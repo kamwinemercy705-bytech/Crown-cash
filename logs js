@@ -1,0 +1,111 @@
+async function loadAuditLogs() {
+
+    const body =
+        document.getElementById("auditLogsBody");
+
+    if (!body) return;
+
+    try {
+
+        const response =
+            await fetch("php/audit_logs.php");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        Unable to load audit logs.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        if (data.logs.length === 0) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        No audit logs found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        body.innerHTML =
+            data.logs.map(log => {
+
+                const details =
+                    JSON.stringify(log.details);
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(log.action)}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                log.target_type
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(details)}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                log.created_at || ""
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Audit log error:",
+            error
+        );
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="4">
+                    Unable to connect to server.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Basic HTML escaping
+|--------------------------------------------------------------------------
+*/
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+loadAuditLogs();

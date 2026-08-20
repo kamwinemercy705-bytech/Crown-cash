@@ -1,91 +1,46 @@
-// =====================================================
-// CROWN CASH — DASHBOARD JAVASCRIPT
-// =====================================================
+async function loadDashboard() {
 
+    try {
 
-document.addEventListener("DOMContentLoaded", function () {
+        const response =
+            await fetch("php/dashboard.php");
 
+        const data =
+            await response.json();
 
-    const sidebar =
-        document.getElementById("sidebar");
+        if (!data.success) {
 
-
-    const openButton =
-        document.getElementById("openSidebar");
-
-
-    const closeButton =
-        document.getElementById("closeSidebar");
-
-
-
-    /*
-     * OPEN SIDEBAR
-     */
-
-    if (openButton) {
-
-        openButton.addEventListener("click", function () {
-
-            sidebar.classList.add("open");
-
-        });
-
-    }
-
-
-
-    /*
-     * CLOSE SIDEBAR
-     */
-
-    if (closeButton) {
-
-        closeButton.addEventListener("click", function () {
-
-            sidebar.classList.remove("open");
-
-        });
-
-    }
-
-
-
-    /*
-     * CLOSE SIDEBAR WHEN
-     * CLICKING OUTSIDE ON MOBILE
-     */
-
-    document.addEventListener("click", function (event) {
-
-        if (
-            window.innerWidth <= 850 &&
-            sidebar.classList.contains("open") &&
-            !sidebar.contains(event.target) &&
-            !openButton.contains(event.target)
-        ) {
-
-            sidebar.classList.remove("open");
-
+            window.location.href = "login.html";
+            return;
         }
 
-    });
+        const user = data.user;
 
+        const nameElement =
+            document.getElementById("userName");
 
+        const balanceElement =
+            document.getElementById("userBalance");
 
-    /*
-     * CURRENT YEAR
-     */
+        if (nameElement) {
+            nameElement.textContent =
+                user.full_name;
+        }
 
-    const year =
-        document.getElementById("year");
+        if (balanceElement) {
+            balanceElement.textContent =
+                "UGX " +
+                Number(user.balance).toLocaleString();
+        }
 
+    } catch (error) {
 
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
+        console.error(
+            "Dashboard error:",
+            error
+        );
 
     }
+}
 
-});
+loadDashboard();

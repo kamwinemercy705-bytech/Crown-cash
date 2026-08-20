@@ -1,23 +1,45 @@
-<div class="form-group">
+<form action="php/deposit.php" method="POST">
 
-    <label for="method">
-        Payment method
-    </label>
+    <label>Amount (UGX)</label>
 
-    <select id="method" name="method" required>
+    <input
+        type="number"
+        name="amount"
+        min="1"
+        required
+    >
+
+
+    <label>Payment Method</label>
+
+    <select name="method" required>
 
         <option value="">
-            Select payment method
+            Select method
         </option>
 
-        <option value="mtn">
+        <option value="MTN">
             MTN Mobile Money
         </option>
 
-        <option value="airtel">
+        <option value="Airtel">
             Airtel Money
         </option>
 
     </select>
 
-</div>
+
+    <label>Payment Reference</label>
+
+    <input
+        type="text"
+        name="reference"
+        required
+    >
+
+
+    <button type="submit">
+        Submit Deposit
+    </button>
+
+</form>

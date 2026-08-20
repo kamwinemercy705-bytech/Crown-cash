@@ -1,98 +1,36 @@
-document.addEventListener("DOMContentLoaded", function () {
+async function loadTransactions() {
 
-    const sidebar =
-        document.getElementById("sidebar");
+    try {
 
-    const openSidebar =
-        document.getElementById("openSidebar");
+        const response =
+            await fetch("php/transactions.php");
 
-    const closeSidebar =
-        document.getElementById("closeSidebar");
+        const data =
+            await response.json();
 
-    const filterButton =
-        document.getElementById("filterButton");
-
-
-    /* SIDEBAR */
-
-    if (openSidebar) {
-
-        openSidebar.addEventListener("click", function () {
-
-            sidebar.classList.add("open");
-
-        });
-
-    }
-
-
-    if (closeSidebar) {
-
-        closeSidebar.addEventListener("click", function () {
-
-            sidebar.classList.remove("open");
-
-        });
-
-    }
-
-
-    document.addEventListener("click", function (event) {
-
-        if (
-            window.innerWidth <= 900 &&
-            sidebar.classList.contains("open") &&
-            !sidebar.contains(event.target) &&
-            !openSidebar.contains(event.target)
-        ) {
-
-            sidebar.classList.remove("open");
-
+        if (!data.success) {
+            console.error(data.message);
+            return;
         }
 
-    });
+        console.log(
+            "Transactions:",
+            data.transactions
+        );
 
+        /*
+         * Use data.transactions to populate
+         * the transaction table already in
+         * transactions.html.
+         */
 
-    /* FILTER BUTTON */
+    } catch (error) {
 
-    if (filterButton) {
-
-        filterButton.addEventListener("click", function () {
-
-            const type =
-                document.getElementById("type").value;
-
-            const status =
-                document.getElementById("status").value;
-
-
-            /*
-             * Real transaction filtering will be handled
-             * by PHP/MySQL after backend integration.
-             */
-
-            console.log(
-                "Selected type:",
-                type,
-                "Selected status:",
-                status
-            );
-
-        });
-
+        console.error(
+            "Transaction loading error:",
+            error
+        );
     }
+}
 
-
-    /* YEAR */
-
-    const year =
-        document.getElementById("year");
-
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
-
-    }
-
-});
+loadTransactions();

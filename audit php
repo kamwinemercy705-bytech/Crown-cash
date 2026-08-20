@@ -1,0 +1,31 @@
+<?php
+
+require_once "admin_auth.php";
+
+function writeAuditLog(
+    $auditLogs,
+    $adminId,
+    $action,
+    $targetType,
+    $targetId = null,
+    $details = []
+) {
+
+    $auditLogs->insertOne([
+
+        "admin_id" => $adminId,
+
+        "action" => $action,
+
+        "target_type" => $targetType,
+
+        "target_id" => $targetId,
+
+        "details" => $details,
+
+        "created_at" =>
+            new MongoDB\BSON\UTCDateTime()
+
+    ]);
+}
+?>

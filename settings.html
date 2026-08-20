@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash account settings">
+
+    <title>Crown Cash | Settings</title>
+
+    <link rel="stylesheet"
+          href="settings.css">
+</head>
+
+<body>
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+            <span class="logo-mark">C</span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+        </a>
+
+        <button
+            type="button"
+            class="close-sidebar"
+            id="closeSidebar">
+            ×
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="settings.html" class="active">
+            <span>⚙</span>
+            Settings
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="login.html">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+<div class="main-wrapper">
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+                ☰
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Settings
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar">
+                U
+            </div>
+
+            <div>
+
+                <strong>
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="content">
+
+        <section class="intro">
+
+            <span class="section-tag">
+                ACCOUNT SETTINGS
+            </span>
+
+            <h2>
+                Manage your preferences
+            </h2>
+
+            <p>
+                Control your account preferences and
+                security settings from one place.
+            </p>
+
+        </section>
+
+
+        <!-- ACCOUNT SETTINGS -->
+
+        <section class="settings-card">
+
+            <div class="card-heading">
+
+                <span class="section-tag">
+                    ACCOUNT
+                </span>
+
+                <h3>
+                    Account preferences
+                </h3>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div class="setting-info">
+
+                    <strong>
+                        Email notifications
+                    </strong>
+
+                    <p>
+                        Receive important account and
+                        transaction notifications.
+                    </p>
+
+                </div>
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="emailNotifications"
+                        checked>
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div class="setting-info">
+
+                    <strong>
+                        Transaction alerts
+                    </strong>
+
+                    <p>
+                        Receive notifications about
+                        important transaction activity.
+                    </p>
+
+                </div>
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="transactionAlerts"
+                        checked>
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div class="setting-info">
+
+                    <strong>
+                        Referral notifications
+                    </strong>
+
+                    <p>
+                        Receive updates about eligible
+                        referral activity.
+                    </p>
+
+                </div>
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="referralNotifications"
+                        checked>
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- SECURITY -->
+
+        <section class="settings-card">
+
+            <div class="card-heading">
+
+                <span class="section-tag">
+                    SECURITY
+                </span>
+
+                <h3>
+                    Account protection
+                </h3>
+
+            </div>
+
+
+            <div class="security-row">
+
+                <div>
+
+                    <strong>
+                        Password
+                    </strong>
+
+                    <p>
+                        Change your account password regularly
+                        and keep it private.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="action-button"
+                    id="changePassword">
+
+                    Change Password
+
+                </button>
+
+            </div>
+
+
+            <div class="security-row">
+
+                <div>
+
+                    <strong>
+                        Login sessions
+                    </strong>
+
+                    <p>
+                        Review your active account sessions.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="action-button"
+                    id="sessionsButton">
+
+                    View Sessions
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- PRIVACY -->
+
+        <section class="settings-card">
+
+            <div class="card-heading">
+
+                <span class="section-tag">
+                    PRIVACY
+                </span>
+
+                <h3>
+                    Privacy preferences
+                </h3>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div class="setting-info">
+
+                    <strong>
+                        Profile visibility
+                    </strong>
+
+                    <p>
+                        Control whether selected profile
+                        information is visible to other users.
+                    </p>
+
+                </div>
+
+                <label class="switch">
+
+                    <input
+                        type="checkbox"
+                        id="profileVisibility">
+
+                    <span class="slider"></span>
+
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- SAVE -->
+
+        <section class="save-section">
+
+            <button
+                type="button"
+                class="save-button"
+                id="saveSettings">
+
+                Save Settings
+
+            </button>
+
+            <p id="saveMessage"></p>
+
+        </section>
+
+
+        <!-- SECURITY NOTICE -->
+
+        <section class="notice">
+
+            <div class="notice-icon">
+                !
+            </div>
+
+            <div>
+
+                <h3>
+                    Security reminder
+                </h3>
+
+                <p>
+                    Never share your password, PIN,
+                    verification codes or other confidential
+                    security information with anyone.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash. All rights reserved.
+
+    </footer>
+
+</div>
+
+
+<script src="settings.js"></script>
+
+</body>
+</html>

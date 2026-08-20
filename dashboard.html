@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="Crown Cash user dashboard.">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <title>Crown Cash | Dashboard</title>
+
+    <link rel="stylesheet" href="dashboard.css">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     SIDEBAR
+========================= -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-mark">
+                C
+            </span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+
+        </a>
+
+
+        <button
+            class="close-sidebar"
+            id="closeSidebar"
+            type="button">
+
+            ×
+
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html" class="active">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="login.html" class="logout">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =========================
+     MAIN AREA
+========================= -->
+
+<div class="main-wrapper">
+
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                class="menu-button"
+                id="openSidebar"
+                type="button">
+
+                ☰
+
+            </button>
+
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Dashboard
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+            <button
+                class="notification-button"
+                type="button"
+                aria-label="Notifications">
+
+                ♢
+
+                <span></span>
+
+            </button>
+
+
+            <div class="user-mini">
+
+                <div class="avatar">
+                    U
+                </div>
+
+                <div class="user-mini-info">
+
+                    <strong>
+                        User Account
+                    </strong>
+
+                    <small>
+                        Member
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================
+         DASHBOARD CONTENT
+    ========================== -->
+
+    <main class="dashboard-content">
+
+
+        <!-- WELCOME -->
+
+        <section class="welcome-section">
+
+            <div>
+
+                <span class="section-tag">
+                    ACCOUNT OVERVIEW
+                </span>
+
+                <h2>
+                    Welcome back.
+                </h2>
+
+                <p>
+                    Manage your Crown Cash account
+                    and keep track of your activity.
+                </p>
+
+            </div>
+
+
+            <a
+                href="profile.html"
+                class="profile-button">
+
+                My Profile
+                →
+
+            </a>
+
+        </section>
+
+
+
+        <!-- =========================
+             OVERVIEW CARDS
+        ========================== -->
+
+        <section class="overview-grid">
+
+
+            <article class="overview-card">
+
+                <div class="card-icon">
+                    ◇
+                </div>
+
+                <span>
+                    Account Status
+                </span>
+
+                <strong>
+                    Active
+                </strong>
+
+                <small>
+                    Your account is currently active.
+                </small>
+
+            </article>
+
+
+
+            <article class="overview-card">
+
+                <div class="card-icon">
+                    🎁
+                </div>
+
+                <span>
+                    Welcome Bonus
+                </span>
+
+                <strong>
+                    Available
+                </strong>
+
+                <small>
+                    Subject to bonus eligibility terms.
+                </small>
+
+            </article>
+
+
+
+            <article class="overview-card">
+
+                <div class="card-icon">
+                    ↗
+                </div>
+
+                <span>
+                    Referral Status
+                </span>
+
+                <strong>
+                    Ready
+                </strong>
+
+                <small>
+                    Your referral area is available.
+                </small>
+
+            </article>
+
+
+
+            <article class="overview-card">
+
+                <div class="card-icon">
+                    ◎
+                </div>
+
+                <span>
+                    Account Activity
+                </span>
+
+                <strong>
+                    View
+                </strong>
+
+                <small>
+                    Review your recent activity.
+                </small>
+
+            </article>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             ACCOUNT PANEL
+        ========================== -->
+
+        <section class="content-grid">
+
+
+            <article class="panel main-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <span class="panel-label">
+                            ACCOUNT
+                        </span>
+
+                        <h3>
+                            Your Crown Cash account
+                        </h3>
+
+                    </div>
+
+                    <span class="status-badge">
+                        ● Active
+                    </span>
+
+                </div>
+
+
+                <div class="account-summary">
+
+                    <div>
+
+                        <span>
+                            Member since
+                        </span>
+
+                        <strong>
+                            Recently joined
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Verification
+                        </span>
+
+                        <strong>
+                            Pending
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Account type
+                        </span>
+
+                        <strong>
+                            Standard
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel-actions">
+
+                    <a
+                        href="profile.html"
+                        class="primary-action">
+
+                        Complete Profile
+
+                    </a>
+
+
+                    <a
+                        href="support.html"
+                        class="secondary-action">
+
+                        Get Support
+
+                    </a>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- QUICK ACTIONS -->
+
+            <article class="panel quick-panel">
+
+                <div class="panel-heading">
+
+                    <div>
+
+                        <span class="panel-label">
+                            QUICK ACCESS
+                        </span>
+
+                        <h3>
+                            What would you like to do?
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions">
+
+                    <a href="investments.html">
+                        <span>◇</span>
+                        <div>
+                            <strong>
+                                Explore Investments
+                            </strong>
+                            <small>
+                                View available options
+                            </small>
+                        </div>
+                    </a>
+
+
+                    <a href="deposits.html">
+                        <span>↓</span>
+                        <div>
+                            <strong>
+                                Make a Deposit
+                            </strong>
+                            <small>
+                                Manage your account funding
+                            </small>
+                        </div>
+                    </a>
+
+
+                    <a href="withdrawals.html">
+                        <span>↑</span>
+                        <div>
+                            <strong>
+                                Withdraw
+                            </strong>
+                            <small>
+                                Request a withdrawal
+                            </small>
+                        </div>
+                    </a>
+
+
+                    <a href="referrals.html">
+                        <span>↗</span>
+                        <div>
+                            <strong>
+                                Referral Program
+                            </strong>
+                            <small>
+                                Invite and manage referrals
+                            </small>
+                        </div>
+                    </a>
+
+                </div>
+
+            </article>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             RECENT ACTIVITY
+        ========================== -->
+
+        <section class="panel activity-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        ACTIVITY
+                    </span>
+
+                    <h3>
+                        Recent account activity
+                    </h3>
+
+                </div>
+
+
+                <a
+                    href="transactions.html"
+                    class="view-all">
+
+                    View all →
+
+                </a>
+
+            </div>
+
+
+            <div class="empty-activity">
+
+                <div class="empty-icon">
+                    ◎
+                </div>
+
+                <h4>
+                    No recent activity
+                </h4>
+
+                <p>
+                    Your account transactions and activity
+                    will appear here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             SECURITY NOTICE
+        ========================== -->
+
+        <section class="security-notice">
+
+            <div class="security-icon">
+                ✓
+            </div>
+
+            <div>
+
+                <strong>
+                    Keep your account secure
+                </strong>
+
+                <p>
+                    Never share your password, PIN or
+                    verification information with anyone.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+
+            © <span id="year"></span>
+            Crown Cash. All rights reserved.
+
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+
+<script src="dashboard.js"></script>
+
+</body>
+
+</html>

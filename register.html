@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="Create your Crown Cash account.">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <title>Crown Cash | Create Account</title>
+
+    <link rel="stylesheet" href="register.css">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<header class="site-header">
+
+    <div class="container nav-container">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-icon">
+                C
+            </span>
+
+            <span class="logo-text">
+                Crown<span>Cash</span>
+            </span>
+
+        </a>
+
+
+        <a
+            href="login.html"
+            class="login-link">
+
+            Already have an account?
+            <strong>Login</strong>
+
+        </a>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="register-page">
+
+
+    <div class="background-glow glow-one"></div>
+
+    <div class="background-glow glow-two"></div>
+
+
+    <div class="container register-container">
+
+
+        <!-- =====================
+             LEFT INFORMATION
+        ====================== -->
+
+        <section class="register-intro">
+
+
+            <span class="section-label">
+                WELCOME TO CROWN CASH
+            </span>
+
+
+            <h1>
+
+                Start your
+                <span>journey.</span>
+
+            </h1>
+
+
+            <p>
+
+                Create your Crown Cash account and
+                access a modern digital platform designed
+                around a simple and transparent user
+                experience.
+
+            </p>
+
+
+            <div class="benefits">
+
+
+                <div class="benefit">
+
+                    <span class="benefit-icon">
+                        ✓
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Personal Account
+                        </strong>
+
+                        <p>
+                            Manage your account from one place.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="benefit">
+
+                    <span class="benefit-icon">
+                        ◇
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Welcome Bonus
+                        </strong>
+
+                        <p>
+                            Eligible new users may receive a
+                            promotional registration bonus.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="benefit">
+
+                    <span class="benefit-icon">
+                        ◎
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Referral Program
+                        </strong>
+
+                        <p>
+                            Receive your personal referral link
+                            after registration.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =====================
+             REGISTRATION CARD
+        ====================== -->
+
+        <section class="register-card">
+
+
+            <div class="card-heading">
+
+                <span class="mini-label">
+                    CREATE ACCOUNT
+                </span>
+
+
+                <h2>
+                    Join Crown Cash
+                </h2>
+
+
+                <p>
+                    Enter your details below to get started.
+                </p>
+
+            </div>
+
+
+
+            <!-- FORM -->
+
+            <form
+                id="registerForm"
+                novalidate>
+
+
+                <!-- NAME -->
+
+                <div class="form-row">
+
+
+                    <div class="form-group">
+
+                        <label for="firstName">
+                            First Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="firstName"
+                            name="firstName"
+                            placeholder="Enter first name"
+                            autocomplete="given-name"
+                            required>
+
+                        <small
+                            class="error-message"
+                            id="firstNameError">
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="form-group">
+
+                        <label for="lastName">
+                            Last Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="lastName"
+                            name="lastName"
+                            placeholder="Enter last name"
+                            autocomplete="family-name"
+                            required>
+
+                        <small
+                            class="error-message"
+                            id="lastNameError">
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- PHONE -->
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="e.g. 07XXXXXXXX"
+                        autocomplete="tel"
+                        required>
+
+                    <small
+                        class="error-message"
+                        id="phoneError">
+                    </small>
+
+                </div>
+
+
+
+                <!-- EMAIL -->
+
+                <div class="form-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required>
+
+                    <small
+                        class="error-message"
+                        id="emailError">
+                    </small>
+
+                </div>
+
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a strong password"
+                            autocomplete="new-password"
+                            required>
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            data-target="password">
+
+                            Show
+
+                        </button>
+
+                    </div>
+
+                    <small
+                        class="password-hint">
+
+                        Use at least 8 characters.
+
+                    </small>
+
+                    <small
+                        class="error-message"
+                        id="passwordError">
+                    </small>
+
+                </div>
+
+
+
+                <!-- CONFIRM PASSWORD -->
+
+                <div class="form-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Repeat your password"
+                            autocomplete="new-password"
+                            required>
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            data-target="confirmPassword">
+
+                            Show
+
+                        </button>
+
+                    </div>
+
+                    <small
+                        class="error-message"
+                        id="confirmPasswordError">
+                    </small>
+
+                </div>
+
+
+
+                <!-- REFERRAL -->
+
+                <div class="form-group">
+
+                    <label for="referralCode">
+
+                        Referral Code
+
+                        <span class="optional">
+                            Optional
+                        </span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="referralCode"
+                        name="referralCode"
+                        placeholder="Enter referral code">
+
+                </div>
+
+
+
+                <!-- BONUS NOTICE -->
+
+                <div class="bonus-box">
+
+                    <div class="bonus-icon">
+                        🎁
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Welcome Bonus
+                        </strong>
+
+                        <p>
+
+                            Eligible new accounts may receive
+                            a promotional registration bonus
+                            after meeting the applicable
+                            requirements.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TERMS -->
+
+                <div class="terms-check">
+
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                        required>
+
+                    <label for="terms">
+
+                        I agree to the
+                        <a href="terms.html">
+                            Terms & Conditions
+                        </a>
+                        and
+                        <a href="privacy.html">
+                            Privacy Policy
+                        </a>.
+
+                    </label>
+
+                </div>
+
+                <small
+                    class="error-message"
+                    id="termsError">
+                </small>
+
+
+
+                <!-- SUBMIT -->
+
+                <button
+                    type="submit"
+                    class="register-button">
+
+                    Create My Account
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+
+                <div
+                    class="form-message"
+                    id="formMessage">
+                </div>
+
+
+            </form>
+
+
+
+            <div class="login-bottom">
+
+                Already have an account?
+
+                <a href="login.html">
+                    Sign in
+                </a>
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+</main>
+
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer>
+
+    <div class="container">
+
+        <p>
+            © <span id="year"></span>
+            Crown Cash. All rights reserved.
+        </p>
+
+    </div>
+
+</footer>
+
+
+
+<script src="register.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Crown Cash - Security Testing</title>
+
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+
+        /* HEADER */
+
+        .header {
+            background: #111827;
+            color: white;
+
+            padding: 18px 25px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+
+        .header h1 {
+            font-size: 22px;
+        }
+
+
+        .admin {
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+
+        /* CONTAINER */
+
+        .container {
+            max-width: 1300px;
+            margin: auto;
+            padding: 25px;
+        }
+
+
+        .title {
+            margin-bottom: 25px;
+        }
+
+
+        .title h2 {
+            font-size: 27px;
+        }
+
+
+        .title p {
+            margin-top: 7px;
+            color: #6b7280;
+        }
+
+
+        /* SECURITY SCORE */
+
+        .security-score {
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 10px;
+
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.08);
+        }
+
+
+        .score-header {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 15px;
+        }
+
+
+        .score {
+            font-size: 30px;
+
+            font-weight: bold;
+
+            color: #16a34a;
+        }
+
+
+        .progress {
+            width: 100%;
+
+            height: 14px;
+
+            background: #e5e7eb;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+        }
+
+
+        .progress-bar {
+            width: 80%;
+
+            height: 100%;
+
+            background: #16a34a;
+        }
+
+
+        /* STATISTICS */
+
+        .stats {
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .stat-card {
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.08);
+        }
+
+
+        .stat-card h3 {
+            font-size: 14px;
+
+            color: #6b7280;
+
+            margin-bottom: 10px;
+        }
+
+
+        .stat-card p {
+            font-size: 25px;
+
+            font-weight: bold;
+        }
+
+
+        /* SECURITY TESTS */
+
+        .tests {
+            background: white;
+
+            border-radius: 10px;
+
+            padding: 20px;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.08);
+        }
+
+
+        .tests h2 {
+            margin-bottom: 20px;
+        }
+
+
+        .test-item {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            padding: 17px 5px;
+
+            border-bottom: 1px solid #eee;
+        }
+
+
+        .test-info {
+            flex: 1;
+        }
+
+
+        .test-info h3 {
+            font-size: 16px;
+
+            margin-bottom: 5px;
+        }
+
+
+        .test-info p {
+            font-size: 13px;
+
+            color: #6b7280;
+        }
+
+
+        /* STATUS */
+
+        .status {
+
+            padding: 6px 12px;
+
+            border-radius: 20px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            white-space: nowrap;
+        }
+
+
+        .passed {
+
+            background: #dcfce7;
+
+            color: #166534;
+        }
+
+
+        .warning {
+
+            background: #fef3c7;
+
+            color: #92400e;
+        }
+
+
+        .failed {
+
+            background: #fee2e2;
+
+            color: #991b1b;
+        }
+
+
+        /* TEST BUTTON */
+
+        .test-btn {
+
+            background: #2563eb;
+
+            color: white;
+
+            border: none;
+
+            padding: 8px 13px;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+        }
+
+
+        .test-btn:hover {
+            opacity: 0.85;
+        }
+
+
+        /* RUN ALL */
+
+        .run-all {
+
+            margin-top: 20px;
+
+            background: #111827;
+
+            color: white;
+
+            border: none;
+
+            padding: 12px 20px;
+
+            border-radius: 6px;
+
+            cursor: pointer;
+        }
+
+
+        /* WARNING */
+
+        .warning-box {
+
+            margin-top: 25px;
+
+            background: #fff7ed;
+
+            border-left: 5px solid #f97316;
+
+            padding: 18px;
+
+            border-radius: 6px;
+        }
+
+
+        .warning-box h3 {
+            margin-bottom: 8px;
+        }
+
+
+        .warning-box p {
+            color: #555;
+
+            line-height: 1.5;
+        }
+
+
+        /* MOBILE */
+
+        @media (max-width: 800px) {
+
+            .stats {
+
+                grid-template-columns: repeat(2, 1fr);
+
+            }
+
+
+            .test-item {
+
+                align-items: flex-start;
+
+                flex-direction: column;
+
+            }
+
+        }
+
+
+        @media (max-width: 500px) {
+
+            .stats {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .container {
+
+                padding: 15px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<header class="header">
+
+    <h1>
+        Crown Cash
+    </h1>
+
+    <div class="admin">
+        Administrator
+    </div>
+
+</header>
+
+
+<main class="container">
+
+
+    <!-- TITLE -->
+
+    <section class="title">
+
+        <h2>
+            Security Testing
+        </h2>
+
+        <p>
+            Review important security controls before launching Crown Cash.
+        </p>
+
+    </section>
+
+
+    <!-- SECURITY SCORE -->
+
+    <section class="security-score">
+
+        <div class="score-header">
+
+            <div>
+
+                <h2>
+                    Security Status
+                </h2>
+
+                <p>
+                    Current security checklist progress
+                </p>
+
+            </div>
+
+
+            <div
+                class="score"
+                id="securityScore"
+            >
+                80%
+            </div>
+
+        </div>
+
+
+        <div class="progress">
+
+            <div
+                class="progress-bar"
+                id="progressBar"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- STATISTICS -->
+
+    <section class="stats">
+
+
+        <div class="stat-card">
+
+            <h3>
+                Tests Passed
+            </h3>
+
+            <p id="passedCount">
+                8
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                Warnings
+            </h3>
+
+            <p id="warningCount">
+                1
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                Failed Tests
+            </h3>
+
+            <p id="failedCount">
+                1
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                Total Tests
+            </h3>
+
+            <p>
+                10
+            </p>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- SECURITY TESTS -->
+
+    <section class="tests">
+
+        <h2>
+            Security Checklist
+        </h2>
+
+
+        <!-- TEST 1 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Admin Authentication
+                </h3>
+
+                <p>
+                    Confirm that only authorized administrators can access the admin panel.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 2 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    User Authentication
+                </h3>
+
+                <p>
+                    Confirm that users must log in before accessing protected account pages.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 3 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Password Security
+                </h3>
+
+                <p>
+                    Passwords must be securely hashed and never stored as plain text.
+                </p>
+
+            </div>
+
+
+            <span class="status warning">
+                Warning
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 4 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Session Security
+                </h3>
+
+                <p>
+                    Check session handling and prevent unauthorized session access.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 5 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    SQL Injection Protection
+                </h3>
+
+                <p>
+                    Database queries should use prepared statements and validated input.
+                </p>
+
+            </div>
+
+
+            <span class="status failed">
+                Failed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 6 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Transaction Authorization
+                </h3>
+
+                <p>
+                    Users must not be able to modify transaction records directly.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 7 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Withdrawal Approval
+                </h3>
+
+                <p>
+                    Withdrawals must require authorized admin approval before processing.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 8 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Payment Verification
+                </h3>
+
+                <p>
+                    Deposits should only be credited after verified payment confirmation.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 9 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    Audit Logging
+                </h3>
+
+                <p>
+                    Important account and transaction activities should be recorded.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- TEST 10 -->
+
+        <div class="test-item">
+
+            <div class="test-info">
+
+                <h3>
+                    HTTPS / SSL
+                </h3>
+
+                <p>
+                    Production website should use HTTPS to protect information in transit.
+                </p>
+
+            </div>
+
+
+            <span class="status passed">
+                Passed
+            </span>
+
+
+            <button
+                class="test-btn"
+                onclick="runTest(this)"
+            >
+                Test
+            </button>
+
+        </div>
+
+
+        <!-- RUN ALL -->
+
+        <button
+            class="run-all"
+            onclick="runAllTests()"
+        >
+            Run Security Checklist
+        </button>
+
+
+    </section>
+
+
+    <!-- WARNING -->
+
+    <section class="warning-box">
+
+        <h3>
+            Important Security Notice
+        </h3>
+
+        <p>
+            This HTML page is only a security checklist.
+            It does not actually secure the website.
+            Real protection must be implemented in the PHP backend,
+            database, server configuration and authorized payment
+            integration before Crown Cash is launched.
+        </p>
+
+    </section>
+
+
+</main>
+
+
+<script>
+
+
+/* RUN INDIVIDUAL TEST */
+
+function runTest(button) {
+
+
+    const item =
+        button.closest(".test-item");
+
+
+    const status =
+        item.querySelector(".status");
+
+
+    status.innerText =
+        "Checking...";
+
+
+    status.className =
+        "status warning";
+
+
+    setTimeout(function() {
+
+
+        status.innerText =
+            "Review Required";
+
+
+        status.className =
+            "status warning";
+
+
+        alert(
+            "This HTML page cannot perform a real server security test. The corresponding PHP/server security control must be tested before launch."
+        );
+
+
+    }, 700);
+
+}
+
+
+/* RUN ALL TESTS */
+
+function runAllTests() {
+
+
+    alert(
+        "Security checklist opened. Real security testing must be performed on the PHP backend, database and production server."
+    );
+
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

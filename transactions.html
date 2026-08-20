@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash transaction history">
+
+    <title>Crown Cash | Transactions</title>
+
+    <link rel="stylesheet"
+          href="transactions.css">
+
+</head>
+
+<body>
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-mark">C</span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+
+        </a>
+
+        <button
+            type="button"
+            class="close-sidebar"
+            id="closeSidebar">
+
+            ×
+
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html" class="active">
+            <span>≡</span>
+            Transactions
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="login.html">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- MAIN -->
+
+<div class="main-wrapper">
+
+
+    <!-- TOPBAR -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+
+                ☰
+
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Transactions
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar">
+                U
+            </div>
+
+            <div>
+
+                <strong>
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- CONTENT -->
+
+    <main class="content">
+
+
+        <section class="intro">
+
+            <span class="section-tag">
+                TRANSACTION CENTER
+            </span>
+
+            <h2>
+                Keep track of your account activity.
+            </h2>
+
+            <p>
+                View deposits, withdrawals, investments
+                and other recorded account transactions.
+            </p>
+
+        </section>
+
+
+
+        <!-- FILTERS -->
+
+        <section class="filter-card">
+
+            <div class="filter-heading">
+
+                <div>
+
+                    <span class="section-tag">
+                        TRANSACTION HISTORY
+                    </span>
+
+                    <h3>
+                        Activity
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="filters">
+
+                <div class="filter-group">
+
+                    <label for="type">
+                        Transaction type
+                    </label>
+
+                    <select id="type">
+
+                        <option value="all">
+                            All transactions
+                        </option>
+
+                        <option value="deposit">
+                            Deposits
+                        </option>
+
+                        <option value="withdrawal">
+                            Withdrawals
+                        </option>
+
+                        <option value="investment">
+                            Investments
+                        </option>
+
+                        <option value="referral">
+                            Referral rewards
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label for="status">
+                        Status
+                    </label>
+
+                    <select id="status">
+
+                        <option value="all">
+                            All statuses
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                        <option value="completed">
+                            Completed
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="filter-button"
+                    id="filterButton">
+
+                    Apply Filters
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- TRANSACTIONS -->
+
+        <section class="transaction-card">
+
+
+            <div class="transaction-table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Reference
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="transactionTable">
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="empty-state">
+
+                                <div class="empty-icon">
+                                    ≡
+                                </div>
+
+                                <strong>
+                                    No transactions yet
+                                </strong>
+
+                                <p>
+                                    Your transaction history
+                                    will appear here once your
+                                    account has recorded activity.
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- MOBILE TRANSACTION LIST -->
+
+        <section class="mobile-transactions"
+                 id="mobileTransactions">
+
+        </section>
+
+
+
+        <!-- INFORMATION -->
+
+        <section class="information-card">
+
+            <div class="information-icon">
+                i
+            </div>
+
+            <div>
+
+                <h3>
+                    About transaction statuses
+                </h3>
+
+                <p>
+                    <strong>Pending</strong> means a transaction
+                    is waiting for review or processing.
+                </p>
+
+                <p>
+                    <strong>Approved</strong> means the request
+                    has been authorized.
+                </p>
+
+                <p>
+                    <strong>Completed</strong> means the
+                    transaction has been successfully processed.
+                </p>
+
+                <p>
+                    <strong>Rejected</strong> means the request
+                    was declined.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash. All rights reserved.
+
+    </footer>
+
+
+</div>
+
+
+<script src="transactions.js"></script>
+
+</body>
+
+</html>

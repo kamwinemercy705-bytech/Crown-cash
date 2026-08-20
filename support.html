@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash Support Center">
+
+    <title>Crown Cash | Support</title>
+
+    <link rel="stylesheet"
+          href="support.css">
+</head>
+
+<body>
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+            <span class="logo-mark">C</span>
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+        </a>
+
+        <button
+            type="button"
+            class="close-sidebar"
+            id="closeSidebar">
+            ×
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="support.html" class="active">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="login.html">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+<div class="main-wrapper">
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+                ☰
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Support Center
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar">
+                U
+            </div>
+
+            <div>
+
+                <strong>
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="content">
+
+
+        <!-- INTRO -->
+
+        <section class="intro">
+
+            <span class="section-tag">
+                HELP CENTER
+            </span>
+
+            <h2>
+                How can we help you?
+            </h2>
+
+            <p>
+                Find answers or send a support request
+                to the Crown Cash support team.
+            </p>
+
+        </section>
+
+
+        <!-- SUPPORT OPTIONS -->
+
+        <section class="support-grid">
+
+            <article class="support-card">
+
+                <div class="support-icon">
+                    ?
+                </div>
+
+                <h3>
+                    General Support
+                </h3>
+
+                <p>
+                    Questions about your account,
+                    profile or using the platform.
+                </p>
+
+                <button
+                    type="button"
+                    class="support-select"
+                    data-category="General Support">
+
+                    Get Help →
+
+                </button>
+
+            </article>
+
+
+            <article class="support-card">
+
+                <div class="support-icon">
+                    ↓
+                </div>
+
+                <h3>
+                    Deposits
+                </h3>
+
+                <p>
+                    Help with deposit instructions,
+                    payment references or pending deposits.
+                </p>
+
+                <button
+                    type="button"
+                    class="support-select"
+                    data-category="Deposits">
+
+                    Get Help →
+
+                </button>
+
+            </article>
+
+
+            <article class="support-card">
+
+                <div class="support-icon">
+                    ↑
+                </div>
+
+                <h3>
+                    Withdrawals
+                </h3>
+
+                <p>
+                    Questions about withdrawal requests,
+                    reviews or payment status.
+                </p>
+
+                <button
+                    type="button"
+                    class="support-select"
+                    data-category="Withdrawals">
+
+                    Get Help →
+
+                </button>
+
+            </article>
+
+
+            <article class="support-card">
+
+                <div class="support-icon">
+                    ↗
+                </div>
+
+                <h3>
+                    Referrals
+                </h3>
+
+                <p>
+                    Get help with referral links,
+                    referrals and eligible rewards.
+                </p>
+
+                <button
+                    type="button"
+                    class="support-select"
+                    data-category="Referrals">
+
+                    Get Help →
+
+                </button>
+
+            </article>
+
+        </section>
+
+
+        <!-- CONTACT FORM -->
+
+        <section class="form-card">
+
+            <div class="card-heading">
+
+                <span class="section-tag">
+                    CONTACT SUPPORT
+                </span>
+
+                <h3>
+                    Submit a support request
+                </h3>
+
+                <p>
+                    Describe your issue clearly so the
+                    support team can assist you.
+                </p>
+
+            </div>
+
+
+            <form id="supportForm">
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+                        <select id="category"
+                                name="category"
+                                required>
+
+                            <option value="">
+                                Select category
+                            </option>
+
+                            <option value="general">
+                                General Support
+                            </option>
+
+                            <option value="deposit">
+                                Deposits
+                            </option>
+
+                            <option value="withdrawal">
+                                Withdrawals
+                            </option>
+
+                            <option value="referral">
+                                Referrals
+                            </option>
+
+                            <option value="account">
+                                Account & Security
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="subject">
+                            Subject
+                        </label>
+
+                        <input
+                            type="text"
+                            id="subject"
+                            name="subject"
+                            placeholder="Enter subject"
+                            required>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="message">
+                        Message
+                    </label>
+
+                    <textarea
+                        id="message"
+                        name="message"
+                        rows="6"
+                        placeholder="Describe your issue..."
+                        required></textarea>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="submit-button">
+
+                    Send Support Request
+
+                </button>
+
+
+                <p id="formMessage"
+                   class="form-message"></p>
+
+            </form>
+
+        </section>
+
+
+        <!-- FAQ -->
+
+        <section class="faq-section">
+
+            <div class="card-heading">
+
+                <span class="section-tag">
+                    FAQ
+                </span>
+
+                <h3>
+                    Frequently asked questions
+                </h3>
+
+            </div>
+
+
+            <div class="faq-list">
+
+
+                <div class="faq-item">
+
+                    <button class="faq-question">
+
+                        How do I make a deposit?
+
+                        <span>+</span>
+
+                    </button>
+
+                    <div class="faq-answer">
+
+                        <p>
+                            Open the Deposits section of your
+                            account and follow the current
+                            payment instructions displayed
+                            by the platform.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="faq-item">
+
+                    <button class="faq-question">
+
+                        How do withdrawals work?
+
+                        <span>+</span>
+
+                    </button>
+
+                    <div class="faq-answer">
+
+                        <p>
+                            Withdrawal requests are submitted
+                            by the user and reviewed by an
+                            authorized administrator before
+                            payment is processed.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="faq-item">
+
+                    <button class="faq-question">
+
+                        Where can I find my referral link?
+
+                        <span>+</span>
+
+                    </button>
+
+                    <div class="faq-answer">
+
+                        <p>
+                            Your personal referral information
+                            is available from the Referrals
+                            section of your account.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="faq-item">
+
+                    <button class="faq-question">
+
+                        What should I do if I forget my password?
+
+                        <span>+</span>
+
+                    </button>
+
+                    <div class="faq-answer">
+
+                        <p>
+                            Use the password recovery process
+                            provided on the login page. Never
+                            share your password with another person.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- NOTICE -->
+
+        <section class="notice">
+
+            <div class="notice-icon">
+                !
+            </div>
+
+            <div>
+
+                <h3>
+                    Important
+                </h3>
+
+                <p>
+                    Crown Cash support will never ask for your
+                    password, PIN or other confidential security
+                    credentials. Always verify payment instructions
+                    through the official platform.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash. All rights reserved.
+
+    </footer>
+
+</div>
+
+
+<script src="support.js"></script>
+
+</body>
+</html>

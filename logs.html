@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Crown Cash - Audit Logs</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        /* HEADER */
+
+        .header {
+            background: #111827;
+            color: white;
+
+            padding: 18px 25px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 22px;
+        }
+
+        .admin {
+            color: #d1d5db;
+            font-size: 14px;
+        }
+
+        /* CONTAINER */
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 25px;
+        }
+
+        .page-title {
+            margin-bottom: 20px;
+        }
+
+        .page-title h2 {
+            font-size: 26px;
+        }
+
+        .page-title p {
+            margin-top: 6px;
+            color: #6b7280;
+        }
+
+        /* STATISTICS */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+
+            color: #6b7280;
+
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            font-size: 25px;
+
+            font-weight: bold;
+        }
+
+        /* FILTERS */
+
+        .filters {
+            background: white;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            display: flex;
+
+            gap: 10px;
+
+            flex-wrap: wrap;
+        }
+
+        .filters input,
+        .filters select {
+
+            padding: 11px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 6px;
+
+            outline: none;
+        }
+
+        .search {
+            background: #2563eb;
+
+            color: white;
+
+            border: none;
+
+            padding: 11px 18px;
+
+            border-radius: 6px;
+
+            cursor: pointer;
+        }
+
+        /* TABLE */
+
+        .table-container {
+
+            background: white;
+
+            border-radius: 10px;
+
+            overflow-x: auto;
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 1100px;
+        }
+
+        th,
+        td {
+
+            padding: 14px;
+
+            border-bottom: 1px solid #eee;
+
+            text-align: left;
+        }
+
+        th {
+
+            background: #111827;
+
+            color: white;
+
+            font-size: 13px;
+        }
+
+        td {
+
+            font-size: 14px;
+        }
+
+        /* ACTION TYPES */
+
+        .login {
+            color: #2563eb;
+
+            font-weight: bold;
+        }
+
+        .deposit {
+            color: #15803d;
+
+            font-weight: bold;
+        }
+
+        .withdrawal {
+            color: #dc2626;
+
+            font-weight: bold;
+        }
+
+        .approval {
+            color: #7c3aed;
+
+            font-weight: bold;
+        }
+
+        .user-action {
+            color: #ca8a04;
+
+            font-weight: bold;
+        }
+
+        /* STATUS */
+
+        .status {
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+        }
+
+        .success {
+
+            background: #dcfce7;
+
+            color: #166534;
+        }
+
+        .warning {
+
+            background: #fef3c7;
+
+            color: #92400e;
+        }
+
+        .danger {
+
+            background: #fee2e2;
+
+            color: #991b1b;
+        }
+
+        /* VIEW BUTTON */
+
+        .view-btn {
+
+            background: #2563eb;
+
+            color: white;
+
+            border: none;
+
+            padding: 7px 11px;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+        }
+
+        .view-btn:hover {
+            opacity: 0.85;
+        }
+
+        /* MODAL */
+
+        .modal {
+
+            display: none;
+
+            position: fixed;
+
+            left: 0;
+
+            top: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            background: rgba(0,0,0,0.6);
+
+            align-items: center;
+
+            justify-content: center;
+
+            z-index: 1000;
+        }
+
+        .modal-content {
+
+            background: white;
+
+            width: 90%;
+
+            max-width: 550px;
+
+            padding: 25px;
+
+            border-radius: 10px;
+
+            position: relative;
+        }
+
+        .close {
+
+            position: absolute;
+
+            right: 20px;
+
+            top: 15px;
+
+            font-size: 25px;
+
+            cursor: pointer;
+        }
+
+        .details {
+
+            margin-top: 20px;
+        }
+
+        .details div {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            padding: 12px 0;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 800px) {
+
+            .stats {
+
+                grid-template-columns: repeat(2, 1fr);
+
+            }
+
+            .container {
+
+                padding: 15px;
+
+            }
+
+        }
+
+        @media (max-width: 500px) {
+
+            .stats {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<header class="header">
+
+    <h1>Crown Cash</h1>
+
+    <div class="admin">
+        Administrator
+    </div>
+
+</header>
+
+
+<main class="container">
+
+
+    <!-- TITLE -->
+
+    <section class="page-title">
+
+        <h2>
+            Audit Logs
+        </h2>
+
+        <p>
+            Monitor important activities performed on the platform.
+        </p>
+
+    </section>
+
+
+    <!-- STATISTICS -->
+
+    <section class="stats">
+
+
+        <div class="stat-card">
+
+            <h3>
+                Total Activities
+            </h3>
+
+            <p>
+                2,450
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                Admin Actions
+            </h3>
+
+            <p>
+                340
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                User Actions
+            </h3>
+
+            <p>
+                2,050
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <h3>
+                Security Events
+            </h3>
+
+            <p>
+                60
+            </p>
+
+        </div>
+
+
+    </section>
+
+
+    <!-- FILTERS -->
+
+    <section class="filters">
+
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search activity..."
+        >
+
+
+        <select id="actionFilter">
+
+            <option value="all">
+                All Actions
+            </option>
+
+            <option value="login">
+                Login
+            </option>
+
+            <option value="deposit">
+                Deposit
+            </option>
+
+            <option value="withdrawal">
+                Withdrawal
+            </option>
+
+            <option value="approval">
+                Approval
+            </option>
+
+            <option value="user">
+                User Management
+            </option>
+
+        </select>
+
+
+        <button
+            class="search"
+            onclick="filterLogs()"
+        >
+            Filter
+        </button>
+
+
+    </section>
+
+
+    <!-- AUDIT TABLE -->
+
+    <section class="table-container">
+
+
+        <table id="auditTable">
+
+
+            <thead>
+
+                <tr>
+
+                    <th>Log ID</th>
+
+                    <th>User/Admin</th>
+
+                    <th>Role</th>
+
+                    <th>Action</th>
+
+                    <th>Description</th>
+
+                    <th>Status</th>
+
+                    <th>Date & Time</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                <!-- LOG 1 -->
+
+                <tr>
+
+                    <td>
+                        LOG001
+                    </td>
+
+                    <td>
+                        Admin
+                    </td>
+
+                    <td>
+                        Administrator
+                    </td>
+
+                    <td class="login">
+                        Login
+                    </td>
+
+                    <td>
+                        Administrator logged into admin panel
+                    </td>
+
+                    <td>
+
+                        <span class="status success">
+                            Successful
+                        </span>
+
+                    </td>
+
+                    <td>
+                        20 Aug 2026 10:30
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="view-btn"
+                            onclick="viewLog(this)"
+                        >
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- LOG 2 -->
+
+                <tr>
+
+                    <td>
+                        LOG002
+                    </td>
+
+                    <td>
+                        John Doe
+                    </td>
+
+                    <td>
+                        User
+                    </td>
+
+                    <td class="deposit">
+                        Deposit
+                    </td>
+
+                    <td>
+                        User submitted a UGX 100,000 deposit
+                    </td>
+
+                    <td>
+
+                        <span class="status success">
+                            Successful
+                        </span>
+
+                    </td>
+
+                    <td>
+                        20 Aug 2026 10:15
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="view-btn"
+                            onclick="viewLog(this)"
+                        >
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- LOG 3 -->
+
+                <tr>
+
+                    <td>
+                        LOG003
+                    </td>
+
+                    <td>
+                        Mary Namukasa
+                    </td>
+
+                    <td>
+                        User
+                    </td>
+
+                    <td class="withdrawal">
+                        Withdrawal
+                    </td>
+
+                    <td>
+                        User requested UGX 50,000 withdrawal
+                    </td>
+
+                    <td>
+
+                        <span class="status warning">
+                            Pending
+                        </span>
+
+                    </td>
+
+                    <td>
+                        20 Aug 2026 09:50
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="view-btn"
+                            onclick="viewLog(this)"
+                        >
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- LOG 4 -->
+
+                <tr>
+
+                    <td>
+                        LOG004
+                    </td>
+
+                    <td>
+                        Admin
+                    </td>
+
+                    <td>
+                        Administrator
+                    </td>
+
+                    <td class="approval">
+                        Withdrawal Approval
+                    </td>
+
+                    <td>
+                        Administrator approved a withdrawal
+                    </td>
+
+                    <td>
+
+                        <span class="status success">
+                            Successful
+                        </span>
+
+                    </td>
+
+                    <td>
+                        19 Aug 2026 16:20
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="view-btn"
+                            onclick="viewLog(this)"
+                        >
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                <!-- LOG 5 -->
+
+                <tr>
+
+                    <td>
+                        LOG005
+                    </td>
+
+                    <td>
+                        Admin
+                    </td>
+
+                    <td>
+                        Administrator
+                    </td>
+
+                    <td class="user-action">
+                        User Deactivation
+                    </td>
+
+                    <td>
+                        Administrator deactivated a user account
+                    </td>
+
+                    <td>
+
+                        <span class="status success">
+                            Successful
+                        </span>
+
+                    </td>
+
+                    <td>
+                        19 Aug 2026 14:40
+                    </td>
+
+                    <td>
+
+                        <button
+                            class="view-btn"
+                            onclick="viewLog(this)"
+                        >
+                            View
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+            </tbody>
+
+        </table>
+
+
+    </section>
+
+
+</main>
+
+
+<!-- DETAILS MODAL -->
+
+<div
+    class="modal"
+    id="logModal"
+>
+
+
+    <div class="modal-content">
+
+
+        <span
+            class="close"
+            onclick="closeModal()"
+        >
+            &times;
+        </span>
+
+
+        <h2>
+            Audit Log Details
+        </h2>
+
+
+        <div
+            class="details"
+            id="logDetails"
+        >
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+/* FILTER LOGS */
+
+function filterLogs() {
+
+
+    const search =
+
+        document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+
+    const filter =
+
+        document
+        .getElementById("actionFilter")
+        .value
+        .toLowerCase();
+
+
+    const rows =
+
+        document
+        .querySelectorAll(
+            "#auditTable tbody tr"
+        );
+
+
+    rows.forEach(function(row) {
+
+
+        const text =
+            row.innerText.toLowerCase();
+
+
+        let actionMatch = true;
+
+
+        if (filter !== "all") {
+
+            actionMatch =
+                text.includes(filter);
+
+        }
+
+
+        const searchMatch =
+            text.includes(search);
+
+
+        if (
+            searchMatch &&
+            actionMatch
+        ) {
+
+            row.style.display = "";
+
+        } else {
+
+            row.style.display = "none";
+
+        }
+
+
+    });
+
+}
+
+
+/* VIEW LOG */
+
+function viewLog(button) {
+
+
+    const row =
+        button.closest("tr");
+
+
+    const cells =
+        row.querySelectorAll("td");
+
+
+    document
+        .getElementById("logDetails")
+        .innerHTML = `
+
+            <div>
+                <strong>Log ID</strong>
+                <span>${cells[0].innerText}</span>
+            </div>
+
+            <div>
+                <strong>User/Admin</strong>
+                <span>${cells[1].innerText}</span>
+            </div>
+
+            <div>
+                <strong>Role</strong>
+                <span>${cells[2].innerText}</span>
+            </div>
+
+            <div>
+                <strong>Action</strong>
+                <span>${cells[3].innerText}</span>
+            </div>
+
+            <div>
+                <strong>Description</strong>
+                <span>${cells[4].innerText}</span>
+            </div>
+
+            <div>
+                <strong>Status</strong>
+                <span>${cells[5].innerText}</span>
+            </div>
+
+            <div>
+                <strong>Date & Time</strong>
+                <span>${cells[6].innerText}</span>
+            </div>
+
+        `;
+
+
+    document
+        .getElementById("logModal")
+        .style.display = "flex";
+
+}
+
+
+/* CLOSE MODAL */
+
+function closeModal() {
+
+    document
+        .getElementById("logModal")
+        .style.display = "none";
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

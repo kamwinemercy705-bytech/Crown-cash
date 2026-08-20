@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash user profile">
+
+    <title>Crown Cash | My Profile</title>
+
+    <link rel="stylesheet"
+          href="profile.css">
+
+</head>
+
+<body>
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-mark">C</span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+
+        </a>
+
+        <button
+            type="button"
+            class="close-sidebar"
+            id="closeSidebar">
+
+            ×
+
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html" class="active">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="login.html">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- MAIN -->
+
+<div class="main-wrapper">
+
+
+    <!-- TOPBAR -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+
+                ☰
+
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    My Profile
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar">
+                U
+            </div>
+
+            <div>
+
+                <strong>
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- CONTENT -->
+
+    <main class="content">
+
+
+        <!-- PROFILE HEADER -->
+
+        <section class="profile-header">
+
+            <div class="profile-avatar">
+                U
+            </div>
+
+            <div class="profile-intro">
+
+                <span class="section-tag">
+                    ACCOUNT PROFILE
+                </span>
+
+                <h2>
+                    User Account
+                </h2>
+
+                <p>
+                    Manage your personal information
+                    and account settings.
+                </p>
+
+            </div>
+
+
+            <div class="account-status">
+
+                <span class="status-dot"></span>
+
+                Active Account
+
+            </div>
+
+        </section>
+
+
+
+        <!-- PERSONAL INFORMATION -->
+
+        <section class="profile-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="section-tag">
+                        PERSONAL INFORMATION
+                    </span>
+
+                    <h3>
+                        Account details
+                    </h3>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="edit-button"
+                    id="editProfile">
+
+                    Edit Profile
+
+                </button>
+
+            </div>
+
+
+            <div class="details-grid">
+
+
+                <div class="detail">
+
+                    <span>
+                        Full Name
+                    </span>
+
+                    <strong id="fullName">
+                        User Account
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        Email Address
+                    </span>
+
+                    <strong id="email">
+                        user@example.com
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        Phone Number
+                    </span>
+
+                    <strong id="phone">
+                        07XXXXXXXX
+                    </strong>
+
+                </div>
+
+
+                <div class="detail">
+
+                    <span>
+                        Account Type
+                    </span>
+
+                    <strong>
+                        Standard Member
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- REFERRAL INFORMATION -->
+
+        <section class="profile-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="section-tag">
+                        REFERRAL
+                    </span>
+
+                    <h3>
+                        Your referral information
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="referral-box">
+
+                <div>
+
+                    <span>
+                        Referral Code
+                    </span>
+
+                    <strong id="referralCode">
+                        CC-USER
+                    </strong>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="copyReferral">
+
+                    Copy Code
+
+                </button>
+
+            </div>
+
+
+            <p class="helper-text"
+               id="copyMessage">
+
+                Share your referral code through
+                the Crown Cash referral program.
+
+            </p>
+
+        </section>
+
+
+
+        <!-- SECURITY -->
+
+        <section class="profile-card">
+
+            <div class="card-heading">
+
+                <div>
+
+                    <span class="section-tag">
+                        SECURITY
+                    </span>
+
+                    <h3>
+                        Account security
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="security-list">
+
+
+                <div class="security-item">
+
+                    <div>
+
+                        <strong>
+                            Password
+                        </strong>
+
+                        <p>
+                            Keep your password private
+                            and secure.
+                        </p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        id="changePassword">
+
+                        Change Password
+
+                    </button>
+
+                </div>
+
+
+                <div class="security-item">
+
+                    <div>
+
+                        <strong>
+                            Account Protection
+                        </strong>
+
+                        <p>
+                            Never share your login
+                            credentials with another person.
+                        </p>
+
+                    </div>
+
+                    <span class="protected">
+                        Protected
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ACCOUNT INFORMATION -->
+
+        <section class="information-card">
+
+            <div class="information-icon">
+                i
+            </div>
+
+            <div>
+
+                <h3>
+                    Account information
+                </h3>
+
+                <p>
+                    Some profile information may require
+                    verification before it can be changed.
+                </p>
+
+                <p>
+                    Crown Cash will never ask you to share
+                    your password or security credentials.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash. All rights reserved.
+
+    </footer>
+
+
+</div>
+
+
+<script src="profile.js"></script>
+
+</body>
+
+</html>

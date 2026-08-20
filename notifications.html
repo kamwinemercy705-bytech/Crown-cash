@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash notifications">
+
+    <title>Crown Cash | Notifications</title>
+
+    <link rel="stylesheet"
+          href="notifications.css">
+</head>
+
+<body>
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+            <span class="logo-mark">C</span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+        </a>
+
+        <button
+            type="button"
+            class="close-sidebar"
+            id="closeSidebar">
+            ×
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="notifications.html" class="active">
+            <span>♢</span>
+            Notifications
+        </a>
+
+        <a href="settings.html">
+            <span>⚙</span>
+            Settings
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="login.html">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+<div class="main-wrapper">
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+                ☰
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Notifications
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar">
+                U
+            </div>
+
+            <div>
+
+                <strong>
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="content">
+
+
+        <!-- INTRO -->
+
+        <section class="intro">
+
+            <span class="section-tag">
+                NOTIFICATION CENTER
+            </span>
+
+            <h2>
+                Stay informed.
+            </h2>
+
+            <p>
+                Important updates about your Crown Cash
+                account will appear here.
+            </p>
+
+        </section>
+
+
+        <!-- NOTIFICATION CONTROLS -->
+
+        <section class="notification-toolbar">
+
+            <div class="filter-buttons">
+
+                <button
+                    type="button"
+                    class="filter active"
+                    data-filter="all">
+
+                    All
+
+                </button>
+
+                <button
+                    type="button"
+                    class="filter"
+                    data-filter="account">
+
+                    Account
+
+                </button>
+
+                <button
+                    type="button"
+                    class="filter"
+                    data-filter="transaction">
+
+                    Transactions
+
+                </button>
+
+                <button
+                    type="button"
+                    class="filter"
+                    data-filter="referral">
+
+                    Referrals
+
+                </button>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="read-all"
+                id="readAll">
+
+                Mark all as read
+
+            </button>
+
+        </section>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <section class="notification-card">
+
+
+            <article
+                class="notification unread"
+                data-type="account">
+
+                <div class="notification-icon account">
+                    ✓
+                </div>
+
+                <div class="notification-content">
+
+                    <div class="notification-title">
+
+                        <h3>
+                            Welcome to Crown Cash
+                        </h3>
+
+                        <span class="unread-dot"></span>
+
+                    </div>
+
+                    <p>
+                        Your account has been successfully
+                        created. Explore your dashboard to
+                        manage your account.
+                    </p>
+
+                    <small>
+                        Recently
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="notification"
+                data-type="transaction">
+
+                <div class="notification-icon transaction">
+                    ↕
+                </div>
+
+                <div class="notification-content">
+
+                    <div class="notification-title">
+
+                        <h3>
+                            Transaction updates
+                        </h3>
+
+                    </div>
+
+                    <p>
+                        Transaction status updates will be
+                        displayed here when activity occurs.
+                    </p>
+
+                    <small>
+                        System notification
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="notification"
+                data-type="referral">
+
+                <div class="notification-icon referral">
+                    ↗
+                </div>
+
+                <div class="notification-content">
+
+                    <div class="notification-title">
+
+                        <h3>
+                            Referral updates
+                        </h3>
+
+                    </div>
+
+                    <p>
+                        Eligible referral activity and
+                        related updates will appear here.
+                    </p>
+
+                    <small>
+                        System notification
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="notification"
+                data-type="account">
+
+                <div class="notification-icon security">
+                    !
+                </div>
+
+                <div class="notification-content">
+
+                    <div class="notification-title">
+
+                        <h3>
+                            Keep your account secure
+                        </h3>
+
+                    </div>
+
+                    <p>
+                        Never share your password, PIN or
+                        verification codes with anyone.
+                    </p>
+
+                    <small>
+                        Security reminder
+                    </small>
+
+                </div>
+
+            </article>
+
+
+        </section>
+
+
+        <!-- EMPTY STATE -->
+
+        <section
+            class="empty-state"
+            id="emptyState">
+
+            <div class="empty-icon">
+                ✓
+            </div>
+
+            <h3>
+                No notifications found
+            </h3>
+
+            <p>
+                There are no notifications in this category.
+            </p>
+
+        </section>
+
+
+        <!-- NOTICE -->
+
+        <section class="notice">
+
+            <div class="notice-icon">
+                i
+            </div>
+
+            <div>
+
+                <h3>
+                    About notifications
+                </h3>
+
+                <p>
+                    Notifications may include account,
+                    transaction, security and referral
+                    updates. Final transaction status should
+                    always be confirmed from your account
+                    transaction history.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash. All rights reserved.
+
+    </footer>
+
+</div>
+
+
+<script src="notifications.js"></script>
+
+</body>
+</html>

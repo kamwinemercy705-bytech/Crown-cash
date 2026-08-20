@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <meta name="description"
+          content="Crown Cash administrator dashboard">
+
+    <title>Crown Cash | Admin Dashboard</title>
+
+    <link rel="stylesheet"
+          href="admin.css">
+
+</head>
+
+<body>
+
+
+<!-- =========================
+     ADMIN SIDEBAR
+========================== -->
+
+<aside class="admin-sidebar" id="adminSidebar">
+
+    <div class="admin-brand">
+
+        <a href="../index.html" class="logo">
+
+            <span class="logo-mark">
+                C
+            </span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+
+        </a>
+
+        <span class="admin-badge">
+            ADMIN
+        </span>
+
+    </div>
+
+
+    <nav class="admin-nav">
+
+        <a href="dashboard.html"
+           class="active">
+
+            <span>⌂</span>
+            Dashboard
+
+        </a>
+
+        <a href="users.html">
+
+            <span>◎</span>
+            Users
+
+        </a>
+
+        <a href="deposits.html">
+
+            <span>↓</span>
+            Deposits
+
+        </a>
+
+        <a href="withdrawals.html">
+
+            <span>↑</span>
+            Withdrawals
+
+        </a>
+
+        <a href="investments.html">
+
+            <span>◇</span>
+            Investments
+
+        </a>
+
+        <a href="referrals.html">
+
+            <span>↗</span>
+            Referrals
+
+        </a>
+
+        <a href="transactions.html">
+
+            <span>≡</span>
+            Transactions
+
+        </a>
+
+        <a href="support.html">
+
+            <span>?</span>
+            Support
+
+        </a>
+
+        <a href="notifications.html">
+
+            <span>♢</span>
+            Notifications
+
+        </a>
+
+    </nav>
+
+
+    <div class="admin-bottom">
+
+        <a href="settings.html">
+
+            <span>⚙</span>
+            Admin Settings
+
+        </a>
+
+        <a href="../login.html">
+
+            <span>↪</span>
+            Logout
+
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =========================
+     MAIN
+========================== -->
+
+<div class="admin-main">
+
+
+    <!-- TOPBAR -->
+
+    <header class="admin-topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                id="menuButton"
+                class="menu-button">
+
+                ☰
+
+            </button>
+
+            <div>
+
+                <span class="top-label">
+                    CROWN CASH ADMINISTRATION
+                </span>
+
+                <h1>
+                    Admin Dashboard
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-user">
+
+            <div class="admin-avatar">
+                A
+            </div>
+
+            <div>
+
+                <strong>
+                    Administrator
+                </strong>
+
+                <small>
+                    Admin Account
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- CONTENT -->
+
+    <main class="admin-content">
+
+
+        <!-- INTRO -->
+
+        <section class="admin-intro">
+
+            <span class="section-tag">
+                ADMINISTRATION
+            </span>
+
+            <h2>
+                Platform overview
+            </h2>
+
+            <p>
+                Manage Crown Cash users, transactions,
+                requests and platform activity from one
+                central administration area.
+            </p>
+
+        </section>
+
+
+
+        <!-- QUICK ACTIONS -->
+
+        <section class="quick-actions">
+
+            <a href="users.html"
+               class="quick-action">
+
+                <span>◎</span>
+
+                <div>
+
+                    <strong>
+                        Manage Users
+                    </strong>
+
+                    <small>
+                        Accounts and verification
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <a href="deposits.html"
+               class="quick-action">
+
+                <span>↓</span>
+
+                <div>
+
+                    <strong>
+                        Deposits
+                    </strong>
+
+                    <small>
+                        Review deposit requests
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <a href="withdrawals.html"
+               class="quick-action">
+
+                <span>↑</span>
+
+                <div>
+
+                    <strong>
+                        Withdrawals
+                    </strong>
+
+                    <small>
+                        Review withdrawal requests
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <a href="support.html"
+               class="quick-action">
+
+                <span>?</span>
+
+                <div>
+
+                    <strong>
+                        Support
+                    </strong>
+
+                    <small>
+                        Respond to users
+                    </small>
+
+                </div>
+
+            </a>
+
+        </section>
+
+
+
+        <!-- PLATFORM STATUS -->
+
+        <section class="status-card">
+
+            <div>
+
+                <span class="section-tag">
+                    SYSTEM STATUS
+                </span>
+
+                <h3>
+                    Crown Cash platform
+                </h3>
+
+                <p>
+                    Administrative monitoring and system
+                    controls will be connected to the
+                    backend database.
+                </p>
+
+            </div>
+
+
+            <div class="system-status">
+
+                <span></span>
+
+                System Online
+
+            </div>
+
+        </section>
+
+
+
+        <!-- MANAGEMENT GRID -->
+
+        <section class="management-grid">
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ◎
+                </div>
+
+                <span>
+                    USER MANAGEMENT
+                </span>
+
+                <h3>
+                    Users
+                </h3>
+
+                <p>
+                    Review registered accounts, account
+                    status and user information.
+                </p>
+
+                <a href="users.html">
+                    Open Users →
+                </a>
+
+            </article>
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ↓
+                </div>
+
+                <span>
+                    DEPOSIT MANAGEMENT
+                </span>
+
+                <h3>
+                    Deposits
+                </h3>
+
+                <p>
+                    Review submitted deposit requests and
+                    their verification status.
+                </p>
+
+                <a href="deposits.html">
+                    Open Deposits →
+                </a>
+
+            </article>
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ↑
+                </div>
+
+                <span>
+                    WITHDRAWAL MANAGEMENT
+                </span>
+
+                <h3>
+                    Withdrawals
+                </h3>
+
+                <p>
+                    Review and approve or reject withdrawal
+                    requests according to platform policy.
+                </p>
+
+                <a href="withdrawals.html">
+                    Open Withdrawals →
+                </a>
+
+            </article>
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ◇
+                </div>
+
+                <span>
+                    INVESTMENT MANAGEMENT
+                </span>
+
+                <h3>
+                    Investments
+                </h3>
+
+                <p>
+                    Manage investment products, terms and
+                    their availability.
+                </p>
+
+                <a href="investments.html">
+                    Open Investments →
+                </a>
+
+            </article>
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ↗
+                </div>
+
+                <span>
+                    REFERRAL MANAGEMENT
+                </span>
+
+                <h3>
+                    Referrals
+                </h3>
+
+                <p>
+                    Review referral relationships and
+                    eligible referral activity.
+                </p>
+
+                <a href="referrals.html">
+                    Open Referrals →
+                </a>
+
+            </article>
+
+
+            <article class="management-card">
+
+                <div class="management-icon">
+                    ≡
+                </div>
+
+                <span>
+                    TRANSACTION MANAGEMENT
+                </span>
+
+                <h3>
+                    Transactions
+                </h3>
+
+                <p>
+                    Review platform transaction records
+                    and statuses.
+                </p>
+
+                <a href="transactions.html">
+                    Open Transactions →
+                </a>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- SECURITY NOTICE -->
+
+        <section class="admin-notice">
+
+            <div class="notice-icon">
+                !
+            </div>
+
+            <div>
+
+                <h3>
+                    Administrator security
+                </h3>
+
+                <p>
+                    Administrative actions can affect user
+                    accounts and financial records. Every
+                    sensitive action should require proper
+                    authorization and be recorded in an
+                    audit log.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        © <span id="year"></span>
+        Crown Cash Administration.
+
+    </footer>
+
+</div>
+
+
+<script src="admin.js"></script>
+
+</body>
+
+</html>

@@ -1,61 +1,37 @@
-document.addEventListener("DOMContentLoaded", function () {
+async function loadInvestments() {
 
-    const sidebar =
-        document.getElementById("sidebar");
+    try {
 
-    const openSidebar =
-        document.getElementById("openSidebar");
+        const response =
+            await fetch("php/investments.php");
 
-    const closeSidebar =
-        document.getElementById("closeSidebar");
+        const data =
+            await response.json();
 
-
-    if (openSidebar) {
-
-        openSidebar.addEventListener("click", function () {
-
-            sidebar.classList.add("open");
-
-        });
-
-    }
-
-
-    if (closeSidebar) {
-
-        closeSidebar.addEventListener("click", function () {
-
-            sidebar.classList.remove("open");
-
-        });
-
-    }
-
-
-    document.addEventListener("click", function (event) {
-
-        if (
-            window.innerWidth <= 900 &&
-            sidebar.classList.contains("open") &&
-            !sidebar.contains(event.target) &&
-            !openSidebar.contains(event.target)
-        ) {
-
-            sidebar.classList.remove("open");
-
+        if (!data.success) {
+            console.error(data.message);
+            return;
         }
 
-    });
+        console.log(
+            "Investments:",
+            data.investments
+        );
 
+        /*
+         * Connect these results to the
+         * investment cards/table already
+         * present in your investments.html.
+         */
 
-    const year =
-        document.getElementById("year");
+    } catch (error) {
 
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
+        console.error(
+            "Unable to load investments:",
+            error
+        );
 
     }
+}
 
-});
+loadInvestments();

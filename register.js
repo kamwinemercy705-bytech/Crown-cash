@@ -1,19 +1,12 @@
 // =====================================================
 // CROWN CASH — REGISTRATION JAVASCRIPT
-// FRONTEND VALIDATION
+// FRONTEND VALIDATION + BACKEND CONNECTION
 // =====================================================
-
 
 document.addEventListener("DOMContentLoaded", function () {
 
-
-    const form =
-        document.getElementById("registerForm");
-
-
-    const message =
-        document.getElementById("formMessage");
-
+    const form = document.getElementById("registerForm");
+    const message = document.getElementById("formMessage");
 
     /*
      * PASSWORD VISIBILITY
@@ -21,7 +14,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const passwordButtons =
         document.querySelectorAll(".password-toggle");
-
 
     passwordButtons.forEach(function (button) {
 
@@ -33,17 +25,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const input =
                 document.getElementById(targetId);
 
-
             if (input.type === "password") {
 
                 input.type = "text";
-
                 button.textContent = "Hide";
 
             } else {
 
                 input.type = "password";
-
                 button.textContent = "Show";
 
             }
@@ -53,49 +42,41 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-
     /*
      * FORM SUBMISSION
      */
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
-
         clearErrors();
-
 
         const firstName =
             document.getElementById("firstName").value.trim();
 
-
         const lastName =
             document.getElementById("lastName").value.trim();
-
 
         const phone =
             document.getElementById("phone").value.trim();
 
-
         const email =
             document.getElementById("email").value.trim();
-
 
         const password =
             document.getElementById("password").value;
 
-
         const confirmPassword =
             document.getElementById("confirmPassword").value;
 
+        const referralCode =
+            document.getElementById("referralCode").value.trim();
 
         const terms =
             document.getElementById("terms").checked;
 
-
         let valid = true;
-
 
 
         /*
@@ -114,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-
         /*
          * LAST NAME
          */
@@ -131,14 +111,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-
         /*
          * PHONE
          */
 
         const phonePattern =
             /^(?:\+256|0)\d{9}$/;
-
 
         if (!phonePattern.test(phone)) {
 
@@ -152,14 +130,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-
         /*
          * EMAIL
          */
 
         const emailPattern =
             /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 
         if (!emailPattern.test(email)) {
 
@@ -171,7 +147,6 @@ document.addEventListener("DOMContentLoaded", function () {
             valid = false;
 
         }
-
 
 
         /*
@@ -190,7 +165,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-
         /*
          * CONFIRM PASSWORD
          */
@@ -205,7 +179,6 @@ document.addEventListener("DOMContentLoaded", function () {
             valid = false;
 
         }
-
 
 
         /*
@@ -224,35 +197,103 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-
         /*
-         * SUCCESS
+         * STOP IF INVALID
          */
 
-        if (valid) {
+        if (!valid) {
+            return;
+        }
 
-            message.style.color = "#3274e8";
 
-            message.textContent =
-                "Registration details are valid. Backend connection will be added next.";
+        /*
+         * SEND REGISTRATION TO PHP
+         */
+
+        message.style.color = "#3274e8";
+        message.textContent = "Creating your account...";
+
+        const registrationData = {
+
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            email: email,
+            password: password,
+            referralCode: referralCode
+
+        };
+
+
+        try {
+
+            const response = await fetch("register.php", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(registrationData)
+
+            });
+
+
+            const data = await response.json();
+
 
             /*
-             * IMPORTANT:
-             *
-             * We are NOT creating the real account here.
-             *
-             * Later this form will send the data to PHP:
-             *
-             * register.php
-             *
-             * which will safely store the user
-             * inside MySQL.
+             * SUCCESS
              */
+
+            if (response.ok && data.success) {
+
+                message.style.color = "#28a745";
+
+                message.textContent =
+                    "Account created successfully. Redirecting to login...";
+
+                form.reset();
+
+
+                setTimeout(function () {
+
+                    window.location.href = "login.html";
+
+                }, 1500);
+
+                return;
+            }
+
+
+            /*
+             * SERVER ERROR
+             */
+
+            message.style.color = "#dc3545";
+
+            message.textContent =
+                data.message || "Registration failed.";
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Registration error:",
+                error
+            );
+
+            message.style.color = "#dc3545";
+
+            message.textContent =
+                "Unable to connect to the registration server. Please try again.";
 
         }
 
     });
-
 
 
     /*
@@ -273,7 +314,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-
     /*
      * CLEAR ERRORS
      */
@@ -283,18 +323,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const errors =
             document.querySelectorAll(".error-message");
 
-
         errors.forEach(function (error) {
 
             error.textContent = "";
 
         });
 
-
         message.textContent = "";
 
     }
-
 
 
     /*
@@ -303,7 +340,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const year =
         document.getElementById("year");
-
 
     if (year) {
 

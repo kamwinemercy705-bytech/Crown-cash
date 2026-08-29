@@ -2,70 +2,326 @@
 
 /*
 |--------------------------------------------------------------------------
-| Crown Cash - MongoDB Configuration
+| Crown Cash — Registration API
 |--------------------------------------------------------------------------
-| Do NOT put your real MongoDB password or connection string directly
-| in this file. We will use an environment variable on the server.
+| Receives registration data from register.js and saves the new user
+| securely in MongoDB.
 |--------------------------------------------------------------------------
 */
 
+header("Content-Type: application/json; charset=UTF-8");
 
-require_once __DIR__ . '/vendor/autoload.php';
-use MongoDB\Client;
+require_once __DIR__ . "/config.php";
 
 
 /*
-|
-| Get MongoDB connection URI
+|--------------------------------------------------------------------------
+| Only allow POST
 |--------------------------------------------------------------------------
 */
 
-$mongoUri = getenv('MONGODB_URI');
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
-if (!$mongoUri) {
-    die("MongoDB connection is not configured.");
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Connect to MongoDB
-|--------------------------------------------------------------------------
-*/
-
 try {
 
-    $client = new Client($mongoUri);
-
     /*
-    | Crown Cash database
+    |--------------------------------------------------------------------------
+    | Read JSON request
+    |--------------------------------------------------------------------------
     */
 
-    $db = $client->selectDatabase('crown_cash');
+    $rawData =
+        file_get_contents("php://input");
+
+    $data =
+        json_decode($rawData, true);
+
+
+    if (!is_array($data)) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid registration data."
+        ]);
+
+        exit;
+    }
 
 
     /*
-    | Collections
+    |--------------------------------------------------------------------------
+    | Get submitted values
+    |--------------------------------------------------------------------------
     */
 
-    $users = $db->users;
+    $firstName =
+        trim($data["firstName"] ?? "");
 
-    $transactions = $db->transactions;
+    $lastName =
+        trim($data["lastName"] ?? "");
 
-    $deposits = $db->deposits;
+    $phone =
+        trim($data["phone"] ?? "");
 
-    $withdrawals = $db->withdrawals;
+    $email =
+        strtolower(
+            trim($data["email"] ?? "")
+        );
 
-    $investments = $db->investments;
+    $password =
+        $data["password"] ?? "";
 
-    $referrals = $db->referrals;
+    $referralCode =
+        trim($data["referralCode"] ?? "");
 
-    $auditLogs = $db->audit_logs;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Server-side validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (strlen($firstName) < 2) {
+
+        throw new Exception(
+            "Please enter your first name."
+        );
+    }
 
 
-} catch (Exception $e) {
+    if (strlen($lastName) < 2) {
 
-    die("Database connection failed.");
+        throw new Exception(
+            "Please enter your last name."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Uganda phone validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (!preg_match(
+        '/^(?:\+256|0)\d{9}$/',
+        $phone
+    )) {
+
+        throw new Exception(
+            "Enter a valid Uganda phone number."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (!filter_var(
+        $email,
+        FILTER_VALIDATE_EMAIL
+    )) {
+
+        throw new Exception(
+            "Enter a valid email address."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (strlen($password) < 8) {
+
+        throw new Exception(
+            "Password must contain at least 8 characters."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check existing email
+    |--------------------------------------------------------------------------
+    */
+
+    $existingEmail =
+        $users->findOne([
+            "email" => $email
+        ]);
+
+
+    if ($existingEmail) {
+
+        throw new Exception(
+            "An account with this email already exists."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check existing phone
+    |--------------------------------------------------------------------------
+    */
+
+    $existingPhone =
+        $users->findOne([
+            "phone" => $phone
+        ]);
+
+
+    if ($existingPhone) {
+
+        throw new Exception(
+            "An account with this phone number already exists."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate unique referral code
+    |--------------------------------------------------------------------------
+    */
+
+    $userReferralCode =
+        "CC" .
+        strtoupper(
+            bin2hex(
+                random_bytes(4)
+            )
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hash password
+    |--------------------------------------------------------------------------
+    */
+
+    $passwordHash =
+        password_hash(
+            $password,
+            PASSWORD_DEFAULT
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create MongoDB user document
+    |--------------------------------------------------------------------------
+    */
+
+    $user = [
+
+        "firstName" =>
+            $firstName,
+
+        "lastName" =>
+            $lastName,
+
+        "phone" =>
+            $phone,
+
+        "email" =>
+            $email,
+
+        "password" =>
+            $passwordHash,
+
+        "referralCode" =>
+            $userReferralCode,
+
+        "referredBy" =>
+            $referralCode !== ""
+                ? $referralCode
+                : null,
+
+        "balance" =>
+            0,
+
+        "status" =>
+            "active",
+
+        "createdAt" =>
+            new MongoDB\BSON\UTCDateTime()
+
+    ];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Insert user into MongoDB
+    |--------------------------------------------------------------------------
+    */
+
+    $result =
+        $users->insertOne($user);
+
+
+    if ($result->getInsertedCount() !== 1) {
+
+        throw new Exception(
+            "Account could not be created."
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Success response
+    |--------------------------------------------------------------------------
+    */
+
+    echo json_encode([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "Account created successfully.",
+
+        "referralCode" =>
+            $userReferralCode
+
+    ]);
+
+}
+
+
+catch (Exception $e) {
+
+    http_response_code(400);
+
+    echo json_encode([
+
+        "success" =>
+            false,
+
+        "message" =>
+            $e->getMessage()
+
+    ]);
 
 }
 

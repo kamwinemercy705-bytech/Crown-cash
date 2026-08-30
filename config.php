@@ -10,29 +10,56 @@ require_once __DIR__ . "/vendor/autoload.php";
 
 try {
 
-    $uri = getenv("DB_URI");
+    /*
+    |--------------------------------------------------------------------------
+    | Get MongoDB URI from Render environment variables
+    |--------------------------------------------------------------------------
+    */
+
+    $uri = getenv("MONGODB_URI");
 
     if (!$uri) {
-        throw new Exception("DB_URI environment variable is not configured.");
+
+        throw new Exception(
+            "MONGODB_URI environment variable is not configured."
+        );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Connect to MongoDB Atlas
+    |--------------------------------------------------------------------------
+    */
 
     $client = new MongoDB\Client($uri);
 
-    /*
-     * Change "crowncash" only if you want a different database name.
-     */
-    $database = $client->selectDatabase("crowncash");
 
     /*
-     * Users collection
-     */
+    |--------------------------------------------------------------------------
+    | Select Crown Cash database
+    |--------------------------------------------------------------------------
+    */
+
+    $database = $client->selectDatabase("crowncash");
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users collection
+    |--------------------------------------------------------------------------
+    */
+
     $users = $database->users;
+
 
 } catch (Throwable $e) {
 
     http_response_code(500);
 
-    header("Content-Type: application/json; charset=UTF-8");
+    header(
+        "Content-Type: application/json; charset=UTF-8"
+    );
 
     echo json_encode([
         "success" => false,

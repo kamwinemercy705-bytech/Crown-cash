@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
 
-            const response = await fetch("register.php", {
+            const response = await fetch("https://crown-cash1.onrender.com/register.php", { 
 
                 method: "POST",
 

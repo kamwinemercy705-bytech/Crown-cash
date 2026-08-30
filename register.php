@@ -1,22 +1,13 @@
 
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash — Registration API
-|--------------------------------------------------------------------------
-*/
 
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-/*
-|--------------------------------------------------------------------------
-| Handle CORS preflight request
-|--------------------------------------------------------------------------
-*/
+
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 

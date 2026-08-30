@@ -1,4 +1,3 @@
-
 <?php
 
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
@@ -333,4 +332,3 @@ catch (Exception $e) {
 
 }
 
-?>

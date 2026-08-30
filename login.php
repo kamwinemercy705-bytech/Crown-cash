@@ -1,31 +1,118 @@
 <?php
 
-require_once "config.php";
+/*
+|--------------------------------------------------------------------------
+| Crown Cash — Login API
+|--------------------------------------------------------------------------
+*/
 
-session_start();
+header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Content-Type: application/json; charset=UTF-8");
 
+/*
+|--------------------------------------------------------------------------
+| Handle CORS preflight
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(204);
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Load MongoDB configuration
+|--------------------------------------------------------------------------
+*/
+
+require_once __DIR__ . "/config.php";
+
+/*
+|--------------------------------------------------------------------------
+| Only allow POST
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+
     http_response_code(405);
-    exit("Method not allowed.");
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
 }
-
-
-$email = strtolower(trim($_POST["email"] ?? ""));
-$password = $_POST["password"] ?? "";
-
-
-if ($email === "" || $password === "") {
-    exit("Email and password are required.");
-}
-
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    exit("Invalid email address.");
-}
-
 
 try {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Read JSON request
+    |--------------------------------------------------------------------------
+    */
+
+    $rawData = file_get_contents("php://input");
+
+    $data = json_decode($rawData, true);
+
+    if (!is_array($data)) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid login data."
+        ]);
+
+        exit;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get login details
+    |--------------------------------------------------------------------------
+    */
+
+    $email = strtolower(
+        trim($data["email"] ?? "")
+    );
+
+    $password = $data["password"] ?? "";
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate input
+    |--------------------------------------------------------------------------
+    */
+
+    if ($email === "" || $password === "") {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Email and password are required."
+        ]);
+
+        exit;
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid email address."
+        ]);
+
+        exit;
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -37,11 +124,17 @@ try {
         "email" => $email
     ]);
 
-
     if (!$user) {
-        exit("Invalid email or password.");
-    }
 
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid email or password."
+        ]);
+
+        exit;
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -50,9 +143,16 @@ try {
     */
 
     if (($user["status"] ?? "active") !== "active") {
-        exit("This account is not active.");
-    }
 
+        http_response_code(403);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "This account is not active."
+        ]);
+
+        exit;
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -60,27 +160,20 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    if (!password_verify($password, $user["password"])) {
-        exit("Invalid email or password.");
+    if (
+        !isset($user["password"]) ||
+        !password_verify($password, $user["password"])
+    ) {
+
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid email or password."
+        ]);
+
+        exit;
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create secure session
-    |--------------------------------------------------------------------------
-    */
-
-    session_regenerate_id(true);
-
-    $_SESSION["user_id"] =
-        (string) $user["_id"];
-
-    $_SESSION["user_email"] =
-        $user["email"];
-
-    $_SESSION["logged_in"] = true;
-
 
     /*
     |--------------------------------------------------------------------------
@@ -100,22 +193,58 @@ try {
         ]
     );
 
-
     /*
     |--------------------------------------------------------------------------
     | Successful login
     |--------------------------------------------------------------------------
     */
 
-    echo "LOGIN_SUCCESS";
+    echo json_encode([
 
+        "success" => true,
 
-} catch (Exception $e) {
+        "message" => "Login successful.",
+
+        "user" => [
+
+            "id" =>
+                (string) $user["_id"],
+
+            "firstName" =>
+                $user["firstName"] ?? "",
+
+            "lastName" =>
+                $user["lastName"] ?? "",
+
+            "email" =>
+                $user["email"],
+
+            "phone" =>
+                $user["phone"] ?? "",
+
+            "referralCode" =>
+                $user["referralCode"] ?? "",
+
+            "balance" =>
+                $user["balance"] ?? 0
+
+        ]
+
+    ]);
+
+} catch (Throwable $e) {
+
+    error_log(
+        "CROWN CASH LOGIN ERROR: " .
+        $e->getMessage()
+    );
 
     http_response_code(500);
 
-    echo "Login failed.";
-
+    echo json_encode([
+        "success" => false,
+        "message" => "Login failed. Please try again."
+    ]);
 }
 
 ?>

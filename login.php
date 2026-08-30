@@ -9,7 +9,9 @@
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +24,22 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Start session
+|--------------------------------------------------------------------------
+*/
+
+session_set_cookie_params([
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
+session_start();
+
+
 /*
 |--------------------------------------------------------------------------
 | Load MongoDB configuration
@@ -29,6 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 */
 
 require_once __DIR__ . "/config.php";
+
 
 /*
 |--------------------------------------------------------------------------
@@ -48,17 +67,19 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
+
 try {
 
     /*
     |--------------------------------------------------------------------------
-    | Read JSON request
+    | Read JSON
     |--------------------------------------------------------------------------
     */
 
     $rawData = file_get_contents("php://input");
 
     $data = json_decode($rawData, true);
+
 
     if (!is_array($data)) {
 
@@ -72,6 +93,7 @@ try {
         exit;
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Get login details
@@ -84,9 +106,10 @@ try {
 
     $password = $data["password"] ?? "";
 
+
     /*
     |--------------------------------------------------------------------------
-    | Validate input
+    | Validate
     |--------------------------------------------------------------------------
     */
 
@@ -102,6 +125,7 @@ try {
         exit;
     }
 
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
         http_response_code(400);
@@ -114,6 +138,7 @@ try {
         exit;
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Find user
@@ -123,6 +148,7 @@ try {
     $user = $users->findOne([
         "email" => $email
     ]);
+
 
     if (!$user) {
 
@@ -135,6 +161,7 @@ try {
 
         exit;
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -153,6 +180,7 @@ try {
 
         exit;
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -175,6 +203,31 @@ try {
         exit;
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Regenerate session ID
+    |--------------------------------------------------------------------------
+    */
+
+    session_regenerate_id(true);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Store login session
+    |--------------------------------------------------------------------------
+    */
+
+    $_SESSION["logged_in"] = true;
+
+    $_SESSION["user_id"] =
+        (string) $user["_id"];
+
+    $_SESSION["user_email"] =
+        $user["email"];
+
+
     /*
     |--------------------------------------------------------------------------
     | Update last login
@@ -193,9 +246,10 @@ try {
         ]
     );
 
+
     /*
     |--------------------------------------------------------------------------
-    | Successful login
+    | Return safe user information
     |--------------------------------------------------------------------------
     */
 
@@ -227,7 +281,6 @@ try {
 
             "balance" =>
                 $user["balance"] ?? 0
-
         ]
 
     ]);

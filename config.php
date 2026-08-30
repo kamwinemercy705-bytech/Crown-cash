@@ -55,11 +55,14 @@ try {
 
 } catch (Throwable $e) {
 
+    error_log(
+        "CROWN CASH MONGODB ERROR: " .
+        $e->getMessage()
+    );
+
     http_response_code(500);
 
-    header(
-        "Content-Type: application/json; charset=UTF-8"
-    );
+    header("Content-Type: application/json; charset=UTF-8");
 
     echo json_encode([
         "success" => false,

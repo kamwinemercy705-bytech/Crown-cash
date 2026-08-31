@@ -169,15 +169,18 @@
 
             <div class="user-mini">
 
-                <div class="avatar">
-                    U
-                </div>
+                
+                  <div class="avatar" id="userAvatar">
+    U
+</div>  
+              
 
                 <div class="user-mini-info">
 
-                    <strong>
-                        User Account
-                    </strong>
+                    <strong id="userName">
+    User Account
+</strong>no
+                  
 
                     <small>
                         Member
@@ -210,9 +213,11 @@
                     ACCOUNT OVERVIEW
                 </span>
 
-                <h2>
-                    Welcome back.
-                </h2>
+                
+                   <h2>
+    Welcome back, <span id="welcomeName">Member</span>.
+</h2>
+            
 
                 <p>
                     Manage your Crown Cash account
@@ -493,7 +498,12 @@
                     </a>
 
 
-                    <a href="referrals.html">
+     <div class="user-balance">
+    <span>Available Balance</span>
+    <strong id="userBalance">UGX 0</strong>
+</div>
+
+               <a href="referrals.html">
                         <span>↗</span>
                         <div>
                             <strong>
@@ -513,6 +523,10 @@
         </section>
 
 
+<div class="user-referral">
+    <span>Referral Code</span>
+    <strong id="referralCode">Loading...</strong>
+</div>
 
         <!-- =========================
              RECENT ACTIVITY

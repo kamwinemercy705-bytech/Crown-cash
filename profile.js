@@ -1,5 +1,248 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    /* =========================
+       GET SAVED USER
+    ========================= */
+
+    const savedUser =
+        localStorage.getItem("crowncash_user");
+
+    if (!savedUser) {
+
+        window.location.href = "login.html";
+        return;
+
+    }
+
+    let user;
+
+    try {
+
+        user = JSON.parse(savedUser);
+
+    } catch (error) {
+
+        console.error("Invalid user data:", error);
+
+        localStorage.removeItem("crowncash_user");
+
+        window.location.href = "login.html";
+
+        return;
+    }
+
+
+    /* =========================
+       USER INFORMATION
+    ========================= */
+
+    const fullName =
+        document.getElementById("fullName");
+
+    const email =
+        document.getElementById("email");
+
+    const phone =
+        document.getElementById("phone");
+
+    const referralCode =
+        document.getElementById("referralCode");
+
+
+    const firstName =
+        user.firstName || "";
+
+    const lastName =
+        user.lastName || "";
+
+    const completeName =
+        `${firstName} ${lastName}`.trim();
+
+
+    if (fullName) {
+
+        fullName.textContent =
+            completeName || "User Account";
+
+    }
+
+
+    if (email) {
+
+        email.textContent =
+            user.email || "Not available";
+
+    }
+
+
+    if (phone) {
+
+        phone.textContent =
+            user.phone || "Not available";
+
+    }
+
+
+    if (referralCode) {
+
+        referralCode.textContent =
+            user.referralCode || "Not available";
+
+    }
+
+
+    /* =========================
+       UPDATE PROFILE HEADER
+    ========================= */
+
+    const profileIntro =
+        document.querySelector(".profile-intro h2");
+
+    if (profileIntro) {
+
+        profileIntro.textContent =
+            completeName || "User Account";
+
+    }
+
+
+    /* =========================
+       AVATARS
+    ========================= */
+
+    const avatars =
+        document.querySelectorAll(".avatar, .profile-avatar");
+
+    avatars.forEach(function (avatar) {
+
+        if (firstName) {
+
+            avatar.textContent =
+                firstName.charAt(0).toUpperCase();
+
+        }
+
+    });
+
+
+    /* =========================
+       COPY REFERRAL CODE
+    ========================= */
+
+    const copyReferral =
+        document.getElementById("copyReferral");
+
+    const copyMessage =
+        document.getElementById("copyMessage");
+
+
+    if (copyReferral && referralCode) {
+
+        copyReferral.addEventListener(
+            "click",
+            async function () {
+
+                const code =
+                    referralCode.textContent.trim();
+
+                if (
+                    !code ||
+                    code === "Not available"
+                ) {
+
+                    copyMessage.textContent =
+                        "No referral code is available.";
+
+                    return;
+
+                }
+
+
+                try {
+
+                    await navigator.clipboard.writeText(code);
+
+                    copyMessage.textContent =
+                        "Referral code copied successfully.";
+
+                    copyReferral.textContent =
+                        "Copied";
+
+
+                    setTimeout(function () {
+
+                        copyReferral.textContent =
+                            "Copy Code";
+
+                        copyMessage.textContent =
+                            "Share your referral code through the Crown Cash referral program.";
+
+                    }, 2500);
+
+
+                } catch (error) {
+
+                    copyMessage.textContent =
+                        "Unable to copy automatically. Please copy the code manually.";
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       EDIT PROFILE
+    ========================= */
+
+    const editProfile =
+        document.getElementById("editProfile");
+
+    if (editProfile) {
+
+        editProfile.addEventListener(
+            "click",
+            function () {
+
+                alert(
+                    "Profile editing will be added in the next backend step."
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       CHANGE PASSWORD
+    ========================= */
+
+    const changePassword =
+        document.getElementById("changePassword");
+
+    if (changePassword) {
+
+        changePassword.addEventListener(
+            "click",
+            function () {
+
+                alert(
+                    "Password change will be connected to the secure Crown Cash backend."
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
     const sidebar =
         document.getElementById("sidebar");
 
@@ -9,135 +252,89 @@ document.addEventListener("DOMContentLoaded", function () {
     const closeSidebar =
         document.getElementById("closeSidebar");
 
-    const copyReferral =
-        document.getElementById("copyReferral");
-
-    const referralCode =
-        document.getElementById("referralCode");
-
-    const copyMessage =
-        document.getElementById("copyMessage");
-
-    const editProfile =
-        document.getElementById("editProfile");
-
-    const changePassword =
-        document.getElementById("changePassword");
-
-
-    /* SIDEBAR */
 
     if (openSidebar) {
 
-        openSidebar.addEventListener("click", function () {
+        openSidebar.addEventListener(
+            "click",
+            function () {
 
-            sidebar.classList.add("open");
+                sidebar.classList.add("open");
 
-        });
+            }
+        );
 
     }
 
 
     if (closeSidebar) {
 
-        closeSidebar.addEventListener("click", function () {
+        closeSidebar.addEventListener(
+            "click",
+            function () {
 
-            sidebar.classList.remove("open");
+                sidebar.classList.remove("open");
 
-        });
+            }
+        );
 
     }
 
 
-    /* COPY REFERRAL CODE */
+    /* =========================
+       CLOSE MOBILE SIDEBAR
+    ========================= */
 
-    if (copyReferral) {
+    document.addEventListener(
+        "click",
+        function (event) {
 
-        copyReferral.addEventListener("click", async function () {
+            if (
+                window.innerWidth <= 900 &&
+                sidebar &&
+                sidebar.classList.contains("open") &&
+                !sidebar.contains(event.target) &&
+                openSidebar &&
+                !openSidebar.contains(event.target)
+            ) {
 
-            try {
-
-                await navigator.clipboard.writeText(
-                    referralCode.textContent.trim()
-                );
-
-                copyMessage.textContent =
-                    "Referral code copied successfully.";
-
-                copyReferral.textContent =
-                    "Copied";
-
-                setTimeout(function () {
-
-                    copyReferral.textContent =
-                        "Copy Code";
-
-                    copyMessage.textContent =
-                        "Share your referral code through the Crown Cash referral program.";
-
-                }, 2500);
-
-            } catch (error) {
-
-                copyMessage.textContent =
-                    "Unable to copy automatically. Please copy the code manually.";
+                sidebar.classList.remove("open");
 
             }
 
-        });
-
-    }
-
-
-    /* EDIT PROFILE */
-
-    if (editProfile) {
-
-        editProfile.addEventListener("click", function () {
-
-            alert(
-                "Profile editing will be connected to PHP and MySQL in the backend stage."
-            );
-
-        });
-
-    }
-
-
-    /* CHANGE PASSWORD */
-
-    if (changePassword) {
-
-        changePassword.addEventListener("click", function () {
-
-            alert(
-                "Password management will be connected to the secure PHP backend."
-            );
-
-        });
-
-    }
-
-
-    /* MOBILE SIDEBAR */
-
-    document.addEventListener("click", function (event) {
-
-        if (
-            window.innerWidth <= 900 &&
-            sidebar.classList.contains("open") &&
-            !sidebar.contains(event.target) &&
-            !openSidebar.contains(event.target)
-        ) {
-
-            sidebar.classList.remove("open");
-
         }
+    );
+
+
+    /* =========================
+       LOGOUT
+    ========================= */
+
+    const logoutLinks =
+        document.querySelectorAll(
+            'a[href="login.html"]'
+        );
+
+
+    logoutLinks.forEach(function (logoutLink) {
+
+        logoutLink.addEventListener(
+            "click",
+            function () {
+
+                localStorage.removeItem(
+                    "crowncash_user"
+                );
+
+            }
+        );
 
     });
 
 
-    /* YEAR */
+    /* =========================
+       YEAR
+    ========================= */
 
     const year =
         document.getElementById("year");

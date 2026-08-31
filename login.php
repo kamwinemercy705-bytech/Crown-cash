@@ -34,23 +34,10 @@ session_set_cookie_params([
     "httponly" => true,
     "samesite" => "None"
 ]);
+ 
 
 session_start();
 
-
-/*
-|--------------------------------------------------------------------------
-| Start session
-|--------------------------------------------------------------------------
-*/
-
-session_set_cookie_params([
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
-]);
-
-session_start();
 
 
 /*

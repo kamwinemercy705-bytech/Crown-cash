@@ -7,9 +7,9 @@
 */
 
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
 
@@ -20,11 +20,36 @@ header("Content-Type: application/json; charset=UTF-8");
 */
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-
     http_response_code(204);
-
     exit;
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Session configuration
+|--------------------------------------------------------------------------
+*/
+
+session_set_cookie_params([
+    "lifetime" => 0,
+    "path" => "/",
+    "domain" => "",
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
+session_start();
+
+
+/*
+|--------------------------------------------------------------------------
+| Load MongoDB configuration
+|--------------------------------------------------------------------------
+*/
+
+require_once __DIR__ . "/config.php";
 
 
 /*
@@ -46,77 +71,24 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Start session
-|--------------------------------------------------------------------------
-*/
-
-session_start();
-
-
-/*
-|--------------------------------------------------------------------------
-| Check login session
-|--------------------------------------------------------------------------
-*/
-
-if (
-    !isset($_SESSION["logged_in"]) ||
-    $_SESSION["logged_in"] !== true ||
-    !isset($_SESSION["user_id"])
-) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "You are not logged in."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Load MongoDB configuration
-|--------------------------------------------------------------------------
-*/
-
-require_once __DIR__ . "/config.php";
-
-
-/*
-|--------------------------------------------------------------------------
-| Find logged-in user
-|--------------------------------------------------------------------------
-*/
-
 try {
-
-    $userId =
-        $_SESSION["user_id"];
-
 
     /*
     |--------------------------------------------------------------------------
-    | Convert session ID to MongoDB ObjectId
+    | Check login session
     |--------------------------------------------------------------------------
     */
 
-    try {
+    if (
+        empty($_SESSION["logged_in"]) ||
+        empty($_SESSION["user_id"])
+    ) {
 
-        $objectId =
-            new MongoDB\BSON\ObjectId($userId);
-
-    } catch (Throwable $e) {
-
-        http_response_code(400);
+        http_response_code(401);
 
         echo json_encode([
             "success" => false,
-            "message" => "Invalid user ID."
+            "message" => "You are not logged in."
         ]);
 
         exit;
@@ -125,21 +97,25 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Get user from MongoDB
+    | Get user ID from session
     |--------------------------------------------------------------------------
     */
 
-    $user =
-        $users->findOne([
-            "_id" => $objectId
-        ]);
+    $userId = new MongoDB\BSON\ObjectId(
+        $_SESSION["user_id"]
+    );
 
 
     /*
     |--------------------------------------------------------------------------
-    | User not found
+    | Find user
     |--------------------------------------------------------------------------
     */
+
+    $user = $users->findOne([
+        "_id" => $userId
+    ]);
+
 
     if (!$user) {
 
@@ -175,23 +151,21 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Prepare profile data
+    | Prepare full name
     |--------------------------------------------------------------------------
     */
 
-    $firstName =
-        $user["firstName"] ?? "";
+    $firstName = $user["firstName"] ?? "";
+    $lastName  = $user["lastName"] ?? "";
 
-    $lastName =
-        $user["lastName"] ?? "";
-
-    $fullName =
-        trim($firstName . " " . $lastName);
+    $fullName = trim(
+        $firstName . " " . $lastName
+    );
 
 
     /*
     |--------------------------------------------------------------------------
-    | Successful response
+    | Return profile information
     |--------------------------------------------------------------------------
     */
 
@@ -204,14 +178,14 @@ try {
             "id" =>
                 (string) $user["_id"],
 
+            "fullName" =>
+                $fullName,
+
             "firstName" =>
                 $firstName,
 
             "lastName" =>
                 $lastName,
-
-            "fullName" =>
-                $fullName,
 
             "email" =>
                 $user["email"] ?? "",
@@ -226,39 +200,17 @@ try {
                 $user["balance"] ?? 0,
 
             "status" =>
-                $user["status"] ?? "active",
-
-            "accountType" =>
-                $user["accountType"] ?? "Standard",
-
-            "createdAt" =>
-                isset($user["createdAt"])
-                    ? $user["createdAt"]
-                    : null
-
+                $user["status"] ?? "active"
         ]
 
     ]);
 
 } catch (Throwable $e) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Log error privately
-    |--------------------------------------------------------------------------
-    */
-
     error_log(
         "CROWN CASH PROFILE ERROR: " .
         $e->getMessage()
     );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Return safe error
-    |--------------------------------------------------------------------------
-    */
 
     http_response_code(500);
 
@@ -266,7 +218,6 @@ try {
         "success" => false,
         "message" => "Unable to load profile."
     ]);
-
 }
 
 ?>

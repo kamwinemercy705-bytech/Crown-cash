@@ -113,9 +113,11 @@ async function createTestInvestment(
 
     try {
 
-        const response =
-            await fetch(
-                "https://crown-cash1.onrender.com/create-investment.php",
+        
+            const response =
+    await fetch(
+        "https://crown-cash1.onrender.com/investment.php",
+      
                 {
                     method: "POST",
 

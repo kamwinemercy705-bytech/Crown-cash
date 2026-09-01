@@ -23,7 +23,9 @@
 <body>
 
 
-<!-- SIDEBAR -->
+<!-- =========================
+     SIDEBAR
+========================= -->
 
 <aside class="sidebar" id="sidebar">
 
@@ -109,12 +111,16 @@
 
 
 
-<!-- MAIN -->
+<!-- =========================
+     MAIN
+========================= -->
 
 <div class="main-wrapper">
 
 
-    <!-- TOPBAR -->
+    <!-- =========================
+         TOPBAR
+    ========================== -->
 
     <header class="topbar">
 
@@ -168,7 +174,9 @@
 
 
 
-    <!-- CONTENT -->
+    <!-- =========================
+         CONTENT
+    ========================== -->
 
     <main class="content">
 
@@ -216,7 +224,8 @@
                 <p>
                     Investment products may involve risk.
                     Review the terms, fees, duration and
-                    applicable risk information before proceeding.
+                    applicable risk information before
+                    proceeding.
                 </p>
 
             </div>
@@ -225,7 +234,9 @@
 
 
 
-        <!-- INVESTMENT PLANS -->
+        <!-- =========================
+             INVESTMENT PLANS
+        ========================== -->
 
         <section class="plans-section">
 
@@ -245,7 +256,9 @@
             <div class="plans-grid">
 
 
-                <!-- PLAN ONE -->
+                <!-- =========================
+                     STARTER PLAN
+                ========================== -->
 
                 <article class="plan-card">
 
@@ -265,6 +278,7 @@
                     <h4>
                         Starter Plan
                     </h4>
+
 
                     <p class="plan-description">
                         A simple option for users who want
@@ -290,11 +304,11 @@
                         <div>
 
                             <span>
-                                Minimum
+                                Test Amount
                             </span>
 
                             <strong>
-                                Set by platform
+                                UGX 10,000
                             </strong>
 
                         </div>
@@ -315,27 +329,33 @@
                     </div>
 
 
-                    <a
-                        href="login.html"
-                        class="plan-button">
+                    <!-- TEST BUTTON -->
 
-                        View Details
+                    <button
+                        type="button"
+                        class="plan-button"
+                        onclick="createTestInvestment('Starter Plan', 10000)">
+
+                        Test Starter Investment
 
                         <span>→</span>
 
-                    </a>
+                    </button>
 
                 </article>
 
 
 
-                <!-- PLAN TWO -->
+                <!-- =========================
+                     STANDARD PLAN
+                ========================== -->
 
                 <article class="plan-card featured">
 
                     <div class="featured-label">
                         FEATURED
                     </div>
+
 
                     <div class="plan-top">
 
@@ -353,6 +373,7 @@
                     <h4>
                         Standard Plan
                     </h4>
+
 
                     <p class="plan-description">
                         Designed for users looking for a
@@ -378,11 +399,11 @@
                         <div>
 
                             <span>
-                                Minimum
+                                Test Amount
                             </span>
 
                             <strong>
-                                Set by platform
+                                UGX 10,000
                             </strong>
 
                         </div>
@@ -403,21 +424,26 @@
                     </div>
 
 
-                    <a
-                        href="login.html"
-                        class="plan-button">
+                    <!-- TEST BUTTON -->
 
-                        View Details
+                    <button
+                        type="button"
+                        class="plan-button"
+                        onclick="createTestInvestment('Standard Plan', 10000)">
+
+                        Test Standard Investment
 
                         <span>→</span>
 
-                    </a>
+                    </button>
 
                 </article>
 
 
 
-                <!-- PLAN THREE -->
+                <!-- =========================
+                     ADVANCED PLAN
+                ========================== -->
 
                 <article class="plan-card">
 
@@ -437,6 +463,7 @@
                     <h4>
                         Advanced Plan
                     </h4>
+
 
                     <p class="plan-description">
                         An advanced investment option with
@@ -462,11 +489,11 @@
                         <div>
 
                             <span>
-                                Minimum
+                                Test Amount
                             </span>
 
                             <strong>
-                                Set by platform
+                                UGX 10,000
                             </strong>
 
                         </div>
@@ -487,15 +514,18 @@
                     </div>
 
 
-                    <a
-                        href="login.html"
-                        class="plan-button">
+                    <!-- TEST BUTTON -->
 
-                        View Details
+                    <button
+                        type="button"
+                        class="plan-button"
+                        onclick="createTestInvestment('Advanced Plan', 10000)">
+
+                        Test Advanced Investment
 
                         <span>→</span>
 
-                    </a>
+                    </button>
 
                 </article>
 
@@ -506,7 +536,9 @@
 
 
 
-        <!-- HOW IT WORKS -->
+        <!-- =========================
+             HOW IT WORKS
+        ========================== -->
 
         <section class="how-section">
 
@@ -620,7 +652,9 @@
 
 
 
-        <!-- RISK -->
+        <!-- =========================
+             RISK
+        ========================== -->
 
         <section class="risk-card">
 
@@ -651,13 +685,17 @@
 
 
 
-    <!-- FOOTER -->
+    <!-- =========================
+         FOOTER
+    ========================== -->
 
     <footer>
 
         <p>
+
             © <span id="year"></span>
             Crown Cash. All rights reserved.
+
         </p>
 
     </footer>
@@ -665,6 +703,11 @@
 
 </div>
 
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
 
 <script src="investments.js"></script>
 

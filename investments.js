@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("closeSidebar");
 
 
-    if (openSidebar) {
+    if (openSidebar && sidebar) {
 
         openSidebar.addEventListener(
             "click",
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    if (closeSidebar) {
+    if (closeSidebar && sidebar) {
 
         closeSidebar.addEventListener(
             "click",
@@ -40,6 +40,31 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
     }
+
+
+    /* =========================
+       MOBILE SIDEBAR
+    ========================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                window.innerWidth <= 900 &&
+                sidebar &&
+                sidebar.classList.contains("open") &&
+                !sidebar.contains(event.target) &&
+                openSidebar &&
+                !openSidebar.contains(event.target)
+            ) {
+
+                sidebar.classList.remove("open");
+
+            }
+
+        }
+    );
 
 
     /* =========================
@@ -56,121 +81,77 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
-
-    /* =========================
-       LOAD INVESTMENTS
-    ========================= */
-
-    loadInvestments();
-
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| LOAD USER INVESTMENTS
-|--------------------------------------------------------------------------
-*/
-
-async function loadInvestments() {
-
-    try {
-
-        const response = await fetch(
-            "https://crown-cash1.onrender.com/investments.php",
-            {
-                method: "GET",
-                credentials: "include"
-            }
-        );
-
-
-        const data =
-            await response.json();
-
-
-        if (!data.success) {
-
-            console.error(
-                data.message
-            );
-
-            return;
-        }
-
-
-        console.log(
-            "User investments:",
-            data.investments
-        );
-
-
-        /*
-         * For now we display the results
-         * in the browser console.
-         *
-         * We will connect them to a
-         * My Investments page next.
-         */
-
-    } catch (error) {
-
-        console.error(
-            "Unable to load investments:",
-            error
-        );
-
-    }
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CREATE TEST INVESTMENT
-|--------------------------------------------------------------------------
-*/
+/* =========================
+   CREATE TEST INVESTMENT
+========================= */
 
 async function createTestInvestment(
     plan,
     amount
 ) {
 
+    const confirmed =
+        confirm(
+            "Create a test investment?\n\n" +
+            "Plan: " + plan + "\n" +
+            "Amount: UGX " +
+            Number(amount).toLocaleString() +
+            "\n\n" +
+            "This is a testing transaction only."
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
     try {
 
-        const response = await fetch(
-            "https://crown-cash1.onrender.com/investments.php",
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                "https://crown-cash1.onrender.com/create-investment.php",
+                {
+                    method: "POST",
 
-                credentials: "include",
+                    credentials: "include",
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
+                    body: JSON.stringify({
 
-                    plan: plan,
+                        plan: plan,
 
-                    amount: amount
+                        amount: amount
 
-                })
-
-            }
-        );
+                    })
+                }
+            );
 
 
         const data =
             await response.json();
 
 
-        if (!data.success) {
+        console.log(
+            "Investment response:",
+            data
+        );
+
+
+        if (!response.ok || !data.success) {
 
             alert(
                 data.message ||
-                "Unable to create test investment."
+                "Investment could not be created."
             );
 
             return;
@@ -179,32 +160,42 @@ async function createTestInvestment(
 
 
         alert(
-            "Test investment created successfully."
-        );
-
-
-        console.log(
-            "Test investment:",
-            data.investment
+            "Test investment created successfully!\n\n" +
+            "Plan: " +
+            data.investment.plan +
+            "\n" +
+            "Amount: UGX " +
+            Number(
+                data.investment.amount
+            ).toLocaleString() +
+            "\n" +
+            "Status: " +
+            data.investment.status
         );
 
 
         /*
-         * Reload investments after creation.
+         * Go to My Investments after success.
+         *
+         * Change this filename if your page
+         * uses a different name.
          */
 
-        loadInvestments();
+        window.location.href =
+            "my-investments.html";
 
 
     } catch (error) {
 
         console.error(
-            "Investment error:",
+            "Create investment error:",
             error
         );
 
+
         alert(
-            "Unable to connect to Crown Cash server."
+            "Unable to connect to Crown Cash server. " +
+            "Please try again."
         );
 
     }

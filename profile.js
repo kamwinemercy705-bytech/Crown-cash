@@ -1,32 +1,42 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     /* =========================
-       GET SAVED USER
+       LOAD USER PROFILE
     ========================= */
-
-    const savedUser =
-        localStorage.getItem("crowncash_user");
-
-    if (!savedUser) {
-
-        window.location.href = "login.html";
-        return;
-
-    }
 
     let user;
 
     try {
 
-        user = JSON.parse(savedUser);
+        const response = await fetch(
+            "https://crown-cash1.onrender.com/profile.php",
+            {
+                method: "GET",
+                credentials: "include"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.success) {
+
+            window.location.href = "login.html";
+            return;
+
+        }
+
+        user = data.user;
 
     } catch (error) {
 
-        console.error("Invalid user data:", error);
+        console.error(
+            "Profile loading error:",
+            error
+        );
 
-        localStorage.removeItem("crowncash_user");
-
-        window.location.href = "login.html";
+        alert(
+            "Unable to load your profile. Please try again."
+        );
 
         return;
     }
@@ -52,11 +62,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const firstName =
         user.firstName || "";
 
-    const lastName =
-        user.lastName || "";
-
     const completeName =
-        `${firstName} ${lastName}`.trim();
+        user.fullName ||
+        `${firstName} ${user.lastName || ""}`.trim();
 
 
     if (fullName) {
@@ -92,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =========================
-       UPDATE PROFILE HEADER
+       PROFILE HEADER
     ========================= */
 
     const profileIntro =
@@ -111,7 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ========================= */
 
     const avatars =
-        document.querySelectorAll(".avatar, .profile-avatar");
+        document.querySelectorAll(
+            ".avatar, .profile-avatar"
+        );
 
     avatars.forEach(function (avatar) {
 
@@ -157,10 +167,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 }
 
-
                 try {
 
-                    await navigator.clipboard.writeText(code);
+                    await navigator.clipboard.writeText(
+                        code
+                    );
 
                     copyMessage.textContent =
                         "Referral code copied successfully.";

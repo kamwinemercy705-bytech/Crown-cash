@@ -2,13 +2,13 @@
 
 /*
 |--------------------------------------------------------------------------
-| Crown Cash — Investment API
-| Test/demo investment creation and listing
+| Crown Cash — User Investments API
+| Lists investments belonging to the logged-in user
 |--------------------------------------------------------------------------
 */
 
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
@@ -46,11 +46,30 @@ session_start();
 
 /*
 |--------------------------------------------------------------------------
-| Load configuration
+| Load MongoDB configuration
 |--------------------------------------------------------------------------
 */
 
 require_once __DIR__ . "/config.php";
+
+
+/*
+|--------------------------------------------------------------------------
+| Only GET
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
+}
 
 
 /*
@@ -79,7 +98,7 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Logged-in user
+    | Convert session user ID
     |--------------------------------------------------------------------------
     */
 
@@ -90,258 +109,102 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | GET — List user's investments
+    | Find user's investments
     |--------------------------------------------------------------------------
     */
 
-    if ($_SERVER["REQUEST_METHOD"] === "GET") {
-
-        $cursor = $investments->find(
-            [
-                "user_id" => $userId
+    $cursor = $investments->find(
+        [
+            "user_id" => $userId
+        ],
+        [
+            "sort" => [
+                "created_at" => -1
             ],
-            [
-                "sort" => [
-                    "created_at" => -1
-                ],
-                "limit" => 100
-            ]
-        );
-
-        $investmentList = [];
+            "limit" => 100
+        ]
+    );
 
 
-        foreach ($cursor as $investment) {
-
-            $investmentList[] = [
-
-                "id" =>
-                    (string) $investment["_id"],
-
-                "plan" =>
-                    $investment["plan"] ?? "Test Plan",
-
-                "amount" =>
-                    (float) ($investment["amount"] ?? 0),
-
-                "duration" =>
-                    $investment["duration"] ?? 30,
-
-                "status" =>
-                    $investment["status"] ?? "pending",
-
-                "created_at" =>
-                    isset($investment["created_at"])
-                        ? $investment["created_at"]
-                            ->toDateTime()
-                            ->format("Y-m-d H:i:s")
-                        : null
-            ];
-        }
-
-
-        echo json_encode([
-
-            "success" => true,
-
-            "investments" =>
-                $investmentList
-
-        ]);
-
-        exit;
-    }
+    $investmentList = [];
 
 
     /*
     |--------------------------------------------------------------------------
-    | POST — Create TEST investment
+    | Build response
     |--------------------------------------------------------------------------
     */
 
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    foreach ($cursor as $investment) {
 
-        $rawData =
-            file_get_contents("php://input");
+        $investmentList[] = [
 
-        $data =
-            json_decode($rawData, true);
-
-
-        if (!is_array($data)) {
-
-            http_response_code(400);
-
-            echo json_encode([
-                "success" => false,
-                "message" => "Invalid investment data."
-            ]);
-
-            exit;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get test investment details
-        |--------------------------------------------------------------------------
-        */
-
-        $plan =
-            trim($data["plan"] ?? "");
-
-        $amount =
-            (float) ($data["amount"] ?? 0);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validate plan
-        |--------------------------------------------------------------------------
-        */
-
-        $allowedPlans = [
-            "Starter Plan",
-            "Standard Plan",
-            "Advanced Plan"
-        ];
-
-
-        if (!in_array($plan, $allowedPlans, true)) {
-
-            http_response_code(400);
-
-            echo json_encode([
-                "success" => false,
-                "message" => "Invalid investment plan."
-            ]);
-
-            exit;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validate amount
-        |--------------------------------------------------------------------------
-        */
-
-        if ($amount <= 0) {
-
-            http_response_code(400);
-
-            echo json_encode([
-                "success" => false,
-                "message" => "Enter a valid test amount."
-            ]);
-
-            exit;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create test investment
-        |--------------------------------------------------------------------------
-        */
-
-        $investment = [
-
-            "user_id" =>
-                $userId,
+            "id" =>
+                (string) $investment["_id"],
 
             "plan" =>
-                $plan,
+                $investment["plan"] ?? "Unknown Plan",
 
             "amount" =>
-                $amount,
+                (float) ($investment["amount"] ?? 0),
 
-            "duration" =>
-                30,
+            "currency" =>
+                $investment["currency"] ?? "UGX",
+
+            "duration_days" =>
+                (int) (
+                    $investment["duration_days"]
+                    ?? $investment["duration"]
+                    ?? 30
+                ),
 
             "status" =>
-                "test",
+                $investment["status"] ?? "unknown",
 
             "type" =>
-                "demo",
+                $investment["type"] ?? "test",
 
             "created_at" =>
-                new MongoDB\BSON\UTCDateTime(),
-
-            "updated_at" =>
-                new MongoDB\BSON\UTCDateTime()
-
+                isset($investment["created_at"])
+                    ? $investment["created_at"]
+                        ->toDateTime()
+                        ->format("Y-m-d H:i:s")
+                    : null
         ];
-
-
-        $result =
-            $investments->insertOne($investment);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Successful response
-        |--------------------------------------------------------------------------
-        */
-
-        echo json_encode([
-
-            "success" => true,
-
-            "message" =>
-                "Test investment created successfully.",
-
-            "investment" => [
-
-                "id" =>
-                    (string) $result->getInsertedId(),
-
-                "plan" =>
-                    $plan,
-
-                "amount" =>
-                    $amount,
-
-                "duration" =>
-                    30,
-
-                "status" =>
-                    "test"
-
-            ]
-
-        ]);
-
-        exit;
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Unsupported method
+    | Return investments
     |--------------------------------------------------------------------------
     */
 
-    http_response_code(405);
-
     echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
-    ]);
 
+        "success" => true,
+
+        "investments" =>
+            $investmentList
+
+    ]);
 
 } catch (Throwable $e) {
 
     error_log(
-        "CROWN CASH INVESTMENT ERROR: " .
+        "CROWN CASH INVESTMENTS ERROR: " .
         $e->getMessage()
     );
 
     http_response_code(500);
 
     echo json_encode([
+
         "success" => false,
-        "message" => "Investment request failed."
+
+        "message" =>
+            "Unable to load investments."
+
     ]);
 }
 

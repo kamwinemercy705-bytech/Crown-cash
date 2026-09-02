@@ -1,9 +1,35 @@
 <?php
 
-require_once "auth.php";
-require_once "config.php";
+/*
+|--------------------------------------------------------------------------
+| Crown Cash — Create Investment API
+| TEST VERSION
+|--------------------------------------------------------------------------
+*/
 
-header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(204);
+    exit;
+}
+
+session_set_cookie_params([
+    "lifetime" => 0,
+    "path" => "/",
+    "domain" => "",
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
+session_start();
+
+require_once __DIR__ . "/config.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
@@ -16,17 +42,21 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-$amount = filter_input(
-    INPUT_POST,
-    "amount",
-    FILTER_VALIDATE_FLOAT
-);
+/*
+|--------------------------------------------------------------------------
+| Check login
+|--------------------------------------------------------------------------
+*/
 
-if ($amount === false || $amount <= 0) {
+if (
+    empty($_SESSION["logged_in"]) ||
+    empty($_SESSION["user_id"])
+) {
+    http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" => "Enter a valid investment amount."
+        "message" => "Please login first."
     ]);
 
     exit;
@@ -34,13 +64,112 @@ if ($amount === false || $amount <= 0) {
 
 try {
 
-    $userId = new MongoDB\BSON\ObjectId(
-        $_SESSION["user_id"]
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Read JSON sent by investments.js
+    |--------------------------------------------------------------------------
+    */
+
+    $rawData = file_get_contents("php://input");
+
+    $data = json_decode($rawData, true);
+
+    if (!is_array($data)) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid investment data."
+        ]);
+
+        exit;
+    }
+
 
     /*
     |--------------------------------------------------------------------------
-    | Find the logged-in user
+    | Get plan and amount
+    |--------------------------------------------------------------------------
+    */
+
+    $plan = trim($data["plan"] ?? "");
+
+    $amount = (float)($data["amount"] ?? 0);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate plan
+    |--------------------------------------------------------------------------
+    */
+
+    $allowedPlans = [
+        "Starter Plan",
+        "Standard Plan",
+        "Advanced Plan"
+    ];
+
+    if (!in_array($plan, $allowedPlans, true)) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid investment plan."
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEST AMOUNT
+    |--------------------------------------------------------------------------
+    */
+
+    if ($amount !== 10000.0) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "For testing, use exactly UGX 10,000."
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Convert session user ID
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+
+        $userId = new MongoDB\BSON\ObjectId(
+            $_SESSION["user_id"]
+        );
+
+    } catch (Throwable $e) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid user session."
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Find user
     |--------------------------------------------------------------------------
     */
 
@@ -50,6 +179,8 @@ try {
 
     if (!$user) {
 
+        http_response_code(404);
+
         echo json_encode([
             "success" => false,
             "message" => "User not found."
@@ -58,109 +189,95 @@ try {
         exit;
     }
 
-    $balance = (float)($user["balance"] ?? 0);
-
 
     /*
     |--------------------------------------------------------------------------
-    | Check available balance
+    | TEST INVESTMENT
     |--------------------------------------------------------------------------
-    */
-
-    if ($balance < $amount) {
-
-        echo json_encode([
-            "success" => false,
-            "message" => "Insufficient available balance."
-        ]);
-
-        exit;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create investment
-    |--------------------------------------------------------------------------
+    |
+    | We do NOT deduct the user's balance during this test.
+    |
     */
 
     $investment = [
 
         "user_id" => $userId,
 
+        "plan" => $plan,
+
         "amount" => $amount,
+
+        "currency" => "UGX",
 
         "status" => "active",
 
+        "type" => "test",
+
+        "duration_days" => 30,
+
         "created_at" =>
+            new MongoDB\BSON\UTCDateTime(),
+
+        "updated_at" =>
             new MongoDB\BSON\UTCDateTime()
 
     ];
 
-    $investmentResult =
-        $investments->insertOne($investment);
-
 
     /*
     |--------------------------------------------------------------------------
-    | Deduct investment amount
+    | Save investment
     |--------------------------------------------------------------------------
     */
 
-    $users->updateOne(
-        [
-            "_id" => $userId,
-
-            "balance" => [
-                '$gte' => $amount
-            ]
-        ],
-        [
-            '$inc' => [
-                "balance" => -$amount
-            ]
-        ]
+    $result = $investments->insertOne(
+        $investment
     );
 
 
     /*
     |--------------------------------------------------------------------------
-    | Create transaction record
+    | Response
     |--------------------------------------------------------------------------
     */
-
-    $transactions->insertOne([
-
-        "user_id" => $userId,
-
-        "type" => "investment",
-
-        "amount" => $amount,
-
-        "investment_id" =>
-            $investmentResult->getInsertedId(),
-
-        "status" => "completed",
-
-        "created_at" =>
-            new MongoDB\BSON\UTCDateTime()
-
-    ]);
-
 
     echo json_encode([
 
         "success" => true,
 
         "message" =>
-            "Investment created successfully.",
+            "Test investment created successfully.",
 
-        "investment_id" =>
-            (string)$investmentResult->getInsertedId()
+        "investment" => [
+
+            "id" =>
+                (string)$result->getInsertedId(),
+
+            "plan" =>
+                $plan,
+
+            "amount" =>
+                $amount,
+
+            "currency" =>
+                "UGX",
+
+            "status" =>
+                "active",
+
+            "duration_days" =>
+                30
+
+        ]
 
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+
+    error_log(
+        "CROWN CASH CREATE INVESTMENT ERROR: " .
+        $e->getMessage()
+    );
 
     http_response_code(500);
 
@@ -172,7 +289,6 @@ try {
             "Unable to create investment."
 
     ]);
-
 }
 
 ?>

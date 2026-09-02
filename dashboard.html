@@ -87,6 +87,76 @@
     </div>
 
 
+<section class="investment-preview">
+    <div class="preview-header">
+        <h2>Investment Calculator</h2>
+        <p>See your estimated daily return before investing.</p>
+    </div>
+
+    <div class="calculator-box">
+
+        <label for="investmentAmount">
+            Enter Investment Amount
+        </label>
+
+        <div class="amount-input">
+            <span>UGX</span>
+            <input
+                type="number"
+                id="investmentAmount"
+                placeholder="10000"
+                min="0"
+                step="1000"
+            >
+        </div>
+
+        <div class="return-rate">
+            <span>Daily Return Rate</span>
+            <strong>10%</strong>
+        </div>
+
+        <div class="projection-results">
+
+            <div class="projection-card">
+                <span>Investment</span>
+                <strong id="previewInvestment">
+                    UGX 0
+                </strong>
+            </div>
+
+            <div class="projection-card">
+                <span>Estimated Daily Return</span>
+                <strong id="dailyReturn">
+                    UGX 0
+                </strong>
+            </div>
+
+            <div class="projection-card">
+                <span>Estimated 30-Day Return</span>
+                <strong id="monthlyReturn">
+                    UGX 0
+                </strong>
+            </div>
+
+            <div class="projection-card">
+                <span>Estimated Total After 30 Days</span>
+                <strong id="totalAfter30">
+                    UGX 0
+                </strong>
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            class="invest-button"
+            onclick="goToInvestment()"
+        >
+            Continue to Investment
+        </button>
+
+    </div>
+</section>
 
     <nav class="sidebar-nav">
 

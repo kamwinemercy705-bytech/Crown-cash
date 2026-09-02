@@ -9,24 +9,29 @@
 
 :root {
 
-    --navy: #07111f;
-    --navy-two: #0c1a2b;
+    --navy: #08050c;
+    --navy-two: #100914;
 
-    --gold: #d8b36a;
-    --gold-light: #f0d69b;
+    --gold: #d8b33f;
+    --gold-light: #f4d875;
 
-    --blue: #3274e8;
+    --purple: #d000ff;
+    --purple-light: #e34aff;
+
+    --blue: #d000ff;
 
     --white: #ffffff;
 
-    --text: #172033;
-    --muted: #6d7788;
+    --text: #f7f4fa;
+    --muted: #9b94a3;
 
-    --light: #f7f9fc;
+    --light: #0d0911;
 
-    --border: #e6eaf0;
+    --border: rgba(208,0,255,.22);
 
 }
+ 
+
 
 
 /* =====================================================
@@ -719,16 +724,42 @@ button {
 
     place-items: center;
 
-    width: 35px;
-    height: 35px;
+    width: 40px;
+    height: 40px;
 
-    border-radius: 10px;
+    flex-shrink: 0;
 
-    color: var(--gold);
+    border-radius: 12px;
+
+    color: #d000ff;
 
     background:
-        rgba(216,179,106,.1);
+        rgba(208,0,255,.12);
 
+    border:
+        1px solid
+        rgba(208,0,255,.35);
+
+    box-shadow:
+        0 0 20px
+        rgba(208,0,255,.12);
+}
+
+
+.floating-icon svg {
+
+    width: 21px;
+    height: 21px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.8;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
 }
 
 

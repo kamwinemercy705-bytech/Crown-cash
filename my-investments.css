@@ -1,0 +1,610 @@
+/* =========================================================
+   CROWN CASH — MY INVESTMENTS
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f6f8;
+    color: #111827;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background: #07111f;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-top {
+    height: 90px;
+    padding: 0 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.logo-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #c8a24a;
+    color: #07111f;
+    font-weight: 800;
+}
+
+.gold {
+    color: #c8a24a;
+}
+
+.close-sidebar {
+    display: none;
+    border: 0;
+    background: transparent;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   SIDEBAR NAV
+========================================================= */
+
+.sidebar-nav {
+    padding: 22px 14px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-nav a,
+.sidebar-bottom a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 15px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    color: #b9c2cf;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.sidebar-nav a span,
+.sidebar-bottom a span {
+    width: 22px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.sidebar-nav a:hover,
+.sidebar-bottom a:hover,
+.sidebar-nav a.active {
+    background: rgba(200,162,74,0.14);
+    color: #ffffff;
+}
+
+.sidebar-nav a.active {
+    border-left: 3px solid #c8a24a;
+}
+
+.sidebar-bottom {
+    padding: 14px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main-wrapper {
+    margin-left: 250px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+.topbar {
+    min-height: 90px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 35px;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.topbar-label {
+    display: block;
+    color: #8b6b21;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+
+.topbar h1 {
+    font-size: 25px;
+}
+
+.menu-button {
+    display: none;
+    border: 0;
+    background: transparent;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+.user-mini {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.user-mini strong {
+    display: block;
+    font-size: 14px;
+}
+
+.user-mini small {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #07111f;
+    color: #c8a24a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 35px;
+    flex: 1;
+}
+
+
+/* =========================================================
+   INTRO
+========================================================= */
+
+.intro {
+    margin-bottom: 30px;
+}
+
+.section-tag {
+    color: #8b6b21;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.intro h2 {
+    margin-top: 8px;
+    font-size: 32px;
+}
+
+.intro p {
+    max-width: 700px;
+    margin-top: 12px;
+    line-height: 1.7;
+    color: #667085;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+    padding: 24px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+}
+
+.summary-card span {
+    display: block;
+    color: #667085;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.summary-card strong {
+    font-size: 25px;
+}
+
+
+/* =========================================================
+   SECTION HEADING
+========================================================= */
+
+.section-heading {
+    margin-bottom: 20px;
+}
+
+.section-heading h3 {
+    font-size: 25px;
+    margin-top: 7px;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+    padding: 50px 20px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.loader {
+    width: 35px;
+    height: 35px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #c8a24a;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+.loading-card p {
+    color: #667085;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   INVESTMENT LIST
+========================================================= */
+
+.investments-section {
+    margin-bottom: 35px;
+}
+
+.investment-list {
+    display: grid;
+    gap: 18px;
+}
+
+.investment-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+}
+
+.investment-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.investment-plan {
+    color: #8b6b21;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.investment-card h4 {
+    font-size: 22px;
+    margin-top: 7px;
+}
+
+.status {
+    padding: 7px 12px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: #e8f7ee;
+    color: #16834a;
+}
+
+.status-pending {
+    background: #fff6dc;
+    color: #8b6b21;
+}
+
+.status-completed {
+    background: #e8eef8;
+    color: #34527d;
+}
+
+.status-default {
+    background: #f0f1f3;
+    color: #555b66;
+}
+
+.investment-details {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.detail {
+    padding: 15px;
+    background: #f8f9fb;
+    border-radius: 10px;
+}
+
+.detail span {
+    display: block;
+    color: #667085;
+    font-size: 11px;
+    margin-bottom: 7px;
+}
+
+.detail strong {
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   MESSAGE CARDS
+========================================================= */
+
+.message-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+    padding: 25px;
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.message-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    background: #f2ead5;
+    color: #8b6b21;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.message-card h3 {
+    margin-bottom: 8px;
+}
+
+.message-card p {
+    color: #667085;
+    line-height: 1.6;
+}
+
+.retry-button,
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    border: 0;
+    background: #07111f;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.primary-button span {
+    color: #c8a24a;
+}
+
+
+/* =========================================================
+   INFORMATION
+========================================================= */
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #fffaf0;
+    border: 1px solid #eadbb6;
+    border-radius: 15px;
+    padding: 23px;
+}
+
+.info-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 50%;
+    background: #c8a24a;
+    color: #07111f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.info-card h3 {
+    margin-bottom: 7px;
+}
+
+.info-card p {
+    color: #667085;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {
+    padding: 25px 35px;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+}
+
+footer p {
+    color: #667085;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .close-sidebar {
+        display: block;
+    }
+
+    .main-wrapper {
+        margin-left: 0;
+    }
+
+    .menu-button {
+        display: block;
+    }
+
+    .topbar {
+        padding: 15px 20px;
+    }
+
+    .content {
+        padding: 30px 20px;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .investment-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .topbar h1 {
+        font-size: 21px;
+    }
+
+    .user-mini {
+        display: none;
+    }
+
+    .intro h2 {
+        font-size: 26px;
+    }
+
+    .investment-top {
+        flex-direction: column;
+    }
+
+    .investment-details {
+        grid-template-columns: 1fr;
+    }
+
+    .message-card,
+    .info-card {
+        flex-direction: column;
+    }
+
+}

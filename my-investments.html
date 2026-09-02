@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="View and manage your Crown Cash investments.">
+
+    <meta name="theme-color"
+          content="#07111f">
+
+    <title>Crown Cash | My Investments</title>
+
+    <link rel="stylesheet" href="my-investments.css">
+
+</head>
+
+<body>
+
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-top">
+
+        <a href="index.html" class="logo">
+
+            <span class="logo-mark">C</span>
+
+            <span>
+                Crown<span class="gold">Cash</span>
+            </span>
+
+        </a>
+
+        <button
+            type="button"
+            id="closeSidebar"
+            class="close-sidebar">
+
+            ×
+
+        </button>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a href="dashboard.html">
+            <span>⌂</span>
+            Dashboard
+        </a>
+
+        <a href="profile.html">
+            <span>◎</span>
+            My Profile
+        </a>
+
+        <a href="investments.html">
+            <span>◇</span>
+            Investments
+        </a>
+
+        <a href="my-investments.html" class="active">
+            <span>◆</span>
+            My Investments
+        </a>
+
+        <a href="deposits.html">
+            <span>↓</span>
+            Deposits
+        </a>
+
+        <a href="withdrawals.html">
+            <span>↑</span>
+            Withdrawals
+        </a>
+
+        <a href="referrals.html">
+            <span>↗</span>
+            Referrals
+        </a>
+
+        <a href="transactions.html">
+            <span>≡</span>
+            Transactions
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <a href="support.html">
+            <span>?</span>
+            Support
+        </a>
+
+        <a href="login.html" id="logoutLink">
+            <span>↪</span>
+            Logout
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =========================================================
+     MAIN WRAPPER
+========================================================= -->
+
+<div class="main-wrapper">
+
+
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="openSidebar">
+
+                ☰
+
+            </button>
+
+            <div>
+
+                <span class="topbar-label">
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    My Investments
+                </h1>
+
+            </div>
+
+        </div>
+
+
+        <div class="user-mini">
+
+            <div class="avatar" id="userAvatar">
+                U
+            </div>
+
+            <div>
+
+                <strong id="userName">
+                    User Account
+                </strong>
+
+                <small>
+                    Member
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         CONTENT
+    ====================================================== -->
+
+    <main class="content">
+
+
+        <!-- INTRO -->
+
+        <section class="intro">
+
+            <div>
+
+                <span class="section-tag">
+                    PORTFOLIO
+                </span>
+
+                <h2>
+                    Track your investments.
+                </h2>
+
+                <p>
+                    View your active and completed
+                    investments, including their amount,
+                    status and duration.
+                </p>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SUMMARY CARDS
+        ================================================== -->
+
+        <section class="summary-grid">
+
+
+            <div class="summary-card">
+
+                <span>
+                    Total Investments
+                </span>
+
+                <strong id="totalInvestments">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <span>
+                    Total Invested
+                </span>
+
+                <strong id="totalInvested">
+                    UGX 0
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <span>
+                    Active Investments
+                </span>
+
+                <strong id="activeInvestments">
+                    0
+                </strong>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             LOADING
+        ================================================== -->
+
+        <section
+            class="loading-card"
+            id="loadingCard">
+
+            <div class="loader"></div>
+
+            <p>
+                Loading your investments...
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ERROR
+        ================================================== -->
+
+        <section
+            class="message-card error-card"
+            id="errorCard"
+            style="display:none;">
+
+            <div class="message-icon">
+                !
+            </div>
+
+            <div>
+
+                <h3>
+                    Unable to load investments
+                </h3>
+
+                <p id="errorMessage">
+                    Please try again.
+                </p>
+
+                <button
+                    type="button"
+                    id="retryButton"
+                    class="retry-button">
+
+                    Try Again
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             EMPTY STATE
+        ================================================== -->
+
+        <section
+            class="message-card empty-card"
+            id="emptyCard"
+            style="display:none;">
+
+            <div class="message-icon">
+                ◇
+            </div>
+
+            <div>
+
+                <h3>
+                    No investments yet
+                </h3>
+
+                <p>
+                    You have not created an investment yet.
+                    Explore the available investment options
+                    to begin.
+                </p>
+
+                <a
+                    href="investments.html"
+                    class="primary-button">
+
+                    Explore Investments
+                    <span>→</span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             INVESTMENT LIST
+        ================================================== -->
+
+        <section
+            class="investments-section"
+            id="investmentsSection"
+            style="display:none;">
+
+            <div class="section-heading">
+
+                <span class="section-tag">
+                    YOUR PORTFOLIO
+                </span>
+
+                <h3>
+                    Investment history
+                </h3>
+
+            </div>
+
+
+            <div
+                class="investment-list"
+                id="investmentList">
+
+                <!-- Investments will be inserted here by JS -->
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             INFORMATION
+        ================================================== -->
+
+        <section class="info-card">
+
+            <div class="info-icon">
+                !
+            </div>
+
+            <div>
+
+                <h3>
+                    Investment information
+                </h3>
+
+                <p>
+                    Investment values and status information
+                    shown on this page are based on records
+                    associated with your Crown Cash account.
+                    Always review the applicable investment
+                    terms before making financial decisions.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer>
+
+        <p>
+
+            © <span id="year"></span>
+            Crown Cash. All rights reserved.
+
+        </p>
+
+    </footer>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script src="my-investments.js"></script>
+
+</body>
+
+</html>

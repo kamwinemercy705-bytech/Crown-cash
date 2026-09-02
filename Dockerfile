@@ -1,6 +1,6 @@
 FROM php:8.3-apache
 
-# Install packages required to build the MongoDB PHP extension
+# Install packages required for MongoDB
 RUN apt-get update \
     && apt-get install -y libssl-dev pkg-config unzip git \
     && pecl install mongodb \
@@ -10,19 +10,19 @@ RUN apt-get update \
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Application directory
+# Apache application directory
 WORKDIR /var/www/html
 
 # Copy Composer configuration
-COPY composer.json ./
+COPY composer.json /var/www/html/composer.json
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy Crown Cash application
+# Copy ALL application files
 COPY . /var/www/html/
 
-# Set permissions
+# Permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 

@@ -88,66 +88,76 @@ document.addEventListener("DOMContentLoaded", function () {
    CREATE TEST INVESTMENT
 ========================= */
 
-async function createTestInvestment(
-    plan,
-    amount
-) {
 
-    const confirmed =
-        confirm(
-            "Create a test investment?\n\n" +
-            "Plan: " + plan + "\n" +
-            "Amount: UGX " +
-            Number(amount).toLocaleString() +
-            "\n\n" +
-            "This is a testing transaction only."
-        );
+                    
+                        
+                 async function createTestInvestment(plan, amount) {
 
+    const confirmed = confirm(
+        "Create a test investment?\n\n" +
+        "Plan: " + plan + "\n" +
+        "Amount: UGX " + Number(amount).toLocaleString() +
+        "\n\nThis is a testing transaction only."
+    );
 
     if (!confirmed) {
-
         return;
-
     }
-
 
     try {
 
-        
-            const response =
-    await fetch(
-        "https://crown-cash1.onrender.com/investment.php",
-      
-                {
-                    method: "POST",
+        const response = await fetch(
+            "https://crown-cash1.onrender.com/create_investment.php",
+            {
+                method: "POST",
 
-                    credentials: "include",
+                credentials: "include",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-                    body: JSON.stringify({
-
-                        plan: plan,
-
-                        amount: amount
-
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "Investment response:",
-            data
+                body: JSON.stringify({
+                    plan: plan,
+                    amount: Number(amount)
+                })
+            }
         );
 
+        /*
+        ----------------------------------------------------------
+        Read the server response as text first.
+        This helps us see the real response if JSON parsing fails.
+        ----------------------------------------------------------
+        */
+
+        const responseText = await response.text();
+
+        console.log("HTTP status:", response.status);
+        console.log("Server response:", responseText);
+
+        let data;
+
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonError) {
+
+            alert(
+                "Server returned an unexpected response.\n\n" +
+                "HTTP Status: " + response.status +
+                "\n\n" +
+                responseText.substring(0, 500)
+            );
+
+            return;
+        }
+
+
+        /*
+        ----------------------------------------------------------
+        Check API response
+        ----------------------------------------------------------
+        */
 
         if (!response.ok || !data.success) {
 
@@ -157,31 +167,36 @@ async function createTestInvestment(
             );
 
             return;
-
         }
 
 
+        /*
+        ----------------------------------------------------------
+        Success
+        ----------------------------------------------------------
+        */
+
         alert(
             "Test investment created successfully!\n\n" +
+
             "Plan: " +
             data.investment.plan +
-            "\n" +
-            "Amount: UGX " +
+
+            "\nAmount: UGX " +
             Number(
                 data.investment.amount
             ).toLocaleString() +
-            "\n" +
-            "Status: " +
+
+            "\nStatus: " +
             data.investment.status
         );
 
 
         /*
-         * Go to My Investments after success.
-         *
-         * Change this filename if your page
-         * uses a different name.
-         */
+        ----------------------------------------------------------
+        Open My Investments
+        ----------------------------------------------------------
+        */
 
         window.location.href =
             "my-investments.html";
@@ -194,12 +209,16 @@ async function createTestInvestment(
             error
         );
 
-
         alert(
-            "Unable to connect to Crown Cash server. " +
-            "Please try again."
+            "The browser could not complete the request.\n\n" +
+            "Error: " +
+            error.message
         );
-
     }
-
 }
+
+                 
+
+                     
+
+           

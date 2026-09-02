@@ -99,6 +99,105 @@ button {
 }
 
 
+.investment-preview {
+    margin: 25px 0;
+}
+
+.preview-header h2 {
+    margin-bottom: 6px;
+}
+
+.preview-header p {
+    margin-top: 0;
+    opacity: 0.75;
+}
+
+.calculator-box {
+    padding: 25px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.calculator-box label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.amount-input {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.amount-input span {
+    padding: 14px;
+    font-weight: bold;
+    background: #f5f5f5;
+}
+
+.amount-input input {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 14px;
+    font-size: 16px;
+}
+
+.return-rate {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f5f5f5;
+    margin-bottom: 20px;
+}
+
+.projection-results {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.projection-card {
+    padding: 18px;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+.projection-card span {
+    display: block;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 7px;
+}
+
+.projection-card strong {
+    font-size: 18px;
+}
+
+.invest-button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+@media (max-width: 600px) {
+
+    .projection-results {
+        grid-template-columns: 1fr;
+    }
+
+
 /* =====================================================
    SVG ICONS
 ===================================================== */

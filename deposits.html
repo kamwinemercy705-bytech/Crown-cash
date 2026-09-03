@@ -1,45 +1,927 @@
-<form action="php/deposit.php" method="POST">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <label>Amount (UGX)</label>
+    <title>Crown Cash | Deposit</title>
 
-    <input
-        type="number"
-        name="amount"
-        min="1"
-        required
-    >
+    <link rel="stylesheet" href="deposits.css">
+</head>
+
+<body>
+
+<!-- =========================================================
+     CROWN CASH — DEPOSIT PAGE
+========================================================= -->
+
+<div class="app">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M3 7l3 3 3-5 3 5 3-5 3 5 3-3"/>
+                    <path d="M4 10h16"/>
+                    <path d="M5 10v9h14v-9"/>
+                    <path d="M8 19v-5h8v5"/>
+                </svg>
+            </div>
+
+            <div class="brand-text">
+                <span class="brand-name">CROWN CASH</span>
+                <span class="brand-subtitle">SMART FINANCE</span>
+            </div>
+
+        </div>
 
 
-    <label>Payment Method</label>
+        <!-- NAVIGATION -->
 
-    <select name="method" required>
+        <nav class="sidebar-nav">
 
-        <option value="">
-            Select method
-        </option>
+            <a href="dashboard.html" class="nav-item">
 
-        <option value="MTN">
-            MTN Mobile Money
-        </option>
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M3 11l9-8 9 8"/>
+                        <path d="M5 10v10h14V10"/>
+                        <path d="M9 20v-6h6v6"/>
+                    </svg>
+                </span>
 
-        <option value="Airtel">
-            Airtel Money
-        </option>
+                <span>Dashboard</span>
 
-    </select>
-
-
-    <label>Payment Reference</label>
-
-    <input
-        type="text"
-        name="reference"
-        required
-    >
+            </a>
 
 
-    <button type="submit">
-        Submit Deposit
-    </button>
+            <a href="deposit.html" class="nav-item active">
 
-</form>
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                        <path d="M3 10h18"/>
+                        <path d="M12 13v4"/>
+                        <path d="M10 15l2 2 2-2"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Deposit</span>
+
+            </a>
+
+
+            <a href="withdraw.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                        <path d="M3 10h18"/>
+                        <path d="M12 17v-4"/>
+                        <path d="M10 15l2-2 2 2"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Withdraw</span>
+
+            </a>
+
+
+            <a href="investments.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M4 19V5"/>
+                        <path d="M4 19h16"/>
+                        <path d="M7 15l4-4 3 2 5-6"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <a href="my-investments.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <rect x="4" y="3" width="16" height="18" rx="2"/>
+                        <path d="M8 8h8"/>
+                        <path d="M8 12h8"/>
+                        <path d="M8 16h5"/>
+
+                    </svg>
+
+                </span>
+
+                <span>My Investments</span>
+
+            </a>
+
+
+            <a href="transactions.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M4 6h16"/>
+                        <path d="M4 12h16"/>
+                        <path d="M4 18h16"/>
+                        <circle cx="8" cy="6" r="1"/>
+                        <circle cx="14" cy="12" r="1"/>
+                        <circle cx="10" cy="18" r="1"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <a href="team.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <circle cx="9" cy="8" r="3"/>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+
+                        <path d="M16 11c2.2 0 4 1.8 4 4"/>
+                        <path d="M16 5.5a2.5 2.5 0 010 5"/>
+
+                    </svg>
+
+                </span>
+
+                <span>My Team</span>
+
+            </a>
+
+
+            <a href="profile.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Profile</span>
+
+            </a>
+
+
+            <a href="support.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4"/>
+                        <path d="M12 17h.01"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Support</span>
+
+            </a>
+
+
+            <a href="settings.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6v.2h-2.6V20a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H4.2v-2.6h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 001.9.3 1.7 1.7 0 001-1.6V5h2.6v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 00-.3 1.9 1.7 1.7 0 001.6 1h.2v2.6h-.2a1.7 1.7 0 00-1.6 1z"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Settings</span>
+
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <button type="button" class="logout-btn" id="logoutBtn">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M10 17l5-5-5-5"/>
+                        <path d="M15 12H3"/>
+                        <path d="M13 4h6a2 2 0 012 2v12a2 2 0 01-2 2h-6"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Logout</span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <button
+                type="button"
+                class="menu-btn"
+                id="menuBtn"
+                aria-label="Open menu">
+
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round">
+
+                    <path d="M4 7h16"/>
+                    <path d="M4 12h16"/>
+                    <path d="M4 17h16"/>
+
+                </svg>
+
+            </button>
+
+
+            <div class="topbar-title">
+
+                <span>Deposit</span>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <button
+                    type="button"
+                    class="notification-btn"
+                    aria-label="Notifications">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                        <path d="M10 21h4"/>
+
+                    </svg>
+
+                    <span class="notification-dot"></span>
+
+                </button>
+
+
+                <a href="profile.html" class="top-profile">
+
+                    <span class="profile-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span id="topUserName">User</span>
+
+                </a>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE -->
+
+        <section class="page-content">
+
+
+            <!-- HERO -->
+
+            <section class="deposit-hero">
+
+                <div class="hero-content">
+
+                    <div class="hero-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+                            <path d="M3 10h18"/>
+                            <path d="M12 13v4"/>
+                            <path d="M10 15l2 2 2-2"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span class="section-label">
+                            CROWN CASH WALLET
+                        </span>
+
+                        <h1>Deposit Funds</h1>
+
+                        <p>
+                            Add funds to your Crown Cash account
+                            using an available payment method.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- BALANCE -->
+
+            <section class="balance-card">
+
+                <div class="balance-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <rect x="3" y="6" width="18" height="13" rx="2"/>
+                        <path d="M7 6V4h10v2"/>
+                        <path d="M16 13h3"/>
+                        <circle cx="16" cy="13" r="1"/>
+
+                    </svg>
+
+                </div>
+
+                <div class="balance-info">
+
+                    <span>Current Balance</span>
+
+                    <strong>
+                        UGX <span id="currentBalance">0</span>
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <!-- DEPOSIT FORM -->
+
+            <section class="deposit-grid">
+
+
+                <div class="deposit-card">
+
+                    <div class="card-heading">
+
+                        <div class="heading-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.8"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+
+                                <path d="M4 7h16"/>
+                                <path d="M6 7V5h12v2"/>
+                                <rect x="3" y="7" width="18" height="12" rx="2"/>
+                                <path d="M8 12h8"/>
+                                <path d="M8 15h5"/>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <h2>Make a Deposit</h2>
+
+                            <p>
+                                Enter the amount you want to deposit.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form id="depositForm">
+
+
+                        <div class="form-group">
+
+                            <label for="amount">
+                                Deposit Amount
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <span class="input-icon">
+
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="1.8"
+                                         stroke-linecap="round"
+                                         stroke-linejoin="round">
+
+                                        <circle cx="12" cy="12" r="9"/>
+                                        <path d="M15 8.5c-.7-.5-1.7-.8-2.8-.8-1.7 0-2.9.8-2.9 2s1.1 1.7 2.8 2c1.9.3 2.9.9 2.9 2.1 0 1.3-1.2 2.2-3.1 2.2-1.2 0-2.3-.4-3-.9"/>
+                                        <path d="M12 6v12"/>
+
+                                    </svg>
+
+                                </span>
+
+                                <input
+                                    type="number"
+                                    id="amount"
+                                    name="amount"
+                                    min="1000"
+                                    step="100"
+                                    placeholder="Enter amount"
+                                    required>
+
+                                <span class="currency">
+                                    UGX
+                                </span>
+
+                            </div>
+
+                            <small>
+                                Minimum deposit: UGX 1,000
+                            </small>
+
+                        </div>
+
+
+                        <!-- PAYMENT METHOD -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Payment Method
+                            </label>
+
+                            <div class="payment-methods">
+
+
+                                <label class="payment-option">
+
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="MTN"
+                                        checked>
+
+                                    <span class="payment-box">
+
+                                        <span class="payment-icon mtn-icon">
+                                            M
+                                        </span>
+
+                                        <span>
+                                            <strong>MTN Mobile Money</strong>
+                                            <small>Mobile Money</small>
+                                        </span>
+
+                                        <span class="radio-circle"></span>
+
+                                    </span>
+
+                                </label>
+
+
+                                <label class="payment-option">
+
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="AIRTEL">
+
+                                    <span class="payment-box">
+
+                                        <span class="payment-icon airtel-icon">
+                                            A
+                                        </span>
+
+                                        <span>
+                                            <strong>Airtel Money</strong>
+                                            <small>Mobile Money</small>
+                                        </span>
+
+                                        <span class="radio-circle"></span>
+
+                                    </span>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PHONE -->
+
+                        <div class="form-group">
+
+                            <label for="phone">
+                                Mobile Money Number
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <span class="input-icon">
+
+                                    <svg viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="1.8"
+                                         stroke-linecap="round"
+                                         stroke-linejoin="round">
+
+                                        <rect x="6" y="2.5" width="12" height="19" rx="2"/>
+                                        <path d="M10 5h4"/>
+                                        <path d="M11 18h2"/>
+
+                                    </svg>
+
+                                </span>
+
+                                <input
+                                    type="tel"
+                                    id="phone"
+                                    name="phone"
+                                    placeholder="07XXXXXXXX"
+                                    autocomplete="tel"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- SUBMIT -->
+
+                        <button
+                            type="submit"
+                            class="deposit-btn"
+                            id="depositBtn">
+
+                            <span class="btn-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8"
+                                     stroke-linecap="round"
+                                     stroke-linejoin="round">
+
+                                    <path d="M12 4v12"/>
+                                    <path d="M7 11l5 5 5-5"/>
+                                    <path d="M5 20h14"/>
+
+                                </svg>
+
+                            </span>
+
+                            <span>Continue Deposit</span>
+
+                        </button>
+
+
+                        <div
+                            class="form-message"
+                            id="formMessage">
+                        </div>
+
+                    </form>
+
+                </div>
+
+
+                <!-- PAYMENT INFORMATION -->
+
+                <div class="info-card">
+
+                    <div class="card-heading">
+
+                        <div class="heading-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.8"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 10v6"/>
+                                <path d="M12 7h.01"/>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <h2>How Deposits Work</h2>
+
+                            <p>
+                                Follow the secure deposit process.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="steps">
+
+
+                        <div class="step">
+
+                            <span class="step-number">01</span>
+
+                            <div>
+
+                                <h3>Enter Amount</h3>
+
+                                <p>
+                                    Choose the amount you want
+                                    to deposit.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="step">
+
+                            <span class="step-number">02</span>
+
+                            <div>
+
+                                <h3>Choose Payment</h3>
+
+                                <p>
+                                    Select MTN Mobile Money
+                                    or Airtel Money.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="step">
+
+                            <span class="step-number">03</span>
+
+                            <div>
+
+                                <h3>Confirm Payment</h3>
+
+                                <p>
+                                    Complete the payment request
+                                    sent to your phone.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="step">
+
+                            <span class="step-number">04</span>
+
+                            <div>
+
+                                <h3>Balance Updated</h3>
+
+                                <p>
+                                    Your balance is updated only
+                                    after payment verification.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="security-note">
+
+                        <div class="security-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.8"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+
+                                <path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3z"/>
+                                <path d="M9 12l2 2 4-4"/>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <strong>Secure Payment Verification</strong>
+
+                            <p>
+                                Crown Cash should credit funds only
+                                after the payment provider confirms
+                                the transaction.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- NOTICE -->
+
+            <section class="notice-card">
+
+                <div class="notice-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M12 3l9 18H3L12 3z"/>
+                        <path d="M12 9v4"/>
+                        <path d="M12 17h.01"/>
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <strong>Important</strong>
+
+                    <p>
+                        Do not share your PIN, password, OTP, or
+                        mobile-money security information with anyone.
+                        A deposit is not considered successful until
+                        the payment provider confirms it.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <footer class="footer">
+
+                <span>
+                    © <span id="currentYear"></span> Crown Cash
+                </span>
+
+                <span>
+                    Secure • Transparent • Responsible
+                </span>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- MOBILE OVERLAY -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+<script src="deposit.js"></script>
+
+</body>
+</html>

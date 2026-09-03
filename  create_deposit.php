@@ -4,14 +4,23 @@
 |--------------------------------------------------------------------------
 | CROWN CASH — CREATE DEPOSIT API
 |--------------------------------------------------------------------------
-| Creates a pending deposit request.
 |
-| IMPORTANT:
-| This endpoint does NOT automatically add money to the user's balance.
-| The balance must only be credited after the payment provider confirms
-| the transaction.
+| DEMO / TEST VERSION
+|
+| This endpoint creates a PENDING deposit.
+|
+| It does NOT automatically credit the user's balance.
+|
+| Real MTN/Airtel verification must happen before money is
+| added to a user's balance.
+|
 |--------------------------------------------------------------------------
 */
+
+
+/* =========================================================
+   CORS
+========================================================= */
 
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
@@ -35,7 +44,7 @@ header(
 
 
 /* =========================================================
-   HANDLE CORS PREFLIGHT
+   OPTIONS
 ========================================================= */
 
 if (
@@ -54,12 +63,19 @@ if (
 ========================================================= */
 
 session_set_cookie_params([
+
     "lifetime" => 0,
+
     "path" => "/",
+
     "domain" => "",
+
     "secure" => true,
+
     "httponly" => true,
+
     "samesite" => "None"
+
 ]);
 
 session_start();
@@ -83,8 +99,13 @@ if (
     http_response_code(405);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
+
+        "success" =>
+            false,
+
+        "message" =>
+            "Method not allowed."
+
     ]);
 
     exit;
@@ -104,8 +125,13 @@ if (
     http_response_code(401);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Please login first."
+
+        "success" =>
+            false,
+
+        "message" =>
+            "Please login first."
+
     ]);
 
     exit;
@@ -114,13 +140,41 @@ if (
 
 
 /* =========================================================
-   READ REQUEST DATA
+   MERCHANT CODES
+========================================================= */
+
+/*
+ * DEMO CONFIGURATION
+ *
+ * These are placeholders until you obtain your actual
+ * MTN and Airtel merchant codes.
+ *
+ * IMPORTANT:
+ * Do NOT put a personal mobile-money number here.
+ */
+
+$merchantCodes = [
+
+    "MTN" =>
+        "YOUR_MTN_MERCHANT_CODE",
+
+    "AIRTEL" =>
+        "YOUR_AIRTEL_MERCHANT_CODE"
+
+];
+
+
+/* =========================================================
+   READ REQUEST
 ========================================================= */
 
 try {
 
     $rawData =
-        file_get_contents("php://input");
+        file_get_contents(
+            "php://input"
+        );
+
 
     $data =
         json_decode(
@@ -136,8 +190,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
-            "message" => "Invalid deposit data."
+
+            "success" =>
+                false,
+
+            "message" =>
+                "Invalid deposit data."
+
         ]);
 
         exit;
@@ -146,11 +205,11 @@ try {
 
 
     /* =====================================================
-       GET VALUES
+       VALUES
     ===================================================== */
 
     $amount =
-        (float) (
+        (float)(
             $data["amount"] ?? 0
         );
 
@@ -170,7 +229,7 @@ try {
 
 
     /* =====================================================
-       VALIDATE AMOUNT
+       AMOUNT VALIDATION
     ===================================================== */
 
     if (
@@ -180,9 +239,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Minimum deposit is UGX 1,000."
+
         ]);
 
         exit;
@@ -197,19 +260,19 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Deposit amount is too large."
+
         ]);
 
         exit;
 
     }
 
-
-    /*
-     * Only allow whole UGX amounts.
-     */
 
     if (
         floor($amount) !== $amount
@@ -218,9 +281,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Deposit amount must be a whole UGX amount."
+
         ]);
 
         exit;
@@ -229,29 +296,26 @@ try {
 
 
     /* =====================================================
-       VALIDATE PAYMENT METHOD
+       PAYMENT METHOD
     ===================================================== */
 
-    $allowedMethods = [
-        "MTN",
-        "AIRTEL"
-    ];
-
-
     if (
-        !in_array(
+        !array_key_exists(
             $paymentMethod,
-            $allowedMethods,
-            true
+            $merchantCodes
         )
     ) {
 
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Invalid payment method."
+
         ]);
 
         exit;
@@ -259,8 +323,14 @@ try {
     }
 
 
+    $merchantCode =
+        $merchantCodes[
+            $paymentMethod
+        ];
+
+
     /* =====================================================
-       NORMALIZE PHONE NUMBER
+       PHONE NORMALIZATION
     ===================================================== */
 
     $phone =
@@ -306,7 +376,7 @@ try {
 
 
     /* =====================================================
-       VALIDATE UGANDA PHONE
+       PHONE VALIDATION
     ===================================================== */
 
     if (
@@ -319,9 +389,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Enter a valid Uganda mobile-money number."
+
         ]);
 
         exit;
@@ -347,9 +421,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Invalid user session."
+
         ]);
 
         exit;
@@ -363,7 +441,10 @@ try {
 
     $user =
         $users->findOne([
-            "_id" => $userId
+
+            "_id" =>
+                $userId
+
         ]);
 
 
@@ -374,9 +455,13 @@ try {
         http_response_code(404);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "User account was not found."
+
         ]);
 
         exit;
@@ -421,6 +506,9 @@ try {
         "payment_method" =>
             $paymentMethod,
 
+        "merchant_code" =>
+            $merchantCode,
+
         "status" =>
             "pending",
 
@@ -443,7 +531,7 @@ try {
 
 
     /* =====================================================
-       SAVE DEPOSIT
+       SAVE
     ===================================================== */
 
     $result =
@@ -462,7 +550,7 @@ try {
             true,
 
         "message" =>
-            "Deposit request created. Complete the payment when prompted. Your balance will be updated after payment verification.",
+            "Deposit request created successfully. Payment remains pending until verified.",
 
         "deposit" => [
 
@@ -484,6 +572,9 @@ try {
 
             "paymentMethod" =>
                 $paymentMethod,
+
+            "merchantCode" =>
+                $merchantCode,
 
             "status" =>
                 "pending"
@@ -540,6 +631,8 @@ try {
             "Unable to create deposit request."
 
     ]);
+
+    exit;
 
 }
 

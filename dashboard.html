@@ -1,1039 +1,751 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <meta name="description"
-          content="Crown Cash user dashboard.">
-
-    <meta name="theme-color"
-          content="#08050d">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Crown Cash | Dashboard</title>
 
     <link rel="stylesheet" href="dashboard.css">
-
 </head>
-
 
 <body>
 
+<div class="app-shell">
 
-<!-- =====================================================
-     SIDEBAR
-===================================================== -->
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
 
-<aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
 
-    <div class="sidebar-top">
+            <div class="brand">
+                <div class="brand-icon">
+                    <span>CC</span>
+                </div>
 
-        <a href="index.html" class="logo">
-
-            <span class="logo-mark">
-                C
-            </span>
-
-            <span class="logo-text">
-                Crown<span>Cash</span>
-            </span>
-
-        </a>
-
-
-        <button
-            class="close-sidebar"
-            id="closeSidebar"
-            type="button"
-            aria-label="Close menu">
-
-            <i data-lucide="x"></i>
-
-        </button>
-
-    </div>
-
-
-    <nav class="sidebar-nav">
-
-        <a href="dashboard.html" class="active">
-
-            <i data-lucide="house"></i>
-
-            <span>Dashboard</span>
-
-        </a>
-
-
-        <a href="profile.html">
-
-            <i data-lucide="user-round"></i>
-
-            <span>My Profile</span>
-
-        </a>
-
-
-        <a href="investments.html">
-
-            <i data-lucide="trending-up"></i>
-
-            <span>Investments</span>
-
-        </a>
-
-
-        <a href="deposits.html">
-
-            <i data-lucide="wallet-cards"></i>
-
-            <span>Deposits</span>
-
-        </a>
-
-
-        <a href="withdrawals.html">
-
-            <i data-lucide="wallet-minimal"></i>
-
-            <span>Withdrawals</span>
-
-        </a>
-
-
-        <a href="referrals.html">
-
-            <i data-lucide="users-round"></i>
-
-            <span>Referrals</span>
-
-        </a>
-
-
-        <a href="transactions.html">
-
-            <i data-lucide="receipt-text"></i>
-
-            <span>Transactions</span>
-
-        </a>
-
-    </nav>
-
-
-    <div class="sidebar-bottom">
-
-        <a href="support.html">
-
-            <i data-lucide="headphones"></i>
-
-            <span>Support</span>
-
-        </a>
-
-
-        <a href="login.html" class="logout">
-
-            <i data-lucide="log-out"></i>
-
-            <span>Logout</span>
-
-        </a>
-
-    </div>
-
-</aside>
-
-
-
-<!-- =====================================================
-     MAIN WRAPPER
-===================================================== -->
-
-<div class="main-wrapper">
-
-
-    <!-- =================================================
-         TOP BAR
-    ================================================= -->
-
-    <header class="topbar">
-
-
-        <div class="topbar-left">
-
-            <button
-                class="menu-button"
-                id="openSidebar"
-                type="button"
-                aria-label="Open menu">
-
-                <i data-lucide="menu"></i>
-
-            </button>
-
-
-            <div>
-
-                <span class="topbar-label">
-                    CROWN CASH
-                </span>
-
-                <h1>
-                    Dashboard
-                </h1>
-
+                <div class="brand-text">
+                    <strong>Crown</strong>
+                    <span>Cash</span>
+                </div>
             </div>
+
+            <button class="close-sidebar" id="closeSidebar">
+                ×
+            </button>
 
         </div>
 
 
+        <nav class="sidebar-nav">
 
-        <div class="topbar-right">
+            <p class="nav-title">MAIN MENU</p>
 
-
-            <button
-                class="notification-button"
-                type="button"
-                aria-label="Notifications">
-
-                <i data-lucide="bell"></i>
-
-                <span class="notification-dot"></span>
-
-            </button>
-
-
-            <div class="user-mini">
+            <a href="dashboard.html" class="nav-item active">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 10.5 12 3l9 7.5"></path>
+                        <path d="M5 9.5V21h14V9.5"></path>
+                        <path d="M9 21v-7h6v7"></path>
+                    </svg>
+                </span>
+                <span>Dashboard</span>
+            </a>
 
 
-                <div
-                    class="avatar"
-                    id="userAvatar">
+            <a href="investments.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 7h18"></path>
+                        <path d="M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"></path>
+                        <path d="M4 7h16v13H4z"></path>
+                        <path d="M9 12h6"></path>
+                    </svg>
+                </span>
+                <span>Investments</span>
+            </a>
 
-                    U
 
+            <a href="my-investments.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="m7 15 4-4 3 2 5-6"></path>
+                    </svg>
+                </span>
+                <span>My Investments</span>
+            </a>
+
+
+            <a href="deposit.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3v14"></path>
+                        <path d="m7 12 5 5 5-5"></path>
+                        <path d="M5 21h14"></path>
+                    </svg>
+                </span>
+                <span>Deposit</span>
+            </a>
+
+
+            <a href="withdraw.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 21V7"></path>
+                        <path d="m7 12 5-5 5 5"></path>
+                        <path d="M5 3h14"></path>
+                    </svg>
+                </span>
+                <span>Withdraw</span>
+            </a>
+
+
+            <a href="transactions.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 5h16"></path>
+                        <path d="M4 12h16"></path>
+                        <path d="M4 19h16"></path>
+                        <circle cx="8" cy="5" r="1"></circle>
+                        <circle cx="15" cy="12" r="1"></circle>
+                        <circle cx="10" cy="19" r="1"></circle>
+                    </svg>
+                </span>
+                <span>Transactions</span>
+            </a>
+
+
+            <p class="nav-title second-title">ACCOUNT</p>
+
+
+            <a href="team.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <circle cx="17" cy="9" r="2.5"></circle>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                        <path d="M15 14c3.2 0 6 2.1 6 5"></path>
+                    </svg>
+                </span>
+                <span>My Team</span>
+            </a>
+
+
+            <a href="profile.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c.8-4 3.5-6 8-6s7.2 2 8 6"></path>
+                    </svg>
+                </span>
+                <span>Profile</span>
+            </a>
+
+
+            <a href="support.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M8 14c1 1.3 2.3 2 4 2s3-.7 4-2"></path>
+                        <path d="M8.5 9.5h.01"></path>
+                        <path d="M15.5 9.5h.01"></path>
+                    </svg>
+                </span>
+                <span>Support</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="secure-box">
+                <div class="secure-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="5" y="10" width="14" height="11" rx="2"></rect>
+                        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                    </svg>
                 </div>
 
-
-                <div class="user-mini-info">
-
-                    <strong id="userName">
-                        User Account
-                    </strong>
-
-                    <small>
-                        Member
-                    </small>
-
+                <div>
+                    <strong>Secure Account</strong>
+                    <small>Your account is protected</small>
                 </div>
-
             </div>
 
         </div>
 
-    </header>
+    </aside>
 
 
+    <!-- ================= MAIN ================= -->
+    <main class="main-content">
 
-    <!-- =================================================
-         DASHBOARD CONTENT
-    ================================================= -->
+        <!-- TOPBAR -->
+        <header class="topbar">
 
-    <main class="dashboard-content">
-
-
-        <!-- =================================================
-             WELCOME
-        ================================================= -->
-
-        <section class="welcome-section">
+            <button class="menu-button" id="openSidebar">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
 
 
-            <div>
-
-                <span class="section-tag">
-                    ACCOUNT OVERVIEW
-                </span>
-
-
-                <h2>
-                    Welcome back,
-                    <span id="welcomeName">
-                        Member
-                    </span>.
-                </h2>
-
-
-                <p>
-                    Manage your Crown Cash account
-                    and keep track of your activity.
-                </p>
-
+            <div class="topbar-title">
+                <span>ACCOUNT CENTER</span>
+                <h1>Dashboard</h1>
             </div>
 
 
-            <a
-                href="profile.html"
-                class="profile-button">
+            <div class="topbar-actions">
 
-                <i data-lucide="user-round"></i>
+                <button class="notification-button" title="Notifications">
 
-                <span>
-                    My Profile
-                </span>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                        <path d="M10 21h4"></path>
+                    </svg>
 
-                <i data-lucide="arrow-right"></i>
+                    <span class="notification-dot"></span>
 
-            </a>
+                </button>
 
-        </section>
 
+                <a href="profile.html" class="user-mini">
 
-
-        <!-- =================================================
-             OVERVIEW CARDS
-        ================================================= -->
-
-        <section class="overview-grid">
-
-
-            <!-- ACCOUNT STATUS -->
-
-            <article class="overview-card">
-
-                <div class="card-icon">
-
-                    <i data-lucide="shield-check"></i>
-
-                </div>
-
-
-                <span class="card-label">
-                    ACCOUNT STATUS
-                </span>
-
-
-                <strong>
-                    Active
-                </strong>
-
-
-                <small>
-                    Your account is currently active.
-                </small>
-
-            </article>
-
-
-
-            <!-- WELCOME BONUS -->
-
-            <article class="overview-card">
-
-                <div class="card-icon">
-
-                    <i data-lucide="gift"></i>
-
-                </div>
-
-
-                <span class="card-label">
-                    WELCOME BONUS
-                </span>
-
-
-                <strong>
-                    Available
-                </strong>
-
-
-                <small>
-                    Subject to bonus eligibility terms.
-                </small>
-
-            </article>
-
-
-
-            <!-- REFERRALS -->
-
-            <article class="overview-card">
-
-                <div class="card-icon">
-
-                    <i data-lucide="users-round"></i>
-
-                </div>
-
-
-                <span class="card-label">
-                    REFERRAL STATUS
-                </span>
-
-
-                <strong>
-                    Ready
-                </strong>
-
-
-                <small>
-                    Your referral area is available.
-                </small>
-
-            </article>
-
-
-
-            <!-- ACTIVITY -->
-
-            <article class="overview-card">
-
-                <div class="card-icon">
-
-                    <i data-lucide="activity"></i>
-
-                </div>
-
-
-                <span class="card-label">
-                    ACCOUNT ACTIVITY
-                </span>
-
-
-                <strong>
-                    View
-                </strong>
-
-
-                <small>
-                    Review your recent activity.
-                </small>
-
-            </article>
-
-
-        </section>
-
-
-
-        <!-- =================================================
-             FINANCIAL SUMMARY
-        ================================================= -->
-
-        <section class="financial-grid">
-
-
-            <!-- WALLET BALANCE -->
-
-            <article class="balance-card">
-
-
-                <div class="balance-top">
-
-                    <div>
-
-                        <span class="gold-label">
-                            AVAILABLE WALLET BALANCE
-                        </span>
-
-
-                        <h3 id="userBalance">
-                            UGX 0
-                        </h3>
-
-
-                        <p>
-                            Available balance
-                        </p>
-
+                    <div class="avatar" id="avatar">
+                        C
                     </div>
 
-
-                    <div class="large-icon">
-
-                        <i data-lucide="wallet"></i>
-
+                    <div class="user-mini-info">
+                        <strong id="topUserName">Crown User</strong>
+                        <span>Member</span>
                     </div>
-
-                </div>
-
-
-                <div class="balance-actions">
-
-                    <a
-                        href="deposits.html"
-                        class="deposit-button">
-
-                        <i data-lucide="arrow-down-to-line"></i>
-
-                        Deposit
-
-                    </a>
-
-
-                    <a
-                        href="withdrawals.html"
-                        class="withdraw-button">
-
-                        <i data-lucide="arrow-up-from-line"></i>
-
-                        Withdraw
-
-                    </a>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- EARNINGS -->
-
-            <article class="money-card">
-
-                <div class="money-icon">
-
-                    <i data-lucide="chart-no-axes-combined"></i>
-
-                </div>
-
-                <div>
-
-                    <span>
-                        TOTAL EARNINGS
-                    </span>
-
-                    <strong>
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        All time earnings
-                    </small>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- TODAY -->
-
-            <article class="money-card">
-
-                <div class="money-icon">
-
-                    <i data-lucide="calendar-days"></i>
-
-                </div>
-
-                <div>
-
-                    <span>
-                        TODAY'S EARNINGS
-                    </span>
-
-                    <strong>
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Daily earning
-                    </small>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- INVESTED -->
-
-            <article class="money-card">
-
-                <div class="money-icon">
-
-                    <i data-lucide="layers-3"></i>
-
-                </div>
-
-                <div>
-
-                    <span>
-                        TOTAL INVESTED
-                    </span>
-
-                    <strong>
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Active investments
-                    </small>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- REFERRAL BONUS -->
-
-            <article class="money-card">
-
-                <div class="money-icon">
-
-                    <i data-lucide="users"></i>
-
-                </div>
-
-                <div>
-
-                    <span>
-                        REFERRAL BONUS
-                    </span>
-
-                    <strong>
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Total referral bonus
-                    </small>
-
-                </div>
-
-            </article>
-
-
-        </section>
-
-
-
-        <!-- =================================================
-             ACCOUNT + QUICK ACCESS
-        ================================================= -->
-
-        <section class="content-grid">
-
-
-            <!-- ACCOUNT -->
-
-            <article class="panel main-panel">
-
-
-                <div class="panel-heading">
-
-                    <div>
-
-                        <span class="panel-label">
-                            ACCOUNT
-                        </span>
-
-                        <h3>
-                            Your Crown Cash account
-                        </h3>
-
-                    </div>
-
-
-                    <span class="status-badge">
-
-                        <i data-lucide="circle-check"></i>
-
-                        Active
-
-                    </span>
-
-                </div>
-
-
-                <div class="account-summary">
-
-
-                    <div>
-
-                        <span>
-                            Member since
-                        </span>
-
-                        <strong>
-                            Recently joined
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Verification
-                        </span>
-
-                        <strong>
-                            Pending
-                        </strong>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Account type
-                        </span>
-
-                        <strong>
-                            Standard
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="panel-actions">
-
-                    <a
-                        href="profile.html"
-                        class="primary-action">
-
-                        <i data-lucide="user-round-check"></i>
-
-                        Complete Profile
-
-                    </a>
-
-
-                    <a
-                        href="support.html"
-                        class="secondary-action">
-
-                        <i data-lucide="headphones"></i>
-
-                        Get Support
-
-                    </a>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- QUICK ACCESS -->
-
-            <article class="panel quick-panel">
-
-
-                <div class="panel-heading">
-
-                    <div>
-
-                        <span class="panel-label">
-                            QUICK ACCESS
-                        </span>
-
-                        <h3>
-                            What would you like to do?
-                        </h3>
-
-                    </div>
-
-                </div>
-
-
-                <div class="quick-actions">
-
-
-                    <a href="investments.html">
-
-                        <span class="quick-icon">
-
-                            <i data-lucide="trending-up"></i>
-
-                        </span>
-
-
-                        <div>
-
-                            <strong>
-                                Explore Investments
-                            </strong>
-
-                            <small>
-                                View available options
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-
-                    <a href="deposits.html">
-
-                        <span class="quick-icon">
-
-                            <i data-lucide="wallet-cards"></i>
-
-                        </span>
-
-
-                        <div>
-
-                            <strong>
-                                Make a Deposit
-                            </strong>
-
-                            <small>
-                                Manage your account funding
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-
-                    <a href="withdrawals.html">
-
-                        <span class="quick-icon">
-
-                            <i data-lucide="arrow-up-from-line"></i>
-
-                        </span>
-
-
-                        <div>
-
-                            <strong>
-                                Withdraw
-                            </strong>
-
-                            <small>
-                                Request a withdrawal
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-
-                    <a href="referrals.html">
-
-                        <span class="quick-icon">
-
-                            <i data-lucide="users-round"></i>
-
-                        </span>
-
-
-                        <div>
-
-                            <strong>
-                                Referral Program
-                            </strong>
-
-                            <small>
-                                Invite and manage referrals
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-                </div>
-
-            </article>
-
-
-        </section>
-
-
-
-        <!-- =================================================
-             REFERRAL CODE
-        ================================================= -->
-
-        <section class="referral-card">
-
-
-            <div class="referral-icon">
-
-                <i data-lucide="share-2"></i>
-
-            </div>
-
-
-            <div>
-
-                <span>
-                    YOUR REFERRAL CODE
-                </span>
-
-                <strong id="referralCode">
-                    Loading...
-                </strong>
-
-            </div>
-
-
-            <a
-                href="referrals.html"
-                class="referral-button">
-
-                Manage Referrals
-
-                <i data-lucide="arrow-right"></i>
-
-            </a>
-
-        </section>
-
-
-
-        <!-- =================================================
-             RECENT ACTIVITY
-        ================================================= -->
-
-        <section class="panel activity-panel">
-
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        ACTIVITY
-                    </span>
-
-                    <h3>
-                        Recent account activity
-                    </h3>
-
-                </div>
-
-
-                <a
-                    href="transactions.html"
-                    class="view-all">
-
-                    View all
-
-                    <i data-lucide="arrow-right"></i>
 
                 </a>
 
             </div>
 
+        </header>
 
-            <div class="empty-activity">
+
+        <!-- PAGE CONTENT -->
+        <section class="page-content">
 
 
-                <div class="empty-icon">
+            <!-- ================= WELCOME ================= -->
+            <section class="welcome-section">
 
-                    <i data-lucide="receipt-text"></i>
+                <div>
+
+                    <p class="section-label">
+                        CROWN CASH
+                    </p>
+
+                    <h2>
+                        Welcome back,
+                        <span id="welcomeName">Member</span>
+                    </h2>
+
+                    <p class="welcome-text">
+                        Manage your account, review your investments
+                        and monitor your projected returns.
+                    </p>
 
                 </div>
 
 
-                <h4>
-                    No recent activity
-                </h4>
+                <div class="welcome-badge">
+
+                    <span class="status-dot"></span>
+
+                    <span>ACCOUNT ACTIVE</span>
+
+                </div>
+
+            </section>
 
 
-                <p>
-                    Your account transactions and activity
-                    will appear here.
-                </p>
+
+            <!-- ================================================= -->
+            <!-- DAILY RETURN PREVIEW -->
+            <!-- ================================================= -->
+
+            <section class="return-preview-card">
+
+                <div class="return-preview-left">
+
+                    <div class="return-label">
+                        DAILY RETURN PREVIEW
+                    </div>
+
+                    <h2>
+                        See your projected daily return
+                    </h2>
+
+                    <p>
+                        Enter an investment amount to see the
+                        projected daily amount at the displayed
+                        <strong>10% daily rate.</strong>
+                    </p>
+
+
+                    <div class="rate-badge">
+
+                        <span class="rate-icon">
+                            %
+                        </span>
+
+                        <div>
+                            <strong>10%</strong>
+                            <small>Projected daily rate</small>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="return-calculator">
+
+                    <div class="calculator-label">
+                        Investment amount
+                    </div>
+
+
+                    <div class="amount-input-wrap">
+
+                        <span>UGX</span>
+
+                        <input
+                            type="number"
+                            id="investmentAmount"
+                            min="10000"
+                            step="1000"
+                            value="10000"
+                            inputmode="numeric"
+                            placeholder="10,000"
+                        >
+
+                    </div>
+
+
+                    <div class="quick-amounts">
+
+                        <button
+                            type="button"
+                            class="amount-chip active"
+                            data-amount="10000">
+                            10K
+                        </button>
+
+                        <button
+                            type="button"
+                            class="amount-chip"
+                            data-amount="20000">
+                            20K
+                        </button>
+
+                        <button
+                            type="button"
+                            class="amount-chip"
+                            data-amount="50000">
+                            50K
+                        </button>
+
+                        <button
+                            type="button"
+                            class="amount-chip"
+                            data-amount="100000">
+                            100K
+                        </button>
+
+                    </div>
+
+
+                    <div class="projected-result">
+
+                        <span>
+                            PROJECTED DAILY AMOUNT
+                        </span>
+
+                        <strong id="dailyReturnAmount">
+                            UGX 1,000
+                        </strong>
+
+                        <small>
+                            Based on a 10% projected daily rate
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <div class="projection-note">
+
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 10v6"></path>
+                    <path d="M12 7h.01"></path>
+                </svg>
+
+                <span>
+                    Projection only. Actual returns depend on the
+                    applicable investment terms.
+                </span>
 
             </div>
+
+
+
+            <!-- ================= ACCOUNT OVERVIEW ================= -->
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="section-label">
+                        ACCOUNT OVERVIEW
+                    </p>
+
+                    <h2>
+                        Your account at a glance
+                    </h2>
+                </div>
+
+            </div>
+
+
+            <section class="stats-grid">
+
+
+                <!-- BALANCE -->
+                <div class="stat-card balance-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon wallet-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 7h16v13H4z"></path>
+                                <path d="M4 7V5a2 2 0 0 1 2-2h12"></path>
+                                <path d="M16 13h5v4h-5a2 2 0 0 1 0-4z"></path>
+                                <circle cx="17" cy="15" r=".5"></circle>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-tag">
+                            BALANCE
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat-value" id="balance">
+                        UGX 0
+                    </div>
+
+                    <div class="stat-footer">
+                        Available balance
+                    </div>
+
+                </div>
+
+
+
+                <!-- INVESTMENTS -->
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon investment-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19h16"></path>
+                                <path d="m7 15 4-4 3 2 5-6"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-tag">
+                            INVESTMENTS
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat-value" id="investmentCount">
+                        0
+                    </div>
+
+                    <div class="stat-footer">
+                        Total investments
+                    </div>
+
+                </div>
+
+
+
+                <!-- REFERRALS -->
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon referral-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="9" cy="8" r="3"></circle>
+                                <circle cx="17" cy="9" r="2.5"></circle>
+                                <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                                <path d="M15 14c3.2 0 6 2.1 6 5"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-tag">
+                            REFERRALS
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat-value" id="referralCount">
+                        0
+                    </div>
+
+                    <div class="stat-footer">
+                        People in your team
+                    </div>
+
+                </div>
+
+
+
+                <!-- DAILY PREVIEW -->
+                <div class="stat-card highlight-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon percent-icon">
+                            %
+                        </div>
+
+                        <span class="stat-tag purple">
+                            DAILY RATE
+                        </span>
+
+                    </div>
+
+
+                    <div class="stat-value purple-text">
+                        10%
+                    </div>
+
+                    <div class="stat-footer">
+                        Projected daily rate
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ================= QUICK ACTIONS ================= -->
+
+            <section class="quick-section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <p class="section-label">
+                            QUICK ACTIONS
+                        </p>
+
+                        <h2>
+                            Manage your account
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-grid">
+
+
+                    <a href="deposit.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 3v14"></path>
+                                <path d="m7 12 5 5 5-5"></path>
+                                <path d="M5 21h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>Deposit</strong>
+                            <span>Add funds to your account</span>
+                        </div>
+
+                        <b>→</b>
+
+                    </a>
+
+
+
+                    <a href="investments.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19h16"></path>
+                                <path d="m7 15 4-4 3 2 5-6"></path>
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>Invest</strong>
+                            <span>Explore investment plans</span>
+                        </div>
+
+                        <b>→</b>
+
+                    </a>
+
+
+
+                    <a href="withdraw.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 21V7"></path>
+                                <path d="m7 12 5-5 5 5"></path>
+                                <path d="M5 3h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>Withdraw</strong>
+                            <span>Request a withdrawal</span>
+                        </div>
+
+                        <b>→</b>
+
+                    </a>
+
+
+
+                    <a href="team.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="9" cy="8" r="3"></circle>
+                                <circle cx="17" cy="9" r="2.5"></circle>
+                                <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                                <path d="M15 14c3.2 0 6 2.1 6 5"></path>
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>My Team</strong>
+                            <span>View your referral team</span>
+                        </div>
+
+                        <b>→</b>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ================= INFORMATION ================= -->
+
+            <section class="info-card">
+
+                <div class="info-icon">
+
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 10v6"></path>
+                        <path d="M12 7h.01"></path>
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <p class="section-label">
+                        IMPORTANT
+                    </p>
+
+                    <h3>
+                        Review investment terms before investing
+                    </h3>
+
+                    <p>
+                        The figures shown on this dashboard are
+                        projections for demonstration and planning.
+                        Investment outcomes depend on the applicable
+                        investment terms and conditions.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ================= FOOTER ================= -->
+
+            <footer class="dashboard-footer">
+
+                <div>
+                    © <span id="year"></span> Crown Cash.
+                    All rights reserved.
+                </div>
+
+                <div class="footer-links">
+
+                    <a href="support.html">
+                        Support
+                    </a>
+
+                    <a href="profile.html">
+                        Profile
+                    </a>
+
+                </div>
+
+            </footer>
 
         </section>
-
-
-
-        <!-- =================================================
-             SECURITY
-        ================================================= -->
-
-        <section class="security-notice">
-
-
-            <div class="security-icon">
-
-                <i data-lucide="shield-check"></i>
-
-            </div>
-
-
-            <div>
-
-                <strong>
-                    Keep your account secure
-                </strong>
-
-                <p>
-                    Never share your password, PIN or
-                    verification information with anyone.
-                </p>
-
-            </div>
-
-        </section>
-
 
     </main>
-
-
-
-    <!-- =================================================
-         FOOTER
-    ================================================= -->
-
-    <footer>
-
-        <p>
-
-            © <span id="year"></span>
-            Crown Cash. All rights reserved.
-
-        </p>
-
-    </footer>
-
 
 </div>
 
 
-
-<!-- =====================================================
-     LUCIDE ICONS
-===================================================== -->
-
-<script src="https://unpkg.com/lucide@latest"></script>
-
-
-<script>
-
-    lucide.createIcons();
-
-</script>
-
-
-<!-- Dashboard JavaScript -->
-
 <script src="dashboard.js"></script>
 
-
 </body>
-
 </html>

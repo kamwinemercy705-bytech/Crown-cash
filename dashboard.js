@@ -163,77 +163,143 @@ async function loadDashboard() {
 
 loadDashboard();
 
+/*
+|--------------------------------------------------------------------------
+| INVESTMENT RETURN CALCULATOR
+|--------------------------------------------------------------------------
+*/
+
 const DAILY_RATE = 0.10;
 const INVESTMENT_DAYS = 30;
 
-const investmentAmountInput =
-    document.getElementById("investmentAmount");
-
-const previewInvestment =
-    document.getElementById("previewInvestment");
-
-const dailyReturn =
-    document.getElementById("dailyReturn");
-
-const monthlyReturn =
-    document.getElementById("monthlyReturn");
-
-const totalAfter30 =
-    document.getElementById("totalAfter30");
-
 
 function formatUGX(amount) {
-    return "UGX " + Math.round(amount).toLocaleString("en-UG");
+
+    return "UGX " +
+        Math.round(Number(amount) || 0)
+            .toLocaleString("en-UG");
+
 }
 
 
 function updateInvestmentPreview() {
 
+    const input =
+        document.getElementById("investmentAmount");
+
+    const dailyElement =
+        document.getElementById("dailyReturn");
+
+    const monthlyElement =
+        document.getElementById("monthlyReturn");
+
+    const totalElement =
+        document.getElementById("totalAfter30");
+
+
+    if (!input) return;
+
+
     const amount =
-        Number(investmentAmountInput.value) || 0;
+        Number(input.value) || 0;
+
+
+    /*
+    | 10% of investment amount
+    */
 
     const estimatedDailyReturn =
         amount * DAILY_RATE;
 
+
+    /*
+    | 10% × 30 days
+    */
+
     const estimated30DayReturn =
         estimatedDailyReturn * INVESTMENT_DAYS;
+
+
+    /*
+    | Original investment + projected return
+    */
 
     const estimatedTotal =
         amount + estimated30DayReturn;
 
 
-    previewInvestment.textContent =
-        formatUGX(amount);
+    if (dailyElement) {
 
-    dailyReturn.textContent =
-        formatUGX(estimatedDailyReturn);
+        dailyElement.textContent =
+            formatUGX(estimatedDailyReturn);
 
-    monthlyReturn.textContent =
-        formatUGX(estimated30DayReturn);
+    }
 
-    totalAfter30.textContent =
-        formatUGX(estimatedTotal);
+
+    if (monthlyElement) {
+
+        monthlyElement.textContent =
+            formatUGX(estimated30DayReturn);
+
+    }
+
+
+    if (totalElement) {
+
+        totalElement.textContent =
+            formatUGX(estimatedTotal);
+
+    }
+
 }
 
 
-investmentAmountInput.addEventListener(
-    "input",
-    updateInvestmentPreview
-);
+const investmentAmountInput =
+    document.getElementById("investmentAmount");
+
+
+if (investmentAmountInput) {
+
+    investmentAmountInput.addEventListener(
+        "input",
+        updateInvestmentPreview
+    );
+
+}
 
 
 function goToInvestment() {
 
-    const amount =
-        Number(investmentAmountInput.value) || 0;
+    const input =
+        document.getElementById("investmentAmount");
 
-    if (amount <= 0) {
-        alert("Please enter an investment amount.");
+
+    if (!input) {
+
         return;
+
     }
 
+
+    const amount =
+        Number(input.value) || 0;
+
+
+    if (amount <= 0) {
+
+        alert(
+            "Please enter an investment amount."
+        );
+
+        return;
+
+    }
+
+
     window.location.href =
-        "investments.html?amount=" + encodeURIComponent(amount);
+        "investments.html?amount=" +
+        encodeURIComponent(amount);
+
 }
 
 

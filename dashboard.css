@@ -2342,3 +2342,176 @@ footer {
 
 
 }
+
+/* =====================================================
+   INVESTMENT RETURN SECTION
+===================================================== */
+
+.investment-return-section {
+    margin-top: 30px;
+}
+
+
+.return-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+.investment-calculator {
+    margin-top: 18px;
+    padding: 26px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(184, 0, 255, 0.12);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.07);
+}
+
+
+.calculator-intro {
+    margin-bottom: 22px;
+}
+
+
+.calculator-intro h3 {
+    margin: 7px 0;
+}
+
+
+.calculator-intro p {
+    margin: 0;
+    line-height: 1.6;
+    opacity: 0.72;
+}
+
+
+.calculator-input-area {
+    margin-bottom: 20px;
+}
+
+
+.calculator-input-area label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+
+.amount-input {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+
+.amount-input span {
+    padding: 15px;
+    font-weight: 800;
+    background: #f5f5f5;
+}
+
+
+.amount-input input {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    outline: none;
+    padding: 15px;
+    font-size: 17px;
+}
+
+
+.return-display {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+
+.return-item {
+    padding: 18px;
+    border-radius: 14px;
+    background: #f8f7fa;
+}
+
+
+.return-item span {
+    display: block;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 8px;
+}
+
+
+.return-item strong {
+    display: block;
+    font-size: 20px;
+}
+
+
+.invest-button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+
+.active-investment-box {
+    margin-top: 20px;
+    padding: 25px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(184, 0, 255, 0.12);
+}
+
+
+.active-investment-heading span {
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0.65;
+}
+
+
+.active-investment-heading h3 {
+    margin-top: 6px;
+}
+
+
+.no-investment {
+    padding: 25px;
+    text-align: center;
+    border-radius: 14px;
+    background: #f8f7fa;
+}
+
+
+.no-investment p {
+    margin-bottom: 0;
+    opacity: 0.7;
+}
+
+
+@media (max-width: 650px) {
+
+    .return-display {
+        grid-template-columns: 1fr;
+    }
+
+    .investment-calculator,
+    .active-investment-box {
+        padding: 20px;
+    }
+
+}

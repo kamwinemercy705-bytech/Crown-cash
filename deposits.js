@@ -1,12 +1,8 @@
 /* =========================================================
-   CROWN CASH — DEPOSIT PAGE JAVASCRIPT
-   ========================================================= */
+   CROWN CASH — DEPOSIT JAVASCRIPT
+========================================================= */
 
 document.addEventListener("DOMContentLoaded", function () {
-
-    /* =====================================================
-       CONFIGURATION
-    ===================================================== */
 
     const API_BASE =
         "https://crown-cash1.onrender.com";
@@ -25,20 +21,32 @@ document.addEventListener("DOMContentLoaded", function () {
     const phoneInput =
         document.getElementById("phone");
 
+    const paymentMethodInput =
+        document.getElementById("paymentMethod");
+
     const depositBtn =
         document.getElementById("depositBtn");
 
-    const formMessage =
-        document.getElementById("formMessage");
+    const depositMessage =
+        document.getElementById("depositMessage");
 
-    const currentBalance =
-        document.getElementById("currentBalance");
+    const balanceElement =
+        document.getElementById("balance");
 
     const topUserName =
         document.getElementById("topUserName");
 
-    const currentYear =
-        document.getElementById("currentYear");
+    const avatar =
+        document.getElementById("avatar");
+
+    const merchantCode =
+        document.getElementById("merchantCode");
+
+    const merchantLabel =
+        document.getElementById("merchantLabel");
+
+    const copyMerchant =
+        document.getElementById("copyMerchant");
 
     const menuBtn =
         document.getElementById("menuBtn");
@@ -46,11 +54,33 @@ document.addEventListener("DOMContentLoaded", function () {
     const sidebar =
         document.getElementById("sidebar");
 
-    const sidebarOverlay =
-        document.getElementById("sidebarOverlay");
-
     const logoutBtn =
         document.getElementById("logoutBtn");
+
+    const currentYear =
+        document.getElementById("currentYear");
+
+
+    /* =====================================================
+       MERCHANT CODES — DEMO
+    ===================================================== */
+
+    /*
+     * These are DEMO PLACEHOLDERS.
+     *
+     * Replace them with your actual merchant codes when
+     * you have them.
+     *
+     * Do not use a personal phone number here.
+     */
+
+    const MERCHANT_CODES = {
+
+        MTN: "YOUR_MTN_MERCHANT_CODE",
+
+        AIRTEL: "YOUR_AIRTEL_MERCHANT_CODE"
+
+    };
 
 
     /* =====================================================
@@ -64,155 +94,220 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =====================================================
-       FORMAT UGX
+       LOAD USER
     ===================================================== */
 
-    function formatUGX(value) {
+    let savedUser = null;
 
-        const number =
-            Number(value) || 0;
+    try {
 
-        return number.toLocaleString("en-UG", {
-            maximumFractionDigits: 0
-        });
-
-    }
-
-
-    /* =====================================================
-       MESSAGE
-    ===================================================== */
-
-    function showMessage(message, type) {
-
-        if (!formMessage) {
-            return;
-        }
-
-        formMessage.textContent =
-            message || "";
-
-        formMessage.className =
-            "form-message " + (type || "");
-
-    }
-
-
-    /* =====================================================
-       LOAD SAVED USER
-    ===================================================== */
-
-    function loadSavedUser() {
-
-        try {
-
-            const savedUser =
+        savedUser =
+            JSON.parse(
                 localStorage.getItem(
                     "crowncash_user"
-                );
-
-            if (!savedUser) {
-                return;
-            }
-
-            const user =
-                JSON.parse(savedUser);
-
-            if (
-                topUserName &&
-                user
-            ) {
-
-                const firstName =
-                    user.firstName || "";
-
-                topUserName.textContent =
-                    firstName || "User";
-
-            }
-
-            if (
-                currentBalance &&
-                user
-            ) {
-
-                currentBalance.textContent =
-                    formatUGX(
-                        user.balance || 0
-                    );
-
-            }
-
-            if (
-                phoneInput &&
-                user.phone
-            ) {
-
-                phoneInput.value =
-                    user.phone;
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Unable to load saved user:",
-                error
+                )
             );
+
+    } catch (error) {
+
+        savedUser = null;
+
+    }
+
+
+    if (savedUser) {
+
+        const firstName =
+            savedUser.firstName || "User";
+
+        const lastName =
+            savedUser.lastName || "";
+
+        const fullName =
+            `${firstName} ${lastName}`.trim();
+
+        if (topUserName) {
+            topUserName.textContent =
+                fullName;
+        }
+
+        if (avatar) {
+            avatar.textContent =
+                firstName
+                    .charAt(0)
+                    .toUpperCase();
+        }
+
+        if (
+            savedUser.balance !== undefined
+        ) {
+
+            balanceElement.textContent =
+                Number(
+                    savedUser.balance || 0
+                ).toLocaleString();
 
         }
 
     }
-
-    loadSavedUser();
 
 
     /* =====================================================
        MOBILE MENU
     ===================================================== */
 
-    function openSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.add("open");
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.classList.add("show");
-        }
-
-    }
-
-
-    function closeSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.remove("open");
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.classList.remove("show");
-        }
-
-    }
-
-
-    if (menuBtn) {
+    if (menuBtn && sidebar) {
 
         menuBtn.addEventListener(
             "click",
             function () {
 
+                sidebar.classList.toggle(
+                    "open"
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       UPDATE MERCHANT CODE
+    ===================================================== */
+
+    function updateMerchantCode(method) {
+
+        const code =
+            MERCHANT_CODES[method] ||
+            "Merchant code unavailable";
+
+        if (merchantCode) {
+            merchantCode.textContent =
+                code;
+        }
+
+        if (merchantLabel) {
+
+            merchantLabel.textContent =
+                method === "MTN"
+                    ? "MTN Merchant Code"
+                    : "Airtel Merchant Code";
+
+        }
+
+    }
+
+
+    updateMerchantCode("MTN");
+
+
+    /* =====================================================
+       PAYMENT METHOD SELECTION
+    ===================================================== */
+
+    const methodButtons =
+        document.querySelectorAll(
+            ".method-btn"
+        );
+
+
+    methodButtons.forEach(
+        function (button) {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    methodButtons.forEach(
+                        function (item) {
+
+                            item.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                    button.classList.add(
+                        "active"
+                    );
+
+
+                    const method =
+                        button.dataset.method;
+
+
+                    paymentMethodInput.value =
+                        method;
+
+
+                    updateMerchantCode(
+                        method
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+    /* =====================================================
+       COPY MERCHANT CODE
+    ===================================================== */
+
+    if (copyMerchant) {
+
+        copyMerchant.addEventListener(
+            "click",
+            async function () {
+
+                const code =
+                    merchantCode.textContent.trim();
+
                 if (
-                    sidebar &&
-                    sidebar.classList.contains("open")
+                    !code ||
+                    code === "Loading..." ||
+                    code.includes("YOUR_")
                 ) {
 
-                    closeSidebar();
+                    showMessage(
+                        "Set the actual merchant code before copying.",
+                        "error"
+                    );
 
-                } else {
+                    return;
 
-                    openSidebar();
+                }
+
+
+                try {
+
+                    await navigator.clipboard.writeText(
+                        code
+                    );
+
+                    copyMerchant.textContent =
+                        "Copied";
+
+                    setTimeout(
+                        function () {
+
+                            copyMerchant.textContent =
+                                "Copy";
+
+                        },
+                        1500
+                    );
+
+                } catch (error) {
+
+                    showMessage(
+                        "Unable to copy merchant code.",
+                        "error"
+                    );
 
                 }
 
@@ -222,47 +317,66 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    if (sidebarOverlay) {
+    /* =====================================================
+       MESSAGE
+    ===================================================== */
 
-        sidebarOverlay.addEventListener(
-            "click",
-            closeSidebar
-        );
+    function showMessage(
+        message,
+        type = "info"
+    ) {
+
+        if (!depositMessage) {
+            return;
+        }
+
+        depositMessage.textContent =
+            message;
+
+        if (type === "success") {
+
+            depositMessage.style.color =
+                "#3ddc97";
+
+        } else if (type === "error") {
+
+            depositMessage.style.color =
+                "#ff6b7a";
+
+        } else {
+
+            depositMessage.style.color =
+                "#a89fba";
+
+        }
 
     }
 
 
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(function (item) {
-
-            item.addEventListener(
-                "click",
-                closeSidebar
-            );
-
-        });
-
-
     /* =====================================================
-       PHONE NORMALIZATION
+       VALIDATE PHONE
     ===================================================== */
 
-    function normalizeUgandaPhone(phone) {
+    function normalizePhone(phone) {
 
         let value =
-            String(phone || "")
+            phone
                 .trim()
-                .replace(/\s+/g, "")
-                .replace(/-/g, "");
+                .replace(/[\s\-]/g, "");
 
-        if (value.startsWith("+256")) {
+
+        if (
+            value.startsWith("+256")
+        ) {
 
             value =
                 "0" +
                 value.substring(4);
 
-        } else if (
+        }
+
+
+        if (
             value.startsWith("256")
         ) {
 
@@ -272,50 +386,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }
 
+
         return value;
-
-    }
-
-
-    /* =====================================================
-       PHONE VALIDATION
-    ===================================================== */
-
-    function validUgandaPhone(phone) {
-
-        return /^07\d{8}$/.test(phone);
-
-    }
-
-
-    /* =====================================================
-       AMOUNT VALIDATION
-    ===================================================== */
-
-    function validAmount(amount) {
-
-        return (
-            Number.isFinite(amount) &&
-            amount >= 1000
-        );
-
-    }
-
-
-    /* =====================================================
-       GET PAYMENT METHOD
-    ===================================================== */
-
-    function getPaymentMethod() {
-
-        const selected =
-            document.querySelector(
-                'input[name="paymentMethod"]:checked'
-            );
-
-        return selected
-            ? selected.value
-            : "";
 
     }
 
@@ -332,56 +404,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 event.preventDefault();
 
-                showMessage("", "");
+
+                showMessage(
+                    "",
+                    "info"
+                );
+
 
                 const amount =
                     Number(
-                        amountInput
-                            ? amountInput.value
-                            : 0
+                        amountInput.value
                     );
+
 
                 const phone =
-                    normalizeUgandaPhone(
-                        phoneInput
-                            ? phoneInput.value
-                            : ""
+                    normalizePhone(
+                        phoneInput.value
                     );
 
+
                 const paymentMethod =
-                    getPaymentMethod();
+                    paymentMethodInput.value;
 
 
                 /* -----------------------------------------
-                   VALIDATION
+                   VALIDATE AMOUNT
                 ----------------------------------------- */
 
-                if (!validAmount(amount)) {
+                if (
+                    !Number.isFinite(amount) ||
+                    amount < 1000
+                ) {
 
                     showMessage(
                         "Minimum deposit is UGX 1,000.",
                         "error"
                     );
-
-                    if (amountInput) {
-                        amountInput.focus();
-                    }
-
-                    return;
-
-                }
-
-
-                if (!validUgandaPhone(phone)) {
-
-                    showMessage(
-                        "Enter a valid Uganda mobile-money number.",
-                        "error"
-                    );
-
-                    if (phoneInput) {
-                        phoneInput.focus();
-                    }
 
                     return;
 
@@ -389,12 +447,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (
-                    paymentMethod !== "MTN" &&
-                    paymentMethod !== "AIRTEL"
+                    !Number.isInteger(amount)
                 ) {
 
                     showMessage(
-                        "Please select a payment method.",
+                        "Deposit amount must be a whole UGX amount.",
                         "error"
                     );
 
@@ -404,46 +461,59 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 /* -----------------------------------------
-                   BUTTON STATE
+                   VALIDATE PHONE
                 ----------------------------------------- */
 
-                const originalButtonHTML =
-                    depositBtn
-                        ? depositBtn.innerHTML
-                        : "";
+                if (
+                    !/^07\d{8}$/.test(phone)
+                ) {
 
-                if (depositBtn) {
+                    showMessage(
+                        "Enter a valid Uganda mobile-money number.",
+                        "error"
+                    );
 
-                    depositBtn.disabled = true;
-
-                    depositBtn.innerHTML = `
-                        <span class="btn-icon">
-                            <svg viewBox="0 0 24 24"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="1.8"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="8"/>
-                                <path d="M12 8v4l2.5 2"/>
-                            </svg>
-                        </span>
-                        <span>Processing...</span>
-                    `;
+                    return;
 
                 }
 
 
-                try {
+                /* -----------------------------------------
+                   VALIDATE METHOD
+                ----------------------------------------- */
 
-                    /* -------------------------------------
-                       SEND REQUEST TO RENDER BACKEND
-                    ------------------------------------- */
+                if (
+                    paymentMethod !== "MTN" &&
+                    paymentMethod !== "AIRTEL"
+                ) {
+
+                    showMessage(
+                        "Please select MTN or Airtel.",
+                        "error"
+                    );
+
+                    return;
+
+                }
+
+
+                /* -----------------------------------------
+                   BUTTON
+                ----------------------------------------- */
+
+                depositBtn.disabled = true;
+
+                depositBtn.querySelector(
+                    "span"
+                ).textContent =
+                    "Submitting...";
+
+
+                try {
 
                     const response =
                         await fetch(
-                            API_BASE +
-                            "/create_deposit.php",
+                            `${API_BASE}/create_deposit.php`,
                             {
                                 method: "POST",
 
@@ -454,16 +524,19 @@ document.addEventListener("DOMContentLoaded", function () {
                                         "application/json"
                                 },
 
-                                body: JSON.stringify({
+                                body:
+                                    JSON.stringify({
 
-                                    amount: amount,
+                                        amount:
+                                            amount,
 
-                                    phone: phone,
+                                        phone:
+                                            phone,
 
-                                    paymentMethod:
-                                        paymentMethod
+                                        paymentMethod:
+                                            paymentMethod
 
-                                })
+                                    })
 
                             }
                         );
@@ -473,103 +546,81 @@ document.addEventListener("DOMContentLoaded", function () {
                         await response.json();
 
 
-                    /* -------------------------------------
-                       BACKEND ERROR
-                    ------------------------------------- */
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            result.message ||
-                            "Unable to create deposit request."
-                        );
-
-                    }
-
-
-                    if (!result.success) {
+                    if (
+                        !response.ok ||
+                        !result.success
+                    ) {
 
                         throw new Error(
                             result.message ||
-                            "Deposit request was not successful."
+                            "Deposit request failed."
                         );
 
                     }
 
 
                     /* -------------------------------------
-                       SUCCESS
+                       UPDATE LOCAL USER BALANCE
+                       Balance should remain unchanged because
+                       deposit is still pending.
                     ------------------------------------- */
+
+                    if (
+                        result.user
+                    ) {
+
+                        localStorage.setItem(
+                            "crowncash_user",
+                            JSON.stringify(
+                                result.user
+                            )
+                        );
+
+                    }
+
 
                     showMessage(
-                        result.message ||
-                        "Deposit request created successfully.",
+                        `Deposit request ${result.deposit.reference} created successfully. Payment remains pending until verified.`,
                         "success"
                     );
 
 
-                    /*
-                     * IMPORTANT:
-                     *
-                     * The frontend does NOT automatically
-                     * increase the user's balance.
-                     *
-                     * The balance should only change after
-                     * the payment provider confirms payment.
-                     */
+                    depositForm.reset();
 
 
-                    if (
-                        result.deposit &&
-                        result.deposit.status
-                    ) {
+                    paymentMethodInput.value =
+                        "MTN";
 
-                        console.log(
-                            "Deposit status:",
-                            result.deposit.status
+
+                    methodButtons.forEach(
+                        function (button) {
+
+                            button.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                    const mtnButton =
+                        document.querySelector(
+                            '.method-btn[data-method="MTN"]'
+                        );
+
+
+                    if (mtnButton) {
+
+                        mtnButton.classList.add(
+                            "active"
                         );
 
                     }
 
 
-                    /*
-                     * Refresh saved user information if
-                     * the backend returned updated data.
-                     */
-
-                    if (result.user) {
-
-                        try {
-
-                            localStorage.setItem(
-                                "crowncash_user",
-                                JSON.stringify(
-                                    result.user
-                                )
-                            );
-
-                            if (
-                                currentBalance &&
-                                result.user.balance !== undefined
-                            ) {
-
-                                currentBalance.textContent =
-                                    formatUGX(
-                                        result.user.balance
-                                    );
-
-                            }
-
-                        } catch (storageError) {
-
-                            console.warn(
-                                "Could not update saved user.",
-                                storageError
-                            );
-
-                        }
-
-                    }
+                    updateMerchantCode(
+                        "MTN"
+                    );
 
 
                 } catch (error) {
@@ -579,22 +630,22 @@ document.addEventListener("DOMContentLoaded", function () {
                         error
                     );
 
+
                     showMessage(
                         error.message ||
-                        "Unable to connect to the deposit server.",
+                        "Unable to create deposit request.",
                         "error"
                     );
 
                 } finally {
 
-                    if (depositBtn) {
+                    depositBtn.disabled =
+                        false;
 
-                        depositBtn.disabled = false;
-
-                        depositBtn.innerHTML =
-                            originalButtonHTML;
-
-                    }
+                    depositBtn.querySelector(
+                        "span"
+                    ).textContent =
+                        "Submit Deposit Request";
 
                 }
 
@@ -617,7 +668,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 try {
 
                     await fetch(
-                        API_BASE + "/logout.php",
+                        `${API_BASE}/logout.php`,
                         {
                             method: "POST",
                             credentials: "include"
@@ -626,90 +677,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 } catch (error) {
 
-                    console.warn(
-                        "Logout request failed:",
+                    console.log(
+                        "Logout request error:",
                         error
                     );
 
-                } finally {
-
-                    localStorage.removeItem(
-                        "crowncash_user"
-                    );
-
-                    window.location.href =
-                        "login.html";
-
                 }
 
-            }
-        );
 
-    }
+                localStorage.removeItem(
+                    "crowncash_user"
+                );
 
 
-    /* =====================================================
-       AMOUNT INPUT CLEANUP
-    ===================================================== */
-
-    if (amountInput) {
-
-        amountInput.addEventListener(
-            "input",
-            function () {
-
-                if (
-                    Number(this.value) < 0
-                ) {
-
-                    this.value = "";
-
-                }
-
-                showMessage("", "");
+                window.location.href =
+                    "login.html";
 
             }
         );
 
     }
-
-
-    /* =====================================================
-       PHONE INPUT CLEANUP
-    ===================================================== */
-
-    if (phoneInput) {
-
-        phoneInput.addEventListener(
-            "input",
-            function () {
-
-                this.value =
-                    this.value
-                        .replace(/[^\d+]/g, "")
-                        .slice(0, 13);
-
-                showMessage("", "");
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       CLOSE MENU WITH ESCAPE
-    ===================================================== */
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Escape") {
-                closeSidebar();
-            }
-
-        }
-    );
 
 });

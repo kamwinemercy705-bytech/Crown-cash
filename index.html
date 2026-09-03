@@ -2,181 +2,363 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <meta name="description"
-          content="Crown Cash — A premium digital financial platform.">
+    <meta
+        name="description"
+        content="Crown Cash — A modern digital investment platform."
+    >
 
-    <meta name="theme-color" content="#07111f">
+    <title>Crown Cash | Smart Digital Investment</title>
 
-    <title>Crown Cash | Welcome</title>
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
 
     <!-- Homepage CSS -->
-    <link rel="stylesheet" href="index.css">
-
+    <link
+        rel="stylesheet"
+        href="index.css"
+    >
 </head>
 
 
 <body>
 
 
-<!-- =========================
+<!-- =====================================================
      HEADER
-========================= -->
+===================================================== -->
 
 <header class="site-header">
 
-    <div class="container nav-container">
+    <div class="header-container">
 
-        <a href="index.html" class="logo">
 
-            <span class="logo-icon">C</span>
+        <!-- LOGO -->
+
+        <a
+            href="index.html"
+            class="brand-logo"
+            aria-label="Crown Cash Home"
+        >
+
+            <span class="logo-crown">
+
+                <svg
+                    viewBox="0 0 64 64"
+                    aria-hidden="true"
+                >
+                    <path d="M8 18L18 28L32 10L46 28L56 18L52 50H12L8 18Z"/>
+                    <path d="M13 55H51"/>
+                </svg>
+
+            </span>
+
 
             <span class="logo-text">
-                Crown<span>Cash</span>
+
+                <strong>CROWN</strong>
+                <span>CASH</span>
+
             </span>
 
         </a>
 
 
-        <button
-            class="menu-toggle"
-            id="menuToggle"
-            type="button"
-            aria-label="Open navigation">
+        <!-- DESKTOP NAVIGATION -->
 
-            ☰
+        <nav
+            class="main-nav"
+            aria-label="Main navigation"
+        >
 
-        </button>
-
-
-        <nav id="mainNav">
-
-            <a href="index.html" class="active">
+            <a
+                href="#home"
+                class="active"
+            >
                 Home
             </a>
 
-            <a href="about.html">
+            <a href="#about">
                 About
             </a>
 
-            <a href="support.html">
+            <a href="#how-it-works">
+                How It Works
+            </a>
+
+            <a href="#features">
+                Features
+            </a>
+
+            <a href="#support">
                 Support
-            </a>
-
-            <a href="login.html">
-                Login
-            </a>
-
-            <a
-                href="register.html"
-                class="nav-register">
-
-                Get Started
-
             </a>
 
         </nav>
 
+
+        <!-- HEADER ACTIONS -->
+
+        <div class="header-actions">
+
+            <a
+                href="login.html"
+                class="login-link"
+            >
+                Sign In
+            </a>
+
+            <a
+                href="register.html"
+                class="header-btn"
+            >
+                Get Started
+            </a>
+
+        </div>
+
+
+        <!-- MOBILE MENU BUTTON -->
+
+        <button
+            type="button"
+            id="mobileMenuBtn"
+            class="mobile-menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M4 7H20M4 12H20M4 17H20"/>
+            </svg>
+
+        </button>
+
     </div>
+
+
+    <!-- MOBILE NAVIGATION -->
+
+    <nav
+        id="mobileNav"
+        class="mobile-nav"
+        aria-label="Mobile navigation"
+    >
+
+        <a href="#home">
+            Home
+        </a>
+
+        <a href="#about">
+            About
+        </a>
+
+        <a href="#how-it-works">
+            How It Works
+        </a>
+
+        <a href="#features">
+            Features
+        </a>
+
+        <a href="#support">
+            Support
+        </a>
+
+        <a href="login.html">
+            Sign In
+        </a>
+
+        <a
+            href="register.html"
+            class="mobile-register"
+        >
+            Get Started
+        </a>
+
+    </nav>
 
 </header>
 
 
 
-<!-- =========================
+<!-- =====================================================
      MAIN
-========================= -->
+===================================================== -->
 
 <main>
 
 
-<!-- =========================
-     PREMIUM HERO
-========================= -->
+<!-- =====================================================
+     HERO SECTION
+===================================================== -->
 
-<section class="hero">
+<section
+    id="home"
+    class="hero-section"
+>
 
-    <div class="hero-background">
-
-        <div class="orb orb-one"></div>
-
-        <div class="orb orb-two"></div>
-
-        <div class="grid-pattern"></div>
-
-    </div>
+    <div class="hero-container">
 
 
-    <div class="container hero-container">
-
+        <!-- HERO CONTENT -->
 
         <div class="hero-content">
 
 
-            <div class="welcome-label">
+            <div class="section-label">
 
                 <span class="label-line"></span>
 
-                WELCOME TO CROWN CASH
-
-                <span class="label-line"></span>
+                <span>
+                    SMART DIGITAL INVESTMENT
+                </span>
 
             </div>
 
 
             <h1>
 
-                A Smarter
+                WELCOME TO
 
-                <span>Digital Future.</span>
+                <span class="gradient-text">
+                    CROWN CASH
+                </span>
 
             </h1>
 
 
+            <p class="hero-subtitle">
+                A smarter digital future for your
+                financial journey.
+            </p>
+
+
             <p class="hero-description">
 
-                Welcome to Crown Cash — a modern digital
-                platform designed to bring your financial
-                activities, account management and digital
-                experience together in one place.
+                Crown Cash provides a modern platform
+                where you can manage your account,
+                explore investment opportunities,
+                track your activity and monitor your
+                financial progress from one place.
 
             </p>
 
+
+            <!-- HERO BUTTONS -->
 
             <div class="hero-buttons">
 
                 <a
                     href="register.html"
-                    class="primary-button">
+                    class="primary-btn"
+                >
 
                     Create Account
 
-                    <span>→</span>
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M5 12H19"/>
+                        <path d="M13 6L19 12L13 18"/>
+                    </svg>
 
                 </a>
 
 
                 <a
                     href="login.html"
-                    class="secondary-button">
+                    class="secondary-btn"
+                >
 
                     Sign In
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M15 3H19C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H15"/>
+                        <path d="M10 17L15 12L10 7"/>
+                        <path d="M15 12H3"/>
+                    </svg>
 
                 </a>
 
             </div>
 
 
-            <div class="hero-note">
+            <!-- TRUST LINE -->
 
-                <span class="check">✓</span>
+            <div class="hero-trust">
 
-                Simple • Secure • Transparent
+                <span>
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3L20 6V11C20 16 16.5 20 12 21C7.5 20 4 16 4 11V6L12 3Z"/>
+                        <path d="M9 12L11 14L15 10"/>
+                    </svg>
+
+                    Simple
+
+                </span>
+
+
+                <span>
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <rect
+                            x="4"
+                            y="4"
+                            width="16"
+                            height="16"
+                            rx="4"
+                        />
+
+                        <path d="M8 12L11 15L16 9"/>
+                    </svg>
+
+                    Secure
+
+                </span>
+
+
+                <span>
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                        />
+
+                        <path d="M12 7V12L15 14"/>
+                    </svg>
+
+                    Transparent
+
+                </span>
 
             </div>
 
@@ -184,77 +366,183 @@
 
 
 
-        <!-- PREMIUM VISUAL -->
+        <!-- =================================================
+             HERO VISUAL
+        ================================================= -->
 
         <div class="hero-visual">
 
 
-            <div class="premium-card">
+            <div class="glow-orb orb-one"></div>
+
+            <div class="glow-orb orb-two"></div>
 
 
-                <div class="card-top">
+            <!-- MAIN CARD -->
 
-                    <div class="mini-logo">
-                        C
+            <div class="hero-card">
+
+
+                <!-- CARD TOP -->
+
+                <div class="hero-card-top">
+
+                    <div>
+
+                        <span class="card-small-label">
+                            CROWN CASH
+                        </span>
+
+                        <h3>
+                            Financial Overview
+                        </h3>
+
                     </div>
 
-                    <span>
-                        CROWN CASH
-                    </span>
 
-                    <div class="card-status">
-                        ●
+                    <div class="card-crown">
+
+                        <svg
+                            viewBox="0 0 64 64"
+                            aria-hidden="true"
+                        >
+                            <path d="M8 18L18 28L32 10L46 28L56 18L52 50H12L8 18Z"/>
+                            <path d="M13 55H51"/>
+                        </svg>
+
                     </div>
 
                 </div>
 
 
-                <div class="card-middle">
+                <!-- BALANCE -->
 
-                    <p>
-                        YOUR DIGITAL
-                    </p>
+                <div class="hero-balance">
 
-                    <h2>
-                        FINANCIAL
-                        <br>
-                        JOURNEY
-                    </h2>
+                    <span>
+                        AVAILABLE BALANCE
+                    </span>
+
+                    <strong>
+                        UGX 0
+                    </strong>
 
                 </div>
 
 
-                <div class="card-bottom">
+                <!-- CARD STATS -->
 
-                    <span>
-                        SMARTER
-                    </span>
+                <div class="hero-card-stats">
 
-                    <span>
-                        SIMPLER
-                    </span>
 
-                    <span>
-                        MODERN
-                    </span>
+                    <div class="mini-stat">
+
+                        <div class="mini-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <rect
+                                    x="3"
+                                    y="6"
+                                    width="18"
+                                    height="13"
+                                    rx="2"
+                                />
+
+                                <path d="M7 6V4H17V6"/>
+                                <path d="M16 13H18"/>
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Wallet
+                            </span>
+
+                            <strong>
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="mini-stat">
+
+                        <div class="mini-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path d="M12 3V21"/>
+                                <path d="M17 7C17 5.3 14.8 4 12 4C9.2 4 7 5.3 7 7C7 10 17 9 17 13C17 15.2 14.8 17 12 17C9.2 17 7 15.7 7 14"/>
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Daily Return
+                            </span>
+
+                            <strong>
+                                10%
+                            </strong>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
+
+                <!-- CARD BUTTON -->
+
+                <div class="hero-card-action">
+
+                    <a href="register.html">
+
+                        Start Your Journey
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path d="M5 12H19"/>
+                            <path d="M13 6L19 12L13 18"/>
+                        </svg>
+
+                    </a>
+
+                </div>
 
             </div>
 
 
-            <div class="floating-card card-one">
 
-                
-                  <span class="floating-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3l8 4v5c0 4.5-3.2 7.9-8 9-4.8-1.1-8-4.5-8-9V7l8-4z"></path>
-        <path d="M9 12l2 2 4-4"></path>
-    </svg>
-</span>
-  
-             
+            <!-- FLOATING SECURE CARD -->
+
+            <div class="floating-card secure-card">
+
+                <div class="floating-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3L20 6V11C20 16 16.5 20 12 21C7.5 20 4 16 4 11V6L12 3Z"/>
+                        <path d="M9 12L11 14L15 10"/>
+                    </svg>
+
+                </div>
 
                 <div>
 
@@ -262,40 +550,53 @@
                         Secure
                     </strong>
 
-                    <small>
-                        Account experience
-                    </small>
+                    <span>
+                        Account Protection
+                    </span>
 
                 </div>
 
             </div>
 
 
-            <div class="floating-card card-two">
 
-                
-                   <span class="floating-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 16l5-5 4 3 7-8"></path>
-        <path d="M15 6h5v5"></path>
-    </svg>
-</span> 
-            
+            <!-- FLOATING WALLET CARD -->
+
+            <div class="floating-card wallet-card">
+
+                <div class="floating-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <rect
+                            x="3"
+                            y="6"
+                            width="18"
+                            height="13"
+                            rx="2"
+                        />
+
+                        <path d="M7 6V4H17V6"/>
+                        <path d="M16 13H18"/>
+                    </svg>
+
+                </div>
 
                 <div>
 
                     <strong>
-                        Simple
+                        Smart Wallet
                     </strong>
 
-                    <small>
-                        Easy navigation
-                    </small>
+                    <span>
+                        Manage your funds
+                    </span>
 
                 </div>
 
             </div>
-
 
         </div>
 
@@ -305,33 +606,43 @@
 
 
 
-<!-- =========================
-     WELCOME SECTION
-========================= -->
+<!-- =====================================================
+     ABOUT SECTION
+===================================================== -->
 
-<section class="welcome-section">
+<section
+    id="about"
+    class="about-section"
+>
 
-    <div class="container">
+    <div class="section-container">
 
 
         <div class="section-heading">
 
-            <span class="section-label">
-                THE CROWN CASH EXPERIENCE
-            </span>
+            <div class="section-label">
+
+                <span class="label-line"></span>
+
+                ABOUT CROWN CASH
+
+            </div>
 
 
             <h2>
-                Designed around
-                <span>you.</span>
+                Built For A
+                <span class="gradient-text">
+                    Smarter Financial Future
+                </span>
             </h2>
 
 
             <p>
 
-                Crown Cash provides a clean and modern
-                environment where users can manage their
-                account and access platform services.
+                Crown Cash is designed with a simple
+                goal — to give users a modern,
+                convenient and transparent digital
+                financial experience.
 
             </p>
 
@@ -339,157 +650,502 @@
 
 
 
-        <div class="feature-grid">
+        <!-- ABOUT CARDS -->
 
+        <div class="about-grid">
+
+
+            <!-- WALLET -->
 
             <article class="feature-card">
 
-                <div class="feature-number">
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <rect
+                            x="3"
+                            y="6"
+                            width="18"
+                            height="13"
+                            rx="2"
+                        />
+
+                        <path d="M7 6V4H17V6"/>
+                        <path d="M16 13H18"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Smart Wallet
+                </h3>
+
+
+                <p>
+                    Keep track of your available
+                    balance and financial activity
+                    from one convenient dashboard.
+                </p>
+
+            </article>
+
+
+
+            <!-- INVESTMENT -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 19V5"/>
+                        <path d="M4 19H20"/>
+                        <path d="M7 15L11 11L14 14L20 7"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Investment
+                </h3>
+
+
+                <p>
+                    Explore available investment
+                    plans and monitor your investment
+                    progress in one place.
+                </p>
+
+            </article>
+
+
+
+            <!-- SECURITY -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3L20 6V11C20 16 16.5 20 12 21C7.5 20 4 16 4 11V6L12 3Z"/>
+                        <path d="M9 12L11 14L15 10"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Account Security
+                </h3>
+
+
+                <p>
+                    Designed with account protection
+                    and responsible access management
+                    in mind.
+                </p>
+
+            </article>
+
+
+
+            <!-- TRANSACTIONS -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M7 7H20L16 3"/>
+                        <path d="M17 17H4L8 21"/>
+                        <path d="M20 7C20 12 17 14 13 14H4"/>
+                        <path d="M4 17C4 12 7 10 11 10H20"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Transactions
+                </h3>
+
+
+                <p>
+                    Keep your account activity
+                    organized and easy to review.
+                </p>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     FEATURES
+===================================================== -->
+
+<section
+    id="features"
+    class="features-section"
+>
+
+    <div class="section-container">
+
+
+        <div class="section-heading center">
+
+            <div class="section-label">
+
+                <span class="label-line"></span>
+
+                PLATFORM FEATURES
+
+            </div>
+
+
+            <h2>
+                Everything In
+                <span class="gradient-text">
+                    One Place
+                </span>
+            </h2>
+
+        </div>
+
+
+
+        <div class="features-grid">
+
+
+            <!-- DEPOSIT -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3V17"/>
+                        <path d="M7 12L12 17L17 12"/>
+                        <path d="M5 21H19"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Easy Deposits
+                </h3>
+
+
+                <p>
+                    Access your deposit options and
+                    manage your account funding.
+                </p>
+
+            </article>
+
+
+
+            <!-- WITHDRAW -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 21V7"/>
+                        <path d="M7 12L12 7L17 12"/>
+                        <path d="M5 3H19"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Withdrawals
+                </h3>
+
+
+                <p>
+                    Submit and track withdrawal
+                    requests through your account.
+                </p>
+
+            </article>
+
+
+
+            <!-- TEAM -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle
+                            cx="9"
+                            cy="8"
+                            r="3"
+                        />
+
+                        <circle
+                            cx="17"
+                            cy="9"
+                            r="2"
+                        />
+
+                        <path d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"/>
+
+                        <path d="M15 15C16 14.3 17 14 18 14C20.2 14 22 15.8 22 18"/>
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Referral Team
+                </h3>
+
+
+                <p>
+                    Share your referral code and
+                    monitor your team activity.
+                </p>
+
+            </article>
+
+
+
+            <!-- SUPPORT -->
+
+            <article class="feature-card">
+
+                <div class="feature-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                        />
+
+                        <path d="M8 10C8 8.3 9.8 7 12 7C14.2 7 16 8.3 16 10C16 12 14 12.5 12 13.5V15"/>
+                        <circle
+                            cx="12"
+                            cy="18"
+                            r="1"
+                        />
+                    </svg>
+
+                </div>
+
+
+                <h3>
+                    Support
+                </h3>
+
+
+                <p>
+                    Get assistance and access support
+                    whenever you need it.
+                </p>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     HOW IT WORKS
+===================================================== -->
+
+<section
+    id="how-it-works"
+    class="steps-section"
+>
+
+    <div class="section-container">
+
+
+        <div class="section-heading center">
+
+            <div class="section-label">
+
+                <span class="label-line"></span>
+
+                HOW IT WORKS
+
+            </div>
+
+
+            <h2>
+                Start In
+                <span class="gradient-text">
+                    Three Simple Steps
+                </span>
+            </h2>
+
+        </div>
+
+
+
+        <div class="steps-grid">
+
+
+            <!-- STEP 1 -->
+
+            <article class="step-card">
+
+                <div class="step-number">
                     01
                 </div>
 
-                <div class="feature-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3l8 4v5c0 4.5-3.2 7.9-8 9-4.8-1.1-8-4.5-8-9V7l8-4z"></path>
-        <path d="M9 12l2 2 4-4"></path>
-    </svg>
-</div>
-                    ◇
+
+                <div class="step-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M16 21V19C16 16.8 14.2 15 12 15H6C3.8 15 2 16.8 2 19V21"/>
+                        <circle
+                            cx="9"
+                            cy="7"
+                            r="4"
+                        />
+                        <path d="M19 8V14"/>
+                        <path d="M22 11H16"/>
+                    </svg>
+
                 </div>
 
+
                 <h3>
-                    <div class="feature-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="3"></circle>
-        <path d="M5 20c.8-3.2 3.2-5 7-5s6.2 1.8 7 5"></path>
-    </svg>
-</div>
+                    Create Account
                 </h3>
 
+
                 <p>
-
-                    Create your personal account and
-                    manage your information from one
-                    convenient place.
-
+                    Register your Crown Cash account
+                    and securely access your dashboard.
                 </p>
-
-                <a href="register.html">
-                    Get started →
-                </a>
 
             </article>
 
 
 
-            <article class="feature-card dark-card">
+            <!-- STEP 2 -->
 
-                <div class="feature-number">
+            <article class="step-card">
+
+                <div class="step-number">
                     02
                 </div>
 
-                <div class="feature-icon">
-                    ◎
+
+                <div class="step-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="2"
+                        />
+
+                        <path d="M7 9H17"/>
+                        <path d="M7 13H12"/>
+                    </svg>
+
                 </div>
 
+
                 <h3>
-                    <div class="feature-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="3" y="3" width="18" height="18" rx="4"></rect>
-        <path d="M8 15v-3"></path>
-        <path d="M12 15V9"></path>
-        <path d="M16 15v-5"></path>
-    </svg>
-</div>
+                    Fund & Explore
                 </h3>
 
+
                 <p>
-
-                    Access a clean dashboard designed
-                    to make your platform experience
-                    simple and easy to understand.
-
+                    Manage your wallet and explore
+                    the available platform features.
                 </p>
-
-                <a href="login.html">
-                    Sign in →
-                </a>
 
             </article>
 
 
 
-            <article class="feature-card">
+            <!-- STEP 3 -->
 
-                <div class="feature-number">
+            <article class="step-card">
+
+                <div class="step-number">
                     03
                 </div>
 
-                <div class="feature-icon">
-                    ↗
+
+                <div class="step-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 19V5"/>
+                        <path d="M4 19H20"/>
+                        <path d="M7 15L11 11L14 14L20 7"/>
+                    </svg>
+
                 </div>
 
+
                 <h3>
-                 <div class="feature-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="9" cy="8" r="3"></circle>
-        <circle cx="17" cy="10" r="2.5"></circle>
-        <path d="M3.5 20c.7-3.4 2.7-5 5.5-5s4.8 1.6 5.5 5"></path>
-        <path d="M15 15c2.4 0 4.2 1.3 5 4"></path>
-    </svg>
-</div>
+                    Track Progress
                 </h3>
 
-                <p>
-
-                    Share your personal referral link
-                    and manage your eligible referral
-                    activity.
-
-                </p>
-
-                <a href="register.html">
-                    Join now →
-                </a>
-
-            </article>
-
-
-
-            <article class="feature-card">
-
-                <div class="feature-number">
-                    04
-                </div>
-
-                <div class="feature-icon">
-                    ◉
-                </div>
-
-                <h3>
-                    
-                </h3><div class="feature-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 13a8 8 0 0 1 16 0"></path>
-        <path d="M4 13v4"></path>
-        <path d="M20 13v4"></path>
-        <rect x="2.5" y="15" width="4" height="5" rx="2"></rect>
-        <rect x="17.5" y="15" width="4" height="5" rx="2"></rect>
-        <path d="M17.5 20c-.8 1-2.1 1.5-4 1.5"></path>
-    </svg>
-</div>
 
                 <p>
-
-                    Get assistance and find answers
-                    through the Crown Cash support
-                    center.
-
+                    Monitor your account, investments,
+                    transactions and financial activity.
                 </p>
-
-                <a href="support.html">
-                    Contact support →
-                </a>
 
             </article>
 
@@ -501,221 +1157,76 @@
 
 
 
-<!-- =========================
-     HOW IT WORKS
-========================= -->
-
-<section class="experience-section">
-
-    <div class="container">
-
-
-        <div class="experience-grid">
-
-
-            <div class="experience-text">
-
-                <span class="section-label">
-                    GET STARTED
-                </span>
-
-
-                <h2>
-                    Everything begins
-                    with one step.
-                </h2>
-
-
-                <p>
-
-                    Create your Crown Cash account and
-                    discover a simple digital environment
-                    built around your experience.
-
-                </p>
-
-
-                <a
-                    href="register.html"
-                    class="dark-button">
-
-                    
-Create Account
-
-<span class="button-icon">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 12h14"></path>
-        <path d="M13 6l6 6-6 6"></path>
-    </svg>
-</span>
-
-
-       .button-icon {
-
-    display: grid;
-
-    place-items: center;
-
-    width: 24px;
-    height: 24px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255,255,255,.15);
-}
-
-
-.button-icon svg {
-
-    width: 15px;
-    height: 15px;
-
-    fill: none;
-
-    stroke: currentColor;
-
-    stroke-width: 2;
-
-    stroke-linecap: round;
-
-    stroke-linejoin: round;
-}           
-
-                </a>
-
-            </div>
-
-
-
-            <div class="steps">
-
-
-                <div class="step">
-
-                    <div class="step-number">
-                        01
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            Create your account
-                        </h3>
-
-                        <p>
-                            Register your personal Crown Cash
-                            account.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="step">
-
-                    <div class="step-number">
-                        02
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            Complete your profile
-                        </h3>
-
-                        <p>
-                            Provide the information required
-                            for your account.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="step">
-
-                    <div class="step-number">
-                        03
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            Explore Crown Cash
-                        </h3>
-
-                        <p>
-                            Access the features available
-                            through your account.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-            </div>
+<!-- =====================================================
+     SUPPORT / CTA
+===================================================== -->
+
+<section
+    id="support"
+    class="cta-section"
+>
+
+    <div class="cta-container">
+
+
+        <div class="cta-icon">
+
+            <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M4 13C4 8 7.6 4 12 4C16.4 4 20 8 20 13"/>
+                <path d="M4 13V17C4 18.1 4.9 19 6 19H8V12H6C4.9 12 4 12.9 4 14"/>
+                <path d="M20 13V17C20 18.1 19.1 19 18 19H16V12H18C19.1 12 20 12.9 20 14"/>
+                <path d="M12 20H15"/>
+            </svg>
 
         </div>
 
-    </div>
 
-</section>
+        <div class="cta-content">
 
+            <div class="section-label">
 
+                <span class="label-line"></span>
 
-<!-- =========================
-     FINAL CTA
-========================= -->
-
-<section class="final-section">
-
-    <div class="container">
-
-        <div class="final-card">
-
-
-            <div class="final-content">
-
-                <span>
-                    WELCOME TO YOUR NEXT STEP
-                </span>
-
-
-                <h2>
-                    Your journey
-                    starts here.
-                </h2>
-
-
-                <p>
-
-                    Join Crown Cash and experience a
-                    modern approach to digital financial
-                    management.
-
-                </p>
-
-
-                <a
-                    href="register.html"
-                    class="light-button">
-
-                    Create Account
-
-                    <span>→</span>
-
-                </a>
+                CROWN CASH
 
             </div>
 
 
+            <h2>
+                Ready To Start Your
+                <span class="gradient-text">
+                    Financial Journey?
+                </span>
+            </h2>
+
+
+            <p>
+                Create your account and explore
+                the Crown Cash platform.
+            </p>
+
         </div>
+
+
+        <a
+            href="register.html"
+            class="primary-btn"
+        >
+
+            Get Started
+
+            <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+            >
+                <path d="M5 12H19"/>
+                <path d="M13 6L19 12L13 18"/>
+            </svg>
+
+        </a>
 
     </div>
 
@@ -726,35 +1237,47 @@ Create Account
 
 
 
-<!-- =========================
+<!-- =====================================================
      FOOTER
-========================= -->
+===================================================== -->
 
-<footer>
+<footer class="site-footer">
 
-    <div class="container footer-container">
+    <div class="footer-container">
 
 
         <div class="footer-brand">
 
-            <a href="index.html" class="logo">
+            <a
+                href="index.html"
+                class="brand-logo"
+            >
 
-                <span class="logo-icon">
-                    C
+                <span class="logo-crown">
+
+                    <svg
+                        viewBox="0 0 64 64"
+                        aria-hidden="true"
+                    >
+                        <path d="M8 18L18 28L32 10L46 28L56 18L52 50H12L8 18Z"/>
+                        <path d="M13 55H51"/>
+                    </svg>
+
                 </span>
 
+
                 <span class="logo-text">
-                    Crown<span>Cash</span>
+
+                    <strong>CROWN</strong>
+                    <span>CASH</span>
+
                 </span>
 
             </a>
 
 
             <p>
-
-                A modern digital platform designed
-                around a better user experience.
-
+                A smarter digital future.
             </p>
 
         </div>
@@ -763,68 +1286,42 @@ Create Account
 
         <div class="footer-links">
 
-            <h4>
-                Platform
-            </h4>
-
-            <a href="index.html">
+            <a href="#home">
                 Home
             </a>
 
-            <a href="about.html">
+            <a href="#about">
                 About
             </a>
 
-            <a href="support.html">
-                Support
+            <a href="#features">
+                Features
             </a>
 
-        </div>
-
-
-
-        <div class="footer-links">
-
-            <h4>
-                Account
-            </h4>
+            <a href="#support">
+                Support
+            </a>
 
             <a href="login.html">
                 Login
             </a>
 
-            <a href="register.html">
-                Register
-            </a>
-
         </div>
 
 
 
-        <div class="footer-links">
+        <div class="footer-bottom">
 
-            <h4>
-                Legal
-            </h4>
+            <span>
+                © <span id="currentYear"></span>
+                Crown Cash. All rights reserved.
+            </span>
 
-            <a href="terms.html">
-                Terms
-            </a>
-
-            <a href="privacy.html">
-                Privacy
-            </a>
+            <span>
+                Simple • Secure • Transparent
+            </span>
 
         </div>
-
-
-    </div>
-
-
-    <div class="copyright">
-
-        © <span id="year"></span>
-        Crown Cash. All rights reserved.
 
     </div>
 
@@ -832,12 +1329,11 @@ Create Account
 
 
 
-<!-- =========================
-     JAVASCRIPT
-========================= -->
+<!-- =====================================================
+     INDEX JAVASCRIPT
+===================================================== -->
 
 <script src="index.js"></script>
 
 </body>
-
 </html>

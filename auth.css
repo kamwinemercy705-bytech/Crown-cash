@@ -1,0 +1,1526 @@
+/* =========================================================
+   CROWN CASH
+   LOGIN + REGISTER
+   PREMIUM AUTHENTICATION DESIGN
+========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+
+    --black: #07060b;
+    --black-2: #0d0911;
+
+    --glass: rgba(25, 17, 31, 0.82);
+
+    --purple: #9d4edd;
+    --purple-light: #c084fc;
+    --purple-dark: #57228a;
+
+    --maroon: #681d3b;
+    --maroon-light: #8b2c50;
+
+    --gold: #f3c969;
+    --gold-light: #ffe4a3;
+
+    --white: #ffffff;
+    --text: #e9e4ed;
+    --muted: #918997;
+    --dim: #655d6b;
+
+    --border: rgba(180, 90, 255, 0.16);
+
+    --danger: #ef7777;
+    --success: #69d7a0;
+}
+
+
+/* =========================================================
+   BASE
+========================================================= */
+
+html {
+    min-height: 100%;
+}
+
+body {
+
+    min-height: 100vh;
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    background:
+
+        radial-gradient(
+            circle at 15% 15%,
+            rgba(120, 37, 158, 0.18),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 90% 85%,
+            rgba(101, 25, 55, 0.16),
+            transparent 30%
+        ),
+
+        var(--black);
+
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    border: 0;
+}
+
+a {
+    color: inherit;
+}
+
+
+/* =========================================================
+   SVG
+========================================================= */
+
+svg {
+
+    width: 20px;
+    height: 20px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.7;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+}
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.auth-page {
+
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(380px, 0.9fr)
+        minmax(500px, 1.1fr);
+
+}
+
+
+/* =========================================================
+   BRAND SIDE
+========================================================= */
+
+.auth-brand {
+
+    position: relative;
+
+    min-height: 100vh;
+
+    padding: 55px;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+
+        radial-gradient(
+            circle at 50% 30%,
+            rgba(123, 41, 154, 0.18),
+            transparent 40%
+        ),
+
+        linear-gradient(
+            145deg,
+            #120b17,
+            #0b0710
+        );
+
+    border-right:
+        1px solid rgba(155, 77, 255, 0.12);
+
+}
+
+
+/* =========================================================
+   DECORATIVE ORBS
+========================================================= */
+
+.brand-orb {
+
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    filter: blur(2px);
+
+}
+
+.orb-one {
+
+    width: 260px;
+    height: 260px;
+
+    top: -120px;
+    right: -100px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(157, 78, 221, 0.22),
+            transparent 70%
+        );
+
+}
+
+.orb-two {
+
+    width: 300px;
+    height: 300px;
+
+    bottom: -160px;
+    left: -130px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(104, 29, 59, 0.2),
+            transparent 70%
+        );
+
+}
+
+.orb-three {
+
+    width: 120px;
+    height: 120px;
+
+    top: 45%;
+    right: 15%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(243, 201, 105, 0.06),
+            transparent 70%
+        );
+
+}
+
+
+/* =========================================================
+   BRAND CONTENT
+========================================================= */
+
+.brand-content {
+
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 480px;
+
+    margin: auto 0;
+
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.brand-logo,
+.mobile-logo {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    text-decoration: none;
+
+}
+
+.brand-logo-icon {
+
+    width: 50px;
+    height: 50px;
+
+    display: grid;
+
+    place-items: center;
+
+    color: var(--gold);
+
+    border-radius: 14px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(157, 78, 221, 0.2),
+            rgba(104, 29, 59, 0.25)
+        );
+
+    border:
+        1px solid rgba(243, 201, 105, 0.28);
+
+    box-shadow:
+        0 0 30px rgba(157, 78, 221, 0.12);
+
+}
+
+.brand-logo-icon svg {
+
+    width: 31px;
+    height: 31px;
+
+}
+
+.brand-name {
+
+    display: flex;
+
+    flex-direction: column;
+
+    line-height: 1;
+
+}
+
+.brand-name strong {
+
+    color: white;
+
+    font-size: 20px;
+
+    letter-spacing: 3px;
+
+}
+
+.brand-name small {
+
+    color: var(--gold);
+
+    font-size: 9px;
+
+    letter-spacing: 5px;
+
+    margin-top: 6px;
+
+}
+
+
+/* =========================================================
+   BRAND MESSAGE
+========================================================= */
+
+.brand-message {
+
+    margin-top: 85px;
+
+}
+
+.brand-label {
+
+    color: var(--purple-light);
+
+    font-size: 9px;
+
+    font-weight: 900;
+
+    letter-spacing: 2.5px;
+
+}
+
+.brand-message h1 {
+
+    margin-top: 12px;
+
+    color: white;
+
+    font-size:
+        clamp(36px, 4vw, 57px);
+
+    line-height: 1.08;
+
+    letter-spacing: -1.5px;
+
+}
+
+.brand-message h1 span {
+
+    display: block;
+
+    color: var(--gold);
+
+}
+
+.brand-message p {
+
+    max-width: 430px;
+
+    margin-top: 20px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.8;
+
+}
+
+
+/* =========================================================
+   FEATURES
+========================================================= */
+
+.brand-features {
+
+    margin-top: 40px;
+
+    display: grid;
+
+    gap: 13px;
+
+}
+
+.brand-feature {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+}
+
+.feature-icon {
+
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    color: var(--purple-light);
+
+    background:
+
+        rgba(157, 78, 221, 0.08);
+
+    border:
+        1px solid rgba(157, 78, 221, 0.15);
+
+    border-radius: 10px;
+
+}
+
+.feature-icon svg {
+
+    width: 18px;
+    height: 18px;
+
+}
+
+.brand-feature strong {
+
+    display: block;
+
+    color: #e9e3ed;
+
+    font-size: 11px;
+
+}
+
+.brand-feature small {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #706976;
+
+    font-size: 9px;
+
+}
+
+
+/* =========================================================
+   BRAND FOOTER
+========================================================= */
+
+.brand-footer {
+
+    position: relative;
+
+    z-index: 2;
+
+    color: #625b67;
+
+    font-size: 9px;
+
+}
+
+
+/* =========================================================
+   AUTH PANEL
+========================================================= */
+
+.auth-panel {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 45px 35px;
+
+    background:
+
+        radial-gradient(
+            circle at 70% 20%,
+            rgba(157, 78, 221, 0.07),
+            transparent 35%
+        );
+
+}
+
+
+/* =========================================================
+   AUTH CARD
+========================================================= */
+
+.auth-card {
+
+    width: min(100%, 470px);
+
+    padding: 38px 40px;
+
+    border-radius: 22px;
+
+    background:
+
+        linear-gradient(
+            145deg,
+            rgba(30, 21, 37, 0.88),
+            rgba(14, 10, 19, 0.94)
+        );
+
+    border:
+        1px solid rgba(157, 78, 221, 0.16);
+
+    box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.45);
+
+    backdrop-filter: blur(22px);
+
+    animation:
+        authFade 0.5s ease both;
+
+}
+
+@keyframes authFade {
+
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE LOGO
+========================================================= */
+
+.mobile-logo {
+
+    display: none;
+
+    margin-bottom: 28px;
+
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.auth-heading {
+
+    margin-bottom: 28px;
+
+}
+
+.auth-kicker {
+
+    color: var(--purple-light);
+
+    font-size: 8px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+}
+
+.auth-heading h2 {
+
+    color: white;
+
+    font-size: 29px;
+
+    margin-top: 6px;
+
+}
+
+.auth-heading p {
+
+    margin-top: 7px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.auth-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 17px;
+
+}
+
+.form-group {
+
+    width: 100%;
+
+}
+
+.form-group label {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #c9c1cd;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+}
+
+.optional {
+
+    color: #716878;
+
+    font-size: 8px;
+
+    font-weight: 500;
+
+    margin-left: 4px;
+
+}
+
+
+/* =========================================================
+   LABEL ROW
+========================================================= */
+
+.label-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+}
+
+.forgot-link {
+
+    color: var(--gold);
+
+    font-size: 9px;
+
+    text-decoration: none;
+
+}
+
+.forgot-link:hover {
+
+    color: var(--gold-light);
+
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.input-wrap {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+}
+
+.input-icon {
+
+    position: absolute;
+
+    left: 13px;
+
+    width: 21px;
+    height: 21px;
+
+    display: grid;
+
+    place-items: center;
+
+    color: #756a7c;
+
+    pointer-events: none;
+
+}
+
+.input-icon svg {
+
+    width: 17px;
+    height: 17px;
+
+}
+
+.input-wrap input {
+
+    width: 100%;
+
+    height: 47px;
+
+    padding:
+        0 45px 0 42px;
+
+    color: white;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 10px;
+
+    outline: none;
+
+    font-size: 11px;
+
+    transition:
+        0.25s ease;
+
+}
+
+.input-wrap input::placeholder {
+
+    color: #5f5867;
+
+}
+
+.input-wrap input:focus {
+
+    border-color:
+        rgba(157, 78, 221, 0.55);
+
+    background:
+        rgba(157, 78, 221, 0.045);
+
+    box-shadow:
+        0 0 0 3px rgba(157, 78, 221, 0.08);
+
+}
+
+.input-wrap:focus-within .input-icon {
+
+    color: var(--purple-light);
+
+}
+
+
+/* =========================================================
+   PASSWORD TOGGLE
+========================================================= */
+
+.password-toggle {
+
+    position: absolute;
+
+    right: 11px;
+
+    width: 31px;
+    height: 31px;
+
+    display: grid;
+
+    place-items: center;
+
+    color: #716878;
+
+    background: transparent;
+
+    cursor: pointer;
+
+}
+
+.password-toggle:hover {
+
+    color: var(--gold);
+
+}
+
+.password-toggle svg {
+
+    width: 17px;
+    height: 17px;
+
+}
+
+.password-toggle .eye-closed {
+
+    display: none;
+
+}
+
+.password-toggle.show .eye-open {
+
+    display: none;
+
+}
+
+.password-toggle.show .eye-closed {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.field-error {
+
+    display: block;
+
+    min-height: 0;
+
+    margin-top: 4px;
+
+    color: var(--danger);
+
+    font-size: 8px;
+
+}
+
+
+/* =========================================================
+   TWO COLUMNS
+========================================================= */
+
+.two-columns {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+
+}
+
+
+/* =========================================================
+   REMEMBER
+========================================================= */
+
+.form-options {
+
+    margin-top: -4px;
+
+}
+
+.remember,
+.terms-check {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 8px;
+
+    color: #817986;
+
+    font-size: 9px;
+
+    cursor: pointer;
+
+}
+
+.remember input,
+.terms-check input {
+
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+}
+
+.custom-check {
+
+    width: 16px;
+    height: 16px;
+
+    flex-shrink: 0;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 4px;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.12);
+
+}
+
+.custom-check svg {
+
+    width: 11px;
+    height: 11px;
+
+    color: white;
+
+    display: none;
+
+}
+
+.remember input:checked + .custom-check,
+.terms-check input:checked + .custom-check {
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple),
+            var(--maroon-light)
+        );
+
+    border-color: transparent;
+
+}
+
+.remember input:checked + .custom-check svg,
+.terms-check input:checked + .custom-check svg {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+   PASSWORD STRENGTH
+========================================================= */
+
+.password-strength {
+
+    width: 100%;
+
+    height: 3px;
+
+    margin-top: 7px;
+
+    overflow: hidden;
+
+    border-radius: 5px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+}
+
+.password-strength span {
+
+    display: block;
+
+    width: 0;
+
+    height: 100%;
+
+    border-radius: inherit;
+
+    transition:
+        width 0.25s ease;
+
+}
+
+.password-hint {
+
+    display: block;
+
+    margin-top: 4px;
+
+    color: #655e6a;
+
+    font-size: 8px;
+
+}
+
+
+/* =========================================================
+   TERMS
+========================================================= */
+
+.terms-check {
+
+    line-height: 1.5;
+
+    margin-top: -2px;
+
+}
+
+.terms-check a {
+
+    color: var(--gold);
+
+    text-decoration: none;
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.auth-message {
+
+    display: none;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    font-size: 9px;
+
+    line-height: 1.5;
+
+}
+
+.auth-message.show {
+
+    display: block;
+
+}
+
+.auth-message.error {
+
+    color: #ffb0b0;
+
+    background:
+        rgba(180, 50, 50, 0.08);
+
+    border:
+        1px solid rgba(220, 80, 80, 0.15);
+
+}
+
+.auth-message.success {
+
+    color: #9ce7be;
+
+    background:
+        rgba(50, 180, 110, 0.08);
+
+    border:
+        1px solid rgba(80, 220, 140, 0.15);
+
+}
+
+
+/* =========================================================
+   AUTH BUTTON
+========================================================= */
+
+.auth-button {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 49px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    color: white;
+
+    background:
+
+        linear-gradient(
+            100deg,
+            #6329a0,
+            #70223f
+        );
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 10px 30px rgba(101, 37, 131, 0.2);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+
+}
+
+.auth-button:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 14px 35px rgba(112, 36, 143, 0.3);
+
+}
+
+.auth-button:active {
+
+    transform:
+        translateY(0);
+
+}
+
+.button-icon {
+
+    display: flex;
+
+    color: var(--gold);
+
+}
+
+.button-icon svg {
+
+    width: 17px;
+    height: 17px;
+
+}
+
+.button-arrow {
+
+    position: absolute;
+
+    right: 15px;
+
+    display: flex;
+
+}
+
+.button-arrow svg {
+
+    width: 16px;
+    height: 16px;
+
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.auth-button.loading {
+
+    pointer-events: none;
+
+    opacity: 0.7;
+
+}
+
+.auth-button.loading .button-text {
+
+    font-size: 0;
+
+}
+
+.auth-button.loading .button-text::after {
+
+    content: "Please wait...";
+
+    font-size: 10px;
+
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.auth-divider {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin: 24px 0 19px;
+
+}
+
+.auth-divider::before,
+.auth-divider::after {
+
+    content: "";
+
+    height: 1px;
+
+    flex: 1;
+
+    background:
+        rgba(255, 255, 255, 0.06);
+
+}
+
+.auth-divider span {
+
+    padding: 0 11px;
+
+    color: #5e5764;
+
+    font-size: 7px;
+
+    letter-spacing: 1.3px;
+
+}
+
+
+/* =========================================================
+   REGISTER PROMPT
+========================================================= */
+
+.register-prompt {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    flex-wrap: wrap;
+
+    color: #77707e;
+
+    font-size: 9px;
+
+}
+
+.register-prompt a {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    color: var(--gold);
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+}
+
+.register-prompt a:hover {
+
+    color: var(--gold-light);
+
+}
+
+.register-icon {
+
+    width: 22px;
+    height: 22px;
+
+    display: grid;
+
+    place-items: center;
+
+    border-radius: 6px;
+
+    color: var(--purple-light);
+
+    background:
+        rgba(157, 78, 221, 0.08);
+
+}
+
+.register-icon svg {
+
+    width: 13px;
+    height: 13px;
+
+}
+
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+.auth-security {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    margin-top: 23px;
+
+    color: #514b57;
+
+    font-size: 8px;
+
+}
+
+.auth-security > span {
+
+    display: flex;
+
+    color: var(--purple-light);
+
+}
+
+.auth-security svg {
+
+    width: 13px;
+    height: 13px;
+
+}
+
+
+/* =========================================================
+   REGISTER CARD
+========================================================= */
+
+.register-card {
+
+    max-height: calc(100vh - 50px);
+
+    overflow-y: auto;
+
+}
+
+.register-card::-webkit-scrollbar {
+
+    width: 4px;
+
+}
+
+.register-card::-webkit-scrollbar-track {
+
+    background: transparent;
+
+}
+
+.register-card::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(157, 78, 221, 0.3);
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .auth-page {
+
+        display: block;
+
+    }
+
+    .auth-brand {
+
+        display: none;
+
+    }
+
+    .auth-panel {
+
+        min-height: 100vh;
+
+        padding: 25px 16px;
+
+    }
+
+    .auth-card {
+
+        width: min(100%, 470px);
+
+        padding: 30px 25px;
+
+    }
+
+    .mobile-logo {
+
+        display: inline-flex;
+
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 500px) {
+
+    .auth-panel {
+
+        padding: 15px 10px;
+
+    }
+
+    .auth-card {
+
+        padding: 25px 18px;
+
+        border-radius: 17px;
+
+    }
+
+    .auth-heading h2 {
+
+        font-size: 25px;
+
+    }
+
+    .two-columns {
+
+        grid-template-columns: 1fr;
+
+        gap: 17px;
+
+    }
+
+    .input-wrap input {
+
+        height: 45px;
+
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL SCREEN
+========================================================= */
+
+@media (max-width: 350px) {
+
+    .auth-card {
+
+        padding: 22px 14px;
+
+    }
+
+    .brand-logo-icon {
+
+        width: 43px;
+        height: 43px;
+
+    }
+
+    .brand-name strong {
+
+        font-size: 17px;
+
+    }
+
+}

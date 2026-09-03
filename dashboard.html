@@ -62,9 +62,7 @@
         <a href="index.html" class="logo">
 
             <span class="logo-mark">
-
                 <span>C</span>
-
             </span>
 
             <span class="logo-text">
@@ -88,75 +86,9 @@
 
 
 
-    <div class="preview-header">
-        <h2>Investment Calculator</h2>
-        <p>See your estimated daily return before investing.</p>
-    </div>
-
-    <div class="calculator-box">
-
-        <label for="investmentAmount">
-            Enter Investment Amount
-        </label>
-
-        <div class="amount-input">
-            <span>UGX</span>
-            <input
-                type="number"
-                id="investmentAmount"
-                placeholder="10000"
-                min="0"
-                step="1000"
-            >
-        </div>
-
-        <div class="return-rate">
-            <span>Daily Return Rate</span>
-            <strong>10%</strong>
-        </div>
-
-        <div class="projection-results">
-
-            <div class="projection-card">
-                <span>Investment</span>
-                <strong id="previewInvestment">
-                    UGX 0
-                </strong>
-            </div>
-
-            <div class="projection-card">
-                <span>Estimated Daily Return</span>
-                <strong id="dailyReturn">
-                    UGX 0
-                </strong>
-            </div>
-
-            <div class="projection-card">
-                <span>Estimated 30-Day Return</span>
-                <strong id="monthlyReturn">
-                    UGX 0
-                </strong>
-            </div>
-
-            <div class="projection-card">
-                <span>Estimated Total After 30 Days</span>
-                <strong id="totalAfter30">
-                    UGX 0
-                </strong>
-            </div>
-
-        </div>
-
-        <button
-            type="button"
-            class="invest-button"
-            onclick="goToInvestment()"
-        >
-            Continue to Investment
-        </button>
-
-    </div>
-</section>
+    <!-- =================================================
+         SIDEBAR NAVIGATION
+    ================================================== -->
 
     <nav class="sidebar-nav">
 
@@ -276,6 +208,10 @@
 
 
 
+    <!-- =================================================
+         SIDEBAR BOTTOM
+    ================================================== -->
+
     <div class="sidebar-bottom">
 
 
@@ -285,7 +221,7 @@
                 <svg viewBox="0 0 24 24">
                     <path d="M4 13v-1a8 8 0 0 1 16 0v1"/>
                     <path d="M4 13h3v5H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-1Z"/>
-                    <path d="M20 13h-3v5h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-1-1Z"/>
+                    <path d="M20 13h-3v5h2a2 2 0 0 1-2 2v-2a2 2 0 0 1-1-1Z"/>
                     <path d="M17 18c0 1.2-1.8 2-4 2"/>
                 </svg>
             </span>
@@ -433,7 +369,9 @@
 
 
 
-        <!-- WELCOME -->
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
 
         <section class="welcome-section">
 
@@ -446,10 +384,13 @@
 
 
                 <h2>
+
                     Welcome back,
+
                     <span id="welcomeName">
                         Member
                     </span>
+
                 </h2>
 
 
@@ -609,7 +550,7 @@
                         TOTAL EARNINGS
                     </span>
 
-                    <strong>
+                    <strong id="totalEarnings">
                         UGX 0
                     </strong>
 
@@ -628,7 +569,13 @@
                 <div class="stat-icon">
 
                     <svg viewBox="0 0 24 24">
-                        <rect x="4" y="5" width="16" height="15" rx="2"/>
+                        <rect
+                            x="4"
+                            y="5"
+                            width="16"
+                            height="15"
+                            rx="2"/>
+
                         <path d="M8 3v4"/>
                         <path d="M16 3v4"/>
                         <path d="M4 10h16"/>
@@ -642,7 +589,7 @@
                         TODAY'S EARNINGS
                     </span>
 
-                    <strong>
+                    <strong id="todayEarnings">
                         UGX 0
                     </strong>
 
@@ -674,7 +621,7 @@
                         TOTAL INVESTED
                     </span>
 
-                    <strong>
+                    <strong id="totalInvested">
                         UGX 0
                     </strong>
 
@@ -718,6 +665,229 @@
                 </div>
 
             </article>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             INVESTMENT DAILY RETURN SECTION
+        ================================================== -->
+
+        <section class="investment-return-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        INVESTMENT OVERVIEW
+                    </span>
+
+                    <h3>
+                        Investment & Daily Return
+                    </h3>
+
+                </div>
+
+
+                <strong class="return-badge">
+                    10% DAILY
+                </strong>
+
+            </div>
+
+
+
+            <!-- =============================================
+                 INVESTMENT CALCULATOR
+            ============================================== -->
+
+            <div class="investment-calculator">
+
+
+                <div class="calculator-intro">
+
+                    <span class="section-tag">
+                        BEFORE YOU INVEST
+                    </span>
+
+
+                    <h3>
+                        See your estimated daily return
+                    </h3>
+
+
+                    <p>
+                        Enter the amount you would like to
+                        invest to see the estimated daily
+                        return based on the current
+                        10% daily rate.
+                    </p>
+
+                </div>
+
+
+
+                <div class="calculator-input-area">
+
+
+                    <label for="investmentAmount">
+
+                        Investment Amount
+
+                    </label>
+
+
+                    <div class="amount-input">
+
+                        <span>
+                            UGX
+                        </span>
+
+
+                        <input
+                            type="number"
+                            id="investmentAmount"
+                            placeholder="10000"
+                            min="0"
+                            step="1000"
+                        >
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =========================================
+                     RETURN RESULTS
+                ========================================== -->
+
+                <div class="return-display">
+
+
+                    <div class="return-item">
+
+                        <span>
+                            Daily Return Rate
+                        </span>
+
+                        <strong>
+                            10%
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="return-item">
+
+                        <span>
+                            Estimated Daily Return
+                        </span>
+
+                        <strong id="dailyReturn">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="return-item">
+
+                        <span>
+                            Estimated 30-Day Return
+                        </span>
+
+                        <strong id="monthlyReturn">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="return-item">
+
+                        <span>
+                            Estimated Total After 30 Days
+                        </span>
+
+                        <strong id="totalAfter30">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <button
+                    type="button"
+                    class="invest-button"
+                    onclick="goToInvestment()">
+
+                    Continue to Investment
+
+                </button>
+
+
+            </div>
+
+
+
+            <!-- =============================================
+                 ACTIVE INVESTMENT
+            ============================================== -->
+
+            <div class="active-investment-box">
+
+
+                <div class="active-investment-heading">
+
+                    <span>
+                        ACTIVE INVESTMENTS
+                    </span>
+
+
+                    <h3>
+                        Your Current Investment
+                    </h3>
+
+                </div>
+
+
+
+                <div id="investmentList">
+
+
+                    <div class="no-investment">
+
+                        <strong>
+                            No active investment found
+                        </strong>
+
+
+                        <p>
+                            Your investment details will
+                            appear here after an investment
+                            is created.
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
 
 
         </section>
@@ -886,7 +1056,7 @@
                         <svg viewBox="0 0 24 24">
                             <path d="M4 13v-1a8 8 0 0 1 16 0v1"/>
                             <path d="M4 13h3v5H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-1Z"/>
-                            <path d="M20 13h-3v5h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-1-1Z"/>
+                            <path d="M20 13h-3v5h2a2 2 0 0 1 2-2v-2a2 2 0 0 1-1-1Z"/>
                             <path d="M17 18c0 1.2-1.8 2-4 2"/>
                         </svg>
 
@@ -922,6 +1092,7 @@
                 <span>
                     YOUR REFERRAL CODE
                 </span>
+
 
                 <strong id="referralCode">
                     Loading...
@@ -961,6 +1132,7 @@
                     <span class="panel-label">
                         ACTIVITY
                     </span>
+
 
                     <h3>
                         Recent account activity
@@ -1046,6 +1218,7 @@
                     Keep your account secure
                 </strong>
 
+
                 <p>
                     Never share your password, PIN or
                     verification information with anyone.
@@ -1081,7 +1254,12 @@
 
 
 
+<!-- =====================================================
+     DASHBOARD JAVASCRIPT
+===================================================== -->
+
 <script src="dashboard.js"></script>
+
 
 </body>
 

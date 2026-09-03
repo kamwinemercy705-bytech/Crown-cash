@@ -1,41 +1,91 @@
 /* =====================================================
-   CROWN CASH — PREMIUM DARK DASHBOARD
+   CROWN CASH
+   PREMIUM DARK FINTECH DASHBOARD
    ===================================================== */
 
 
+@import url(
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap'
+);
+
+
+/* =====================================================
+   VARIABLES
+   ===================================================== */
+
 :root {
 
-    --bg: #09070d;
-    --bg-two: #0e0a12;
-    --card: #110d15;
-    --card-two: #150e19;
+    --bg:
+        #08050d;
 
-    --purple: #c800ff;
-    --purple-light: #e100ff;
-    --purple-dark: #7800a8;
+    --bg-two:
+        #0d0912;
 
-    --gold: #d7aa32;
-    --gold-light: #f0cf67;
+    --card:
+        rgba(20, 13, 23, .82);
 
-    --white: #ffffff;
-    --text: #f8f5fa;
-    --muted: #98919d;
-    --muted-two: #706a74;
+    --card-solid:
+        #120c17;
 
-    --border: rgba(200, 0, 255, .25);
+    --card-light:
+        rgba(255,255,255,.035);
 
-    --green: #31d48a;
+    --purple:
+        #d000ff;
+
+    --purple-light:
+        #e33cff;
+
+    --purple-dark:
+        #7600a8;
+
+    --purple-soft:
+        rgba(208,0,255,.12);
+
+    --purple-border:
+        rgba(208,0,255,.30);
+
+    --gold:
+        #d7b33f;
+
+    --gold-light:
+        #f2d56d;
+
+    --white:
+        #ffffff;
+
+    --text:
+        #f7f3fa;
+
+    --muted:
+        #9a92a2;
+
+    --muted-light:
+        #bbb3c1;
+
+    --success:
+        #53d88a;
+
+    --danger:
+        #ff5d79;
+
+    --border:
+        rgba(255,255,255,.07);
+
+    --shadow:
+        0 25px 80px rgba(0,0,0,.38);
 
 }
 
 
 /* =====================================================
    RESET
-===================================================== */
+   ===================================================== */
 
 * {
 
     margin: 0;
+
     padding: 0;
 
     box-sizing: border-box;
@@ -52,33 +102,49 @@ html {
 
 body {
 
+    min-height: 100vh;
+
     font-family:
-        Inter,
+        "Inter",
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
-        Roboto,
-        Arial,
         sans-serif;
-
-    background:
-        radial-gradient(
-            circle at 80% 10%,
-            rgba(170,0,255,.09),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 10% 45%,
-            rgba(120,0,255,.06),
-            transparent 30%
-        ),
-        var(--bg);
 
     color: var(--text);
 
+    background:
+
+        radial-gradient(
+            circle at 80% 5%,
+            rgba(208,0,255,.08),
+            transparent 25%
+        ),
+
+        radial-gradient(
+            circle at 10% 40%,
+            rgba(208,0,255,.045),
+            transparent 30%
+        ),
+
+        var(--bg);
+
     line-height: 1.5;
 
-    min-height: 100vh;
+    overflow-x: hidden;
+
+}
+
+
+h1,
+h2,
+h3,
+h4 {
+
+    font-family:
+        "Manrope",
+        "Inter",
+        sans-serif;
 
 }
 
@@ -100,8 +166,8 @@ button {
 
 
 /* =====================================================
-   SVG ICONS
-===================================================== */
+   LUCIDE GLOBAL
+   ===================================================== */
 
 svg {
 
@@ -109,28 +175,21 @@ svg {
 
     height: 20px;
 
-    fill: none;
-
-    stroke: currentColor;
-
     stroke-width: 1.8;
-
-    stroke-linecap: round;
-
-    stroke-linejoin: round;
 
 }
 
 
 /* =====================================================
    SIDEBAR
-===================================================== */
+   ===================================================== */
 
 .sidebar {
 
     position: fixed;
 
     top: 0;
+
     left: 0;
 
     width: 255px;
@@ -142,24 +201,25 @@ svg {
     flex-direction: column;
 
     background:
-        linear-gradient(
-            180deg,
-            #100914 0%,
-            #09070d 100%
-        );
+        rgba(10,6,14,.96);
 
     border-right:
         1px solid
-        rgba(200,0,255,.18);
+        rgba(208,0,255,.12);
+
+    color: white;
 
     z-index: 1000;
+
+    backdrop-filter:
+        blur(25px);
 
 }
 
 
 .sidebar-top {
 
-    height: 82px;
+    height: 85px;
 
     display: flex;
 
@@ -171,10 +231,14 @@ svg {
 
     border-bottom:
         1px solid
-        rgba(255,255,255,.05);
+        rgba(255,255,255,.06);
 
 }
 
+
+/* =====================================================
+   LOGO
+   ===================================================== */
 
 .logo {
 
@@ -183,6 +247,8 @@ svg {
     align-items: center;
 
     gap: 11px;
+
+    color: white;
 
     font-size: 18px;
 
@@ -193,56 +259,42 @@ svg {
 
 .logo-mark {
 
-    width: 38px;
-
-    height: 38px;
-
     display: grid;
 
     place-items: center;
 
+    width: 38px;
+
+    height: 38px;
+
     border-radius: 11px;
+
+    color: var(--purple);
+
+    background:
+        rgba(208,0,255,.08);
 
     border:
         1px solid
-        rgba(200,0,255,.65);
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(200,0,255,.18),
-            rgba(100,0,150,.05)
-        );
+        rgba(208,0,255,.5);
 
     box-shadow:
         0 0 20px
-        rgba(200,0,255,.15);
-
-}
-
-
-.logo-mark span {
-
-    color: var(--purple-light);
-
-    font-size: 18px;
-
-}
-
-
-.logo-text {
-
-    color: white;
+        rgba(208,0,255,.14);
 
 }
 
 
 .logo-text span {
 
-    color: var(--gold-light);
+    color: var(--gold);
 
 }
 
+
+/* =====================================================
+   CLOSE BUTTON
+   ===================================================== */
 
 .close-sidebar {
 
@@ -254,16 +306,23 @@ svg {
 
     color: white;
 
-    font-size: 28px;
-
     cursor: pointer;
 
 }
 
 
+.close-sidebar svg {
+
+    width: 25px;
+
+    height: 25px;
+
+}
+
+
 /* =====================================================
-   SIDEBAR NAVIGATION
-===================================================== */
+   NAVIGATION
+   ===================================================== */
 
 .sidebar-nav {
 
@@ -271,9 +330,9 @@ svg {
 
     flex-direction: column;
 
-    gap: 5px;
+    gap: 6px;
 
-    padding: 23px 13px;
+    padding: 25px 13px;
 
 }
 
@@ -289,23 +348,33 @@ svg {
 
     gap: 13px;
 
-    min-height: 46px;
+    min-height: 47px;
 
-    padding: 11px 14px;
+    padding: 0 15px;
 
-    border-radius: 11px;
+    border-radius: 12px;
 
     color:
-        rgba(255,255,255,.58);
+        rgba(255,255,255,.52);
 
     font-size: 12px;
 
     font-weight: 600;
 
     transition:
-        background .2s ease,
-        color .2s ease,
-        transform .2s ease;
+        .25s ease;
+
+}
+
+
+.sidebar-nav a svg,
+.sidebar-bottom a svg {
+
+    width: 19px;
+
+    height: 19px;
+
+    flex-shrink: 0;
 
 }
 
@@ -316,7 +385,7 @@ svg {
     color: white;
 
     background:
-        rgba(200,0,255,.08);
+        rgba(208,0,255,.07);
 
 }
 
@@ -328,13 +397,13 @@ svg {
     background:
         linear-gradient(
             90deg,
-            rgba(200,0,255,.18),
-            rgba(200,0,255,.04)
+            rgba(208,0,255,.17),
+            rgba(208,0,255,.04)
         );
 
     border:
         1px solid
-        rgba(200,0,255,.20);
+        rgba(208,0,255,.22);
 
     box-shadow:
         inset 3px 0 0
@@ -343,36 +412,15 @@ svg {
 }
 
 
-.nav-icon {
+.sidebar-nav a.active svg {
 
-    width: 28px;
+    color: var(--purple);
 
-    height: 28px;
-
-    display: grid;
-
-    place-items: center;
-
-    flex-shrink: 0;
-
-    color:
-        rgba(255,255,255,.55);
-
-}
-
-
-.nav-icon svg {
-
-    width: 19px;
-
-    height: 19px;
-
-}
-
-
-.sidebar-nav a.active .nav-icon {
-
-    color: var(--purple-light);
+    filter:
+        drop-shadow(
+            0 0 7px
+            rgba(208,0,255,.8)
+        );
 
 }
 
@@ -381,11 +429,11 @@ svg {
 
     margin-top: auto;
 
-    padding: 14px;
+    padding: 15px 13px;
 
     border-top:
         1px solid
-        rgba(255,255,255,.05);
+        rgba(255,255,255,.06);
 
 }
 
@@ -393,14 +441,14 @@ svg {
 .logout {
 
     color:
-        rgba(255,255,255,.45) !important;
+        rgba(255,255,255,.42) !important;
 
 }
 
 
 /* =====================================================
-   MAIN WRAPPER
-===================================================== */
+   MAIN
+   ===================================================== */
 
 .main-wrapper {
 
@@ -413,11 +461,17 @@ svg {
 
 /* =====================================================
    TOPBAR
-===================================================== */
+   ===================================================== */
 
 .topbar {
 
-    height: 82px;
+    position: sticky;
+
+    top: 0;
+
+    z-index: 500;
+
+    height: 85px;
 
     display: flex;
 
@@ -425,23 +479,17 @@ svg {
 
     justify-content: space-between;
 
-    padding: 0 38px;
+    padding: 0 40px;
 
     background:
-        rgba(9,7,13,.92);
+        rgba(8,5,13,.82);
 
     border-bottom:
         1px solid
-        rgba(255,255,255,.05);
+        rgba(255,255,255,.06);
 
     backdrop-filter:
-        blur(15px);
-
-    position: sticky;
-
-    top: 0;
-
-    z-index: 500;
+        blur(25px);
 
 }
 
@@ -452,7 +500,7 @@ svg {
 
     align-items: center;
 
-    gap: 14px;
+    gap: 15px;
 
 }
 
@@ -466,23 +514,16 @@ svg {
     height: 40px;
 
     border: 1px solid
-        rgba(200,0,255,.25);
+        rgba(208,0,255,.25);
 
-    border-radius: 10px;
+    border-radius: 11px;
+
+    color: var(--purple);
 
     background:
-        rgba(200,0,255,.06);
-
-    color: white;
+        rgba(208,0,255,.08);
 
     cursor: pointer;
-
-}
-
-
-.menu-button svg {
-
-    width: 21px;
 
 }
 
@@ -491,26 +532,26 @@ svg {
 
     display: block;
 
-    color: var(--gold-light);
+    color: var(--purple);
 
     font-size: 9px;
 
     font-weight: 800;
 
-    letter-spacing: 2.3px;
+    letter-spacing: 2.5px;
 
 }
 
 
 .topbar h1 {
 
-    margin-top: 1px;
+    margin-top: 2px;
 
     color: white;
 
     font-size: 22px;
 
-    font-weight: 750;
+    font-weight: 800;
 
 }
 
@@ -521,7 +562,7 @@ svg {
 
     align-items: center;
 
-    gap: 24px;
+    gap: 22px;
 
 }
 
@@ -530,24 +571,24 @@ svg {
 
     position: relative;
 
-    width: 39px;
-
-    height: 39px;
-
     display: grid;
 
     place-items: center;
 
-    border:
-        1px solid
-        rgba(200,0,255,.18);
+    width: 40px;
 
-    border-radius: 50%;
+    height: 40px;
+
+    border: 1px solid
+        rgba(208,0,255,.18);
+
+    border-radius: 12px;
+
+    color:
+        rgba(255,255,255,.75);
 
     background:
-        rgba(200,0,255,.04);
-
-    color: #bfb7c3;
+        rgba(208,0,255,.05);
 
     cursor: pointer;
 
@@ -556,7 +597,7 @@ svg {
 
 .notification-button svg {
 
-    width: 18px;
+    width: 19px;
 
 }
 
@@ -575,7 +616,8 @@ svg {
 
     border-radius: 50%;
 
-    background: var(--purple-light);
+    background:
+        var(--purple);
 
     box-shadow:
         0 0 8px
@@ -583,6 +625,10 @@ svg {
 
 }
 
+
+/* =====================================================
+   USER
+   ===================================================== */
 
 .user-mini {
 
@@ -597,28 +643,32 @@ svg {
 
 .avatar {
 
-    width: 38px;
-
-    height: 38px;
-
     display: grid;
 
     place-items: center;
 
+    width: 39px;
+
+    height: 39px;
+
     border-radius: 50%;
 
-    color: white;
+    color: var(--purple);
 
     background:
         linear-gradient(
             145deg,
-            #a900ff,
-            #5b007e
+            rgba(208,0,255,.18),
+            rgba(208,0,255,.04)
         );
+
+    border:
+        1px solid
+        rgba(208,0,255,.38);
 
     box-shadow:
         0 0 18px
-        rgba(200,0,255,.25);
+        rgba(208,0,255,.10);
 
     font-size: 12px;
 
@@ -640,10 +690,6 @@ svg {
 
 .user-mini-info small {
 
-    display: block;
-
-    margin-top: 1px;
-
     color: var(--muted);
 
     font-size: 9px;
@@ -652,27 +698,27 @@ svg {
 
 
 /* =====================================================
-   DASHBOARD CONTENT
-===================================================== */
+   CONTENT
+   ===================================================== */
 
 .dashboard-content {
 
     width:
         min(
             1250px,
-            calc(100% - 70px)
+            calc(100% - 80px)
         );
 
     margin: auto;
 
-    padding: 38px 0 65px;
+    padding: 45px 0 70px;
 
 }
 
 
 /* =====================================================
    WELCOME
-===================================================== */
+   ===================================================== */
 
 .welcome-section {
 
@@ -682,44 +728,44 @@ svg {
 
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 25px;
 
-    margin-bottom: 25px;
+    margin-bottom: 30px;
 
 }
 
 
 .section-tag {
 
-    color: var(--purple-light);
+    color: var(--purple);
 
     font-size: 9px;
 
     font-weight: 800;
 
-    letter-spacing: 2px;
+    letter-spacing: 2.2px;
 
 }
 
 
 .welcome-section h2 {
 
-    margin-top: 5px;
+    margin-top: 7px;
 
     color: white;
 
-    font-size: 33px;
+    font-size: 35px;
 
     line-height: 1.15;
 
-    letter-spacing: -.8px;
+    letter-spacing: -1.2px;
 
 }
 
 
 .welcome-section h2 span {
 
-    color: var(--purple-light);
+    color: var(--purple);
 
 }
 
@@ -735,6 +781,10 @@ svg {
 }
 
 
+/* =====================================================
+   PROFILE BUTTON
+   ===================================================== */
+
 .profile-button {
 
     display: inline-flex;
@@ -743,24 +793,40 @@ svg {
 
     gap: 8px;
 
-    padding: 11px 16px;
+    min-height: 43px;
+
+    padding: 0 16px;
 
     border:
         1px solid
-        rgba(200,0,255,.28);
+        rgba(208,0,255,.25);
 
-    border-radius: 10px;
+    border-radius: 12px;
 
     color: white;
 
     background:
-        rgba(200,0,255,.06);
+        rgba(208,0,255,.06);
 
     font-size: 10px;
 
     font-weight: 700;
 
-    transition: .2s;
+    transition: .25s;
+
+}
+
+
+.profile-button svg {
+
+    width: 16px;
+
+}
+
+
+.profile-button svg:last-child {
+
+    width: 14px;
 
 }
 
@@ -768,129 +834,235 @@ svg {
 .profile-button:hover {
 
     background:
-        rgba(200,0,255,.13);
+        rgba(208,0,255,.14);
 
     border-color:
-        rgba(200,0,255,.55);
-
-}
-
-
-.profile-button svg {
-
-    width: 15px;
+        rgba(208,0,255,.5);
 
 }
 
 
 /* =====================================================
-   WALLET HERO
-===================================================== */
+   OVERVIEW
+   ===================================================== */
 
-.wallet-card {
+.overview-grid {
 
-    position: relative;
+    display: grid;
 
-    overflow: hidden;
+    grid-template-columns:
+        repeat(4, 1fr);
 
-    margin-bottom: 20px;
+    gap: 16px;
 
-    padding: 30px;
+    margin-bottom: 18px;
+
+}
+
+
+.overview-card {
+
+    min-height: 180px;
+
+    padding: 22px;
 
     border:
         1px solid
-        rgba(200,0,255,.35);
+        var(--border);
 
-    border-radius: 27px;
+    border-radius: 19px;
 
     background:
         linear-gradient(
-            135deg,
-            #210816 0%,
-            #150b17 45%,
-            #0f0a12 100%
+            145deg,
+            rgba(255,255,255,.045),
+            rgba(255,255,255,.012)
         );
 
     box-shadow:
-        0 20px 50px
-        rgba(0,0,0,.25);
+        0 15px 45px
+        rgba(0,0,0,.18);
+
+    transition: .3s;
 
 }
 
 
-.wallet-card::before {
+.overview-card:hover {
 
-    content: "";
+    transform:
+        translateY(-4px);
 
-    position: absolute;
+    border-color:
+        rgba(208,0,255,.25);
 
-    width: 260px;
+}
 
-    height: 260px;
 
-    right: -100px;
+.card-icon {
 
-    top: -130px;
+    display: grid;
 
-    border-radius: 50%;
+    place-items: center;
+
+    width: 52px;
+
+    height: 52px;
+
+    margin-bottom: 22px;
+
+    border-radius: 15px;
+
+    color: var(--purple);
 
     background:
-        rgba(200,0,255,.13);
+        linear-gradient(
+            145deg,
+            rgba(208,0,255,.16),
+            rgba(208,0,255,.035)
+        );
+
+    border:
+        1px solid
+        rgba(208,0,255,.32);
+
+    box-shadow:
+        0 0 25px
+        rgba(208,0,255,.08);
+
+}
+
+
+.card-icon svg {
+
+    width: 25px;
+
+    height: 25px;
 
     filter:
-        blur(60px);
+        drop-shadow(
+            0 0 7px
+            rgba(208,0,255,.55)
+        );
 
 }
 
 
-.wallet-glow {
-
-    position: absolute;
-
-    width: 350px;
-
-    height: 100px;
-
-    left: 20%;
-
-    bottom: -100px;
-
-    background:
-        rgba(200,0,255,.14);
-
-    filter:
-        blur(60px);
-
-}
-
-
-.wallet-content {
-
-    position: relative;
-
-    z-index: 2;
-
-}
-
-
-.wallet-heading {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-start;
-
-}
-
-
-.wallet-label {
+.card-label {
 
     display: block;
 
-    color: var(--gold-light);
+    color: var(--gold);
 
-    font-size: 10px;
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.8px;
+
+}
+
+
+.overview-card strong {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: white;
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+}
+
+
+.overview-card small {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+}
+
+
+/* =====================================================
+   FINANCIAL GRID
+   ===================================================== */
+
+.financial-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        2fr 1fr 1fr;
+
+    gap: 16px;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =====================================================
+   WALLET BALANCE
+   ===================================================== */
+
+.balance-card {
+
+    min-height: 230px;
+
+    padding: 27px;
+
+    border:
+        1px solid
+        rgba(208,0,255,.25);
+
+    border-radius: 22px;
+
+    background:
+
+        radial-gradient(
+            circle at 85% 10%,
+            rgba(208,0,255,.13),
+            transparent 30%
+        ),
+
+        linear-gradient(
+            145deg,
+            rgba(208,0,255,.08),
+            rgba(255,255,255,.025)
+        );
+
+    box-shadow:
+        var(--shadow);
+
+}
+
+
+.balance-top {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+}
+
+
+.gold-label {
+
+    display: block;
+
+    color: var(--gold);
+
+    font-size: 9px;
 
     font-weight: 800;
 
@@ -899,88 +1071,95 @@ svg {
 }
 
 
-.wallet-heading strong {
-
-    display: block;
+.balance-card h3 {
 
     margin-top: 8px;
 
     color: white;
 
-    font-size: 38px;
+    font-size: 39px;
 
     line-height: 1;
 
-    letter-spacing: -.8px;
+    letter-spacing: -1px;
 
 }
 
 
-.wallet-heading p {
+.balance-card p {
 
-    margin-top: 10px;
+    margin-top: 8px;
 
-    color: #aaa0ad;
+    color: var(--muted);
 
-    font-size: 12px;
+    font-size: 11px;
 
 }
 
 
-.wallet-icon {
-
-    width: 72px;
-
-    height: 72px;
+.large-icon {
 
     display: grid;
 
     place-items: center;
 
-    border:
-        1px solid
-        rgba(200,0,255,.42);
+    width: 68px;
+
+    height: 68px;
 
     border-radius: 19px;
 
-    color: var(--purple-light);
+    color: var(--purple);
 
     background:
-        rgba(200,0,255,.08);
+        rgba(208,0,255,.10);
+
+    border:
+        1px solid
+        rgba(208,0,255,.42);
 
     box-shadow:
-        0 0 30px
-        rgba(200,0,255,.09);
+        0 0 35px
+        rgba(208,0,255,.13);
 
 }
 
 
-.wallet-icon svg {
+.large-icon svg {
 
-    width: 34px;
+    width: 33px;
 
-    height: 34px;
+    height: 33px;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(208,0,255,.7)
+        );
 
 }
 
 
-.wallet-actions {
+/* =====================================================
+   BALANCE BUTTONS
+   ===================================================== */
+
+.balance-actions {
 
     display: grid;
 
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+        1fr 1fr;
 
-    gap: 14px;
+    gap: 12px;
 
-    margin-top: 30px;
+    margin-top: 28px;
 
 }
 
 
-.wallet-primary,
-.wallet-secondary {
-
-    min-height: 52px;
+.deposit-button,
+.withdraw-button {
 
     display: flex;
 
@@ -988,9 +1167,11 @@ svg {
 
     justify-content: center;
 
-    gap: 9px;
+    gap: 8px;
 
-    border-radius: 14px;
+    min-height: 48px;
+
+    border-radius: 13px;
 
     font-size: 11px;
 
@@ -998,45 +1179,56 @@ svg {
 
     text-transform: uppercase;
 
-    letter-spacing: 1.3px;
+    letter-spacing: 1px;
+
+    transition: .25s;
 
 }
 
 
-.wallet-primary {
+.deposit-button {
 
     color: white;
 
     background:
         linear-gradient(
             135deg,
-            #c900ff,
-            #9700d5
+            #d000ff,
+            #9e00d0
         );
 
     box-shadow:
-        0 8px 25px
-        rgba(200,0,255,.22);
+        0 10px 30px
+        rgba(208,0,255,.22);
 
 }
 
 
-.wallet-secondary {
+.withdraw-button {
+
+    color: var(--purple);
 
     border:
         1px solid
-        rgba(200,0,255,.42);
-
-    color: var(--purple-light);
+        rgba(208,0,255,.4);
 
     background:
-        rgba(200,0,255,.03);
+        rgba(208,0,255,.045);
 
 }
 
 
-.wallet-primary svg,
-.wallet-secondary svg {
+.deposit-button:hover,
+.withdraw-button:hover {
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+.deposit-button svg,
+.withdraw-button svg {
 
     width: 17px;
 
@@ -1044,26 +1236,10 @@ svg {
 
 
 /* =====================================================
-   STAT CARDS
-===================================================== */
+   MONEY CARDS
+   ===================================================== */
 
-.stats-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap: 17px;
-
-    margin-bottom: 30px;
-
-}
-
-
-.stat-card {
-
-    min-height: 142px;
+.money-card {
 
     display: flex;
 
@@ -1071,107 +1247,102 @@ svg {
 
     gap: 15px;
 
-    padding: 21px;
+    min-height: 110px;
+
+    padding: 20px;
 
     border:
         1px solid
-        rgba(200,0,255,.20);
+        var(--border);
 
-    border-radius: 19px;
+    border-radius: 18px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,.025),
-            rgba(255,255,255,.008)
+            rgba(255,255,255,.045),
+            rgba(255,255,255,.012)
         );
 
-    transition:
-        transform .2s,
-        border-color .2s;
-
 }
 
 
-.stat-card:hover {
-
-    transform:
-        translateY(-2px);
-
-    border-color:
-        rgba(200,0,255,.42);
-
-}
-
-
-.stat-icon {
-
-    width: 55px;
-
-    height: 55px;
+.money-icon {
 
     display: grid;
 
     place-items: center;
 
+    width: 52px;
+
+    height: 52px;
+
     flex-shrink: 0;
+
+    border-radius: 15px;
+
+    color: var(--purple);
+
+    background:
+        rgba(208,0,255,.09);
 
     border:
         1px solid
-        rgba(200,0,255,.36);
-
-    border-radius: 16px;
-
-    color: var(--purple-light);
-
-    background:
-        rgba(200,0,255,.08);
+        rgba(208,0,255,.28);
 
     box-shadow:
-        inset 0 0 20px
-        rgba(200,0,255,.03);
+        0 0 20px
+        rgba(208,0,255,.07);
 
 }
 
 
-.stat-icon svg {
+.money-icon svg {
 
-    width: 27px;
+    width: 24px;
 
-    height: 27px;
+    height: 24px;
+
+    filter:
+        drop-shadow(
+            0 0 6px
+            rgba(208,0,255,.55)
+        );
 
 }
 
 
-.stat-card span {
+.money-card span {
 
     display: block;
 
-    color: var(--gold-light);
+    color: var(--gold);
 
     font-size: 8px;
 
     font-weight: 800;
 
-    letter-spacing: 1.7px;
+    letter-spacing: 1.5px;
 
 }
 
 
-.stat-card strong {
+.money-card strong {
 
     display: block;
 
-    margin-top: 4px;
+    margin-top: 3px;
 
     color: white;
 
     font-size: 19px;
 
+    font-weight: 800;
+
 }
 
 
-.stat-card small {
+.money-card small {
 
     display: block;
 
@@ -1179,287 +1350,28 @@ svg {
 
     color: var(--muted);
 
-    font-size: 9px;
+    font-size: 8px;
 
 }
 
 
 /* =====================================================
-   SECTION HEADING
-===================================================== */
+   CONTENT GRID
+   ===================================================== */
 
-.section-block {
-
-    margin-bottom: 30px;
-
-}
-
-
-.section-heading {
-
-    display: flex;
-
-    align-items: flex-end;
-
-    justify-content: space-between;
-
-    margin-bottom: 16px;
-
-}
-
-
-.section-heading > div > span {
-
-    color: var(--purple-light);
-
-    font-size: 9px;
-
-    font-weight: 800;
-
-    letter-spacing: 2px;
-
-}
-
-
-.section-heading h3 {
-
-    margin-top: 4px;
-
-    color: white;
-
-    font-size: 26px;
-
-    letter-spacing: -.5px;
-
-}
-
-
-.section-heading > small {
-
-    color: var(--muted);
-
-    font-size: 10px;
-
-}
-
-
-/* =====================================================
-   QUICK ACTIONS
-===================================================== */
-
-.quick-grid {
+.content-grid {
 
     display: grid;
 
     grid-template-columns:
-        repeat(6,1fr);
+        1.15fr .85fr;
 
-    gap: 15px;
+    gap: 18px;
 
-}
-
-
-.quick-card {
-
-    min-height: 175px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
-
-    padding: 17px 10px;
-
-    border:
-        1px solid
-        rgba(200,0,255,.20);
-
-    border-radius: 19px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,.025),
-            rgba(255,255,255,.008)
-        );
-
-    transition:
-        transform .2s,
-        border-color .2s,
-        background .2s;
+    margin-bottom: 18px;
 
 }
 
-
-.quick-card:hover {
-
-    transform:
-        translateY(-3px);
-
-    border-color:
-        rgba(200,0,255,.50);
-
-    background:
-        rgba(200,0,255,.045);
-
-}
-
-
-.quick-icon {
-
-    width: 58px;
-
-    height: 58px;
-
-    display: grid;
-
-    place-items: center;
-
-    margin-bottom: 13px;
-
-    border:
-        1px solid
-        rgba(200,0,255,.38);
-
-    border-radius: 17px;
-
-    color: var(--purple-light);
-
-    background:
-        rgba(200,0,255,.08);
-
-    box-shadow:
-        0 0 20px
-        rgba(200,0,255,.05);
-
-}
-
-
-.quick-icon svg {
-
-    width: 28px;
-
-    height: 28px;
-
-}
-
-
-.quick-card strong {
-
-    color: white;
-
-    font-size: 11px;
-
-}
-
-
-.quick-card small {
-
-    margin-top: 3px;
-
-    color: var(--muted);
-
-    font-size: 9px;
-
-}
-
-
-/* =====================================================
-   REFERRAL
-===================================================== */
-
-.referral-card {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 20px;
-
-    margin-bottom: 20px;
-
-    padding: 20px 23px;
-
-    border:
-        1px solid
-        rgba(215,170,50,.23);
-
-    border-radius: 17px;
-
-    background:
-        linear-gradient(
-            100deg,
-            rgba(215,170,50,.06),
-            rgba(200,0,255,.03)
-        );
-
-}
-
-
-.referral-card span {
-
-    display: block;
-
-    color: var(--gold-light);
-
-    font-size: 8px;
-
-    font-weight: 800;
-
-    letter-spacing: 1.7px;
-
-}
-
-
-.referral-card strong {
-
-    display: block;
-
-    margin-top: 4px;
-
-    color: white;
-
-    font-size: 16px;
-
-    letter-spacing: 1px;
-
-}
-
-
-.referral-card > a {
-
-    display: inline-flex;
-
-    align-items: center;
-
-    gap: 7px;
-
-    color: var(--purple-light);
-
-    font-size: 10px;
-
-    font-weight: 700;
-
-}
-
-
-.referral-card svg {
-
-    width: 14px;
-
-}
-
-
-/* =====================================================
-   PANEL
-===================================================== */
 
 .panel {
 
@@ -1467,23 +1379,20 @@ svg {
 
     border:
         1px solid
-        rgba(200,0,255,.19);
+        var(--border);
 
     border-radius: 19px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255,255,255,.025),
-            rgba(255,255,255,.008)
+            rgba(255,255,255,.042),
+            rgba(255,255,255,.012)
         );
 
-}
-
-
-.activity-panel {
-
-    margin-bottom: 20px;
+    box-shadow:
+        0 15px 45px
+        rgba(0,0,0,.16);
 
 }
 
@@ -1498,31 +1407,432 @@ svg {
 
     gap: 15px;
 
-    margin-bottom: 21px;
+    margin-bottom: 22px;
 
 }
 
 
 .panel-label {
 
-    color: var(--gold-light);
+    color: var(--purple);
 
     font-size: 8px;
 
     font-weight: 800;
 
-    letter-spacing: 1.7px;
+    letter-spacing: 2px;
 
 }
 
 
 .panel-heading h3 {
 
-    margin-top: 4px;
+    margin-top: 5px;
 
     color: white;
 
     font-size: 17px;
+
+}
+
+
+/* =====================================================
+   STATUS
+   ===================================================== */
+
+.status-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 7px 10px;
+
+    border-radius: 20px;
+
+    color: var(--success);
+
+    background:
+        rgba(83,216,138,.07);
+
+    border:
+        1px solid
+        rgba(83,216,138,.15);
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+}
+
+
+.status-badge svg {
+
+    width: 13px;
+
+    height: 13px;
+
+}
+
+
+/* =====================================================
+   ACCOUNT SUMMARY
+   ===================================================== */
+
+.account-summary {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    border:
+        1px solid
+        rgba(255,255,255,.07);
+
+    border-radius: 13px;
+
+    overflow: hidden;
+
+}
+
+
+.account-summary > div {
+
+    padding: 16px;
+
+}
+
+
+.account-summary > div + div {
+
+    border-left:
+        1px solid
+        rgba(255,255,255,.07);
+
+}
+
+
+.account-summary span {
+
+    display: block;
+
+    color: var(--muted);
+
+    font-size: 9px;
+
+}
+
+
+.account-summary strong {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: white;
+
+    font-size: 11px;
+
+}
+
+
+/* =====================================================
+   PANEL BUTTONS
+   ===================================================== */
+
+.panel-actions {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+
+.primary-action,
+.secondary-action {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    min-height: 40px;
+
+    padding: 0 14px;
+
+    border-radius: 10px;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+}
+
+
+.primary-action {
+
+    color: white;
+
+    background:
+        var(--purple);
+
+    box-shadow:
+        0 8px 20px
+        rgba(208,0,255,.16);
+
+}
+
+
+.secondary-action {
+
+    color: var(--muted-light);
+
+    border:
+        1px solid
+        rgba(255,255,255,.09);
+
+    background:
+        rgba(255,255,255,.025);
+
+}
+
+
+.primary-action svg,
+.secondary-action svg {
+
+    width: 15px;
+
+}
+
+
+/* =====================================================
+   QUICK ACTIONS
+   ===================================================== */
+
+.quick-actions {
+
+    display: grid;
+
+    gap: 7px;
+
+}
+
+
+.quick-actions a {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 10px;
+
+    border-radius: 12px;
+
+    transition: .25s;
+
+}
+
+
+.quick-actions a:hover {
+
+    background:
+        rgba(208,0,255,.06);
+
+}
+
+
+.quick-icon {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 42px;
+
+    height: 42px;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    color: var(--purple);
+
+    background:
+        rgba(208,0,255,.09);
+
+    border:
+        1px solid
+        rgba(208,0,255,.25);
+
+}
+
+
+.quick-icon svg {
+
+    width: 20px;
+
+    height: 20px;
+
+}
+
+
+.quick-actions strong {
+
+    display: block;
+
+    color: white;
+
+    font-size: 10px;
+
+}
+
+
+.quick-actions small {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+}
+
+
+/* =====================================================
+   REFERRAL
+   ===================================================== */
+
+.referral-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+
+    padding: 17px 20px;
+
+    border:
+        1px solid
+        rgba(208,0,255,.20);
+
+    border-radius: 16px;
+
+    background:
+        rgba(208,0,255,.035);
+
+}
+
+
+.referral-icon {
+
+    display: grid;
+
+    place-items: center;
+
+    width: 46px;
+
+    height: 46px;
+
+    flex-shrink: 0;
+
+    border-radius: 13px;
+
+    color: var(--purple);
+
+    background:
+        rgba(208,0,255,.10);
+
+    border:
+        1px solid
+        rgba(208,0,255,.27);
+
+}
+
+
+.referral-icon svg {
+
+    width: 21px;
+
+}
+
+
+.referral-card span {
+
+    display: block;
+
+    color: var(--gold);
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+
+}
+
+
+.referral-card strong {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: white;
+
+    font-size: 14px;
+
+    letter-spacing: 1px;
+
+}
+
+
+.referral-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-left: auto;
+
+    color: var(--purple);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+}
+
+
+.referral-button svg {
+
+    width: 14px;
+
+}
+
+
+/* =====================================================
+   ACTIVITY
+   ===================================================== */
+
+.activity-panel {
+
+    margin-bottom: 18px;
 
 }
 
@@ -1535,9 +1845,9 @@ svg {
 
     gap: 5px;
 
-    color: var(--purple-light);
+    color: var(--purple);
 
-    font-size: 10px;
+    font-size: 9px;
 
     font-weight: 700;
 
@@ -1546,62 +1856,61 @@ svg {
 
 .view-all svg {
 
-    width: 14px;
+    width: 13px;
 
 }
 
 
-/* =====================================================
-   EMPTY ACTIVITY
-===================================================== */
-
 .empty-activity {
 
-    padding: 34px;
+    padding: 35px;
 
     text-align: center;
 
     border:
         1px dashed
-        rgba(200,0,255,.23);
+        rgba(255,255,255,.10);
 
     border-radius: 14px;
-
-    background:
-        rgba(200,0,255,.015);
 
 }
 
 
 .empty-icon {
 
-    width: 48px;
-
-    height: 48px;
-
     display: grid;
 
     place-items: center;
 
+    width: 50px;
+
+    height: 50px;
+
     margin: auto;
+
+    border-radius: 15px;
+
+    color: var(--purple);
+
+    background:
+        rgba(208,0,255,.08);
 
     border:
         1px solid
-        rgba(200,0,255,.25);
-
-    border-radius: 14px;
-
-    color: var(--purple-light);
-
-    background:
-        rgba(200,0,255,.07);
+        rgba(208,0,255,.24);
 
 }
 
 
 .empty-icon svg {
 
-    width: 23px;
+    width: 24px;
+
+    filter:
+        drop-shadow(
+            0 0 7px
+            rgba(208,0,255,.6)
+        );
 
 }
 
@@ -1625,14 +1934,14 @@ svg {
 
     color: var(--muted);
 
-    font-size: 10px;
+    font-size: 9px;
 
 }
 
 
 /* =====================================================
    SECURITY
-===================================================== */
+   ===================================================== */
 
 .security-notice {
 
@@ -1640,47 +1949,47 @@ svg {
 
     align-items: center;
 
-    gap: 15px;
+    gap: 14px;
 
-    padding: 17px 20px;
+    padding: 16px 19px;
 
     border:
         1px solid
-        rgba(49,212,138,.15);
+        rgba(83,216,138,.12);
 
     border-radius: 14px;
 
     background:
-        rgba(49,212,138,.035);
+        rgba(83,216,138,.025);
 
 }
 
 
 .security-icon {
 
-    width: 38px;
-
-    height: 38px;
-
     display: grid;
 
     place-items: center;
+
+    width: 38px;
+
+    height: 38px;
 
     flex-shrink: 0;
 
     border-radius: 12px;
 
-    color: var(--green);
+    color: var(--success);
 
     background:
-        rgba(49,212,138,.08);
+        rgba(83,216,138,.07);
 
 }
 
 
 .security-icon svg {
 
-    width: 21px;
+    width: 19px;
 
 }
 
@@ -1691,7 +2000,7 @@ svg {
 
     color: white;
 
-    font-size: 11px;
+    font-size: 10px;
 
 }
 
@@ -1702,14 +2011,14 @@ svg {
 
     color: var(--muted);
 
-    font-size: 9px;
+    font-size: 8px;
 
 }
 
 
 /* =====================================================
    FOOTER
-===================================================== */
+   ===================================================== */
 
 footer {
 
@@ -1717,11 +2026,12 @@ footer {
 
     border-top:
         1px solid
-        rgba(255,255,255,.05);
+        rgba(255,255,255,.06);
 
     text-align: center;
 
-    color: var(--muted-two);
+    color:
+        rgba(255,255,255,.25);
 
     background:
         rgba(0,0,0,.15);
@@ -1733,23 +2043,30 @@ footer {
 
 /* =====================================================
    TABLET
-===================================================== */
+   ===================================================== */
 
 @media (max-width: 1100px) {
 
-
-    .stats-grid {
+    .overview-grid {
 
         grid-template-columns:
-            repeat(2,1fr);
+            repeat(2, 1fr);
 
     }
 
 
-    .quick-grid {
+    .financial-grid {
 
         grid-template-columns:
-            repeat(3,1fr);
+            1.5fr 1fr;
+
+    }
+
+
+    .money-card:last-child {
+
+        grid-column:
+            auto;
 
     }
 
@@ -1758,10 +2075,9 @@ footer {
 
 /* =====================================================
    MOBILE SIDEBAR
-===================================================== */
+   ===================================================== */
 
 @media (max-width: 850px) {
-
 
     .sidebar {
 
@@ -1769,11 +2085,7 @@ footer {
             translateX(-100%);
 
         transition:
-            transform .25s ease;
-
-        box-shadow:
-            20px 0 50px
-            rgba(0,0,0,.5);
+            transform .28s ease;
 
     }
 
@@ -1783,12 +2095,18 @@ footer {
         transform:
             translateX(0);
 
+        box-shadow:
+            20px 0 60px
+            rgba(0,0,0,.55);
+
     }
 
 
     .close-sidebar {
 
-        display: block;
+        display: grid;
+
+        place-items: center;
 
     }
 
@@ -1809,10 +2127,9 @@ footer {
     }
 
 
-    .dashboard-content {
+    .content-grid {
 
-        width:
-            calc(100% - 30px);
+        grid-template-columns: 1fr;
 
     }
 
@@ -1821,32 +2138,26 @@ footer {
 
 /* =====================================================
    MOBILE
-===================================================== */
+   ===================================================== */
 
 @media (max-width: 600px) {
 
+    .dashboard-content {
 
-    body {
+        width:
+            calc(100% - 28px);
 
-        padding-bottom: 0;
+        padding:
+            30px 0 100px;
 
     }
 
 
     .topbar {
 
-        height: 68px;
+        height: 72px;
 
-        padding: 0 15px;
-
-    }
-
-
-    .topbar-label {
-
-        font-size: 7px;
-
-        letter-spacing: 1.8px;
+        padding: 0 14px;
 
     }
 
@@ -1858,62 +2169,43 @@ footer {
     }
 
 
+    .topbar-label {
+
+        font-size: 8px;
+
+    }
+
+
     .topbar-right {
 
-        gap: 9px;
+        gap: 8px;
 
     }
 
 
     .notification-button {
 
-        width: 34px;
+        width: 37px;
 
-        height: 34px;
-
-    }
-
-
-    .user-mini-info {
-
-        display: none;
-
-    }
-
-
-    .dashboard-content {
-
-        width:
-            calc(100% - 28px);
-
-        padding-top: 26px;
-
-        padding-bottom: 40px;
+        height: 37px;
 
     }
 
 
     .welcome-section {
 
-        flex-direction: column;
-
         align-items: flex-start;
 
-        gap: 15px;
+        flex-direction: column;
+
+        gap: 18px;
 
     }
 
 
     .welcome-section h2 {
 
-        font-size: 27px;
-
-    }
-
-
-    .welcome-section p {
-
-        font-size: 11px;
+        font-size: 29px;
 
     }
 
@@ -1927,319 +2219,226 @@ footer {
     }
 
 
-    /* WALLET */
+    .overview-grid {
 
-    .wallet-card {
+        grid-template-columns: 1fr 1fr;
 
-        padding: 24px 20px;
-
-        border-radius: 23px;
+        gap: 10px;
 
     }
 
 
-    .wallet-heading strong {
+    .overview-card {
+
+        min-height: 170px;
+
+        padding: 17px;
+
+    }
+
+
+    .card-icon {
+
+        width: 47px;
+
+        height: 47px;
+
+        margin-bottom: 18px;
+
+    }
+
+
+    .card-icon svg {
+
+        width: 22px;
+
+    }
+
+
+    .financial-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .balance-card {
+
+        min-height: 225px;
+
+        padding: 22px;
+
+    }
+
+
+    .balance-card h3 {
 
         font-size: 32px;
 
     }
 
 
-    .wallet-icon {
+    .large-icon {
 
         width: 58px;
 
         height: 58px;
 
-        border-radius: 16px;
-
     }
 
 
-    .wallet-icon svg {
+    .large-icon svg {
 
         width: 28px;
 
     }
 
 
-    .wallet-actions {
+    .money-card {
 
-        gap: 10px;
-
-        margin-top: 24px;
+        min-height: 100px;
 
     }
 
 
-    .wallet-primary,
-    .wallet-secondary {
+    .panel {
 
-        min-height: 50px;
-
-        font-size: 9px;
-
-        letter-spacing: 1px;
+        padding: 20px;
 
     }
 
 
-    /* STATS */
+    .account-summary {
 
-    .stats-grid {
-
-        grid-template-columns:
-            1fr 1fr;
-
-        gap: 10px;
+        grid-template-columns: 1fr;
 
     }
 
 
-    .stat-card {
+    .account-summary > div + div {
 
-        min-height: 128px;
+        border-left: none;
+
+        border-top:
+            1px solid
+            rgba(255,255,255,.07);
+
+    }
+
+
+    .panel-actions {
 
         flex-direction: column;
 
-        align-items: flex-start;
+    }
+
+
+    .primary-action,
+    .secondary-action {
 
         justify-content: center;
 
-        gap: 11px;
+    }
+
+
+    .referral-card {
+
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+
+    }
+
+
+    .referral-button {
+
+        width: 100%;
+
+        margin-left: 61px;
+
+    }
+
+}
+
+
+/* =====================================================
+   SMALL PHONES
+   ===================================================== */
+
+@media (max-width: 430px) {
+
+    .overview-grid {
+
+        grid-template-columns: 1fr 1fr;
+
+    }
+
+
+    .overview-card {
 
         padding: 15px;
 
-        border-radius: 17px;
-
     }
 
 
-    .stat-icon {
-
-        width: 43px;
-
-        height: 43px;
-
-        border-radius: 13px;
-
-    }
-
-
-    .stat-icon svg {
-
-        width: 21px;
-
-    }
-
-
-    .stat-card span {
-
-        font-size: 7px;
-
-        letter-spacing: 1.2px;
-
-    }
-
-
-    .stat-card strong {
+    .overview-card strong {
 
         font-size: 17px;
 
     }
 
 
-    .stat-card small {
+    .overview-card small {
 
         font-size: 8px;
 
     }
 
 
-    /* QUICK ACTIONS */
-
-    .section-heading {
-
-        align-items: flex-end;
-
-    }
-
-
-    .section-heading h3 {
-
-        font-size: 23px;
-
-    }
-
-
-    .section-heading > small {
-
-        font-size: 9px;
-
-    }
-
-
-    .quick-grid {
-
-        grid-template-columns:
-            repeat(3,1fr);
+    .balance-top {
 
         gap: 10px;
 
     }
 
 
-    .quick-card {
-
-        min-height: 145px;
-
-        padding: 12px 5px;
-
-        border-radius: 16px;
-
-    }
-
-
-    .quick-icon {
-
-        width: 49px;
-
-        height: 49px;
-
-        border-radius: 15px;
-
-        margin-bottom: 10px;
-
-    }
-
-
-    .quick-icon svg {
-
-        width: 23px;
-
-    }
-
-
-    .quick-card strong {
-
-        font-size: 9px;
-
-    }
-
-
-    .quick-card small {
-
-        font-size: 7px;
-
-    }
-
-
-    /* REFERRAL */
-
-    .referral-card {
-
-        flex-direction: column;
-
-        align-items: flex-start;
-
-        padding: 18px;
-
-    }
-
-
-    .referral-card > a {
-
-        font-size: 9px;
-
-    }
-
-
-    /* PANEL */
-
-    .panel {
-
-        padding: 19px;
-
-        border-radius: 17px;
-
-    }
-
-
-    .panel-heading h3 {
-
-        font-size: 15px;
-
-    }
-
-
-    .empty-activity {
-
-        padding: 27px 15px;
-
-    }
-
-
-    /* SECURITY */
-
-    .security-notice {
-
-        align-items: flex-start;
-
-        padding: 15px;
-
-    }
-
-
-}
-
-
-/* =====================================================
-   VERY SMALL PHONES
-===================================================== */
-
-@media (max-width: 380px) {
-
-
-    .wallet-heading strong {
-
-        font-size: 28px;
-
-    }
-
-
-    .wallet-label {
+    .gold-label {
 
         font-size: 8px;
 
     }
 
 
-    .stats-grid {
+    .balance-card h3 {
+
+        font-size: 29px;
+
+    }
+
+
+    .large-icon {
+
+        width: 53px;
+
+        height: 53px;
+
+    }
+
+
+    .balance-actions {
 
         gap: 8px;
 
     }
 
 
-    .stat-card {
+    .deposit-button,
+    .withdraw-button {
 
-        padding: 12px;
+        min-height: 45px;
 
-    }
-
-
-    .quick-grid {
-
-        gap: 7px;
+        font-size: 9px;
 
     }
-
-
-    .quick-card {
-
-        min-height: 135px;
-
-    }
-
 
 }

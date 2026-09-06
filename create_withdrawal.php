@@ -4,66 +4,53 @@
 |--------------------------------------------------------------------------
 | Crown Cash — Create Withdrawal API
 |--------------------------------------------------------------------------
-| Withdrawal flow:
+|
+| Flow:
 |
 | User submits withdrawal
 |        ↓
-| Balance is reserved
+| Amount is reserved from balance
 |        ↓
 | Withdrawal saved as PENDING
 |        ↓
 | Admin reviews
 |        ↓
-| APPROVED or REJECTED
+| APPROVED → amount remains deducted
+| REJECTED → amount is returned
 |
 | IMPORTANT:
-| This endpoint does NOT send money automatically.
+| This endpoint does NOT automatically send Mobile Money.
+|
 |--------------------------------------------------------------------------
 */
 
+header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json; charset=UTF-8");
 
-/* =========================================================
-   CORS
-   ========================================================= */
-
-header(
-    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
-);
-
-header(
-    "Access-Control-Allow-Methods: POST, OPTIONS"
-);
-
-header(
-    "Access-Control-Allow-Headers: Content-Type"
-);
-
-header(
-    "Access-Control-Allow-Credentials: true"
-);
-
-header(
-    "Content-Type: application/json; charset=UTF-8"
-);
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
 
 
-/* =========================================================
-   HANDLE PREFLIGHT REQUEST
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| OPTIONS REQUEST
+|--------------------------------------------------------------------------
+*/
 
-if (
-    $_SERVER["REQUEST_METHOD"] === "OPTIONS"
-) {
-
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
-
     exit;
 }
 
 
-/* =========================================================
-   SESSION
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| SESSION
+|--------------------------------------------------------------------------
+*/
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -77,20 +64,22 @@ session_set_cookie_params([
 session_start();
 
 
-/* =========================================================
-   DATABASE
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| DATABASE
+|--------------------------------------------------------------------------
+*/
 
 require_once __DIR__ . "/config.php";
 
 
-/* =========================================================
-   REQUEST METHOD
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| METHOD CHECK
+|--------------------------------------------------------------------------
+*/
 
-if (
-    $_SERVER["REQUEST_METHOD"] !== "POST"
-) {
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
     http_response_code(405);
 
@@ -103,9 +92,11 @@ if (
 }
 
 
-/* =========================================================
-   CHECK LOGIN
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| LOGIN CHECK
+|--------------------------------------------------------------------------
+*/
 
 if (
     empty($_SESSION["logged_in"]) ||
@@ -123,18 +114,23 @@ if (
 }
 
 
-/* =========================================================
-   MAIN PROCESS
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| MAIN PROCESS
+|--------------------------------------------------------------------------
+*/
 
 try {
 
-    /* -----------------------------------------------------
-       READ JSON
-       ----------------------------------------------------- */
+    /*
+    |--------------------------------------------------------------------------
+    | READ JSON
+    |--------------------------------------------------------------------------
+    */
 
     $rawData =
         file_get_contents("php://input");
+
 
     $data =
         json_decode(
@@ -156,66 +152,97 @@ try {
     }
 
 
-    /* -----------------------------------------------------
-       GET FORM VALUES
-       ----------------------------------------------------- */
+    /*
+    |--------------------------------------------------------------------------
+    | GET VALUES
+    |--------------------------------------------------------------------------
+    */
 
-    $amount =
+    $amountInput =
         $data["amount"] ?? 0;
+
 
     $method =
         strtoupper(
             trim(
-                $data["method"] ?? ""
+                (string)(
+                    $data["method"] ?? ""
+                )
             )
         );
 
+
     $account =
         trim(
-            $data["account"] ?? ""
+            (string)(
+                $data["account"] ?? ""
+            )
         );
 
 
-    /* -----------------------------------------------------
-       VALIDATE AMOUNT
-       ----------------------------------------------------- */
+    /*
+    |--------------------------------------------------------------------------
+    | AMOUNT VALIDATION
+    |--------------------------------------------------------------------------
+    */
 
     if (
-        !is_numeric($amount)
+        $amountInput === "" ||
+        !is_numeric($amountInput)
     ) {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" => "Please enter a valid withdrawal amount."
+            "message" =>
+                "Please enter a valid withdrawal amount."
         ]);
 
         exit;
     }
 
-
-    /*
-     * Convert to number.
-     */
 
     $amount =
-        (float)$amount;
+        (float)$amountInput;
 
 
-    /*
-     * Minimum withdrawal.
-     */
-
-    if (
-        $amount < 1000
-    ) {
+    if ($amount < 1000) {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" => "Minimum withdrawal amount is UGX 1,000."
+            "message" =>
+                "Minimum withdrawal amount is UGX 1,000."
+        ]);
+
+        exit;
+    }
+
+
+    if (floor($amount) != $amount) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Withdrawal amount must be a whole UGX amount."
+        ]);
+
+        exit;
+    }
+
+
+    if ($amount > 10000000) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Maximum withdrawal per request is UGX 10,000,000."
         ]);
 
         exit;
@@ -223,49 +250,10 @@ try {
 
 
     /*
-     * Only whole UGX amounts.
-     */
-
-    if (
-        floor($amount) != $amount
-    ) {
-
-        http_response_code(400);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "Withdrawal amount must be a whole UGX amount."
-        ]);
-
-        exit;
-    }
-
-
-    /*
-     * Maximum safety limit for one request.
-     *
-     * This can be changed later according
-     * to the platform's final withdrawal policy.
-     */
-
-    if (
-        $amount > 10000000
-    ) {
-
-        http_response_code(400);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "Maximum withdrawal per request is UGX 10,000,000."
-        ]);
-
-        exit;
-    }
-
-
-    /* -----------------------------------------------------
-       VALIDATE PAYMENT METHOD
-       ----------------------------------------------------- */
+    |--------------------------------------------------------------------------
+    | PAYMENT METHOD VALIDATION
+    |--------------------------------------------------------------------------
+    */
 
     $allowedMethods = [
         "MTN",
@@ -285,28 +273,19 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "Please select MTN Mobile Money or Airtel Money."
+            "message" =>
+                "Please select MTN Mobile Money or Airtel Money."
         ]);
 
         exit;
     }
 
 
-    /* -----------------------------------------------------
-       NORMALIZE PHONE NUMBER
-       ----------------------------------------------------- */
-
     /*
-     * Accept:
-     *
-     * 07XXXXXXXX
-     * +2567XXXXXXXX
-     * 2567XXXXXXXX
-     *
-     * Store internally as:
-     *
-     * 07XXXXXXXX
-     */
+    |--------------------------------------------------------------------------
+    | PHONE NUMBER CLEANUP
+    |--------------------------------------------------------------------------
+    */
 
     $account =
         preg_replace(
@@ -315,6 +294,12 @@ try {
             $account
         );
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONVERT INTERNATIONAL UGANDA NUMBER
+    |--------------------------------------------------------------------------
+    */
 
     if (
         str_starts_with(
@@ -346,9 +331,11 @@ try {
     }
 
 
-    /* -----------------------------------------------------
-       VALIDATE UGANDA NUMBER
-       ----------------------------------------------------- */
+    /*
+    |--------------------------------------------------------------------------
+    | UGANDA NUMBER VALIDATION
+    |--------------------------------------------------------------------------
+    */
 
     if (
         !preg_match(
@@ -361,16 +348,19 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "Please enter a valid Uganda mobile money number."
+            "message" =>
+                "Please enter a valid Uganda mobile money number."
         ]);
 
         exit;
     }
 
 
-    /* =====================================================
-       USER ID
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | USER OBJECT ID
+    |--------------------------------------------------------------------------
+    */
 
     try {
 
@@ -385,16 +375,19 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "Invalid user session."
+            "message" =>
+                "Invalid user session."
         ]);
 
         exit;
     }
 
 
-    /* =====================================================
-       GENERATE WITHDRAWAL REFERENCE
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE UNIQUE WITHDRAWAL REFERENCE
+    |--------------------------------------------------------------------------
+    */
 
     $reference =
         "CW-" .
@@ -411,47 +404,42 @@ try {
         );
 
 
-    /* =====================================================
-       ATOMICALLY RESERVE BALANCE
-       ===================================================== */
-
     /*
-     * IMPORTANT:
-     *
-     * We do NOT simply:
-     *
-     * 1. Read balance
-     * 2. Check balance
-     * 3. Deduct balance
-     *
-     * because two requests could arrive
-     * at almost the same time.
-     *
-     * Instead MongoDB performs:
-     *
-     * balance >= requested amount
-     *
-     * AND
-     *
-     * balance = balance - requested amount
-     *
-     * as one atomic operation.
-     */
+    |--------------------------------------------------------------------------
+    | ATOMIC BALANCE RESERVATION
+    |--------------------------------------------------------------------------
+    |
+    | The balance is reduced only when:
+    |
+    |   - The user exists
+    |   - The account is active
+    |   - The balance is sufficient
+    |
+    | MongoDB performs this atomically, helping prevent
+    | two simultaneous withdrawals from spending the same balance.
+    |
+    */
 
     $balanceUpdate =
         $users->findOneAndUpdate(
-            [
-                "_id" => $userId,
 
-                "status" => "active",
+            [
+                "_id" =>
+                    $userId,
+
+                "status" =>
+                    "active",
 
                 "balance" => [
-                    '$gte' => $amount
+                    '$gte' =>
+                        $amount
                 ]
             ],
+
             [
                 '$inc' => [
-                    "balance" => -$amount
+                    "balance" =>
+                        -$amount
                 ],
 
                 '$set' => [
@@ -459,6 +447,7 @@ try {
                         new MongoDB\BSON\UTCDateTime()
                 ]
             ],
+
             [
                 "returnDocument" =>
                     MongoDB\Operation\FindOneAndUpdate::RETURN_DOCUMENT_AFTER
@@ -466,90 +455,180 @@ try {
         );
 
 
-    /* =====================================================
-       CHECK BALANCE UPDATE
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | INSUFFICIENT BALANCE
+    |--------------------------------------------------------------------------
+    */
 
-    if (
-        !$balanceUpdate
-    ) {
+    if (!$balanceUpdate) {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" => "Insufficient available balance or inactive account."
+            "message" =>
+                "Insufficient available balance or inactive account."
         ]);
 
         exit;
     }
 
 
-    /* =====================================================
-       CREATE WITHDRAWAL RECORD
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE WITHDRAWAL RECORD
+    |--------------------------------------------------------------------------
+    */
+
+    $now =
+        new MongoDB\BSON\UTCDateTime();
+
 
     $withdrawal = [
+
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT TYPE FIELD
+        |--------------------------------------------------------------------------
+        */
+
+        "type" =>
+            "withdrawal",
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | USER
+        |--------------------------------------------------------------------------
+        */
 
         "user_id" =>
             $userId,
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | REFERENCE
+        |--------------------------------------------------------------------------
+        */
+
         "reference" =>
             $reference,
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | AMOUNT
+        |--------------------------------------------------------------------------
+        */
 
         "amount" =>
             $amount,
 
+
         "currency" =>
             "UGX",
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYMENT DETAILS
+        |--------------------------------------------------------------------------
+        */
 
         "method" =>
             $method,
 
+
         "account" =>
             $account,
 
+
         /*
-         * Withdrawal starts pending.
-         */
+        |--------------------------------------------------------------------------
+        | STATUS
+        |--------------------------------------------------------------------------
+        */
 
         "status" =>
             "pending",
 
+
         /*
-         * Money has been reserved
-         * from the user's available balance.
-         */
+        |--------------------------------------------------------------------------
+        | BALANCE STATE
+        |--------------------------------------------------------------------------
+        */
 
         "balance_reserved" =>
             true,
 
+        "balance_deducted" =>
+            false,
+
+        "balance_restored" =>
+            false,
+
+
         /*
-         * No payout has happened yet.
-         */
+        |--------------------------------------------------------------------------
+        | PAYOUT STATE
+        |--------------------------------------------------------------------------
+        */
 
         "payout_sent" =>
             false,
 
+
         /*
-         * Admin has not approved it yet.
-         */
+        |--------------------------------------------------------------------------
+        | ADMIN STATE
+        |--------------------------------------------------------------------------
+        */
 
         "admin_approved" =>
             false,
 
+        "admin_rejected" =>
+            false,
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN ACTION
+        |--------------------------------------------------------------------------
+        */
+
+        "admin_id" =>
+            null,
+
+        "admin_email" =>
+            "",
+
+        "admin_action_at" =>
+            null,
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | DATES
+        |--------------------------------------------------------------------------
+        */
+
         "created_at" =>
-            new MongoDB\BSON\UTCDateTime(),
+            $now,
 
         "updated_at" =>
-            new MongoDB\BSON\UTCDateTime()
-
+            $now
     ];
 
 
-    /* =====================================================
-       SAVE WITHDRAWAL
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE WITHDRAWAL
+    |--------------------------------------------------------------------------
+    */
 
     try {
 
@@ -561,19 +640,25 @@ try {
     } catch (Throwable $insertError) {
 
         /*
-         * The withdrawal record failed to save.
-         *
-         * Restore the reserved balance so the
-         * user does not lose money.
-         */
+        |--------------------------------------------------------------------------
+        | RESTORE BALANCE IF SAVING FAILED
+        |--------------------------------------------------------------------------
+        |
+        | We already reserved the money.
+        | If the transaction record cannot be created,
+        | return the money to the user.
+        |
+        */
 
         try {
 
             $users->updateOne(
+
                 [
                     "_id" =>
                         $userId
                 ],
+
                 [
                     '$inc' => [
                         "balance" =>
@@ -600,9 +685,11 @@ try {
     }
 
 
-    /* =====================================================
-       RETURN SUCCESS
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | SUCCESS RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
     echo json_encode([
 
@@ -615,8 +702,12 @@ try {
         "withdrawal" => [
 
             "id" =>
-                (string)
-                $result->getInsertedId(),
+                (string)(
+                    $result->getInsertedId()
+                ),
+
+            "type" =>
+                "withdrawal",
 
             "reference" =>
                 $reference,
@@ -644,22 +735,26 @@ try {
         "user" => [
 
             "id" =>
-                (string)
-                $balanceUpdate["_id"],
+                (string)(
+                    $balanceUpdate["_id"]
+                ),
 
             "balance" =>
-                $balanceUpdate["balance"] ?? 0
+                (float)(
+                    $balanceUpdate["balance"] ?? 0
+                )
 
         ]
 
     ]);
 
-
 } catch (Throwable $e) {
 
-    /* =====================================================
-       ERROR LOG
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | ERROR LOG
+    |--------------------------------------------------------------------------
+    */
 
     error_log(
         "CROWN CASH CREATE WITHDRAWAL ERROR: " .
@@ -667,9 +762,11 @@ try {
     );
 
 
-    /* =====================================================
-       ERROR RESPONSE
-       ===================================================== */
+    /*
+    |--------------------------------------------------------------------------
+    | ERROR RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
     http_response_code(500);
 
@@ -682,7 +779,6 @@ try {
             "Unable to create withdrawal request. Please try again."
 
     ]);
-
 }
 
 ?>

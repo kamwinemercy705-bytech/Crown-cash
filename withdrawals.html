@@ -1321,4 +1321,328 @@
                              aria-hidden="true">
 
                             <path d="M5 12h14
-                                     M13
+                                     M13 6l6 6-6 6"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.8"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </a>
+
+                </aside>
+
+            </div>
+
+
+            <!-- ==============================
+                 WITHDRAWAL HISTORY
+            =============================== -->
+            <section class="history-card">
+
+                <div class="history-header">
+
+                    <div class="section-heading">
+
+                        <div class="section-icon">
+
+                            <svg viewBox="0 0 24 24"
+                                 aria-hidden="true">
+
+                                <path d="M4 5h16v15H4z"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linejoin="round"/>
+
+                                <path d="M8 9h8
+                                         M8 13h8
+                                         M8 17h5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                ACTIVITY
+                            </span>
+
+                            <h3>
+                                Withdrawal History
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="history-empty">
+
+                    <div class="empty-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M6 4h12v16H6z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.6"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M9 8h6
+                                     M9 12h6
+                                     M9 16h4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.6"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </div>
+
+                    <h4>
+                        Withdrawal History
+                    </h4>
+
+                    <p>
+                        Your withdrawal requests
+                        will appear here.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==============================
+                 FOOTER
+            =============================== -->
+            <footer class="page-footer">
+
+                <p>
+                    © <span id="currentYear"></span>
+                    Crown Cash. All rights reserved.
+                </p>
+
+                <div class="footer-links">
+
+                    <a href="support.html">
+                        Support
+                    </a>
+
+                    <span>•</span>
+
+                    <a href="#">
+                        Terms
+                    </a>
+
+                    <span>•</span>
+
+                    <a href="#">
+                        Privacy
+                    </a>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+
+    <!-- ==============================
+         LOADING OVERLAY
+    =============================== -->
+    <div class="loading-overlay"
+         id="loadingOverlay"
+         hidden>
+
+        <div class="loading-box">
+
+            <div class="loading-spinner"></div>
+
+            <strong>
+                Processing request...
+            </strong>
+
+            <span>
+                Please wait.
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==============================
+         CONFIRMATION MODAL
+    =============================== -->
+    <div class="modal-overlay"
+         id="confirmModal"
+         hidden>
+
+        <div class="confirm-modal">
+
+            <button type="button"
+                    class="modal-close"
+                    id="modalClose"
+                    aria-label="Close">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M6 6l12 12
+                             M18 6L6 18"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"/>
+
+                </svg>
+
+            </button>
+
+
+            <div class="modal-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M12 3
+                             L19 6v5
+                             C19 16 16.2 19.5 12 21
+                             C7.8 19.5 5 16 5 11V6z"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"/>
+
+                    <path d="M9 12l2 2
+                             L15 10"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
+                </svg>
+
+            </div>
+
+
+            <span class="modal-label">
+                CONFIRM REQUEST
+            </span>
+
+            <h3>
+                Confirm Withdrawal
+            </h3>
+
+            <p>
+                Please check your withdrawal
+                details before submitting.
+            </p>
+
+
+            <div class="confirm-details">
+
+                <div>
+
+                    <span>
+                        Amount
+                    </span>
+
+                    <strong id="confirmAmount">
+                        UGX 0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Method
+                    </span>
+
+                    <strong id="confirmMethod">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Mobile Number
+                    </span>
+
+                    <strong id="confirmPhone">
+                        —
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button type="button"
+                        class="modal-cancel"
+                        id="modalCancel">
+
+                    Cancel
+
+                </button>
+
+                <button type="button"
+                        class="modal-confirm"
+                        id="modalConfirm">
+
+                    Confirm Withdrawal
+
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true">
+
+                        <path d="M5 12h14
+                                 M13 6l6 6-6 6"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==============================
+         JAVASCRIPT
+         IMPORTANT:
+         Cache-busting version added.
+    =============================== -->
+    <script src="withdrawals.js?v=3"></script>
+
+</body>
+</html>

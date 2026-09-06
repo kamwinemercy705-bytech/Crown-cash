@@ -1,352 +1,675 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Crown Cash - Withdrawals</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="withdrawals.css">
+    <meta name="theme-color"
+          content="#160b24">
+
+    <meta name="description"
+          content="Crown Cash Withdrawals">
+
+    <title>Crown Cash — Withdraw</title>
+
+    <link rel="stylesheet"
+          href="withdrawals.css?v=3">
 </head>
 
 <body>
 
-<div class="app-shell">
+    <!-- ==============================
+         MOBILE OVERLAY
+    =============================== -->
+    <div class="sidebar-overlay"
+         id="sidebarOverlay"></div>
 
-    <!-- ================= SIDEBAR ================= -->
-    <aside class="sidebar" id="sidebar">
 
-        <div class="sidebar-logo">
+    <!-- ==============================
+         SIDEBAR
+    =============================== -->
+    <aside class="sidebar"
+           id="sidebar">
 
-            <div class="logo-icon">
-                <svg viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                    <path d="M3 7l3 10h12l3-10-5 5-4-6-4 6-5-5z"/>
-                    <path d="M6 20h12"/>
+        <div class="sidebar-top">
+
+            <!-- LOGO -->
+            <a href="dashboard.html"
+               class="brand">
+
+                <div class="brand-logo">
+
+                    <svg viewBox="0 0 64 64"
+                         aria-hidden="true">
+
+                        <path d="M32 5
+                                 L52 13
+                                 V29
+                                 C52 43 44 53 32 59
+                                 C20 53 12 43 12 29
+                                 V13
+                                 Z"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="4"/>
+
+                        <path d="M23 31
+                                 L29 37
+                                 L42 23"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="4"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
+
+                    </svg>
+
+                </div>
+
+                <div class="brand-text">
+
+                    <strong>CROWN</strong>
+                    <span>CASH</span>
+
+                </div>
+
+            </a>
+
+
+            <!-- USER LABEL -->
+            <div class="account-label">
+
+                <span class="account-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true">
+
+                        <circle cx="12"
+                                cy="8"
+                                r="4"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"/>
+
+                        <path d="M4 21
+                                 C4.8 16.8 7.5 15
+                                 12 15
+                                 C16.5 15 19.2 16.8 20 21"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"/>
+
+                    </svg>
+
+                </span>
+
+                <span>MY ACCOUNT</span>
+
+            </div>
+
+
+            <!-- NAVIGATION -->
+            <nav class="sidebar-nav">
+
+                <a href="dashboard.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M4 13h6V4H4z
+                                     M14 20h6v-9h-6z
+                                     M14 4h6v4h-6z
+                                     M4 20h6v-3H4z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Dashboard</span>
+
+                </a>
+
+
+                <a href="investments.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M4 19
+                                     L9 13
+                                     L13 16
+                                     L20 7"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.8"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M15 7h5v5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.8"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Investments</span>
+
+                </a>
+
+
+                <a href="my-investments.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M4 7h16v13H4z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M8 7V5
+                                     C8 3.9 8.9 3 10 3h4
+                                     C15.1 3 16 3.9 16 5v2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M4 11h16"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>My Investments</span>
+
+                </a>
+
+
+                <a href="deposit.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <rect x="4"
+                                  y="6"
+                                  width="16"
+                                  height="13"
+                                  rx="2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M8 10h8"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M12 3v7
+                                     M9 7l3 3
+                                     L15 7"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Deposit</span>
+
+                </a>
+
+
+                <a href="withdrawals.html"
+                   class="nav-item active">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <rect x="4"
+                                  y="6"
+                                  width="16"
+                                  height="13"
+                                  rx="2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M12 4v10
+                                     M9 11l3 3
+                                     L15 11"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.8"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Withdraw</span>
+
+                </a>
+
+
+                <a href="transactions.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M5 4h14v16H5z"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M8 8h8
+                                     M8 12h8
+                                     M8 16h5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Transactions</span>
+
+                </a>
+
+
+                <a href="team.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <circle cx="9"
+                                    cy="8"
+                                    r="3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <circle cx="17"
+                                    cy="9"
+                                    r="2.3"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <path d="M3.5 20
+                                     C4.2 16.3 6 14.5 9 14.5
+                                     C12 14.5 13.8 16.3 14.5 20"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M14.5 14.8
+                                     C17.4 14.3 19.3 16
+                                     20 19"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>My Team</span>
+
+                </a>
+
+
+                <a href="profile.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <circle cx="12"
+                                    cy="8"
+                                    r="3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <path d="M5 21
+                                     C5.8 16.5 8.1 14.5 12 14.5
+                                     C15.9 14.5 18.2 16.5 19 21"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Profile</span>
+
+                </a>
+
+
+                <a href="support.html"
+                   class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path d="M5 12
+                                     C5 7.6 8.1 4.5 12 4.5
+                                     C15.9 4.5 19 7.6 19 12"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M5 12v5
+                                     M19 12v5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <rect x="3"
+                                  y="15"
+                                  width="4"
+                                  height="5"
+                                  rx="1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <rect x="17"
+                                  y="15"
+                                  width="4"
+                                  height="5"
+                                  rx="1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Support</span>
+
+                </a>
+
+            </nav>
+
+        </div>
+
+
+        <!-- LOGOUT -->
+        <button type="button"
+                class="logout-btn"
+                id="logoutBtn">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M10 5H5v14h5"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
+                    <path d="M13 8l4 4-4 4
+                             M17 12H9"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
                 </svg>
-            </div>
 
-            <div class="logo-text">
-                <strong>CROWN</strong>
-                <span>CASH</span>
-            </div>
+            </span>
 
-        </div>
+            <span>Logout</span>
 
-
-        <!-- Navigation -->
-        <nav class="sidebar-nav">
-
-            <a href="dashboard.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"/>
-                        <rect x="14" y="3" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/>
-                        <rect x="14" y="14" width="7" height="7"/>
-                    </svg>
-                </span>
-                <span>Dashboard</span>
-            </a>
-
-
-            <a href="deposit.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="5" width="18" height="14" rx="2"/>
-                        <path d="M7 12h10"/>
-                        <path d="M12 8v8"/>
-                    </svg>
-                </span>
-                <span>Deposit</span>
-            </a>
-
-
-            <a href="investments.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19V5"/>
-                        <path d="M4 19h16"/>
-                        <path d="M7 15l4-5 3 3 5-7"/>
-                    </svg>
-                </span>
-                <span>Investments</span>
-            </a>
-
-
-            <a href="my-investments.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 7h16"/>
-                        <path d="M6 4h12"/>
-                        <rect x="4" y="7" width="16" height="13" rx="2"/>
-                        <path d="M9 12h6"/>
-                    </svg>
-                </span>
-                <span>My Investments</span>
-            </a>
-
-
-            <a href="withdrawals.html" class="nav-item active">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="5" width="18" height="14" rx="2"/>
-                        <path d="M12 8v8"/>
-                        <path d="M8 12h8"/>
-                    </svg>
-                </span>
-                <span>Withdraw</span>
-            </a>
-
-
-            <a href="transactions.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 6h16"/>
-                        <path d="M4 12h16"/>
-                        <path d="M4 18h16"/>
-                        <circle cx="8" cy="6" r="1"/>
-                        <circle cx="16" cy="12" r="1"/>
-                        <circle cx="10" cy="18" r="1"/>
-                    </svg>
-                </span>
-                <span>Transactions</span>
-            </a>
-
-
-            <a href="team.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="9" cy="8" r="3"/>
-                        <circle cx="17" cy="9" r="2.5"/>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
-                        <path d="M15 14c3 0 5 2 6 5"/>
-                    </svg>
-                </span>
-                <span>My Team</span>
-            </a>
-
-
-            <a href="profile.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="8" r="3.5"/>
-                        <path d="M5 20c0-4 3-6 7-6s7 2 7 6"/>
-                    </svg>
-                </span>
-                <span>Profile</span>
-            </a>
-
-
-            <a href="support.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="9"/>
-                        <path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-1.1.8-1.7 1.3-1.7 2.7"/>
-                        <circle cx="12" cy="17" r=".7"/>
-                    </svg>
-                </span>
-                <span>Support</span>
-            </a>
-
-
-            <a href="settings.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.1h-2.6v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H6v-2.6h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1L9 5.6l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.1h2.6v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1V13h-.1a1.7 1.7 0 0 0-1.1 2z"/>
-                    </svg>
-                </span>
-                <span>Settings</span>
-            </a>
-
-        </nav>
-
-
-        <div class="sidebar-bottom">
-
-            <button type="button" id="logoutBtn" class="logout-btn">
-
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10 17l5-5-5-5"/>
-                        <path d="M15 12H3"/>
-                        <path d="M20 4v16"/>
-                    </svg>
-                </span>
-
-                <span>Logout</span>
-
-            </button>
-
-        </div>
+        </button>
 
     </aside>
 
 
-
-    <!-- ================= MAIN CONTENT ================= -->
+    <!-- ==============================
+         MAIN CONTENT
+    =============================== -->
     <main class="main-content">
 
 
-        <!-- Mobile topbar -->
-        <header class="mobile-topbar">
+        <!-- ==============================
+             TOP BAR
+        =============================== -->
+        <header class="topbar">
 
-            <button
-                type="button"
-                id="menuBtn"
-                class="menu-btn"
-                aria-label="Open menu">
+            <div class="topbar-left">
 
-                <svg viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round">
-                    <path d="M4 6h16"/>
-                    <path d="M4 12h16"/>
-                    <path d="M4 18h16"/>
-                </svg>
+                <button type="button"
+                        class="menu-toggle"
+                        id="menuToggle"
+                        aria-label="Open menu">
 
-            </button>
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true">
 
+                        <path d="M4 7h16
+                                 M4 12h16
+                                 M4 17h16"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"/>
 
-            <div class="mobile-brand">
-
-                <span class="mobile-brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.8"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-                        <path d="M3 7l3 10h12l3-10-5 5-4-6-4 6-5-5z"/>
-                        <path d="M6 20h12"/>
                     </svg>
-                </span>
 
-                <span>CROWN CASH</span>
+                </button>
+
+
+                <div class="page-heading">
+
+                    <span class="eyebrow">
+                        CROWN CASH
+                    </span>
+
+                    <h1>
+                        Withdraw Funds
+                    </h1>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <!-- NOTIFICATION -->
+                <button type="button"
+                        class="top-icon-btn"
+                        aria-label="Notifications">
+
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true">
+
+                        <path d="M18 9
+                                 C18 5.7 15.8 3.5 12 3.5
+                                 C8.2 3.5 6 5.7 6 9v4
+                                 L4.5 16h15L18 13z"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.7"
+                              stroke-linejoin="round"/>
+
+                        <path d="M10 19
+                                 C10.5 20 11.2 20.5 12 20.5
+                                 C12.8 20.5 13.5 20 14 19"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.7"
+                              stroke-linecap="round"/>
+
+                    </svg>
+
+                </button>
+
+
+                <!-- PROFILE -->
+                <a href="profile.html"
+                   class="top-profile">
+
+                    <div class="profile-avatar">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <circle cx="12"
+                                    cy="8"
+                                    r="3.2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"/>
+
+                            <path d="M5.5 20
+                                     C6.3 16.3 8.3 14.5 12 14.5
+                                     C15.7 14.5 17.7 16.3 18.5 20"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.6"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div class="profile-info">
+
+                        <strong id="topUserName">
+                            User
+                        </strong>
+
+                        <span>
+                            Account
+                        </span>
+
+                    </div>
+
+                </a>
 
             </div>
 
         </header>
 
 
-
-        <!-- ================= TOPBAR ================= -->
-        <div class="topbar">
-
-            <div>
-                <span class="page-label">Wallet</span>
-                <h1>Withdraw Funds</h1>
-            </div>
+        <!-- ==============================
+             PAGE WRAPPER
+        =============================== -->
+        <section class="page-wrapper">
 
 
-            <div class="topbar-actions">
-
-                <button
-                    type="button"
-                    class="notification-btn"
-                    aria-label="Notifications">
-
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.8"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-                        <path d="M10 21h4"/>
-                    </svg>
-
-                    <span class="notification-dot"></span>
-
-                </button>
-
-
-                <div class="user-mini">
-
-                    <div class="user-mini-icon">
-
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor"
-                             stroke-width="1.8"
-                             stroke-linecap="round"
-                             stroke-linejoin="round">
-                            <circle cx="12" cy="8" r="3"/>
-                            <path d="M5 20c0-4 3-6 7-6s7 2 7 6"/>
-                        </svg>
-
-                    </div>
-
-                    <div class="user-mini-info">
-                        <strong id="topUserName">Crown Cash User</strong>
-                        <span>Member</span>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- ================= PAGE ================= -->
-        <section class="page-container">
-
-
-            <!-- Hero -->
+            <!-- ==============================
+                 HERO
+            =============================== -->
             <section class="withdraw-hero">
 
                 <div class="hero-icon">
 
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.7"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-                        <rect x="3" y="5" width="18" height="14" rx="2"/>
-                        <path d="M12 8v8"/>
-                        <path d="M8 12h8"/>
+                    <svg viewBox="0 0 64 64"
+                         aria-hidden="true">
+
+                        <rect x="9"
+                              y="15"
+                              width="46"
+                              height="34"
+                              rx="6"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"/>
+
+                        <path d="M32 10v29"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                              stroke-linecap="round"/>
+
+                        <path d="M23 31l9 9
+                                 L41 31"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
+
                     </svg>
 
                 </div>
 
-
                 <div class="hero-content">
 
-                    <span class="eyebrow">
-                        CROWN CASH WALLET
+                    <span class="hero-label">
+                        WITHDRAWAL CENTER
                     </span>
 
-                    <h2>Withdraw Your Funds</h2>
+                    <h2>
+                        Withdraw Your Funds
+                    </h2>
 
                     <p>
-                        Request a withdrawal directly to your
-                        registered mobile money account.
+                        Request a withdrawal securely
+                        using your preferred mobile
+                        money method.
                     </p>
 
                 </div>
@@ -354,92 +677,168 @@
             </section>
 
 
-
-            <!-- ================= BALANCE ================= -->
+            <!-- ==============================
+                 BALANCE CARD
+            =============================== -->
             <section class="balance-card">
 
-                <div class="balance-icon">
+                <div class="balance-left">
 
-                    <svg viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.7"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-                        <rect x="3" y="6" width="18" height="13" rx="2"/>
-                        <path d="M7 6V4h10v2"/>
-                        <path d="M16 13h2"/>
+                    <div class="balance-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <rect x="3"
+                                  y="6"
+                                  width="18"
+                                  height="13"
+                                  rx="2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M7 10h10"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <circle cx="16.5"
+                                    cy="15"
+                                    r="1.2"
+                                    fill="currentColor"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span class="balance-label">
+                            AVAILABLE BALANCE
+                        </span>
+
+                        <strong id="availableBalance">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                <a href="deposit.html"
+                   class="balance-action">
+
+                    <span>Deposit</span>
+
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true">
+
+                        <path d="M5 12h14
+                                 M13 6l6 6-6 6"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"/>
+
                     </svg>
 
-                </div>
-
-
-                <div class="balance-info">
-
-                    <span>Available Balance</span>
-
-                    <strong id="availableBalance">
-                        UGX 0
-                    </strong>
-
-                </div>
+                </a>
 
             </section>
 
 
-
-            <!-- ================= GRID ================= -->
+            <!-- ==============================
+                 WITHDRAWAL GRID
+            =============================== -->
             <div class="withdraw-grid">
 
 
-                <!-- Withdrawal form -->
+                <!-- ==============================
+                     WITHDRAWAL FORM CARD
+                =============================== -->
                 <section class="withdraw-card">
 
-                    <div class="card-heading">
+                    <div class="section-heading">
 
-                        <div class="heading-icon">
+                        <div class="section-icon">
 
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="1.7"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <path d="M4 12h16"/>
-                                <path d="M14 6l6 6-6 6"/>
+                            <svg viewBox="0 0 24 24"
+                                 aria-hidden="true">
+
+                                <path d="M5 4h14v16H5z"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linejoin="round"/>
+
+                                <path d="M8 8h8
+                                         M8 12h8
+                                         M8 16h5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
+
                             </svg>
 
                         </div>
 
                         <div>
-                            <h3>Request Withdrawal</h3>
-                            <p>Enter the amount you want to withdraw.</p>
+
+                            <span>
+                                NEW REQUEST
+                            </span>
+
+                            <h3>
+                                Withdrawal Request
+                            </h3>
+
                         </div>
 
                     </div>
 
 
+                    <!-- FORM
+                         IMPORTANT:
+                         NO ACTION ATTRIBUTE.
+                         withdrawals.js handles submission.
+                    -->
+                    <form id="withdrawalForm"
+                          novalidate>
 
-                    <form id="withdrawalForm" novalidate>
 
-
-                        <!-- Amount -->
+                        <!-- AMOUNT -->
                         <div class="form-group">
 
                             <label for="withdrawalAmount">
                                 Withdrawal Amount
                             </label>
 
-                            <div class="input-wrapper">
+                            <div class="input-wrap">
 
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor"
-                                         stroke-width="1.7"
-                                         stroke-linecap="round"
-                                         stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="M15 8.5c-.8-.6-1.7-.9-2.8-.9-1.5 0-2.7.8-2.7 2s1.1 1.8 2.8 2.1c1.7.3 2.7 1 2.7 2.2 0 1.2-1.2 2.1-2.9 2.1-1.1 0-2.2-.4-3-1"/>
-                                        <path d="M12 6v12"/>
+                                    <svg viewBox="0 0 24 24"
+                                         aria-hidden="true">
+
+                                        <rect x="3"
+                                              y="6"
+                                              width="18"
+                                              height="13"
+                                              rx="2"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="1.7"/>
+
+                                        <path d="M7 10h10"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="1.7"
+                                              stroke-linecap="round"/>
+
                                     </svg>
 
                                 </span>
@@ -449,8 +848,10 @@
                                     id="withdrawalAmount"
                                     name="amount"
                                     min="1000"
+                                    max="10000000"
                                     step="1"
                                     placeholder="Enter amount"
+                                    autocomplete="off"
                                     required
                                 >
 
@@ -461,48 +862,56 @@
                             </div>
 
                             <small>
-                                Minimum withdrawal: UGX 1,000
+                                Minimum: UGX 1,000
                             </small>
 
                         </div>
 
 
-
-                        <!-- Payment method -->
+                        <!-- PAYMENT METHOD -->
                         <div class="form-group">
 
                             <label>
-                                Payment Method
+                                Mobile Money Method
                             </label>
 
+                            <div class="method-grid">
 
-                            <div class="method-options">
 
+                                <!-- MTN -->
+                                <button type="button"
+                                        class="method-btn"
+                                        data-method="MTN">
 
-                                <button
-                                    type="button"
-                                    class="method-option"
-                                    data-method="MTN"
-                                    id="mtnMethod">
-
-                                    <span class="method-icon mtn-icon">
-                                        M
+                                    <span class="method-logo mtn-logo">
+                                        MTN
                                     </span>
 
-                                    <span class="method-info">
-                                        <strong>MTN Mobile Money</strong>
-                                        <small>Withdraw to MTN</small>
+                                    <span class="method-details">
+
+                                        <strong>
+                                            MTN Mobile Money
+                                        </strong>
+
+                                        <small>
+                                            Uganda
+                                        </small>
+
                                     </span>
 
                                     <span class="method-check">
 
                                         <svg viewBox="0 0 24 24"
-                                             fill="none"
-                                             stroke="currentColor"
-                                             stroke-width="2"
-                                             stroke-linecap="round"
-                                             stroke-linejoin="round">
-                                            <path d="M5 12l4 4L19 6"/>
+                                             aria-hidden="true">
+
+                                            <path d="M5 12l4 4
+                                                     L19 7"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  stroke-width="2"
+                                                  stroke-linecap="round"
+                                                  stroke-linejoin="round"/>
+
                                         </svg>
 
                                     </span>
@@ -510,31 +919,40 @@
                                 </button>
 
 
+                                <!-- AIRTEL -->
+                                <button type="button"
+                                        class="method-btn"
+                                        data-method="AIRTEL">
 
-                                <button
-                                    type="button"
-                                    class="method-option"
-                                    data-method="AIRTEL"
-                                    id="airtelMethod">
-
-                                    <span class="method-icon airtel-icon">
+                                    <span class="method-logo airtel-logo">
                                         A
                                     </span>
 
-                                    <span class="method-info">
-                                        <strong>Airtel Money</strong>
-                                        <small>Withdraw to Airtel</small>
+                                    <span class="method-details">
+
+                                        <strong>
+                                            Airtel Money
+                                        </strong>
+
+                                        <small>
+                                            Uganda
+                                        </small>
+
                                     </span>
 
                                     <span class="method-check">
 
                                         <svg viewBox="0 0 24 24"
-                                             fill="none"
-                                             stroke="currentColor"
-                                             stroke-width="2"
-                                             stroke-linecap="round"
-                                             stroke-linejoin="round">
-                                            <path d="M5 12l4 4L19 6"/>
+                                             aria-hidden="true">
+
+                                            <path d="M5 12l4 4
+                                                     L19 7"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  stroke-width="2"
+                                                  stroke-linecap="round"
+                                                  stroke-linejoin="round"/>
+
                                         </svg>
 
                                     </span>
@@ -544,7 +962,7 @@
                             </div>
 
 
-                            <!-- Hidden method value -->
+                            <!-- Hidden method field -->
                             <input
                                 type="hidden"
                                 id="withdrawalMethod"
@@ -555,343 +973,352 @@
                         </div>
 
 
-
-                        <!-- Phone number -->
+                        <!-- PHONE NUMBER -->
                         <div class="form-group">
 
-                            <label for="withdrawalAccount">
+                            <label for="withdrawalPhone">
                                 Mobile Money Number
                             </label>
 
-                            <div class="input-wrapper">
+                            <div class="input-wrap">
 
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor"
-                                         stroke-width="1.7"
-                                         stroke-linecap="round"
-                                         stroke-linejoin="round">
-                                        <rect x="7" y="3" width="10" height="18" rx="2"/>
-                                        <path d="M10 6h4"/>
-                                        <path d="M11 18h2"/>
+                                    <svg viewBox="0 0 24 24"
+                                         aria-hidden="true">
+
+                                        <rect x="7"
+                                              y="3"
+                                              width="10"
+                                              height="18"
+                                              rx="2"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="1.7"/>
+
+                                        <path d="M10 6h4
+                                                 M10 18h4"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="1.7"
+                                              stroke-linecap="round"/>
+
                                     </svg>
 
                                 </span>
 
                                 <input
                                     type="tel"
-                                    id="withdrawalAccount"
+                                    id="withdrawalPhone"
                                     name="account"
-                                    inputmode="numeric"
-                                    autocomplete="tel"
                                     placeholder="07XXXXXXXX"
                                     maxlength="10"
+                                    autocomplete="tel"
                                     required
                                 >
 
                             </div>
 
                             <small>
-                                Enter the Uganda mobile money number.
+                                Enter the number registered
+                                for mobile money.
                             </small>
 
                         </div>
 
 
-
-                        <!-- Security notice -->
+                        <!-- SECURITY NOTE -->
                         <div class="security-note">
 
                             <div class="security-icon">
 
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor"
-                                     stroke-width="1.7"
-                                     stroke-linecap="round"
-                                     stroke-linejoin="round">
-                                    <path d="M12 3l8 3v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-3z"/>
-                                    <path d="M9 12l2 2 4-4"/>
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <path d="M12 3
+                                             L19 6v5
+                                             C19 16 16.2 19.5 12 21
+                                             C7.8 19.5 5 16 5 11V6z"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="1.7"
+                                          stroke-linejoin="round"/>
+
+                                    <path d="M9 12l2 2
+                                             L15 10"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="1.7"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"/>
+
                                 </svg>
 
                             </div>
 
                             <div>
-                                <strong>Secure Withdrawal</strong>
+
+                                <strong>
+                                    Secure Withdrawal
+                                </strong>
 
                                 <p>
-                                    Crown Cash will review your request
-                                    before funds are released.
+                                    Your withdrawal request
+                                    will be reviewed by an
+                                    administrator before payout.
                                 </p>
+
                             </div>
 
                         </div>
 
 
-
-                        <!-- Message -->
-                        <div
-                            id="withdrawalMessage"
-                            class="form-message"
-                            aria-live="polite">
-                        </div>
-
-
-
-                        <!-- Submit -->
+                        <!-- SUBMIT -->
                         <button
                             type="submit"
-                            id="withdrawalSubmit"
-                            class="withdraw-submit">
+                            class="withdraw-submit"
+                            id="withdrawSubmit"
+                        >
 
-                            <span class="button-icon">
+                            <span class="submit-icon">
 
-                                <svg viewBox="0 0 24 24" fill="none"
-                                     stroke="currentColor"
-                                     stroke-width="1.8"
-                                     stroke-linecap="round"
-                                     stroke-linejoin="round">
-                                    <path d="M12 19V5"/>
-                                    <path d="M6 11l6-6 6 6"/>
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <path d="M12 4v12
+                                             M8 12l4 4
+                                             L16 12"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="1.8"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"/>
+
                                 </svg>
 
                             </span>
 
-                            <span>Request Withdrawal</span>
+                            <span>
+                                Withdraw Request
+                            </span>
+
+                            <span class="submit-arrow">
+
+                                <svg viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <path d="M5 12h14
+                                             M13 6l6 6-6 6"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="1.8"
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"/>
+
+                                </svg>
+
+                            </span>
 
                         </button>
-
 
                     </form>
 
                 </section>
 
 
-
-                <!-- ================= INFORMATION ================= -->
-                <aside class="withdraw-info-card">
-
+                <!-- ==============================
+                     INFORMATION CARD
+                =============================== -->
+                <aside class="info-card">
 
                     <div class="info-heading">
 
                         <div class="info-heading-icon">
 
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="1.7"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9"/>
-                                <path d="M12 10v6"/>
-                                <circle cx="12" cy="7" r=".7"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"
+                                 aria-hidden="true">
 
-                        </div>
+                                <circle cx="12"
+                                        cy="12"
+                                        r="9"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
 
-                        <div>
-                            <h3>How Withdrawals Work</h3>
-                            <p>Simple and secure process.</p>
-                        </div>
+                                <path d="M12 10v6"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.8"
+                                      stroke-linecap="round"/>
 
-                    </div>
+                                <circle cx="12"
+                                        cy="7"
+                                        r="1"
+                                        fill="currentColor"/>
 
-
-
-                    <div class="process-list">
-
-
-                        <div class="process-item">
-
-                            <span class="process-number">01</span>
-
-                            <div>
-                                <strong>Submit Request</strong>
-                                <p>
-                                    Enter your amount and mobile
-                                    money details.
-                                </p>
-                            </div>
-
-                        </div>
-
-
-                        <div class="process-item">
-
-                            <span class="process-number">02</span>
-
-                            <div>
-                                <strong>Review</strong>
-                                <p>
-                                    Your request is checked before
-                                    processing.
-                                </p>
-                            </div>
-
-                        </div>
-
-
-                        <div class="process-item">
-
-                            <span class="process-number">03</span>
-
-                            <div>
-                                <strong>Approval</strong>
-                                <p>
-                                    Approved withdrawals proceed
-                                    for payment.
-                                </p>
-                            </div>
-
-                        </div>
-
-
-                        <div class="process-item">
-
-                            <span class="process-number">04</span>
-
-                            <div>
-                                <strong>Receive Funds</strong>
-                                <p>
-                                    Funds are sent to your selected
-                                    mobile money account.
-                                </p>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <!-- Important notice -->
-                    <div class="important-notice">
-
-                        <div class="notice-icon">
-
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="1.8"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <path d="M12 3l9 17H3L12 3z"/>
-                                <path d="M12 9v4"/>
-                                <circle cx="12" cy="16" r=".7"/>
                             </svg>
 
                         </div>
 
                         <div>
 
-                            <strong>Important</strong>
+                            <span>
+                                IMPORTANT
+                            </span>
 
-                            <p>
-                                Never share your mobile money PIN,
-                                password, or security code with anyone.
-                            </p>
+                            <h3>
+                                Withdrawal Information
+                            </h3>
 
                         </div>
 
                     </div>
 
 
-                </aside>
+                    <div class="info-list">
 
-            </div>
+                        <div class="info-item">
+
+                            <span class="info-number">
+                                01
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Enter Amount
+                                </strong>
+
+                                <p>
+                                    Enter the amount you
+                                    want to withdraw.
+                                </p>
+
+                            </div>
+
+                        </div>
 
 
+                        <div class="info-item">
 
-            <!-- ================= HISTORY ================= -->
-            <section class="history-card">
+                            <span class="info-number">
+                                02
+                            </span>
 
-                <div class="card-heading">
+                            <div>
 
-                    <div class="heading-icon">
+                                <strong>
+                                    Select Method
+                                </strong>
 
-                        <svg viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor"
-                             stroke-width="1.7"
-                             stroke-linecap="round"
-                             stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 7v5l3 2"/>
-                        </svg>
+                                <p>
+                                    Choose MTN or Airtel
+                                    Mobile Money.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span class="info-number">
+                                03
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Confirm Number
+                                </strong>
+
+                                <p>
+                                    Make sure the mobile
+                                    money number is correct.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-item">
+
+                            <span class="info-number">
+                                04
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Admin Review
+                                </strong>
+
+                                <p>
+                                    Your request is reviewed
+                                    before payout.
+                                </p>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
-                    <div>
 
-                        <h3>Withdrawal History</h3>
+                    <!-- SUPPORT -->
+                    <a href="support.html"
+                       class="support-link">
 
-                        <p>
-                            Track your recent withdrawal requests.
-                        </p>
+                        <span class="support-link-icon">
 
-                    </div>
+                            <svg viewBox="0 0 24 24"
+                                 aria-hidden="true">
 
-                </div>
+                                <path d="M5 12
+                                         C5 7.6 8.1 4.5 12 4.5
+                                         C15.9 4.5 19 7.6 19 12"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
 
+                                <path d="M5 12v5
+                                         M19 12v5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"/>
 
-                <div id="withdrawalHistory" class="withdrawal-history">
+                                <rect x="3"
+                                      y="15"
+                                      width="4"
+                                      height="5"
+                                      rx="1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"/>
 
-                    <div class="empty-history">
+                                <rect x="17"
+                                      y="15"
+                                      width="4"
+                                      height="5"
+                                      rx="1"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"/>
 
-                        <div class="empty-history-icon">
-
-                            <svg viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="1.7"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                <rect x="4" y="4" width="16" height="16" rx="2"/>
-                                <path d="M8 9h8"/>
-                                <path d="M8 13h5"/>
-                                <path d="M8 17h3"/>
                             </svg>
 
-                        </div>
+                        </span>
 
-                        <strong>No withdrawal requests yet</strong>
+                        <span>
+                            Need help?
+                        </span>
 
-                        <p>
-                            Your withdrawal requests will appear here.
-                        </p>
+                        <svg class="support-arrow"
+                             viewBox="0 0 24 24"
+                             aria-hidden="true">
 
-                    </div>
-
-                </div>
-
-            </section>
-
-
-
-            <!-- ================= FOOTER ================= -->
-            <footer class="page-footer">
-
-                <p>
-                    © <span id="currentYear"></span>
-                    Crown Cash. All rights reserved.
-                </p>
-
-                <div class="footer-links">
-                    <a href="support.html">Support</a>
-                    <a href="profile.html">Profile</a>
-                </div>
-
-            </footer>
-
-
-        </section>
-
-    </main>
-
-</div>
-
-
-<!-- Overlay for mobile sidebar -->
-<div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-
-<script src="withdrawals.js"></script>
-
-</body>
-</html>
+                            <path d="M5 12h14
+                                     M13

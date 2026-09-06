@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Crown Cash | Admin Withdrawals</title>
+
+    <link rel="stylesheet" href="admin_withdrawals.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         MOBILE OVERLAY
+    ========================== -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-top">
+
+            <!-- LOGO -->
+            <a href="admin.html" class="brand">
+
+                <div class="brand-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M3 7l3-4 6 4 6-4 3 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7z"/>
+
+                        <path d="M3 7h18"/>
+
+                        <path d="M8 12h8"/>
+
+                    </svg>
+
+                </div>
+
+                <div class="brand-text">
+                    <strong>CROWN</strong>
+                    <span>CASH</span>
+                </div>
+
+            </a>
+
+
+            <!-- ADMIN LABEL -->
+            <div class="admin-label">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+
+                    <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>
+
+                    <path d="M9 12l2 2 4-4"/>
+
+                </svg>
+
+                <span>ADMIN PANEL</span>
+
+            </div>
+
+
+            <!-- NAVIGATION -->
+            <nav class="navigation">
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Dashboard</span>
+
+                </a>
+
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+
+                            <circle cx="9" cy="7" r="4"/>
+
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Users</span>
+
+                </a>
+
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+
+                            <path d="M3 10h18"/>
+
+                            <path d="M7 15h3"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Deposits</span>
+
+                </a>
+
+
+                <!-- ACTIVE -->
+                <a href="admin_withdrawals.html"
+                   class="nav-item active">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M3 6h18"/>
+
+                            <path d="M5 6v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6"/>
+
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+
+                            <path d="M9 13h6"/>
+
+                            <path d="M12 10v6"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Withdrawals</span>
+
+                    <span class="nav-badge" id="sidebarPendingBadge">
+                        0
+                    </span>
+
+                </a>
+
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M3 3v18h18"/>
+
+                            <path d="M7 16l4-5 3 3 5-7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Investments</span>
+
+                </a>
+
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M4 19V5"/>
+
+                            <path d="M4 5h12l-2 3 2 3H4"/>
+
+                            <path d="M8 19h12"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span>Transactions</span>
+
+                </a>
+
+            </nav>
+
+        </div>
+
+
+        <!-- SIDEBAR BOTTOM -->
+        <div class="sidebar-bottom">
+
+            <a href="index.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M3 11l9-8 9 8"/>
+
+                        <path d="M5 10v10h14V10"/>
+
+                        <path d="M9 20v-6h6v6"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Visit Website</span>
+
+            </a>
+
+
+            <button class="logout-button" id="logoutButton">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M10 17l5-5-5-5"/>
+
+                        <path d="M15 12H3"/>
+
+                        <path d="M21 19V5a2 2 0 0 0-2-2h-6"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Logout</span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main class="main-content">
+
+
+        <!-- MOBILE TOPBAR -->
+        <header class="mobile-topbar">
+
+            <button class="menu-button" id="menuButton">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round">
+
+                    <path d="M4 6h16"/>
+                    <path d="M4 12h16"/>
+                    <path d="M4 18h16"/>
+
+                </svg>
+
+            </button>
+
+
+            <div class="mobile-brand">
+
+                <span>CROWN</span>
+                <strong>CASH</strong>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- DESKTOP TOPBAR -->
+        <header class="topbar">
+
+            <div class="topbar-title">
+
+                <span class="eyebrow">
+                    CROWN CASH ADMIN
+                </span>
+
+                <h1>
+                    Withdrawal Management
+                </h1>
+
+            </div>
+
+
+            <div class="topbar-actions">
+
+                <button class="notification-button"
+                        id="notificationButton"
+                        aria-label="Notifications">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+
+                        <path d="M10 21h4"/>
+
+                    </svg>
+
+                    <span class="notification-dot"></span>
+
+                </button>
+
+
+                <div class="admin-profile">
+
+                    <div class="admin-avatar">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="12" cy="8" r="4"/>
+
+                            <path d="M4 21a8 8 0 0 1 16 0"/>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div class="admin-profile-text">
+
+                        <strong id="adminName">
+                            Administrator
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =========================
+             PAGE
+        ========================== -->
+        <section class="page-container">
+
+
+            <!-- HERO -->
+            <section class="page-hero">
+
+                <div class="hero-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.7"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M3 6h18"/>
+
+                        <path d="M5 6v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6"/>
+
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+
+                        <path d="M9 13h6"/>
+
+                        <path d="M12 10v6"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div class="hero-text">
+
+                    <span>
+                        ADMINISTRATION
+                    </span>
+
+                    <h2>
+                        Withdrawal Requests
+                    </h2>
+
+                    <p>
+                        Review, approve, or reject user withdrawal requests.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =========================
+                 STAT CARDS
+            ========================== -->
+            <section class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon pending">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="12" cy="12" r="9"/>
+
+                            <path d="M12 7v5l3 2"/>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="stat-label">
+                            Pending Requests
+                        </span>
+
+                        <strong id="pendingCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon amount">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+
+                            <path d="M7 15h2"/>
+
+                            <path d="M15 9h2"/>
+
+                            <path d="M12 9v6"/>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="stat-label">
+                            Pending Amount
+                        </span>
+
+                        <strong id="pendingAmount">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon approved">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="12" cy="12" r="9"/>
+
+                            <path d="M8 12l3 3 5-6"/>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="stat-label">
+                            Approved
+                        </span>
+
+                        <strong id="approvedCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon rejected">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="12" cy="12" r="9"/>
+
+                            <path d="M9 9l6 6"/>
+
+                            <path d="M15 9l-6 6"/>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="stat-label">
+                            Rejected
+                        </span>
+
+                        <strong id="rejectedCount">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =========================
+                 FILTER BAR
+            ========================== -->
+            <section class="filter-card">
+
+                <div class="filter-heading">
+
+                    <div class="filter-title-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M4 6h16"/>
+
+                            <path d="M7 12h10"/>
+
+                            <path d="M10 18h4"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Filter Requests
+                        </h3>
+
+                        <p>
+                            Find withdrawal requests quickly.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-controls">
+
+                    <div class="search-box">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <circle cx="11" cy="11" r="7"/>
+
+                            <path d="M20 20l-4-4"/>
+
+                        </svg>
+
+                        <input
+                            type="search"
+                            id="searchInput"
+                            placeholder="Search reference, user or account..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <select id="statusFilter">
+
+                        <option value="all">
+                            All Statuses
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                    </select>
+
+
+                    <select id="methodFilter">
+
+                        <option value="all">
+                            All Methods
+                        </option>
+
+                        <option value="MTN">
+                            MTN Mobile Money
+                        </option>
+
+                        <option value="AIRTEL">
+                            Airtel Money
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        type="button"
+                        class="refresh-button"
+                        id="refreshButton"
+                    >
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+
+                            <path d="M20 11a8.1 8.1 0 0 0-15.5-3"/>
+
+                            <path d="M4 4v4h4"/>
+
+                            <path d="M4 13a8.1 8.1 0 0 0 15.5 3"/>
+
+                            <path d="M20 20v-4h-4"/>
+
+                        </svg>
+
+                        Refresh
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =========================
+                 MESSAGE
+            ========================== -->
+            <div
+                class="page-message"
+                id="pageMessage"
+                role="alert"
+                aria-live="polite"
+            ></div>
+
+
+
+            <!-- =========================
+                 WITHDRAWAL TABLE
+            ========================== -->
+            <section class="table-card">
+
+                <div class="table-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            WITHDRAWAL REQUESTS
+                        </span>
+
+                        <h3>
+                            Recent Requests
+                        </h3>
+
+                    </div>
+
+
+                    <span class="request-count"
+                          id="requestCount">
+                        0 requests
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Reference
+                                </th>
+
+                                <th>
+                                    User
+                                </th>
+
+                                <th>
+                                    Amount
+                                </th>
+
+                                <th>
+                                    Method
+                                </th>
+
+                                <th>
+                                    Account
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="withdrawalTableBody">
+
+                            <!-- JavaScript will insert requests here -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- EMPTY STATE -->
+                    <div
+                        class="empty-state"
+                        id="emptyState"
+                    >
+
+                        <div class="empty-icon">
+
+                            <svg viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.7"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+
+                                <path d="M3 6h18"/>
+
+                                <path d="M5 6v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6"/>
+
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+
+                                <path d="M9 13h6"/>
+
+                            </svg>
+
+                        </div>
+
+
+                        <h4>
+                            No withdrawal requests
+                        </h4>
+
+                        <p>
+                            There are currently no withdrawal requests matching your filters.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =========================
+                 SECURITY NOTICE
+            ========================== -->
+            <section class="security-card">
+
+                <div class="security-icon">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.7"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+
+                        <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>
+
+                        <path d="M9 12l2 2 4-4"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        Withdrawal Security
+                    </h3>
+
+                    <p>
+                        Always verify the user's request, amount, mobile
+                        money number, and transaction details before approving
+                        a withdrawal. Never request or store a user's Mobile
+                        Money PIN or password.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- FOOTER -->
+            <footer class="footer">
+
+                <span>
+                    © <span id="currentYear"></span> Crown Cash.
+                    All rights reserved.
+                </span>
+
+                <span>
+                    Secure Admin Panel
+                </span>
+
+            </footer>
+
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         CONFIRMATION MODAL
+    ========================== -->
+    <div
+        class="modal-overlay"
+        id="confirmationModal"
+        aria-hidden="true"
+    >
+
+        <div class="confirmation-modal">
+
+            <button
+                type="button"
+                class="modal-close"
+                id="modalClose"
+                aria-label="Close"
+            >
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round">
+
+                    <path d="M6 6l12 12"/>
+                    <path d="M18 6L6 18"/>
+
+                </svg>
+
+            </button>
+
+
+            <div class="modal-icon" id="modalIcon">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+
+                    <path d="M12 3l9 4v5c0 4.8-3.2 8.2-9 9-5.8-.8-9-4.2-9-9V7l9-4z"/>
+
+                    <path d="M9 12l2 2 4-4"/>
+
+                </svg>
+
+            </div>
+
+
+            <h3 id="modalTitle">
+                Confirm Action
+            </h3>
+
+
+            <p id="modalMessage">
+                Are you sure you want to continue?
+            </p>
+
+
+            <div class="modal-details"
+                 id="modalDetails">
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="modal-cancel"
+                    id="modalCancel"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    type="button"
+                    class="modal-confirm"
+                    id="modalConfirm"
+                >
+                    Confirm
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         LOADING OVERLAY
+    ========================== -->
+    <div
+        class="loading-overlay"
+        id="loadingOverlay"
+        aria-hidden="true"
+    >
+
+        <div class="loading-box">
+
+            <div class="spinner"></div>
+
+            <p>
+                Processing request...
+            </p>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- JAVASCRIPT -->
+    <script src="admin_withdrawals.js"></script>
+
+</body>
+
+</html>

@@ -362,9 +362,9 @@ async function handleWithdrawal(event) {
     // -----------------------------------------
 
     const account =
-        withdrawalAccount?.value
-            .trim()
-            .replace(/\s+/g, "");
+    (withdrawalAccount?.value || "")
+        .trim()
+        .replace(/\s+/g, "");
 
 
     // -----------------------------------------

@@ -1,33 +1,15 @@
 <?php
 
-/* =========================================================
-   CROWN CASH — ADMIN DEPOSIT MANAGEMENT
-   Handles:
-   - Admin authentication
-   - GET deposit list
-   - Approve deposit
-   - Reject deposit
-   - Safe one-time balance credit
-   ========================================================= */
-
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
-/* =========================================================
-   CORS PREFLIGHT
-   ========================================================= */
-
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
     exit;
 }
-
-/* =========================================================
-   SESSION
-   ========================================================= */
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -40,15 +22,14 @@ session_set_cookie_params([
 
 session_start();
 
-/* =========================================================
-   DATABASE
-   ========================================================= */
-
 require_once __DIR__ . "/config.php";
 
-/* =========================================================
-   RESPONSE HELPER
-   ========================================================= */
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSE HELPER
+|--------------------------------------------------------------------------
+*/
 
 function sendResponse(
     bool $success,
@@ -72,12 +53,17 @@ function sendResponse(
     exit;
 }
 
-/* =========================================================
-   ADMIN AUTHENTICATION
-   ========================================================= */
 
-function requireAdmin($users): MongoDB\Model\BSONDocument|array
+/*
+|--------------------------------------------------------------------------
+| ADMIN AUTHORIZATION
+|--------------------------------------------------------------------------
+*/
+
+function requireAdmin()
 {
+    global $users;
+
     if (
         empty($_SESSION["logged_in"]) ||
         empty($_SESSION["user_id"])
@@ -92,43 +78,35 @@ function requireAdmin($users): MongoDB\Model\BSONDocument|array
 
     try {
 
-        $userId =
-            new MongoDB\BSON\ObjectId(
-                $_SESSION["user_id"]
-            );
+        $adminId = new MongoDB\BSON\ObjectId(
+            $_SESSION["user_id"]
+        );
 
     } catch (Throwable $e) {
 
         sendResponse(
             false,
-            "Invalid user session.",
+            "Invalid admin session.",
             [],
             401
         );
     }
 
-    $user =
-        $users->findOne([
-            "_id" => $userId
-        ]);
+    $admin = $users->findOne([
+        "_id" => $adminId
+    ]);
 
-    if (!$user) {
+    if (!$admin) {
 
         sendResponse(
             false,
-            "Administrator account not found.",
+            "Admin account not found.",
             [],
             403
         );
     }
 
-    if (
-        strtolower(
-            trim(
-                (string)($user["role"] ?? "")
-            )
-        ) !== "admin"
-    ) {
+    if (($admin["role"] ?? "") !== "admin") {
 
         sendResponse(
             false,
@@ -138,53 +116,55 @@ function requireAdmin($users): MongoDB\Model\BSONDocument|array
         );
     }
 
-    return $user;
+    return $admin;
 }
 
-/* =========================================================
-   CHECK ADMIN
-   ========================================================= */
 
-$admin = requireAdmin($users);
+/*
+|--------------------------------------------------------------------------
+| REQUIRE ADMIN
+|--------------------------------------------------------------------------
+*/
 
-/* =========================================================
-   GET — LOAD DEPOSITS
-   ========================================================= */
+$admin = requireAdmin();
+
+
+/*
+|--------------------------------------------------------------------------
+| GET DEPOSITS
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
     try {
 
         /*
+         * Deposits created by create_deposit.php are stored
+         * inside the transactions collection.
+         *
          * We support both:
          *
          * type = deposit
          *
-         * and older deposit records that may not
-         * have the type field.
+         * and older records which may have balance_credited.
          */
 
-        $cursor = $transactions->find(
-            [
-                '$or' => [
-                    [
-                        "type" => "deposit"
-                    ],
-                    [
-                        "payment_status" => [
-                            '$in' => [
-                                "pending",
-                                "approved",
-                                "verified",
-                                "rejected"
-                            ]
-                        ],
-                        "balance_credited" => [
-                            '$exists" => true
-                        ]
+        $filter = [
+            '$or' => [
+                [
+                    "type" => "deposit"
+                ],
+                [
+                    "balance_credited" => [
+                        '$exists' => true
                     ]
                 ]
-            ],
+            ]
+        ];
+
+        $cursor = $transactions->find(
+            $filter,
             [
                 "sort" => [
                     "created_at" => -1
@@ -195,173 +175,197 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
         $deposits = [];
 
-        /* User cache avoids repeatedly querying the same user */
+        /*
+         * Cache users so we do not repeatedly query
+         * the users collection.
+         */
+
         $userCache = [];
 
         foreach ($cursor as $deposit) {
 
-            $userId = $deposit["user_id"] ?? null;
+            $userIdString = "";
 
-            $user = null;
+            if (
+                isset($deposit["user_id"]) &&
+                $deposit["user_id"] instanceof MongoDB\BSON\ObjectId
+            ) {
+                $userIdString = (string)$deposit["user_id"];
+            }
 
-            if ($userId) {
+            /*
+             * Load user information.
+             */
 
-                $userKey = (string)$userId;
+            if (
+                $userIdString !== "" &&
+                !isset($userCache[$userIdString])
+            ) {
 
-                if (isset($userCache[$userKey])) {
+                try {
 
-                    $user =
-                        $userCache[$userKey];
+                    $user = $users->findOne([
+                        "_id" => new MongoDB\BSON\ObjectId(
+                            $userIdString
+                        )
+                    ]);
 
-                } else {
+                    $userCache[$userIdString] = $user;
 
-                    $user =
-                        $users->findOne([
-                            "_id" => $userId
-                        ]);
+                } catch (Throwable $e) {
 
-                    $userCache[$userKey] =
-                        $user;
+                    $userCache[$userIdString] = null;
                 }
             }
 
-            $firstName =
-                (string)($user["firstName"] ?? "");
+            $user = $userCache[$userIdString] ?? null;
 
-            $lastName =
-                (string)($user["lastName"] ?? "");
 
-            $userName =
-                trim(
-                    $firstName .
-                    " " .
-                    $lastName
-                );
-
-            if ($userName === "") {
-                $userName = "Unknown User";
-            }
+            /*
+             * Date conversion.
+             */
 
             $createdAt = null;
+            $updatedAt = null;
+            $processedAt = null;
 
             if (
-                isset(
-                    $deposit["created_at"]
-                ) &&
-                $deposit["created_at"]
-                instanceof MongoDB\BSON\UTCDateTime
+                isset($deposit["created_at"]) &&
+                $deposit["created_at"] instanceof MongoDB\BSON\UTCDateTime
             ) {
-
                 $createdAt =
                     $deposit["created_at"]
                         ->toDateTime()
-                        ->format(
-                            "c"
-                        );
+                        ->format(DATE_ATOM);
             }
 
-            $updatedAt = null;
-
             if (
-                isset(
-                    $deposit["updated_at"]
-                ) &&
-                $deposit["updated_at"]
-                instanceof MongoDB\BSON\UTCDateTime
+                isset($deposit["updated_at"]) &&
+                $deposit["updated_at"] instanceof MongoDB\BSON\UTCDateTime
             ) {
-
                 $updatedAt =
                     $deposit["updated_at"]
                         ->toDateTime()
-                        ->format(
-                            "c"
-                        );
+                        ->format(DATE_ATOM);
             }
+
+            if (
+                isset($deposit["processed_at"]) &&
+                $deposit["processed_at"] instanceof MongoDB\BSON\UTCDateTime
+            ) {
+                $processedAt =
+                    $deposit["processed_at"]
+                        ->toDateTime()
+                        ->format(DATE_ATOM);
+            }
+
+
+            /*
+             * User display information.
+             */
+
+            $firstName = $user["firstName"] ?? "";
+            $lastName = $user["lastName"] ?? "";
+
+            $fullName = trim(
+                $firstName . " " . $lastName
+            );
+
+            if ($fullName === "") {
+                $fullName = "Unknown User";
+            }
+
+
+            /*
+             * Deposit reference.
+             */
+
+            $reference =
+                $deposit["reference"]
+                ?? $deposit["transaction_reference"]
+                ?? ("DEP-" . (string)$deposit["_id"]);
+
+
+            /*
+             * Payment method.
+             */
+
+            $method =
+                strtoupper(
+                    (string)(
+                        $deposit["payment_method"]
+                        ?? $deposit["method"]
+                        ?? ""
+                    )
+                );
+
+
+            /*
+             * Account / phone.
+             */
+
+            $account =
+                $deposit["phone"]
+                ?? $deposit["account"]
+                ?? "";
+
+
+            /*
+             * Status.
+             */
 
             $status =
                 strtolower(
                     (string)(
                         $deposit["status"]
-                        ??
-                        $deposit["payment_status"]
-                        ??
-                        "pending"
+                        ?? $deposit["payment_status"]
+                        ?? "pending"
                     )
                 );
 
+
             /*
-             * Keep frontend status values simple.
+             * Amount.
              */
 
-            if (
-                $status === "verified" ||
-                $status === "completed"
-            ) {
-                $status = "approved";
-            }
+            $amount =
+                (float)(
+                    $deposit["amount"]
+                    ?? 0
+                );
+
 
             $deposits[] = [
 
-                "id" =>
-                    (string)$deposit["_id"],
+                "id" => (string)$deposit["_id"],
 
-                "reference" =>
-                    (string)(
-                        $deposit["reference"]
-                        ?? ""
-                    ),
+                "reference" => $reference,
 
-                "user_id" =>
-                    $userId
-                        ? (string)$userId
-                        : "",
+                "user_id" => $userIdString,
 
-                "user_name" =>
-                    $userName,
+                "user" => [
+                    "name" => $fullName,
+                    "firstName" => $firstName,
+                    "lastName" => $lastName,
+                    "email" => $user["email"] ?? "",
+                    "phone" => $user["phone"] ?? ""
+                ],
 
-                "user_email" =>
-                    (string)(
-                        $user["email"]
-                        ?? ""
-                    ),
-
-                "amount" =>
-                    (float)(
-                        $deposit["amount"]
-                        ?? 0
-                    ),
+                "amount" => $amount,
 
                 "currency" =>
-                    (string)(
-                        $deposit["currency"]
-                        ?? "UGX"
-                    ),
+                    $deposit["currency"]
+                    ?? "UGX",
 
-                "phone" =>
-                    (string)(
-                        $deposit["phone"]
-                        ?? ""
-                    ),
+                "method" => $method,
 
-                "payment_method" =>
-                    strtoupper(
-                        (string)(
-                            $deposit["payment_method"]
-                            ??
-                            $deposit["method"]
-                            ??
-                            ""
-                        )
-                    ),
+                "account" => $account,
 
-                "status" =>
-                    $status,
+                "status" => $status,
 
                 "payment_status" =>
-                    (string)(
-                        $deposit["payment_status"]
-                        ?? $status
-                    ),
+                    $deposit["payment_status"]
+                    ?? $status,
 
                 "balance_credited" =>
                     (bool)(
@@ -369,45 +373,65 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
                         ?? false
                     ),
 
-                "admin_approved" =>
-                    (bool)(
-                        $deposit["admin_approved"]
-                        ?? false
-                    ),
+                "created_at" => $createdAt,
 
-                "admin_rejected" =>
-                    (bool)(
-                        $deposit["admin_rejected"]
-                        ?? false
-                    ),
+                "updated_at" => $updatedAt,
 
-                "admin_email" =>
-                    (string)(
-                        $deposit["admin_email"]
-                        ?? ""
-                    ),
-
-                "created_at" =>
-                    $createdAt,
-
-                "updated_at" =>
-                    $updatedAt
+                "processed_at" => $processedAt
             ];
         }
+
+
+        /*
+         * Statistics.
+         */
+
+        $pendingCount = 0;
+        $pendingAmount = 0;
+
+        $approvedCount = 0;
+        $rejectedCount = 0;
+
+        foreach ($deposits as $deposit) {
+
+            if ($deposit["status"] === "pending") {
+
+                $pendingCount++;
+
+                $pendingAmount +=
+                    (float)$deposit["amount"];
+            }
+
+            if ($deposit["status"] === "approved") {
+                $approvedCount++;
+            }
+
+            if ($deposit["status"] === "rejected") {
+                $rejectedCount++;
+            }
+        }
+
 
         sendResponse(
             true,
             "Deposits loaded successfully.",
             [
-                "deposits" => $deposits
+                "deposits" => $deposits,
+
+                "stats" => [
+                    "pending_count" => $pendingCount,
+                    "pending_amount" => $pendingAmount,
+                    "approved_count" => $approvedCount,
+                    "rejected_count" => $rejectedCount
+                ]
             ]
         );
 
     } catch (Throwable $e) {
 
         error_log(
-            "CROWN CASH ADMIN DEPOSITS GET ERROR: " .
-            $e->getMessage()
+            "CROWN CASH ADMIN DEPOSIT GET ERROR: "
+            . $e->getMessage()
         );
 
         sendResponse(
@@ -419,22 +443,19 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
     }
 }
 
-/* =========================================================
-   POST — APPROVE / REJECT
-   ========================================================= */
+
+/*
+|--------------------------------------------------------------------------
+| POST APPROVE / REJECT DEPOSIT
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     try {
 
-        /*
-         * New admin_deposits.js sends JSON.
-         */
-
         $rawData =
-            file_get_contents(
-                "php://input"
-            );
+            file_get_contents("php://input");
 
         $data =
             json_decode(
@@ -452,26 +473,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
+
         $depositId =
             trim(
-                (string)(
-                    $data["depositId"]
-                    ??
-                    $data["deposit_id"]
-                    ??
-                    ""
-                )
+                $data["depositId"]
+                ?? ""
             );
 
         $action =
             strtolower(
                 trim(
-                    (string)(
-                        $data["action"]
-                        ?? ""
-                    )
+                    $data["action"]
+                    ?? ""
                 )
             );
+
+
+        /*
+         * Allow approve/reject only.
+         */
 
         if ($depositId === "") {
 
@@ -483,16 +503,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
-        if (
-            !in_array(
-                $action,
-                [
-                    "approve",
-                    "reject"
-                ],
-                true
-            )
-        ) {
+        if (!in_array(
+            $action,
+            ["approve", "reject"],
+            true
+        )) {
 
             sendResponse(
                 false,
@@ -502,8 +517,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
+
         /*
-         * Convert ID to ObjectId.
+         * Convert ID.
          */
 
         try {
@@ -523,79 +539,91 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
+
         /*
-         * Find the deposit.
-         *
-         * balance_credited=false is important:
-         * it prevents the same deposit from
-         * crediting the user twice.
+         * Find deposit.
          */
 
         $deposit =
             $transactions->findOne([
                 "_id" => $id,
-                "type" => "deposit",
-                "status" => "pending",
-                "balance_credited" => false
-            ]);
 
-        /*
-         * Compatibility for older deposit records
-         * that may not have type=deposit.
-         */
-
-        if (!$deposit) {
-
-            $deposit =
-                $transactions->findOne([
-                    "_id" => $id,
-                    "status" => "pending",
-                    "balance_credited" => false,
-                    '$or' => [
-                        [
-                            "type" => "deposit"
-                        ],
-                        [
-                            "payment_method" => [
-                                '$in' => [
-                                    "MTN",
-                                    "AIRTEL"
-                                ]
-                            ]
+                '$or' => [
+                    [
+                        "type" => "deposit"
+                    ],
+                    [
+                        "balance_credited" => [
+                            '$exists' => true
                         ]
                     ]
-                ]);
-        }
+                ]
+            ]);
+
 
         if (!$deposit) {
 
             sendResponse(
                 false,
-                "Deposit not found, already processed, or already credited.",
+                "Deposit not found.",
+                [],
+                404
+            );
+        }
+
+
+        /*
+         * Only pending deposits can be processed.
+         */
+
+        $currentStatus =
+            strtolower(
+                (string)(
+                    $deposit["status"]
+                    ?? $deposit["payment_status"]
+                    ?? "pending"
+                )
+            );
+
+
+        if ($currentStatus !== "pending") {
+
+            sendResponse(
+                false,
+                "This deposit has already been processed.",
                 [],
                 409
             );
         }
 
-        $userId =
-            $deposit["user_id"]
-            ?? null;
 
-        if (!$userId) {
+        /*
+         * We require a user.
+         */
+
+        if (
+            !isset($deposit["user_id"]) ||
+            !($deposit["user_id"] instanceof MongoDB\BSON\ObjectId)
+        ) {
 
             sendResponse(
                 false,
-                "Deposit has no associated user.",
+                "Deposit user information is missing.",
                 [],
                 400
             );
         }
+
+
+        $userId =
+            $deposit["user_id"];
 
         $amount =
             (float)(
                 $deposit["amount"]
                 ?? 0
             );
+
 
         if ($amount <= 0) {
 
@@ -607,101 +635,74 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
-        /* =================================================
-           START DATABASE TRANSACTION
-           ================================================= */
+
+        /*
+         * IMPORTANT:
+         *
+         * Approval here should only be performed after
+         * independently verifying the MTN/Airtel payment.
+         *
+         * This endpoint does NOT contact MTN or Airtel.
+         */
+
+
+        /*
+         * Start MongoDB transaction.
+         */
 
         $session =
             $client->startSession();
+
 
         try {
 
             $session->startTransaction();
 
+
             /*
-             * Re-read the deposit inside the transaction.
+             * Re-check the deposit inside the transaction.
+             *
+             * This protects against two admins processing
+             * the same deposit at the same time.
              */
 
-            $currentDeposit =
+            $freshDeposit =
                 $transactions->findOne(
                     [
                         "_id" => $id,
+
                         "status" => "pending",
-                        "balance_credited" => false
+
+                        "balance_credited" => [
+                            '$ne' => true
+                        ]
                     ],
                     [
                         "session" => $session
                     ]
                 );
 
-            if (!$currentDeposit) {
+
+            if (!$freshDeposit) {
 
                 $session->abortTransaction();
 
                 sendResponse(
                     false,
-                    "This deposit has already been processed.",
+                    "This deposit has already been processed or credited.",
                     [],
                     409
                 );
             }
 
-            $now =
-                new MongoDB\BSON\UTCDateTime();
-
-            $adminId =
-                $_SESSION["user_id"];
-
-            $adminEmail =
-                (string)(
-                    $admin["email"]
-                    ?? ""
-                );
-
-            /* =================================================
-               APPROVE
-               ================================================= */
 
             if ($action === "approve") {
 
                 /*
-                 * IMPORTANT:
-                 *
-                 * The admin must independently verify
-                 * that the MTN/Airtel payment was actually
-                 * received before using this action.
-                 *
-                 * A user-entered payment reference alone
-                 * is not proof of payment.
+                 * Credit the user's Crown Cash balance.
                  */
 
-                $user =
-                    $users->findOne(
-                        [
-                            "_id" => $userId
-                        ],
-                        [
-                            "session" => $session
-                        ]
-                    );
-
-                if (!$user) {
-
-                    $session->abortTransaction();
-
-                    sendResponse(
-                        false,
-                        "User associated with this deposit was not found.",
-                        [],
-                        404
-                    );
-                }
-
-                /*
-                 * Credit the user's balance exactly once.
-                 */
-
-                $balanceResult =
+                $userUpdate =
                     $users->updateOne(
                         [
                             "_id" => $userId
@@ -716,92 +717,81 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         ]
                     );
 
+
                 if (
-                    $balanceResult
-                        ->getModifiedCount() !== 1
+                    $userUpdate->getMatchedCount() !== 1
                 ) {
 
                     $session->abortTransaction();
 
                     sendResponse(
                         false,
-                        "Unable to credit user balance.",
+                        "User account could not be found.",
                         [],
-                        500
+                        404
                     );
                 }
 
+
                 /*
-                 * Mark deposit approved
-                 * and balance credited.
+                 * Mark deposit as credited.
                  */
 
-                $depositResult =
-                    $transactions->updateOne(
-                        [
-                            "_id" => $id,
-                            "status" => "pending",
-                            "balance_credited" => false
-                        ],
-                        [
-                            '$set' => [
+                $now =
+                    new MongoDB\BSON\UTCDateTime();
 
-                                "status" =>
-                                    "approved",
 
-                                "payment_status" =>
-                                    "verified",
+                $transactions->updateOne(
+                    [
+                        "_id" => $id,
 
-                                "balance_credited" =>
-                                    true,
+                        "status" => "pending",
 
-                                "admin_approved" =>
-                                    true,
-
-                                "admin_rejected" =>
-                                    false,
-
-                                "admin_id" =>
-                                    $adminId,
-
-                                "admin_email" =>
-                                    $adminEmail,
-
-                                "admin_action_at" =>
-                                    $now,
-
-                                "processed_at" =>
-                                    $now,
-
-                                "updated_at" =>
-                                    $now
-                            ]
-                        ],
-                        [
-                            "session" => $session
+                        "balance_credited" => [
+                            '$ne' => true
                         ]
-                    );
+                    ],
+                    [
+                        '$set' => [
 
-                if (
-                    $depositResult
-                        ->getModifiedCount() !== 1
-                ) {
+                            "status" => "approved",
 
-                    $session->abortTransaction();
+                            "payment_status" =>
+                                "approved",
 
-                    sendResponse(
-                        false,
-                        "Unable to finalize deposit approval.",
-                        [],
-                        500
-                    );
-                }
+                            "balance_credited" =>
+                                true,
 
-                /*
-                 * Commit.
-                 */
+                            "admin_approved" =>
+                                true,
+
+                            "admin_rejected" =>
+                                false,
+
+                            "admin_id" =>
+                                $admin["_id"],
+
+                            "admin_email" =>
+                                $admin["email"] ?? "",
+
+                            "admin_action_at" =>
+                                $now,
+
+                            "processed_at" =>
+                                $now,
+
+                            "updated_at" =>
+                                $now
+                        ]
+                    ],
+                    [
+                        "session" => $session
+                    ]
+                );
+
 
                 $session->commitTransaction();
+
 
                 /*
                  * Get new balance.
@@ -812,34 +802,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "_id" => $userId
                     ]);
 
+
                 $newBalance =
                     (float)(
                         $updatedUser["balance"]
                         ?? 0
                     );
 
+
                 sendResponse(
                     true,
-                    "Deposit approved and user balance credited successfully.",
+                    "Deposit approved and user balance credited.",
                     [
                         "deposit" => [
                             "id" =>
                                 (string)$id,
 
                             "reference" =>
-                                (string)(
-                                    $deposit["reference"]
-                                    ?? ""
-                                ),
+                                $deposit["reference"]
+                                ?? "",
 
                             "amount" =>
                                 $amount,
 
                             "status" =>
-                                "approved",
-
-                            "balance_credited" =>
-                                true
+                                "approved"
                         ],
 
                         "user" => [
@@ -853,82 +840,69 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            /* =================================================
-               REJECT
-               ================================================= */
+
+            /*
+             * REJECT
+             */
 
             if ($action === "reject") {
 
-                /*
-                 * Rejection does NOT credit the balance.
-                 */
+                $now =
+                    new MongoDB\BSON\UTCDateTime();
 
-                $depositResult =
-                    $transactions->updateOne(
-                        [
-                            "_id" => $id,
-                            "status" => "pending",
-                            "balance_credited" => false
-                        ],
-                        [
-                            '$set' => [
 
-                                "status" =>
-                                    "rejected",
+                $transactions->updateOne(
+                    [
+                        "_id" => $id,
 
-                                "payment_status" =>
-                                    "rejected",
+                        "status" => "pending",
 
-                                "balance_credited" =>
-                                    false,
-
-                                "admin_approved" =>
-                                    false,
-
-                                "admin_rejected" =>
-                                    true,
-
-                                "admin_id" =>
-                                    $adminId,
-
-                                "admin_email" =>
-                                    $adminEmail,
-
-                                "admin_action_at" =>
-                                    $now,
-
-                                "processed_at" =>
-                                    $now,
-
-                                "updated_at" =>
-                                    $now
-                            ]
-                        ],
-                        [
-                            "session" => $session
+                        "balance_credited" => [
+                            '$ne' => true
                         ]
-                    );
+                    ],
+                    [
+                        '$set' => [
 
-                if (
-                    $depositResult
-                        ->getModifiedCount() !== 1
-                ) {
+                            "status" =>
+                                "rejected",
 
-                    $session->abortTransaction();
+                            "payment_status" =>
+                                "rejected",
 
-                    sendResponse(
-                        false,
-                        "Unable to reject deposit.",
-                        [],
-                        500
-                    );
-                }
+                            "balance_credited" =>
+                                false,
 
-                /*
-                 * Commit rejection.
-                 */
+                            "admin_approved" =>
+                                false,
+
+                            "admin_rejected" =>
+                                true,
+
+                            "admin_id" =>
+                                $admin["_id"],
+
+                            "admin_email" =>
+                                $admin["email"] ?? "",
+
+                            "admin_action_at" =>
+                                $now,
+
+                            "processed_at" =>
+                                $now,
+
+                            "updated_at" =>
+                                $now
+                        ]
+                    ],
+                    [
+                        "session" => $session
+                    ]
+                );
+
 
                 $session->commitTransaction();
+
 
                 sendResponse(
                     true,
@@ -939,57 +913,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 (string)$id,
 
                             "reference" =>
-                                (string)(
-                                    $deposit["reference"]
-                                    ?? ""
-                                ),
+                                $deposit["reference"]
+                                ?? "",
 
                             "amount" =>
                                 $amount,
 
                             "status" =>
-                                "rejected",
-
-                            "balance_credited" =>
-                                false
+                                "rejected"
                         ]
                     ]
                 );
             }
 
-            /*
-             * Safety fallback.
-             */
 
-            $session->abortTransaction();
-
-            sendResponse(
-                false,
-                "Unknown deposit action.",
-                [],
-                400
-            );
-
-        } catch (Throwable $transactionError) {
+        } catch (Throwable $e) {
 
             try {
                 $session->abortTransaction();
             } catch (Throwable $ignore) {
-                /* Ignore abort failure */
             }
 
-            throw $transactionError;
+            throw $e;
 
         } finally {
 
             $session->endSession();
         }
 
+
     } catch (Throwable $e) {
 
         error_log(
-            "CROWN CASH ADMIN DEPOSIT ACTION ERROR: " .
-            $e->getMessage()
+            "CROWN CASH ADMIN DEPOSIT POST ERROR: "
+            . $e->getMessage()
         );
 
         sendResponse(
@@ -1001,9 +958,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-/* =========================================================
-   INVALID METHOD
-   ========================================================= */
+
+/*
+|--------------------------------------------------------------------------
+| METHOD NOT ALLOWED
+|--------------------------------------------------------------------------
+*/
 
 sendResponse(
     false,

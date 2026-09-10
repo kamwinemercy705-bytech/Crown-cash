@@ -1,782 +1,1820 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* =========================================================
+   CROWN CASH — ADMIN DEPOSITS
+   Professional dark admin dashboard
+   ========================================================= */
+
+:root {
+    --bg-main: #080b16;
+    --bg-sidebar: #0d1020;
+    --bg-card: #111526;
+    --bg-card-2: #151a2d;
+    --border: rgba(255, 255, 255, 0.08);
+
+    --text-main: #ffffff;
+    --text-soft: #aeb5c8;
+    --text-muted: #737b91;
+
+    --purple: #a855f7;
+    --purple-dark: #7c3aed;
+    --pink: #ec4899;
+
+    --gold: #f5c451;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --blue: #3b82f6;
+
+    --sidebar-width: 250px;
+    --radius: 16px;
+
+    --shadow:
+        0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(
+            circle at 15% 10%,
+            rgba(168, 85, 247, 0.08),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(236, 72, 153, 0.06),
+            transparent 25%
+        ),
+        var(--bg-main);
+
+    color: var(--text-main);
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    overflow-x: hidden;
+}
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: var(--sidebar-width);
+    height: 100vh;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0d1020 0%,
+            #0a0d18 100%
+        );
+
+    border-right: 1px solid var(--border);
+
+    display: flex;
+    flex-direction: column;
 
-    <meta name="theme-color" content="#080612">
+    z-index: 1000;
 
-    <title>Crown Cash | Admin Deposits</title>
+    overflow-y: auto;
+}
 
-    <link rel="stylesheet" href="admin_deposits.css">
-</head>
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
 
-<body>
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.35);
+    border-radius: 10px;
+}
 
-<!-- =========================================================
-     MOBILE OVERLAY
-========================================================= -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
+/* =========================================================
+   LOGO
+   ========================================================= */
 
+.sidebar-brand {
+    min-height: 90px;
 
-<!-- =========================================================
-     SIDEBAR
-========================================================= -->
-<aside class="sidebar" id="sidebar">
+    display: flex;
+    align-items: center;
 
-    <div class="sidebar-brand">
+    padding: 20px 22px;
 
-        <div class="brand-logo">
-            C
-        </div>
+    border-bottom: 1px solid var(--border);
+}
 
-        <div class="brand-text">
-            <strong>CROWN</strong>
-            <span>CASH</span>
-        </div>
+.brand-logo {
+    width: 42px;
+    height: 42px;
 
-        <div class="admin-badge">
-            ADMIN
-        </div>
+    border-radius: 12px;
 
-    </div>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple),
+            var(--pink)
+        );
 
-    <nav class="sidebar-nav">
+    box-shadow:
+        0 8px 25px rgba(168, 85, 247, 0.25);
 
-        <a href="admin.html" class="nav-item">
+    margin-right: 12px;
+}
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M3 13h8V3H3v10Z"></path>
-                    <path d="M13 21h8V11h-8v10Z"></path>
-                    <path d="M13 3h8v4h-8V3Z"></path>
-                    <path d="M3 17h8v4H3v-4Z"></path>
-                </svg>
-            </span>
+.brand-logo svg {
+    width: 22px;
+    height: 22px;
 
-            <span>Dashboard</span>
+    stroke: #ffffff;
+    fill: none;
+    stroke-width: 2;
+}
 
-        </a>
+.brand-text h2 {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
 
+.brand-text span {
+    display: block;
 
-        <a href="admin_users.html" class="nav-item">
+    margin-top: 2px;
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-            </span>
+    font-size: 10px;
+    color: var(--gold);
 
-            <span>Users</span>
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+}
 
-        </a>
+/* =========================================================
+   SIDEBAR NAV
+   ========================================================= */
 
+.sidebar-nav {
+    padding: 20px 12px;
+    flex: 1;
+}
 
-        <a href="admin_deposits.html" class="nav-item active">
+.nav-title {
+    padding: 0 12px;
+    margin-bottom: 9px;
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3v18"></path>
-                    <path d="M17 7.5A4 4 0 0 0 13 5h-2a4 4 0 0 0 0 8h2a4 4 0 0 1 0 8h-2a4 4 0 0 1-4-2.5"></path>
-                </svg>
-            </span>
+    color: var(--text-muted);
 
-            <span>Deposits</span>
+    font-size: 10px;
+    font-weight: 700;
 
-        </a>
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
 
+.nav-link {
+    position: relative;
 
-        <a href="admin_withdrawals.html" class="nav-item">
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3v18"></path>
-                    <path d="m7 8 5-5 5 5"></path>
-                    <path d="m17 16-5 5-5-5"></path>
-                </svg>
-            </span>
+    width: 100%;
 
-            <span>Withdrawals</span>
+    min-height: 45px;
 
-        </a>
+    padding: 10px 13px;
+    margin-bottom: 5px;
 
+    border-radius: 11px;
 
-        <a href="admin_investments.html" class="nav-item">
+    color: var(--text-soft);
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M3 20h18"></path>
-                    <path d="M5 17V9"></path>
-                    <path d="M10 17V5"></path>
-                    <path d="M15 17v-7"></path>
-                    <path d="M20 17V3"></path>
-                </svg>
-            </span>
+    font-size: 13px;
+    font-weight: 600;
 
-            <span>Investments</span>
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
 
-        </a>
+.nav-link svg {
+    width: 18px;
+    height: 18px;
 
+    flex-shrink: 0;
 
-        <a href="admin_transactions.html" class="nav-item">
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 4h16v16H4z"></path>
-                    <path d="M8 8h8"></path>
-                    <path d="M8 12h8"></path>
-                    <path d="M8 16h5"></path>
-                </svg>
-            </span>
+.nav-link:hover {
+    color: #ffffff;
 
-            <span>Transactions</span>
+    background: rgba(168, 85, 247, 0.09);
 
-        </a>
+    transform: translateX(2px);
+}
 
+.nav-link.active {
+    color: #ffffff;
 
-        <a href="admin_referrals.html" class="nav-item">
+    background:
+        linear-gradient(
+            90deg,
+            rgba(168, 85, 247, 0.20),
+            rgba(236, 72, 153, 0.08)
+        );
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M3 21v-2a6 6 0 0 1 12 0v2"></path>
-                    <path d="M19 8v6"></path>
-                    <path d="M16 11h6"></path>
-                </svg>
-            </span>
+    border: 1px solid rgba(168, 85, 247, 0.15);
+}
 
-            <span>Referrals</span>
+.nav-link.active::before {
+    content: "";
 
-        </a>
+    position: absolute;
+    left: -12px;
+    top: 50%;
 
+    width: 3px;
+    height: 23px;
 
-        <a href="admin_settings.html" class="nav-item">
+    transform: translateY(-50%);
 
-            <span class="nav-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.41 1.41-.06-.06A1.7 1.7 0 0 0 16.45 18a1.7 1.7 0 0 0-1.45 1.65V20h-2v-.35A1.7 1.7 0 0 0 11.55 18a1.7 1.7 0 0 0-1.88.34l-.06.06-1.41-1.41.06-.06A1.7 1.7 0 0 0 8.6 15a1.7 1.7 0 0 0-1.65-1.45H6v-2h.95A1.7 1.7 0 0 0 8.6 10a1.7 1.7 0 0 0-.34-1.88L8.2 8.06l1.41-1.41.06.06A1.7 1.7 0 0 0 11.55 7 1.7 1.7 0 0 0 13 5.35V5h2v.35A1.7 1.7 0 0 0 16.45 7a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.41 1.41-.06.06A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.65 1.45H22v2h-.95A1.7 1.7 0 0 0 19.4 15Z"></path>
-                </svg>
-            </span>
+    background:
+        linear-gradient(
+            180deg,
+            var(--purple),
+            var(--pink)
+        );
 
-            <span>Settings</span>
+    border-radius: 0 5px 5px 0;
+}
 
-        </a>
+.nav-link.logout {
+    margin-top: 15px;
+    color: #ff8c8c;
+}
 
-    </nav>
+.nav-link.logout:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ffb0b0;
+}
 
+/* =========================================================
+   SIDEBAR FOOTER
+   ========================================================= */
 
-    <div class="sidebar-bottom">
+.sidebar-footer {
+    padding: 16px 18px;
 
-        <div class="security-mini">
+    border-top: 1px solid var(--border);
+}
 
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"></path>
-                <path d="m9 12 2 2 4-4"></path>
-            </svg>
+.admin-mini {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-            <div>
-                <strong>Secure Admin</strong>
-                <span>Protected Access</span>
-            </div>
+.admin-avatar {
+    width: 34px;
+    height: 34px;
 
-        </div>
+    border-radius: 50%;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-        <button type="button" class="logout-btn" id="logoutBtn">
+    background:
+        linear-gradient(
+            135deg,
+            rgba(168, 85, 247, 0.25),
+            rgba(236, 72, 153, 0.20)
+        );
 
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M10 17l5-5-5-5"></path>
-                <path d="M15 12H3"></path>
-                <path d="M21 3v18"></path>
-            </svg>
+    border: 1px solid rgba(168, 85, 247, 0.25);
+}
 
-            Logout
+.admin-avatar svg {
+    width: 16px;
+    height: 16px;
 
-        </button>
+    stroke: var(--gold);
+    fill: none;
+    stroke-width: 1.8;
+}
 
-    </div>
+.admin-mini-text strong {
+    display: block;
 
-</aside>
+    font-size: 12px;
+    color: #ffffff;
+}
 
+.admin-mini-text span {
+    display: block;
 
-<!-- =========================================================
-     MAIN
-========================================================= -->
-<main class="main-content">
+    margin-top: 2px;
 
+    color: var(--text-muted);
 
-    <!-- =====================================================
-         TOPBAR
-    ====================================================== -->
-    <header class="topbar">
+    font-size: 10px;
+}
 
-        <div class="topbar-left">
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
 
-            <button
-                type="button"
-                class="menu-btn"
-                id="menuBtn"
-                aria-label="Open menu"
-            >
+.main-content {
+    margin-left: var(--sidebar-width);
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 6h16"></path>
-                    <path d="M4 12h16"></path>
-                    <path d="M4 18h16"></path>
-                </svg>
+    min-height: 100vh;
 
-            </button>
+    padding: 0 30px 40px;
+}
 
+/* =========================================================
+   TOPBAR
+   ========================================================= */
 
-            <div>
+.topbar {
+    min-height: 82px;
 
-                <p class="eyebrow">
-                    CROWN CASH ADMIN
-                </p>
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-                <h1>
-                    Deposit Management
-                </h1>
+    border-bottom: 1px solid var(--border);
+}
 
-            </div>
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-        </div>
+.page-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
 
+.page-subtitle {
+    margin-top: 3px;
 
-        <div class="admin-profile">
+    color: var(--text-muted);
 
-            <div class="notification-icon">
+    font-size: 11px;
+}
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-                    <path d="M10 21h4"></path>
-                </svg>
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-                <span class="notification-dot"></span>
+.icon-button {
+    width: 38px;
+    height: 38px;
 
-            </div>
+    border-radius: 10px;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-            <div class="admin-avatar">
-                A
-            </div>
+    background: var(--bg-card);
 
+    border: 1px solid var(--border);
 
-            <div class="admin-profile-text">
+    color: var(--text-soft);
 
-                <strong id="adminName">
-                    Administrator
-                </strong>
+    cursor: pointer;
 
-                <span>
-                    Crown Cash Admin
-                </span>
+    transition: 0.2s ease;
+}
 
-            </div>
+.icon-button:hover {
+    color: #ffffff;
 
-        </div>
+    border-color: rgba(168, 85, 247, 0.35);
 
-    </header>
+    background: rgba(168, 85, 247, 0.10);
+}
 
+.icon-button svg {
+    width: 18px;
+    height: 18px;
 
-    <!-- =====================================================
-         HERO
-    ====================================================== -->
-    <section class="page-hero">
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
 
-        <div class="hero-icon">
+.admin-name {
+    font-size: 12px;
+    color: var(--text-soft);
+}
 
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v18"></path>
-                <path d="M17 7.5A4 4 0 0 0 13 5h-2a4 4 0 0 0 0 8h2a4 4 0 0 1 0 8h-2a4 4 0 0 1-4-2.5"></path>
-            </svg>
+/* =========================================================
+   MOBILE MENU
+   ========================================================= */
 
-        </div>
+.menu-btn {
+    display: none;
 
+    width: 40px;
+    height: 40px;
 
-        <div class="hero-copy">
+    align-items: center;
+    justify-content: center;
 
-            <span class="hero-label">
-                FINANCIAL OPERATIONS
-            </span>
+    border-radius: 10px;
 
-            <h2>
-                Manage Customer Deposits
-            </h2>
+    border: 1px solid var(--border);
+    background: var(--bg-card);
 
-            <p>
-                Review pending deposits and approve only
-                after the payment has been properly verified.
-            </p>
+    color: #ffffff;
 
-        </div>
+    cursor: pointer;
+}
 
-    </section>
+.menu-btn svg {
+    width: 20px;
+    height: 20px;
 
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
 
-    <!-- =====================================================
-         STAT CARDS
-    ====================================================== -->
-    <section class="stats-grid">
+/* =========================================================
+   HERO
+   ========================================================= */
 
+.hero {
+    margin-top: 28px;
 
-        <article class="stat-card pending-card">
+    padding: 25px 27px;
 
-            <div class="stat-icon">
+    border-radius: var(--radius);
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="M12 7v5l3 2"></path>
-                </svg>
+    background:
+        linear-gradient(
+            135deg,
+            rgba(168, 85, 247, 0.15),
+            rgba(236, 72, 153, 0.06)
+        );
 
-            </div>
+    border: 1px solid rgba(168, 85, 247, 0.16);
 
-            <div class="stat-content">
+    box-shadow: var(--shadow);
 
-                <span>
-                    Pending Deposits
-                </span>
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-                <strong id="pendingCount">
-                    0
-                </strong>
+    gap: 20px;
+}
 
-            </div>
+.hero-content h1 {
+    font-size: 25px;
+    font-weight: 800;
 
-        </article>
+    letter-spacing: -0.7px;
+}
 
+.hero-content p {
+    max-width: 650px;
 
-        <article class="stat-card amount-card">
+    margin-top: 8px;
 
-            <div class="stat-icon">
+    color: var(--text-soft);
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3v18"></path>
-                    <path d="M17 7.5A4 4 0 0 0 13 5h-2a4 4 0 0 0 0 8h2a4 4 0 0 1 0 8h-2a4 4 0 0 1-4-2.5"></path>
-                </svg>
+    font-size: 13px;
+    line-height: 1.7;
+}
 
-            </div>
+.hero-icon {
+    width: 58px;
+    height: 58px;
 
-            <div class="stat-content">
+    flex-shrink: 0;
 
-                <span>
-                    Pending Amount
-                </span>
+    border-radius: 16px;
 
-                <strong id="pendingAmount">
-                    UGX 0
-                </strong>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-            </div>
+    background:
+        rgba(168, 85, 247, 0.14);
 
-        </article>
+    border: 1px solid rgba(168, 85, 247, 0.18);
+}
 
+.hero-icon svg {
+    width: 28px;
+    height: 28px;
 
-        <article class="stat-card approved-card">
+    stroke: var(--gold);
+    fill: none;
+    stroke-width: 1.6;
+}
 
-            <div class="stat-icon">
+/* =========================================================
+   STAT CARDS
+   ========================================================= */
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="m8 12 2.5 2.5L16 9"></path>
-                </svg>
+.stats-grid {
+    display: grid;
 
-            </div>
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
-            <div class="stat-content">
+    gap: 15px;
 
-                <span>
-                    Approved Deposits
-                </span>
+    margin-top: 20px;
+}
 
-                <strong id="approvedCount">
-                    0
-                </strong>
+.stat-card {
+    position: relative;
 
-            </div>
+    padding: 18px;
 
-        </article>
+    min-height: 125px;
 
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.035),
+            rgba(255, 255, 255, 0.015)
+        );
 
-        <article class="stat-card rejected-card">
+    border: 1px solid var(--border);
 
-            <div class="stat-icon">
+    border-radius: 14px;
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="m9 9 6 6"></path>
-                    <path d="m15 9-6 6"></path>
-                </svg>
+    overflow: hidden;
 
-            </div>
+    transition: transform 0.2s ease,
+                border-color 0.2s ease;
+}
 
-            <div class="stat-content">
+.stat-card:hover {
+    transform: translateY(-2px);
 
-                <span>
-                    Rejected Deposits
-                </span>
+    border-color: rgba(168, 85, 247, 0.22);
+}
 
-                <strong id="rejectedCount">
-                    0
-                </strong>
+.stat-card::after {
+    content: "";
 
-            </div>
+    position: absolute;
 
-        </article>
+    width: 90px;
+    height: 90px;
 
-    </section>
+    right: -35px;
+    bottom: -35px;
 
+    border-radius: 50%;
 
-    <!-- =====================================================
-         FILTERS
-    ====================================================== -->
-    <section class="control-panel">
+    background:
+        rgba(168, 85, 247, 0.07);
+}
 
-        <div class="search-box">
+.stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="m20 20-4-4"></path>
-            </svg>
+.stat-icon {
+    width: 34px;
+    height: 34px;
 
-            <input
-                type="search"
-                id="searchInput"
-                placeholder="Search reference, user or phone..."
-                autocomplete="off"
-            >
+    border-radius: 10px;
 
-        </div>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    background: rgba(168, 85, 247, 0.10);
+}
 
-        <div class="filter-group">
+.stat-icon svg {
+    width: 17px;
+    height: 17px;
 
-            <select id="statusFilter">
+    stroke: var(--purple);
+    fill: none;
+    stroke-width: 1.7;
+}
 
-                <option value="all">
-                    All Statuses
-                </option>
+.stat-card.approved .stat-icon {
+    background: rgba(34, 197, 94, 0.10);
+}
 
-                <option value="pending">
-                    Pending
-                </option>
+.stat-card.approved .stat-icon svg {
+    stroke: var(--green);
+}
 
-                <option value="approved">
-                    Approved
-                </option>
+.stat-card.rejected .stat-icon {
+    background: rgba(239, 68, 68, 0.10);
+}
 
-                <option value="rejected">
-                    Rejected
-                </option>
+.stat-card.rejected .stat-icon svg {
+    stroke: var(--red);
+}
 
-            </select>
+.stat-label {
+    margin-top: 14px;
 
+    color: var(--text-muted);
 
-            <select id="methodFilter">
+    font-size: 11px;
+    font-weight: 600;
+}
 
-                <option value="all">
-                    All Methods
-                </option>
+.stat-value {
+    margin-top: 5px;
 
-                <option value="MTN">
-                    MTN
-                </option>
+    font-size: 22px;
+    font-weight: 800;
 
-                <option value="AIRTEL">
-                    Airtel
-                </option>
+    letter-spacing: -0.5px;
+}
 
-            </select>
+.stat-value small {
+    font-size: 11px;
 
+    color: var(--text-muted);
 
-            <button
-                type="button"
-                class="refresh-btn"
-                id="refreshBtn"
-            >
+    font-weight: 600;
+}
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M20 11a8 8 0 0 0-14.9-4"></path>
-                    <path d="M4 5v5h5"></path>
-                    <path d="M4 13a8 8 0 0 0 14.9 4"></path>
-                    <path d="M20 19v-5h-5"></path>
-                </svg>
+/* =========================================================
+   FILTER SECTION
+   ========================================================= */
 
-                Refresh
+.content-card {
+    margin-top: 22px;
 
-            </button>
+    background:
+        rgba(17, 21, 38, 0.86);
 
-        </div>
+    border: 1px solid var(--border);
 
-    </section>
+    border-radius: var(--radius);
 
+    overflow: hidden;
 
-    <!-- =====================================================
-         DEPOSITS TABLE
-    ====================================================== -->
-    <section class="table-card">
+    box-shadow: var(--shadow);
+}
 
-        <div class="table-header">
+.card-header {
+    padding: 19px 20px;
 
-            <div>
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-                <span class="section-label">
-                    DEPOSIT REQUESTS
-                </span>
+    border-bottom: 1px solid var(--border);
 
-                <h2>
-                    Customer Deposits
-                </h2>
+    gap: 15px;
+}
 
-            </div>
+.card-title h2 {
+    font-size: 15px;
+    font-weight: 750;
+}
 
-            <span class="record-count" id="recordCount">
-                0 records
-            </span>
+.card-title p {
+    margin-top: 4px;
 
-        </div>
+    color: var(--text-muted);
 
+    font-size: 10px;
+}
 
-        <div class="table-wrapper">
+.record-count {
+    color: var(--text-muted);
+    font-size: 11px;
+}
 
-            <table>
+/* =========================================================
+   FILTER BAR
+   ========================================================= */
 
-                <thead>
+.filter-bar {
+    padding: 15px 20px;
 
-                    <tr>
+    display: grid;
 
-                        <th>
-                            Reference
-                        </th>
+    grid-template-columns:
+        minmax(180px, 1fr)
+        160px
+        150px
+        auto;
 
-                        <th>
-                            User
-                        </th>
+    gap: 10px;
 
-                        <th>
-                            Amount
-                        </th>
+    border-bottom: 1px solid var(--border);
+}
 
-                        <th>
-                            Method
-                        </th>
+.input-wrap {
+    position: relative;
+}
 
-                        <th>
-                            Account
-                        </th>
+.input-wrap svg {
+    position: absolute;
 
-                        <th>
-                            Date
-                        </th>
+    left: 12px;
+    top: 50%;
 
-                        <th>
-                            Status
-                        </th>
+    width: 15px;
+    height: 15px;
 
-                        <th>
-                            Action
-                        </th>
+    transform: translateY(-50%);
 
-                    </tr>
+    stroke: var(--text-muted);
+    fill: none;
+    stroke-width: 1.8;
 
-                </thead>
+    pointer-events: none;
+}
 
+.search-input,
+.filter-select {
+    width: 100%;
+    height: 40px;
 
-                <tbody id="depositTableBody">
+    padding: 0 12px;
 
-                    <tr>
+    border-radius: 10px;
 
-                        <td colspan="8">
+    background: #0c101d;
 
-                            <div class="empty-state">
+    border: 1px solid var(--border);
 
-                                <div class="empty-icon">
+    color: #ffffff;
 
-                                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M4 5h16v14H4z"></path>
-                                        <path d="M8 9h8"></path>
-                                        <path d="M8 13h5"></path>
-                                    </svg>
+    outline: none;
 
-                                </div>
+    font: inherit;
+    font-size: 11px;
+}
 
-                                <h3>
-                                    No Deposit Requests
-                                </h3>
+.search-input {
+    padding-left: 37px;
+}
 
-                                <p>
-                                    Deposit requests will appear
-                                    here when customers submit them.
-                                </p>
+.search-input::placeholder {
+    color: #5f6679;
+}
 
-                            </div>
+.search-input:focus,
+.filter-select:focus {
+    border-color: rgba(168, 85, 247, 0.45);
 
-                        </td>
+    box-shadow:
+        0 0 0 3px rgba(168, 85, 247, 0.07);
+}
 
-                    </tr>
+.filter-select {
+    cursor: pointer;
+}
 
-                </tbody>
+.filter-select option {
+    background: #111526;
+    color: #ffffff;
+}
 
-            </table>
+.refresh-btn {
+    height: 40px;
 
-        </div>
+    padding: 0 15px;
 
-    </section>
+    border-radius: 10px;
 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
 
-    <!-- =====================================================
-         SECURITY NOTICE
-    ====================================================== -->
-    <section class="security-notice">
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple-dark),
+            var(--purple)
+        );
 
-        <div class="security-notice-icon">
+    border: none;
 
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"></path>
-                <path d="M12 8v4"></path>
-                <path d="M12 16h.01"></path>
-            </svg>
+    color: #ffffff;
 
-        </div>
+    font-size: 11px;
+    font-weight: 700;
 
+    cursor: pointer;
 
-        <div>
+    transition: transform 0.2s ease,
+                opacity 0.2s ease;
+}
 
-            <strong>
-                Deposit Verification Required
-            </strong>
+.refresh-btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.92;
+}
 
-            <p>
-                Approving a deposit should only be done after
-                the corresponding payment has been independently
-                verified through an authorized payment channel.
-                A customer-entered reference alone should not
-                be treated as proof of payment.
-            </p>
+.refresh-btn svg {
+    width: 15px;
+    height: 15px;
 
-        </div>
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
 
-    </section>
+.refresh-btn.loading svg {
+    animation: spin 0.8s linear infinite;
+}
 
+/* =========================================================
+   TABLE
+   ========================================================= */
 
-    <!-- =====================================================
-         CONFIRMATION MODAL
-    ====================================================== -->
-    <div class="modal" id="actionModal" aria-hidden="true">
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
 
-        <div class="modal-backdrop" id="modalBackdrop"></div>
+.deposit-table {
+    width: 100%;
 
+    border-collapse: collapse;
 
-        <div
-            class="modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modalTitle"
-        >
+    min-width: 900px;
+}
 
-            <button
-                type="button"
-                class="modal-close"
-                id="modalClose"
-                aria-label="Close"
-            >
-                ×
-            </button>
+.deposit-table thead {
+    background: rgba(255, 255, 255, 0.018);
+}
 
+.deposit-table th {
+    padding: 13px 16px;
 
-            <div class="modal-icon" id="modalIcon">
+    color: var(--text-muted);
 
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"></path>
-                    <path d="M12 8v4"></path>
-                    <path d="M12 16h.01"></path>
-                </svg>
+    font-size: 9px;
+    font-weight: 700;
 
-            </div>
+    text-align: left;
 
+    text-transform: uppercase;
 
-            <h3 id="modalTitle">
-                Confirm Action
-            </h3>
+    letter-spacing: 0.7px;
 
+    white-space: nowrap;
 
-            <p id="modalMessage">
-                Are you sure you want to continue?
-            </p>
+    border-bottom: 1px solid var(--border);
+}
 
+.deposit-table td {
+    padding: 15px 16px;
 
-            <div class="modal-actions">
+    color: var(--text-soft);
 
-                <button
-                    type="button"
-                    class="modal-cancel"
-                    id="modalCancel"
-                >
-                    Cancel
-                </button>
+    font-size: 11px;
 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
 
-                <button
-                    type="button"
-                    class="modal-confirm"
-                    id="modalConfirm"
-                >
-                    Confirm
-                </button>
+    vertical-align: middle;
+}
 
-            </div>
+.deposit-table tbody tr {
+    transition: background 0.2s ease;
+}
 
-        </div>
+.deposit-table tbody tr:hover {
+    background: rgba(168, 85, 247, 0.035);
+}
 
-    </div>
+.reference {
+    color: #ffffff !important;
 
+    font-weight: 700;
 
-    <!-- =====================================================
-         LOADING OVERLAY
-    ====================================================== -->
-    <div class="loading-overlay" id="loadingOverlay">
+    white-space: nowrap;
+}
 
-        <div class="loading-box">
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
 
-            <div class="spinner"></div>
+.user-avatar {
+    width: 30px;
+    height: 30px;
 
-            <strong id="loadingText">
-                Loading deposits...
-            </strong>
+    flex-shrink: 0;
 
-            <span>
-                Please wait
-            </span>
+    border-radius: 50%;
 
-        </div>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    </div>
+    background:
+        linear-gradient(
+            135deg,
+            rgba(168, 85, 247, 0.20),
+            rgba(236, 72, 153, 0.14)
+        );
 
+    border: 1px solid rgba(168, 85, 247, 0.15);
 
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-    <footer class="footer">
+    color: #ffffff;
 
-        <span>
-            © <span id="currentYear"></span> Crown Cash
-        </span>
+    font-size: 10px;
+    font-weight: 800;
+}
 
-        <span>
-            Secure Administration Panel
-        </span>
+.user-details strong {
+    display: block;
 
-    </footer>
+    color: #ffffff;
 
-</main>
+    font-size: 11px;
 
+    white-space: nowrap;
+}
 
-<script src="admin_deposits.js?v=1"></script>
+.user-details span {
+    display: block;
 
-</body>
-</html>
+    margin-top: 2px;
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+
+    white-space: nowrap;
+}
+
+.amount {
+    color: var(--gold) !important;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+.method {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    white-space: nowrap;
+
+    font-weight: 700;
+}
+
+.method-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--orange);
+}
+
+.method-dot.airtel {
+    background: #ef4444;
+}
+
+.account {
+    color: var(--text-soft);
+
+    font-family: ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
+
+.date {
+    color: var(--text-muted);
+
+    white-space: nowrap;
+
+    font-size: 10px;
+}
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.status {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    min-height: 25px;
+
+    padding: 4px 9px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
+
+    white-space: nowrap;
+}
+
+.status::before {
+    content: "";
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+}
+
+.status.pending {
+    color: var(--orange);
+
+    background: rgba(245, 158, 11, 0.09);
+
+    border: 1px solid rgba(245, 158, 11, 0.14);
+}
+
+.status.approved {
+    color: var(--green);
+
+    background: rgba(34, 197, 94, 0.09);
+
+    border: 1px solid rgba(34, 197, 94, 0.14);
+}
+
+.status.rejected {
+    color: var(--red);
+
+    background: rgba(239, 68, 68, 0.09);
+
+    border: 1px solid rgba(239, 68, 68, 0.14);
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn {
+    min-height: 30px;
+
+    padding: 5px 9px;
+
+    border-radius: 8px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    border: 1px solid transparent;
+
+    font-size: 9px;
+    font-weight: 750;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.action-btn svg {
+    width: 13px;
+    height: 13px;
+
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
+
+.action-btn.approve {
+    color: #79e69a;
+
+    background: rgba(34, 197, 94, 0.08);
+
+    border-color: rgba(34, 197, 94, 0.14);
+}
+
+.action-btn.approve:hover {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.action-btn.reject {
+    color: #ff9696;
+
+    background: rgba(239, 68, 68, 0.08);
+
+    border-color: rgba(239, 68, 68, 0.14);
+}
+
+.action-btn.reject:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.action-completed {
+    color: var(--text-muted);
+
+    font-size: 9px;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+    padding: 55px 20px;
+
+    text-align: center;
+}
+
+.empty-icon {
+    width: 48px;
+    height: 48px;
+
+    margin: 0 auto 13px;
+
+    border-radius: 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(168, 85, 247, 0.08);
+
+    border: 1px solid rgba(168, 85, 247, 0.12);
+}
+
+.empty-icon svg {
+    width: 22px;
+    height: 22px;
+
+    stroke: var(--purple);
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.empty-state h3 {
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.empty-state p {
+    max-width: 400px;
+
+    margin: 6px auto 0;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   SECURITY NOTICE
+   ========================================================= */
+
+.security-notice {
+    margin-top: 18px;
+
+    padding: 15px 17px;
+
+    display: flex;
+    align-items: flex-start;
+
+    gap: 11px;
+
+    border-radius: 12px;
+
+    background:
+        rgba(245, 196, 81, 0.045);
+
+    border: 1px solid rgba(245, 196, 81, 0.12);
+}
+
+.security-icon {
+    width: 29px;
+    height: 29px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: rgba(245, 196, 81, 0.08);
+}
+
+.security-icon svg {
+    width: 15px;
+    height: 15px;
+
+    stroke: var(--gold);
+    fill: none;
+    stroke-width: 1.7;
+}
+
+.security-notice strong {
+    display: block;
+
+    color: var(--gold);
+
+    font-size: 10px;
+}
+
+.security-notice p {
+    margin-top: 4px;
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+.action-modal {
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    z-index: 3000;
+}
+
+.action-modal.show {
+    display: flex;
+}
+
+.modal-backdrop {
+    position: absolute;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.72);
+
+    backdrop-filter: blur(5px);
+}
+
+.modal-box {
+    position: relative;
+
+    width: min(420px, 100%);
+
+    padding: 24px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #151a2d,
+            #0f1322
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.09);
+
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.55);
+
+    animation: modalIn 0.2s ease;
+}
+
+.modal-close {
+    position: absolute;
+
+    top: 12px;
+    right: 12px;
+
+    width: 30px;
+    height: 30px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: rgba(255, 255, 255, 0.05);
+
+    color: var(--text-muted);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: #ffffff;
+}
+
+.modal-close svg {
+    width: 15px;
+    height: 15px;
+
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+}
+
+.modal-icon {
+    width: 46px;
+    height: 46px;
+
+    margin-bottom: 15px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(168, 85, 247, 0.10);
+
+    border: 1px solid rgba(168, 85, 247, 0.13);
+}
+
+.modal-icon svg {
+    width: 22px;
+    height: 22px;
+
+    stroke: var(--purple);
+    fill: none;
+    stroke-width: 1.6;
+}
+
+.modal-title {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.modal-message {
+    margin-top: 8px;
+
+    color: var(--text-soft);
+
+    font-size: 11px;
+
+    line-height: 1.65;
+}
+
+.modal-actions {
+    margin-top: 20px;
+
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 9px;
+}
+
+.modal-btn {
+    min-height: 38px;
+
+    padding: 0 15px;
+
+    border-radius: 9px;
+
+    border: 1px solid var(--border);
+
+    background: rgba(255, 255, 255, 0.04);
+
+    color: var(--text-soft);
+
+    font-size: 10px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.modal-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.modal-btn.confirm {
+    color: #ffffff;
+
+    border-color: transparent;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple-dark),
+            var(--purple)
+        );
+}
+
+.modal-btn.confirm.reject {
+    background:
+        linear-gradient(
+            135deg,
+            #b91c1c,
+            #ef4444
+        );
+}
+
+/* =========================================================
+   LOADING OVERLAY
+   ========================================================= */
+
+.loading-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 4000;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(5, 7, 13, 0.78);
+
+    backdrop-filter: blur(4px);
+}
+
+.loading-overlay.show {
+    display: flex;
+}
+
+.loading-box {
+    min-width: 180px;
+
+    padding: 22px;
+
+    text-align: center;
+
+    border-radius: 14px;
+
+    background: #111526;
+
+    border: 1px solid var(--border);
+
+    box-shadow: var(--shadow);
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+
+    margin: 0 auto 12px;
+
+    border-radius: 50%;
+
+    border: 3px solid rgba(255, 255, 255, 0.08);
+
+    border-top-color: var(--purple);
+
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    color: var(--text-soft);
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* =========================================================
+   SIDEBAR OVERLAY
+   ========================================================= */
+
+.sidebar-overlay {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 900;
+
+    background: rgba(0, 0, 0, 0.60);
+
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.show {
+    display: block;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    :root {
+        --sidebar-width: 225px;
+    }
+
+    .main-content {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-bar {
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 10px;
+    }
+
+    .refresh-btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+    :root {
+        --sidebar-width: 250px;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+
+        transition: transform 0.25s ease;
+
+        box-shadow:
+            20px 0 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .menu-btn {
+        display: flex;
+    }
+
+    .main-content {
+        margin-left: 0;
+
+        padding:
+            0 14px 30px;
+    }
+
+    .topbar {
+        min-height: 68px;
+    }
+
+    .topbar-right .admin-name {
+        display: none;
+    }
+
+    .page-title {
+        font-size: 17px;
+    }
+
+    .hero {
+        margin-top: 18px;
+
+        padding: 19px;
+
+        align-items: flex-start;
+    }
+
+    .hero-content h1 {
+        font-size: 20px;
+    }
+
+    .hero-content p {
+        font-size: 11px;
+    }
+
+    .hero-icon {
+        width: 45px;
+        height: 45px;
+
+        border-radius: 12px;
+    }
+
+    .hero-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+
+        gap: 10px;
+
+        margin-top: 14px;
+    }
+
+    .stat-card {
+        min-height: 105px;
+    }
+
+    .content-card {
+        margin-top: 15px;
+
+        border-radius: 13px;
+    }
+
+    .card-header {
+        padding: 15px;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .filter-bar {
+        padding: 13px;
+
+        grid-template-columns: 1fr;
+    }
+
+    .security-notice {
+        padding: 13px;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .deposit-table {
+        min-width: 900px;
+    }
+
+    .modal-box {
+        padding: 20px;
+    }
+}
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .main-content {
+        padding-left: 11px;
+        padding-right: 11px;
+    }
+
+    .hero-content h1 {
+        font-size: 18px;
+    }
+
+    .hero-content p {
+        font-size: 10px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: 2px solid rgba(168, 85, 247, 0.65);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

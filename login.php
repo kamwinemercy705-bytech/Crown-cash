@@ -6,25 +6,11 @@
 |--------------------------------------------------------------------------
 */
 
-header(
-    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
-);
-
-header(
-    "Access-Control-Allow-Methods: POST, OPTIONS"
-);
-
-header(
-    "Access-Control-Allow-Headers: Content-Type"
-);
-
-header(
-    "Access-Control-Allow-Credentials: true"
-);
-
-header(
-    "Content-Type: application/json; charset=UTF-8"
-);
+header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json; charset=UTF-8");
 
 
 /*
@@ -33,14 +19,9 @@ header(
 |--------------------------------------------------------------------------
 */
 
-if (
-    $_SERVER["REQUEST_METHOD"] === "OPTIONS"
-) {
-
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
-
     exit;
-
 }
 
 
@@ -77,10 +58,7 @@ require_once __DIR__ . "/config.php";
 |--------------------------------------------------------------------------
 */
 
-if (
-    $_SERVER["REQUEST_METHOD"] !== "POST"
-) {
-
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
 
     echo json_encode([
@@ -89,7 +67,6 @@ if (
     ]);
 
     exit;
-
 }
 
 
@@ -101,17 +78,9 @@ if (
 
 try {
 
-    $rawData =
-        file_get_contents(
-            "php://input"
-        );
+    $rawData = file_get_contents("php://input");
 
-
-    $data =
-        json_decode(
-            $rawData,
-            true
-        );
+    $data = json_decode($rawData, true);
 
 
     if (!is_array($data)) {
@@ -124,25 +93,22 @@ try {
         ]);
 
         exit;
-
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | GET DATA
+    | GET LOGIN DATA
     |--------------------------------------------------------------------------
     */
 
-    $email =
-        strtolower(
-            trim(
-                $data["email"] ?? ""
-            )
-        );
+    $email = strtolower(
+        trim(
+            $data["email"] ?? ""
+        )
+    );
 
-    $password =
-        $data["password"] ?? "";
+    $password = $data["password"] ?? "";
 
 
     /*
@@ -151,21 +117,16 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    if (
-        $email === "" ||
-        $password === ""
-    ) {
+    if ($email === "" || $password === "") {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" =>
-                "Email and password are required."
+            "message" => "Email and password are required."
         ]);
 
         exit;
-
     }
 
 
@@ -175,23 +136,16 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    if (
-        !filter_var(
-            $email,
-            FILTER_VALIDATE_EMAIL
-        )
-    ) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" =>
-                "Invalid email address."
+            "message" => "Invalid email address."
         ]);
 
         exit;
-
     }
 
 
@@ -201,10 +155,9 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    $user =
-        $users->findOne([
-            "email" => $email
-        ]);
+    $user = $users->findOne([
+        "email" => $email
+    ]);
 
 
     if (!$user) {
@@ -213,12 +166,10 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" =>
-                "Invalid email or password."
+            "message" => "Invalid email or password."
         ]);
 
         exit;
-
     }
 
 
@@ -228,34 +179,27 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    if (
-        ($user["status"] ?? "active")
-        !== "active"
-    ) {
+    if (($user["status"] ?? "active") !== "active") {
 
         http_response_code(403);
 
         echo json_encode([
             "success" => false,
-            "message" =>
-                "This account is not active."
+            "message" => "This account is not active."
         ]);
 
         exit;
-
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | PASSWORD
+    | PASSWORD VERIFICATION
     |--------------------------------------------------------------------------
     */
 
     if (
-        !isset(
-            $user["password"]
-        ) ||
+        !isset($user["password"]) ||
         !password_verify(
             $password,
             $user["password"]
@@ -266,13 +210,26 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" =>
-                "Invalid email or password."
+            "message" => "Invalid email or password."
         ]);
 
         exit;
-
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | USER ROLE
+    |--------------------------------------------------------------------------
+    */
+
+    $role = strtolower(
+        trim(
+            (string) (
+                $user["role"] ?? "user"
+            )
+        )
+    );
 
 
     /*
@@ -284,13 +241,22 @@ try {
     session_regenerate_id(true);
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE LOGIN SESSION
+    |--------------------------------------------------------------------------
+    */
+
     $_SESSION["logged_in"] = true;
 
     $_SESSION["user_id"] =
         (string) $user["_id"];
 
     $_SESSION["user_email"] =
-        $user["email"];
+        (string) $user["email"];
+
+    $_SESSION["role"] =
+        $role;
 
 
     /*
@@ -300,25 +266,21 @@ try {
     */
 
     $users->updateOne(
-
         [
-            "_id" =>
-                $user["_id"]
+            "_id" => $user["_id"]
         ],
-
         [
             '$set' => [
                 "last_login" =>
                     new MongoDB\BSON\UTCDateTime()
             ]
         ]
-
     );
 
 
     /*
     |--------------------------------------------------------------------------
-    | SUCCESS
+    | SUCCESS RESPONSE
     |--------------------------------------------------------------------------
     */
 
@@ -326,8 +288,7 @@ try {
 
         "success" => true,
 
-        "message" =>
-            "Login successful.",
+        "message" => "Login successful.",
 
         "user" => [
 
@@ -350,15 +311,18 @@ try {
                 $user["referralCode"] ?? "",
 
             "balance" =>
-                $user["balance"] ?? 0
+                $user["balance"] ?? 0,
 
+            "role" =>
+                $role
         ]
 
     ]);
 
+    exit;
+
 
 } catch (Throwable $e) {
-
 
     /*
     |--------------------------------------------------------------------------
@@ -371,19 +335,14 @@ try {
         $e->getMessage()
     );
 
-
     http_response_code(500);
 
-
     echo json_encode([
-
         "success" => false,
-
-        "message" =>
-            "Login failed. Please try again."
-
+        "message" => "Login failed. Please try again."
     ]);
 
+    exit;
 }
 
 ?>

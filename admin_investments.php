@@ -1,5 +1,11 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| Crown Cash — Admin Investments API
+|--------------------------------------------------------------------------
+*/
+
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -9,7 +15,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 /*
 |--------------------------------------------------------------------------
-| Handle CORS preflight
+| CORS PREFLIGHT
 |--------------------------------------------------------------------------
 */
 
@@ -21,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 /*
 |--------------------------------------------------------------------------
-| Session configuration
+| SESSION
 |--------------------------------------------------------------------------
 */
 
@@ -39,7 +45,7 @@ session_start();
 
 /*
 |--------------------------------------------------------------------------
-| Database
+| DATABASE
 |--------------------------------------------------------------------------
 */
 
@@ -48,7 +54,7 @@ require_once __DIR__ . "/config.php";
 
 /*
 |--------------------------------------------------------------------------
-| Response helper
+| RESPONSE HELPER
 |--------------------------------------------------------------------------
 */
 
@@ -77,16 +83,21 @@ function sendResponse(
 
 /*
 |--------------------------------------------------------------------------
-| Admin authentication
+| CHECK ADMIN
 |--------------------------------------------------------------------------
 */
 
-function requireAdmin(): object
+function requireAdmin()
 {
+    /*
+     * Check login session
+     */
+
     if (
         empty($_SESSION["logged_in"]) ||
         empty($_SESSION["user_id"])
     ) {
+
         sendResponse(
             false,
             "Please login first.",
@@ -94,6 +105,11 @@ function requireAdmin(): object
             401
         );
     }
+
+
+    /*
+     * Convert session ID to MongoDB ObjectId
+     */
 
     try {
 
@@ -106,10 +122,18 @@ function requireAdmin(): object
         sendResponse(
             false,
             "Invalid user session.",
-            [],
+            [
+                "session_user_id" =>
+                    $_SESSION["user_id"] ?? null
+            ],
             401
         );
     }
+
+
+    /*
+     * Find the actual user in Crown Cash
+     */
 
     global $users;
 
@@ -117,25 +141,96 @@ function requireAdmin(): object
         "_id" => $userId
     ]);
 
+
+    /*
+     * User not found
+     */
+
     if (!$admin) {
 
         sendResponse(
             false,
-            "Administrator account not found.",
-            [],
+            "The logged-in user was not found in Crown Cash.",
+            [
+                "session_user_id" =>
+                    (string) $userId,
+
+                "session_email" =>
+                    $_SESSION["user_email"] ?? null
+            ],
             403
         );
     }
 
-    if (($admin["role"] ?? "") !== "admin") {
+
+    /*
+     * Read role directly from MongoDB
+     */
+
+    $databaseRole = strtolower(
+        trim(
+            (string) (
+                $admin["role"] ?? ""
+            )
+        )
+    );
+
+
+    /*
+     * TEMPORARY DIAGNOSTIC
+     *
+     * This tells us exactly which user the session
+     * is connected to.
+     */
+
+    if ($databaseRole !== "admin") {
 
         sendResponse(
             false,
-            "Administrator access required.",
-            [],
+            "Administrator role mismatch.",
+            [
+                "session" => [
+                    "logged_in" =>
+                        $_SESSION["logged_in"] ?? false,
+
+                    "user_id" =>
+                        $_SESSION["user_id"] ?? null,
+
+                    "user_email" =>
+                        $_SESSION["user_email"] ?? null,
+
+                    "session_role" =>
+                        $_SESSION["role"] ?? null
+                ],
+
+                "database_user" => [
+                    "id" =>
+                        (string) $admin["_id"],
+
+                    "email" =>
+                        $admin["email"] ?? "",
+
+                    "firstName" =>
+                        $admin["firstName"] ?? "",
+
+                    "lastName" =>
+                        $admin["lastName"] ?? "",
+
+                    "role" =>
+                        $admin["role"] ?? "NOT SET",
+
+                    "status" =>
+                        $admin["status"] ?? "NOT SET"
+                ]
+            ],
             403
         );
     }
+
+
+    /*
+     * Administrator confirmed
+     */
 
     return $admin;
 }
@@ -143,7 +238,7 @@ function requireAdmin(): object
 
 /*
 |--------------------------------------------------------------------------
-| Only GET is allowed
+| METHOD CHECK
 |--------------------------------------------------------------------------
 */
 
@@ -160,7 +255,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 
 /*
 |--------------------------------------------------------------------------
-| Verify administrator
+| VERIFY ADMIN
 |--------------------------------------------------------------------------
 */
 
@@ -169,16 +264,11 @@ $admin = requireAdmin();
 
 /*
 |--------------------------------------------------------------------------
-| Load investments
+| LOAD INVESTMENTS
 |--------------------------------------------------------------------------
 */
 
 try {
-
-    /*
-     * Current Crown Cash investments are stored
-     * in the investments collection.
-     */
 
     $cursor = $investments->find(
         [],
@@ -202,7 +292,7 @@ try {
 
     /*
      |--------------------------------------------------------------------------
-     | Process every investment
+     | PROCESS INVESTMENTS
      |--------------------------------------------------------------------------
      */
 
@@ -313,7 +403,9 @@ try {
             isset($investment["_id"]) &&
             $investment["_id"] instanceof MongoDB\BSON\ObjectId
         ) {
-            $investmentId = (string) $investment["_id"];
+
+            $investmentId =
+                (string) $investment["_id"];
         }
 
 
@@ -383,7 +475,7 @@ try {
 
 
         /*
-         * Add investment to response
+         * Add investment
          */
 
         $investmentList[] = [
@@ -419,7 +511,7 @@ try {
 
     /*
      |--------------------------------------------------------------------------
-     | Send response
+     | SUCCESS RESPONSE
      |--------------------------------------------------------------------------
      */
 
@@ -428,29 +520,48 @@ try {
         "Investments loaded successfully.",
         [
             "admin" => [
-                "id" => (string) $admin["_id"],
+                "id" =>
+                    (string) $admin["_id"],
+
                 "name" =>
                     trim(
-                        (string) ($admin["firstName"] ?? "")
+                        (string) (
+                            $admin["firstName"] ?? ""
+                        )
                         . " "
-                        . (string) ($admin["lastName"] ?? "")
+                        . (string) (
+                            $admin["lastName"] ?? ""
+                        )
                     ),
-                "email" => (string) (
-                    $admin["email"] ?? ""
-                )
+
+                "email" =>
+                    (string) (
+                        $admin["email"] ?? ""
+                    )
             ],
 
             "stats" => [
-                "total_investments" => $totalInvestments,
-                "total_amount" => $totalAmount,
-                "active" => $activeInvestments,
-                "pending" => $pendingInvestments,
-                "completed" => $completedInvestments
+                "total_investments" =>
+                    $totalInvestments,
+
+                "total_amount" =>
+                    $totalAmount,
+
+                "active" =>
+                    $activeInvestments,
+
+                "pending" =>
+                    $pendingInvestments,
+
+                "completed" =>
+                    $completedInvestments
             ],
 
-            "investments" => $investmentList
+            "investments" =>
+                $investmentList
         ]
     );
+
 
 } catch (Throwable $e) {
 

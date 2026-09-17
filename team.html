@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#07111f">
+
+    <title>Crown Cash | Referral Team</title>
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- Team CSS -->
+    <link rel="stylesheet" href="team.css">
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- Logo -->
+        <div class="logo-area">
+            <div class="logo-mark">
+                <span>C</span>
+            </div>
+
+            <div class="logo-text">
+                <strong>Crown</strong>
+                <span>Cash</span>
+            </div>
+        </div>
+
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="profile.html" class="nav-item">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </a>
+
+            <a href="investments.html" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Investments</span>
+            </a>
+
+            <a href="deposit.html" class="nav-item">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Deposits</span>
+            </a>
+
+            <a href="withdraw.html" class="nav-item">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+                <span>Withdrawals</span>
+            </a>
+
+            <a href="team.html" class="nav-item active">
+                <i class="fa-solid fa-users"></i>
+                <span>Referral Team</span>
+            </a>
+
+            <a href="transactions.html" class="nav-item">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Transactions</span>
+            </a>
+
+            <a href="support.html" class="nav-item">
+                <i class="fa-solid fa-headset"></i>
+                <span>Support</span>
+            </a>
+
+        </nav>
+
+
+        <!-- Logout -->
+        <div class="sidebar-bottom">
+
+            <button
+                type="button"
+                class="logout-btn"
+                id="logoutBtn"
+            >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main class="main-content">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+
+            <button
+                type="button"
+                class="menu-btn"
+                id="menuBtn"
+                aria-label="Open menu"
+            >
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="page-heading">
+
+                <span class="small-heading">
+                    Crown Cash
+                </span>
+
+                <h1>
+                    Referral Team
+                </h1>
+
+            </div>
+
+            <div class="topbar-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+        </header>
+
+
+        <!-- =========================
+             CONTENT
+        ========================== -->
+        <section class="content">
+
+            <!-- Welcome -->
+            <div class="welcome-card">
+
+                <div class="welcome-icon">
+                    <i class="fa-solid fa-people-group"></i>
+                </div>
+
+                <div class="welcome-text">
+
+                    <span>
+                        REFERRAL PROGRAM
+                    </span>
+
+                    <h2>
+                        Build Your Team
+                    </h2>
+
+                    <p>
+                        Invite friends and grow your Crown Cash referral team.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 REFERRAL LINK CARD
+            ========================== -->
+            <div class="referral-card">
+
+                <div class="section-title">
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-link"></i>
+                    </div>
+
+                    <div>
+                        <h2>Your Referral Link</h2>
+                        <p>Share your link with friends</p>
+                    </div>
+
+                </div>
+
+
+                <div class="referral-link-box">
+
+                    <input
+                        type="text"
+                        id="referralLink"
+                        value="Loading..."
+                        readonly
+                    >
+
+                    <button
+                        type="button"
+                        id="copyLinkBtn"
+                        class="copy-btn"
+                    >
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy</span>
+                    </button>
+
+                </div>
+
+                <div
+                    id="copyMessage"
+                    class="copy-message"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 REFERRAL CODE
+            ========================== -->
+            <div class="referral-code-card">
+
+                <div class="code-icon">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+
+                <div class="code-content">
+
+                    <span class="card-label">
+                        YOUR REFERRAL CODE
+                    </span>
+
+                    <strong id="referralCode">
+                        Loading...
+                    </strong>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="copyCodeBtn"
+                    class="icon-copy-btn"
+                    title="Copy referral code"
+                >
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+
+            </div>
+
+
+            <!-- =========================
+                 STATISTICS
+            ========================== -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            TOTAL REFERRALS
+                        </span>
+
+                        <strong id="totalReferrals">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            ACTIVE MEMBERS
+                        </span>
+
+                        <strong id="activeMembers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+
+                    <div class="stat-info">
+
+                        <span>
+                            REFERRAL EARNINGS
+                        </span>
+
+                        <strong id="referralEarnings">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 HOW IT WORKS
+            ========================== -->
+            <div class="how-card">
+
+                <div class="section-title">
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </div>
+
+                    <div>
+                        <h2>How Referrals Work</h2>
+                        <p>Invite and grow your team</p>
+                    </div>
+
+                </div>
+
+
+                <div class="steps">
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            1
+                        </div>
+
+                        <div class="step-icon">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Share Your Link
+                            </h3>
+
+                            <p>
+                                Copy your referral link and share it with your friends.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            2
+                        </div>
+
+                        <div class="step-icon">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                They Register
+                            </h3>
+
+                            <p>
+                                Your friend creates a Crown Cash account using your referral code.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            3
+                        </div>
+
+                        <div class="step-icon">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Build Your Team
+                            </h3>
+
+                            <p>
+                                Your referred members appear in your referral team.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =========================
+                 TEAM MEMBERS
+            ========================== -->
+            <div class="team-card">
+
+                <div class="section-title">
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-user-group"></i>
+                    </div>
+
+                    <div>
+                        <h2>My Referral Team</h2>
+                        <p>People who joined using your referral code</p>
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="teamMessage"
+                    class="team-message"
+                >
+                    Loading your referral team...
+                </div>
+
+
+                <div
+                    id="teamList"
+                    class="team-list"
+                ></div>
+
+            </div>
+
+
+            <!-- =========================
+                 EMPTY STATE
+            ========================== -->
+            <div
+                id="emptyTeam"
+                class="empty-team"
+                style="display:none;"
+            >
+
+                <div class="empty-icon">
+                    <i class="fa-solid fa-user-group"></i>
+                </div>
+
+                <h3>
+                    No Referral Members Yet
+                </h3>
+
+                <p>
+                    Share your referral link with friends to start building your team.
+                </p>
+
+                <button
+                    type="button"
+                    id="emptyCopyBtn"
+                    class="primary-btn"
+                >
+                    <i class="fa-solid fa-copy"></i>
+                    Copy Referral Link
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer class="footer">
+
+            <p>
+                © <span id="currentYear"></span>
+                Crown Cash. All rights reserved.
+            </p>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- Team JavaScript -->
+<script src="team.js"></script>
+
+</body>
+</html>

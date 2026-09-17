@@ -2,14 +2,15 @@
 
 /*
 |--------------------------------------------------------------------------
-| CROWN CASH - USER WITHDRAWAL HISTORY API
+| Crown Cash — Withdrawal History API
 |--------------------------------------------------------------------------
 */
 
+require_once __DIR__ . "/config.php";
 
 /*
 |--------------------------------------------------------------------------
-| CROSS-SITE SESSION
+| Session configuration
 |--------------------------------------------------------------------------
 */
 
@@ -23,7 +24,6 @@ session_set_cookie_params([
 
 session_start();
 
-
 /*
 |--------------------------------------------------------------------------
 | CORS
@@ -34,12 +34,11 @@ header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-
+header("Content-Type: application/json; charset=UTF-8");
 
 /*
 |--------------------------------------------------------------------------
-| PREFLIGHT
+| Handle OPTIONS request
 |--------------------------------------------------------------------------
 */
 
@@ -50,10 +49,9 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     exit;
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| ONLY GET ALLOWED
+| Only GET is allowed
 |--------------------------------------------------------------------------
 */
 
@@ -69,10 +67,9 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     exit;
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| CHECK LOGIN
+| Check login
 |--------------------------------------------------------------------------
 */
 
@@ -91,28 +88,17 @@ if (
     exit;
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| DATABASE
-|--------------------------------------------------------------------------
-*/
-
-require_once __DIR__ . "/config.php";
-
-
-/*
-|--------------------------------------------------------------------------
-| CONVERT SESSION USER ID
+| Get user ID
 |--------------------------------------------------------------------------
 */
 
 try {
 
-    $userId =
-        new MongoDB\BSON\ObjectId(
-            $_SESSION["user_id"]
-        );
+    $userId = new MongoDB\BSON\ObjectId(
+        (string) $_SESSION["user_id"]
+    );
 
 } catch (Throwable $e) {
 
@@ -126,164 +112,192 @@ try {
     exit;
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| GET WITHDRAWALS
+| Get withdrawal history
 |--------------------------------------------------------------------------
 */
 
 try {
 
-    $cursor =
-        $withdrawals->find(
+    /*
+    |--------------------------------------------------------------------------
+    | Find withdrawals belonging only to this user
+    |--------------------------------------------------------------------------
+    */
 
-            [
-                "user_id" => $userId
+    $cursor = $withdrawals->find(
+        [
+            "user_id" => $userId
+        ],
+        [
+            "sort" => [
+                "created_at" => -1
             ],
+            "limit" => 20
+        ]
+    );
 
-            [
-                "sort" => [
-                    "created_at" => -1
-                ],
+    $withdrawalList = [];
 
-                "limit" => 20
-            ]
+    foreach ($cursor as $withdrawal) {
 
+        /*
+        |--------------------------------------------------------------------------
+        | Withdrawal ID
+        |--------------------------------------------------------------------------
+        */
+
+        $id = isset($withdrawal["_id"])
+            ? (string) $withdrawal["_id"]
+            : "";
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Amount
+        |--------------------------------------------------------------------------
+        */
+
+        $amount = $withdrawal["amount"] ?? 0;
+
+        if ($amount instanceof MongoDB\BSON\Decimal128) {
+
+            $amount = (float) $amount->toString();
+
+        } else {
+
+            $amount = (float) $amount;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payment method
+        |--------------------------------------------------------------------------
+        */
+
+        $method =
+            $withdrawal["payment_method"]
+            ?? $withdrawal["method"]
+            ?? "";
+
+
+        $method = strtolower(
+            trim((string) $method)
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Phone/account
+        |--------------------------------------------------------------------------
+        */
+
+        $phone =
+            $withdrawal["phone"]
+            ?? $withdrawal["account"]
+            ?? "";
+
+
+        $phone = (string) $phone;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status
+        |--------------------------------------------------------------------------
+        */
+
+        $status =
+            $withdrawal["status"]
+            ?? "pending";
+
+
+        $status = strtolower(
+            trim((string) $status)
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Created date
+        |--------------------------------------------------------------------------
+        */
+
+        $createdAt = null;
+
+        if (
+            isset($withdrawal["created_at"]) &&
+            $withdrawal["created_at"]
+                instanceof MongoDB\BSON\UTCDateTime
+        ) {
+
+            $createdAt =
+                $withdrawal["created_at"]
+                    ->toDateTime()
+                    ->format(
+                        DateTimeInterface::ATOM
+                    );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Add withdrawal to response
+        |--------------------------------------------------------------------------
+        */
+
+        $withdrawalList[] = [
+
+            "id" => $id,
+
+            "amount" => $amount,
+
+            "payment_method" => $method,
+
+            "phone" => $phone,
+
+            "status" => $status,
+
+            "created_at" => $createdAt
+
+        ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Send response
+    |--------------------------------------------------------------------------
+    */
+
+    echo json_encode([
+
+        "success" => true,
+
+        "withdrawals" => $withdrawalList
+
+    ]);
+
 } catch (Throwable $e) {
+
+    error_log(
+        "CROWN CASH WITHDRAWAL HISTORY ERROR: "
+        . $e->getMessage()
+    );
 
     http_response_code(500);
 
     echo json_encode([
+
         "success" => false,
-        "message" => "Unable to load withdrawal history."
+
+        "message" =>
+            "Unable to load withdrawal history."
+
     ]);
-
-    exit;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| BUILD RESPONSE
-|--------------------------------------------------------------------------
-*/
-
-$withdrawalList = [];
-
-
-foreach ($cursor as $withdrawal) {
-
-    $createdAt = null;
-
-    if (
-        isset($withdrawal["created_at"]) &&
-        $withdrawal["created_at"]
-            instanceof MongoDB\BSON\UTCDateTime
-    ) {
-
-        $createdAt =
-            $withdrawal["created_at"]
-                ->toDateTime()
-                ->format(
-                    "Y-m-d H:i:s"
-                );
-    }
-
-
-    $updatedAt = null;
-
-    if (
-        isset($withdrawal["updated_at"]) &&
-        $withdrawal["updated_at"]
-            instanceof MongoDB\BSON\UTCDateTime
-    ) {
-
-        $updatedAt =
-            $withdrawal["updated_at"]
-                ->toDateTime()
-                ->format(
-                    "Y-m-d H:i:s"
-                );
-    }
-
-
-    $amount = 0;
-
-
-    if (isset($withdrawal["amount"])) {
-
-        if (
-            $withdrawal["amount"]
-                instanceof MongoDB\BSON\Decimal128
-        ) {
-
-            $amount =
-                (float)$withdrawal["amount"]
-                    ->toString();
-
-        } else {
-
-            $amount =
-                (float)$withdrawal["amount"];
-        }
-    }
-
-
-    $withdrawalList[] = [
-
-        "id" =>
-            isset($withdrawal["_id"])
-                ? (string)$withdrawal["_id"]
-                : "",
-
-        "amount" =>
-            $amount,
-
-        "payment_method" =>
-            (string)(
-                $withdrawal["payment_method"]
-                ?? ""
-            ),
-
-        "phone" =>
-            (string)(
-                $withdrawal["phone"]
-                ?? ""
-            ),
-
-        "status" =>
-            (string)(
-                $withdrawal["status"]
-                ?? "pending"
-            ),
-
-        "created_at" =>
-            $createdAt,
-
-        "updated_at" =>
-            $updatedAt
-
-    ];
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| SUCCESS
-|--------------------------------------------------------------------------
-*/
-
-echo json_encode([
-
-    "success" => true,
-
-    "withdrawals" =>
-        $withdrawalList
-
-]);
-
-exit;
 ?>

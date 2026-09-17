@@ -1,48 +1,15 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash — Create Investment API
-| TEST VERSION
-|--------------------------------------------------------------------------
-| This endpoint is currently for testing only.
-| Test investment amount: UGX 10,000
-|--------------------------------------------------------------------------
-*/
-
-
-/*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
-
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
-
-/*
-|--------------------------------------------------------------------------
-| Handle browser preflight request
-|--------------------------------------------------------------------------
-*/
-
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-
     http_response_code(204);
-
     exit;
 }
-
-
-/*
-|--------------------------------------------------------------------------
-| Session configuration
-|--------------------------------------------------------------------------
-*/
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -55,19 +22,12 @@ session_set_cookie_params([
 
 session_start();
 
-
-/*
-|--------------------------------------------------------------------------
-| Database connection
-|--------------------------------------------------------------------------
-*/
-
 require_once __DIR__ . "/config.php";
 
 
 /*
 |--------------------------------------------------------------------------
-| Only POST requests are allowed
+| Only POST is allowed
 |--------------------------------------------------------------------------
 */
 
@@ -86,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
 /*
 |--------------------------------------------------------------------------
-| Check whether the user is logged in
+| Check login
 |--------------------------------------------------------------------------
 */
 
@@ -106,24 +66,17 @@ if (
 }
 
 
-try {
+/*
+|--------------------------------------------------------------------------
+| Read request
+|--------------------------------------------------------------------------
+*/
 
-    /*
-    |--------------------------------------------------------------------------
-    | Read JSON sent by investments.js
-    |--------------------------------------------------------------------------
-    */
+try {
 
     $rawData = file_get_contents("php://input");
 
     $data = json_decode($rawData, true);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Check received data
-    |--------------------------------------------------------------------------
-    */
 
     if (!is_array($data)) {
 
@@ -138,44 +91,35 @@ try {
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Get investment plan
-    |--------------------------------------------------------------------------
-    */
-
     $plan = trim($data["plan"] ?? "");
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Get investment amount
-    |--------------------------------------------------------------------------
-    */
 
     $amount = (float)($data["amount"] ?? 0);
 
 
     /*
     |--------------------------------------------------------------------------
-    | Allowed investment plans
+    | Investment plan minimums
     |--------------------------------------------------------------------------
     */
 
-    $allowedPlans = [
-        "Starter Plan",
-        "Standard Plan",
-        "Advanced Plan"
+    $planMinimums = [
+
+        "Starter Plan" => 10000,
+
+        "Standard Plan" => 15000,
+
+        "Advanced Plan" => 25000
+
     ];
 
 
     /*
     |--------------------------------------------------------------------------
-    | Validate investment plan
+    | Check plan
     |--------------------------------------------------------------------------
     */
 
-    if (!in_array($plan, $allowedPlans, true)) {
+    if (!array_key_exists($plan, $planMinimums)) {
 
         http_response_code(400);
 
@@ -188,22 +132,22 @@ try {
     }
 
 
+    $minimumAmount = $planMinimums[$plan];
+
+
     /*
     |--------------------------------------------------------------------------
-    | Validate investment amount
+    | Amount must be a whole UGX amount
     |--------------------------------------------------------------------------
-    |
-    | For now we are using UGX 10,000 only for testing.
-    |
     */
 
-    if ($amount !== 10000.0) {
+    if ($amount <= 0 || floor($amount) != $amount) {
 
         http_response_code(400);
 
         echo json_encode([
             "success" => false,
-            "message" => "For testing, use exactly UGX 10,000."
+            "message" => "Investment amount must be a valid whole UGX amount."
         ]);
 
         exit;
@@ -212,7 +156,29 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Convert logged-in user's ID to MongoDB ObjectId
+    | Check minimum amount for selected plan
+    |--------------------------------------------------------------------------
+    */
+
+    if ($amount < $minimumAmount) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                $plan .
+                " requires a minimum investment of UGX " .
+                number_format($minimumAmount)
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Convert session user ID to MongoDB ObjectId
     |--------------------------------------------------------------------------
     */
 
@@ -237,7 +203,7 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Find logged-in user
+    | Find user
     |--------------------------------------------------------------------------
     */
 
@@ -246,19 +212,13 @@ try {
     ]);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Check user exists
-    |--------------------------------------------------------------------------
-    */
-
     if (!$user) {
 
         http_response_code(404);
 
         echo json_encode([
             "success" => false,
-            "message" => "User not found."
+            "message" => "User account not found."
         ]);
 
         exit;
@@ -267,7 +227,38 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Create TEST investment
+    | Check account status
+    |--------------------------------------------------------------------------
+    */
+
+    if (($user["status"] ?? "active") !== "active") {
+
+        http_response_code(403);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Your account is not active."
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Current balance
+    |--------------------------------------------------------------------------
+    */
+
+    $currentBalance = (float)($user["balance"] ?? 0);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEST MODE
+    |
+    | The current Crown Cash investment flow is still a test/demo flow.
+    | Therefore this version DOES NOT deduct the user's balance.
     |--------------------------------------------------------------------------
     */
 
@@ -278,6 +269,8 @@ try {
         "plan" => $plan,
 
         "amount" => $amount,
+
+        "minimum_amount" => $minimumAmount,
 
         "currency" => "UGX",
 
@@ -298,7 +291,7 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Save investment in MongoDB
+    | Save investment
     |--------------------------------------------------------------------------
     */
 
@@ -309,7 +302,7 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Return successful response
+    | Return success
     |--------------------------------------------------------------------------
     */
 
@@ -331,6 +324,9 @@ try {
             "amount" =>
                 $amount,
 
+            "minimum_amount" =>
+                $minimumAmount,
+
             "currency" =>
                 "UGX",
 
@@ -340,29 +336,26 @@ try {
             "duration_days" =>
                 30
 
+        ],
+
+        "user" => [
+
+            "balance" =>
+                $currentBalance
+
         ]
 
     ]);
 
-} catch (Throwable $e) {
+    exit;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Log server error
-    |--------------------------------------------------------------------------
-    */
+
+} catch (Throwable $e) {
 
     error_log(
         "CROWN CASH CREATE INVESTMENT ERROR: " .
         $e->getMessage()
     );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Return error
-    |--------------------------------------------------------------------------
-    */
 
     http_response_code(500);
 
@@ -374,6 +367,8 @@ try {
             "Unable to create investment."
 
     ]);
+
+    exit;
 }
 
 ?>

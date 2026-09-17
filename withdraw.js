@@ -1,245 +1,346 @@
-/*
-|--------------------------------------------------------------------------
-| Crown Cash — Withdrawal Frontend
-|--------------------------------------------------------------------------
-*/
+/* =========================================
+   CROWN CASH WITHDRAW JAVASCRIPT
+========================================= */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_URL = "https://crown-cash1.onrender.com";
 
-const MIN_WITHDRAWAL = 1000;
+const withdrawForm = document.getElementById("withdrawForm");
+const amountInput = document.getElementById("amount");
+const paymentMethod = document.getElementById("paymentMethod");
+const phoneNumber = document.getElementById("phoneNumber");
+const withdrawBtn = document.getElementById("withdrawBtn");
+const formMessage = document.getElementById("formMessage");
 
-let selectedMethod = "MTN";
+const availableBalance =
+    document.getElementById("availableBalance");
 
+const withdrawalHistory =
+    document.getElementById("withdrawalHistory");
 
-// =====================================================
-// PAGE START
-// =====================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    setupMobileMenu();
-    setupPaymentMethods();
-    setupWithdrawalForm();
-    loadUser();
-    setCurrentYear();
-
-});
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const logoutBtn = document.getElementById("logoutBtn");
 
 
-// =====================================================
-// LOAD USER
-// =====================================================
+/* =========================================
+   CURRENT YEAR
+========================================= */
 
-function loadUser() {
+document.getElementById("year").textContent =
+    new Date().getFullYear();
 
-    const storedUser = localStorage.getItem("crowncash_user");
 
-    if (!storedUser) {
+/* =========================================
+   MOBILE SIDEBAR
+========================================= */
 
-        window.location.href = "login.html";
+if (menuBtn) {
 
-        return;
-    }
+    menuBtn.addEventListener("click", () => {
+
+        sidebar.classList.toggle("open");
+        overlay.classList.toggle("show");
+
+    });
+
+}
+
+
+if (overlay) {
+
+    overlay.addEventListener("click", () => {
+
+        sidebar.classList.remove("open");
+        overlay.classList.remove("show");
+
+    });
+
+}
+
+
+/* =========================================
+   MESSAGE
+========================================= */
+
+function showMessage(message, type) {
+
+    formMessage.textContent = message;
+
+    formMessage.className = "form-message " + type;
+
+}
+
+
+/* =========================================
+   LOAD PROFILE / BALANCE
+========================================= */
+
+async function loadBalance() {
 
     try {
 
-        const user = JSON.parse(storedUser);
+        const response = await fetch(
+            `${API_URL}/profile.php`,
+            {
+                method: "GET",
+                credentials: "include"
+            }
+        );
 
-        const firstName = user.firstName || "";
-        const lastName = user.lastName || "";
+        const data = await response.json();
 
-        const fullName =
-            `${firstName} ${lastName}`.trim() || "User";
+        if (!response.ok || !data.success) {
 
-        const topUserName =
-            document.getElementById("topUserName");
+            availableBalance.textContent = "UGX 0";
+            return;
 
-        const availableBalance =
-            document.getElementById("availableBalance");
-
-        if (topUserName) {
-            topUserName.textContent = fullName;
         }
 
-        if (availableBalance) {
+        const user = data.user || data;
 
-            const balance =
-                Number(user.balance || 0);
+        const balance =
+            Number(
+                user.balance ??
+                user.wallet_balance ??
+                0
+            );
 
-            availableBalance.textContent =
-                `UGX ${formatMoney(balance)}`;
-        }
+        availableBalance.textContent =
+            "UGX " + balance.toLocaleString();
 
     } catch (error) {
 
-        console.error("Unable to read user data:", error);
+        console.error(
+            "Unable to load balance:",
+            error
+        );
 
-        localStorage.removeItem("crowncash_user");
-
-        window.location.href = "login.html";
+        availableBalance.textContent = "UGX 0";
     }
 }
 
 
-// =====================================================
-// PAYMENT METHODS
-// =====================================================
+/* =========================================
+   LOAD WITHDRAWAL HISTORY
+========================================= */
 
-function setupPaymentMethods() {
-
-    const methodCards =
-        document.querySelectorAll(".method-card");
-
-    const methodInput =
-        document.getElementById("withdrawMethod");
-
-    methodCards.forEach(card => {
-
-        card.addEventListener("click", () => {
-
-            methodCards.forEach(item => {
-                item.classList.remove("selected");
-            });
-
-            card.classList.add("selected");
-
-            selectedMethod =
-                card.dataset.method || "MTN";
-
-            if (methodInput) {
-                methodInput.value = selectedMethod;
-            }
-
-        });
-
-    });
-}
-
-
-// =====================================================
-// WITHDRAWAL FORM
-// =====================================================
-
-function setupWithdrawalForm() {
-
-    const form =
-        document.getElementById("withdrawForm");
-
-    if (!form) {
-        return;
-    }
-
-    form.addEventListener("submit", async (event) => {
-
-        event.preventDefault();
-
-        await submitWithdrawal();
-
-    });
-
-}
-
-
-// =====================================================
-// SUBMIT WITHDRAWAL
-// =====================================================
-
-async function submitWithdrawal() {
-
-    const amountInput =
-        document.getElementById("withdrawAmount");
-
-    const phoneInput =
-        document.getElementById("withdrawPhone");
-
-    const button =
-        document.getElementById("withdrawBtn");
-
-    const buttonText =
-        document.getElementById("withdrawBtnText");
-
-
-    const amount =
-        Number(amountInput?.value || 0);
-
-    const phone =
-        String(phoneInput?.value || "").trim();
-
-
-    // -----------------------------
-    // AMOUNT VALIDATION
-    // -----------------------------
-
-    if (!Number.isFinite(amount) ||
-        amount < MIN_WITHDRAWAL) {
-
-        alert(
-            `Minimum withdrawal is UGX ${formatMoney(MIN_WITHDRAWAL)}.`
-        );
-
-        return;
-    }
-
-
-    if (!Number.isInteger(amount)) {
-
-        alert(
-            "Withdrawal amount must be a whole UGX amount."
-        );
-
-        return;
-    }
-
-
-    // -----------------------------
-    // PHONE VALIDATION
-    // -----------------------------
-
-    const cleanPhone =
-        normalizeUgandaPhone(phone);
-
-    if (!cleanPhone) {
-
-        alert(
-            "Please enter a valid Ugandan Mobile Money number, for example 07XXXXXXXX."
-        );
-
-        return;
-    }
-
-
-    // -----------------------------
-    // CONFIRMATION
-    // -----------------------------
-
-    const confirmed =
-        confirm(
-            `Request withdrawal of UGX ${formatMoney(amount)} through ${selectedMethod} to ${cleanPhone}?`
-        );
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    // -----------------------------
-    // BUTTON STATE
-    // -----------------------------
-
-    if (button) {
-        button.disabled = true;
-    }
-
-    if (buttonText) {
-        buttonText.textContent = "Submitting Request...";
-    }
-
+async function loadWithdrawals() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE}/create_withdrawal.php`,
+        /*
+         * This expects withdrawals.php to return
+         * the user's withdrawal history.
+         */
+
+        const response = await fetch(
+            `${API_URL}/withdrawals.php`,
+            {
+                method: "GET",
+                credentials: "include"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+
+            withdrawalHistory.innerHTML = `
+                <div class="empty-history">
+                    <i class="fa-solid fa-receipt"></i>
+                    No withdrawal history available.
+                </div>
+            `;
+
+            return;
+        }
+
+        const withdrawals =
+            data.withdrawals || [];
+
+        if (withdrawals.length === 0) {
+
+            withdrawalHistory.innerHTML = `
+                <div class="empty-history">
+                    <i class="fa-solid fa-receipt"></i>
+                    No withdrawal requests yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        withdrawalHistory.innerHTML =
+            withdrawals.map(withdrawal => {
+
+                const amount =
+                    Number(withdrawal.amount || 0);
+
+                const status =
+                    String(
+                        withdrawal.status || "pending"
+                    ).toLowerCase();
+
+                const method =
+                    String(
+                        withdrawal.payment_method ||
+                        withdrawal.method ||
+                        "Mobile Money"
+                    ).toUpperCase();
+
+                let date = "";
+
+                if (withdrawal.created_at) {
+
+                    const parsedDate =
+                        new Date(withdrawal.created_at);
+
+                    if (!isNaN(parsedDate)) {
+
+                        date =
+                            parsedDate.toLocaleString();
+
+                    }
+
+                }
+
+                return `
+                    <div class="withdrawal-item">
+
+                        <div class="withdrawal-top">
+
+                            <div>
+                                <div class="withdrawal-amount">
+                                    UGX ${amount.toLocaleString()}
+                                </div>
+
+                                <div class="withdrawal-method">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                    ${method}
+                                </div>
+
+                                <div class="withdrawal-date">
+                                    ${date}
+                                </div>
+                            </div>
+
+                            <span class="status ${status}">
+                                ${status}
+                            </span>
+
+                        </div>
+
+                    </div>
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Withdrawal history error:",
+            error
+        );
+
+        withdrawalHistory.innerHTML = `
+            <div class="empty-history">
+                Withdrawal history could not be loaded.
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================
+   SUBMIT WITHDRAWAL
+========================================= */
+
+withdrawForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        formMessage.className =
+            "form-message";
+
+        formMessage.textContent = "";
+
+        const amount =
+            Number(amountInput.value);
+
+        const method =
+            paymentMethod.value;
+
+        const phone =
+            phoneNumber.value.trim();
+
+
+        /* -------------------------------------
+           VALIDATION
+        ------------------------------------- */
+
+        if (!amount || amount < 10000) {
+
+            showMessage(
+                "Minimum withdrawal amount is UGX 10,000.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!method) {
+
+            showMessage(
+                "Please select MTN or Airtel Mobile Money.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!phone) {
+
+            showMessage(
+                "Please enter your Mobile Money number.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!/^[0-9+ ]{10,15}$/.test(phone)) {
+
+            showMessage(
+                "Please enter a valid Mobile Money number.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /* -------------------------------------
+           DISABLE BUTTON
+        ------------------------------------- */
+
+        withdrawBtn.disabled = true;
+
+        withdrawBtn.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Submitting...</span>
+        `;
+
+
+        try {
+
+            const response = await fetch(
+                `${API_URL}/withdraw.php`,
                 {
                     method: "POST",
 
@@ -253,390 +354,128 @@ async function submitWithdrawal() {
 
                         amount: amount,
 
-                        phone: cleanPhone,
+                        payment_method: method,
 
-                        paymentMethod: selectedMethod
+                        phone: phone
 
                     })
                 }
             );
 
 
-        const result =
-            await response.json();
+            const data =
+                await response.json();
 
 
-        if (!response.ok || !result.success) {
+            /* -------------------------------------
+               SERVER ERROR
+            ------------------------------------- */
 
-            throw new Error(
-                result.message ||
-                "Unable to submit withdrawal request."
-            );
-        }
+            if (!response.ok || !data.success) {
 
+                throw new Error(
+                    data.message ||
+                    "Withdrawal request failed."
+                );
 
-        // Update local balance if backend returned it
-
-        if (
-            result.user &&
-            typeof result.user.balance !== "undefined"
-        ) {
-
-            updateStoredBalance(
-                result.user.balance
-            );
-
-            const balanceElement =
-                document.getElementById("availableBalance");
-
-            if (balanceElement) {
-
-                balanceElement.textContent =
-                    `UGX ${formatMoney(result.user.balance)}`;
-            }
-        }
-
-
-        alert(
-            result.message ||
-            "Withdrawal request submitted successfully."
-        );
-
-
-        formReset();
-
-
-        // Show request immediately
-
-        if (result.withdrawal) {
-
-            addWithdrawalToHistory(
-                result.withdrawal
-            );
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Withdrawal error:",
-            error
-        );
-
-        alert(
-            error.message ||
-            "Unable to submit withdrawal request."
-        );
-
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-        }
-
-        if (buttonText) {
-            buttonText.textContent =
-                "Submit Withdrawal Request";
-        }
-
-    }
-}
-
-
-// =====================================================
-// NORMALIZE UGANDAN PHONE
-// =====================================================
-
-function normalizeUgandaPhone(phone) {
-
-    let value =
-        String(phone || "")
-            .replace(/\s+/g, "")
-            .trim();
-
-
-    if (value.startsWith("+256")) {
-
-        value =
-            "0" +
-            value.substring(4);
-
-    } else if (value.startsWith("256")) {
-
-        value =
-            "0" +
-            value.substring(3);
-    }
-
-
-    if (!/^07\d{8}$/.test(value)) {
-
-        return null;
-    }
-
-    return value;
-}
-
-
-// =====================================================
-// RESET FORM
-// =====================================================
-
-function formReset() {
-
-    const form =
-        document.getElementById("withdrawForm");
-
-    const methodInput =
-        document.getElementById("withdrawMethod");
-
-    const amountInput =
-        document.getElementById("withdrawAmount");
-
-    const phoneInput =
-        document.getElementById("withdrawPhone");
-
-
-    if (form) {
-        form.reset();
-    }
-
-    selectedMethod = "MTN";
-
-    if (methodInput) {
-        methodInput.value = "MTN";
-    }
-
-    if (amountInput) {
-        amountInput.value = "";
-    }
-
-    if (phoneInput) {
-        phoneInput.value = "";
-    }
-
-
-    document
-        .querySelectorAll(".method-card")
-        .forEach(card => {
-
-            if (card.dataset.method === "MTN") {
-
-                card.classList.add("selected");
-
-            } else {
-
-                card.classList.remove("selected");
             }
 
-        });
-}
+
+            /* -------------------------------------
+               SUCCESS
+            ------------------------------------- */
+
+            showMessage(
+                "Withdrawal request submitted successfully. It is now pending admin approval.",
+                "success"
+            );
 
 
-// =====================================================
-// ADD HISTORY ITEM
-// =====================================================
-
-function addWithdrawalToHistory(withdrawal) {
-
-    const history =
-        document.getElementById("withdrawalHistory");
-
-    if (!history || !withdrawal) {
-        return;
-    }
+            withdrawForm.reset();
 
 
-    const empty =
-        history.querySelector(".empty-history");
+            /* Reload balance/history */
 
-    if (empty) {
-        empty.remove();
-    }
+            await loadBalance();
+            await loadWithdrawals();
 
 
-    const item =
-        document.createElement("div");
+        } catch (error) {
 
-    item.className =
-        "history-item";
+            console.error(
+                "Withdrawal error:",
+                error
+            );
 
+            showMessage(
+                error.message ||
+                "Unable to submit withdrawal request. Please try again.",
+                "error"
+            );
 
-    const amount =
-        Number(withdrawal.amount || 0);
+        } finally {
 
-    const method =
-        withdrawal.payment_method ||
-        withdrawal.paymentMethod ||
-        selectedMethod;
+            withdrawBtn.disabled = false;
 
+            withdrawBtn.innerHTML = `
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Submit Withdrawal Request</span>
+            `;
 
-    const reference =
-        withdrawal.reference ||
-        "Pending";
-
-
-    item.innerHTML = `
-
-        <div class="history-main">
-
-            <strong>${escapeHtml(method)} Withdrawal</strong>
-
-            <span>
-                Reference: ${escapeHtml(reference)}
-            </span>
-
-        </div>
-
-
-        <div class="history-amount">
-            UGX ${formatMoney(amount)}
-        </div>
-
-
-        <div class="history-status status-pending">
-            PENDING
-        </div>
-
-    `;
-
-
-    history.prepend(item);
-}
-
-
-// =====================================================
-// UPDATE LOCAL USER BALANCE
-// =====================================================
-
-function updateStoredBalance(balance) {
-
-    try {
-
-        const storedUser =
-            localStorage.getItem("crowncash_user");
-
-        if (!storedUser) {
-            return;
         }
 
-        const user =
-            JSON.parse(storedUser);
-
-        user.balance =
-            Number(balance || 0);
-
-        localStorage.setItem(
-            "crowncash_user",
-            JSON.stringify(user)
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Unable to update stored balance:",
-            error
-        );
     }
+);
+
+
+/* =========================================
+   LOGOUT
+========================================= */
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener(
+        "click",
+        async function(event) {
+
+            event.preventDefault();
+
+            try {
+
+                /*
+                 * Change this URL if your logout
+                 * backend uses another filename.
+                 */
+
+                await fetch(
+                    `${API_URL}/logout.php`,
+                    {
+                        method: "POST",
+                        credentials: "include"
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+            }
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
 }
 
 
-// =====================================================
-// MONEY FORMAT
-// =====================================================
+/* =========================================
+   START PAGE
+========================================= */
 
-function formatMoney(value) {
-
-    return Number(value || 0)
-        .toLocaleString("en-UG", {
-            maximumFractionDigits: 0
-        });
-}
-
-
-// =====================================================
-// ESCAPE HTML
-// =====================================================
-
-function escapeHtml(value) {
-
-    return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-// =====================================================
-// MOBILE MENU
-// =====================================================
-
-function setupMobileMenu() {
-
-    const menu =
-        document.getElementById("mobileMenuBtn");
-
-    const sidebar =
-        document.getElementById("sidebar");
-
-    const overlay =
-        document.getElementById("sidebarOverlay");
-
-
-    if (!menu || !sidebar || !overlay) {
-        return;
-    }
-
-
-    menu.addEventListener("click", () => {
-
-        sidebar.classList.toggle("open");
-
-        overlay.classList.toggle("active");
-
-    });
-
-
-    overlay.addEventListener("click", () => {
-
-        sidebar.classList.remove("open");
-
-        overlay.classList.remove("active");
-
-    });
-
-
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(item => {
-
-            item.addEventListener("click", () => {
-
-                sidebar.classList.remove("open");
-
-                overlay.classList.remove("active");
-
-            });
-
-        });
-}
-
-
-// =====================================================
-// YEAR
-// =====================================================
-
-function setCurrentYear() {
-
-    const year =
-        document.getElementById("currentYear");
-
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
-    }
-}
+loadBalance();
+loadWithdrawals();

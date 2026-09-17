@@ -1,224 +1,358 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
-    /* =========================
-       SIDEBAR
-    ========================= */
+    const API_BASE =
+        "https://crown-cash1.onrender.com";
+
+
+    /* =========================================================
+       MOBILE SIDEBAR
+    ========================================================= */
+
+    const menuToggle =
+        document.getElementById("menuToggle");
 
     const sidebar =
-        document.getElementById("sidebar");
+        document.querySelector(".dashboard-sidebar");
 
-    const openSidebar =
-        document.getElementById("openSidebar");
-
-    const closeSidebar =
-        document.getElementById("closeSidebar");
+    const sidebarOverlay =
+        document.querySelector(".sidebar-overlay");
 
 
-    if (openSidebar && sidebar) {
+    function openSidebar() {
 
-        openSidebar.addEventListener(
-            "click",
-            function () {
-
-                sidebar.classList.add("open");
-
-            }
-        );
-
-    }
-
-
-    if (closeSidebar && sidebar) {
-
-        closeSidebar.addEventListener(
-            "click",
-            function () {
-
-                sidebar.classList.remove("open");
-
-            }
-        );
-
-    }
-
-
-    /* =========================
-       MOBILE SIDEBAR
-    ========================= */
-
-    document.addEventListener(
-        "click",
-        function (event) {
-
-            if (
-                window.innerWidth <= 900 &&
-                sidebar &&
-                sidebar.classList.contains("open") &&
-                !sidebar.contains(event.target) &&
-                openSidebar &&
-                !openSidebar.contains(event.target)
-            ) {
-
-                sidebar.classList.remove("open");
-
-            }
-
+        if (sidebar) {
+            sidebar.classList.add("open");
         }
-    );
+
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.add("show");
+        }
+    }
 
 
-    /* =========================
+    function closeSidebar() {
+
+        if (sidebar) {
+            sidebar.classList.remove("open");
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove("show");
+        }
+    }
+
+
+    if (menuToggle) {
+
+        menuToggle.addEventListener(
+            "click",
+            openSidebar
+        );
+
+    }
+
+
+    if (sidebarOverlay) {
+
+        sidebarOverlay.addEventListener(
+            "click",
+            closeSidebar
+        );
+
+    }
+
+
+    /* =========================================================
        YEAR
-    ========================= */
+    ========================================================= */
 
-    const year =
-        document.getElementById("year");
+    const yearElement =
+        document.getElementById("currentYear");
 
-    if (year) {
+    if (yearElement) {
 
-        year.textContent =
+        yearElement.textContent =
             new Date().getFullYear();
 
     }
 
-});
+
+    /* =========================================================
+       PLAN DATA
+    ========================================================= */
+
+    const plans = {
+
+        "Starter Plan": {
+
+            minimum: 10000,
+
+            label: "UGX 10,000"
+
+        },
+
+        "Standard Plan": {
+
+            minimum: 15000,
+
+            label: "UGX 15,000"
+
+        },
+
+        "Advanced Plan": {
+
+            minimum: 25000,
+
+            label: "UGX 25,000"
+
+        }
+
+    };
 
 
-/* =========================
-   CREATE TEST INVESTMENT
-========================= */
+    /* =========================================================
+       FORMAT UGX
+    ========================================================= */
 
+    function formatUGX(amount) {
 
-                    
-                        
-                 async function createTestInvestment(plan, amount) {
+        return "UGX " +
+            Number(amount).toLocaleString(
+                "en-UG"
+            );
 
-    const confirmed = confirm(
-        "Create a test investment?\n\n" +
-        "Plan: " + plan + "\n" +
-        "Amount: UGX " + Number(amount).toLocaleString() +
-        "\n\nThis is a testing transaction only."
-    );
-
-    if (!confirmed) {
-        return;
     }
 
-    try {
 
-        const response = await fetch(
-            "https://crown-cash1.onrender.com/create_investment.php",
-            {
-                method: "POST",
+    /* =========================================================
+       CREATE TEST INVESTMENT
+    ========================================================= */
 
-                credentials: "include",
+    window.createTestInvestment =
+        async function(plan, amount) {
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            if (!plans[plan]) {
 
-                body: JSON.stringify({
-                    plan: plan,
-                    amount: Number(amount)
-                })
+                alert(
+                    "Invalid investment plan."
+                );
+
+                return;
+
+            }
+
+
+            const minimum =
+                plans[plan].minimum;
+
+
+            amount =
+                Number(amount);
+
+
+            if (!Number.isFinite(amount)) {
+
+                alert(
+                    "Please enter a valid investment amount."
+                );
+
+                return;
+
+            }
+
+
+            if (!Number.isInteger(amount)) {
+
+                alert(
+                    "Investment amount must be a whole UGX amount."
+                );
+
+                return;
+
+            }
+
+
+            if (amount < minimum) {
+
+                alert(
+                    `${plan} requires a minimum investment of ${formatUGX(minimum)}.`
+                );
+
+                return;
+
+            }
+
+
+            const confirmed =
+                confirm(
+
+                    `You selected ${plan}.\n\n` +
+
+                    `Investment amount: ${formatUGX(amount)}\n` +
+
+                    `Minimum required: ${formatUGX(minimum)}\n\n` +
+
+                    `Continue with this test investment?`
+
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_BASE}/create_investment.php`,
+                        {
+
+                            method: "POST",
+
+                            credentials: "include",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    plan: plan,
+
+                                    amount: amount
+
+                                })
+
+                        }
+                    );
+
+
+                const text =
+                    await response.text();
+
+
+                let data;
+
+
+                try {
+
+                    data =
+                        JSON.parse(text);
+
+                } catch (error) {
+
+                    console.error(
+                        "Invalid server response:",
+                        text
+                    );
+
+                    alert(
+                        "The investment server returned an invalid response."
+                    );
+
+                    return;
+
+                }
+
+
+                if (!response.ok ||
+                    !data.success) {
+
+                    alert(
+                        data.message ||
+                        "Unable to create investment."
+                    );
+
+                    return;
+
+                }
+
+
+                alert(
+
+                    `${data.message}\n\n` +
+
+                    `${data.investment.plan}\n` +
+
+                    `${formatUGX(data.investment.amount)}\n\n` +
+
+                    `Duration: ${data.investment.duration_days} days`
+
+                );
+
+
+                window.location.href =
+                    "my-investments.html";
+
+
+            } catch (error) {
+
+                console.error(
+                    "Investment error:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to connect to the investment server. Please try again."
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
+       PLAN BUTTONS
+       Automatically connect buttons that contain:
+       data-plan="Starter Plan"
+       data-plan="Standard Plan"
+       data-plan="Advanced Plan"
+    ========================================================= */
+
+    const planButtons =
+        document.querySelectorAll(
+            "[data-plan]"
+        );
+
+
+    planButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const plan =
+                    button.dataset.plan;
+
+
+                if (!plans[plan]) {
+
+                    return;
+
+                }
+
+
+                const amount =
+                    plans[plan].minimum;
+
+
+                createTestInvestment(
+                    plan,
+                    amount
+                );
+
             }
         );
 
-        /*
-        ----------------------------------------------------------
-        Read the server response as text first.
-        This helps us see the real response if JSON parsing fails.
-        ----------------------------------------------------------
-        */
+    });
 
-        const responseText = await response.text();
-
-        console.log("HTTP status:", response.status);
-        console.log("Server response:", responseText);
-
-        let data;
-
-        try {
-            data = JSON.parse(responseText);
-        } catch (jsonError) {
-
-            alert(
-                "Server returned an unexpected response.\n\n" +
-                "HTTP Status: " + response.status +
-                "\n\n" +
-                responseText.substring(0, 500)
-            );
-
-            return;
-        }
-
-
-        /*
-        ----------------------------------------------------------
-        Check API response
-        ----------------------------------------------------------
-        */
-
-        if (!response.ok || !data.success) {
-
-            alert(
-                data.message ||
-                "Investment could not be created."
-            );
-
-            return;
-        }
-
-
-        /*
-        ----------------------------------------------------------
-        Success
-        ----------------------------------------------------------
-        */
-
-        alert(
-            "Test investment created successfully!\n\n" +
-
-            "Plan: " +
-            data.investment.plan +
-
-            "\nAmount: UGX " +
-            Number(
-                data.investment.amount
-            ).toLocaleString() +
-
-            "\nStatus: " +
-            data.investment.status
-        );
-
-
-        /*
-        ----------------------------------------------------------
-        Open My Investments
-        ----------------------------------------------------------
-        */
-
-        window.location.href =
-            "my-investments.html";
-
-
-    } catch (error) {
-
-        console.error(
-            "Create investment error:",
-            error
-        );
-
-        alert(
-            "The browser could not complete the request.\n\n" +
-            "Error: " +
-            error.message
-        );
-    }
-}
-
-                 
-
-                     
-
-           
+});

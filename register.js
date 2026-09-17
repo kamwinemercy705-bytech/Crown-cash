@@ -1,40 +1,123 @@
-// =====================================================
-// CROWN CASH — REGISTRATION JAVASCRIPT
-// FRONTEND VALIDATION + BACKEND CONNECTION
-// =====================================================
+/* =========================================================
+   CROWN CASH — REGISTRATION
+   register.js
+   ========================================================= */
 
-document.addEventListener("DOMContentLoaded", function () {
+const API_URL = "https://crown-cash1.onrender.com";
+
+document.addEventListener("DOMContentLoaded", () => {
 
     const form = document.getElementById("registerForm");
     const message = document.getElementById("formMessage");
 
-    /*
-     * PASSWORD VISIBILITY
-     */
+    const firstNameInput = document.getElementById("firstName");
+    const lastNameInput = document.getElementById("lastName");
+    const phoneInput = document.getElementById("phone");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const referralInput = document.getElementById("referralCode");
+    const termsInput = document.getElementById("terms");
 
-    const passwordButtons =
-        document.querySelectorAll(".password-toggle");
+    /* ---------------------------------------------------------
+       SHOW MESSAGE
+    --------------------------------------------------------- */
 
-    passwordButtons.forEach(function (button) {
+    function showMessage(text, type = "error") {
 
-        button.addEventListener("click", function () {
+        if (!message) return;
+
+        message.textContent = text;
+        message.className = `form-message ${type}`;
+        message.style.display = "block";
+
+        message.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+    }
+
+
+    /* ---------------------------------------------------------
+       GET REFERRAL CODE FROM URL
+       
+       Example:
+       register.html?ref=CC123456
+    --------------------------------------------------------- */
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    let referralFromURL = urlParams.get("ref");
+
+    if (referralFromURL) {
+
+        referralFromURL = referralFromURL.trim();
+
+        // Save referral code temporarily
+        sessionStorage.setItem(
+            "crownCashReferralCode",
+            referralFromURL
+        );
+
+        localStorage.setItem(
+            "crownCashReferralCode",
+            referralFromURL
+        );
+    }
+
+
+    /* ---------------------------------------------------------
+       LOAD SAVED REFERRAL CODE
+    --------------------------------------------------------- */
+
+    const savedReferral =
+        referralFromURL ||
+        sessionStorage.getItem("crownCashReferralCode") ||
+        localStorage.getItem("crownCashReferralCode") ||
+        "";
+
+
+    if (referralInput && savedReferral) {
+
+        referralInput.value = savedReferral;
+
+        // Make it visually clear that the referral was detected
+        referralInput.classList.add("referral-detected");
+    }
+
+
+    /* ---------------------------------------------------------
+       PASSWORD SHOW / HIDE BUTTONS
+    --------------------------------------------------------- */
+
+    const passwordToggleButtons =
+        document.querySelectorAll("[data-target]");
+
+    passwordToggleButtons.forEach(button => {
+
+        button.addEventListener("click", () => {
 
             const targetId =
                 button.getAttribute("data-target");
 
-            const input =
+            const target =
                 document.getElementById(targetId);
 
-            if (input.type === "password") {
+            if (!target) return;
 
-                input.type = "text";
-                button.textContent = "Hide";
+            if (target.type === "password") {
+
+                target.type = "text";
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-eye-slash"></i>';
 
             } else {
 
-                input.type = "password";
-                button.textContent = "Show";
+                target.type = "password";
 
+                button.innerHTML =
+                    '<i class="fa-solid fa-eye"></i>';
             }
 
         });
@@ -42,310 +125,408 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-    /*
-     * FORM SUBMISSION
-     */
+    /* ---------------------------------------------------------
+       PHONE NUMBER CLEANING
+    --------------------------------------------------------- */
 
-    form.addEventListener("submit", async function (event) {
+    if (phoneInput) {
+
+        phoneInput.addEventListener("input", () => {
+
+            let value = phoneInput.value;
+
+            // Keep only numbers and +
+            value = value.replace(/[^\d+]/g, "");
+
+            // Only allow + at the beginning
+            if (value.indexOf("+") > 0) {
+                value =
+                    value.replace(/\+/g, "");
+            }
+
+            phoneInput.value = value;
+        });
+
+    }
+
+
+    /* ---------------------------------------------------------
+       PASSWORD STRENGTH CHECK
+    --------------------------------------------------------- */
+
+    if (passwordInput) {
+
+        passwordInput.addEventListener("input", () => {
+
+            const password =
+                passwordInput.value;
+
+            if (password.length < 8) {
+
+                passwordInput.setCustomValidity(
+                    "Password must contain at least 8 characters."
+                );
+
+            } else {
+
+                passwordInput.setCustomValidity("");
+            }
+
+        });
+
+    }
+
+
+    /* ---------------------------------------------------------
+       CONFIRM PASSWORD CHECK
+    --------------------------------------------------------- */
+
+    if (confirmPasswordInput && passwordInput) {
+
+        confirmPasswordInput.addEventListener("input", () => {
+
+            if (
+                confirmPasswordInput.value !==
+                passwordInput.value
+            ) {
+
+                confirmPasswordInput.setCustomValidity(
+                    "Passwords do not match."
+                );
+
+            } else {
+
+                confirmPasswordInput.setCustomValidity("");
+            }
+
+        });
+
+    }
+
+
+    /* ---------------------------------------------------------
+       FORM SUBMISSION
+    --------------------------------------------------------- */
+
+    if (!form) {
+
+        console.error(
+            "Crown Cash: registerForm was not found."
+        );
+
+        return;
+    }
+
+
+    form.addEventListener("submit", async (event) => {
 
         event.preventDefault();
 
-        clearErrors();
+
+        /* ---------------------------------------------
+           CLEAR OLD MESSAGE
+        --------------------------------------------- */
+
+        if (message) {
+
+            message.style.display = "none";
+            message.textContent = "";
+        }
+
+
+        /* ---------------------------------------------
+           GET FORM VALUES
+        --------------------------------------------- */
 
         const firstName =
-            document.getElementById("firstName").value.trim();
+            firstNameInput?.value.trim() || "";
 
         const lastName =
-            document.getElementById("lastName").value.trim();
+            lastNameInput?.value.trim() || "";
 
         const phone =
-            document.getElementById("phone").value.trim();
+            phoneInput?.value.trim() || "";
 
         const email =
-            document.getElementById("email").value.trim();
+            emailInput?.value.trim().toLowerCase() || "";
 
         const password =
-            document.getElementById("password").value;
+            passwordInput?.value || "";
 
         const confirmPassword =
-            document.getElementById("confirmPassword").value;
+            confirmPasswordInput?.value || "";
 
         const referralCode =
-            document.getElementById("referralCode").value.trim();
-
-        const terms =
-            document.getElementById("terms").checked;
-
-        let valid = true;
+            referralInput?.value.trim() ||
+            savedReferral ||
+            "";
 
 
-        /*
-         * FIRST NAME
-         */
+        /* ---------------------------------------------
+           BASIC VALIDATION
+        --------------------------------------------- */
 
-        if (firstName.length < 2) {
+        if (!firstName) {
 
-            showError(
-                "firstNameError",
+            showMessage(
                 "Please enter your first name."
             );
 
-            valid = false;
+            firstNameInput?.focus();
 
-        }
-
-
-        /*
-         * LAST NAME
-         */
-
-        if (lastName.length < 2) {
-
-            showError(
-                "lastNameError",
-                "Please enter your last name."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * PHONE
-         */
-
-        const phonePattern =
-            /^(?:\+256|0)\d{9}$/;
-
-        if (!phonePattern.test(phone)) {
-
-            showError(
-                "phoneError",
-                "Enter a valid Uganda phone number."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * EMAIL
-         */
-
-        const emailPattern =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailPattern.test(email)) {
-
-            showError(
-                "emailError",
-                "Enter a valid email address."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * PASSWORD
-         */
-
-        if (password.length < 8) {
-
-            showError(
-                "passwordError",
-                "Password must contain at least 8 characters."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * CONFIRM PASSWORD
-         */
-
-        if (password !== confirmPassword) {
-
-            showError(
-                "confirmPasswordError",
-                "Passwords do not match."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * TERMS
-         */
-
-        if (!terms) {
-
-            showError(
-                "termsError",
-                "You must accept the terms and privacy policy."
-            );
-
-            valid = false;
-
-        }
-
-
-        /*
-         * STOP IF INVALID
-         */
-
-        if (!valid) {
             return;
         }
 
 
-        /*
-         * SEND REGISTRATION TO PHP
-         */
+        if (!lastName) {
 
-        message.style.color = "#3274e8";
-        message.textContent = "Creating your account...";
+            showMessage(
+                "Please enter your last name."
+            );
 
-        const registrationData = {
+            lastNameInput?.focus();
 
-            firstName: firstName,
-            lastName: lastName,
-            phone: phone,
-            email: email,
-            password: password,
-            referralCode: referralCode
+            return;
+        }
 
-        };
+
+        if (!phone) {
+
+            showMessage(
+                "Please enter your phone number."
+            );
+
+            phoneInput?.focus();
+
+            return;
+        }
+
+
+        if (!email) {
+
+            showMessage(
+                "Please enter your email address."
+            );
+
+            emailInput?.focus();
+
+            return;
+        }
+
+
+        if (!password) {
+
+            showMessage(
+                "Please create a password."
+            );
+
+            passwordInput?.focus();
+
+            return;
+        }
+
+
+        if (password.length < 8) {
+
+            showMessage(
+                "Password must contain at least 8 characters."
+            );
+
+            passwordInput?.focus();
+
+            return;
+        }
+
+
+        if (password !== confirmPassword) {
+
+            showMessage(
+                "Passwords do not match."
+            );
+
+            confirmPasswordInput?.focus();
+
+            return;
+        }
+
+
+        if (termsInput && !termsInput.checked) {
+
+            showMessage(
+                "Please accept the Terms & Conditions and Privacy Policy."
+            );
+
+            termsInput.focus();
+
+            return;
+        }
+
+
+        /* ---------------------------------------------
+           DISABLE SUBMIT BUTTON
+        --------------------------------------------- */
+
+        const submitButton =
+            form.querySelector(
+                'button[type="submit"], input[type="submit"]'
+            );
+
+        const originalButtonText =
+            submitButton?.innerHTML || "";
+
+        if (submitButton) {
+
+            submitButton.disabled = true;
+
+            submitButton.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
+        }
 
 
         try {
 
-            const response = await fetch("https://crown-cash1.onrender.com/register.php", { 
+            /* -----------------------------------------
+               SEND REGISTRATION DATA TO PHP BACKEND
+            ----------------------------------------- */
 
-                method: "POST",
+            const response = await fetch(
+                `${API_URL}/register.php`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    credentials: "include",
 
-                body: JSON.stringify(registrationData)
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
 
-            });
+                    body: JSON.stringify({
+
+                        first_name: firstName,
+
+                        last_name: lastName,
+
+                        full_name:
+                            `${firstName} ${lastName}`.trim(),
+
+                        phone: phone,
+
+                        email: email,
+
+                        password: password,
+
+                        confirm_password:
+                            confirmPassword,
+
+                        referral_code:
+                            referralCode
+
+                    })
+                }
+            );
 
 
-            const data = await response.json();
+            /* -----------------------------------------
+               READ SERVER RESPONSE
+            ----------------------------------------- */
+
+            let data;
+
+            try {
+
+                data = await response.json();
+
+            } catch (jsonError) {
+
+                throw new Error(
+                    "The registration server returned an invalid response."
+                );
+            }
 
 
-            /*
-             * SUCCESS
-             */
+            /* -----------------------------------------
+               HANDLE FAILED REGISTRATION
+            ----------------------------------------- */
 
-            if (response.ok && data.success) {
+            if (!response.ok || !data.success) {
 
-                message.style.color = "#28a745";
-
-                message.textContent =
-                    "Account created successfully. Redirecting to login...";
-
-                form.reset();
-
-
-                setTimeout(function () {
-
-                    window.location.href = "login.html";
-
-                }, 1500);
+                showMessage(
+                    data.message ||
+                    "Registration failed. Please try again."
+                );
 
                 return;
             }
 
 
-            /*
-             * SERVER ERROR
-             */
+            /* -----------------------------------------
+               REGISTRATION SUCCESS
+            ----------------------------------------- */
 
-            message.style.color = "#dc3545";
+            showMessage(
+                data.message ||
+                "Account created successfully!",
+                "success"
+            );
 
-            message.textContent =
-                data.message || "Registration failed.";
 
-        }
+            /* -----------------------------------------
+               REMOVE USED REFERRAL CODE
+            ----------------------------------------- */
+
+            sessionStorage.removeItem(
+                "crownCashReferralCode"
+            );
+
+            localStorage.removeItem(
+                "crownCashReferralCode"
+            );
 
 
-        catch (error) {
+            /* -----------------------------------------
+               REDIRECT TO LOGIN
+            ----------------------------------------- */
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "/login.html";
+
+            }, 1800);
+
+
+        } catch (error) {
 
             console.error(
-                "Registration error:",
+                "Crown Cash registration error:",
                 error
             );
 
-            message.style.color = "#dc3545";
 
-            message.textContent =
-                "Unable to connect to the registration server. Please try again.";
+            showMessage(
+                "Unable to connect to the registration server. Please try again."
+            );
+
+
+        } finally {
+
+            /* -----------------------------------------
+               RESTORE BUTTON
+            ----------------------------------------- */
+
+            if (submitButton) {
+
+                submitButton.disabled = false;
+
+                submitButton.innerHTML =
+                    originalButtonText ||
+                    "Create Account";
+            }
 
         }
 
     });
 
-
-    /*
-     * ERROR FUNCTION
-     */
-
-    function showError(id, text) {
-
-        const element =
-            document.getElementById(id);
-
-        if (element) {
-
-            element.textContent = text;
-
-        }
-
-    }
-
-
-    /*
-     * CLEAR ERRORS
-     */
-
-    function clearErrors() {
-
-        const errors =
-            document.querySelectorAll(".error-message");
-
-        errors.forEach(function (error) {
-
-            error.textContent = "";
-
-        });
-
-        message.textContent = "";
-
-    }
-
-
-    /*
-     * CURRENT YEAR
-     */
-
-    const year =
-        document.getElementById("year");
-
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
-
-    }
-
 });
+

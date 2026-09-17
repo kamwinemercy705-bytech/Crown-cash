@@ -1,491 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f">
+    <title>Crown Cash | Profile</title>
 
-    <meta name="theme-color"
-          content="#07111f">
-
-    <meta name="description"
-          content="Crown Cash user profile">
-
-    <title>Crown Cash | My Profile</title>
-
+    <!-- Font Awesome -->
     <link rel="stylesheet"
-          href="profile.css">
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <!-- Profile CSS -->
+    <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
 
+<!-- ================= HEADER ================= -->
+<header class="top-header">
 
-<!-- SIDEBAR -->
+    <div class="brand">
 
+        <div class="brand-icon">
+            <i class="fa-solid fa-crown"></i>
+        </div>
+
+        <div class="brand-text">
+            <strong>CROWN</strong>
+            <span>CASH</span>
+            <small>SMART DIGITAL INVESTMENT</small>
+        </div>
+
+    </div>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+</header>
+
+
+<!-- ================= SIDEBAR ================= -->
 <aside class="sidebar" id="sidebar">
 
-    <div class="sidebar-top">
+    <div class="sidebar-brand">
 
-        <a href="index.html" class="logo">
+        <div class="brand-icon">
+            <i class="fa-solid fa-crown"></i>
+        </div>
 
-            <span class="logo-mark">C</span>
-
-            <span>
-                Crown<span class="gold">Cash</span>
-            </span>
-
-        </a>
-
-        <button
-            type="button"
-            class="close-sidebar"
-            id="closeSidebar">
-
-            ×
-
-        </button>
+        <div>
+            <strong>CROWN</strong>
+            <span>CASH</span>
+        </div>
 
     </div>
 
 
-    <nav class="sidebar-nav">
+    <nav>
 
         <a href="dashboard.html">
-            <span>⌂</span>
-            Dashboard
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Dashboard</span>
         </a>
 
         <a href="profile.html" class="active">
-            <span>◎</span>
-            My Profile
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
         </a>
 
         <a href="investments.html">
-            <span>◇</span>
-            Investments
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Investments</span>
         </a>
 
-        <a href="deposits.html">
-            <span>↓</span>
-            Deposits
+        <a href="my-investments.html">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>My Investments</span>
         </a>
 
-        <a href="withdrawals.html">
-            <span>↑</span>
-            Withdrawals
+        <a href="deposit.html">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Deposits</span>
         </a>
 
-        <a href="referrals.html">
-            <span>↗</span>
-            Referrals
+        <a href="withdraw.html">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            <span>Withdrawals</span>
+        </a>
+
+        <a href="team.html">
+            <i class="fa-solid fa-users"></i>
+            <span>Referral Team</span>
         </a>
 
         <a href="transactions.html">
-            <span>≡</span>
-            Transactions
+            <i class="fa-solid fa-receipt"></i>
+            <span>Transactions</span>
+        </a>
+
+        <a href="support.html">
+            <i class="fa-solid fa-headset"></i>
+            <span>Support</span>
+        </a>
+
+        <a href="logout.php" class="logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
         </a>
 
     </nav>
 
-
-    <div class="sidebar-bottom">
-
-        <a href="support.html">
-            <span>?</span>
-            Support
-        </a>
-
-        <a href="login.html">
-            <span>↪</span>
-            Logout
-        </a>
-
-    </div>
-
 </aside>
 
 
-
-<!-- MAIN -->
-
-<div class="main-wrapper">
+<!-- ================= MAIN CONTENT ================= -->
+<main class="main-content">
 
 
-    <!-- TOPBAR -->
+    <!-- PAGE TITLE -->
+    <section class="page-heading">
 
-    <header class="topbar">
-
-        <div class="topbar-left">
-
-            <button
-                type="button"
-                class="menu-button"
-                id="openSidebar">
-
-                ☰
-
-            </button>
-
-            <div>
-
-                <span class="topbar-label">
-                    CROWN CASH
-                </span>
-
-                <h1>
-                    My Profile
-                </h1>
-
-            </div>
-
+        <div class="heading-icon">
+            <i class="fa-solid fa-user"></i>
         </div>
 
-
-        <div class="user-mini">
-
-            <div class="avatar">
-                U
-            </div>
-
-            <div>
-
-                <strong>
-                    User Account
-                </strong>
-
-                <small>
-                    Member
-                </small>
-
-            </div>
-
+        <div>
+            <h1>My Profile</h1>
+            <p>Manage your personal information and account settings.</p>
         </div>
 
-    </header>
+    </section>
 
 
+    <!-- ================= PROFILE HEADER ================= -->
+    <section class="profile-header">
 
-    <!-- CONTENT -->
+        <div class="profile-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
 
-    <main class="content">
+        <div class="profile-name">
 
+            <h2 id="profileName">Crown Cash User</h2>
 
-        <!-- PROFILE HEADER -->
-
-        <section class="profile-header">
-
-            <div class="profile-avatar">
-                U
-            </div>
-
-            <div class="profile-intro">
-
-                <span class="section-tag">
-                    ACCOUNT PROFILE
-                </span>
-
-                <h2>
-                    User Account
-                </h2>
-
-                <p>
-                    Manage your personal information
-                    and account settings.
-                </p>
-
-            </div>
-
-
-            <div class="account-status">
-
-                <span class="status-dot"></span>
-
-                Active Account
-
-            </div>
-
-        </section>
-
-
-
-        <!-- PERSONAL INFORMATION -->
-
-        <section class="profile-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="section-tag">
-                        PERSONAL INFORMATION
-                    </span>
-
-                    <h3>
-                        Account details
-                    </h3>
-
-                </div>
-
-                <button
-                    type="button"
-                    class="edit-button"
-                    id="editProfile">
-
-                    Edit Profile
-
-                </button>
-
-            </div>
-
-
-            <div class="details-grid">
-
-
-                <div class="detail">
-
-                    <span>
-                        Full Name
-                    </span>
-
-                    <strong id="fullName">
-                        User Account
-                    </strong>
-
-                </div>
-
-
-                <div class="detail">
-
-                    <span>
-                        Email Address
-                    </span>
-
-                    <strong id="email">
-                        user@example.com
-                    </strong>
-
-                </div>
-
-
-                <div class="detail">
-
-                    <span>
-                        Phone Number
-                    </span>
-
-                    <strong id="phone">
-                        07XXXXXXXX
-                    </strong>
-
-                </div>
-
-
-                <div class="detail">
-
-                    <span>
-                        Account Type
-                    </span>
-
-                    <strong>
-                        Standard Member
-                    </strong>
-
-                </div>
-
-
-            </div>
-
-        </section>
-
-
-
-        <!-- REFERRAL INFORMATION -->
-
-        <section class="profile-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="section-tag">
-                        REFERRAL
-                    </span>
-
-                    <h3>
-                        Your referral information
-                    </h3>
-
-                </div>
-
-            </div>
-
-
-            <div class="referral-box">
-
-                <div>
-
-                    <span>
-                        Referral Code
-                    </span>
-
-                    <strong id="referralCode">
-                        CC-USER
-                    </strong>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="copyReferral">
-
-                    Copy Code
-
-                </button>
-
-            </div>
-
-
-            <p class="helper-text"
-               id="copyMessage">
-
-                Share your referral code through
-                the Crown Cash referral program.
-
+            <p>
+                <i class="fa-solid fa-circle-check"></i>
+                Account Member
             </p>
 
-        </section>
+        </div>
 
+        <div class="account-status">
 
+            <i class="fa-solid fa-shield-halved"></i>
 
-        <!-- SECURITY -->
-
-        <section class="profile-card">
-
-            <div class="card-heading">
-
-                <div>
-
-                    <span class="section-tag">
-                        SECURITY
-                    </span>
-
-                    <h3>
-                        Account security
-                    </h3>
-
-                </div>
-
+            <div>
+                <small>Account Status</small>
+                <strong>Active</strong>
             </div>
 
+        </div>
 
-            <div class="security-list">
-
-
-                <div class="security-item">
-
-                    <div>
-
-                        <strong>
-                            Password
-                        </strong>
-
-                        <p>
-                            Keep your password private
-                            and secure.
-                        </p>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        id="changePassword">
-
-                        Change Password
-
-                    </button>
-
-                </div>
+    </section>
 
 
-                <div class="security-item">
+    <!-- ================= PERSONAL INFORMATION ================= -->
+    <section class="profile-section">
 
-                    <div>
+        <div class="section-title">
 
-                        <strong>
-                            Account Protection
-                        </strong>
-
-                        <p>
-                            Never share your login
-                            credentials with another person.
-                        </p>
-
-                    </div>
-
-                    <span class="protected">
-                        Protected
-                    </span>
-
-                </div>
-
-
-            </div>
-
-        </section>
-
-
-
-        <!-- ACCOUNT INFORMATION -->
-
-        <section class="information-card">
-
-            <div class="information-icon">
-                i
+            <div class="section-icon">
+                <i class="fa-solid fa-id-card"></i>
             </div>
 
             <div>
+                <h2>Personal Information</h2>
+                <p>Your registered account information.</p>
+            </div>
 
-                <h3>
-                    Account information
-                </h3>
+        </div>
 
-                <p>
-                    Some profile information may require
-                    verification before it can be changed.
-                </p>
 
-                <p>
-                    Crown Cash will never ask you to share
-                    your password or security credentials.
-                </p>
+        <div class="information-grid">
+
+
+            <!-- FIRST NAME -->
+            <div class="information-card">
+
+                <div class="information-icon">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+
+                <div>
+                    <small>First Name</small>
+                    <strong id="firstName">Not available</strong>
+                </div>
 
             </div>
 
-        </section>
+
+            <!-- LAST NAME -->
+            <div class="information-card">
+
+                <div class="information-icon">
+                    <i class="fa-solid fa-user-tag"></i>
+                </div>
+
+                <div>
+                    <small>Last Name</small>
+                    <strong id="lastName">Not available</strong>
+                </div>
+
+            </div>
 
 
-    </main>
+            <!-- PHONE -->
+            <div class="information-card">
+
+                <div class="information-icon">
+                    <i class="fa-solid fa-phone"></i>
+                </div>
+
+                <div>
+                    <small>Phone Number</small>
+                    <strong id="phoneNumber">Not available</strong>
+                </div>
+
+            </div>
 
 
+            <!-- EMAIL -->
+            <div class="information-card">
 
-    <footer>
+                <div class="information-icon">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
 
-        © <span id="year"></span>
-        Crown Cash. All rights reserved.
+                <div>
+                    <small>Email Address</small>
+                    <strong id="emailAddress">Not available</strong>
+                </div>
 
-    </footer>
+            </div>
 
 
-</div>
+        </div>
+
+    </section>
 
 
-<script src="profile.js"></script>
+    <!-- ================= ACCOUNT INFORMATION ================= -->
+    <section class="profile-section">
+
+        <div class="section-title">
+
+            <div class="section-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+            <div>
+                <h2>Account Information</h2>
+                <p>Important information about your Crown Cash account.</p>
+            </div>
+
+        </div>
+
+
+        <div class="account-grid">
+
+
+            <!-- BALANCE -->
+            <div class="account-card">
+
+                <div class="account-card-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+
+                <div>
+                    <small>Available Balance</small>
+                    <strong id="balance">UGX 0</strong>
+                </div>
+
+            </div>
+
+
+            <!-- REFERRAL -->
+            <div class="account-card">
+
+                <div class="account-card-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div>
+                    <small>Referral Code</small>
+                    <strong id="referralCode">Not available</strong>
+                </div>
+
+            </div>
+
+
+            <!-- MEMBER DATE -->
+            <div class="account-card">
+
+                <div class="account-card-icon">
+                    <i class="fa-solid fa-calendar"></i>
+                </div>
+
+                <div>
+                    <small>Member Since</small>
+                    <strong id="memberSince">Not available</strong>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= SECURITY ================= -->
+    <section class="profile-section">
+
+        <div class="section-title">
+
+            <div class="section-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div>
+                <h2>Account Security</h2>
+                <p>Manage your account protection.</p>
+            </div>
+
+        </div>
+
+
+        <div class="security-grid">
+
+
+            <!-- PASSWORD -->
+            <div class="security-card">
+
+                <div class="security-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+
+                <div class="security-text">
+
+                    <h3>Password</h3>
+
+                    <p>
+                        Keep your password private and secure.
+                    </p>
+
+                </div>
+
+                <button onclick="changePassword()">
+                    <i class="fa-solid fa-key"></i>
+                    Change
+                </button>
+
+            </div>
+
+
+            <!-- ACCOUNT PROTECTION -->
+            <div class="security-card">
+
+                <div class="security-icon">
+                    <i class="fa-solid fa-shield"></i>
+                </div>
+
+                <div class="security-text">
+
+                    <h3>Account Protection</h3>
+
+                    <p>
+                        Your account is protected by security controls.
+                    </p>
+
+                </div>
+
+                <span class="protected">
+                    <i class="fa-solid fa-check"></i>
+                    Protected
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= QUICK ACTIONS ================= -->
+    <section class="profile-section">
+
+        <div class="section-title">
+
+            <div class="section-icon">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+
+            <div>
+                <h2>Quick Actions</h2>
+                <p>Quickly access important account features.</p>
+            </div>
+
+        </div>
+
+
+        <div class="quick-actions">
+
+
+            <a href="deposit.html" class="quick-card">
+
+                <div class="quick-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+
+                <div>
+                    <strong>Deposit</strong>
+                    <small>Fund your account</small>
+                </div>
+
+                <i class="fa-solid fa-chevron-right arrow"></i>
+
+            </a>
+
+
+            <a href="withdraw.html" class="quick-card">
+
+                <div class="quick-icon">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                </div>
+
+                <div>
+                    <strong>Withdraw</strong>
+                    <small>Request a withdrawal</small>
+                </div>
+
+                <i class="fa-solid fa-chevron-right arrow"></i>
+
+            </a>
+
+
+            <a href="team.html" class="quick-card">
+
+                <div class="quick-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div>
+                    <strong>Referral Team</strong>
+                    <small>View your team</small>
+                </div>
+
+                <i class="fa-solid fa-chevron-right arrow"></i>
+
+            </a>
+
+
+            <a href="transactions.html" class="quick-card">
+
+                <div class="quick-icon">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+
+                <div>
+                    <strong>Transactions</strong>
+                    <small>View account activity</small>
+                </div>
+
+                <i class="fa-solid fa-chevron-right arrow"></i>
+
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+
+    /* MOBILE MENU */
+
+    const menuBtn = document.getElementById("menuBtn");
+    const sidebar = document.getElementById("sidebar");
+
+    menuBtn.addEventListener("click", function () {
+
+        sidebar.classList.toggle("open");
+
+        const icon = menuBtn.querySelector("i");
+
+        if (sidebar.classList.contains("open")) {
+
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-xmark");
+
+        } else {
+
+            icon.classList.remove("fa-xmark");
+            icon.classList.add("fa-bars");
+
+        }
+
+    });
+
+
+    /* CHANGE PASSWORD */
+
+    function changePassword() {
+
+        window.location.href = "change-password.html";
+
+    }
+
+
+    /*
+     * Profile data can later be loaded from your PHP/MongoDB API.
+     *
+     * These placeholders are intentionally used until your
+     * profile API is connected.
+     */
+
+</script>
 
 </body>
-
 </html>

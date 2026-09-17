@@ -1,22 +1,90 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH - PROFILE API
+|--------------------------------------------------------------------------
+*/
+
+
+/*
+|--------------------------------------------------------------------------
+| CROSS-SITE SESSION COOKIE
+|--------------------------------------------------------------------------
+*/
+
+session_set_cookie_params([
+    "lifetime" => 0,
+    "path" => "/",
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
 session_start();
 
+
+/*
+|--------------------------------------------------------------------------
+| HEADERS
+|--------------------------------------------------------------------------
+*/
+
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+
+header(
+    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+);
+
+header(
+    "Access-Control-Allow-Credentials: true"
+);
+
+header(
+    "Access-Control-Allow-Methods: GET, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type"
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| OPTIONS REQUEST
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+
     http_response_code(204);
+
     exit;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| CHECK LOGIN
+| ONLY GET ALLOWED
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK LOGIN SESSION
 |--------------------------------------------------------------------------
 */
 
@@ -25,6 +93,7 @@ if (
     $_SESSION["logged_in"] !== true ||
     !isset($_SESSION["user_id"])
 ) {
+
     http_response_code(401);
 
     echo json_encode([
@@ -38,26 +107,36 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| LOAD MONGODB CONFIGURATION
+| DATABASE
 |--------------------------------------------------------------------------
 */
 
 require_once __DIR__ . "/config.php";
 
+
+/*
+|--------------------------------------------------------------------------
+| FIND USER
+|--------------------------------------------------------------------------
+*/
+
 try {
 
-    /*
-    |--------------------------------------------------------------------------
-    | FIND USER
-    |--------------------------------------------------------------------------
-    */
+    $userId = new MongoDB\BSON\ObjectId(
+        $_SESSION["user_id"]
+    );
 
-    $userId = new MongoDB\BSON\ObjectId($_SESSION["user_id"]);
 
     $user = $users->findOne([
         "_id" => $userId
     ]);
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | USER NOT FOUND
+    |--------------------------------------------------------------------------
+    */
 
     if (!$user) {
 
@@ -74,43 +153,253 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | SPLIT FULL NAME
+    | FIRST NAME
     |--------------------------------------------------------------------------
+    |
+    | Supports:
+    | first_name
+    | firstname
+    | firstName
+    |
     */
 
-    $fullName = trim((string)($user["full_name"] ?? ""));
+    $firstName = "";
 
-    $nameParts = preg_split(
-        "/\s+/",
-        $fullName,
-        -1,
-        PREG_SPLIT_NO_EMPTY
-    );
+    if (!empty($user["first_name"])) {
 
-    $firstName = $nameParts[0] ?? "";
-    $lastName = "";
+        $firstName =
+            (string)$user["first_name"];
 
-    if (count($nameParts) > 1) {
-        $lastName = implode(
-            " ",
-            array_slice($nameParts, 1)
-        );
+    } elseif (!empty($user["firstname"])) {
+
+        $firstName =
+            (string)$user["firstname"];
+
+    } elseif (!empty($user["firstName"])) {
+
+        $firstName =
+            (string)$user["firstName"];
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | ACCOUNT DATA
+    | LAST NAME
     |--------------------------------------------------------------------------
     */
 
-    $balance = $user["balance"] ?? 0;
+    $lastName = "";
 
-    if ($balance instanceof MongoDB\BSON\Decimal128) {
-        $balance = (float)$balance->__toString();
-    } else {
-        $balance = (float)$balance;
+    if (!empty($user["last_name"])) {
+
+        $lastName =
+            (string)$user["last_name"];
+
+    } elseif (!empty($user["lastname"])) {
+
+        $lastName =
+            (string)$user["lastname"];
+
+    } elseif (!empty($user["lastName"])) {
+
+        $lastName =
+            (string)$user["lastName"];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FULL NAME
+    |--------------------------------------------------------------------------
+    */
+
+    $fullName = "";
+
+    if (!empty($user["full_name"])) {
+
+        $fullName =
+            trim((string)$user["full_name"]);
+
+    } elseif (!empty($user["fullName"])) {
+
+        $fullName =
+            trim((string)$user["fullName"]);
+
+    } elseif ($firstName !== "" || $lastName !== "") {
+
+        $fullName =
+            trim(
+                $firstName . " " . $lastName
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | IF ONLY FULL NAME EXISTS
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $fullName !== "" &&
+        $firstName === "" &&
+        $lastName === ""
+    ) {
+
+        $nameParts = preg_split(
+            "/\s+/",
+            $fullName,
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        );
+
+
+        $firstName =
+            $nameParts[0] ?? "";
+
+
+        if (count($nameParts) > 1) {
+
+            $lastName =
+                implode(
+                    " ",
+                    array_slice(
+                        $nameParts,
+                        1
+                    )
+                );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EMAIL
+    |--------------------------------------------------------------------------
+    */
+
+    $email =
+        (string)($user["email"] ?? "");
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHONE
+    |--------------------------------------------------------------------------
+    */
+
+    $phone = "";
+
+    if (!empty($user["phone"])) {
+
+        $phone =
+            (string)$user["phone"];
+
+    } elseif (!empty($user["phone_number"])) {
+
+        $phone =
+            (string)$user["phone_number"];
+
+    } elseif (!empty($user["phoneNumber"])) {
+
+        $phone =
+            (string)$user["phoneNumber"];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REFERRAL CODE
+    |--------------------------------------------------------------------------
+    */
+
+    $referralCode = "";
+
+    if (!empty($user["referral_code"])) {
+
+        $referralCode =
+            (string)$user["referral_code"];
+
+    } elseif (!empty($user["referralCode"])) {
+
+        $referralCode =
+            (string)$user["referralCode"];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BALANCE
+    |--------------------------------------------------------------------------
+    */
+
+    $balance = 0;
+
+
+    if (isset($user["balance"])) {
+
+        if (
+            $user["balance"]
+            instanceof MongoDB\BSON\Decimal128
+        ) {
+
+            $balance =
+                (float)$user["balance"]
+                    ->__toString();
+
+        } else {
+
+            $balance =
+                (float)$user["balance"];
+        }
+
+    } elseif (isset($user["wallet_balance"])) {
+
+        if (
+            $user["wallet_balance"]
+            instanceof MongoDB\BSON\Decimal128
+        ) {
+
+            $balance =
+                (float)$user["wallet_balance"]
+                    ->__toString();
+
+        } else {
+
+            $balance =
+                (float)$user["wallet_balance"];
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCOUNT STATUS
+    |--------------------------------------------------------------------------
+    */
+
+    $status =
+        strtolower(
+            (string)(
+                $user["status"]
+                ?? "active"
+            )
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCOUNT TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    $accountType =
+        strtolower(
+            (string)(
+                $user["account_type"]
+                ?? "user"
+            )
+        );
 
 
     /*
@@ -121,21 +410,30 @@ try {
 
     $createdAt = "";
 
-    if (
-        isset($user["created_at"]) &&
-        $user["created_at"] instanceof MongoDB\BSON\UTCDateTime
-    ) {
 
-        $createdAt = $user["created_at"]
-            ->toDateTime()
-            ->format("Y-m-d");
+    if (isset($user["created_at"])) {
 
+        if (
+            $user["created_at"]
+            instanceof MongoDB\BSON\UTCDateTime
+        ) {
+
+            $createdAt =
+                $user["created_at"]
+                    ->toDateTime()
+                    ->format("Y-m-d");
+
+        } else {
+
+            $createdAt =
+                (string)$user["created_at"];
+        }
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | RETURN USER PROFILE
+    | RETURN USER DATA
     |--------------------------------------------------------------------------
     */
 
@@ -155,22 +453,22 @@ try {
                 $fullName,
 
             "email" =>
-                (string)($user["email"] ?? ""),
+                $email,
 
             "phone" =>
-                (string)($user["phone"] ?? ""),
+                $phone,
 
             "referral_code" =>
-                (string)($user["referral_code"] ?? ""),
+                $referralCode,
 
             "balance" =>
                 $balance,
 
             "status" =>
-                (string)($user["status"] ?? "active"),
+                $status,
 
             "account_type" =>
-                (string)($user["account_type"] ?? "user"),
+                $accountType,
 
             "created_at" =>
                 $createdAt
@@ -178,7 +476,9 @@ try {
 
     ]);
 
-} catch (MongoDB\Driver\Exception\Exception $e) {
+} catch (
+    MongoDB\Driver\Exception\Exception $e
+) {
 
     http_response_code(500);
 
@@ -196,10 +496,5 @@ try {
         "message" => "Unable to load profile."
     ]);
 }
+
 ?>
-
-
-
-            
-
-        

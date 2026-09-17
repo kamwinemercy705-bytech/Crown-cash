@@ -1,0 +1,1641 @@
+/* =========================================================
+   CROWN CASH — DEPOSIT PAGE
+   deposit.css
+   ========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --background: #07111f;
+    --background-light: #0b1728;
+    --card: #0d1b2d;
+    --card-light: #12243a;
+
+    --purple: #b800ff;
+    --pink: #ff00d4;
+
+    --text: #ffffff;
+    --text-light: #d8dce7;
+    --muted: #8e99aa;
+
+    --border: rgba(255, 255, 255, 0.08);
+
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    --sidebar-width: 255px;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(
+            circle at 80% 10%,
+            rgba(184, 0, 255, 0.10),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 10% 80%,
+            rgba(255, 0, 212, 0.06),
+            transparent 30%
+        ),
+        var(--background);
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: var(--sidebar-width);
+    height: 100vh;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0b1728 0%,
+            #07111f 100%
+        );
+
+    border-right: 1px solid var(--border);
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1000;
+
+    overflow-y: auto;
+}
+
+
+/* LOGO */
+
+.sidebar-logo {
+    min-height: 85px;
+
+    padding: 20px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+
+.logo-icon {
+    width: 43px;
+    height: 43px;
+
+    border-radius: 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple),
+            var(--pink)
+        );
+
+    color: white;
+
+    font-size: 24px;
+    font-weight: 900;
+
+    box-shadow:
+        0 8px 25px
+        rgba(184, 0, 255, 0.30);
+}
+
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+
+    line-height: 1.05;
+}
+
+.logo-text strong {
+    font-size: 20px;
+    color: #ffffff;
+}
+
+.logo-text span {
+    color: #ff63e4;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* NAVIGATION */
+
+.sidebar-nav {
+    padding: 20px 13px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+
+.sidebar-nav a,
+.logout-button {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding: 12px 14px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    border-radius: 12px;
+
+    color: var(--text-light);
+
+    text-decoration: none;
+
+    background: transparent;
+
+    border: none;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease;
+}
+
+
+.sidebar-nav a i,
+.logout-button i {
+    width: 21px;
+
+    text-align: center;
+
+    font-size: 17px;
+}
+
+
+.sidebar-nav a:hover,
+.logout-button:hover {
+    background:
+        rgba(184, 0, 255, 0.10);
+
+    color: #ffffff;
+
+    transform: translateX(2px);
+}
+
+
+.sidebar-nav a.active {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(184, 0, 255, 0.25),
+            rgba(255, 0, 212, 0.15)
+        );
+
+    color: #ffffff;
+
+    box-shadow:
+        inset 3px 0 0 var(--purple);
+}
+
+
+.sidebar-bottom {
+    margin-top: auto;
+
+    padding: 15px;
+
+    border-top:
+        1px solid var(--border);
+}
+
+
+.logout-button {
+    color: #ff8b9b;
+}
+
+.logout-button:hover {
+    background:
+        rgba(239, 68, 68, 0.10);
+
+    color: #ff9aaa;
+}
+
+
+/* =========================================================
+   SIDEBAR OVERLAY
+   ========================================================= */
+
+.sidebar-overlay {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, 0.65);
+
+    z-index: 900;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+.main-content {
+    margin-left: var(--sidebar-width);
+
+    min-height: 100vh;
+
+    padding: 0 30px 40px;
+}
+
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+    min-height: 90px;
+
+    display: flex;
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+
+.page-heading {
+    flex: 1;
+}
+
+
+.page-heading h1 {
+    font-size: 25px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.5px;
+}
+
+
+.page-heading p {
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+.topbar-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(184, 0, 255, 0.18),
+            rgba(255, 0, 212, 0.13)
+        );
+
+    border:
+        1px solid
+        rgba(184, 0, 255, 0.25);
+
+    color: #e58aff;
+
+    font-size: 19px;
+}
+
+
+.menu-toggle {
+    display: none;
+
+    width: 45px;
+    height: 45px;
+
+    border: 1px solid var(--border);
+
+    background: var(--card);
+
+    color: white;
+
+    border-radius: 11px;
+
+    cursor: pointer;
+
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.deposit-page {
+    padding-top: 28px;
+}
+
+
+/* =========================================================
+   BALANCE CARD
+   ========================================================= */
+
+.balance-card {
+    position: relative;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7614b4,
+            #d40bb6
+        );
+
+    box-shadow:
+        0 18px 45px
+        rgba(184, 0, 255, 0.18);
+
+    margin-bottom: 25px;
+}
+
+
+.balance-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    border-radius: 50%;
+
+    right: -50px;
+    top: -80px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+}
+
+
+.balance-card::after {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    right: 80px;
+    bottom: -80px;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+}
+
+
+.balance-icon {
+    position: relative;
+    z-index: 1;
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 17px;
+
+    background:
+        rgba(255, 255, 255, 0.16);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.20);
+
+    font-size: 24px;
+}
+
+
+.balance-details {
+    position: relative;
+    z-index: 1;
+}
+
+
+.balance-details span {
+    display: block;
+
+    color:
+        rgba(255, 255, 255, 0.78);
+
+    font-size: 13px;
+
+    margin-bottom: 5px;
+}
+
+
+.balance-details h2 {
+    font-size: 27px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   DEPOSIT LAYOUT
+   ========================================================= */
+
+.deposit-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.25fr)
+        minmax(320px, 0.75fr);
+
+    gap: 22px;
+
+    margin-bottom: 25px;
+}
+
+
+.deposit-card,
+.instructions-card,
+.history-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(13, 27, 45, 0.98),
+            rgba(9, 21, 36, 0.98)
+        );
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 20px;
+
+    padding: 25px;
+
+    box-shadow:
+        0 15px 35px
+        rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.card-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    margin-bottom: 25px;
+}
+
+
+.header-icon {
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(184, 0, 255, 0.20),
+            rgba(255, 0, 212, 0.12)
+        );
+
+    color: #df8bff;
+
+    border:
+        1px solid
+        rgba(184, 0, 255, 0.20);
+
+    font-size: 18px;
+}
+
+
+.card-header h2 {
+    font-size: 18px;
+
+    margin-bottom: 4px;
+}
+
+
+.card-header p {
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   FORM MESSAGE
+   ========================================================= */
+
+.form-message {
+    padding: 13px 15px;
+
+    border-radius: 12px;
+
+    margin-bottom: 20px;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+.form-message.success {
+    color: #9af5b8;
+
+    background:
+        rgba(34, 197, 94, 0.10);
+
+    border:
+        1px solid
+        rgba(34, 197, 94, 0.20);
+}
+
+
+.form-message.error {
+    color: #ff9eaa;
+
+    background:
+        rgba(239, 68, 68, 0.10);
+
+    border:
+        1px solid
+        rgba(239, 68, 68, 0.20);
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+
+.form-group > label {
+    display: block;
+
+    margin-bottom: 9px;
+
+    color: #e9edf5;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+.form-group > label i {
+    color: #d67cff;
+
+    margin-right: 6px;
+}
+
+
+.form-group small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+.form-group small strong {
+    color: #e5a0ff;
+}
+
+
+/* INPUT */
+
+.input-wrapper {
+    position: relative;
+}
+
+
+.input-prefix {
+    position: absolute;
+
+    left: 15px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    color: #cfd5df;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    pointer-events: none;
+}
+
+
+.input-wrapper input {
+    padding-left: 55px;
+}
+
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: 100%;
+
+    height: 51px;
+
+    padding: 0 15px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.09);
+
+    border-radius: 12px;
+
+    background:
+        #091625;
+
+    color: white;
+
+    outline: none;
+
+    font-size: 14px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.form-group input::placeholder {
+    color: #647083;
+}
+
+
+.form-group input:focus {
+    border-color:
+        rgba(184, 0, 255, 0.65);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(184, 0, 255, 0.08);
+}
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+.method-options {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+}
+
+
+.method-option {
+    display: block;
+
+    cursor: pointer;
+}
+
+
+.method-option input {
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+
+.method-box {
+    min-height: 82px;
+
+    padding: 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    position: relative;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    background:
+        #091625;
+
+    border-radius: 14px;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.method-option:hover .method-box {
+    transform: translateY(-1px);
+
+    border-color:
+        rgba(184, 0, 255, 0.30);
+}
+
+
+.method-option input:checked
+~ .method-box {
+    border-color:
+        var(--purple);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(184, 0, 255, 0.13),
+            rgba(255, 0, 212, 0.06)
+        );
+
+    box-shadow:
+        0 8px 22px
+        rgba(184, 0, 255, 0.08);
+}
+
+
+.method-icon {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    color: white;
+
+    font-size: 17px;
+}
+
+
+.mtn-icon {
+    background:
+        #ffcc00;
+
+    color: #171717;
+}
+
+
+.airtel-icon {
+    background:
+        #e21b2d;
+
+    color: white;
+}
+
+
+.method-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    min-width: 0;
+}
+
+
+.method-info strong {
+    color: white;
+
+    font-size: 12px;
+}
+
+
+.method-info small {
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+.selected-icon {
+    margin-left: auto;
+
+    color: var(--purple);
+
+    opacity: 0;
+
+    font-size: 16px;
+}
+
+
+.method-option input:checked
+~ .method-box
+.selected-icon {
+    opacity: 1;
+}
+
+
+/* =========================================================
+   DEPOSIT BUTTON
+   ========================================================= */
+
+.deposit-button {
+    width: 100%;
+
+    height: 53px;
+
+    margin-top: 5px;
+
+    border: none;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--purple),
+            var(--pink)
+        );
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 9px;
+
+    box-shadow:
+        0 12px 25px
+        rgba(184, 0, 255, 0.18);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+
+.deposit-button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 16px 30px
+        rgba(184, 0, 255, 0.25);
+}
+
+
+.deposit-button:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   INSTRUCTIONS
+   ========================================================= */
+
+.instruction-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+
+.instruction-item {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 13px;
+}
+
+
+.step-number {
+    width: 31px;
+    height: 31px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(184, 0, 255, 0.25),
+            rgba(255, 0, 212, 0.18)
+        );
+
+    color: #e8a1ff;
+
+    font-size: 12px;
+
+    font-weight: 800;
+}
+
+
+.instruction-item h3 {
+    margin-bottom: 4px;
+
+    font-size: 13px;
+}
+
+
+.instruction-item p {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   SECURITY NOTICE
+   ========================================================= */
+
+.security-notice {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-top: 25px;
+
+    padding: 15px;
+
+    border-radius: 13px;
+
+    background:
+        rgba(34, 197, 94, 0.06);
+
+    border:
+        1px solid
+        rgba(34, 197, 94, 0.14);
+}
+
+
+.security-notice > i {
+    margin-top: 2px;
+
+    color: #4ade80;
+
+    font-size: 18px;
+}
+
+
+.security-notice strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #a2f5b9;
+
+    font-size: 12px;
+}
+
+
+.security-notice p {
+    color: #849b8d;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+
+.history-card {
+    margin-bottom: 25px;
+}
+
+
+.history-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+}
+
+
+.history-header h2 {
+    font-size: 18px;
+
+    margin-bottom: 4px;
+}
+
+
+.history-header p {
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+.history-header > i {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(184, 0, 255, 0.10);
+
+    color: #d77cff;
+}
+
+
+/* LOADING */
+
+.history-loading {
+    min-height: 90px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+
+/* EMPTY */
+
+.empty-deposits {
+    padding: 35px 20px;
+
+    text-align: center;
+}
+
+
+.empty-deposits i {
+    font-size: 28px;
+
+    color: #8d5aa5;
+
+    margin-bottom: 12px;
+}
+
+
+.empty-deposits h3 {
+    font-size: 14px;
+
+    margin-bottom: 5px;
+}
+
+
+.empty-deposits p {
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+/* DEPOSIT ROW */
+
+.deposit-row {
+    display: grid;
+
+    grid-template-columns:
+        45px
+        1fr
+        auto
+        auto;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 14px 0;
+
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.05);
+}
+
+
+.deposit-row:last-child {
+    border-bottom: none;
+}
+
+
+.deposit-history-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(184, 0, 255, 0.10);
+
+    color: #d881ff;
+}
+
+
+.deposit-row-info strong {
+    display: block;
+
+    font-size: 13px;
+
+    margin-bottom: 4px;
+}
+
+
+.deposit-row-info small {
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+.deposit-amount {
+    font-weight: 800;
+
+    font-size: 13px;
+
+    white-space: nowrap;
+}
+
+
+.deposit-status {
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    text-transform: capitalize;
+
+    white-space: nowrap;
+}
+
+
+.deposit-status.pending {
+    color: #fbbf24;
+
+    background:
+        rgba(245, 158, 11, 0.10);
+}
+
+
+.deposit-status.approved,
+.deposit-status.completed,
+.deposit-status.success {
+    color: #4ade80;
+
+    background:
+        rgba(34, 197, 94, 0.10);
+}
+
+
+.deposit-status.rejected,
+.deposit-status.failed {
+    color: #fb7185;
+
+    background:
+        rgba(239, 68, 68, 0.10);
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.page-footer {
+    text-align: center;
+
+    padding: 15px 0;
+
+    color: #526073;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    :root {
+        --sidebar-width: 230px;
+    }
+
+    .main-content {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .deposit-layout {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    :root {
+        --sidebar-width: 255px;
+    }
+
+
+    .sidebar {
+        transform:
+            translateX(-100%);
+
+        transition:
+            transform 0.3s ease;
+    }
+
+
+    .sidebar.open {
+        transform:
+            translateX(0);
+    }
+
+
+    .sidebar-overlay.show {
+        display: block;
+    }
+
+
+    .main-content {
+        margin-left: 0;
+
+        padding:
+            0 15px 30px;
+    }
+
+
+    .topbar {
+        min-height: 75px;
+    }
+
+
+    .menu-toggle {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    .page-heading h1 {
+        font-size: 20px;
+    }
+
+
+    .page-heading p {
+        font-size: 11px;
+    }
+
+
+    .topbar-icon {
+        width: 42px;
+        height: 42px;
+
+        font-size: 16px;
+    }
+
+
+    .deposit-page {
+        padding-top: 18px;
+    }
+
+
+    .balance-card {
+        padding: 20px;
+
+        border-radius: 17px;
+    }
+
+
+    .balance-icon {
+        width: 50px;
+        height: 50px;
+
+        font-size: 20px;
+    }
+
+
+    .balance-details h2 {
+        font-size: 23px;
+    }
+
+
+    .deposit-card,
+    .instructions-card,
+    .history-card {
+        padding: 20px;
+
+        border-radius: 17px;
+    }
+
+
+    .method-options {
+        grid-template-columns: 1fr;
+    }
+
+
+    .deposit-row {
+        grid-template-columns:
+            42px
+            1fr
+            auto;
+
+        gap: 10px;
+    }
+
+
+    .deposit-status {
+        grid-column: 2 / 4;
+
+        width: fit-content;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 430px) {
+
+    .main-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+
+    .balance-card {
+        gap: 13px;
+
+        padding: 17px;
+    }
+
+
+    .balance-icon {
+        width: 45px;
+        height: 45px;
+
+        border-radius: 13px;
+
+        font-size: 18px;
+    }
+
+
+    .balance-details span {
+        font-size: 11px;
+    }
+
+
+    .balance-details h2 {
+        font-size: 20px;
+    }
+
+
+    .deposit-card,
+    .instructions-card,
+    .history-card {
+        padding: 16px;
+    }
+
+
+    .card-header {
+        gap: 10px;
+    }
+
+
+    .header-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+
+    .card-header h2 {
+        font-size: 16px;
+    }
+
+
+    .card-header p {
+        font-size: 11px;
+    }
+
+
+    .method-box {
+        min-height: 75px;
+
+        padding: 11px;
+    }
+
+
+    .method-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+
+    .deposit-button {
+        height: 50px;
+
+        font-size: 13px;
+    }
+
+
+    .history-header h2 {
+        font-size: 16px;
+    }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline:
+        2px solid
+        var(--purple);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+
+::-webkit-scrollbar-track {
+    background:
+        #07111f;
+}
+
+
+::-webkit-scrollbar-thumb {
+    background:
+        #26364d;
+
+    border-radius: 20px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+    background:
+        #3b4e68;
+}

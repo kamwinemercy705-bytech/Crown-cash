@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#07111f"
+    >
+
+    <title>Crown Cash | Deposit</title>
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- Deposit CSS -->
+    <link
+        rel="stylesheet"
+        href="deposit.css"
+    >
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+    <aside class="sidebar" id="sidebar">
+
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-mark">C</div>
+
+            <div class="logo-text">
+                <span>Crown</span> Cash
+            </div>
+        </div>
+
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="profile.html" class="nav-item">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </a>
+
+            <a href="investments.html" class="nav-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Investments</span>
+            </a>
+
+            <a href="deposit.html" class="nav-item active">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Deposits</span>
+            </a>
+
+            <a href="withdraw.html" class="nav-item">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+                <span>Withdrawals</span>
+            </a>
+
+            <a href="team.html" class="nav-item">
+                <i class="fa-solid fa-users"></i>
+                <span>Referral Team</span>
+            </a>
+
+            <a href="transactions.html" class="nav-item">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Transactions</span>
+            </a>
+
+            <a href="support.html" class="nav-item">
+                <i class="fa-solid fa-headset"></i>
+                <span>Support</span>
+            </a>
+
+        </nav>
+
+
+        <!-- Logout -->
+        <div class="sidebar-bottom">
+
+            <button
+                type="button"
+                class="nav-item logout-btn"
+                id="logoutBtn"
+            >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MOBILE OVERLAY
+    ====================================================== -->
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+    <main class="main-content">
+
+
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
+        <header class="topbar">
+
+            <button
+                type="button"
+                class="menu-toggle"
+                id="menuToggle"
+                aria-label="Open menu"
+            >
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+
+            <div class="page-title">
+
+                <div>
+                    <span class="page-label">
+                        Crown Cash
+                    </span>
+
+                    <h1>
+                        Make a Deposit
+                    </h1>
+                </div>
+
+            </div>
+
+
+            <div class="topbar-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+        <section class="deposit-page">
+
+
+            <!-- =================================================
+                 BALANCE CARD
+            ================================================== -->
+            <div class="balance-card">
+
+                <div class="balance-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+
+                <div class="balance-info">
+
+                    <span>
+                        Available Balance
+                    </span>
+
+                    <h2 id="availableBalance">
+                        UGX 0
+                    </h2>
+
+                </div>
+
+                <div class="balance-decoration">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 MAIN GRID
+            ================================================== -->
+            <div class="deposit-grid">
+
+
+                <!-- =============================================
+                     DEPOSIT FORM
+                ============================================== -->
+                <section class="card deposit-card">
+
+                    <div class="card-header">
+
+                        <div class="header-icon">
+                            <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                        </div>
+
+                        <div>
+                            <h2>
+                                Deposit Funds
+                            </h2>
+
+                            <p>
+                                Add money to your Crown Cash account.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Form Message -->
+                    <div
+                        id="formMessage"
+                        class="form-message"
+                        role="alert"
+                        aria-live="polite"
+                    ></div>
+
+
+                    <form
+                        id="depositForm"
+                        novalidate
+                    >
+
+
+                        <!-- Amount -->
+                        <div class="form-group">
+
+                            <label for="amount">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                                Deposit Amount
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <span class="input-prefix">
+                                    UGX
+                                </span>
+
+                                <input
+                                    type="number"
+                                    id="amount"
+                                    name="amount"
+                                    placeholder="Enter amount"
+                                    min="10000"
+                                    step="1000"
+                                    inputmode="numeric"
+                                    required
+                                >
+
+                            </div>
+
+                            <small>
+                                Minimum deposit: UGX 10,000
+                            </small>
+
+                        </div>
+
+
+                        <!-- Payment Method -->
+                        <div class="form-group">
+
+                            <label>
+                                <i class="fa-solid fa-mobile-screen-button"></i>
+                                Payment Method
+                            </label>
+
+
+                            <div class="payment-methods">
+
+
+                                <!-- MTN -->
+                                <label
+                                    class="payment-option"
+                                    for="mtn"
+                                >
+
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        id="mtn"
+                                        value="mtn"
+                                        required
+                                    >
+
+                                    <div class="payment-content">
+
+                                        <div class="payment-icon mtn-icon">
+                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                MTN Mobile Money
+                                            </strong>
+
+                                            <span>
+                                                Pay using MTN MoMo
+                                            </span>
+                                        </div>
+
+                                    </div>
+
+                                    <i class="fa-solid fa-circle-check selected-icon"></i>
+
+                                </label>
+
+
+                                <!-- Airtel -->
+                                <label
+                                    class="payment-option"
+                                    for="airtel"
+                                >
+
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        id="airtel"
+                                        value="airtel"
+                                    >
+
+                                    <div class="payment-content">
+
+                                        <div class="payment-icon airtel-icon">
+                                            <i class="fa-solid fa-mobile-screen-button"></i>
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                Airtel Money
+                                            </strong>
+
+                                            <span>
+                                                Pay using Airtel Money
+                                            </span>
+                                        </div>
+
+                                    </div>
+
+                                    <i class="fa-solid fa-circle-check selected-icon"></i>
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Transaction Reference -->
+                        <div class="form-group">
+
+                            <label for="transactionReference">
+
+                                <i class="fa-solid fa-receipt"></i>
+
+                                Transaction Reference
+
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <span class="input-icon">
+                                    <i class="fa-solid fa-hashtag"></i>
+                                </span>
+
+                                <input
+                                    type="text"
+                                    id="transactionReference"
+                                    name="transaction_reference"
+                                    placeholder="Enter transaction ID"
+                                    maxlength="100"
+                                    autocomplete="off"
+                                    required
+                                >
+
+                            </div>
+
+                            <small>
+                                Enter the transaction ID you received after making the payment.
+                            </small>
+
+                        </div>
+
+
+                        <!-- Submit -->
+                        <button
+                            type="submit"
+                            class="deposit-button"
+                            id="depositButton"
+                        >
+
+                            <i class="fa-solid fa-wallet"></i>
+
+                            <span>
+                                Submit Deposit
+                            </span>
+
+                        </button>
+
+                    </form>
+
+                </section>
+
+
+                <!-- =============================================
+                     PAYMENT INSTRUCTIONS
+                ============================================== -->
+                <section class="card instructions-card">
+
+                    <div class="card-header">
+
+                        <div class="header-icon">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </div>
+
+                        <div>
+
+                            <h2>
+                                Deposit Instructions
+                            </h2>
+
+                            <p>
+                                Follow these steps carefully.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Step 1 -->
+                    <div class="instruction-step">
+
+                        <div class="step-number">
+                            1
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Choose your network
+                            </h3>
+
+                            <p>
+                                Select either MTN Mobile Money
+                                or Airtel Money above.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Step 2 -->
+                    <div class="instruction-step">
+
+                        <div class="step-number">
+                            2
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Make your payment
+                            </h3>
+
+                            <p>
+                                Send your deposit through the
+                                official Crown Cash payment channel.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Step 3 -->
+                    <div class="instruction-step">
+
+                        <div class="step-number">
+                            3
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Keep your reference
+                            </h3>
+
+                            <p>
+                                After payment, copy the transaction
+                                reference shown in your Mobile Money
+                                confirmation message.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Step 4 -->
+                    <div class="instruction-step">
+
+                        <div class="step-number">
+                            4
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Submit your deposit
+                            </h3>
+
+                            <p>
+                                Enter the amount and transaction
+                                reference, then submit the request.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Security Notice -->
+                    <div class="security-notice">
+
+                        <div class="security-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Payment Verification
+                            </strong>
+
+                            <p>
+                                Deposits remain pending until the
+                                payment is verified. Do not submit
+                                fake transaction references.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 RECENT DEPOSITS
+            ================================================== -->
+            <section class="card history-card">
+
+                <div class="card-header history-header">
+
+                    <div class="header-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Recent Deposits
+                        </h2>
+
+                        <p>
+                            View your latest deposit requests.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Deposit History -->
+                <div
+                    id="depositHistory"
+                    class="deposit-history"
+                >
+
+                    <div class="history-loading">
+
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+
+                        <span>
+                            Loading deposits...
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 FOOTER
+            ================================================== -->
+            <footer class="page-footer">
+
+                <p>
+                    © 2026 Crown Cash. All rights reserved.
+                </p>
+
+                <div class="footer-links">
+
+                    <a href="#">
+                        Terms
+                    </a>
+
+                    <a href="#">
+                        Privacy
+                    </a>
+
+                    <a href="support.html">
+                        Support
+                    </a>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     DEPOSIT JAVASCRIPT
+========================================================= -->
+
+<script src="deposit.js"></script>
+
+</body>
+</html>

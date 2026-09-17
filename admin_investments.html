@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#080103"
+    >
+
+    <title>Crown Cash | Admin Investments</title>
+
+    <link
+        rel="stylesheet"
+        href="admin_investments.css"
+    >
+</head>
+
+
+<body>
+
+<div class="admin-layout">
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside
+        class="admin-sidebar"
+        id="adminSidebar"
+    >
+
+        <!-- LOGO -->
+
+        <div class="admin-logo">
+
+            <div class="admin-logo-mark">
+                C
+            </div>
+
+            <div class="admin-logo-text">
+                <strong>Crown Cash</strong>
+                <span>Administration</span>
+            </div>
+
+        </div>
+
+
+        <!-- ADMIN USER -->
+
+        <div class="admin-user">
+
+            <div
+                class="admin-avatar"
+                id="adminAvatar"
+            >
+                A
+            </div>
+
+            <div class="admin-user-info">
+
+                <div
+                    class="admin-user-name"
+                    id="adminName"
+                >
+                    Administrator
+                </div>
+
+                <div class="admin-user-role">
+                    Administrator
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="admin-nav">
+
+            <a href="admin.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M3 10.5 12 3l9 7.5"></path>
+                        <path d="M5 9.5V21h14V9.5"></path>
+                        <path d="M9 21v-7h6v7"></path>
+                    </svg>
+                </span>
+
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <a href="admin_deposits.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3v18"></path>
+                        <path d="M17 7.5c0-2-2.2-3.5-5-3.5S7 5.5 7 7.5s2.2 3 5 3 5 1.5 5 3.5-2.2 3.5-5 3.5-5-1.5-5-3.5"></path>
+                    </svg>
+                </span>
+
+                <span>Deposits</span>
+
+            </a>
+
+
+            <a href="admin_withdrawals.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 21V3"></path>
+                        <path d="m6 9 6-6 6 6"></path>
+                        <path d="M5 14h14"></path>
+                        <path d="M7 18h10"></path>
+                    </svg>
+                </span>
+
+                <span>Withdrawals</span>
+
+            </a>
+
+
+            <a
+                href="admin_investments.html"
+                class="active"
+            >
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="m7 15 4-4 3 2 5-6"></path>
+                        <path d="M15 7h4v4"></path>
+                    </svg>
+                </span>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <a href="admin_users.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                        <path d="M16 5.5a3 3 0 0 1 0 5.8"></path>
+                        <path d="M18 14c1.8.7 3 2.5 3 4.5"></path>
+                    </svg>
+                </span>
+
+                <span>Users</span>
+
+            </a>
+
+
+            <a href="admin_transactions.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 6h16"></path>
+                        <path d="M4 12h16"></path>
+                        <path d="M4 18h16"></path>
+                        <circle cx="8" cy="6" r="1"></circle>
+                        <circle cx="14" cy="12" r="1"></circle>
+                        <circle cx="10" cy="18" r="1"></circle>
+                    </svg>
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <a href="admin_security.html">
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-3Z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                </span>
+
+                <span>Security</span>
+
+            </a>
+
+        </nav>
+
+
+        <!-- LOGOUT -->
+
+        <div class="admin-sidebar-bottom">
+
+            <button
+                type="button"
+                class="admin-logout"
+                id="logoutBtn"
+            >
+
+                <span class="nav-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M10 17l5-5-5-5"></path>
+                        <path d="M15 12H3"></path>
+                        <path d="M21 19V5a2 2 0 0 0-2-2h-5"></path>
+                    </svg>
+                </span>
+
+                <span>Logout</span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MOBILE OVERLAY -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main class="admin-main">
+
+
+        <!-- TOP BAR -->
+
+        <header class="admin-topbar">
+
+            <div class="admin-page-title">
+
+                <h1>
+                    Investment Management
+                </h1>
+
+                <p>
+                    Monitor and manage Crown Cash investment activity.
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="admin-menu-btn"
+                id="menuBtn"
+                aria-label="Open menu"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M4 6h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 18h16"></path>
+                </svg>
+
+            </button>
+
+        </header>
+
+
+        <!-- ERROR -->
+
+        <div
+            class="error-message"
+            id="errorMessage"
+        ></div>
+
+
+        <!-- =================================================
+             STATISTICS
+             ================================================= -->
+
+        <section class="stats-grid">
+
+
+            <!-- TOTAL INVESTMENTS -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="m7 15 4-4 3 2 5-6"></path>
+                    </svg>
+
+                </div>
+
+                <div class="stat-label">
+                    Total Investments
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="totalInvestments"
+                >
+                    0
+                </div>
+
+            </article>
+
+
+            <!-- TOTAL AMOUNT -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 7v10"></path>
+                        <path d="M15 9.5c0-1.2-1.3-2-3-2s-3 .8-3 2 1.3 2 3 2 3 .8 3 2-1.3 2-3 2-3-.8-3-2"></path>
+                    </svg>
+
+                </div>
+
+                <div class="stat-label">
+                    Total Amount
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="totalAmount"
+                >
+                    UGX 0
+                </div>
+
+            </article>
+
+
+            <!-- ACTIVE -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="m8 12 2.5 2.5L16 9"></path>
+                    </svg>
+
+                </div>
+
+                <div class="stat-label">
+                    Active
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="activeInvestments"
+                >
+                    0
+                </div>
+
+            </article>
+
+
+            <!-- COMPLETED -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M8 12h8"></path>
+                        <path d="M12 8v8"></path>
+                    </svg>
+
+                </div>
+
+                <div class="stat-label">
+                    Completed
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="completedInvestments"
+                >
+                    0
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =================================================
+             TOOLBAR
+             ================================================= -->
+
+        <section class="admin-toolbar">
+
+
+            <!-- SEARCH -->
+
+            <div class="search-box">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-4-4"></path>
+                </svg>
+
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search name, email, phone or plan..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- STATUS FILTER -->
+
+            <select
+                class="filter-select"
+                id="statusFilter"
+            >
+
+                <option value="all">
+                    All Statuses
+                </option>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+                <option value="completed">
+                    Completed
+                </option>
+
+            </select>
+
+
+            <!-- REFRESH -->
+
+            <button
+                type="button"
+                class="refresh-btn"
+                id="refreshBtn"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M20 11a8 8 0 0 0-14.8-4"></path>
+                    <path d="M4 4v5h5"></path>
+                    <path d="M4 13a8 8 0 0 0 14.8 4"></path>
+                    <path d="M20 20v-5h-5"></path>
+                </svg>
+
+                <span>
+                    Refresh
+                </span>
+
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             INVESTMENT TABLE
+             ================================================= -->
+
+        <section class="table-card">
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Investor
+                            </th>
+
+                            <th>
+                                Plan
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Duration
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Created
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="investmentTableBody">
+
+                        <!-- JavaScript loads investments here -->
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- LOADING -->
+
+            <div
+                class="loading-state"
+                id="loadingState"
+            >
+
+                <div class="loading-spinner"></div>
+
+                <p>
+                    Loading investments...
+                </p>
+
+            </div>
+
+
+            <!-- EMPTY -->
+
+            <div
+                class="empty-state"
+                id="emptyState"
+                style="display:none;"
+            >
+
+                <div class="empty-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="m7 15 4-4 3 2 5-6"></path>
+                    </svg>
+
+                </div>
+
+                <h3>
+                    No investments found
+                </h3>
+
+                <p>
+                    There are no investment records matching your current search or filter.
+                </p>
+
+            </div>
+
+
+            <!-- PAGINATION / INFO -->
+
+            <div
+                class="pagination"
+                id="pagination"
+                style="display:none;"
+            >
+
+                <div
+                    class="pagination-info"
+                    id="paginationInfo"
+                >
+                    Showing 0 investments
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script src="admin_investments.js"></script>
+
+</body>
+
+</html>

@@ -1,1063 +1,1544 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Crown Cash | Investments</title>
+    <meta name="theme-color" content="#080103">
+
+    <title>Crown Cash | Investment Plans</title>
+
+    <link rel="stylesheet" href="dashboard.css">
 
     <link rel="stylesheet" href="investments.css">
 </head>
 
 <body>
 
-<div class="app-layout">
+    <!-- ==============================
+         MOBILE MENU BUTTON
+    =============================== -->
+    <button
+        class="mobile-menu-btn"
+        id="menuToggle"
+        type="button"
+        aria-label="Open navigation menu"
+    >
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 
-    <!-- =====================================================
+
+    <!-- ==============================
+         SIDEBAR OVERLAY
+    =============================== -->
+    <div
+        class="sidebar-overlay"
+        aria-hidden="true"
+    ></div>
+
+
+    <!-- ==============================
          SIDEBAR
-         ===================================================== -->
-
-    <aside class="sidebar" id="sidebar">
+    =============================== -->
+    <aside class="dashboard-sidebar">
 
         <!-- LOGO -->
-        <a href="dashboard.html" class="sidebar-logo">
+        <a
+            href="dashboard.html"
+            class="dashboard-logo"
+        >
+            <span class="logo-symbol">C</span>
 
-            <div class="sidebar-logo-mark">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 7l3 4 5-7 5 7 3-4-2 11H6L4 7z"></path>
-                    <path d="M7 18h10"></path>
-                </svg>
-            </div>
-
-            <div class="sidebar-logo-text">
-                <strong>Crown Cash</strong>
-                <span>Smart Finance</span>
-            </div>
-
+            <span class="logo-text">
+                <strong>Crown</strong>
+                <small>Cash</small>
+            </span>
         </a>
 
 
-        <!-- NAVIGATION -->
-        <nav class="sidebar-nav">
+        <!-- USER INFORMATION -->
+        <div class="sidebar-user">
 
-            <div class="sidebar-nav-label">
-                Main
+            <div class="sidebar-user-avatar">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                    ></circle>
+
+                    <path
+                        d="M4 21a8 8 0 0 1 16 0"
+                    ></path>
+
+                </svg>
+
             </div>
 
+
+            <div class="sidebar-user-details">
+
+                <strong id="sidebarUserName">
+                    Crown Cash User
+                </strong>
+
+                <span id="sidebarUserEmail">
+                    Active Account
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==============================
+             NAVIGATION
+        =============================== -->
+        <nav class="dashboard-nav">
 
             <!-- DASHBOARD -->
-            <a href="dashboard.html">
+            <a
+                href="dashboard.html"
+                class="dashboard-nav-link"
+            >
 
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-                    </svg>
-                </span>
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <rect
+                        x="3"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="1"
+                    ></rect>
 
-                <span class="sidebar-nav-text">
-                    Dashboard
-                </span>
+                    <rect
+                        x="14"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="1"
+                    ></rect>
 
-            </a>
+                    <rect
+                        x="3"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="1"
+                    ></rect>
 
+                    <rect
+                        x="14"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="1"
+                    ></rect>
 
-            <!-- WALLET -->
-            <a href="dashboard.html">
+                </svg>
 
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6.5A2.5 2.5 0 0 1 4 16.5z"></path>
-                        <path d="M4 8h15"></path>
-                        <path d="M17 13h4"></path>
-                        <circle cx="17" cy="13" r=".7"></circle>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    Wallet
-                </span>
-
-            </a>
-
-
-            <!-- INVESTMENTS -->
-            <a href="investments.html" class="active">
-
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M5 19V9"></path>
-                        <path d="M10 19V5"></path>
-                        <path d="M15 19v-7"></path>
-                        <path d="M20 19V3"></path>
-                        <path d="M3 19h18"></path>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    Investments
-                </span>
-
-            </a>
-
-
-            <!-- MY INVESTMENTS -->
-            <a href="my-investments.html">
-
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 5h16v14H4z"></path>
-                        <path d="M8 9h8"></path>
-                        <path d="M8 13h5"></path>
-                        <path d="M8 17h3"></path>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    My Investments
-                </span>
-
-            </a>
-
-
-            <!-- TRANSACTIONS -->
-            <a href="transactions.html">
-
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7h13"></path>
-                        <path d="M14 4l3 3-3 3"></path>
-                        <path d="M20 17H7"></path>
-                        <path d="M10 14l-3 3 3 3"></path>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    Transactions
-                </span>
-
-            </a>
-
-
-            <div class="sidebar-nav-label">
-                Account
-            </div>
-
-
-            <!-- TEAM -->
-            <a href="team.html">
-
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <circle cx="17" cy="9" r="2.5"></circle>
-                        <path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path>
-                        <path d="M14 15.5a4.5 4.5 0 0 1 6.5 3.5"></path>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    My Team
-                </span>
+                <span>Dashboard</span>
 
             </a>
 
 
             <!-- PROFILE -->
-            <a href="profile.html">
+            <a
+                href="profile.html"
+                class="dashboard-nav-link"
+            >
 
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="8" r="3"></circle>
-                        <path d="M5 20a7 7 0 0 1 14 0"></path>
-                    </svg>
-                </span>
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                    ></circle>
 
-                <span class="sidebar-nav-text">
-                    Profile
-                </span>
+                    <path
+                        d="M4 21a8 8 0 0 1 16 0"
+                    ></path>
+
+                </svg>
+
+                <span>My Profile</span>
+
+            </a>
+
+
+            <!-- INVESTMENTS -->
+            <a
+                href="investments.html"
+                class="dashboard-nav-link active"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-4Z"
+                    ></path>
+
+                    <path
+                        d="m9 12 2 2 4-4"
+                    ></path>
+
+                </svg>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <!-- MY INVESTMENTS -->
+            <a
+                href="my-investments.html"
+                class="dashboard-nav-link"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M6 2h12v20H6z"
+                    ></path>
+
+                    <path
+                        d="M9 6h6M9 10h6M9 14h4"
+                    ></path>
+
+                </svg>
+
+                <span>My Investments</span>
+
+            </a>
+
+
+            <!-- DEPOSIT -->
+            <a
+                href="deposit.html"
+                class="dashboard-nav-link"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="2"
+                    ></rect>
+
+                    <path
+                        d="M7 12h10"
+                    ></path>
+
+                    <path
+                        d="M12 8v8"
+                    ></path>
+
+                </svg>
+
+                <span>Deposit</span>
+
+            </a>
+
+
+            <!-- WITHDRAW -->
+            <a
+                href="withdrawals.html"
+                class="dashboard-nav-link"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M12 3v14"
+                    ></path>
+
+                    <path
+                        d="m7 12 5 5 5-5"
+                    ></path>
+
+                    <path
+                        d="M5 21h14"
+                    ></path>
+
+                </svg>
+
+                <span>Withdraw</span>
+
+            </a>
+
+
+            <!-- REFERRALS -->
+            <a
+                href="team.html"
+                class="dashboard-nav-link"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                    ></path>
+
+                    <circle
+                        cx="9"
+                        cy="7"
+                        r="4"
+                    ></circle>
+
+                    <path
+                        d="M22 21v-2a4 4 0 0 0-3-3.87"
+                    ></path>
+
+                    <path
+                        d="M16 3.13a4 4 0 0 1 0 7.75"
+                    ></path>
+
+                </svg>
+
+                <span>My Referrals</span>
+
+            </a>
+
+
+            <!-- TRANSACTIONS -->
+            <a
+                href="transactions.html"
+                class="dashboard-nav-link"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M4 6h16"
+                    ></path>
+
+                    <path
+                        d="M4 12h16"
+                    ></path>
+
+                    <path
+                        d="M4 18h16"
+                    ></path>
+
+                    <circle
+                        cx="8"
+                        cy="6"
+                        r="1"
+                    ></circle>
+
+                    <circle
+                        cx="15"
+                        cy="12"
+                        r="1"
+                    ></circle>
+
+                    <circle
+                        cx="10"
+                        cy="18"
+                        r="1"
+                    ></circle>
+
+                </svg>
+
+                <span>Transactions</span>
 
             </a>
 
 
             <!-- SUPPORT -->
-            <a href="support.html">
+            <a
+                href="support.html"
+                class="dashboard-nav-link"
+            >
 
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 12a8 8 0 0 1 16 0"></path>
-                        <path d="M4 12v5a2 2 0 0 0 2 2h2v-6H6a2 2 0 0 0-2 2"></path>
-                        <path d="M20 12v5a2 2 0 0 1-2 2h-2v-6h2a2 2 0 0 1 2 2"></path>
-                    </svg>
-                </span>
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    ></circle>
 
-                <span class="sidebar-nav-text">
-                    Support
-                </span>
+                    <path
+                        d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-1.2 1-1.7 1.3-1.7 2.7"
+                    ></path>
 
-            </a>
+                    <path
+                        d="M12 17h.01"
+                    ></path>
 
+                </svg>
 
-            <!-- SETTINGS -->
-            <a href="#">
-
-                <span class="sidebar-nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 1.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.1h-2.4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.7-1.7.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H6.7v-2.4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L8 8.7 9.7 7l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.1h2.4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3L18 7l1.7 1.7-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v2.4h-.1a1.7 1.7 0 0 0-1.5.9z"></path>
-                    </svg>
-                </span>
-
-                <span class="sidebar-nav-text">
-                    Settings
-                </span>
+                <span>Support</span>
 
             </a>
 
         </nav>
 
+
+        <!-- ==============================
+             LOGOUT
+        =============================== -->
+        <div class="sidebar-bottom">
+
+            <button
+                type="button"
+                class="logout-btn"
+                id="logoutBtn"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+                    ></path>
+
+                    <path
+                        d="m16 17 5-5-5-5"
+                    ></path>
+
+                    <path
+                        d="M21 12H9"
+                    ></path>
+
+                </svg>
+
+                <span>Logout</span>
+
+            </button>
+
+        </div>
+
     </aside>
 
 
-    <!-- MOBILE OVERLAY -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-
-    <!-- =====================================================
+    <!-- ==============================
          MAIN CONTENT
-         ===================================================== -->
+    =============================== -->
+    <main class="dashboard-main">
 
-    <main class="main-content">
 
+        <!-- ==============================
+             HEADER
+        =============================== -->
+        <header class="dashboard-header">
 
-        <!-- =================================================
-             TOPBAR
-             ================================================= -->
+            <div>
 
-        <header class="topbar">
+                <span class="page-label">
+                    CROWN CASH
+                </span>
 
-            <div class="topbar-left">
+                <h1>
+                    Investment Plans
+                </h1>
 
-                <button
-                    class="mobile-menu-btn"
-                    id="mobileMenuBtn"
-                    type="button"
-                    aria-label="Open menu"
-                >
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 6h16"></path>
-                        <path d="M4 12h16"></path>
-                        <path d="M4 18h16"></path>
-                    </svg>
-
-                </button>
-
-                <h2 class="page-title">
-                    <span>Investments</span>
-                </h2>
+                <p>
+                    Choose a plan that matches your investment budget.
+                </p>
 
             </div>
 
 
-            <div class="topbar-right">
+            <a
+                href="my-investments.html"
+                class="header-action-btn"
+            >
 
-                <button
-                    class="notification-btn"
-                    type="button"
-                    aria-label="Notifications"
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                 >
+                    <path
+                        d="M6 2h12v20H6z"
+                    ></path>
 
-                    <svg viewBox="0 0 24 24">
-                        <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-                        <path d="M10 21h4"></path>
-                    </svg>
+                    <path
+                        d="M9 6h6M9 10h6M9 14h4"
+                    ></path>
 
-                    <span class="notification-dot"></span>
+                </svg>
 
-                </button>
+                My Investments
 
-
-                <div class="topbar-profile">
-
-                    <div class="topbar-avatar">
-
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="8" r="3"></circle>
-                            <path d="M5 20a7 7 0 0 1 14 0"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="topbar-user">
-                        <strong id="topbarUserName">
-                            Crown Cash User
-                        </strong>
-
-                        <span>
-                            Investor
-                        </span>
-                    </div>
-
-                </div>
-
-            </div>
+            </a>
 
         </header>
 
 
-        <!-- =================================================
-             INVESTMENTS CONTAINER
-             ================================================= -->
+        <!-- ==============================
+             HERO
+        =============================== -->
+        <section class="investment-hero">
 
-        <div class="investments-container">
+            <div class="investment-hero-icon">
 
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="m12 2 2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5L12 2Z"
+                    ></path>
 
-            <!-- =================================================
-                 HERO
-                 ================================================= -->
+                    <path
+                        d="M19 2v4"
+                    ></path>
 
-            <section class="investment-hero">
+                    <path
+                        d="M21 4h-4"
+                    ></path>
 
-                <div class="investment-hero-content">
+                </svg>
 
-                    <div class="section-label">
-                        CROWN CASH INVESTMENTS
-                    </div>
-
-                    <h1>
-                        Grow Your Money
-                        <span>With Purpose</span>
-                    </h1>
-
-                    <p>
-                        Choose an investment plan that fits your
-                        financial goals and monitor your investment
-                        progress from your Crown Cash account.
-                    </p>
-
-                </div>
-
-
-                <!-- SMALL HERO ICON -->
-                <div class="investment-hero-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M5 19V9"></path>
-                        <path d="M10 19V5"></path>
-                        <path d="M15 19v-7"></path>
-                        <path d="M20 19V3"></path>
-                        <path d="M3 19h18"></path>
-
-                    </svg>
-
-                </div>
-
-            </section>
+            </div>
 
 
-            <!-- =================================================
-                 NOTICE
-                 ================================================= -->
+            <div class="investment-hero-content">
 
-            <section class="investment-notice">
+                <span class="hero-badge">
+                    30-DAY INVESTMENT PLANS
+                </span>
 
-                <div class="notice-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="9"></circle>
-                        <path d="M12 10v6"></path>
-                        <path d="M12 7h.01"></path>
-                    </svg>
-
-                </div>
+                <h2>
+                    Build your financial future
+                </h2>
 
                 <p>
-                    <strong>Investment notice:</strong>
-                    Investment projections shown on this page are
-                    for demonstration purposes and are not guaranteed
-                    returns. Always consider your financial situation
-                    before investing.
+                    Choose from our available investment plans and
+                    select an amount that meets the minimum requirement
+                    for your chosen plan.
                 </p>
 
-            </section>
+            </div>
+
+        </section>
 
 
-            <!-- =================================================
-                 AVAILABLE PLANS
-                 ================================================= -->
+        <!-- ==============================
+             INVESTMENT PLANS
+        =============================== -->
+        <section class="investment-section">
 
-            <section class="investment-plans-section">
 
-                <div class="investment-section-header">
+            <div class="section-heading">
 
-                    <div>
+                <div>
 
-                        <div class="section-label">
-                            AVAILABLE PLANS
+                    <span class="section-kicker">
+                        AVAILABLE PLANS
+                    </span>
+
+                    <h2>
+                        Choose your investment plan
+                    </h2>
+
+                </div>
+
+                <span class="section-note">
+                    Minimum amounts in UGX
+                </span>
+
+            </div>
+
+
+            <div class="investment-plans-grid">
+
+
+                <!-- =====================================
+                     STARTER PLAN
+                ====================================== -->
+                <article class="investment-plan-card starter-plan">
+
+
+                    <div class="plan-card-top">
+
+                        <div class="plan-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="m12 3 2.2 5.2L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-1.8L12 3Z"
+                                ></path>
+
+                                <path
+                                    d="M19 17v4"
+                                ></path>
+
+                                <path
+                                    d="M21 19h-4"
+                                ></path>
+
+                            </svg>
+
                         </div>
 
-                        <h2>
-                            Choose Your Investment
-                        </h2>
+
+                        <span class="plan-tag">
+                            BEGINNER
+                        </span>
 
                     </div>
 
-                    <p>
-                        30-day investment cycle
+
+                    <h3>
+                        Starter Plan
+                    </h3>
+
+
+                    <p class="plan-description">
+                        A simple starting point for users who want
+                        to begin with a lower investment amount.
                     </p>
 
-                </div>
+
+                    <div class="plan-price">
+
+                        <span>
+                            UGX
+                        </span>
+
+                        10,000
+
+                    </div>
 
 
-                <!-- =================================================
-                     PLAN GRID
-                     ================================================= -->
-
-                <div class="investment-plans-grid">
+                    <p class="minimum-label">
+                        Minimum investment
+                    </p>
 
 
-                    <!-- =================================================
-                         STARTER PLAN
-                         ================================================= -->
+                    <div class="plan-details">
 
-                    <article class="investment-plan-card">
 
-                        <div class="investment-plan-top">
+                        <div class="plan-detail">
 
-                            <div class="investment-plan-icon">
+                            <span class="detail-icon">
 
-                                <svg viewBox="0 0 24 24">
-                                    <rect x="4" y="6" width="16" height="13" rx="2"></rect>
-                                    <path d="M7 6V4h10v2"></path>
-                                    <path d="M9 12h6"></path>
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                    ></circle>
+
+                                    <path
+                                        d="M12 7v5l3 2"
+                                    ></path>
+
                                 </svg>
 
-                            </div>
-
-                            <div class="investment-plan-title">
-
-                                <h3>
-                                    Starter Plan
-                                </h3>
-
-                                <span>
-                                    Beginner
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="investment-plan-amount">
-
-                            <small>
-                                Investment Amount
-                            </small>
-
-                            <strong>
-                                UGX 10,000
-                            </strong>
+                            </span>
 
                             <span>
-                                Minimum starting amount
+                                30 days
                             </span>
 
                         </div>
 
 
-                        <div class="investment-plan-details">
+                        <div class="plan-detail">
 
+                            <span class="detail-icon">
 
-                            <!-- DURATION -->
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M12 3v18"
+                                    ></path>
 
-                            <div class="investment-detail">
+                                    <path
+                                        d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"
+                                    ></path>
 
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <rect x="4" y="5" width="16" height="15" rx="2"></rect>
-                                        <path d="M8 3v4"></path>
-                                        <path d="M16 3v4"></path>
-                                        <path d="M4 9h16"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    30 Days
-                                </strong>
-
-                                <span>
-                                    Duration
-                                </span>
-
-                            </div>
-
-
-                            <!-- RETURN -->
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M5 17l5-5 3 3 6-7"></path>
-                                        <path d="M15 8h4v4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    10%
-                                </strong>
-
-                                <span>
-                                    Projection
-                                </span>
-
-                            </div>
-
-
-                            <!-- STATUS -->
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M12 3l7 3v5c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-3z"></path>
-                                        <path d="M9 12l2 2 4-4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    Active
-                                </strong>
-
-                                <span>
-                                    Status
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="daily-return">
-
-                            <span>
-                                Projected Daily Return
-                            </span>
-
-                            <strong>
-                                UGX 1,000
-                            </strong>
-
-                        </div>
-
-
-                        <button
-                            class="invest-btn"
-                            type="button"
-                            onclick="createTestInvestment('Starter Plan', 10000)"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 19V5"></path>
-                                <path d="M6 11l6-6 6 6"></path>
-                            </svg>
-
-                            Invest Now
-
-                        </button>
-
-                    </article>
-
-
-
-                    <!-- =================================================
-                         STANDARD PLAN
-                         ================================================= -->
-
-                    <article class="investment-plan-card">
-
-                        <div class="investment-plan-top">
-
-                            <div class="investment-plan-icon">
-
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="8"></circle>
-                                    <path d="M14.5 9.5c-.5-.7-1.3-1-2.5-1-1.4 0-2.5.7-2.5 1.8 0 2.5 5 1.1 5 3.8 0 1.1-1.1 1.9-2.6 1.9-1.2 0-2.2-.4-2.8-1.2"></path>
-                                    <path d="M12 7v10"></path>
                                 </svg>
 
-                            </div>
-
-                            <div class="investment-plan-title">
-
-                                <h3>
-                                    Standard Plan
-                                </h3>
-
-                                <span>
-                                    Popular
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="investment-plan-amount">
-
-                            <small>
-                                Investment Amount
-                            </small>
-
-                            <strong>
-                                UGX 10,000
-                            </strong>
+                            </span>
 
                             <span>
-                                Standard investment option
+                                UGX 10K minimum
                             </span>
 
                         </div>
 
-
-                        <div class="investment-plan-details">
-
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <rect x="4" y="5" width="16" height="15" rx="2"></rect>
-                                        <path d="M8 3v4"></path>
-                                        <path d="M16 3v4"></path>
-                                        <path d="M4 9h16"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    30 Days
-                                </strong>
-
-                                <span>
-                                    Duration
-                                </span>
-
-                            </div>
+                    </div>
 
 
-                            <div class="investment-detail">
+                    <button
+                        type="button"
+                        class="plan-btn"
+                        data-plan="Starter Plan"
+                        onclick="createTestInvestment('Starter Plan', 10000)"
+                    >
 
-                                <div class="detail-icon">
+                        Start Starter Plan
 
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M5 17l5-5 3 3 6-7"></path>
-                                        <path d="M15 8h4v4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    10%
-                                </strong>
-
-                                <span>
-                                    Projection
-                                </span>
-
-                            </div>
-
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M12 3l7 3v5c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-3z"></path>
-                                        <path d="M9 12l2 2 4-4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    Active
-                                </strong>
-
-                                <span>
-                                    Status
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="daily-return">
-
-                            <span>
-                                Projected Daily Return
-                            </span>
-
-                            <strong>
-                                UGX 1,000
-                            </strong>
-
-                        </div>
-
-
-                        <button
-                            class="invest-btn"
-                            type="button"
-                            onclick="createTestInvestment('Standard Plan', 10000)"
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                         >
+                            <path
+                                d="M5 12h14"
+                            ></path>
 
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 19V5"></path>
-                                <path d="M6 11l6-6 6 6"></path>
+                            <path
+                                d="m13 6 6 6-6 6"
+                            ></path>
+
+                        </svg>
+
+                    </button>
+
+                </article>
+
+
+                <!-- =====================================
+                     STANDARD PLAN
+                ====================================== -->
+                <article class="investment-plan-card standard-plan">
+
+
+                    <div class="plan-card-top">
+
+                        <div class="plan-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M12 2 4 7l8 5 8-5-8-5Z"
+                                ></path>
+
+                                <path
+                                    d="m4 12 8 5 8-5"
+                                ></path>
+
+                                <path
+                                    d="m4 17 8 5 8-5"
+                                ></path>
+
                             </svg>
 
-                            Invest Now
-
-                        </button>
-
-                    </article>
+                        </div>
 
 
+                        <span class="plan-tag">
+                            POPULAR
+                        </span>
 
-                    <!-- =================================================
-                         ADVANCED PLAN
-                         ================================================= -->
+                    </div>
 
-                    <article class="investment-plan-card">
 
-                        <div class="investment-plan-top">
+                    <h3>
+                        Standard Plan
+                    </h3>
 
-                            <div class="investment-plan-icon">
 
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"></path>
-                                    <path d="M9 12l2 2 4-4"></path>
+                    <p class="plan-description">
+                        A balanced investment option for users
+                        ready to start with a higher amount.
+                    </p>
+
+
+                    <div class="plan-price">
+
+                        <span>
+                            UGX
+                        </span>
+
+                        15,000
+
+                    </div>
+
+
+                    <p class="minimum-label">
+                        Minimum investment
+                    </p>
+
+
+                    <div class="plan-details">
+
+
+                        <div class="plan-detail">
+
+                            <span class="detail-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                    ></circle>
+
+                                    <path
+                                        d="M12 7v5l3 2"
+                                    ></path>
+
                                 </svg>
 
-                            </div>
-
-                            <div class="investment-plan-title">
-
-                                <h3>
-                                    Advanced Plan
-                                </h3>
-
-                                <span>
-                                    Growth
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="investment-plan-amount">
-
-                            <small>
-                                Investment Amount
-                            </small>
-
-                            <strong>
-                                UGX 10,000
-                            </strong>
+                            </span>
 
                             <span>
-                                Advanced investment option
+                                30 days
                             </span>
 
                         </div>
 
 
-                        <div class="investment-plan-details">
+                        <div class="plan-detail">
 
+                            <span class="detail-icon">
 
-                            <div class="investment-detail">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M12 3v18"
+                                    ></path>
 
-                                <div class="detail-icon">
+                                    <path
+                                        d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"
+                                    ></path>
 
-                                    <svg viewBox="0 0 24 24">
-                                        <rect x="4" y="5" width="16" height="15" rx="2"></rect>
-                                        <path d="M8 3v4"></path>
-                                        <path d="M16 3v4"></path>
-                                        <path d="M4 9h16"></path>
-                                    </svg>
+                                </svg>
 
-                                </div>
-
-                                <strong>
-                                    30 Days
-                                </strong>
-
-                                <span>
-                                    Duration
-                                </span>
-
-                            </div>
-
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M5 17l5-5 3 3 6-7"></path>
-                                        <path d="M15 8h4v4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    10%
-                                </strong>
-
-                                <span>
-                                    Projection
-                                </span>
-
-                            </div>
-
-
-                            <div class="investment-detail">
-
-                                <div class="detail-icon">
-
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M12 3l7 3v5c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-3z"></path>
-                                        <path d="M9 12l2 2 4-4"></path>
-                                    </svg>
-
-                                </div>
-
-                                <strong>
-                                    Active
-                                </strong>
-
-                                <span>
-                                    Status
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="daily-return">
-
-                            <span>
-                                Projected Daily Return
                             </span>
 
-                            <strong>
-                                UGX 1,000
-                            </strong>
+                            <span>
+                                UGX 15K minimum
+                            </span>
 
                         </div>
 
+                    </div>
 
-                        <button
-                            class="invest-btn"
-                            type="button"
-                            onclick="createTestInvestment('Advanced Plan', 10000)"
+
+                    <button
+                        type="button"
+                        class="plan-btn"
+                        data-plan="Standard Plan"
+                        onclick="createTestInvestment('Standard Plan', 15000)"
+                    >
+
+                        Start Standard Plan
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                         >
+                            <path
+                                d="M5 12h14"
+                            ></path>
 
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 19V5"></path>
-                                <path d="M6 11l6-6 6 6"></path>
+                            <path
+                                d="m13 6 6 6-6 6"
+                            ></path>
+
+                        </svg>
+
+                    </button>
+
+                </article>
+
+
+                <!-- =====================================
+                     ADVANCED PLAN
+                ====================================== -->
+                <article class="investment-plan-card advanced-plan">
+
+
+                    <div class="plan-card-top">
+
+                        <div class="plan-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z"
+                                ></path>
+
+                                <path
+                                    d="M19 2v4"
+                                ></path>
+
+                                <path
+                                    d="M21 4h-4"
+                                ></path>
+
                             </svg>
 
-                            Invest Now
+                        </div>
 
-                        </button>
 
-                    </article>
+                        <span class="plan-tag">
+                            ADVANCED
+                        </span>
+
+                    </div>
+
+
+                    <h3>
+                        Advanced Plan
+                    </h3>
+
+
+                    <p class="plan-description">
+                        Designed for users who want to begin
+                        with a higher investment amount.
+                    </p>
+
+
+                    <div class="plan-price">
+
+                        <span>
+                            UGX
+                        </span>
+
+                        25,000
+
+                    </div>
+
+
+                    <p class="minimum-label">
+                        Minimum investment
+                    </p>
+
+
+                    <div class="plan-details">
+
+
+                        <div class="plan-detail">
+
+                            <span class="detail-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                    ></circle>
+
+                                    <path
+                                        d="M12 7v5l3 2"
+                                    ></path>
+
+                                </svg>
+
+                            </span>
+
+                            <span>
+                                30 days
+                            </span>
+
+                        </div>
+
+
+                        <div class="plan-detail">
+
+                            <span class="detail-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M12 3v18"
+                                    ></path>
+
+                                    <path
+                                        d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"
+                                    ></path>
+
+                                </svg>
+
+                            </span>
+
+                            <span>
+                                UGX 25K minimum
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="plan-btn"
+                        data-plan="Advanced Plan"
+                        onclick="createTestInvestment('Advanced Plan', 25000)"
+                    >
+
+                        Start Advanced Plan
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M5 12h14"
+                            ></path>
+
+                            <path
+                                d="m13 6 6 6-6 6"
+                            ></path>
+
+                        </svg>
+
+                    </button>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==============================
+             HOW IT WORKS
+        =============================== -->
+        <section class="how-it-works-section">
+
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        SIMPLE PROCESS
+                    </span>
+
+                    <h2>
+                        How investment works
+                    </h2>
 
                 </div>
 
-            </section>
+            </div>
 
 
-            <!-- =================================================
-                 HOW IT WORKS
-                 ================================================= -->
-
-            <section class="how-it-works">
-
-                <div class="investment-section-header">
-
-                    <div>
-
-                        <div class="section-label">
-                            SIMPLE PROCESS
-                        </div>
-
-                        <h2>
-                            How It Works
-                        </h2>
-
-                    </div>
-
-                </div>
+            <div class="how-it-works-grid">
 
 
-                <div class="how-it-works-grid">
+                <!-- STEP 1 -->
+                <div class="how-step">
 
+                    <div class="how-step-icon">
 
-                    <!-- STEP 1 -->
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-4Z"
+                            ></path>
 
-                    <div class="how-card">
+                            <path
+                                d="m9 12 2 2 4-4"
+                            ></path>
 
-                        <div class="how-card-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="8"></circle>
-                                <path d="M12 8v8"></path>
-                                <path d="M9 11h4a2 2 0 1 1 0 4H9"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            Choose a Plan
-                        </h3>
-
-                        <p>
-                            Select an investment option that matches
-                            your financial goals.
-                        </p>
-
-                    </div>
-
-
-                    <!-- STEP 2 -->
-
-                    <div class="how-card">
-
-                        <div class="how-card-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <rect x="3" y="6" width="18" height="13" rx="2"></rect>
-                                <path d="M3 10h18"></path>
-                                <path d="M7 15h3"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            Start Investing
-                        </h3>
-
-                        <p>
-                            Confirm your investment and monitor it
-                            directly from your account.
-                        </p>
-
-                    </div>
-
-
-                    <!-- STEP 3 -->
-
-                    <div class="how-card">
-
-                        <div class="how-card-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 17l5-5 3 3 6-7"></path>
-                                <path d="M15 8h4v4"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            Track Progress
-                        </h3>
-
-                        <p>
-                            Follow your investment status and projected
-                            returns from My Investments.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 RESPONSIBLE INVESTING
-                 ================================================= -->
-
-            <section class="responsible-investing">
-
-                <div class="responsible-header">
-
-                    <div class="responsible-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"></path>
-                            <path d="M9 12l2 2 4-4"></path>
                         </svg>
 
                     </div>
 
+
                     <h3>
-                        Invest Responsibly
+                        1. Choose a plan
                     </h3>
+
+
+                    <p>
+                        Select Starter, Standard or Advanced
+                        according to your budget.
+                    </p>
 
                 </div>
 
+
+                <!-- STEP 2 -->
+                <div class="how-step">
+
+                    <div class="how-step-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect
+                                x="3"
+                                y="5"
+                                width="18"
+                                height="14"
+                                rx="2"
+                            ></rect>
+
+                            <path
+                                d="M7 12h10"
+                            ></path>
+
+                            <path
+                                d="M12 8v8"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+
+                    <h3>
+                        2. Confirm your amount
+                    </h3>
+
+
+                    <p>
+                        Make sure your selected investment
+                        amount meets the minimum requirement.
+                    </p>
+
+                </div>
+
+
+                <!-- STEP 3 -->
+                <div class="how-step">
+
+                    <div class="how-step-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path
+                                d="M12 3v18"
+                            ></path>
+
+                            <path
+                                d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+
+                    <h3>
+                        3. Track your investment
+                    </h3>
+
+
+                    <p>
+                        View your investment and its status
+                        from the My Investments section.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==============================
+             PLAN SUMMARY
+        =============================== -->
+        <section class="investment-summary">
+
+            <div class="summary-header">
+
+                <div class="summary-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path
+                            d="M12 3v18"
+                        ></path>
+
+                        <path
+                            d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"
+                        ></path>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <span class="section-kicker">
+                        PLAN SUMMARY
+                    </span>
+
+                    <h2>
+                        Investment starting amounts
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-list">
+
+
+                <div class="summary-row">
+
+                    <div class="summary-plan">
+
+                        <span class="summary-number">
+                            01
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Starter Plan
+                            </strong>
+
+                            <small>
+                                30-day plan
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <strong class="summary-amount">
+                        UGX 10,000
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-row">
+
+                    <div class="summary-plan">
+
+                        <span class="summary-number">
+                            02
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Standard Plan
+                            </strong>
+
+                            <small>
+                                30-day plan
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <strong class="summary-amount">
+                        UGX 15,000
+                    </strong>
+
+                </div>
+
+
+                <div class="summary-row">
+
+                    <div class="summary-plan">
+
+                        <span class="summary-number">
+                            03
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Advanced Plan
+                            </strong>
+
+                            <small>
+                                30-day plan
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <strong class="summary-amount">
+                        UGX 25,000
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==============================
+             NOTICE
+        =============================== -->
+        <section class="investment-notice">
+
+
+            <div class="notice-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    ></circle>
+
+                    <path
+                        d="M12 8v4"
+                    ></path>
+
+                    <path
+                        d="M12 16h.01"
+                    ></path>
+
+                </svg>
+
+            </div>
+
+
+            <div>
+
+                <h3>
+                    Investment notice
+                </h3>
+
+
                 <p>
-                    Investment projections are estimates for
-                    demonstration purposes only. Investment values
-                    can change and returns are not guaranteed.
-                    Please review the terms of each investment before
-                    proceeding.
+                    The current Crown Cash investment flow is
+                    operating in testing/demo mode. The amounts
+                    shown above are the minimum starting amounts
+                    for each plan. Any return figures displayed
+                    elsewhere are projections and are not guaranteed.
                 </p>
 
-            </section>
+            </div>
+
+        </section>
 
 
-            <!-- =================================================
-                 FOOTER
-                 ================================================= -->
+        <!-- ==============================
+             FOOTER
+        =============================== -->
+        <footer class="dashboard-footer">
 
-            <footer class="investments-footer">
+            <p>
 
-                © <span id="currentYear"></span>
-                <strong>Crown Cash</strong>.
+                ©
+                <span id="currentYear"></span>
+                Crown Cash.
                 All rights reserved.
 
-            </footer>
+            </p>
 
-        </div>
+
+            <div class="footer-links">
+
+                <a href="terms.html">
+                    Terms
+                </a>
+
+                <a href="privacy.html">
+                    Privacy
+                </a>
+
+                <a href="support.html">
+                    Support
+                </a>
+
+            </div>
+
+        </footer>
+
 
     </main>
 
-</div>
 
+    <!-- ==============================
+         JAVASCRIPT
+    =============================== -->
 
-<!-- =========================================================
-     JAVASCRIPT
-     ========================================================= -->
-
-<script src="investments.js"></script>
+    <script src="investments.js"></script>
 
 </body>
+
 </html>

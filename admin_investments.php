@@ -2,7 +2,7 @@
 
 /*
 |--------------------------------------------------------------------------
-| Crown Cash — Admin Investments API
+| Crown Cash — Admin Investment Management API
 |--------------------------------------------------------------------------
 */
 
@@ -15,7 +15,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 /*
 |--------------------------------------------------------------------------
-| CORS PREFLIGHT
+| Handle CORS Preflight
 |--------------------------------------------------------------------------
 */
 
@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 /*
 |--------------------------------------------------------------------------
-| SESSION
+| Session Configuration
 |--------------------------------------------------------------------------
 */
 
@@ -45,7 +45,7 @@ session_start();
 
 /*
 |--------------------------------------------------------------------------
-| DATABASE
+| Database
 |--------------------------------------------------------------------------
 */
 
@@ -54,62 +54,28 @@ require_once __DIR__ . "/config.php";
 
 /*
 |--------------------------------------------------------------------------
-| RESPONSE HELPER
-|--------------------------------------------------------------------------
-*/
-
-function sendResponse(
-    bool $success,
-    string $message = "",
-    array $data = [],
-    int $statusCode = 200
-): void {
-
-    http_response_code($statusCode);
-
-    echo json_encode(
-        array_merge(
-            [
-                "success" => $success,
-                "message" => $message
-            ],
-            $data
-        )
-    );
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK ADMIN
+| Admin Authentication
 |--------------------------------------------------------------------------
 */
 
 function requireAdmin()
 {
-    /*
-     * Check login session
-     */
+    global $users;
 
     if (
         empty($_SESSION["logged_in"]) ||
         empty($_SESSION["user_id"])
     ) {
+        http_response_code(401);
 
-        sendResponse(
-            false,
-            "Please login first.",
-            [],
-            401
-        );
+        echo json_encode([
+            "success" => false,
+            "message" => "Please login first."
+        ]);
+
+        exit;
     }
 
-
-    /*
-     * Convert session ID to MongoDB ObjectId
-     */
 
     try {
 
@@ -119,118 +85,60 @@ function requireAdmin()
 
     } catch (Throwable $e) {
 
-        sendResponse(
-            false,
-            "Invalid user session.",
-            [
-                "session_user_id" =>
-                    $_SESSION["user_id"] ?? null
-            ],
-            401
-        );
+        http_response_code(401);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid user session."
+        ]);
+
+        exit;
     }
 
 
     /*
-     * Find the actual user in Crown Cash
-     */
-
-    global $users;
+    |--------------------------------------------------------------------------
+    | Always verify admin role from MongoDB
+    |--------------------------------------------------------------------------
+    */
 
     $admin = $users->findOne([
         "_id" => $userId
     ]);
 
 
-    /*
-     * User not found
-     */
-
     if (!$admin) {
 
-        sendResponse(
-            false,
-            "The logged-in user was not found in Crown Cash.",
-            [
-                "session_user_id" =>
-                    (string) $userId,
+        http_response_code(403);
 
-                "session_email" =>
-                    $_SESSION["user_email"] ?? null
-            ],
-            403
-        );
+        echo json_encode([
+            "success" => false,
+            "message" => "Administrator account not found."
+        ]);
+
+        exit;
     }
 
 
-    /*
-     * Read role directly from MongoDB
-     */
-
-    $databaseRole = strtolower(
+    $role = strtolower(
         trim(
-            (string) (
-                $admin["role"] ?? ""
-            )
+            (string) ($admin["role"] ?? "")
         )
     );
 
 
-    /*
-     * TEMPORARY DIAGNOSTIC
-     *
-     * This tells us exactly which user the session
-     * is connected to.
-     */
+    if ($role !== "admin") {
 
-    if ($databaseRole !== "admin") {
+        http_response_code(403);
 
-        sendResponse(
-            false,
-            "Administrator role mismatch.",
-            [
-                "session" => [
-                    "logged_in" =>
-                        $_SESSION["logged_in"] ?? false,
+        echo json_encode([
+            "success" => false,
+            "message" => "Administrator access required."
+        ]);
 
-                    "user_id" =>
-                        $_SESSION["user_id"] ?? null,
-
-                    "user_email" =>
-                        $_SESSION["user_email"] ?? null,
-
-                    "session_role" =>
-                        $_SESSION["role"] ?? null
-                ],
-
-                "database_user" => [
-                    "id" =>
-                        (string) $admin["_id"],
-
-                    "email" =>
-                        $admin["email"] ?? "",
-
-                    "firstName" =>
-                        $admin["firstName"] ?? "",
-
-                    "lastName" =>
-                        $admin["lastName"] ?? "",
-
-                    "role" =>
-                        $admin["role"] ?? "NOT SET",
-
-                    "status" =>
-                        $admin["status"] ?? "NOT SET"
-                ]
-            ],
-            403
-        );
+        exit;
     }
 
-
-    /*
-     * Administrator confirmed
-     */
 
     return $admin;
 }
@@ -238,37 +146,39 @@ function requireAdmin()
 
 /*
 |--------------------------------------------------------------------------
-| METHOD CHECK
+| Only GET is allowed
 |--------------------------------------------------------------------------
 */
 
 if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 
-    sendResponse(
-        false,
-        "Method not allowed.",
-        [],
-        405
-    );
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| VERIFY ADMIN
-|--------------------------------------------------------------------------
-*/
-
-$admin = requireAdmin();
-
-
-/*
-|--------------------------------------------------------------------------
-| LOAD INVESTMENTS
-|--------------------------------------------------------------------------
-*/
-
 try {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Verify Administrator
+    |--------------------------------------------------------------------------
+    */
+
+    $admin = requireAdmin();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load Investments
+    |--------------------------------------------------------------------------
+    */
 
     $cursor = $investments->find(
         [],
@@ -281,29 +191,26 @@ try {
     );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Prepare Results
+    |--------------------------------------------------------------------------
+    */
+
     $investmentList = [];
 
     $totalInvestments = 0;
     $totalAmount = 0;
-    $activeInvestments = 0;
-    $pendingInvestments = 0;
-    $completedInvestments = 0;
 
+    $active = 0;
+    $pending = 0;
+    $completed = 0;
 
-    /*
-     |--------------------------------------------------------------------------
-     | PROCESS INVESTMENTS
-     |--------------------------------------------------------------------------
-     */
 
     foreach ($cursor as $investment) {
 
         $totalInvestments++;
 
-
-        /*
-         * Amount
-         */
 
         $amount = (float) (
             $investment["amount"] ?? 0
@@ -311,10 +218,6 @@ try {
 
         $totalAmount += $amount;
 
-
-        /*
-         * Status
-         */
 
         $status = strtolower(
             trim(
@@ -326,29 +229,25 @@ try {
 
 
         if ($status === "active") {
-            $activeInvestments++;
+            $active++;
         }
 
-        if ($status === "pending") {
-            $pendingInvestments++;
+        elseif ($status === "pending") {
+            $pending++;
         }
 
-        if (
-            $status === "completed" ||
-            $status === "complete" ||
-            $status === "closed"
-        ) {
-            $completedInvestments++;
+        elseif ($status === "completed") {
+            $completed++;
         }
 
 
         /*
-         * User information
-         */
+        |--------------------------------------------------------------------------
+        | Find Investor
+        |--------------------------------------------------------------------------
+        */
 
-        $userName = "Unknown User";
-        $userEmail = "";
-        $userPhone = "";
+        $user = null;
 
 
         if (
@@ -359,61 +258,30 @@ try {
             $user = $users->findOne([
                 "_id" => $investment["user_id"]
             ]);
+        }
 
-            if ($user) {
 
-                $firstName = trim(
-                    (string) (
-                        $user["firstName"] ?? ""
-                    )
-                );
+        $firstName = $user["firstName"] ?? "";
+        $lastName = $user["lastName"] ?? "";
 
-                $lastName = trim(
-                    (string) (
-                        $user["lastName"] ?? ""
-                    )
-                );
 
-                $userName = trim(
-                    $firstName . " " . $lastName
-                );
+        $fullName = trim(
+            $firstName . " " . $lastName
+        );
 
-                if ($userName === "") {
-                    $userName = "Crown Cash User";
-                }
 
-                $userEmail = (string) (
-                    $user["email"] ?? ""
-                );
-
-                $userPhone = (string) (
-                    $user["phone"] ?? ""
-                );
-            }
+        if ($fullName === "") {
+            $fullName = "Unknown User";
         }
 
 
         /*
-         * Investment ID
-         */
+        |--------------------------------------------------------------------------
+        | Dates
+        |--------------------------------------------------------------------------
+        */
 
-        $investmentId = "";
-
-        if (
-            isset($investment["_id"]) &&
-            $investment["_id"] instanceof MongoDB\BSON\ObjectId
-        ) {
-
-            $investmentId =
-                (string) $investment["_id"];
-        }
-
-
-        /*
-         * Created date
-         */
-
-        $createdAt = null;
+        $createdAt = "";
 
         if (
             isset($investment["created_at"]) &&
@@ -427,11 +295,7 @@ try {
         }
 
 
-        /*
-         * Updated date
-         */
-
-        $updatedAt = null;
+        $updatedAt = "";
 
         if (
             isset($investment["updated_at"]) &&
@@ -446,136 +310,127 @@ try {
 
 
         /*
-         * Duration
-         */
-
-        $durationDays = (int) (
-            $investment["duration_days"]
-            ?? $investment["duration"]
-            ?? 30
-        );
-
-
-        /*
-         * Type
-         */
-
-        $type = (string) (
-            $investment["type"] ?? "investment"
-        );
-
-
-        /*
-         * Currency
-         */
-
-        $currency = (string) (
-            $investment["currency"] ?? "UGX"
-        );
-
-
-        /*
-         * Add investment
-         */
+        |--------------------------------------------------------------------------
+        | Investment Record
+        |--------------------------------------------------------------------------
+        */
 
         $investmentList[] = [
 
-            "id" => $investmentId,
+            "id" => (string) $investment["_id"],
 
             "user" => [
-                "name" => $userName,
-                "email" => $userEmail,
-                "phone" => $userPhone
+
+                "name" => $fullName,
+
+                "email" =>
+                    $user["email"] ?? "",
+
+                "phone" =>
+                    $user["phone"] ?? ""
             ],
 
-            "plan" => (string) (
-                $investment["plan"] ?? "Investment Plan"
-            ),
+            "plan" =>
+                $investment["plan"] ?? "",
 
-            "amount" => $amount,
+            "amount" =>
+                $amount,
 
-            "currency" => $currency,
+            "currency" =>
+                $investment["currency"] ?? "UGX",
 
-            "status" => $status,
+            "status" =>
+                $status,
 
-            "type" => $type,
+            "type" =>
+                $investment["type"] ?? "test",
 
-            "duration_days" => $durationDays,
+            "duration_days" =>
+                (int) (
+                    $investment["duration_days"] ?? 30
+                ),
 
-            "created_at" => $createdAt,
+            "created_at" =>
+                $createdAt,
 
-            "updated_at" => $updatedAt
+            "updated_at" =>
+                $updatedAt
         ];
     }
 
 
     /*
-     |--------------------------------------------------------------------------
-     | SUCCESS RESPONSE
-     |--------------------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | Response
+    |--------------------------------------------------------------------------
+    */
 
-    sendResponse(
-        true,
-        "Investments loaded successfully.",
-        [
-            "admin" => [
-                "id" =>
-                    (string) $admin["_id"],
+    echo json_encode([
 
-                "name" =>
-                    trim(
-                        (string) (
-                            $admin["firstName"] ?? ""
-                        )
-                        . " "
-                        . (string) (
-                            $admin["lastName"] ?? ""
-                        )
-                    ),
+        "success" => true,
 
-                "email" =>
-                    (string) (
-                        $admin["email"] ?? ""
-                    )
-            ],
+        "message" =>
+            "Investments loaded successfully.",
 
-            "stats" => [
-                "total_investments" =>
-                    $totalInvestments,
+        "admin" => [
 
-                "total_amount" =>
-                    $totalAmount,
+            "id" =>
+                (string) $admin["_id"],
 
-                "active" =>
-                    $activeInvestments,
+            "name" =>
+                trim(
+                    ($admin["firstName"] ?? "") .
+                    " " .
+                    ($admin["lastName"] ?? "")
+                ),
 
-                "pending" =>
-                    $pendingInvestments,
+            "email" =>
+                $admin["email"] ?? ""
+        ],
 
-                "completed" =>
-                    $completedInvestments
-            ],
+        "stats" => [
 
-            "investments" =>
-                $investmentList
-        ]
-    );
+            "total_investments" =>
+                $totalInvestments,
+
+            "total_amount" =>
+                $totalAmount,
+
+            "active" =>
+                $active,
+
+            "pending" =>
+                $pending,
+
+            "completed" =>
+                $completed
+        ],
+
+        "investments" =>
+            $investmentList
+    ]);
+
+    exit;
 
 
 } catch (Throwable $e) {
 
     error_log(
-        "CROWN CASH ADMIN INVESTMENTS ERROR: "
-        . $e->getMessage()
+        "CROWN CASH ADMIN INVESTMENTS ERROR: " .
+        $e->getMessage()
     );
 
-    sendResponse(
-        false,
-        "Unable to load investments.",
-        [],
-        500
-    );
+    http_response_code(500);
+
+    echo json_encode([
+
+        "success" => false,
+
+        "message" =>
+            "Unable to load investments."
+    ]);
+
+    exit;
 }
 
 ?>

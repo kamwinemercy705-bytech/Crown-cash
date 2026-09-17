@@ -1,23 +1,12 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash — Profile API
-|--------------------------------------------------------------------------
-*/
+session_start();
 
+header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json; charset=UTF-8");
-
-
-/*
-|--------------------------------------------------------------------------
-| Handle CORS preflight
-|--------------------------------------------------------------------------
-*/
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
@@ -27,90 +16,43 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 /*
 |--------------------------------------------------------------------------
-| Session configuration
+| CHECK LOGIN
 |--------------------------------------------------------------------------
 */
 
-session_set_cookie_params([
-    "lifetime" => 0,
-    "path" => "/",
-    "domain" => "",
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
-]);
-
-session_start();
-
-
-/*
-|--------------------------------------------------------------------------
-| Load MongoDB configuration
-|--------------------------------------------------------------------------
-*/
-
-require_once __DIR__ . "/config.php";
-
-
-/*
-|--------------------------------------------------------------------------
-| Only allow GET
-|--------------------------------------------------------------------------
-*/
-
-if ($_SERVER["REQUEST_METHOD"] !== "GET") {
-
-    http_response_code(405);
+if (
+    !isset($_SESSION["logged_in"]) ||
+    $_SESSION["logged_in"] !== true ||
+    !isset($_SESSION["user_id"])
+) {
+    http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" => "Method not allowed."
+        "message" => "Please login first."
     ]);
 
     exit;
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| LOAD MONGODB CONFIGURATION
+|--------------------------------------------------------------------------
+*/
+
+require_once __DIR__ . "/config.php";
+
 try {
 
     /*
     |--------------------------------------------------------------------------
-    | Check login session
+    | FIND USER
     |--------------------------------------------------------------------------
     */
 
-    if (
-        empty($_SESSION["logged_in"]) ||
-        empty($_SESSION["user_id"])
-    ) {
-
-        http_response_code(401);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "You are not logged in."
-        ]);
-
-        exit;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Get user ID from session
-    |--------------------------------------------------------------------------
-    */
-
-    $userId = new MongoDB\BSON\ObjectId(
-        $_SESSION["user_id"]
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Find user
-    |--------------------------------------------------------------------------
-    */
+    $userId = new MongoDB\BSON\ObjectId($_SESSION["user_id"]);
 
     $user = $users->findOne([
         "_id" => $userId
@@ -123,7 +65,7 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "User account not found."
+            "message" => "User account was not found."
         ]);
 
         exit;
@@ -132,40 +74,68 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Check account status
+    | SPLIT FULL NAME
     |--------------------------------------------------------------------------
     */
 
-    if (($user["status"] ?? "active") !== "active") {
+    $fullName = trim((string)($user["full_name"] ?? ""));
 
-        http_response_code(403);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "This account is not active."
-        ]);
-
-        exit;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Prepare full name
-    |--------------------------------------------------------------------------
-    */
-
-    $firstName = $user["firstName"] ?? "";
-    $lastName  = $user["lastName"] ?? "";
-
-    $fullName = trim(
-        $firstName . " " . $lastName
+    $nameParts = preg_split(
+        "/\s+/",
+        $fullName,
+        -1,
+        PREG_SPLIT_NO_EMPTY
     );
 
+    $firstName = $nameParts[0] ?? "";
+    $lastName = "";
+
+    if (count($nameParts) > 1) {
+        $lastName = implode(
+            " ",
+            array_slice($nameParts, 1)
+        );
+    }
+
 
     /*
     |--------------------------------------------------------------------------
-    | Return profile information
+    | ACCOUNT DATA
+    |--------------------------------------------------------------------------
+    */
+
+    $balance = $user["balance"] ?? 0;
+
+    if ($balance instanceof MongoDB\BSON\Decimal128) {
+        $balance = (float)$balance->__toString();
+    } else {
+        $balance = (float)$balance;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATED DATE
+    |--------------------------------------------------------------------------
+    */
+
+    $createdAt = "";
+
+    if (
+        isset($user["created_at"]) &&
+        $user["created_at"] instanceof MongoDB\BSON\UTCDateTime
+    ) {
+
+        $createdAt = $user["created_at"]
+            ->toDateTime()
+            ->format("Y-m-d");
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RETURN USER PROFILE
     |--------------------------------------------------------------------------
     */
 
@@ -175,42 +145,49 @@ try {
 
         "user" => [
 
-            "id" =>
-                (string) $user["_id"],
-
-            "fullName" =>
-                $fullName,
-
-            "firstName" =>
+            "first_name" =>
                 $firstName,
 
-            "lastName" =>
+            "last_name" =>
                 $lastName,
 
+            "full_name" =>
+                $fullName,
+
             "email" =>
-                $user["email"] ?? "",
+                (string)($user["email"] ?? ""),
 
             "phone" =>
-                $user["phone"] ?? "",
+                (string)($user["phone"] ?? ""),
 
-            "referralCode" =>
-                $user["referralCode"] ?? "",
+            "referral_code" =>
+                (string)($user["referral_code"] ?? ""),
 
             "balance" =>
-                $user["balance"] ?? 0,
+                $balance,
 
             "status" =>
-                $user["status"] ?? "active"
+                (string)($user["status"] ?? "active"),
+
+            "account_type" =>
+                (string)($user["account_type"] ?? "user"),
+
+            "created_at" =>
+                $createdAt
         ]
 
     ]);
 
-} catch (Throwable $e) {
+} catch (MongoDB\Driver\Exception\Exception $e) {
 
-    error_log(
-        "CROWN CASH PROFILE ERROR: " .
-        $e->getMessage()
-    );
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Database error."
+    ]);
+
+} catch (Exception $e) {
 
     http_response_code(500);
 
@@ -219,5 +196,183 @@ try {
         "message" => "Unable to load profile."
     ]);
 }
-
 ?>
+
+Step 2 — Connect "profile.html" to it
+
+In your "profile.html", replace the small JavaScript section at the bottom with this:
+
+:::writing{variant="document" id="76314" title="Profile API Connection JavaScript"}
+
+<script>
+
+    /* ================= MOBILE MENU ================= */
+
+    const menuBtn = document.getElementById("menuBtn");
+    const sidebar = document.getElementById("sidebar");
+
+    if (menuBtn) {
+
+        menuBtn.addEventListener("click", function () {
+
+            sidebar.classList.toggle("open");
+
+            const icon = menuBtn.querySelector("i");
+
+            if (sidebar.classList.contains("open")) {
+
+                icon.classList.remove("fa-bars");
+                icon.classList.add("fa-xmark");
+
+            } else {
+
+                icon.classList.remove("fa-xmark");
+                icon.classList.add("fa-bars");
+
+            }
+
+        });
+
+    }
+
+
+    /* ================= LOAD PROFILE ================= */
+
+    async function loadProfile() {
+
+        try {
+
+            const response = await fetch(
+                "https://crown-cash1.onrender.com/profile.php",
+                {
+                    method: "GET",
+                    credentials: "include"
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (!response.ok || !data.success) {
+
+                console.log(
+                    data.message || "Unable to load profile."
+                );
+
+                return;
+            }
+
+
+            const user = data.user;
+
+
+            /* NAME */
+
+            document.getElementById("profileName").textContent =
+                user.full_name || "Crown Cash User";
+
+
+            /* FIRST NAME */
+
+            document.getElementById("firstName").textContent =
+                user.first_name || "Not available";
+
+
+            /* LAST NAME */
+
+            document.getElementById("lastName").textContent =
+                user.last_name || "Not available";
+
+
+            /* PHONE */
+
+            document.getElementById("phoneNumber").textContent =
+                user.phone || "Not available";
+
+
+            /* EMAIL */
+
+            document.getElementById("emailAddress").textContent =
+                user.email || "Not available";
+
+
+            /* BALANCE */
+
+            document.getElementById("balance").textContent =
+                "UGX " +
+                Number(user.balance || 0).toLocaleString();
+
+
+            /* REFERRAL CODE */
+
+            document.getElementById("referralCode").textContent =
+                user.referral_code || "Not available";
+
+
+            /* MEMBER SINCE */
+
+            document.getElementById("memberSince").textContent =
+                user.created_at || "Not available";
+
+
+        } catch (error) {
+
+            console.error(
+                "Profile loading error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* ================= CHANGE PASSWORD ================= */
+
+    function changePassword() {
+
+        window.location.href =
+            "change-password.html";
+
+    }
+
+
+    /* ================= START ================= */
+
+    loadProfile();
+
+</script>
+
+Step 3 — Important
+
+Your "config.php" must continue using the same MongoDB environment variable that your Render service actually has configured. Your recent setup changed between "MONGODB_URI" and "DB_URI", so they must match exactly.
+
+Also, your login system must establish:
+
+$_SESSION["logged_in"] = true;
+$_SESSION["user_id"] = $user["_id"]->toString();
+
+Otherwise "profile.php" will correctly respond:
+
+Please login first.
+
+What this will achieve
+
+Once a user logs in and opens:
+
+"https://crown-cash.vercel.app/profile.html"
+
+the page can display their actual:
+
+👤 Name
+📱 Phone
+✉️ Email
+💰 Balance
+👥 Referral code
+📅 Member since
+🛡️ Account status
+
+rather than the "Not available" placeholders.
+
+Next backend step after this: we should test the complete flow Register → Login → Profile, because that will tell us whether your PHP session between Vercel and Render is working correctly before we connect deposits, investments, and withdrawals.

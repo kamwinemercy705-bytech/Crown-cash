@@ -1,9 +1,78 @@
 <?php
 
-require_once "auth.php";
-require_once "config.php";
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH — WITHDRAWAL REQUEST API
+|--------------------------------------------------------------------------
+| Creates a pending withdrawal request for the logged-in user.
+| Admin approval is required before the withdrawal is processed.
+|--------------------------------------------------------------------------
+*/
 
-header("Content-Type: application/json");
+
+/*
+|--------------------------------------------------------------------------
+| CROSS-SITE SESSION
+|--------------------------------------------------------------------------
+*/
+
+session_set_cookie_params([
+    "lifetime" => 0,
+    "path" => "/",
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
+session_start();
+
+
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
+
+header(
+    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+);
+
+header(
+    "Access-Control-Allow-Credentials: true"
+);
+
+header(
+    "Access-Control-Allow-Methods: POST, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type"
+);
+
+header(
+    "Content-Type: application/json; charset=UTF-8"
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| HANDLE OPTIONS REQUEST
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+
+    http_response_code(204);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ONLY POST ALLOWED
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 
@@ -17,22 +86,127 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-$amount = filter_input(
-    INPUT_POST,
-    "amount",
-    FILTER_VALIDATE_FLOAT
+
+/*
+|--------------------------------------------------------------------------
+| CHECK LOGIN
+|--------------------------------------------------------------------------
+*/
+
+if (
+    empty($_SESSION["logged_in"]) ||
+    empty($_SESSION["user_id"])
+) {
+
+    http_response_code(401);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "You must be logged in to make a withdrawal."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| LOAD DATABASE
+|--------------------------------------------------------------------------
+*/
+
+require_once __DIR__ . "/config.php";
+
+
+/*
+|--------------------------------------------------------------------------
+| READ REQUEST
+|--------------------------------------------------------------------------
+|
+| Supports JSON requests from withdraw.js.
+|
+*/
+
+$input = json_decode(
+    file_get_contents("php://input"),
+    true
 );
 
-$method = trim(
-    $_POST["method"] ?? ""
-);
 
-$account = trim(
-    $_POST["account"] ?? ""
-);
+/*
+|--------------------------------------------------------------------------
+| ALSO SUPPORT NORMAL POST REQUESTS
+|--------------------------------------------------------------------------
+*/
+
+if (!is_array($input)) {
+
+    $input = $_POST;
+
+}
 
 
-if ($amount === false || $amount <= 0) {
+/*
+|--------------------------------------------------------------------------
+| GET AMOUNT
+|--------------------------------------------------------------------------
+*/
+
+$amount = $input["amount"] ?? null;
+
+
+/*
+|--------------------------------------------------------------------------
+| GET METHOD
+|--------------------------------------------------------------------------
+|
+| Accept:
+| mtn / airtel
+| MTN / Airtel
+|
+*/
+
+$method =
+    strtolower(
+        trim(
+            (string)(
+                $input["payment_method"]
+                ?? $input["method"]
+                ?? ""
+            )
+        )
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| GET MOBILE MONEY ACCOUNT
+|--------------------------------------------------------------------------
+*/
+
+$account =
+    trim(
+        (string)(
+            $input["phone"]
+            ?? $input["account"]
+            ?? ""
+        )
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| VALIDATE AMOUNT
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $amount === null ||
+    $amount === "" ||
+    !is_numeric($amount)
+) {
+
+    http_response_code(400);
 
     echo json_encode([
         "success" => false,
@@ -43,166 +217,633 @@ if ($amount === false || $amount <= 0) {
 }
 
 
-if (!in_array(
-    $method,
-    ["MTN", "Airtel"],
-    true
-)) {
+$amount = (float)$amount;
+
+
+/*
+|--------------------------------------------------------------------------
+| MINIMUM WITHDRAWAL
+|--------------------------------------------------------------------------
+*/
+
+$minimumWithdrawal = 10000;
+
+
+if ($amount < $minimumWithdrawal) {
+
+    http_response_code(400);
 
     echo json_encode([
         "success" => false,
-        "message" => "Invalid withdrawal method."
+        "message" =>
+            "Minimum withdrawal amount is UGX 10,000."
     ]);
 
     exit;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| ENSURE WHOLE UGX
+|--------------------------------------------------------------------------
+*/
+
+if (floor($amount) != $amount) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Withdrawal amount must be a whole UGX amount."
+    ]);
+
+    exit;
+}
+
+
+$amount = (int)$amount;
+
+
+/*
+|--------------------------------------------------------------------------
+| NORMALIZE PAYMENT METHOD
+|--------------------------------------------------------------------------
+*/
+
+if ($method === "mtn") {
+
+    $method = "MTN";
+
+}
+
+elseif ($method === "airtel") {
+
+    $method = "Airtel";
+
+}
+
+else {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Please select MTN or Airtel Mobile Money."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VALIDATE MOBILE MONEY NUMBER
+|--------------------------------------------------------------------------
+*/
 
 if ($account === "") {
 
+    http_response_code(400);
+
     echo json_encode([
         "success" => false,
-        "message" => "Enter the mobile money account."
+        "message" =>
+            "Enter the Mobile Money account number."
     ]);
 
     exit;
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| CLEAN PHONE NUMBER
+|--------------------------------------------------------------------------
+*/
+
+$account = preg_replace(
+    "/[\s\-]/",
+    "",
+    $account
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| CONVERT +256 TO 0XXXXXXXXX
+|--------------------------------------------------------------------------
+*/
+
+if (strpos($account, "+256") === 0) {
+
+    $account =
+        "0" . substr($account, 4);
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VALIDATE UGANDAN NUMBER
+|--------------------------------------------------------------------------
+*/
+
+if (!preg_match(
+    "/^07[0-9]{8}$/",
+    $account
+)) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Enter a valid Ugandan Mobile Money number."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VERIFY NETWORK PREFIX
+|--------------------------------------------------------------------------
+*/
+
+$prefix =
+    substr($account, 0, 3);
+
+
+/*
+|--------------------------------------------------------------------------
+| MTN PREFIXES
+|--------------------------------------------------------------------------
+*/
+
+$mtnPrefixes = [
+    "077",
+    "078",
+    "076"
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| AIRTEL PREFIXES
+|--------------------------------------------------------------------------
+*/
+
+$airtelPrefixes = [
+    "070",
+    "075",
+    "074"
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK SELECTED NETWORK
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $method === "MTN" &&
+    !in_array(
+        $prefix,
+        $mtnPrefixes,
+        true
+    )
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "The number does not appear to be an MTN number."
+    ]);
+
+    exit;
+}
+
+
+if (
+    $method === "Airtel" &&
+    !in_array(
+        $prefix,
+        $airtelPrefixes,
+        true
+    )
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "The number does not appear to be an Airtel number."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CONVERT SESSION USER ID
+|--------------------------------------------------------------------------
+*/
+
 try {
 
-    $userId = new MongoDB\BSON\ObjectId(
-        $_SESSION["user_id"]
+    $userId =
+        new MongoDB\BSON\ObjectId(
+            $_SESSION["user_id"]
+        );
+
+} catch (Throwable $e) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Invalid user session."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FIND USER
+|--------------------------------------------------------------------------
+*/
+
+try {
+
+    $user =
+        $users->findOne([
+            "_id" => $userId
+        ]);
+
+} catch (Throwable $e) {
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Unable to access your account."
+    ]);
+
+    exit;
+}
+
+
+if (!$user) {
+
+    http_response_code(404);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "User account not found."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK ACCOUNT STATUS
+|--------------------------------------------------------------------------
+*/
+
+$userStatus =
+    strtolower(
+        (string)(
+            $user["status"]
+            ?? "active"
+        )
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Find user
-    |--------------------------------------------------------------------------
-    */
+if (
+    in_array(
+        $userStatus,
+        [
+            "blocked",
+            "suspended",
+            "disabled"
+        ],
+        true
+    )
+) {
 
-    $user = $users->findOne([
-        "_id" => $userId
+    http_response_code(403);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Your account cannot make withdrawals at this time."
     ]);
 
+    exit;
+}
 
-    if (!$user) {
 
-        echo json_encode([
-            "success" => false,
-            "message" => "User not found."
-        ]);
+/*
+|--------------------------------------------------------------------------
+| GET USER BALANCE
+|--------------------------------------------------------------------------
+*/
 
-        exit;
+$balance = 0;
+
+
+if (isset($user["balance"])) {
+
+    if (
+        $user["balance"]
+        instanceof MongoDB\BSON\Decimal128
+    ) {
+
+        $balance =
+            (float)$user["balance"]
+                ->toString();
+
+    } else {
+
+        $balance =
+            (float)$user["balance"];
+
     }
 
+}
 
-    $balance =
-        (float)($user["balance"] ?? 0);
+elseif (isset($user["wallet_balance"])) {
 
+    if (
+        $user["wallet_balance"]
+        instanceof MongoDB\BSON\Decimal128
+    ) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Check balance
-    |--------------------------------------------------------------------------
-    */
+        $balance =
+            (float)$user["wallet_balance"]
+                ->toString();
 
-    if ($amount > $balance) {
+    } else {
 
-        echo json_encode([
-            "success" => false,
-            "message" => "Insufficient balance."
-        ]);
+        $balance =
+            (float)$user["wallet_balance"];
 
-        exit;
     }
 
+}
 
-    /*
-    |--------------------------------------------------------------------------
-    | Create pending withdrawal
-    |--------------------------------------------------------------------------
-    */
 
-    $withdrawal = [
+/*
+|--------------------------------------------------------------------------
+| CHECK BALANCE
+|--------------------------------------------------------------------------
+*/
 
-        "user_id" => $userId,
+if ($amount > $balance) {
 
-        "amount" => $amount,
+    http_response_code(400);
 
-        "method" => $method,
+    echo json_encode([
 
-        "account" => $account,
+        "success" => false,
 
-        "status" => "pending",
+        "message" =>
+            "Insufficient available balance.",
 
-        "created_at" =>
-            new MongoDB\BSON\UTCDateTime()
+        "available_balance" =>
+            $balance
 
-    ];
+    ]);
 
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK EXISTING PENDING WITHDRAWAL
+|--------------------------------------------------------------------------
+*/
+
+try {
+
+    $pending =
+        $withdrawals->findOne([
+
+            "user_id" =>
+                $userId,
+
+            "status" =>
+                "pending"
+
+        ]);
+
+} catch (Throwable $e) {
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Unable to check existing withdrawals."
+    ]);
+
+    exit;
+}
+
+
+if ($pending) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "You already have a pending withdrawal request. Please wait for it to be processed."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE WITHDRAWAL
+|--------------------------------------------------------------------------
+*/
+
+$now =
+    new MongoDB\BSON\UTCDateTime();
+
+
+$withdrawal = [
+
+    "user_id" =>
+        $userId,
+
+    "amount" =>
+        $amount,
+
+    "method" =>
+        $method,
+
+    "account" =>
+        $account,
+
+    "payment_method" =>
+        strtolower($method),
+
+    "phone" =>
+        $account,
+
+    "status" =>
+        "pending",
+
+    "created_at" =>
+        $now,
+
+    "updated_at" =>
+        $now
+
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| SAVE WITHDRAWAL
+|--------------------------------------------------------------------------
+*/
+
+try {
 
     $withdrawalResult =
         $withdrawals->insertOne(
             $withdrawal
         );
 
+} catch (Throwable $e) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Create transaction record
-    |--------------------------------------------------------------------------
-    */
-
-    $transactions->insertOne([
-
-        "user_id" => $userId,
-
-        "type" => "withdrawal",
-
-        "amount" => $amount,
-
-        "method" => $method,
-
-        "status" => "pending",
-
-        "withdrawal_id" =>
-            $withdrawalResult->getInsertedId(),
-
-        "created_at" =>
-            new MongoDB\BSON\UTCDateTime()
-
-    ]);
-
-
-    echo json_encode([
-
-        "success" => true,
-
-        "message" =>
-            "Withdrawal request submitted for admin approval.",
-
-        "withdrawal_id" =>
-            (string)
-            $withdrawalResult->getInsertedId()
-
-    ]);
-
-
-} catch (Exception $e) {
+    error_log(
+        "CROWN CASH WITHDRAWAL ERROR: " .
+        $e->getMessage()
+    );
 
     http_response_code(500);
 
     echo json_encode([
-
         "success" => false,
-
         "message" =>
             "Unable to submit withdrawal."
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE TRANSACTION RECORD
+|--------------------------------------------------------------------------
+*/
+
+try {
+
+    $transactions->insertOne([
+
+        "user_id" =>
+            $userId,
+
+        "type" =>
+            "withdrawal",
+
+        "amount" =>
+            $amount,
+
+        "method" =>
+            $method,
+
+        "account" =>
+            $account,
+
+        "status" =>
+            "pending",
+
+        "withdrawal_id" =>
+            $withdrawalResult
+                ->getInsertedId(),
+
+        "created_at" =>
+            $now
 
     ]);
 
+} catch (Throwable $e) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Withdrawal was created even if transaction logging failed.
+    | Log the problem for administrator investigation.
+    |--------------------------------------------------------------------------
+    */
+
+    error_log(
+        "CROWN CASH TRANSACTION LOG ERROR: " .
+        $e->getMessage()
+    );
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| SUCCESS
+|--------------------------------------------------------------------------
+*/
+
+http_response_code(201);
+
+echo json_encode([
+
+    "success" =>
+        true,
+
+    "message" =>
+        "Withdrawal request submitted successfully and is pending admin approval.",
+
+    "withdrawal_id" =>
+        (string)
+        $withdrawalResult
+            ->getInsertedId(),
+
+    "amount" =>
+        $amount,
+
+    "method" =>
+        $method,
+
+    "account" =>
+        $account,
+
+    "status" =>
+        "pending"
+
+]);
+
+exit;
 
 ?>

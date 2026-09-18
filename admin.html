@@ -9,262 +9,1024 @@
           content="width=device-width, initial-scale=1.0">
 
     <meta name="theme-color"
-          content="#08050a">
+          content="#4b0f22">
 
     <meta name="description"
           content="Crown Cash administrator dashboard">
 
     <title>Crown Cash | Admin Dashboard</title>
 
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet"
+          href="admin.css">
 
 </head>
 
+
 <body>
 
-<div class="admin-app">
 
-    <!-- =====================================================
-         ADMIN SIDEBAR
-    ====================================================== -->
+<!-- =====================================================
+     MOBILE OVERLAY
+===================================================== -->
 
-    <aside class="admin-sidebar" id="adminSidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- BRAND -->
 
-        <div class="admin-brand">
+<!-- =====================================================
+     ADMIN SIDEBAR
+===================================================== -->
 
-            <a href="index.html" class="logo">
+<aside class="admin-sidebar" id="adminSidebar">
 
-                <span class="logo-mark">
-                    C
-                </span>
 
-                <span class="logo-name">
-                    Crown<span>Cash</span>
-                </span>
+    <!-- BRAND -->
 
-            </a>
+    <div class="admin-brand">
 
-            <div class="admin-badge">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>
-                    <path d="M9 12l2 2 4-5"/>
+        <a href="../index.html" class="logo">
+
+            <span class="logo-mark">
+
+                C
+
+            </span>
+
+            <span class="logo-text">
+
+                Crown<span>Cash</span>
+
+            </span>
+
+        </a>
+
+
+        <div class="admin-badge">
+
+            <svg viewBox="0 0 24 24"
+                 aria-hidden="true">
+
+                <path d="M12 3l2.1 4.25 4.69.68-3.4 3.31.8 4.67L12 13.7l-4.19 2.2.8-4.67-3.4-3.31 4.69-.68L12 3z"/>
+
+            </svg>
+
+            ADMINISTRATOR
+
+        </div>
+
+    </div>
+
+
+
+    <!-- NAVIGATION -->
+
+    <nav class="admin-nav">
+
+
+        <!-- DASHBOARD -->
+
+        <a href="dashboard.html"
+           class="active">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M3 11.5L12 4l9 7.5"/>
+                    <path d="M5.5 10.5V20h13v-9.5"/>
+                    <path d="M9.5 20v-5.5h5V20"/>
+
                 </svg>
 
-                ADMINISTRATOR
+            </span>
+
+            <span class="nav-text">
+                Dashboard
+            </span>
+
+        </a>
+
+
+
+        <!-- USERS -->
+
+        <a href="users.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <circle cx="9" cy="8" r="3"/>
+
+                    <path d="M3.5 20c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5"/>
+
+                    <circle cx="17" cy="9" r="2.3"/>
+
+                    <path d="M15.5 14.8c2.7.2 4.4 1.9 5 4.7"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Users
+            </span>
+
+        </a>
+
+
+
+        <!-- DEPOSITS -->
+
+        <a href="deposits.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <rect x="3" y="5"
+                          width="18"
+                          height="14"
+                          rx="3"/>
+
+                    <path d="M3 9h18"/>
+
+                    <path d="M15 14h3"/>
+
+                    <path d="M12 2v5"/>
+
+                    <path d="M9.5 4.5L12 2l2.5 2.5"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Deposits
+            </span>
+
+        </a>
+
+
+
+        <!-- WITHDRAWALS -->
+
+        <a href="withdrawals.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <rect x="3" y="5"
+                          width="18"
+                          height="14"
+                          rx="3"/>
+
+                    <path d="M3 9h18"/>
+
+                    <path d="M12 22V11"/>
+
+                    <path d="M8.5 14.5L12 11l3.5 3.5"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Withdrawals
+            </span>
+
+        </a>
+
+
+
+        <!-- INVESTMENTS -->
+
+        <a href="investments.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M4 19V5"/>
+
+                    <path d="M4 19h17"/>
+
+                    <path d="M6.5 15l4-4 3 2 5-6"/>
+
+                    <path d="M15.5 7H19v3.5"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Investments
+            </span>
+
+        </a>
+
+
+
+        <!-- REFERRALS -->
+
+        <a href="referrals.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <circle cx="8" cy="8" r="3"/>
+
+                    <circle cx="17" cy="7" r="2.5"/>
+
+                    <circle cx="16" cy="17" r="3"/>
+
+                    <path d="M10.5 9.5l4 4.5"/>
+
+                    <path d="M10.8 7.7l3.7-.7"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Referrals
+            </span>
+
+        </a>
+
+
+
+        <!-- TRANSACTIONS -->
+
+        <a href="transactions.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <rect x="5" y="3"
+                          width="14"
+                          height="18"
+                          rx="2"/>
+
+                    <path d="M8 8h8"/>
+
+                    <path d="M8 12h8"/>
+
+                    <path d="M8 16h5"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Transactions
+            </span>
+
+        </a>
+
+
+
+        <!-- SUPPORT -->
+
+        <a href="support.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M4 13v-2a8 8 0 0116 0v2"/>
+
+                    <path d="M4 13a2 2 0 002 2h1v-5H6a2 2 0 00-2 2z"/>
+
+                    <path d="M20 13a2 2 0 00-2-2h-1v5h1a2 2 0 002-2z"/>
+
+                    <path d="M17 17c-.8 2-2.5 3-5 3"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Support
+            </span>
+
+        </a>
+
+
+
+        <!-- NOTIFICATIONS -->
+
+        <a href="notifications.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M18 9a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+
+                    <path d="M10 21h4"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Notifications
+            </span>
+
+            <span class="notification-dot"></span>
+
+        </a>
+
+    </nav>
+
+
+
+    <!-- BOTTOM NAV -->
+
+    <div class="admin-bottom">
+
+
+        <!-- SETTINGS -->
+
+        <a href="settings.html">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <circle cx="12"
+                            cy="12"
+                            r="3"/>
+
+                    <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6v.2h-2.6V20a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H6v-2.6h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 001.9.3 1.7 1.7 0 001-1.6V5h2.6v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 00-.3 1.9 1.7 1.7 0 001.6 1h.2v2.6h-.2a1.7 1.7 0 00-1.6 1z"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Admin Settings
+            </span>
+
+        </a>
+
+
+
+        <!-- LOGOUT -->
+
+        <a href="../login.html"
+           id="logoutLink">
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <path d="M10 4H5a2 2 0 00-2 2v12a2 2 0 002 2h5"/>
+
+                    <path d="M14 8l4 4-4 4"/>
+
+                    <path d="M9 12h9"/>
+
+                </svg>
+
+            </span>
+
+            <span class="nav-text">
+                Logout
+            </span>
+
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =====================================================
+     MAIN AREA
+===================================================== -->
+
+<div class="admin-main">
+
+
+    <!-- =================================================
+         TOP BAR
+    ================================================== -->
+
+    <header class="admin-topbar">
+
+
+        <div class="topbar-left">
+
+
+            <button type="button"
+                    id="menuButton"
+                    class="menu-button"
+                    aria-label="Open admin menu">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </button>
+
+
+            <div class="topbar-title">
+
+                <span class="top-label">
+                    CROWN CASH ADMINISTRATION
+                </span>
+
+                <h1>
+                    Admin Dashboard
+                </h1>
+
             </div>
 
         </div>
 
 
-        <!-- ADMIN USER -->
 
-        <div class="admin-profile-mini">
+        <!-- ADMIN PROFILE -->
 
-            <div class="admin-mini-icon">
+        <div class="admin-user">
 
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="8" r="4"/>
-                    <path d="M4 21c0-4.2 3.5-7 8-7s8 2.8 8 7"/>
+
+            <div class="admin-avatar">
+
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true">
+
+                    <circle cx="12"
+                            cy="8"
+                            r="3.5"/>
+
+                    <path d="M5 21c.7-4.1 3-6.2 7-6.2s6.3 2.1 7 6.2"/>
+
                 </svg>
 
             </div>
 
-            <div>
 
-                <strong>Administrator</strong>
+            <div class="admin-user-info">
 
-                <small>Admin Account</small>
+                <strong id="adminName">
+                    Administrator
+                </strong>
+
+                <small>
+                    Admin Account
+                </small>
 
             </div>
 
+
+            <div class="admin-status-dot"></div>
+
         </div>
 
-
-        <!-- NAVIGATION -->
-
-        <nav class="admin-nav">
-
-            <!-- Dashboard -->
-
-            <a href="admin.html"
-               class="active">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect x="3" y="3"
-                              width="7"
-                              height="7"
-                              rx="1"/>
-
-                        <rect x="14" y="3"
-                              width="7"
-                              height="7"
-                              rx="1"/>
-
-                        <rect x="3" y="14"
-                              width="7"
-                              height="7"
-                              rx="1"/>
-
-                        <rect x="14" y="14"
-                              width="7"
-                              height="7"
-                              rx="1"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Dashboard</span>
-
-            </a>
+    </header>
 
 
-            <!-- Users -->
 
-            <a href="users.html">
+    <!-- =================================================
+         MAIN CONTENT
+    ================================================== -->
 
-                <span class="nav-icon">
+    <main class="admin-content">
+
+
+        <!-- INTRO -->
+
+        <section class="admin-intro">
+
+            <span class="section-tag">
+                ADMINISTRATION
+            </span>
+
+            <h2>
+                Platform overview
+            </h2>
+
+            <p>
+                Manage Crown Cash users, deposits,
+                withdrawals, investments, referrals and
+                platform activity from one central
+                administration area.
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+        ================================================== -->
+
+        <section class="quick-actions">
+
+
+            <!-- USERS -->
+
+            <a href="users.html"
+               class="quick-action">
+
+                <div class="quick-icon">
 
                     <svg viewBox="0 0 24 24">
 
                         <circle cx="9" cy="8" r="3"/>
 
-                        <circle cx="17" cy="9"
+                        <path d="M3.5 20c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5"/>
+
+                        <circle cx="17" cy="9" r="2.3"/>
+
+                        <path d="M15.5 14.8c2.7.2 4.4 1.9 5 4.7"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Manage Users
+                    </strong>
+
+                    <small>
+                        Accounts and verification
+                    </small>
+
+                </div>
+
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <!-- DEPOSITS -->
+
+            <a href="deposits.html"
+               class="quick-action">
+
+                <div class="quick-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect x="3"
+                              y="6"
+                              width="18"
+                              height="13"
+                              rx="3"/>
+
+                        <path d="M3 10h18"/>
+
+                        <path d="M12 2v6"/>
+
+                        <path d="M9 5l3-3 3 3"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Deposits
+                    </strong>
+
+                    <small>
+                        Review deposit requests
+                    </small>
+
+                </div>
+
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <!-- WITHDRAWALS -->
+
+            <a href="withdrawals.html"
+               class="quick-action">
+
+                <div class="quick-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect x="3"
+                              y="6"
+                              width="18"
+                              height="13"
+                              rx="3"/>
+
+                        <path d="M3 10h18"/>
+
+                        <path d="M12 22V10"/>
+
+                        <path d="M9 13l3-3 3 3"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Withdrawals
+                    </strong>
+
+                    <small>
+                        Review withdrawal requests
+                    </small>
+
+                </div>
+
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <!-- SUPPORT -->
+
+            <a href="support.html"
+               class="quick-action">
+
+                <div class="quick-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 13v-2a8 8 0 0116 0v2"/>
+
+                        <path d="M4 13a2 2 0 002 2h1v-5H6a2 2 0 00-2 2z"/>
+
+                        <path d="M20 13a2 2 0 00-2-2h-1v5h1a2 2 0 002-2z"/>
+
+                        <path d="M17 17c-.8 2-2.5 3-5 3"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Support
+                    </strong>
+
+                    <small>
+                        Respond to users
+                    </small>
+
+                </div>
+
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SYSTEM STATUS
+        ================================================== -->
+
+        <section class="status-card">
+
+
+            <div class="status-content">
+
+                <div class="status-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M12 3a9 9 0 109 9"/>
+
+                        <path d="M12 3v9h9"/>
+
+                        <path d="M7 16l2 2 5-5"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <span class="section-tag">
+                        SYSTEM STATUS
+                    </span>
+
+                    <h3>
+                        Crown Cash platform
+                    </h3>
+
+                    <p>
+                        Administrative monitoring and system
+                        controls are ready to connect to the
+                        Crown Cash backend.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="system-status">
+
+                <span></span>
+
+                System Online
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             MANAGEMENT GRID
+        ================================================== -->
+
+        <section class="management-grid">
+
+
+            <!-- USERS -->
+
+            <article class="management-card">
+
+                <div class="management-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle cx="9"
+                                cy="8"
+                                r="3"/>
+
+                        <path d="M3.5 20c.5-3.5 2.4-5.5 5.5-5.5s5 2 5.5 5.5"/>
+
+                        <circle cx="17"
+                                cy="9"
+                                r="2.3"/>
+
+                        <path d="M15.5 14.8c2.7.2 4.4 1.9 5 4.7"/>
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    USER MANAGEMENT
+                </span>
+
+                <h3>
+                    Users
+                </h3>
+
+                <p>
+                    Review registered accounts, account
+                    status and user information.
+                </p>
+
+                <a href="users.html">
+                    Open Users
+                    <b>→</b>
+                </a>
+
+            </article>
+
+
+
+            <!-- DEPOSITS -->
+
+            <article class="management-card">
+
+                <div class="management-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect x="3"
+                              y="5"
+                              width="18"
+                              height="14"
+                              rx="3"/>
+
+                        <path d="M3 9h18"/>
+
+                        <path d="M12 2v6"/>
+
+                        <path d="M9 5l3-3 3 3"/>
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    DEPOSIT MANAGEMENT
+                </span>
+
+                <h3>
+                    Deposits
+                </h3>
+
+                <p>
+                    Review submitted deposit requests and
+                    their verification status.
+                </p>
+
+                <a href="deposits.html">
+                    Open Deposits
+                    <b>→</b>
+                </a>
+
+            </article>
+
+
+
+            <!-- WITHDRAWALS -->
+
+            <article class="management-card">
+
+                <div class="management-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect x="3"
+                              y="5"
+                              width="18"
+                              height="14"
+                              rx="3"/>
+
+                        <path d="M3 9h18"/>
+
+                        <path d="M12 22V10"/>
+
+                        <path d="M9 13l3-3 3 3"/>
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    WITHDRAWAL MANAGEMENT
+                </span>
+
+                <h3>
+                    Withdrawals
+                </h3>
+
+                <p>
+                    Review and approve or reject withdrawal
+                    requests according to platform policy.
+                </p>
+
+                <a href="withdrawals.html">
+                    Open Withdrawals
+                    <b>→</b>
+                </a>
+
+            </article>
+
+
+
+            <!-- INVESTMENTS -->
+
+            <article class="management-card">
+
+                <div class="management-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 19V5"/>
+
+                        <path d="M4 19h17"/>
+
+                        <path d="M6 15l4-4 3 2 5-6"/>
+
+                        <path d="M15 7h3v3"/>
+
+                    </svg>
+
+                </div>
+
+                <span>
+                    INVESTMENT MANAGEMENT
+                </span>
+
+                <h3>
+                    Investments
+                </h3>
+
+                <p>
+                    Manage investment products, terms and
+                    their availability.
+                </p>
+
+                <a href="investments.html">
+                    Open Investments
+                    <b>→</b>
+                </a>
+
+            </article>
+
+
+
+            <!-- REFERRALS -->
+
+            <article class="management-card">
+
+                <div class="management-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle cx="8"
+                                cy="8"
+                                r="3"/>
+
+                        <circle cx="17"
+                                cy="7"
                                 r="2.5"/>
 
-                        <path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/>
+                        <circle cx="16"
+                                cy="17"
+                                r="3"/>
 
-                        <path d="M15 14c3 0 5 2 5 6"/>
+                        <path d="M10.5 9.5l4 4.5"/>
 
-                    </svg>
-
-                </span>
-
-                <span>Users</span>
-
-            </a>
-
-
-            <!-- Deposits -->
-
-            <a href="admin-deposits.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect x="3" y="5"
-                              width="18"
-                              height="14"
-                              rx="2"/>
-
-                        <path d="M3 9h18"/>
-
-                        <path d="M12 12v5"/>
-
-                        <path d="M9 14l3 3 3-3"/>
+                        <path d="M10.8 7.7l3.7-.7"/>
 
                     </svg>
 
+                </div>
+
+                <span>
+                    REFERRAL MANAGEMENT
                 </span>
 
-                <span>Deposits</span>
+                <h3>
+                    Referrals
+                </h3>
 
-            </a>
+                <p>
+                    Review referral relationships and
+                    eligible referral activity.
+                </p>
+
+                <a href="referrals.html">
+                    Open Referrals
+                    <b>→</b>
+                </a>
+
+            </article>
 
 
-            <!-- Investments -->
 
-            <a href="admin-investments.html">
+            <!-- TRANSACTIONS -->
 
-                <span class="nav-icon">
+            <article class="management-card">
+
+                <div class="management-icon">
 
                     <svg viewBox="0 0 24 24">
 
-                        <polyline
-                            points="3,17 8,12 12,14 21,5"/>
-
-                        <polyline
-                            points="15,5 21,5 21,11"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Investments</span>
-
-            </a>
-
-
-            <!-- Withdrawals -->
-
-            <a href="admin-withdrawals.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect x="3" y="5"
-                              width="18"
-                              height="14"
-                              rx="2"/>
-
-                        <path d="M3 9h18"/>
-
-                        <path d="M12 17v-5"/>
-
-                        <path d="M9 14l3-3 3 3"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Withdrawals</span>
-
-            </a>
-
-
-            <!-- Referrals -->
-
-            <a href="referrals.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle cx="7" cy="7" r="3"/>
-
-                        <circle cx="17" cy="7" r="3"/>
-
-                        <circle cx="12" cy="17" r="3"/>
-
-                        <path d="M9 9l2 5"/>
-
-                        <path d="M15 9l-2 5"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Referrals</span>
-
-            </a>
-
-
-            <!-- Transactions -->
-
-            <a href="transactions.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect x="5" y="3"
+                        <rect x="5"
+                              y="3"
                               width="14"
                               height="18"
                               rx="2"/>
@@ -277,961 +1039,101 @@
 
                     </svg>
 
-                </span>
-
-                <span>Transactions</span>
-
-            </a>
-
-
-            <!-- Support -->
-
-            <a href="support.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M4 13v-2a8 8 0 0 1 16 0v2"/>
-
-                        <path d="M4 13h3v6H5a1 1 0 0 1-1-1z"/>
-
-                        <path d="M20 13h-3v6h2a1 1 0 0 0 1-1z"/>
-
-                        <path d="M17 20c-1 1-2 1-4 1"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Support</span>
-
-            </a>
-
-
-            <!-- Notifications -->
-
-            <a href="notifications.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-
-                        <path d="M10 21h4"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Notifications</span>
-
-            </a>
-
-        </nav>
-
-
-        <!-- BOTTOM NAV -->
-
-        <div class="admin-bottom">
-
-            <a href="settings.html">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle cx="12" cy="12" r="3"/>
-
-                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V20h-3v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-2-2 .1-.1A1.7 1.7 0 0 0 7.2 15a1.7 1.7 0 0 0-1.6-1H5v-3h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V5h3v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v3h-.2a1.7 1.7 0 0 0-1.6.6z"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Admin Settings</span>
-
-            </a>
-
-
-            <a href="login.html"
-               id="logoutLink">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M10 17l5-5-5-5"/>
-
-                        <path d="M15 12H3"/>
-
-                        <path d="M21 3v18"/>
-
-                    </svg>
-
-                </span>
-
-                <span>Logout</span>
-
-            </a>
-
-        </div>
-
-    </aside>
-
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <div class="admin-main">
-
-
-        <!-- TOPBAR -->
-
-        <header class="admin-topbar">
-
-            <div class="topbar-left">
-
-                <button
-                    type="button"
-                    id="menuButton"
-                    class="menu-button"
-                    aria-label="Open menu">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M4 6h16"/>
-                        <path d="M4 12h16"/>
-                        <path d="M4 18h16"/>
-
-                    </svg>
-
-                </button>
-
-
-                <div>
-
-                    <span class="top-label">
-                        CROWN CASH ADMINISTRATION
-                    </span>
-
-                    <h1>
-                        Admin Dashboard
-                    </h1>
-
                 </div>
 
-            </div>
+                <span>
+                    TRANSACTION MANAGEMENT
+                </span>
 
+                <h3>
+                    Transactions
+                </h3>
 
-            <div class="admin-user">
+                <p>
+                    Review platform transaction records
+                    and statuses.
+                </p>
 
-                <div class="admin-avatar">
+                <a href="transactions.html">
+                    Open Transactions
+                    <b>→</b>
+                </a>
 
-                    <i class="fa-solid fa-user-shield"></i>
+            </article>
 
-                </div>
-
-                <div>
-
-                    <strong>
-                        Administrator
-                    </strong>
-
-                    <small>
-                        Admin Account
-                    </small>
-
-                </div>
-
-            </div>
-
-        </header>
+        </section>
 
 
 
         <!-- =================================================
-             CONTENT
+             SECURITY NOTICE
         ================================================== -->
 
-        <main class="admin-content">
+        <section class="admin-notice">
 
 
-            <!-- INTRO -->
+            <div class="notice-icon">
 
-            <section class="admin-intro">
+                <svg viewBox="0 0 24 24">
+
+                    <path d="M12 3l8 3v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"/>
+
+                    <path d="M12 8v5"/>
+
+                    <circle cx="12"
+                            cy="16.5"
+                            r=".7"
+                            fill="currentColor"
+                            stroke="none"/>
+
+                </svg>
+
+            </div>
+
+
+            <div>
 
                 <span class="section-tag">
-                    CROWN CASH CONTROL CENTER
+                    SECURITY
                 </span>
 
-                <h2>
-                    Platform Overview
-                </h2>
+                <h3>
+                    Administrator security
+                </h3>
 
                 <p>
-                    Manage users, deposits, investments,
-                    withdrawals, referrals, transactions
-                    and platform activity from one
-                    central administration area.
+                    Administrative actions can affect user
+                    accounts and financial records. Sensitive
+                    actions should require proper authorization
+                    and should be recorded in an audit log.
                 </p>
 
-            </section>
+            </div>
 
+        </section>
 
+    </main>
 
-            <!-- =================================================
-                 QUICK ACTIONS
-            ================================================== -->
 
-            <section class="quick-actions">
 
+    <!-- =================================================
+         FOOTER
+    ================================================== -->
 
-                <!-- USERS -->
+    <footer>
 
-                <a href="users.html"
-                   class="quick-action">
+        © <span id="year"></span>
+        Crown Cash Administration.
+        All rights reserved.
 
-                    <div class="quick-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle cx="9" cy="8" r="3"/>
-
-                            <circle cx="17" cy="9"
-                                    r="2.5"/>
-
-                            <path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/>
-
-                            <path d="M15 14c3 0 5 2 5 6"/>
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Manage Users
-                        </strong>
-
-                        <small>
-                            Accounts and verification
-                        </small>
-
-                    </div>
-
-                    <i class="fa-solid fa-arrow-right"></i>
-
-                </a>
-
-
-                <!-- DEPOSITS -->
-
-                <a href="admin-deposits.html"
-                   class="quick-action">
-
-                    <div class="quick-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <rect x="3" y="5"
-                                  width="18"
-                                  height="14"
-                                  rx="2"/>
-
-                            <path d="M3 9h18"/>
-
-                            <path d="M12 12v5"/>
-
-                            <path d="M9 14l3 3 3-3"/>
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Deposits
-                        </strong>
-
-                        <small>
-                            Review deposit requests
-                        </small>
-
-                    </div>
-
-                    <i class="fa-solid fa-arrow-right"></i>
-
-                </a>
-
-
-                <!-- WITHDRAWALS -->
-
-                <a href="admin-withdrawals.html"
-                   class="quick-action">
-
-                    <div class="quick-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <rect x="3" y="5"
-                                  width="18"
-                                  height="14"
-                                  rx="2"/>
-
-                            <path d="M3 9h18"/>
-
-                            <path d="M12 17v-5"/>
-
-                            <path d="M9 14l3-3 3 3"/>
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Withdrawals
-                        </strong>
-
-                        <small>
-                            Review withdrawal requests
-                        </small>
-
-                    </div>
-
-                    <i class="fa-solid fa-arrow-right"></i>
-
-                </a>
-
-
-                <!-- SECURITY -->
-
-                <a href="security.html"
-                   class="quick-action security-action">
-
-                    <div class="quick-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>
-
-                            <path d="M9 12l2 2 4-5"/>
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Security
-                        </strong>
-
-                        <small>
-                            Audit and protection
-                        </small>
-
-                    </div>
-
-                    <i class="fa-solid fa-arrow-right"></i>
-
-                </a>
-
-            </section>
-
-
-
-            <!-- =================================================
-                 SYSTEM STATUS
-            ================================================== -->
-
-            <section class="status-card">
-
-                <div class="status-decoration">
-
-                    <i class="fa-solid fa-shield-halved"></i>
-
-                </div>
-
-                <div class="status-content">
-
-                    <span class="section-tag">
-                        SYSTEM STATUS
-                    </span>
-
-                    <h3>
-                        Crown Cash Platform
-                    </h3>
-
-                    <p>
-                        Administrative monitoring and
-                        system controls are connected
-                        to the Crown Cash platform.
-                    </p>
-
-                </div>
-
-
-                <div class="system-status">
-
-                    <span></span>
-
-                    System Online
-
-                </div>
-
-            </section>
-
-
-
-            <!-- =================================================
-                 MANAGEMENT
-            ================================================== -->
-
-            <section class="management-section">
-
-                <div class="section-heading">
-
-                    <span>
-                        ADMINISTRATION
-                    </span>
-
-                    <h2>
-                        Manage Crown Cash
-                    </h2>
-
-                </div>
-
-
-                <div class="management-grid">
-
-
-                    <!-- USERS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle cx="9" cy="8" r="3"/>
-
-                                <circle cx="17" cy="9"
-                                        r="2.5"/>
-
-                                <path d="M3 20c0-4 2.5-6 6-6s6 2 6 6"/>
-
-                                <path d="M15 14c3 0 5 2 5 6"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            USER MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Users
-                        </h3>
-
-                        <p>
-                            Review registered accounts,
-                            account status and user
-                            information.
-                        </p>
-
-                        <a href="users.html">
-                            Open Users
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- DEPOSITS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect x="3" y="5"
-                                      width="18"
-                                      height="14"
-                                      rx="2"/>
-
-                                <path d="M3 9h18"/>
-
-                                <path d="M12 12v5"/>
-
-                                <path d="M9 14l3 3 3-3"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            DEPOSIT MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Deposits
-                        </h3>
-
-                        <p>
-                            Review submitted deposit
-                            requests and their
-                            verification status.
-                        </p>
-
-                        <a href="admin-deposits.html">
-                            Open Deposits
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- INVESTMENTS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <polyline
-                                    points="3,17 8,12 12,14 21,5"/>
-
-                                <polyline
-                                    points="15,5 21,5 21,11"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            INVESTMENT MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Investments
-                        </h3>
-
-                        <p>
-                            Review investment requests,
-                            plans and investment activity.
-                        </p>
-
-                        <a href="admin-investments.html">
-                            Open Investments
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- WITHDRAWALS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect x="3" y="5"
-                                      width="18"
-                                      height="14"
-                                      rx="2"/>
-
-                                <path d="M3 9h18"/>
-
-                                <path d="M12 17v-5"/>
-
-                                <path d="M9 14l3-3 3 3"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            WITHDRAWAL MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Withdrawals
-                        </h3>
-
-                        <p>
-                            Review withdrawal requests
-                            and their approval status.
-                        </p>
-
-                        <a href="admin-withdrawals.html">
-                            Open Withdrawals
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- REFERRALS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle cx="7" cy="7" r="3"/>
-
-                                <circle cx="17" cy="7" r="3"/>
-
-                                <circle cx="12" cy="17" r="3"/>
-
-                                <path d="M9 9l2 5"/>
-
-                                <path d="M15 9l-2 5"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            REFERRAL MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Referrals
-                        </h3>
-
-                        <p>
-                            Review referral relationships
-                            and eligible referral activity.
-                        </p>
-
-                        <a href="referrals.html">
-                            Open Referrals
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- TRANSACTIONS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect x="5" y="3"
-                                      width="14"
-                                      height="18"
-                                      rx="2"/>
-
-                                <path d="M8 8h8"/>
-
-                                <path d="M8 12h8"/>
-
-                                <path d="M8 16h5"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            TRANSACTION MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Transactions
-                        </h3>
-
-                        <p>
-                            Review platform transaction
-                            records and statuses.
-                        </p>
-
-                        <a href="transactions.html">
-                            Open Transactions
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- SECURITY -->
-
-                    <article class="management-card security-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>
-
-                                <path d="M9 12l2 2 4-5"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            SECURITY MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Security
-                        </h3>
-
-                        <p>
-                            Review security controls,
-                            audit activity and sensitive
-                            administrative actions.
-                        </p>
-
-                        <a href="security.html">
-                            Open Security
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- SUPPORT -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M4 13v-2a8 8 0 0 1 16 0v2"/>
-
-                                <path d="M4 13h3v6H5a1 1 0 0 1-1-1z"/>
-
-                                <path d="M20 13h-3v6h2a1 1 0 0 0 1-1z"/>
-
-                                <path d="M17 20c-1 1-2 1-4 1"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            SUPPORT MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Support
-                        </h3>
-
-                        <p>
-                            Review user support requests
-                            and communication.
-                        </p>
-
-                        <a href="support.html">
-                            Open Support
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-
-
-                    <!-- NOTIFICATIONS -->
-
-                    <article class="management-card">
-
-                        <div class="management-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-
-                                <path d="M10 21h4"/>
-
-                            </svg>
-
-                        </div>
-
-                        <span>
-                            NOTIFICATION MANAGEMENT
-                        </span>
-
-                        <h3>
-                            Notifications
-                        </h3>
-
-                        <p>
-                            Manage platform notifications
-                            and administrative alerts.
-                        </p>
-
-                        <a href="notifications.html">
-                            Open Notifications
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-
-                    </article>
-
-                </div>
-
-            </section>
-
-
-
-            <!-- =================================================
-                 SECURITY NOTICE
-            ================================================== -->
-
-            <section class="admin-notice">
-
-                <div class="notice-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>
-
-                        <path d="M12 8v5"/>
-
-                        <circle cx="12"
-                                cy="16.5"
-                                r=".6"
-                                fill="currentColor"
-                                stroke="none"/>
-
-                    </svg>
-
-                </div>
-
-
-                <div>
-
-                    <h3>
-                        Administrator Security
-                    </h3>
-
-                    <p>
-                        Administrative actions can affect
-                        user accounts and financial records.
-                        Sensitive actions should require
-                        proper authorization and be recorded
-                        in an audit log.
-                    </p>
-
-                </div>
-
-            </section>
-
-        </main>
-
-
-        <!-- FOOTER -->
-
-        <footer>
-
-            <strong>Crown Cash</strong>
-
-            <span>
-                © <span id="year"></span>
-                Crown Cash Administration.
-            </span>
-
-        </footer>
-
-    </div>
+    </footer>
 
 </div>
 
 
+
 <script src="admin.js"></script>
 
-<script>
-
-    /* Current year */
-
-    const yearElement =
-        document.getElementById("year");
-
-    if (yearElement) {
-
-        yearElement.textContent =
-            new Date().getFullYear();
-
-    }
-
-
-    /* Mobile sidebar */
-
-    const menuButton =
-        document.getElementById("menuButton");
-
-    const adminSidebar =
-        document.getElementById("adminSidebar");
-
-
-    if (menuButton && adminSidebar) {
-
-        menuButton.addEventListener(
-            "click",
-            () => {
-
-                adminSidebar.classList.toggle(
-                    "open"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* Close mobile sidebar after navigation */
-
-    document.querySelectorAll(
-        ".admin-sidebar a"
-    ).forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    window.innerWidth <= 900
-                ) {
-
-                    adminSidebar.classList.remove(
-                        "open"
-                    );
-
-                }
-
-            }
-        );
-
-    });
-
-</script>
-
 </body>
+
 </html>

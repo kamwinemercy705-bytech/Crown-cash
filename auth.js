@@ -1,842 +1,199 @@
-/* =========================================================
-   CROWN CASH
-   AUTHENTICATION JAVASCRIPT
-========================================================= */
+// ============================================
+// CROWN CASH - AUTHENTICATION JAVASCRIPT
+// File: auth.js
+// ============================================
 
-document.addEventListener("DOMContentLoaded", function () {
+const API_URL = "https://crown-cash1.onrender.com";
 
+// --------------------------------------------
+// CHECK USER AUTHENTICATION
+// --------------------------------------------
+async function checkAuth() {
+try {
+const response = await fetch("${API_URL}/auth-check.php", {
+method: "GET",
+credentials: "include",
+headers: {
+"Accept": "application/json"
+}
+});
 
-    /* =====================================================
-       YEAR
-    ===================================================== */
+    const data = await response.json();
 
-    const year = new Date().getFullYear();
-
-    const brandYear =
-        document.getElementById("brandYear");
-
-    const registerBrandYear =
-        document.getElementById("registerBrandYear");
-
-    if (brandYear) {
-        brandYear.textContent = year;
+    // User is not logged in
+    if (!response.ok || !data.authenticated) {
+        redirectToLogin();
+        return null;
     }
 
-    if (registerBrandYear) {
-        registerBrandYear.textContent = year;
+    // Save current user information locally
+    if (data.user) {
+        localStorage.setItem(
+            "crownCashUser",
+            JSON.stringify(data.user)
+        );
     }
 
+    return data.user;
 
+} catch (error) {
+    console.error("Authentication check failed:", error);
 
-    /* =====================================================
-       PASSWORD SHOW / HIDE
-    ===================================================== */
+    // Do not trust localStorage alone as authentication.
+    // If the backend cannot confirm the session,
+    // send the user to login.
+    redirectToLogin();
 
-    document
-        .querySelectorAll(".password-toggle")
-        .forEach(function (button) {
+    return null;
+}
 
-            button.addEventListener(
-                "click",
-                function () {
+}
 
-                    let targetId =
-                        button.dataset.target;
+// --------------------------------------------
+// REDIRECT TO LOGIN
+// --------------------------------------------
+function redirectToLogin() {
+const currentPage =
+window.location.pathname.split("/").pop() || "index.html";
 
-                    if (!targetId) {
+// Avoid redirect loop if already on login/register pages
+const publicPages = [
+    "",
+    "index.html",
+    "login.html",
+    "register.html",
+    "forgot-password.html",
+    "reset-password.html",
+    "terms.html",
+    "privacy.html"
+];
 
-                        targetId =
-                            "password";
+if (publicPages.includes(currentPage)) {
+    return;
+}
 
-                    }
+window.location.href = "/login.html";
 
-                    const input =
-                        document.getElementById(
-                            targetId
-                        );
+}
 
-                    if (!input) {
-                        return;
-                    }
+// --------------------------------------------
+// LOGOUT USER
+// --------------------------------------------
+async function logoutUser() {
+try {
+const response = await fetch("${API_URL}/logout.php", {
+method: "POST",
+credentials: "include",
+headers: {
+"Accept": "application/json"
+}
+});
 
+    // Remove locally stored user information
+    localStorage.removeItem("crownCashUser");
+    localStorage.removeItem("user");
+    localStorage.removeItem("loggedIn");
 
-                    if (
-                        input.type === "password"
-                    ) {
-
-                        input.type = "text";
-
-                        button.classList.add(
-                            "show"
-                        );
-
-                        button.setAttribute(
-                            "aria-label",
-                            "Hide password"
-                        );
-
-                    } else {
-
-                        input.type = "password";
-
-                        button.classList.remove(
-                            "show"
-                        );
-
-                        button.setAttribute(
-                            "aria-label",
-                            "Show password"
-                        );
-
-                    }
-
-                }
-            );
-
-        });
-
-
-
-    /* =====================================================
-       LOGIN PASSWORD TOGGLE
-    ===================================================== */
-
-    const loginPasswordToggle =
-        document.getElementById(
-            "passwordToggle"
-        );
-
-    if (loginPasswordToggle) {
-
-        loginPasswordToggle.dataset.target =
-            "password";
-
+    if (response.ok) {
+        window.location.href = "/login.html";
+        return;
     }
 
+    // Even if the server returns an error,
+    // clear the local session and go to login.
+    window.location.href = "/login.html";
 
+} catch (error) {
+    console.error("Logout error:", error);
 
-    /* =====================================================
-       PASSWORD STRENGTH
-    ===================================================== */
+    // Clear local information
+    localStorage.removeItem("crownCashUser");
+    localStorage.removeItem("user");
+    localStorage.removeItem("loggedIn");
 
-    const registerPassword =
-        document.getElementById(
-            "registerPassword"
-        );
+    window.location.href = "/login.html";
+}
 
-    const strengthBar =
-        document.getElementById(
-            "strengthBar"
-        );
+}
 
-    const passwordHint =
-        document.getElementById(
-            "passwordHint"
-        );
+// --------------------------------------------
+// GET CURRENT USER
+// --------------------------------------------
+function getCurrentUser() {
+try {
+const savedUser = localStorage.getItem("crownCashUser");
 
-
-    if (
-        registerPassword &&
-        strengthBar
-    ) {
-
-        registerPassword.addEventListener(
-            "input",
-            function () {
-
-                const password =
-                    registerPassword.value;
-
-                let strength = 0;
-
-
-                if (password.length >= 8) {
-                    strength++;
-                }
-
-                if (/[A-Z]/.test(password)) {
-                    strength++;
-                }
-
-                if (/[0-9]/.test(password)) {
-                    strength++;
-                }
-
-                if (
-                    /[^A-Za-z0-9]/.test(password)
-                ) {
-                    strength++;
-                }
-
-
-                if (strength === 0) {
-
-                    strengthBar.style.width =
-                        "0%";
-
-                    if (passwordHint) {
-                        passwordHint.textContent =
-                            "Use at least 8 characters.";
-                    }
-
-                }
-
-                else if (strength === 1) {
-
-                    strengthBar.style.width =
-                        "25%";
-
-                    if (passwordHint) {
-                        passwordHint.textContent =
-                            "Weak password.";
-                    }
-
-                }
-
-                else if (strength === 2) {
-
-                    strengthBar.style.width =
-                        "50%";
-
-                    if (passwordHint) {
-                        passwordHint.textContent =
-                            "Fair password.";
-                    }
-
-                }
-
-                else if (strength === 3) {
-
-                    strengthBar.style.width =
-                        "75%";
-
-                    if (passwordHint) {
-                        passwordHint.textContent =
-                            "Good password.";
-                    }
-
-                }
-
-                else {
-
-                    strengthBar.style.width =
-                        "100%";
-
-                    if (passwordHint) {
-                        passwordHint.textContent =
-                            "Strong password.";
-                    }
-
-                }
-
-            }
-        );
-
+    if (!savedUser) {
+        return null;
     }
 
+    return JSON.parse(savedUser);
 
+} catch (error) {
+    console.error("Could not read saved user:", error);
+    return null;
+}
 
-    /* =====================================================
-       LOGIN FORM
-    ===================================================== */
+}
 
-    const loginForm =
-        document.getElementById(
-            "loginForm"
+// --------------------------------------------
+// PROTECT PAGE
+// --------------------------------------------
+document.addEventListener("DOMContentLoaded", async () => {
+
+// Do not automatically run on public pages
+const currentPage =
+    window.location.pathname.split("/").pop() || "index.html";
+
+const publicPages = [
+    "",
+    "index.html",
+    "login.html",
+    "register.html",
+    "forgot-password.html",
+    "reset-password.html",
+    "terms.html",
+    "privacy.html"
+];
+
+if (publicPages.includes(currentPage)) {
+    return;
+}
+
+// Check the real PHP session
+const user = await checkAuth();
+
+if (!user) {
+    return;
+}
+
+// Make logout buttons work automatically
+const logoutButtons = document.querySelectorAll(
+    '[data-action="logout"], .logout-btn, #logoutBtn'
+);
+
+logoutButtons.forEach(button => {
+    button.addEventListener("click", async (event) => {
+        event.preventDefault();
+
+        const confirmed = confirm(
+            "Are you sure you want to logout?"
         );
 
-
-    if (loginForm) {
-
-        loginForm.addEventListener(
-            "submit",
-            async function (event) {
-
-                event.preventDefault();
-
-
-                const email =
-                    document.getElementById(
-                        "email"
-                    ).value.trim();
-
-                const password =
-                    document.getElementById(
-                        "password"
-                    ).value;
-
-                const message =
-                    document.getElementById(
-                        "loginMessage"
-                    );
-
-                const button =
-                    document.getElementById(
-                        "loginButton"
-                    );
-
-
-                clearErrors();
-
-
-                if (!email) {
-
-                    showError(
-                        "emailError",
-                        "Please enter your email address."
-                    );
-
-                    return;
-
-                }
-
-
-                if (!isValidEmail(email)) {
-
-                    showError(
-                        "emailError",
-                        "Please enter a valid email address."
-                    );
-
-                    return;
-
-                }
-
-
-                if (!password) {
-
-                    showError(
-                        "passwordError",
-                        "Please enter your password."
-                    );
-
-                    return;
-
-                }
-
-
-                setMessage(
-                    message,
-                    "",
-                    ""
-                );
-
-
-                button.classList.add(
-                    "loading"
-                );
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            "https://crown-cash1.onrender.com/login.php",
-                            {
-                                method: "POST",
-
-                                credentials: "include",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-
-                                body:
-                                    JSON.stringify({
-                                        email:
-                                            email.toLowerCase(),
-                                        password:
-                                            password
-                                    })
-                            }
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-
-                        throw new Error(
-                            result.message ||
-                            "Login failed."
-                        );
-
-                    }
-
-
-                    /* Save user information */
-
-                    if (result.user) {
-
-                        localStorage.setItem(
-                            "crowncash_user",
-                            JSON.stringify(
-                                result.user
-                            )
-                        );
-
-                    }
-
-
-                    setMessage(
-                        message,
-                        "Login successful. Redirecting...",
-                        "success"
-                    );
-
-
-                    setTimeout(
-                        function () {
-
-                            window.location.href =
-                                "dashboard.html";
-
-                        },
-                        700
-                    );
-
-
-                } catch (error) {
-
-                    console.error(
-                        "Login error:",
-                        error
-                    );
-
-
-                    setMessage(
-                        message,
-                        error.message ||
-                        "Unable to sign in. Please try again.",
-                        "error"
-                    );
-
-
-                } finally {
-
-                    button.classList.remove(
-                        "loading"
-                    );
-
-                }
-
-            }
-        );
-
-    }
-
-
-
-    /* =====================================================
-       REGISTER FORM
-    ===================================================== */
-
-    const registerForm =
-        document.getElementById(
-            "registerForm"
-        );
-
-
-    if (registerForm) {
-
-        registerForm.addEventListener(
-            "submit",
-            async function (event) {
-
-                event.preventDefault();
-
-
-                clearErrors();
-
-
-                const firstName =
-                    document.getElementById(
-                        "firstName"
-                    ).value.trim();
-
-                const lastName =
-                    document.getElementById(
-                        "lastName"
-                    ).value.trim();
-
-                const email =
-                    document.getElementById(
-                        "registerEmail"
-                    ).value.trim();
-
-                const phone =
-                    document.getElementById(
-                        "phone"
-                    ).value.trim();
-
-                const password =
-                    document.getElementById(
-                        "registerPassword"
-                    ).value;
-
-                const confirmPassword =
-                    document.getElementById(
-                        "confirmPassword"
-                    ).value;
-
-                const referralCode =
-                    document.getElementById(
-                        "referralCode"
-                    ).value.trim();
-
-                const agreeTerms =
-                    document.getElementById(
-                        "agreeTerms"
-                    ).checked;
-
-                const message =
-                    document.getElementById(
-                        "registerMessage"
-                    );
-
-                const button =
-                    document.getElementById(
-                        "registerButton"
-                    );
-
-
-                /* -----------------------------------------
-                   VALIDATION
-                ----------------------------------------- */
-
-                let valid = true;
-
-
-                if (!firstName) {
-
-                    showError(
-                        "firstNameError",
-                        "First name is required."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (!lastName) {
-
-                    showError(
-                        "lastNameError",
-                        "Last name is required."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (!email) {
-
-                    showError(
-                        "registerEmailError",
-                        "Email address is required."
-                    );
-
-                    valid = false;
-
-                } else if (
-                    !isValidEmail(email)
-                ) {
-
-                    showError(
-                        "registerEmailError",
-                        "Enter a valid email address."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (!phone) {
-
-                    showError(
-                        "phoneError",
-                        "Phone number is required."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (password.length < 8) {
-
-                    showError(
-                        "registerPasswordError",
-                        "Password must contain at least 8 characters."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (
-                    password !== confirmPassword
-                ) {
-
-                    showError(
-                        "confirmPasswordError",
-                        "Passwords do not match."
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (!agreeTerms) {
-
-                    setMessage(
-                        message,
-                        "Please accept the Terms & Conditions and Privacy Policy.",
-                        "error"
-                    );
-
-                    valid = false;
-
-                }
-
-
-                if (!valid) {
-                    return;
-                }
-
-
-                button.classList.add(
-                    "loading"
-                );
-
-
-                try {
-
-                    /*
-                     * IMPORTANT:
-                     * Change this URL only if your
-                     * registration backend has a
-                     * different filename.
-                     */
-
-                    const response =
-                        await fetch(
-                            "https://crown-cash1.onrender.com/register.php",
-                            {
-                                method: "POST",
-
-                                credentials: "include",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-
-                                body:
-                                    JSON.stringify({
-
-                                        firstName:
-                                            firstName,
-
-                                        lastName:
-                                            lastName,
-
-                                        email:
-                                            email.toLowerCase(),
-
-                                        phone:
-                                            phone,
-
-                                        password:
-                                            password,
-
-                                        referralCode:
-                                            referralCode
-
-                                    })
-                            }
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-
-                        throw new Error(
-                            result.message ||
-                            "Registration failed."
-                        );
-
-                    }
-
-
-                    setMessage(
-                        message,
-                        "Account created successfully. Redirecting to sign in...",
-                        "success"
-                    );
-
-
-                    setTimeout(
-                        function () {
-
-                            window.location.href =
-                                "login.html";
-
-                        },
-                        1000
-                    );
-
-
-                } catch (error) {
-
-                    console.error(
-                        "Registration error:",
-                        error
-                    );
-
-
-                    setMessage(
-                        message,
-                        error.message ||
-                        "Unable to create account.",
-                        "error"
-                    );
-
-
-                } finally {
-
-                    button.classList.remove(
-                        "loading"
-                    );
-
-                }
-
-            }
-        );
-
-    }
-
-
-
-    /* =====================================================
-       FORGOT PASSWORD
-    ===================================================== */
-
-    const forgotPassword =
-        document.getElementById(
-            "forgotPassword"
-        );
-
-
-    if (forgotPassword) {
-
-        forgotPassword.addEventListener(
-            "click",
-            function (event) {
-
-                event.preventDefault();
-
-                alert(
-                    "Password reset will be available after the password recovery system is connected."
-                );
-
-            }
-        );
-
-    }
-
-
-
-    /* =====================================================
-       HELPER FUNCTIONS
-    ===================================================== */
-
-    function isValidEmail(email) {
-
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            .test(email);
-
-    }
-
-
-    function showError(
-        elementId,
-        text
-    ) {
-
-        const element =
-            document.getElementById(
-                elementId
-            );
-
-        if (element) {
-            element.textContent = text;
+        if (confirmed) {
+            await logoutUser();
         }
-
-    }
-
-
-    function clearErrors() {
-
-        document
-            .querySelectorAll(".field-error")
-            .forEach(function (element) {
-
-                element.textContent = "";
-
-            });
-
-    }
-
-
-    function setMessage(
-        element,
-        text,
-        type
-    ) {
-
-        if (!element) {
-            return;
-        }
-
-        element.textContent = text;
-
-        element.className =
-            "auth-message";
-
-        if (text) {
-
-            element.classList.add(
-                "show"
-            );
-
-        }
-
-        if (type) {
-
-            element.classList.add(
-                type
-            );
-
-        }
-
-    }
+    });
+});
 
 });
+
+// --------------------------------------------
+// MAKE FUNCTIONS AVAILABLE GLOBALLY
+// --------------------------------------------
+window.CrownCashAuth = {
+checkAuth,
+logoutUser,
+getCurrentUser,
+redirectToLogin
+};

@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -11,911 +9,543 @@
     >
 
     <meta
-        name="description"
-        content="Create your Crown Cash account."
+        name="theme-color"
+        content="#07111f"
     >
 
     <title>Crown Cash | Create Account</title>
 
+    <!-- Font Awesome -->
     <link
         rel="stylesheet"
-        href="auth.css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
+    <!-- Registration CSS -->
+    <link
+        rel="stylesheet"
+        href="register.css"
+    >
 </head>
-
 
 <body>
 
+    <!-- ======================================================
+         PAGE
+    ======================================================= -->
 
-<div class="auth-page register-page">
+    <div class="auth-page">
 
+        <!-- ==================================================
+             LEFT / BRAND SECTION
+        =================================================== -->
 
-    <!-- =================================================
-         LEFT BRAND
-    ================================================== -->
+        <section class="auth-brand">
 
-    <section class="auth-brand">
+            <div class="brand-content">
 
-        <div class="brand-orb orb-one"></div>
-        <div class="brand-orb orb-two"></div>
-        <div class="brand-orb orb-three"></div>
-
-
-        <div class="brand-content">
-
-
-            <a
-                href="index.html"
-                class="brand-logo"
-            >
-
-                <span class="brand-logo-icon">
-
-                    <svg viewBox="0 0 64 64">
-
-                        <path
-                            d="M10 18L18 28L26 15L32 28L38 15L46 28L54 18L50 46H14L10 18Z"
-                        />
-
-                        <path d="M15 46H49" />
-
-                    </svg>
-
-                </span>
-
-
-                <span class="brand-name">
-
-                    <strong>CROWN</strong>
-                    <small>CASH</small>
-
-                </span>
-
-            </a>
-
-
-            <div class="brand-message">
-
-                <span class="brand-label">
-                    JOIN CROWN CASH
-                </span>
-
-                <h1>
-                    Start Your
-                    <span>Journey Today.</span>
-                </h1>
-
-                <p>
-                    Create your Crown Cash account and access
-                    a modern platform for managing your financial
-                    activities.
-                </p>
-
-            </div>
-
-
-            <div class="brand-features">
-
-
-                <div class="brand-feature">
-
-                    <span class="feature-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path
-                                d="M12 3L19 6V11C19 15.5 16.2 19 12 21C7.8 19 5 15.5 5 11V6L12 3Z"
-                            />
-
-                            <path d="M9 12L11 14L15 10" />
-
-                        </svg>
-
-                    </span>
-
-                    <div>
-
-                        <strong>Protected Account</strong>
-
-                        <small>
-                            Your account is designed with security in mind.
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="brand-feature">
-
-                    <span class="feature-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path d="M4 18L10 12L14 15L20 7" />
-
-                            <path d="M16 7H20V11" />
-
-                        </svg>
-
-                    </span>
-
-                    <div>
-
-                        <strong>Financial Dashboard</strong>
-
-                        <small>
-                            Keep track of your account activity.
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="brand-feature">
-
-                    <span class="feature-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="9"
-                                cy="8"
-                                r="3"
-                            />
-
-                            <circle
-                                cx="17"
-                                cy="9"
-                                r="2.5"
-                            />
-
-                            <path
-                                d="M3 20C3.5 16 6 14 9 14C12 14 14.5 16 15 20"
-                            />
-
-                            <path
-                                d="M14 15C17 14.8 19 16.5 20 20"
-                            />
-
-                        </svg>
-
-                    </span>
-
-                    <div>
-
-                        <strong>Referral Network</strong>
-
-                        <small>
-                            Build and manage your team.
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-            </div>
-
-        </div>
-
-
-        <div class="brand-footer">
-
-            © <span id="registerBrandYear"></span> Crown Cash
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         REGISTER PANEL
-    ================================================== -->
-
-    <section class="auth-panel">
-
-
-        <div class="auth-card register-card">
-
-
-            <!-- Mobile logo -->
-
-            <a
-                href="index.html"
-                class="mobile-logo"
-            >
-
-                <span class="brand-logo-icon">
-
-                    <svg viewBox="0 0 64 64">
-
-                        <path
-                            d="M10 18L18 28L26 15L32 28L38 15L46 28L54 18L50 46H14L10 18Z"
-                        />
-
-                        <path d="M15 46H49" />
-
-                    </svg>
-
-                </span>
-
-                <span class="brand-name">
-
-                    <strong>CROWN</strong>
-                    <small>CASH</small>
-
-                </span>
-
-            </a>
-
-
-
-            <!-- Heading -->
-
-            <div class="auth-heading">
-
-                <span class="auth-kicker">
-                    CREATE ACCOUNT
-                </span>
-
-                <h2>
-                    Join Crown Cash
-                </h2>
-
-                <p>
-                    Enter your details below to create your account.
-                </p>
-
-            </div>
-
-
-
-            <!-- =================================================
-                 REGISTER FORM
-            ================================================== -->
-
-            <form
-                id="registerForm"
-                class="auth-form"
-                novalidate
-            >
-
-
-                <!-- First / Last Name -->
-
-                <div class="two-columns">
-
-
-                    <div class="form-group">
-
-                        <label for="firstName">
-                            First Name
-                        </label>
-
-                        <div class="input-wrap">
-
-                            <span class="input-icon">
-
-                                <svg viewBox="0 0 24 24">
-
-                                    <circle
-                                        cx="12"
-                                        cy="8"
-                                        r="3.2"
-                                    />
-
-                                    <path
-                                        d="M5 21C5.6 16.8 8 14.5 12 14.5C16 14.5 18.4 16.8 19 21"
-                                    />
-
-                                </svg>
-
-                            </span>
-
-                            <input
-                                type="text"
-                                id="firstName"
-                                name="firstName"
-                                placeholder="First name"
-                                autocomplete="given-name"
-                                required
-                            />
-
-                        </div>
-
-                        <small
-                            class="field-error"
-                            id="firstNameError"
-                        ></small>
-
-                    </div>
-
-
-
-                    <div class="form-group">
-
-                        <label for="lastName">
-                            Last Name
-                        </label>
-
-                        <div class="input-wrap">
-
-                            <span class="input-icon">
-
-                                <svg viewBox="0 0 24 24">
-
-                                    <circle
-                                        cx="12"
-                                        cy="8"
-                                        r="3.2"
-                                    />
-
-                                    <path
-                                        d="M5 21C5.6 16.8 8 14.5 12 14.5C16 14.5 18.4 16.8 19 21"
-                                    />
-
-                                </svg>
-
-                            </span>
-
-                            <input
-                                type="text"
-                                id="lastName"
-                                name="lastName"
-                                placeholder="Last name"
-                                autocomplete="family-name"
-                                required
-                            />
-
-                        </div>
-
-                        <small
-                            class="field-error"
-                            id="lastNameError"
-                        ></small>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- Email -->
-
-                <div class="form-group">
-
-                    <label for="registerEmail">
-                        Email Address
-                    </label>
-
-                    <div class="input-wrap">
-
-                        <span class="input-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="2"
-                                />
-
-                                <path d="M3 7L12 13L21 7" />
-
-                            </svg>
-
-                        </span>
-
-                        <input
-                            type="email"
-                            id="registerEmail"
-                            name="email"
-                            placeholder="Enter your email"
-                            autocomplete="email"
-                            required
-                        />
-
-                    </div>
-
-                    <small
-                        class="field-error"
-                        id="registerEmailError"
-                    ></small>
-
-                </div>
-
-
-
-                <!-- Phone -->
-
-                <div class="form-group">
-
-                    <label for="phone">
-                        Phone Number
-                    </label>
-
-                    <div class="input-wrap">
-
-                        <span class="input-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="6"
-                                    y="3"
-                                    width="12"
-                                    height="18"
-                                    rx="2"
-                                />
-
-                                <path d="M10 6H14" />
-
-                                <circle
-                                    cx="12"
-                                    cy="17"
-                                    r="1"
-                                />
-
-                            </svg>
-
-                        </span>
-
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            placeholder="e.g. 07XXXXXXXX"
-                            autocomplete="tel"
-                            required
-                        />
-
-                    </div>
-
-                    <small
-                        class="field-error"
-                        id="phoneError"
-                    ></small>
-
-                </div>
-
-
-
-                <!-- Password -->
-
-                <div class="form-group">
-
-                    <label for="registerPassword">
-                        Password
-                    </label>
-
-                    <div class="input-wrap">
-
-                        <span class="input-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="5"
-                                    y="10"
-                                    width="14"
-                                    height="10"
-                                    rx="2"
-                                />
-
-                                <path
-                                    d="M8 10V7A4 4 0 0 1 16 7V10"
-                                />
-
-                            </svg>
-
-                        </span>
-
-
-                        <input
-                            type="password"
-                            id="registerPassword"
-                            name="password"
-                            placeholder="Create a password"
-                            autocomplete="new-password"
-                            required
-                        />
-
-
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            data-target="registerPassword"
-                            aria-label="Show password"
-                        >
-
-                            <svg
-                                class="eye-open"
-                                viewBox="0 0 24 24"
-                            >
-
-                                <path
-                                    d="M2.5 12S6 5 12 5S21.5 12 21.5 12S18 19 12 19S2.5 12 2.5 12Z"
-                                />
-
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="3"
-                                />
-
-                            </svg>
-
-                            <svg
-                                class="eye-closed"
-                                viewBox="0 0 24 24"
-                            >
-
-                                <path d="M3 3L21 21" />
-
-                                <path
-                                    d="M10.6 5.2C11.05 5.07 11.52 5 12 5C18 5 21.5 12 21.5 12C20.75 13.5 19.7 14.8 18.4 15.9"
-                                />
-
-                                <path
-                                    d="M6.2 6.3C4.55 7.55 3.35 9.25 2.5 12C2.5 12 6 19 12 19C13.2 19 14.3 18.75 15.3 18.3"
-                                />
-
-                            </svg>
-
-                        </button>
-
-                    </div>
-
-                    <div class="password-strength">
-
-                        <span id="strengthBar"></span>
-
-                    </div>
-
-                    <small
-                        class="password-hint"
-                        id="passwordHint"
-                    >
-                        Use at least 8 characters.
-                    </small>
-
-                    <small
-                        class="field-error"
-                        id="registerPasswordError"
-                    ></small>
-
-                </div>
-
-
-
-                <!-- Confirm Password -->
-
-                <div class="form-group">
-
-                    <label for="confirmPassword">
-                        Confirm Password
-                    </label>
-
-                    <div class="input-wrap">
-
-                        <span class="input-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="5"
-                                    y="10"
-                                    width="14"
-                                    height="10"
-                                    rx="2"
-                                />
-
-                                <path
-                                    d="M8 10V7A4 4 0 0 1 16 7V10"
-                                />
-
-                                <path d="M9 15L11 17L15 13" />
-
-                            </svg>
-
-                        </span>
-
-
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            placeholder="Confirm your password"
-                            autocomplete="new-password"
-                            required
-                        />
-
-
-                        <button
-                            type="button"
-                            class="password-toggle"
-                            data-target="confirmPassword"
-                            aria-label="Show password"
-                        >
-
-                            <svg
-                                class="eye-open"
-                                viewBox="0 0 24 24"
-                            >
-
-                                <path
-                                    d="M2.5 12S6 5 12 5S21.5 12 21.5 12S18 19 12 19S2.5 12 2.5 12Z"
-                                />
-
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="3"
-                                />
-
-                            </svg>
-
-                            <svg
-                                class="eye-closed"
-                                viewBox="0 0 24 24"
-                            >
-
-                                <path d="M3 3L21 21" />
-
-                                <path
-                                    d="M10.6 5.2C11.05 5.07 11.52 5 12 5C18 5 21.5 12 21.5 12C20.75 13.5 19.7 14.8 18.4 15.9"
-                                />
-
-                                <path
-                                    d="M6.2 6.3C4.55 7.55 3.35 9.25 2.5 12C2.5 12 6 19 12 19C13.2 19 14.3 18.75 15.3 18.3"
-                                />
-
-                            </svg>
-
-                        </button>
-
-                    </div>
-
-                    <small
-                        class="field-error"
-                        id="confirmPasswordError"
-                    ></small>
-
-                </div>
-
-
-
-                <!-- Referral -->
-
-                <div class="form-group">
-
-                    <label for="referralCode">
-                        Referral Code
-                        <span class="optional">
-                            Optional
-                        </span>
-                    </label>
-
-                    <div class="input-wrap">
-
-                        <span class="input-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="9"
-                                    cy="8"
-                                    r="3"
-                                />
-
-                                <circle
-                                    cx="17"
-                                    cy="9"
-                                    r="2.5"
-                                />
-
-                                <path
-                                    d="M3 20C3.5 16 6 14 9 14C12 14 14.5 16 15 20"
-                                />
-
-                                <path
-                                    d="M14 15C17 14.8 19 16.5 20 20"
-                                />
-
-                            </svg>
-
-                        </span>
-
-                        <input
-                            type="text"
-                            id="referralCode"
-                            name="referralCode"
-                            placeholder="Enter referral code"
-                            autocomplete="off"
-                        />
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- Terms -->
-
-                <label class="terms-check">
-
-                    <input
-                        type="checkbox"
-                        id="agreeTerms"
-                        required
-                    />
-
-                    <span class="custom-check">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path d="M5 12L10 17L19 7" />
-
-                        </svg>
-
-                    </span>
-
-                    <span>
-                        I agree to the Crown Cash
-                        <a href="#">Terms & Conditions</a>
-                        and
-                        <a href="#">Privacy Policy</a>.
-                    </span>
-
-                </label>
-
-
-
-                <!-- Message -->
-
-                <div
-                    id="registerMessage"
-                    class="auth-message"
-                ></div>
-
-
-
-                <!-- Register -->
-
-                <button
-                    type="submit"
-                    class="auth-button"
-                    id="registerButton"
+                <a
+                    href="index.html"
+                    class="brand-logo"
                 >
 
-                    <span class="button-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="9"
-                                cy="8"
-                                r="3"
-                            />
-
-                            <path
-                                d="M3.5 20C4 16.5 6 14.5 9 14.5C12 14.5 14 16.5 14.5 20"
-                            />
-
-                            <path d="M18 14V20" />
-
-                            <path d="M15 17H21" />
-
-                        </svg>
-
+                    <span class="logo-mark">
+                        C
                     </span>
 
-                    <span class="button-text">
-                        Create Account
+                    <span class="logo-text">
+                        Crown<span>Cash</span>
                     </span>
-
-                    <span class="button-arrow">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path d="M5 12H19" />
-
-                            <path d="M13 6L19 12L13 18" />
-
-                        </svg>
-
-                    </span>
-
-                </button>
-
-
-            </form>
-
-
-
-            <!-- Sign in -->
-
-            <div class="auth-divider">
-
-                <span>ALREADY A MEMBER?</span>
-
-            </div>
-
-
-            <div class="register-prompt">
-
-                <span>
-                    Already have an account?
-                </span>
-
-                <a href="login.html">
-
-                    <span class="register-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="12"
-                                cy="8"
-                                r="3"
-                            />
-
-                            <path
-                                d="M5 21C5.7 16.8 8.1 14.5 12 14.5C15.9 14.5 18.3 16.8 19 21"
-                            />
-
-                            <path d="M5 12H19" />
-
-                            <path d="M13 8L19 12L13 16" />
-
-                        </svg>
-
-                    </span>
-
-                    Sign In
 
                 </a>
 
+                <div class="brand-message">
+
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+
+                    <h1>
+                        Build Your
+                        <span>Financial Future</span>
+                    </h1>
+
+                    <p>
+                        Join Crown Cash and start managing
+                        your investment journey from one
+                        simple dashboard.
+                    </p>
+
+                    <div class="benefits">
+
+                        <div class="benefit">
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <span>
+                                Personal account
+                            </span>
+                        </div>
+
+                        <div class="benefit">
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <span>
+                                Investment plans
+                            </span>
+                        </div>
+
+                        <div class="benefit">
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <span>
+                                Referral program
+                            </span>
+                        </div>
+
+                        <div class="benefit">
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <span>
+                                Secure account access
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="brand-footer">
+                    © 2026 Crown Cash. All rights reserved.
+                </div>
+
             </div>
 
+        </section>
 
-            <!-- Security -->
 
-            <div class="auth-security">
+        <!-- ==================================================
+             RIGHT / REGISTRATION FORM
+        =================================================== -->
 
-                <span>
+        <section class="auth-form-section">
 
-                    <svg viewBox="0 0 24 24">
+            <div class="form-container">
 
-                        <path
-                            d="M12 3L19 6V11C19 15.5 16.2 19 12 21C7.8 19 5 15.5 5 11V6L12 3Z"
-                        />
+                <!-- Mobile logo -->
 
-                        <path d="M9 12L11 14L15 10" />
+                <a
+                    href="index.html"
+                    class="mobile-logo"
+                >
 
-                    </svg>
+                    <span class="logo-mark">
+                        C
+                    </span>
 
-                </span>
+                    <span class="logo-text">
+                        Crown<span>Cash</span>
+                    </span>
 
-                Secure Crown Cash Registration
+                </a>
+
+
+                <!-- Heading -->
+
+                <div class="form-heading">
+
+                    <div class="welcome-icon">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+
+                    <h2>
+                        WELCOME TO CROWN CASH
+                    </h2>
+
+                    <p>
+                        Create your account and start
+                        your journey today.
+                    </p>
+
+                </div>
+
+
+                <!-- ==================================================
+                     MESSAGE
+                =================================================== -->
+
+                <div
+                    id="formMessage"
+                    class="form-message"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
+
+
+                <!-- ==================================================
+                     REGISTRATION FORM
+                =================================================== -->
+
+                <form
+                    id="registerForm"
+                    novalidate
+                >
+
+                    <!-- ==============================================
+                         NAME
+                    =============================================== -->
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="first_name">
+                                First Name
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i
+                                    class="fa-solid fa-user"
+                                ></i>
+
+                                <input
+                                    type="text"
+                                    id="first_name"
+                                    name="first_name"
+                                    placeholder="First name"
+                                    autocomplete="given-name"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="last_name">
+                                Last Name
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <i
+                                    class="fa-solid fa-user"
+                                ></i>
+
+                                <input
+                                    type="text"
+                                    id="last_name"
+                                    name="last_name"
+                                    placeholder="Last name"
+                                    autocomplete="family-name"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         OPTIONAL FULL NAME
+                         Hidden compatibility field
+                    =============================================== -->
+
+                    <input
+                        type="hidden"
+                        id="full_name"
+                        name="full_name"
+                    >
+
+
+                    <!-- ==============================================
+                         PHONE
+                    =============================================== -->
+
+                    <div class="form-group">
+
+                        <label for="phone">
+                            Phone Number
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i
+                                class="fa-solid fa-phone"
+                            ></i>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="e.g. 0771234567"
+                                autocomplete="tel"
+                                inputmode="tel"
+                                required
+                            >
+
+                        </div>
+
+                        <small class="input-help">
+                            Use a valid Ugandan mobile number.
+                        </small>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         EMAIL
+                    =============================================== -->
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            Email Address
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i
+                                class="fa-solid fa-envelope"
+                            ></i>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email"
+                                autocomplete="email"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         PASSWORD
+                    =============================================== -->
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i
+                                class="fa-solid fa-lock"
+                            ></i>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Minimum 8 characters"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="password"
+                                aria-label="Show password"
+                            >
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         CONFIRM PASSWORD
+                    =============================================== -->
+
+                    <div class="form-group">
+
+                        <label for="confirm_password">
+                            Confirm Password
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i
+                                class="fa-solid fa-shield-halved"
+                            ></i>
+
+                            <input
+                                type="password"
+                                id="confirm_password"
+                                name="confirm_password"
+                                placeholder="Repeat your password"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="confirm_password"
+                                aria-label="Show password"
+                            >
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         REFERRAL CODE
+                    =============================================== -->
+
+                    <div class="form-group">
+
+                        <label for="referral_code">
+
+                            Referral Code
+
+                            <span class="optional">
+                                Optional
+                            </span>
+
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i
+                                class="fa-solid fa-users"
+                            ></i>
+
+                            <input
+                                type="text"
+                                id="referral_code"
+                                name="referral_code"
+                                placeholder="Enter referral code"
+                                autocomplete="off"
+                                maxlength="30"
+                            >
+
+                        </div>
+
+                        <small class="input-help">
+                            If someone invited you, enter
+                            their referral code.
+                        </small>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         TERMS
+                    =============================================== -->
+
+                    <div class="terms-row">
+
+                        <label class="checkbox-label">
+
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                name="terms"
+                                required
+                            >
+
+                            <span class="custom-checkbox">
+                                <i
+                                    class="fa-solid fa-check"
+                                ></i>
+                            </span>
+
+                            <span class="terms-text">
+
+                                I agree to the
+
+                                <a
+                                    href="terms.html"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    Terms & Conditions
+                                </a>
+
+                                and
+
+                                <a
+                                    href="privacy.html"
+                                    target="_blank"
+                                    rel="noopener"
+                                >
+                                    Privacy Policy
+                                </a>.
+
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- ==============================================
+                         SUBMIT
+                    =============================================== -->
+
+                    <button
+                        type="submit"
+                        class="register-button"
+                    >
+
+                        <span>
+                            Create Account
+                        </span>
+
+                        <i
+                            class="fa-solid fa-arrow-right"
+                        ></i>
+
+                    </button>
+
+
+                    <!-- ==============================================
+                         LOGIN
+                    =============================================== -->
+
+                    <div class="login-link">
+
+                        Already have an account?
+
+                        <a href="login.html">
+                            Login
+                        </a>
+
+                    </div>
+
+                </form>
 
             </div>
 
+        </section>
 
-        </div>
-
-    </section>
-
-</div>
+    </div>
 
 
-<script src="auth.js"></script>
+    <!-- ======================================================
+         REGISTRATION JAVASCRIPT
+    ======================================================= -->
+
+    <script src="register.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
+
+<title>Crown Cash | Admin Investments</title>
+
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
+
+<!-- Admin Investment CSS -->
+<link rel="stylesheet" href="admin-investments.css">
+
+</head><body><div class="admin-layout"><!-- =====================================================
+     SIDEBAR
+====================================================== -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="logo-area">
+
+        <div class="logo-mark">
+            <i class="fa-solid fa-crown"></i>
+        </div>
+
+        <div class="logo-text">
+            <span class="logo-main">Crown</span>
+            <span class="logo-sub">Cash</span>
+        </div>
+
+    </div>
+
+
+    <div class="admin-profile">
+
+        <div class="admin-avatar">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+
+        <div>
+            <strong>Administrator</strong>
+            <small>Admin Panel</small>
+        </div>
+
+    </div>
+
+
+    <nav class="admin-nav">
+
+        <a href="admin.html">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="admin-users.html">
+            <i class="fa-solid fa-users"></i>
+            <span>Users</span>
+        </a>
+
+        <a href="admin-deposits.html">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            <span>Deposits</span>
+        </a>
+
+        <a href="admin-investments.html" class="active">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Investments</span>
+        </a>
+
+        <a href="admin-withdrawals.html">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Withdrawals</span>
+        </a>
+
+        <a href="admin-transactions.html">
+            <i class="fa-solid fa-receipt"></i>
+            <span>Transactions</span>
+        </a>
+
+        <a href="admin-referrals.html">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Referrals</span>
+        </a>
+
+        <a href="admin-security.html">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Security</span>
+        </a>
+
+    </nav>
+
+
+    <button class="logout-btn" id="logoutBtn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+    </button>
+
+</aside>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
+<main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+
+        <button
+            class="menu-toggle"
+            id="menuToggle"
+            aria-label="Open menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+
+        <div class="page-heading">
+
+            <h1>
+                <i class="fa-solid fa-chart-line"></i>
+                Investment Management
+            </h1>
+
+            <p>
+                Review and manage Crown Cash investment requests.
+            </p>
+
+        </div>
+
+
+        <div class="admin-top-icon">
+            <i class="fa-solid fa-crown"></i>
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         PAGE CONTENT
+    ====================================================== -->
+    <section class="content">
+
+        <!-- PAGE MESSAGE -->
+        <div
+            id="pageMessage"
+            class="page-message"
+            aria-live="polite"
+        ></div>
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+        <div class="stats-grid">
+
+            <div class="stat-card pending-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </div>
+
+                <div class="stat-info">
+                    <span>Pending</span>
+                    <strong id="pendingCount">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card active-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div class="stat-info">
+                    <span>Active</span>
+                    <strong id="activeCount">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card completed-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                </div>
+
+                <div class="stat-info">
+                    <span>Completed</span>
+                    <strong id="completedCount">0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card rejected-card">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </div>
+
+                <div class="stat-info">
+                    <span>Rejected</span>
+                    <strong id="rejectedCount">0</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FILTERS
+        ================================================== -->
+        <div class="control-panel">
+
+            <div class="filter-buttons">
+
+                <button
+                    class="filter-btn active"
+                    data-status="all"
+                >
+                    <i class="fa-solid fa-layer-group"></i>
+                    All
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-status="pending"
+                >
+                    <i class="fa-solid fa-clock"></i>
+                    Pending
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-status="active"
+                >
+                    <i class="fa-solid fa-circle-check"></i>
+                    Active
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-status="completed"
+                >
+                    <i class="fa-solid fa-check-double"></i>
+                    Completed
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-status="rejected"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                    Rejected
+                </button>
+
+            </div>
+
+
+            <button
+                class="refresh-btn"
+                id="refreshBtn"
+            >
+                <i class="fa-solid fa-rotate"></i>
+                Refresh
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             INVESTMENT TABLE
+        ================================================== -->
+        <div class="investment-card">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>
+                        <i class="fa-solid fa-list-check"></i>
+                        Investment Requests
+                    </h2>
+
+                    <p>
+                        Review investment requests submitted by users.
+                    </p>
+                </div>
+
+                <div class="record-count">
+                    <span id="recordCount">0</span>
+                    records
+                </div>
+
+            </div>
+
+
+            <!-- LOADING -->
+            <div
+                id="loadingState"
+                class="state-box"
+            >
+
+                <div class="loader"></div>
+
+                <h3>Loading investments...</h3>
+
+                <p>
+                    Please wait while investment requests are loaded.
+                </p>
+
+            </div>
+
+
+            <!-- ERROR -->
+            <div
+                id="errorState"
+                class="state-box error-state"
+                style="display:none;"
+            >
+
+                <div class="state-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <h3>Unable to load investments</h3>
+
+                <p id="errorMessage">
+                    Something went wrong.
+                </p>
+
+                <button
+                    class="retry-btn"
+                    id="retryBtn"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Try Again
+                </button>
+
+            </div>
+
+
+            <!-- EMPTY -->
+            <div
+                id="emptyState"
+                class="state-box"
+                style="display:none;"
+            >
+
+                <div class="state-icon">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+
+                <h3>No investments found</h3>
+
+                <p>
+                    There are no investment records for this filter.
+                </p>
+
+            </div>
+
+
+            <!-- TABLE -->
+            <div
+                id="tableWrapper"
+                class="table-wrapper"
+                style="display:none;"
+            >
+
+                <table class="investment-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>User</th>
+
+                            <th>Plan</th>
+
+                            <th>Amount</th>
+
+                            <th>Duration</th>
+
+                            <th>Status</th>
+
+                            <th>Reference</th>
+
+                            <th>Date</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="investmentTableBody">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- MOBILE CARDS -->
+            <div
+                id="mobileInvestmentList"
+                class="mobile-investment-list"
+                style="display:none;"
+            >
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SECURITY NOTICE
+        ================================================== -->
+        <div class="security-notice">
+
+            <div class="security-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <div>
+
+                <strong>Investment verification</strong>
+
+                <p>
+                    Only approve an investment after the required
+                    funding or payment has been independently verified.
+                    Approval does not by itself create money in the
+                    user's wallet.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <p>
+            © <span id="currentYear"></span>
+            Crown Cash. Admin Panel.
+        </p>
+
+        <p>
+            <i class="fa-solid fa-shield-halved"></i>
+            Secure Administration
+        </p>
+
+    </footer>
+
+</main>
+
+</div><!-- =====================================================
+     CONFIRMATION MODAL
+====================================================== --><div
+    class="modal-overlay"
+    id="confirmModal"
+    style="display:none;"
+><div class="confirm-modal">
+
+    <button
+        class="modal-close"
+        id="modalClose"
+        aria-label="Close"
+    >
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
+
+    <div
+        class="modal-icon"
+        id="modalIcon"
+    >
+        <i class="fa-solid fa-circle-question"></i>
+    </div>
+
+
+    <h2 id="modalTitle">
+        Confirm Action
+    </h2>
+
+
+    <p id="modalText">
+        Are you sure you want to continue?
+    </p>
+
+
+    <div class="modal-details" id="modalDetails">
+    </div>
+
+
+    <div class="modal-actions">
+
+        <button
+            class="modal-cancel"
+            id="modalCancel"
+        >
+            Cancel
+        </button>
+
+        <button
+            class="modal-confirm"
+            id="modalConfirm"
+        >
+            Confirm
+        </button>
+
+    </div>
+
+</div>
+
+</div><!-- =====================================================
+     JAVASCRIPT
+====================================================== --><script src="admin-investments.js"></script></body>
+</html>

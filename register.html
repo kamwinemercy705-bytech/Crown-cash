@@ -1,234 +1,555 @@
-<div class="form-section"><div class="section-title">
-    <i class="fas fa-user-circle"></i>
-    <div>
-        <h3>Personal Information</h3>
-        <p>Enter your details to create your Crown Cash account.</p>
-    </div>
-</div>
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
 
-<!-- First Name + Last Name -->
-<div class="form-row">
+<title>Crown Cash | Create Account</title>
 
-    <div class="form-group">
-        <label for="first_name">
-            <i class="fas fa-user"></i>
-            First Name
-        </label>
+<!-- Font Awesome Icons -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
 
-        <div class="input-wrapper">
-            <i class="fas fa-user input-icon"></i>
+<!-- Crown Cash Register CSS -->
+<link rel="stylesheet" href="register.css">
 
-            <input
-                type="text"
-                id="first_name"
-                name="first_name"
-                placeholder="Enter your first name"
-                autocomplete="given-name"
-                required
-            >
+</head><body><!-- ================================
+     PAGE
+================================= -->
+
+<div class="register-page">
+
+    <!-- ================================
+         LEFT BRAND SECTION
+    ================================= -->
+
+    <section class="brand-section">
+
+        <div class="brand-content">
+
+            <!-- LOGO -->
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <span>C</span>
+                </div>
+
+                <div class="logo-text">
+                    <strong>Crown</strong>
+                    <span>Cash</span>
+                </div>
+            </a>
+
+
+            <div class="brand-message">
+
+                <span class="brand-badge">
+                    <i class="fa-solid fa-crown"></i>
+                    CROWN CASH
+                </span>
+
+                <h1>
+                    Build Your
+                    <span>Financial Future</span>
+                </h1>
+
+                <p>
+                    Create your Crown Cash account and start your
+                    journey toward achieving your financial goals.
+                </p>
+
+            </div>
+
+
+            <!-- BENEFITS -->
+
+            <div class="benefits">
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+
+                    <div>
+                        <h3>Personal Account</h3>
+                        <p>
+                            Manage your account and track your
+                            financial activity in one place.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                        <i class="fa-solid fa-gift"></i>
+                    </div>
+
+                    <div>
+                        <h3>Welcome Bonus</h3>
+                        <p>
+                            Enjoy the benefits available to eligible
+                            Crown Cash members.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="benefit">
+
+                    <div class="benefit-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <div>
+                        <h3>Referral Program</h3>
+                        <p>
+                            Invite people using your referral code
+                            and track your referral activity.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-    </div>
 
-    <div class="form-group">
-        <label for="last_name">
-            <i class="fas fa-user"></i>
-            Last Name
-        </label>
+    </section>
 
-        <div class="input-wrapper">
-            <i class="fas fa-user input-icon"></i>
 
-            <input
-                type="text"
-                id="last_name"
-                name="last_name"
-                placeholder="Enter your last name"
-                autocomplete="family-name"
-                required
-            >
+    <!-- ================================
+         REGISTER SECTION
+    ================================= -->
+
+    <section class="register-section">
+
+        <div class="register-container">
+
+            <!-- MOBILE LOGO -->
+
+            <a href="index.html" class="mobile-logo">
+
+                <div class="logo-icon">
+                    <span>C</span>
+                </div>
+
+                <div class="logo-text">
+                    <strong>Crown</strong>
+                    <span>Cash</span>
+                </div>
+
+            </a>
+
+
+            <!-- HEADER -->
+
+            <div class="register-header">
+
+                <div class="header-icon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+
+                <div>
+                    <h2>Create Account</h2>
+
+                    <p>
+                        Join Crown Cash today
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- FORM -->
+
+            <form id="registerForm" novalidate>
+
+
+                <!-- =================================
+                     PERSONAL INFORMATION
+                ================================== -->
+
+                <div class="form-section">
+
+                    <div class="section-title">
+
+                        <div class="section-icon">
+                            <i class="fa-solid fa-user-circle"></i>
+                        </div>
+
+                        <div>
+                            <h3>Personal Information</h3>
+
+                            <p>
+                                Enter your details to create your
+                                Crown Cash account.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <!-- FIRST NAME -->
+
+                    <div class="form-group">
+
+                        <label for="first_name">
+                            First Name
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-solid fa-user field-icon"></i>
+
+                            <input
+                                type="text"
+                                id="first_name"
+                                name="first_name"
+                                placeholder="Enter your first name"
+                                autocomplete="given-name"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- LAST NAME -->
+
+                    <div class="form-group">
+
+                        <label for="last_name">
+                            Last Name
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-solid fa-user field-icon"></i>
+
+                            <input
+                                type="text"
+                                id="last_name"
+                                name="last_name"
+                                placeholder="Enter your last name"
+                                autocomplete="family-name"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PHONE -->
+
+                    <div class="form-group">
+
+                        <label for="phone">
+                            Phone Number
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-solid fa-phone field-icon"></i>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="e.g. 0771234567"
+                                autocomplete="tel"
+                                inputmode="tel"
+                                required
+                            >
+
+                        </div>
+
+                        <small class="input-help">
+
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+
+                            Use your active Ugandan mobile number.
+
+                        </small>
+
+                    </div>
+
+
+                    <!-- EMAIL -->
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            Email Address
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-solid fa-envelope field-icon"></i>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email address"
+                                autocomplete="email"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="input-wrapper password-wrapper">
+
+                            <i class="fa-solid fa-lock field-icon"></i>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Create a strong password"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="password"
+                                aria-label="Show password"
+                            >
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                        </div>
+
+                        <small class="input-help">
+
+                            <i class="fa-solid fa-shield-halved"></i>
+
+                            Use at least 8 characters.
+
+                        </small>
+
+                    </div>
+
+
+                    <!-- CONFIRM PASSWORD -->
+
+                    <div class="form-group">
+
+                        <label for="confirm_password">
+                            Confirm Password
+                        </label>
+
+                        <div class="input-wrapper password-wrapper">
+
+                            <i class="fa-solid fa-lock field-icon"></i>
+
+                            <input
+                                type="password"
+                                id="confirm_password"
+                                name="confirm_password"
+                                placeholder="Re-enter your password"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="confirm_password"
+                                aria-label="Show password"
+                            >
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- REFERRAL CODE -->
+
+                    <div class="form-group">
+
+                        <label for="referral_code">
+
+                            Referral Code
+
+                            <span class="optional-label">
+                                Optional
+                            </span>
+
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-solid fa-gift field-icon"></i>
+
+                            <input
+                                type="text"
+                                id="referral_code"
+                                name="referral_code"
+                                placeholder="Enter referral code"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                        <small class="input-help">
+
+                            <i class="fa-solid fa-users"></i>
+
+                            Enter a referral code if someone invited you.
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================
+                     TERMS
+                ================================== -->
+
+                <div class="terms-box">
+
+                    <label class="checkbox-container">
+
+                        <input
+                            type="checkbox"
+                            id="terms"
+                            name="terms"
+                            required
+                        >
+
+                        <span class="custom-checkbox">
+
+                            <i class="fa-solid fa-check"></i>
+
+                        </span>
+
+                        <span class="terms-text">
+
+                            I agree to the
+
+                            <a href="terms.html">
+                                Terms &amp; Conditions
+                            </a>
+
+                            and
+
+                            <a href="privacy.html">
+                                Privacy Policy
+                            </a>.
+
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <!-- FORM MESSAGE -->
+
+                <div
+                    id="formMessage"
+                    class="form-message"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
+
+
+                <!-- CREATE ACCOUNT BUTTON -->
+
+                <button
+                    type="submit"
+                    class="register-btn"
+                    id="registerBtn"
+                >
+
+                    <span>
+
+                        <i class="fa-solid fa-user-plus"></i>
+
+                        Create Account
+
+                    </span>
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+
+            </form>
+
+
+            <!-- LOGIN -->
+
+            <div class="login-link">
+
+                Already have an account?
+
+                <a href="login.html">
+                    Login
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+
+            <!-- SECURITY -->
+
+            <div class="security-notice">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+                <span>
+                    Your information is protected and securely
+                    transmitted.
+                </span>
+
+            </div>
+
+
+            <!-- FOOTER -->
+
+            <div class="register-footer">
+
+                <p>
+                    © 2026 Crown Cash. All rights reserved.
+                </p>
+
+            </div>
+
         </div>
-    </div>
+
+    </section>
 
 </div>
 
-<!-- Phone -->
-<div class="form-group">
-    <label for="phone">
-        <i class="fas fa-phone"></i>
-        Phone Number
-    </label>
 
-    <div class="input-wrapper">
-        <i class="fas fa-phone input-icon"></i>
+<!-- REGISTER JAVASCRIPT -->
 
-        <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="e.g. 0771234567"
-            autocomplete="tel"
-            inputmode="tel"
-            required
-        >
-    </div>
+<script src="register.js"></script>
 
-    <small class="input-help">
-        <i class="fas fa-mobile-alt"></i>
-        Use your active Ugandan mobile number.
-    </small>
-</div>
-
-<!-- Email -->
-<div class="form-group">
-    <label for="email">
-        <i class="fas fa-envelope"></i>
-        Email Address
-    </label>
-
-    <div class="input-wrapper">
-        <i class="fas fa-envelope input-icon"></i>
-
-        <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter your email address"
-            autocomplete="email"
-            required
-        >
-    </div>
-</div>
-
-<!-- Password -->
-<div class="form-group">
-    <label for="password">
-        <i class="fas fa-lock"></i>
-        Password
-    </label>
-
-    <div class="input-wrapper password-wrapper">
-        <i class="fas fa-lock input-icon"></i>
-
-        <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Create a strong password"
-            autocomplete="new-password"
-            required
-        >
-
-        <button
-            type="button"
-            class="password-toggle"
-            data-target="password"
-            aria-label="Show password"
-        >
-            <i class="fas fa-eye"></i>
-        </button>
-    </div>
-
-    <small class="input-help">
-        <i class="fas fa-shield-alt"></i>
-        Use at least 8 characters.
-    </small>
-</div>
-
-<!-- Confirm Password -->
-<div class="form-group">
-    <label for="confirm_password">
-        <i class="fas fa-lock"></i>
-        Confirm Password
-    </label>
-
-    <div class="input-wrapper password-wrapper">
-        <i class="fas fa-lock input-icon"></i>
-
-        <input
-            type="password"
-            id="confirm_password"
-            name="confirm_password"
-            placeholder="Re-enter your password"
-            autocomplete="new-password"
-            required
-        >
-
-        <button
-            type="button"
-            class="password-toggle"
-            data-target="confirm_password"
-            aria-label="Show password"
-        >
-            <i class="fas fa-eye"></i>
-        </button>
-    </div>
-</div>
-
-<!-- Referral Code -->
-<div class="form-group">
-    <label for="referral_code">
-        <i class="fas fa-gift"></i>
-        Referral Code
-        <span class="optional-label">Optional</span>
-    </label>
-
-    <div class="input-wrapper">
-        <i class="fas fa-gift input-icon"></i>
-
-        <input
-            type="text"
-            id="referral_code"
-            name="referral_code"
-            placeholder="Enter referral code"
-            autocomplete="off"
-        >
-    </div>
-
-    <small class="input-help">
-        <i class="fas fa-users"></i>
-        Enter a referral code if someone invited you.
-    </small>
-</div>
-
-</div><!-- Terms --><div class="terms-box"><label class="checkbox-container">
-
-    <input
-        type="checkbox"
-        id="terms"
-        name="terms"
-        required
-    >
-
-    <span class="custom-checkbox">
-        <i class="fas fa-check"></i>
-    </span>
-
-    <span class="terms-text">
-        I agree to the
-        <a href="terms.html">Terms & Conditions</a>
-        and
-        <a href="privacy.html">Privacy Policy</a>.
-    </span>
-
-</label>
-
-</div><!-- Form Message --><div
-    id="formMessage"
-    class="form-message"
-    role="alert"
-    aria-live="polite"
-></div><!-- Create Account Button --><button
-type="submit"
-class="register-btn"
-id="registerBtn"
-
-«»
-
-<span>
-    <i class="fas fa-user-plus"></i>
-    Create Account
-</span>
-
-<i class="fas fa-arrow-right"></i>
-
-</button>
+</body>
+</html>

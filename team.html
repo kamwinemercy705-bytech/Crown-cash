@@ -5,95 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="theme-color" content="#07111f">
-
     <title>Crown Cash | Referral Team</title>
 
-    <!-- Font Awesome -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <!-- Team CSS -->
     <link rel="stylesheet" href="team.css">
 </head>
 
 <body>
 
-<div class="app-container">
+<div class="page">
 
-    <!-- =========================
-         SIDEBAR
-    ========================== -->
+    <!-- MOBILE OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
 
-        <!-- Logo -->
-        <div class="logo-area">
-            <div class="logo-mark">
-                <span>C</span>
+        <div class="brand">
+            <div class="brand-logo">C</div>
+
+            <div class="brand-text">
+                <h2>Crown Cash</h2>
+                <span>Invest • Grow • Earn</span>
             </div>
 
-            <div class="logo-text">
-                <strong>Crown</strong>
-                <span>Cash</span>
-            </div>
+            <button class="close-sidebar" id="closeSidebar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
 
-
-        <!-- Navigation -->
         <nav class="sidebar-nav">
 
-            <a href="dashboard.html" class="nav-item">
+            <a href="dashboard.html">
                 <i class="fa-solid fa-house"></i>
                 <span>Dashboard</span>
             </a>
 
-            <a href="profile.html" class="nav-item">
+            <a href="profile.html">
                 <i class="fa-solid fa-user"></i>
                 <span>Profile</span>
             </a>
 
-            <a href="investments.html" class="nav-item">
+            <a href="investments.html">
                 <i class="fa-solid fa-chart-line"></i>
                 <span>Investments</span>
             </a>
 
-            <a href="deposit.html" class="nav-item">
+            <a href="deposit.html">
                 <i class="fa-solid fa-wallet"></i>
                 <span>Deposits</span>
             </a>
 
-            <a href="withdraw.html" class="nav-item">
+            <a href="withdraw.html">
                 <i class="fa-solid fa-money-bill-transfer"></i>
                 <span>Withdrawals</span>
             </a>
 
-            <a href="team.html" class="nav-item active">
+            <a href="team.html" class="active">
                 <i class="fa-solid fa-users"></i>
                 <span>Referral Team</span>
             </a>
 
-            <a href="transactions.html" class="nav-item">
-                <i class="fa-solid fa-clock-rotate-left"></i>
+            <a href="transactions.html">
+                <i class="fa-solid fa-receipt"></i>
                 <span>Transactions</span>
             </a>
 
-            <a href="support.html" class="nav-item">
+            <a href="support.html">
                 <i class="fa-solid fa-headset"></i>
                 <span>Support</span>
             </a>
 
         </nav>
 
-
-        <!-- Logout -->
         <div class="sidebar-bottom">
 
-            <button
-                type="button"
-                class="logout-btn"
-                id="logoutBtn"
-            >
+            <button class="logout-btn" id="logoutBtn">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Logout</span>
             </button>
@@ -103,400 +92,491 @@
     </aside>
 
 
-    <!-- =========================
-         MAIN CONTENT
-    ========================== -->
+    <!-- MAIN CONTENT -->
     <main class="main-content">
 
-        <!-- Top Bar -->
+        <!-- TOP BAR -->
         <header class="topbar">
 
-            <button
-                type="button"
-                class="menu-btn"
-                id="menuBtn"
-                aria-label="Open menu"
-            >
+            <button class="menu-toggle" id="menuToggle">
                 <i class="fa-solid fa-bars"></i>
             </button>
 
             <div class="page-heading">
-
-                <span class="small-heading">
-                    Crown Cash
-                </span>
-
-                <h1>
-                    Referral Team
-                </h1>
-
+                <h1>Referral Center</h1>
+                <p>Build your team. Grow together.</p>
             </div>
 
-            <div class="topbar-icon">
-                <i class="fa-solid fa-users"></i>
+            <div class="topbar-user">
+                <div class="user-icon">
+                    <i class="fa-solid fa-user"></i>
+                </div>
             </div>
 
         </header>
 
 
-        <!-- =========================
-             CONTENT
-        ========================== -->
-        <section class="content">
+        <!-- PAGE -->
+        <section class="team-page">
 
-            <!-- Welcome -->
-            <div class="welcome-card">
+            <!-- INTRO -->
+            <div class="intro-card">
 
-                <div class="welcome-icon">
-                    <i class="fa-solid fa-people-group"></i>
+                <div class="intro-icon">
+                    <i class="fa-solid fa-users"></i>
                 </div>
 
-                <div class="welcome-text">
-
-                    <span>
-                        REFERRAL PROGRAM
-                    </span>
-
-                    <h2>
-                        Build Your Team
-                    </h2>
+                <div>
+                    <h2>Build your team. Grow together.</h2>
 
                     <p>
-                        Invite friends and grow your Crown Cash referral team.
+                        Invite people to Crown Cash using your referral link
+                        and grow your network together.
                     </p>
-
                 </div>
 
             </div>
 
 
-            <!-- =========================
-                 REFERRAL LINK CARD
-            ========================== -->
-            <div class="referral-card">
+            <!-- TEAM SUMMARY -->
+            <section class="summary-grid">
 
-                <div class="section-title">
+                <div class="summary-card total-card">
 
-                    <div class="title-icon">
-                        <i class="fa-solid fa-link"></i>
+                    <div class="summary-icon">
+                        <i class="fa-solid fa-people-group"></i>
                     </div>
 
-                    <div>
-                        <h2>Your Referral Link</h2>
-                        <p>Share your link with friends</p>
+                    <div class="summary-info">
+                        <span>TOTAL TEAM</span>
+                        <strong id="totalTeam">0</strong>
+                        <small>Registered referrals</small>
                     </div>
 
                 </div>
 
 
-                <div class="referral-link-box">
+                <div class="summary-card">
 
-                    <input
-                        type="text"
-                        id="referralLink"
-                        value="Loading..."
-                        readonly
-                    >
+                    <div class="summary-icon l1-icon">
+                        <span>L1</span>
+                    </div>
 
-                    <button
-                        type="button"
-                        id="copyLinkBtn"
-                        class="copy-btn"
-                    >
-                        <i class="fa-solid fa-copy"></i>
-                        <span>Copy</span>
+                    <div class="summary-info">
+                        <span>LEVEL 1</span>
+                        <strong id="level1Count">0</strong>
+                        <small>Direct referrals</small>
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <div class="summary-icon l2-icon">
+                        <span>L2</span>
+                    </div>
+
+                    <div class="summary-info">
+                        <span>LEVEL 2</span>
+                        <strong id="level2Count">0</strong>
+                        <small>Second level</small>
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <div class="summary-icon l3-icon">
+                        <span>L3</span>
+                    </div>
+
+                    <div class="summary-info">
+                        <span>LEVEL 3</span>
+                        <strong id="level3Count">0</strong>
+                        <small>Third level</small>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- REFERRAL DETAILS -->
+            <section class="section-card referral-card">
+
+                <div class="section-title">
+
+                    <div>
+                        <span class="section-label">YOUR REFERRAL</span>
+                        <h2>Invite & Earn</h2>
+                    </div>
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+
+                </div>
+
+                <p class="section-description">
+                    Share your referral details with friends and start
+                    building your Crown Cash team.
+                </p>
+
+
+                <!-- REFERRAL CODE -->
+                <div class="referral-field">
+
+                    <label>
+                        <i class="fa-solid fa-ticket"></i>
+                        REFERRAL CODE
+                    </label>
+
+                    <div class="copy-box">
+
+                        <input
+                            type="text"
+                            id="referralCode"
+                            value="Loading..."
+                            readonly
+                        >
+
+                        <button id="copyCodeBtn" type="button">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copy</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- REFERRAL LINK -->
+                <div class="referral-field">
+
+                    <label>
+                        <i class="fa-solid fa-link"></i>
+                        REFERRAL LINK
+                    </label>
+
+                    <div class="copy-box">
+
+                        <input
+                            type="text"
+                            id="referralLink"
+                            value="Loading..."
+                            readonly
+                        >
+
+                        <button id="copyLinkBtn" type="button">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copy Link</span>
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SHARE -->
+                <button class="share-btn" id="shareBtn" type="button">
+
+                    <i class="fa-solid fa-share-nodes"></i>
+
+                    <span>Share Referral Link</span>
+
+                </button>
+
+                <div class="copy-message" id="copyMessage"></div>
+
+            </section>
+
+
+            <!-- COMMISSION STRUCTURE -->
+            <section class="section-card">
+
+                <div class="section-title">
+
+                    <div>
+                        <span class="section-label">COMMISSION STRUCTURE</span>
+                        <h2>Referral Levels</h2>
+                    </div>
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-percent"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="commission-grid">
+
+                    <!-- L1 -->
+                    <div class="commission-card level-one">
+
+                        <div class="commission-top">
+
+                            <div class="level-badge">
+                                L1
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                        </div>
+
+                        <strong id="level1Percent">15%</strong>
+
+                        <h3>Direct referrals</h3>
+
+                        <p>
+                            Earn from qualifying activity by people
+                            directly referred by you.
+                        </p>
+
+                    </div>
+
+
+                    <!-- L2 -->
+                    <div class="commission-card level-two">
+
+                        <div class="commission-top">
+
+                            <div class="level-badge">
+                                L2
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                        </div>
+
+                        <strong id="level2Percent">5%</strong>
+
+                        <h3>Second level</h3>
+
+                        <p>
+                            Earn from qualifying activity within your
+                            second referral level.
+                        </p>
+
+                    </div>
+
+
+                    <!-- L3 -->
+                    <div class="commission-card level-three">
+
+                        <div class="commission-top">
+
+                            <div class="level-badge">
+                                L3
+                            </div>
+
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                        </div>
+
+                        <strong id="level3Percent">2%</strong>
+
+                        <h3>Third level</h3>
+
+                        <p>
+                            Earn from qualifying activity within your
+                            third referral level.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- REFERRAL EARNINGS -->
+            <section class="section-card earnings-section">
+
+                <div class="section-title">
+
+                    <div>
+                        <span class="section-label">REFERRAL EARNINGS</span>
+                        <h2>Referral Income</h2>
+                    </div>
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="earnings-grid">
+
+                    <div class="earning-card">
+
+                        <div class="earning-icon l1-bg">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+
+                        <div>
+                            <span>LEVEL 1</span>
+                            <strong id="level1Income">UGX 0</strong>
+                            <small>15% commission</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="earning-card">
+
+                        <div class="earning-icon l2-bg">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+
+                        <div>
+                            <span>LEVEL 2</span>
+                            <strong id="level2Income">UGX 0</strong>
+                            <small>5% commission</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="earning-card">
+
+                        <div class="earning-icon l3-bg">
+                            <i class="fa-solid fa-people-group"></i>
+                        </div>
+
+                        <div>
+                            <span>LEVEL 3</span>
+                            <strong id="level3Income">UGX 0</strong>
+                            <small>2% commission</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="earning-card total-earning">
+
+                        <div class="earning-icon total-income-bg">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+
+                        <div>
+                            <span>TOTAL REFERRAL INCOME</span>
+                            <strong id="totalIncome">UGX 0</strong>
+                            <small>All referral levels</small>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- TEAM MEMBERS -->
+            <section class="section-card network-section">
+
+                <div class="section-title">
+
+                    <div>
+                        <span class="section-label">YOUR NETWORK</span>
+                        <h2>Team Members</h2>
+                    </div>
+
+                    <div class="title-icon">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+
+                </div>
+
+
+                <!-- FILTERS -->
+                <div class="team-filter">
+
+                    <button class="filter-btn active" data-level="all">
+                        All
+                    </button>
+
+                    <button class="filter-btn" data-level="L1">
+                        L1
+                    </button>
+
+                    <button class="filter-btn" data-level="L2">
+                        L2
+                    </button>
+
+                    <button class="filter-btn" data-level="L3">
+                        L3
                     </button>
 
                 </div>
 
-                <div
-                    id="copyMessage"
-                    class="copy-message"
-                ></div>
 
-            </div>
+                <!-- TEAM LIST -->
+                <div class="team-list" id="teamList">
 
+                    <div class="loading-team">
 
-            <!-- =========================
-                 REFERRAL CODE
-            ========================== -->
-            <div class="referral-code-card">
+                        <div class="loading-spinner"></div>
 
-                <div class="code-icon">
-                    <i class="fa-solid fa-ticket"></i>
-                </div>
-
-                <div class="code-content">
-
-                    <span class="card-label">
-                        YOUR REFERRAL CODE
-                    </span>
-
-                    <strong id="referralCode">
-                        Loading...
-                    </strong>
-
-                </div>
-
-                <button
-                    type="button"
-                    id="copyCodeBtn"
-                    class="icon-copy-btn"
-                    title="Copy referral code"
-                >
-                    <i class="fa-solid fa-copy"></i>
-                </button>
-
-            </div>
-
-
-            <!-- =========================
-                 STATISTICS
-            ========================== -->
-            <div class="stats-grid">
-
-                <div class="stat-card">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-
-                    <div class="stat-info">
-
-                        <span>
-                            TOTAL REFERRALS
-                        </span>
-
-                        <strong id="totalReferrals">
-                            0
-                        </strong>
+                        <p>Loading team members...</p>
 
                     </div>
 
                 </div>
 
+            </section>
 
-                <div class="stat-card">
 
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-user-check"></i>
-                    </div>
+            <!-- INFORMATION -->
+            <section class="info-notice">
 
-                    <div class="stat-info">
+                <div class="notice-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
 
-                        <span>
-                            ACTIVE MEMBERS
-                        </span>
+                <div>
 
-                        <strong id="activeMembers">
-                            0
-                        </strong>
+                    <h3>How referral income works</h3>
 
-                    </div>
+                    <p>
+                        Referral percentages shown above represent the
+                        Crown Cash referral commission structure.
+                        Referral income should only be credited when the
+                        qualifying activity has been verified by the
+                        Crown Cash system.
+                    </p>
 
                 </div>
 
-
-                <div class="stat-card">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-coins"></i>
-                    </div>
-
-                    <div class="stat-info">
-
-                        <span>
-                            REFERRAL EARNINGS
-                        </span>
-
-                        <strong id="referralEarnings">
-                            UGX 0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================
-                 HOW IT WORKS
-            ========================== -->
-            <div class="how-card">
-
-                <div class="section-title">
-
-                    <div class="title-icon">
-                        <i class="fa-solid fa-circle-info"></i>
-                    </div>
-
-                    <div>
-                        <h2>How Referrals Work</h2>
-                        <p>Invite and grow your team</p>
-                    </div>
-
-                </div>
-
-
-                <div class="steps">
-
-                    <div class="step">
-
-                        <div class="step-number">
-                            1
-                        </div>
-
-                        <div class="step-icon">
-                            <i class="fa-solid fa-share-nodes"></i>
-                        </div>
-
-                        <div class="step-content">
-
-                            <h3>
-                                Share Your Link
-                            </h3>
-
-                            <p>
-                                Copy your referral link and share it with your friends.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="step">
-
-                        <div class="step-number">
-                            2
-                        </div>
-
-                        <div class="step-icon">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </div>
-
-                        <div class="step-content">
-
-                            <h3>
-                                They Register
-                            </h3>
-
-                            <p>
-                                Your friend creates a Crown Cash account using your referral code.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="step">
-
-                        <div class="step-number">
-                            3
-                        </div>
-
-                        <div class="step-icon">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-
-                        <div class="step-content">
-
-                            <h3>
-                                Build Your Team
-                            </h3>
-
-                            <p>
-                                Your referred members appear in your referral team.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================
-                 TEAM MEMBERS
-            ========================== -->
-            <div class="team-card">
-
-                <div class="section-title">
-
-                    <div class="title-icon">
-                        <i class="fa-solid fa-user-group"></i>
-                    </div>
-
-                    <div>
-                        <h2>My Referral Team</h2>
-                        <p>People who joined using your referral code</p>
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="teamMessage"
-                    class="team-message"
-                >
-                    Loading your referral team...
-                </div>
-
-
-                <div
-                    id="teamList"
-                    class="team-list"
-                ></div>
-
-            </div>
-
-
-            <!-- =========================
-                 EMPTY STATE
-            ========================== -->
-            <div
-                id="emptyTeam"
-                class="empty-team"
-                style="display:none;"
-            >
-
-                <div class="empty-icon">
-                    <i class="fa-solid fa-user-group"></i>
-                </div>
-
-                <h3>
-                    No Referral Members Yet
-                </h3>
-
-                <p>
-                    Share your referral link with friends to start building your team.
-                </p>
-
-                <button
-                    type="button"
-                    id="emptyCopyBtn"
-                    class="primary-btn"
-                >
-                    <i class="fa-solid fa-copy"></i>
-                    Copy Referral Link
-                </button>
-
-            </div>
+            </section>
 
         </section>
 
 
-        <!-- Footer -->
+        <!-- FOOTER -->
         <footer class="footer">
 
+            <div class="footer-brand">
+
+                <div class="footer-logo">C</div>
+
+                <div>
+                    <strong>Crown Cash</strong>
+                    <span>Invest • Grow • Earn</span>
+                </div>
+
+            </div>
+
             <p>
-                © <span id="currentYear"></span>
-                Crown Cash. All rights reserved.
+                Crown Cash provides a simple and transparent investment
+                experience designed around clear earning structures.
             </p>
+
+            <div class="footer-bottom">
+                © 2026 Crown Cash. All rights reserved.
+            </div>
 
         </footer>
 
@@ -505,7 +585,16 @@
 </div>
 
 
-<!-- Team JavaScript -->
+<!-- TOAST -->
+<div class="toast" id="toast">
+
+    <i class="fa-solid fa-circle-check"></i>
+
+    <span id="toastMessage">Copied successfully.</span>
+
+</div>
+
+
 <script src="team.js"></script>
 
 </body>

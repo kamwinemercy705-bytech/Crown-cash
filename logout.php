@@ -1,29 +1,33 @@
 <?php
 
-/* =========================================================
-   CROWN CASH - LOGOUT
-   ========================================================= */
+// ============================================
+// CROWN CASH - LOGOUT API
+// File: logout.php
+// ============================================
 
+// -------------------------------
+// CORS SETTINGS
+// -------------------------------
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 
-/* Handle browser CORS preflight */
+// -------------------------------
+// HANDLE PREFLIGHT REQUEST
+// -------------------------------
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
     exit;
 }
 
-/*
- * Use the same cookie configuration as login.php
- * and the other authenticated API files.
- */
+// -------------------------------
+// START SECURE CROSS-SITE SESSION
+// -------------------------------
 session_set_cookie_params([
     "lifetime" => 0,
     "path" => "/",
-    "domain" => "",
     "secure" => true,
     "httponly" => true,
     "samesite" => "None"
@@ -31,12 +35,14 @@ session_set_cookie_params([
 
 session_start();
 
-/* Remove all session variables */
+// -------------------------------
+// CLEAR ALL SESSION VARIABLES
+// -------------------------------
 $_SESSION = [];
 
-/*
- * Remove the session cookie from the browser.
- */
+// -------------------------------
+// DELETE SESSION COOKIE
+// -------------------------------
 if (ini_get("session.use_cookies")) {
 
     $params = session_get_cookie_params();
@@ -44,24 +50,27 @@ if (ini_get("session.use_cookies")) {
     setcookie(
         session_name(),
         "",
-        [
-            "expires" => time() - 42000,
-            "path" => $params["path"],
-            "domain" => $params["domain"],
-            "secure" => $params["secure"],
-            "httponly" => $params["httponly"],
-            "samesite" => "None"
-        ]
+        time() - 42000,
+        $params["path"],
+        $params["domain"],
+        $params["secure"],
+        $params["httponly"]
     );
 }
 
-/* Destroy the PHP session */
+// -------------------------------
+// DESTROY SESSION
+// -------------------------------
 session_destroy();
 
-/* Return JSON to the Vercel frontend */
+// -------------------------------
+// RESPONSE
+// -------------------------------
+http_response_code(200);
+
 echo json_encode([
     "success" => true,
-    "message" => "Logout successful."
+    "message" => "You have been logged out successfully."
 ]);
 
 exit;

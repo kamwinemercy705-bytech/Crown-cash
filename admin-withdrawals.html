@@ -1,0 +1,444 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f"><title>Crown Cash | Admin Withdrawals</title>
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet" href="admin-withdrawals.css">
+
+</head><body><div class="admin-layout"><!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+        <div class="logo">
+            <div class="logo-mark">C</div>
+
+            <div class="logo-text">
+                <span>Crown</span>
+                <strong>Cash</strong>
+            </div>
+        </div>
+
+        <button class="close-sidebar" id="closeSidebar">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="admin-profile">
+        <div class="admin-avatar">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+
+        <div>
+            <strong>Administrator</strong>
+            <span>
+                <i class="fa-solid fa-circle"></i>
+                Admin Account
+            </span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <p class="nav-title">MAIN</p>
+
+        <a href="admin.html">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="admin-users.html">
+            <i class="fa-solid fa-users"></i>
+            <span>Users</span>
+        </a>
+
+        <a href="admin-deposits.html">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            <span>Deposits</span>
+        </a>
+
+        <a href="admin-investments.html">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Investments</span>
+        </a>
+
+        <a href="admin-withdrawals.html" class="active">
+            <i class="fa-solid fa-hand-holding-dollar"></i>
+            <span>Withdrawals</span>
+        </a>
+
+        <a href="admin-transactions.html">
+            <i class="fa-solid fa-receipt"></i>
+            <span>Transactions</span>
+        </a>
+
+        <p class="nav-title">MANAGEMENT</p>
+
+        <a href="admin-referrals.html">
+            <i class="fa-solid fa-user-group"></i>
+            <span>Referrals</span>
+        </a>
+
+        <a href="admin-security.html">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Security</span>
+        </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </button>
+
+    </div>
+
+</aside>
+
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+
+        <button class="menu-btn" id="menuBtn">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="topbar-title">
+            <h1>Withdrawals</h1>
+            <p>Review and manage user withdrawal requests</p>
+        </div>
+
+        <button class="refresh-btn" id="refreshBtn">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Refresh</span>
+        </button>
+
+    </header>
+
+
+    <!-- SECURITY NOTICE -->
+    <section class="security-notice">
+
+        <div class="notice-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div class="notice-content">
+            <h3>Withdrawal Review Required</h3>
+
+            <p>
+                Verify the user's balance, withdrawal details and all required
+                checks before approving a request. Approval places the request
+                into the payout queue; it does not automatically send Mobile
+                Money.
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- STATISTICS -->
+    <section class="stats-grid">
+
+        <div class="stat-card pending-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+
+            <div class="stat-info">
+                <span>Pending</span>
+                <strong id="pendingCount">0</strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card approved-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div class="stat-info">
+                <span>Approved</span>
+                <strong id="approvedCount">0</strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card paid-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-money-bill-wave"></i>
+            </div>
+
+            <div class="stat-info">
+                <span>Paid</span>
+                <strong id="paidCount">0</strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card rejected-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+
+            <div class="stat-info">
+                <span>Rejected</span>
+                <strong id="rejectedCount">0</strong>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card total-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+            <div class="stat-info">
+                <span>Total Requests</span>
+                <strong id="totalCount">0</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- PAGE CARD -->
+    <section class="content-card">
+
+        <div class="section-header">
+
+            <div>
+                <h2>
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    Withdrawal Requests
+                </h2>
+
+                <p>
+                    Manage pending and completed withdrawal requests.
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- FILTERS -->
+        <div class="filters">
+
+            <button class="filter-btn active" data-status="all">
+                <i class="fa-solid fa-layer-group"></i>
+                All
+            </button>
+
+            <button class="filter-btn" data-status="pending">
+                <i class="fa-solid fa-clock"></i>
+                Pending
+            </button>
+
+            <button class="filter-btn" data-status="approved">
+                <i class="fa-solid fa-circle-check"></i>
+                Approved
+            </button>
+
+            <button class="filter-btn" data-status="paid">
+                <i class="fa-solid fa-money-bill-wave"></i>
+                Paid
+            </button>
+
+            <button class="filter-btn" data-status="rejected">
+                <i class="fa-solid fa-circle-xmark"></i>
+                Rejected
+            </button>
+
+        </div>
+
+
+        <!-- MESSAGE -->
+        <div class="message" id="message"></div>
+
+
+        <!-- LOADING -->
+        <div class="loading-state" id="loadingState">
+
+            <div class="spinner"></div>
+
+            <h3>Loading withdrawals...</h3>
+
+            <p>
+                Please wait while withdrawal requests are loaded.
+            </p>
+
+        </div>
+
+
+        <!-- ERROR -->
+        <div class="error-state" id="errorState">
+
+            <div class="state-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+
+            <h3>Unable to Load Withdrawals</h3>
+
+            <p id="errorText">
+                Something went wrong while loading withdrawal requests.
+            </p>
+
+            <button class="retry-btn" id="retryBtn">
+                <i class="fa-solid fa-rotate-right"></i>
+                Try Again
+            </button>
+
+        </div>
+
+
+        <!-- EMPTY -->
+        <div class="empty-state" id="emptyState">
+
+            <div class="state-icon">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+
+            <h3>No Withdrawal Requests</h3>
+
+            <p>
+                There are no withdrawal requests matching the selected filter.
+            </p>
+
+        </div>
+
+
+        <!-- DESKTOP TABLE -->
+        <div class="table-wrapper" id="tableWrapper">
+
+            <table class="withdrawals-table">
+
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Account</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="withdrawalsTableBody"></tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- MOBILE LIST -->
+        <div class="mobile-withdrawals" id="mobileWithdrawals"></div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="admin-footer">
+        <p>
+            © <span id="currentYear"></span> Crown Cash.
+            Admin Panel.
+        </p>
+
+        <span>
+            <i class="fa-solid fa-shield-halved"></i>
+            Secure Administration
+        </span>
+    </footer>
+
+</main>
+
+</div><!-- OVERLAY --><div class="sidebar-overlay" id="sidebarOverlay"></div><!-- CONFIRMATION MODAL --><div class="modal-overlay" id="actionModal"><div class="modal">
+
+    <button class="modal-close" id="modalClose">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="modal-icon" id="modalIcon">
+        <i class="fa-solid fa-circle-question"></i>
+    </div>
+
+    <h2 id="modalTitle">Confirm Action</h2>
+
+    <p id="modalText">
+        Are you sure you want to continue?
+    </p>
+
+
+    <!-- WITHDRAWAL DETAILS -->
+    <div class="modal-details" id="modalDetails">
+
+        <div>
+            <span>User</span>
+            <strong id="modalUser">—</strong>
+        </div>
+
+        <div>
+            <span>Amount</span>
+            <strong id="modalAmount">UGX 0</strong>
+        </div>
+
+        <div>
+            <span>Method</span>
+            <strong id="modalMethod">—</strong>
+        </div>
+
+        <div>
+            <span>Account</span>
+            <strong id="modalAccount">—</strong>
+        </div>
+
+    </div>
+
+
+    <!-- WARNING -->
+    <div class="modal-warning">
+
+        <i class="fa-solid fa-triangle-exclamation"></i>
+
+        <p id="modalWarningText">
+            Verify all withdrawal information before continuing.
+        </p>
+
+    </div>
+
+
+    <div class="modal-actions">
+
+        <button class="cancel-btn" id="cancelAction">
+            Cancel
+        </button>
+
+        <button class="confirm-btn" id="confirmAction">
+            <i class="fa-solid fa-check"></i>
+            Confirm
+        </button>
+
+    </div>
+
+</div>
+
+</div><script src="admin-withdrawals.js"></script></body>
+</html>

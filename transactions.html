@@ -1,440 +1,448 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!DOCTYPE html><html lang="en">
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<title>Crown Cash | Transactions</title>
 
-    <meta name="theme-color"
-          content="#07111f">
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
 
-    <meta name="description"
-          content="Crown Cash transaction history">
+<!-- Transactions CSS -->
+<link rel="stylesheet" href="transactions.css">
 
-    <title>Crown Cash | Transactions</title>
-
-    <link rel="stylesheet"
-          href="transactions.css">
-
-</head>
-
-<body>
-
-
-<!-- SIDEBAR -->
-
+</head><body><div class="app"><!-- ================= SIDEBAR ================= -->
 <aside class="sidebar" id="sidebar">
 
     <div class="sidebar-top">
 
-        <a href="index.html" class="logo">
-
-            <span class="logo-mark">C</span>
-
-            <span>
-                Crown<span class="gold">Cash</span>
+        <!-- LOGO -->
+        <a href="dashboard.html" class="logo">
+            <span class="logo-icon">C</span>
+            <span class="logo-text">
+                <strong>Crown</strong>
+                <small>Cash</small>
             </span>
-
         </a>
 
-        <button
-            type="button"
-            class="close-sidebar"
-            id="closeSidebar">
+        <!-- USER -->
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
 
-            ×
+            <div class="user-details">
+                <strong id="sidebarUserName">Crown Cash User</strong>
+                <span id="sidebarUserEmail">Account</span>
+            </div>
+        </div>
 
-        </button>
+        <!-- NAVIGATION -->
+        <nav class="sidebar-nav">
 
+            <a href="dashboard.html">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="profile.html">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </a>
+
+            <a href="investments.html">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Investments</span>
+            </a>
+
+            <a href="deposit.html">
+                <i class="fa-solid fa-circle-arrow-down"></i>
+                <span>Deposits</span>
+            </a>
+
+            <a href="withdraw.html">
+                <i class="fa-solid fa-circle-arrow-up"></i>
+                <span>Withdrawals</span>
+            </a>
+
+            <a href="team.html">
+                <i class="fa-solid fa-users"></i>
+                <span>Referral Team</span>
+            </a>
+
+            <a href="transactions.html" class="active">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Transactions</span>
+            </a>
+
+            <a href="support.html">
+                <i class="fa-solid fa-headset"></i>
+                <span>Support</span>
+            </a>
+
+        </nav>
     </div>
 
-
-    <nav class="sidebar-nav">
-
-        <a href="dashboard.html">
-            <span>⌂</span>
-            Dashboard
-        </a>
-
-        <a href="profile.html">
-            <span>◎</span>
-            My Profile
-        </a>
-
-        <a href="investments.html">
-            <span>◇</span>
-            Investments
-        </a>
-
-        <a href="deposits.html">
-            <span>↓</span>
-            Deposits
-        </a>
-
-        <a href="withdrawals.html">
-            <span>↑</span>
-            Withdrawals
-        </a>
-
-        <a href="referrals.html">
-            <span>↗</span>
-            Referrals
-        </a>
-
-        <a href="transactions.html" class="active">
-            <span>≡</span>
-            Transactions
-        </a>
-
-    </nav>
-
-
-    <div class="sidebar-bottom">
-
-        <a href="support.html">
-            <span>?</span>
-            Support
-        </a>
-
-        <a href="login.html">
-            <span>↪</span>
-            Logout
-        </a>
-
-    </div>
+    <!-- LOGOUT -->
+    <button class="logout-btn" id="logoutBtn" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+    </button>
 
 </aside>
 
 
+<!-- ================= MAIN ================= -->
+<main class="main-content">
 
-<!-- MAIN -->
-
-<div class="main-wrapper">
-
-
-    <!-- TOPBAR -->
-
+    <!-- TOP BAR -->
     <header class="topbar">
 
-        <div class="topbar-left">
+        <button
+            type="button"
+            class="menu-btn"
+            id="menuToggle"
+            aria-label="Open menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-            <button
-                type="button"
-                class="menu-button"
-                id="openSidebar">
-
-                ☰
-
-            </button>
-
-            <div>
-
-                <span class="topbar-label">
-                    CROWN CASH
-                </span>
-
-                <h1>
-                    Transactions
-                </h1>
-
-            </div>
-
-        </div>
-
-
-        <div class="user-mini">
-
-            <div class="avatar">
-                U
-            </div>
+        <div class="page-heading">
+            <span class="heading-icon">
+                <i class="fa-solid fa-receipt"></i>
+            </span>
 
             <div>
-
-                <strong>
-                    User Account
-                </strong>
-
-                <small>
-                    Member
-                </small>
-
+                <h1>Transactions</h1>
+                <p>View your complete transaction history</p>
             </div>
-
         </div>
+
+        <a href="profile.html" class="top-profile">
+            <i class="fa-solid fa-user"></i>
+        </a>
 
     </header>
 
 
-
     <!-- CONTENT -->
+    <section class="content">
 
-    <main class="content">
+        <!-- BALANCE CARD -->
+        <div class="balance-card">
+
+            <div class="balance-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+            <div class="balance-info">
+                <span>Available Balance</span>
+                <strong id="availableBalance">UGX 0</strong>
+            </div>
+
+            <a href="deposit.html" class="balance-action">
+                <i class="fa-solid fa-plus"></i>
+                Deposit
+            </a>
+
+        </div>
 
 
-        <section class="intro">
+        <!-- SUMMARY CARDS -->
+        <div class="summary-grid">
 
-            <span class="section-tag">
-                TRANSACTION CENTER
-            </span>
+            <div class="summary-card">
 
-            <h2>
-                Keep track of your account activity.
-            </h2>
-
-            <p>
-                View deposits, withdrawals, investments
-                and other recorded account transactions.
-            </p>
-
-        </section>
-
-
-
-        <!-- FILTERS -->
-
-        <section class="filter-card">
-
-            <div class="filter-heading">
+                <div class="summary-icon deposit-icon">
+                    <i class="fa-solid fa-circle-arrow-down"></i>
+                </div>
 
                 <div>
-
-                    <span class="section-tag">
-                        TRANSACTION HISTORY
-                    </span>
-
-                    <h3>
-                        Activity
-                    </h3>
-
+                    <span>Total Deposits</span>
+                    <strong id="totalDeposits">UGX 0</strong>
                 </div>
 
             </div>
 
 
-            <div class="filters">
+            <div class="summary-card">
 
-                <div class="filter-group">
-
-                    <label for="type">
-                        Transaction type
-                    </label>
-
-                    <select id="type">
-
-                        <option value="all">
-                            All transactions
-                        </option>
-
-                        <option value="deposit">
-                            Deposits
-                        </option>
-
-                        <option value="withdrawal">
-                            Withdrawals
-                        </option>
-
-                        <option value="investment">
-                            Investments
-                        </option>
-
-                        <option value="referral">
-                            Referral rewards
-                        </option>
-
-                    </select>
-
+                <div class="summary-icon withdrawal-icon">
+                    <i class="fa-solid fa-circle-arrow-up"></i>
                 </div>
 
-
-                <div class="filter-group">
-
-                    <label for="status">
-                        Status
-                    </label>
-
-                    <select id="status">
-
-                        <option value="all">
-                            All statuses
-                        </option>
-
-                        <option value="pending">
-                            Pending
-                        </option>
-
-                        <option value="approved">
-                            Approved
-                        </option>
-
-                        <option value="rejected">
-                            Rejected
-                        </option>
-
-                        <option value="completed">
-                            Completed
-                        </option>
-
-                    </select>
-
+                <div>
+                    <span>Total Withdrawals</span>
+                    <strong id="totalWithdrawals">UGX 0</strong>
                 </div>
 
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon investment-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+
+                <div>
+                    <span>Investments</span>
+                    <strong id="totalInvestments">UGX 0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon income-icon">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+
+                <div>
+                    <span>Income</span>
+                    <strong id="totalIncome">UGX 0</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TRANSACTION SECTION -->
+        <div class="transaction-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Transaction History
+                    </h2>
+
+                    <p>
+                        All deposits, withdrawals, investments and earnings
+                    </p>
+                </div>
 
                 <button
                     type="button"
-                    class="filter-button"
-                    id="filterButton">
-
-                    Apply Filters
-
+                    class="refresh-btn"
+                    id="refreshBtn"
+                >
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    Refresh
                 </button>
 
             </div>
 
-        </section>
 
+            <!-- FILTERS -->
+            <div class="filters">
 
+                <button
+                    type="button"
+                    class="filter-btn active"
+                    data-filter="all"
+                >
+                    <i class="fa-solid fa-layer-group"></i>
+                    All
+                </button>
 
-        <!-- TRANSACTIONS -->
+                <button
+                    type="button"
+                    class="filter-btn"
+                    data-filter="deposit"
+                >
+                    <i class="fa-solid fa-circle-arrow-down"></i>
+                    Deposits
+                </button>
 
-        <section class="transaction-card">
+                <button
+                    type="button"
+                    class="filter-btn"
+                    data-filter="withdrawal"
+                >
+                    <i class="fa-solid fa-circle-arrow-up"></i>
+                    Withdrawals
+                </button>
 
+                <button
+                    type="button"
+                    class="filter-btn"
+                    data-filter="investment"
+                >
+                    <i class="fa-solid fa-chart-line"></i>
+                    Investments
+                </button>
 
-            <div class="transaction-table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Reference
-                            </th>
-
-                            <th>
-                                Type
-                            </th>
-
-                            <th>
-                                Amount
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Date
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody id="transactionTable">
-
-                        <tr>
-
-                            <td colspan="5"
-                                class="empty-state">
-
-                                <div class="empty-icon">
-                                    ≡
-                                </div>
-
-                                <strong>
-                                    No transactions yet
-                                </strong>
-
-                                <p>
-                                    Your transaction history
-                                    will appear here once your
-                                    account has recorded activity.
-                                </p>
-
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
+                <button
+                    type="button"
+                    class="filter-btn"
+                    data-filter="income"
+                >
+                    <i class="fa-solid fa-coins"></i>
+                    Income
+                </button>
 
             </div>
 
-        </section>
 
+            <!-- SEARCH -->
+            <div class="transaction-tools">
 
+                <div class="search-box">
 
-        <!-- MOBILE TRANSACTION LIST -->
+                    <i class="fa-solid fa-magnifying-glass"></i>
 
-        <section class="mobile-transactions"
-                 id="mobileTransactions">
+                    <input
+                        type="search"
+                        id="transactionSearch"
+                        placeholder="Search transactions..."
+                        autocomplete="off"
+                    >
 
-        </section>
+                </div>
 
-
-
-        <!-- INFORMATION -->
-
-        <section class="information-card">
-
-            <div class="information-icon">
-                i
-            </div>
-
-            <div>
-
-                <h3>
-                    About transaction statuses
-                </h3>
-
-                <p>
-                    <strong>Pending</strong> means a transaction
-                    is waiting for review or processing.
-                </p>
-
-                <p>
-                    <strong>Approved</strong> means the request
-                    has been authorized.
-                </p>
-
-                <p>
-                    <strong>Completed</strong> means the
-                    transaction has been successfully processed.
-                </p>
-
-                <p>
-                    <strong>Rejected</strong> means the request
-                    was declined.
-                </p>
+                <select id="statusFilter">
+                    <option value="all">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                    <option value="rejected">Rejected</option>
+                </select>
 
             </div>
 
-        </section>
+
+            <!-- LOADING -->
+            <div class="loading-state" id="loadingState">
+
+                <div class="loading-icon">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                </div>
+
+                <p>Loading transactions...</p>
+
+            </div>
 
 
-    </main>
+            <!-- ERROR -->
+            <div class="error-state" id="errorState" hidden>
+
+                <div class="error-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <h3>Unable to load transactions</h3>
+
+                <p id="errorMessage">
+                    Please refresh the page and try again.
+                </p>
+
+                <button type="button" id="retryBtn">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    Try Again
+                </button>
+
+            </div>
 
 
+            <!-- EMPTY -->
+            <div class="empty-state" id="emptyState" hidden>
 
-    <footer>
+                <div class="empty-icon">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
 
-        © <span id="year"></span>
-        Crown Cash. All rights reserved.
+                <h3>No Transactions Yet</h3>
+
+                <p>
+                    Your deposits, withdrawals, investments and earnings
+                    will appear here.
+                </p>
+
+                <a href="deposit.html" class="empty-action">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    Make a Deposit
+                </a>
+
+            </div>
+
+
+            <!-- TRANSACTIONS -->
+            <div
+                class="transactions-list"
+                id="transactionsList"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <p>
+            <i class="fa-solid fa-shield-halved"></i>
+            Your transaction information is protected by Crown Cash.
+        </p>
+
+        <span>
+            © 2026 Crown Cash. All rights reserved.
+        </span>
 
     </footer>
 
+</main>
+
+</div><!-- ================= TRANSACTION TEMPLATE ================= --><template id="transactionTemplate"><div class="transaction-item">
+
+    <div class="transaction-icon">
+
+        <i class="transaction-type-icon"></i>
+
+    </div>
+
+    <div class="transaction-details">
+
+        <div class="transaction-title-row">
+
+            <h3 class="transaction-title">
+                Transaction
+            </h3>
+
+            <span class="transaction-status">
+                Pending
+            </span>
+
+        </div>
+
+        <p class="transaction-reference">
+            Reference: —
+        </p>
+
+        <small class="transaction-date">
+            —
+        </small>
+
+    </div>
+
+    <div class="transaction-amount">
+
+        <strong>UGX 0</strong>
+
+        <span class="transaction-direction">
+            —
+        </span>
+
+    </div>
 
 </div>
 
-
-<script src="transactions.js"></script>
-
-</body>
-
+</template><script src="transactions.js"></script></body>
 </html>

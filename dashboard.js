@@ -1,139 +1,220 @@
-/*
-
-* Crown Cash
-* Dashboard JavaScript
-  */
-
 "use strict";
 
 /* =========================================================
-API CONFIGURATION
+CROWN CASH DASHBOARD JAVASCRIPT
 ========================================================= */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_BASE =
+"https://crown-cash1.onrender.com";
 
 /* =========================================================
 DOM ELEMENTS
 ========================================================= */
 
-const menuToggle = document.getElementById("menuToggle");
-const sidebar = document.getElementById("sidebar");
-const logoutBtn = document.getElementById("logoutBtn");
+const menuToggle =
+document.getElementById("menuToggle");
 
-const adminPanelLink = document.getElementById("adminPanelLink");
-const adminQuickAction = document.getElementById("adminQuickAction");
+const sidebar =
+document.getElementById("sidebar");
 
-const sidebarUserName = document.getElementById("sidebarUserName");
-const sidebarUserRole = document.getElementById("sidebarUserRole");
+const logoutBtn =
+document.getElementById("logoutBtn");
 
-const topbarUserName = document.getElementById("topbarUserName");
-const topbarUserRole = document.getElementById("topbarUserRole");
+const adminPanelLink =
+document.getElementById("adminPanelLink");
 
-const welcomeUserName = document.getElementById("welcomeUserName");
+const adminQuickAction =
+document.getElementById("adminQuickAction");
 
-const availableBalance = document.getElementById("availableBalance");
+const sidebarUserName =
+document.getElementById("sidebarUserName");
 
-const totalInvested = document.getElementById("totalInvested");
-const totalEarnings = document.getElementById("totalEarnings");
-const teamCount = document.getElementById("teamCount");
-const transactionCount = document.getElementById("transactionCount");
+const sidebarUserRole =
+document.getElementById("sidebarUserRole");
 
-const investmentAmount = document.getElementById("investmentAmount");
-const dailyReturn = document.getElementById("dailyReturn");
-const monthlyReturn = document.getElementById("monthlyReturn");
-const totalAfter30 = document.getElementById("totalAfter30");
+const topbarUserName =
+document.getElementById("topbarUserName");
 
-const currentYear = document.getElementById("currentYear");
+const topbarUserRole =
+document.getElementById("topbarUserRole");
+
+const welcomeUserName =
+document.getElementById("welcomeUserName");
+
+const availableBalance =
+document.getElementById("availableBalance");
+
+const totalInvested =
+document.getElementById("totalInvested");
+
+const totalEarnings =
+document.getElementById("totalEarnings");
+
+const teamCount =
+document.getElementById("teamCount");
+
+const transactionCount =
+document.getElementById("transactionCount");
+
+const investmentAmount =
+document.getElementById("investmentAmount");
+
+const dailyReturn =
+document.getElementById("dailyReturn");
+
+const monthlyReturn =
+document.getElementById("monthlyReturn");
+
+const totalAfter30 =
+document.getElementById("totalAfter30");
+
+const currentYear =
+document.getElementById("currentYear");
 
 /* =========================================================
-MOBILE SIDEBAR
+MOBILE MENU
 ========================================================= */
 
 if (menuToggle && sidebar) {
 
-menuToggle.addEventListener("click", function () {
+menuToggle.addEventListener(
+    "click",
+    function () {
 
-    sidebar.classList.toggle("active");
+        sidebar.classList.toggle("active");
 
-});
-
-}
-
-/* Close sidebar when clicking a navigation link on mobile */
-
-document.querySelectorAll(".nav-item").forEach(function (item) {
-
-item.addEventListener("click", function () {
-
-    if (window.innerWidth <= 900 && sidebar) {
-        sidebar.classList.remove("active");
     }
-
-});
-
-});
-
-/* =========================================================
-FORMAT UGX
-========================================================= */
-
-function formatUGX(value) {
-
-let number = Number(value);
-
-if (!Number.isFinite(number)) {
-    number = 0;
-}
-
-return "UGX " + Math.round(number).toLocaleString("en-UG");
+);
 
 }
 
+document.querySelectorAll(".nav-item").forEach(
+function (item) {
+
+    item.addEventListener(
+        "click",
+        function () {
+
+            if (window.innerWidth <= 900) {
+
+                sidebar.classList.remove(
+                    "active"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+);
+
 /* =========================================================
-EXTRACT NUMBER
+NUMBER HELPER
 ========================================================= */
 
 function getNumber(value) {
 
-if (value === null || value === undefined) {
+if (
+    value === null ||
+    value === undefined
+) {
     return 0;
 }
 
+
 if (typeof value === "number") {
-    return Number.isFinite(value) ? value : 0;
+
+    return Number.isFinite(value)
+        ? value
+        : 0;
+
 }
+
 
 if (typeof value === "string") {
 
-    const cleaned = value.replace(/[^0-9.-]/g, "");
-    const number = Number(cleaned);
+    const cleaned =
+        value.replace(
+            /[^0-9.-]/g,
+            ""
+        );
 
-    return Number.isFinite(number) ? number : 0;
+    const number =
+        Number(cleaned);
+
+    return Number.isFinite(number)
+        ? number
+        : 0;
+
 }
 
-/* MongoDB Decimal128 / BSON-style values */
 
 if (typeof value === "object") {
 
-    if (value.$numberDecimal !== undefined) {
-        return Number(value.$numberDecimal) || 0;
+    if (
+        value.$numberDecimal !== undefined
+    ) {
+
+        return (
+            Number(
+                value.$numberDecimal
+            ) || 0
+        );
+
     }
 
-    if (value.$numberLong !== undefined) {
-        return Number(value.$numberLong) || 0;
+
+    if (
+        value.$numberLong !== undefined
+    ) {
+
+        return (
+            Number(
+                value.$numberLong
+            ) || 0
+        );
+
     }
 
-    if (value.value !== undefined) {
-        return getNumber(value.value);
+
+    if (
+        value.value !== undefined
+    ) {
+
+        return getNumber(
+            value.value
+        );
+
     }
+
 }
+
 
 return 0;
 
 }
 
 /* =========================================================
-GET USER NAME
+UGX FORMATTER
+========================================================= */
+
+function formatUGX(value) {
+
+const number =
+    getNumber(value);
+
+return (
+    "UGX " +
+    Math.round(number)
+        .toLocaleString("en-UG")
+);
+
+}
+
+/* =========================================================
+USER NAME
 ========================================================= */
 
 function getUserName(data) {
@@ -142,63 +223,51 @@ if (!data) {
     return "Member";
 }
 
-if (data.user) {
 
-    if (data.user.full_name) {
-        return data.user.full_name;
-    }
+const user =
+    data.user ||
+    data.account ||
+    data.data ||
+    data;
 
-    if (data.user.name) {
-        return data.user.name;
-    }
 
-    const first =
-        data.user.first_name ||
-        data.user.firstName ||
-        "";
-
-    const last =
-        data.user.last_name ||
-        data.user.lastName ||
-        "";
-
-    const full = `${first} ${last}`.trim();
-
-    if (full) {
-        return full;
-    }
+if (user.full_name) {
+    return user.full_name;
 }
 
-if (data.full_name) {
-    return data.full_name;
+
+if (user.name) {
+    return user.name;
 }
 
-if (data.name) {
-    return data.name;
-}
 
 const first =
-    data.first_name ||
-    data.firstName ||
+    user.first_name ||
+    user.firstName ||
     "";
+
 
 const last =
-    data.last_name ||
-    data.lastName ||
+    user.last_name ||
+    user.lastName ||
     "";
 
-const full = `${first} ${last}`.trim();
+
+const full =
+    `${first} ${last}`.trim();
+
 
 if (full) {
     return full;
 }
+
 
 return "Member";
 
 }
 
 /* =========================================================
-DETERMINE ADMIN
+ADMIN CHECK
 ========================================================= */
 
 function isAdmin(data) {
@@ -207,155 +276,186 @@ if (!data) {
     return false;
 }
 
-/*
- * Support different response structures.
- */
 
-const user = data.user || data.account || data.data || data;
+const user =
+    data.user ||
+    data.account ||
+    data.data ||
+    data;
 
-const role = String(
-    user.role ||
-    user.account_type ||
-    user.accountType ||
-    user.user_role ||
-    user.userRole ||
-    ""
-).toLowerCase().trim();
 
-return role === "admin" ||
-       role === "administrator" ||
-       role === "superadmin" ||
-       role === "super_admin";
+const role =
+    String(
+        user.role ||
+        user.account_type ||
+        user.accountType ||
+        user.user_role ||
+        user.userRole ||
+        ""
+    )
+    .toLowerCase()
+    .trim();
+
+
+return (
+    role === "admin" ||
+    role === "administrator" ||
+    role === "superadmin" ||
+    role === "super_admin"
+);
 
 }
 
 /* =========================================================
-SHOW / HIDE ADMIN PANEL
+ADMIN VISIBILITY
 ========================================================= */
 
 function setAdminVisibility(show) {
 
 if (adminPanelLink) {
 
-    adminPanelLink.style.display = show
-        ? "flex"
-        : "none";
+    adminPanelLink.style.display =
+        show ? "flex" : "none";
 
 }
 
+
 if (adminQuickAction) {
 
-    adminQuickAction.style.display = show
-        ? "flex"
-        : "none";
+    adminQuickAction.style.display =
+        show ? "flex" : "none";
 
 }
 
 }
 
 /* =========================================================
-LOAD AUTHENTICATED USER
+LOAD AUTHENTICATION
 ========================================================= */
 
 async function loadAuthenticatedUser() {
 
 try {
 
-    const response = await fetch(
-        `${API_BASE}/auth-check.php`,
-        {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Accept": "application/json"
+    const response =
+        await fetch(
+            `${API_BASE}/auth-check.php`,
+            {
+                method: "GET",
+
+                credentials: "include",
+
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
             }
-        }
-    );
+        );
 
 
     let data = {};
 
     try {
-        data = await response.json();
+
+        data =
+            await response.json();
+
     } catch (error) {
+
         data = {};
+
     }
 
 
-    /* Not logged in */
+    /*
+     * If authentication fails,
+     * do not show admin access.
+     */
 
-    if (!response.ok || data.success === false || data.logged_in === false) {
+    if (
+        !response.ok ||
+        data.success === false ||
+        data.logged_in === false
+    ) {
 
         setAdminVisibility(false);
 
-        /*
-         * Don't repeatedly redirect if the browser
-         * is already on the login page.
-         */
-
-        if (!window.location.pathname.endsWith("login.html")) {
-
-            window.location.href = "login.html";
-
-        }
+        window.location.href =
+            "login.html";
 
         return;
 
     }
 
 
-    /* Get user information */
-
-    const user = data.user || data.account || data.data || data;
-
-    const name = getUserName(data);
-
-    const admin = isAdmin(data);
+    const name =
+        getUserName(data);
 
 
-    /* ===============================================
-       DISPLAY USER NAME
-    =============================================== */
+    const admin =
+        isAdmin(data);
+
+
+    /* USER NAME */
 
     if (sidebarUserName) {
-        sidebarUserName.textContent = name;
+
+        sidebarUserName.textContent =
+            name;
+
     }
+
 
     if (topbarUserName) {
-        topbarUserName.textContent = name;
+
+        topbarUserName.textContent =
+            name;
+
     }
+
 
     if (welcomeUserName) {
-        welcomeUserName.textContent = name;
+
+        welcomeUserName.textContent =
+            name;
+
     }
 
 
-    /* ===============================================
-       DISPLAY ROLE
-    =============================================== */
+    /* USER ROLE */
 
-    const roleText = admin
-        ? "Administrator"
-        : "Member";
+    const roleText =
+        admin
+            ? "Administrator"
+            : "Member";
+
 
     if (sidebarUserRole) {
-        sidebarUserRole.textContent = roleText;
+
+        sidebarUserRole.textContent =
+            roleText;
+
     }
+
 
     if (topbarUserRole) {
-        topbarUserRole.textContent = roleText;
+
+        topbarUserRole.textContent =
+            roleText;
+
     }
 
 
-    /* ===============================================
-       ADMIN PANEL VISIBILITY
-    =============================================== */
+    /*
+     * Show Admin Panel only when
+     * backend confirms admin role.
+     */
 
     setAdminVisibility(admin);
 
 
     /*
-     * Store only non-sensitive display information.
+     * Non-sensitive local display cache.
      */
 
     try {
@@ -367,33 +467,30 @@ try {
 
         localStorage.setItem(
             "crown_cash_role",
-            admin ? "admin" : "user"
+            admin
+                ? "admin"
+                : "user"
         );
 
     } catch (error) {
-        console.warn("Local storage unavailable.");
+
+        console.warn(
+            "Local storage unavailable."
+        );
+
     }
 
-
-    /*
-     * Continue loading dashboard data.
-     */
 
     await loadDashboardData();
 
 } catch (error) {
 
     console.error(
-        "Authentication check failed:",
+        "Authentication error:",
         error
     );
 
     setAdminVisibility(false);
-
-    /*
-     * If the authentication endpoint cannot be reached,
-     * do not grant admin access.
-     */
 
 }
 
@@ -405,30 +502,26 @@ LOAD DASHBOARD DATA
 
 async function loadDashboardData() {
 
-/*
- * Your dashboard.php endpoint may already exist.
- *
- * If it exists, this function will use it.
- */
-
 try {
 
-    const response = await fetch(
-        `${API_BASE}/dashboard.php`,
-        {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Accept": "application/json"
+    const response =
+        await fetch(
+            `${API_BASE}/dashboard.php`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
             }
-        }
-    );
+        );
 
 
     if (!response.ok) {
 
         console.warn(
-            "Dashboard endpoint returned:",
+            "Dashboard API status:",
             response.status
         );
 
@@ -437,7 +530,8 @@ try {
     }
 
 
-    const data = await response.json();
+    const data =
+        await response.json();
 
 
     if (!data) {
@@ -445,94 +539,108 @@ try {
     }
 
 
-    /* ===============================================
-       BALANCE
-    =============================================== */
+    /* BALANCE */
 
-    const balance = getNumber(
-        data.balance ??
-        data.available_balance ??
-        data.wallet_balance ??
-        data.user?.balance ??
-        data.user?.available_balance
-    );
+    const balance =
+        getNumber(
+            data.balance ??
+            data.available_balance ??
+            data.wallet_balance ??
+            data.user?.balance ??
+            data.user?.available_balance
+        );
+
 
     if (availableBalance) {
-        availableBalance.textContent = formatUGX(balance);
+
+        availableBalance.textContent =
+            formatUGX(balance);
+
     }
 
 
-    /* ===============================================
-       TOTAL INVESTED
-    =============================================== */
+    /* INVESTED */
 
-    const invested = getNumber(
-        data.total_invested ??
-        data.totalInvested ??
-        data.invested ??
-        data.statistics?.total_invested
-    );
+    const invested =
+        getNumber(
+            data.total_invested ??
+            data.totalInvested ??
+            data.invested ??
+            data.statistics?.total_invested
+        );
+
 
     if (totalInvested) {
-        totalInvested.textContent = formatUGX(invested);
+
+        totalInvested.textContent =
+            formatUGX(invested);
+
     }
 
 
-    /* ===============================================
-       TOTAL EARNINGS
-    =============================================== */
+    /* EARNINGS */
 
-    const earnings = getNumber(
-        data.total_earnings ??
-        data.totalEarnings ??
-        data.earnings ??
-        data.statistics?.total_earnings
-    );
+    const earnings =
+        getNumber(
+            data.total_earnings ??
+            data.totalEarnings ??
+            data.earnings ??
+            data.statistics?.total_earnings
+        );
+
 
     if (totalEarnings) {
-        totalEarnings.textContent = formatUGX(earnings);
+
+        totalEarnings.textContent =
+            formatUGX(earnings);
+
     }
 
 
-    /* ===============================================
-       TEAM COUNT
-    =============================================== */
+    /* REFERRAL TEAM */
 
-    const team = getNumber(
-        data.team_count ??
-        data.teamCount ??
-        data.total_team ??
-        data.referral_count ??
-        data.referrals ??
-        data.statistics?.team_count
-    );
+    const team =
+        getNumber(
+            data.team_count ??
+            data.teamCount ??
+            data.total_team ??
+            data.referral_count ??
+            data.statistics?.team_count
+        );
+
 
     if (teamCount) {
-        teamCount.textContent = Math.round(team).toLocaleString("en-UG");
+
+        teamCount.textContent =
+            Math.round(team)
+                .toLocaleString("en-UG");
+
     }
 
 
-    /* ===============================================
-       TRANSACTION COUNT
-    =============================================== */
+    /* TRANSACTIONS */
 
-    const transactions = getNumber(
-        data.transaction_count ??
-        data.transactionCount ??
-        data.total_transactions ??
-        data.statistics?.transaction_count
-    );
+    const transactions =
+        getNumber(
+            data.transaction_count ??
+            data.transactionCount ??
+            data.total_transactions ??
+            data.statistics?.transaction_count
+        );
+
 
     if (transactionCount) {
-        transactionCount.textContent =
-            Math.round(transactions).toLocaleString("en-UG");
-    }
 
+        transactionCount.textContent =
+            Math.round(transactions)
+                .toLocaleString("en-UG");
+
+    }
 
 } catch (error) {
 
     console.warn(
-        "Dashboard data could not be loaded:",
+        "Dashboard data error:",
         error
     );
 
@@ -546,12 +654,10 @@ INVESTMENT CALCULATOR
 
 /*
 
-* IMPORTANT:
-* This calculator uses a placeholder rate for the
-* dashboard display only.
+* This is only a display calculator.
 * 
-* It does NOT create an investment, credit money,
-* or guarantee actual returns.
+* It does not create an investment,
+* credit a wallet, or guarantee returns.
   */
 
 const DISPLAY_DAILY_RATE = 0.10;
@@ -562,21 +668,28 @@ if (!investmentAmount) {
     return;
 }
 
-const amount = Number(investmentAmount.value) || 0;
+
+const amount =
+    Number(
+        investmentAmount.value
+    ) || 0;
 
 
 if (amount <= 0) {
 
     if (dailyReturn) {
-        dailyReturn.textContent = "UGX 0";
+        dailyReturn.textContent =
+            "UGX 0";
     }
 
     if (monthlyReturn) {
-        monthlyReturn.textContent = "UGX 0";
+        monthlyReturn.textContent =
+            "UGX 0";
     }
 
     if (totalAfter30) {
-        totalAfter30.textContent = "UGX 0";
+        totalAfter30.textContent =
+            "UGX 0";
     }
 
     return;
@@ -584,21 +697,40 @@ if (amount <= 0) {
 }
 
 
-const daily = amount * DISPLAY_DAILY_RATE;
-const monthly = daily * 30;
-const total = amount + monthly;
+const daily =
+    amount *
+    DISPLAY_DAILY_RATE;
+
+
+const monthly =
+    daily * 30;
+
+
+const total =
+    amount + monthly;
 
 
 if (dailyReturn) {
-    dailyReturn.textContent = formatUGX(daily);
+
+    dailyReturn.textContent =
+        formatUGX(daily);
+
 }
+
 
 if (monthlyReturn) {
-    monthlyReturn.textContent = formatUGX(monthly);
+
+    monthlyReturn.textContent =
+        formatUGX(monthly);
+
 }
 
+
 if (totalAfter30) {
-    totalAfter30.textContent = formatUGX(total);
+
+    totalAfter30.textContent =
+        formatUGX(total);
+
 }
 
 }
@@ -613,22 +745,18 @@ investmentAmount.addEventListener(
 }
 
 /* =========================================================
-GO TO INVESTMENTS
+INVESTMENT PAGE
 ========================================================= */
 
 function goToInvestment() {
 
-window.location.href = "investments.html";
+window.location.href =
+    "investments.html";
 
 }
 
-/*
-
-* Make function available to the inline button
-* in dashboard.html.
-  */
-
-window.goToInvestment = goToInvestment;
+window.goToInvestment =
+goToInvestment;
 
 /* =========================================================
 LOGOUT
@@ -637,7 +765,9 @@ LOGOUT
 async function logoutUser() {
 
 if (logoutBtn) {
+
     logoutBtn.disabled = true;
+
 }
 
 
@@ -647,9 +777,12 @@ try {
         `${API_BASE}/logout.php`,
         {
             method: "POST",
+
             credentials: "include",
+
             headers: {
-                "Accept": "application/json"
+                "Accept":
+                    "application/json"
             }
         }
     );
@@ -666,16 +799,29 @@ try {
 
 try {
 
-    localStorage.removeItem("crown_cash_user");
-    localStorage.removeItem("crown_cash_user_name");
-    localStorage.removeItem("crown_cash_role");
+    localStorage.removeItem(
+        "crown_cash_user"
+    );
+
+    localStorage.removeItem(
+        "crown_cash_user_name"
+    );
+
+    localStorage.removeItem(
+        "crown_cash_role"
+    );
 
 } catch (error) {
-    console.warn("Could not clear local storage.");
+
+    console.warn(
+        "Could not clear local storage."
+    );
+
 }
 
 
-window.location.href = "login.html";
+window.location.href =
+    "login.html";
 
 }
 
@@ -689,7 +835,7 @@ logoutBtn.addEventListener(
 }
 
 /* =========================================================
-CURRENT YEAR
+YEAR
 ========================================================= */
 
 if (currentYear) {
@@ -700,7 +846,7 @@ currentYear.textContent =
 }
 
 /* =========================================================
-INITIALIZE DASHBOARD
+START
 ========================================================= */
 
 document.addEventListener(

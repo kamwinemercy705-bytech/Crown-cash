@@ -1,14 +1,25 @@
 "use strict";
 
 /* =========================================================
-CROWN CASH DASHBOARD JAVASCRIPT
+CROWN CASH DASHBOARD
 ========================================================= */
 
 const API_BASE =
 "https://crown-cash1.onrender.com";
 
+/*
+
+* Display-only calculator rate.
+* 
+* IMPORTANT:
+* This is a placeholder display rate.
+* It does not guarantee actual investment returns.
+  */
+
+const DISPLAY_DAILY_RATE = 0.10;
+
 /* =========================================================
-DOM ELEMENTS
+DOM
 ========================================================= */
 
 const menuToggle =
@@ -59,6 +70,11 @@ document.getElementById("transactionCount");
 const investmentAmount =
 document.getElementById("investmentAmount");
 
+const dailyReturnPercentage =
+document.getElementById(
+"dailyReturnPercentage"
+);
+
 const dailyReturn =
 document.getElementById("dailyReturn");
 
@@ -81,21 +97,26 @@ menuToggle.addEventListener(
     "click",
     function () {
 
-        sidebar.classList.toggle("active");
+        sidebar.classList.toggle(
+            "active"
+        );
 
     }
 );
 
 }
 
-document.querySelectorAll(".nav-item").forEach(
-function (item) {
+document.querySelectorAll(".nav-item")
+.forEach(function (item) {
 
     item.addEventListener(
         "click",
         function () {
 
-            if (window.innerWidth <= 900) {
+            if (
+                window.innerWidth <= 900 &&
+                sidebar
+            ) {
 
                 sidebar.classList.remove(
                     "active"
@@ -106,9 +127,7 @@ function (item) {
         }
     );
 
-}
-
-);
+});
 
 /* =========================================================
 NUMBER HELPER
@@ -120,7 +139,9 @@ if (
     value === null ||
     value === undefined
 ) {
+
     return 0;
+
 }
 
 
@@ -197,18 +218,16 @@ return 0;
 }
 
 /* =========================================================
-UGX FORMATTER
+UGX FORMAT
 ========================================================= */
 
 function formatUGX(value) {
 
-const number =
-    getNumber(value);
-
 return (
     "UGX " +
-    Math.round(number)
-        .toLocaleString("en-UG")
+    Math.round(
+        getNumber(value)
+    ).toLocaleString("en-UG")
 );
 
 }
@@ -217,35 +236,67 @@ return (
 USER NAME
 ========================================================= */
 
-function getUserName(data) {
+function extractUserName(data) {
 
 if (!data) {
+
     return "Member";
+
 }
 
 
 const user =
     data.user ||
     data.account ||
+    data.profile ||
     data.data ||
     data;
 
 
-if (user.full_name) {
-    return user.full_name;
+/* Full name */
+
+if (
+    user.full_name &&
+    String(user.full_name).trim()
+) {
+
+    return String(
+        user.full_name
+    ).trim();
+
 }
 
 
-if (user.name) {
-    return user.name;
+if (
+    user.fullName &&
+    String(user.fullName).trim()
+) {
+
+    return String(
+        user.fullName
+    ).trim();
+
 }
 
+
+if (
+    user.name &&
+    String(user.name).trim()
+) {
+
+    return String(
+        user.name
+    ).trim();
+
+}
+
+
+/* First + last name */
 
 const first =
     user.first_name ||
     user.firstName ||
     "";
-
 
 const last =
     user.last_name ||
@@ -258,7 +309,9 @@ const full =
 
 
 if (full) {
+
     return full;
+
 }
 
 
@@ -270,16 +323,19 @@ return "Member";
 ADMIN CHECK
 ========================================================= */
 
-function isAdmin(data) {
+function checkAdmin(data) {
 
 if (!data) {
+
     return false;
+
 }
 
 
 const user =
     data.user ||
     data.account ||
+    data.profile ||
     data.data ||
     data;
 
@@ -307,7 +363,7 @@ return (
 }
 
 /* =========================================================
-ADMIN VISIBILITY
+SHOW ADMIN
 ========================================================= */
 
 function setAdminVisibility(show) {
@@ -330,10 +386,129 @@ if (adminQuickAction) {
 }
 
 /* =========================================================
-LOAD AUTHENTICATION
+DISPLAY USER
 ========================================================= */
 
-async function loadAuthenticatedUser() {
+function displayUserName(name) {
+
+if (!name) {
+
+    name = "Member";
+
+}
+
+
+if (sidebarUserName) {
+
+    sidebarUserName.textContent =
+        name;
+
+}
+
+
+if (topbarUserName) {
+
+    topbarUserName.textContent =
+        name;
+
+}
+
+
+if (welcomeUserName) {
+
+    welcomeUserName.textContent =
+        name;
+
+}
+
+}
+
+/* =========================================================
+LOAD PROFILE
+========================================================= */
+
+async function loadProfile() {
+
+try {
+
+    const response =
+        await fetch(
+            `${API_BASE}/profile.php`,
+            {
+                method: "GET",
+
+                credentials: "include",
+
+                headers: {
+                    "Accept":
+                        "application/json"
+                }
+            }
+        );
+
+
+    const data =
+        await response.json();
+
+
+    if (!response.ok) {
+
+        console.warn(
+            "Profile request:",
+            response.status,
+            data
+        );
+
+        return null;
+
+    }
+
+
+    const name =
+        extractUserName(data);
+
+
+    displayUserName(name);
+
+
+    /*
+     * Store name for display only.
+     */
+
+    try {
+
+        localStorage.setItem(
+            "crown_cash_user_name",
+            name
+        );
+
+    } catch (error) {
+        console.warn(
+            "Local storage unavailable."
+        );
+    }
+
+
+    return data;
+
+} catch (error) {
+
+    console.warn(
+        "Could not load profile:",
+        error
+    );
+
+    return null;
+
+}
+
+}
+
+/* =========================================================
+AUTH CHECK
+========================================================= */
+
+async function loadAuthentication() {
 
 try {
 
@@ -367,11 +542,6 @@ try {
     }
 
 
-    /*
-     * If authentication fails,
-     * do not show admin access.
-     */
-
     if (
         !response.ok ||
         data.success === false ||
@@ -383,46 +553,21 @@ try {
         window.location.href =
             "login.html";
 
-        return;
+        return false;
 
     }
 
 
-    const name =
-        getUserName(data);
-
+    /*
+     * Determine admin from auth response.
+     */
 
     const admin =
-        isAdmin(data);
+        checkAdmin(data);
 
 
-    /* USER NAME */
+    setAdminVisibility(admin);
 
-    if (sidebarUserName) {
-
-        sidebarUserName.textContent =
-            name;
-
-    }
-
-
-    if (topbarUserName) {
-
-        topbarUserName.textContent =
-            name;
-
-    }
-
-
-    if (welcomeUserName) {
-
-        welcomeUserName.textContent =
-            name;
-
-    }
-
-
-    /* USER ROLE */
 
     const roleText =
         admin
@@ -447,41 +592,35 @@ try {
 
 
     /*
-     * Show Admin Panel only when
-     * backend confirms admin role.
+     * Try to get name from auth response first.
      */
 
-    setAdminVisibility(admin);
+    const authName =
+        extractUserName(data);
 
 
-    /*
-     * Non-sensitive local display cache.
-     */
+    if (
+        authName &&
+        authName !== "Member"
+    ) {
 
-    try {
-
-        localStorage.setItem(
-            "crown_cash_user_name",
-            name
-        );
-
-        localStorage.setItem(
-            "crown_cash_role",
-            admin
-                ? "admin"
-                : "user"
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Local storage unavailable."
+        displayUserName(
+            authName
         );
 
     }
 
 
-    await loadDashboardData();
+    /*
+     * Then get the actual profile.
+     * This fixes the missing user name
+     * when auth-check only returns user_id.
+     */
+
+    await loadProfile();
+
+
+    return true;
 
 } catch (error) {
 
@@ -491,6 +630,13 @@ try {
     );
 
     setAdminVisibility(false);
+
+    /*
+     * Do not grant admin access if
+     * authentication cannot be verified.
+     */
+
+    return false;
 
 }
 
@@ -509,7 +655,9 @@ try {
             `${API_BASE}/dashboard.php`,
             {
                 method: "GET",
+
                 credentials: "include",
+
                 headers: {
                     "Accept":
                         "application/json"
@@ -521,7 +669,7 @@ try {
     if (!response.ok) {
 
         console.warn(
-            "Dashboard API status:",
+            "Dashboard API:",
             response.status
         );
 
@@ -535,7 +683,9 @@ try {
 
 
     if (!data) {
+
         return;
+
     }
 
 
@@ -559,7 +709,7 @@ try {
     }
 
 
-    /* INVESTED */
+    /* TOTAL INVESTED */
 
     const invested =
         getNumber(
@@ -578,7 +728,7 @@ try {
     }
 
 
-    /* EARNINGS */
+    /* TOTAL EARNINGS */
 
     const earnings =
         getNumber(
@@ -597,7 +747,7 @@ try {
     }
 
 
-    /* REFERRAL TEAM */
+    /* TEAM */
 
     const team =
         getNumber(
@@ -637,6 +787,7 @@ try {
 
     }
 
+
 } catch (error) {
 
     console.warn(
@@ -649,47 +800,54 @@ try {
 }
 
 /* =========================================================
-INVESTMENT CALCULATOR
+CALCULATOR
 ========================================================= */
-
-/*
-
-* This is only a display calculator.
-* 
-* It does not create an investment,
-* credit a wallet, or guarantee returns.
-  */
-
-const DISPLAY_DAILY_RATE = 0.10;
 
 function calculateInvestment() {
 
-if (!investmentAmount) {
-    return;
+/*
+ * Always display the daily percentage.
+ */
+
+if (dailyReturnPercentage) {
+
+    dailyReturnPercentage.textContent =
+        "10%";
+
 }
 
 
 const amount =
-    Number(
-        investmentAmount.value
-    ) || 0;
+    investmentAmount
+        ? Number(
+            investmentAmount.value
+        ) || 0
+        : 0;
 
 
 if (amount <= 0) {
 
     if (dailyReturn) {
+
         dailyReturn.textContent =
             "UGX 0";
+
     }
+
 
     if (monthlyReturn) {
+
         monthlyReturn.textContent =
             "UGX 0";
+
     }
 
+
     if (totalAfter30) {
+
         totalAfter30.textContent =
             "UGX 0";
+
     }
 
     return;
@@ -702,12 +860,13 @@ const daily =
     DISPLAY_DAILY_RATE;
 
 
-const monthly =
+const thirtyDayReturn =
     daily * 30;
 
 
 const total =
-    amount + monthly;
+    amount +
+    thirtyDayReturn;
 
 
 if (dailyReturn) {
@@ -721,7 +880,7 @@ if (dailyReturn) {
 if (monthlyReturn) {
 
     monthlyReturn.textContent =
-        formatUGX(monthly);
+        formatUGX(thirtyDayReturn);
 
 }
 
@@ -745,7 +904,7 @@ investmentAmount.addEventListener(
 }
 
 /* =========================================================
-INVESTMENT PAGE
+INVESTMENT BUTTON
 ========================================================= */
 
 function goToInvestment() {
@@ -790,7 +949,7 @@ try {
 } catch (error) {
 
     console.warn(
-        "Logout request failed:",
+        "Logout error:",
         error
     );
 
@@ -814,7 +973,7 @@ try {
 } catch (error) {
 
     console.warn(
-        "Could not clear local storage."
+        "Storage cleanup failed."
     );
 
 }
@@ -846,14 +1005,40 @@ currentYear.textContent =
 }
 
 /* =========================================================
-START
+INITIALIZE
 ========================================================= */
 
 document.addEventListener(
 "DOMContentLoaded",
-function () {
+async function () {
 
-    loadAuthenticatedUser();
+    /*
+     * Put 10% on screen immediately.
+     */
+
+    calculateInvestment();
+
+
+    /*
+     * Authenticate first.
+     */
+
+    const authenticated =
+        await loadAuthentication();
+
+
+    if (!authenticated) {
+
+        return;
+
+    }
+
+
+    /*
+     * Then load balances/statistics.
+     */
+
+    await loadDashboardData();
 
 }
 

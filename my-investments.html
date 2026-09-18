@@ -1,176 +1,153 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!DOCTYPE html><html lang="en">
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<title>Crown Cash | My Investments</title>
 
-    <meta name="description"
-          content="View and manage your Crown Cash investments.">
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+>
 
-    <meta name="theme-color"
-          content="#07111f">
+<!-- Main CSS -->
+<link rel="stylesheet" href="my-investments.css">
 
-    <title>Crown Cash | My Investments</title>
-
-    <link rel="stylesheet" href="my-investments.css">
-
-</head>
-
-<body>
-
-
-<!-- =========================================================
+</head><body><div class="app"><!-- ==========================================
      SIDEBAR
-========================================================= -->
-
+=========================================== -->
 <aside class="sidebar" id="sidebar">
 
-    <div class="sidebar-top">
+    <div class="sidebar-logo">
+        <div class="logo-mark">C</div>
 
-        <a href="index.html" class="logo">
+        <div class="logo-text">
+            <strong>Crown</strong>
+            <span>Cash</span>
+        </div>
+    </div>
 
-            <span class="logo-mark">C</span>
+    <div class="sidebar-user">
 
-            <span>
-                Crown<span class="gold">Cash</span>
+        <div class="user-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+
+        <div class="user-details">
+            <strong id="sidebarUserName">
+                Crown Cash User
+            </strong>
+
+            <span id="sidebarUserStatus">
+                Active Account
             </span>
-
-        </a>
-
-        <button
-            type="button"
-            id="closeSidebar"
-            class="close-sidebar">
-
-            ×
-
-        </button>
+        </div>
 
     </div>
 
-
     <nav class="sidebar-nav">
 
-        <a href="dashboard.html">
-            <span>⌂</span>
-            Dashboard
+        <a href="/dashboard.html">
+            <i class="fa-solid fa-gauge-high"></i>
+            <span>Dashboard</span>
         </a>
 
-        <a href="profile.html">
-            <span>◎</span>
-            My Profile
+        <a href="/profile.html">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
         </a>
 
-        <a href="investments.html">
-            <span>◇</span>
-            Investments
+        <a href="/investments.html">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Investment Plans</span>
         </a>
 
-        <a href="my-investments.html" class="active">
-            <span>◆</span>
-            My Investments
+        <a
+            href="/my-investments.html"
+            class="active"
+        >
+            <i class="fa-solid fa-briefcase"></i>
+            <span>My Investments</span>
         </a>
 
-        <a href="deposits.html">
-            <span>↓</span>
-            Deposits
+        <a href="/deposit.html">
+            <i class="fa-solid fa-circle-arrow-down"></i>
+            <span>Deposits</span>
         </a>
 
-        <a href="withdrawals.html">
-            <span>↑</span>
-            Withdrawals
+        <a href="/withdraw.html">
+            <i class="fa-solid fa-circle-arrow-up"></i>
+            <span>Withdrawals</span>
         </a>
 
-        <a href="referrals.html">
-            <span>↗</span>
-            Referrals
+        <a href="/team.html">
+            <i class="fa-solid fa-users"></i>
+            <span>Referral Team</span>
         </a>
 
-        <a href="transactions.html">
-            <span>≡</span>
-            Transactions
+        <a href="/transactions.html">
+            <i class="fa-solid fa-receipt"></i>
+            <span>Transactions</span>
+        </a>
+
+        <a href="/support.html">
+            <i class="fa-solid fa-headset"></i>
+            <span>Support</span>
         </a>
 
     </nav>
 
-
-    <div class="sidebar-bottom">
-
-        <a href="support.html">
-            <span>?</span>
-            Support
-        </a>
-
-        <a href="login.html" id="logoutLink">
-            <span>↪</span>
-            Logout
-        </a>
-
-    </div>
+    <button
+        type="button"
+        class="logout-btn"
+        id="logoutBtn"
+    >
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+    </button>
 
 </aside>
 
 
+<!-- ==========================================
+     MOBILE OVERLAY
+=========================================== -->
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay"
+></div>
 
-<!-- =========================================================
-     MAIN WRAPPER
-========================================================= -->
 
-<div class="main-wrapper">
+<!-- ==========================================
+     MAIN CONTENT
+=========================================== -->
+<main class="main-content">
 
-
-    <!-- =====================================================
-         TOPBAR
-    ====================================================== -->
-
+    <!-- TOPBAR -->
     <header class="topbar">
 
-        <div class="topbar-left">
+        <button
+            type="button"
+            class="menu-toggle"
+            id="menuToggle"
+            aria-label="Open menu"
+        >
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-            <button
-                type="button"
-                class="menu-button"
-                id="openSidebar">
+        <div class="page-heading">
 
-                ☰
-
-            </button>
-
-            <div>
-
-                <span class="topbar-label">
-                    CROWN CASH
-                </span>
-
-                <h1>
-                    My Investments
-                </h1>
-
-            </div>
-
-        </div>
-
-
-        <div class="user-mini">
-
-            <div class="avatar" id="userAvatar">
-                U
+            <div class="heading-icon">
+                <i class="fa-solid fa-briefcase"></i>
             </div>
 
             <div>
+                <h1>My Investments</h1>
 
-                <strong id="userName">
-                    User Account
-                </strong>
-
-                <small>
-                    Member
-                </small>
-
+                <p>
+                    View and manage your investment requests
+                </p>
             </div>
 
         </div>
@@ -178,279 +155,320 @@
     </header>
 
 
+    <!-- ==========================================
+         PAGE BODY
+    =========================================== -->
+    <section class="page-container">
 
-    <!-- =====================================================
-         CONTENT
-    ====================================================== -->
+        <!-- BALANCE -->
+        <div class="balance-card">
 
-    <main class="content">
+            <div class="balance-left">
+
+                <div class="balance-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+
+                <div>
+                    <span>Available Balance</span>
+
+                    <h2 id="availableBalance">
+                        UGX 0
+                    </h2>
+                </div>
+
+            </div>
+
+            <a
+                href="/deposit.html"
+                class="balance-btn"
+            >
+                <i class="fa-solid fa-plus"></i>
+                Deposit
+            </a>
+
+        </div>
 
 
-        <!-- INTRO -->
+        <!-- ======================================
+             SUMMARY
+        ======================================= -->
+        <div class="summary-grid">
 
-        <section class="intro">
+            <div class="summary-card">
+
+                <div class="summary-icon purple">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+
+                <div>
+                    <span>Total Investments</span>
+
+                    <strong id="totalInvestments">
+                        0
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon green">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <div>
+                    <span>Active</span>
+
+                    <strong id="activeInvestments">
+                        0
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon orange">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+
+                <div>
+                    <span>Pending</span>
+
+                    <strong id="pendingInvestments">
+                        0
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon blue">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+
+                <div>
+                    <span>Total Invested</span>
+
+                    <strong id="totalInvested">
+                        UGX 0
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================
+             MESSAGE
+        ======================================= -->
+        <div
+            id="investmentMessage"
+            class="investment-message"
+            style="display:none;"
+        ></div>
+
+
+        <!-- ======================================
+             INVESTMENT LIST HEADER
+        ======================================= -->
+        <div class="section-header">
 
             <div>
 
-                <span class="section-tag">
-                    PORTFOLIO
-                </span>
-
                 <h2>
-                    Track your investments.
+                    <i class="fa-solid fa-layer-group"></i>
+                    Investment History
                 </h2>
 
                 <p>
-                    View your active and completed
-                    investments, including their amount,
-                    status and duration.
+                    Your investment requests and their current status
                 </p>
 
             </div>
 
-        </section>
+            <a
+                href="/investments.html"
+                class="new-investment-btn"
+            >
+                <i class="fa-solid fa-plus"></i>
+                New Investment
+            </a>
+
+        </div>
 
 
+        <!-- ======================================
+             FILTERS
+        ======================================= -->
+        <div class="filters">
 
-        <!-- =================================================
-             SUMMARY CARDS
-        ================================================== -->
+            <button
+                type="button"
+                class="filter-btn active"
+                data-filter="all"
+            >
+                <i class="fa-solid fa-layer-group"></i>
+                All
+            </button>
 
-        <section class="summary-grid">
+            <button
+                type="button"
+                class="filter-btn"
+                data-filter="pending"
+            >
+                <i class="fa-solid fa-clock"></i>
+                Pending
+            </button>
 
+            <button
+                type="button"
+                class="filter-btn"
+                data-filter="active"
+            >
+                <i class="fa-solid fa-circle-check"></i>
+                Active
+            </button>
 
-            <div class="summary-card">
+            <button
+                type="button"
+                class="filter-btn"
+                data-filter="completed"
+            >
+                <i class="fa-solid fa-flag-checkered"></i>
+                Completed
+            </button>
 
-                <span>
-                    Total Investments
-                </span>
-
-                <strong id="totalInvestments">
-                    0
-                </strong>
-
-            </div>
-
-
-            <div class="summary-card">
-
-                <span>
-                    Total Invested
-                </span>
-
-                <strong id="totalInvested">
-                    UGX 0
-                </strong>
-
-            </div>
-
-
-            <div class="summary-card">
-
-                <span>
-                    Active Investments
-                </span>
-
-                <strong id="activeInvestments">
-                    0
-                </strong>
-
-            </div>
+        </div>
 
 
-        </section>
-
-
-
-        <!-- =================================================
+        <!-- ======================================
              LOADING
-        ================================================== -->
+        ======================================= -->
+        <div
+            class="state-box"
+            id="loadingState"
+        >
 
-        <section
-            class="loading-card"
-            id="loadingCard">
+            <div class="loading-spinner">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
 
-            <div class="loader"></div>
+            <h3>Loading investments...</h3>
 
             <p>
-                Loading your investments...
+                Please wait while we retrieve your investments.
             </p>
 
-        </section>
+        </div>
 
 
-
-        <!-- =================================================
+        <!-- ======================================
              ERROR
-        ================================================== -->
+        ======================================= -->
+        <div
+            class="state-box error-state"
+            id="errorState"
+            style="display:none;"
+        >
 
-        <section
-            class="message-card error-card"
-            id="errorCard"
-            style="display:none;">
-
-            <div class="message-icon">
-                !
+            <div class="state-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
 
-            <div>
+            <h3>Unable to load investments</h3>
 
-                <h3>
-                    Unable to load investments
-                </h3>
+            <p id="errorMessage">
+                Please refresh the page and try again.
+            </p>
 
-                <p id="errorMessage">
-                    Please try again.
-                </p>
+            <button
+                type="button"
+                id="retryBtn"
+                class="retry-btn"
+            >
+                <i class="fa-solid fa-rotate-right"></i>
+                Try Again
+            </button>
 
-                <button
-                    type="button"
-                    id="retryButton"
-                    class="retry-button">
+        </div>
 
-                    Try Again
 
-                </button>
+        <!-- ======================================
+             EMPTY
+        ======================================= -->
+        <div
+            class="state-box empty-state"
+            id="emptyState"
+            style="display:none;"
+        >
 
+            <div class="state-icon">
+                <i class="fa-solid fa-chart-line"></i>
             </div>
 
-        </section>
+            <h3>No investments yet</h3>
+
+            <p>
+                You have not submitted an investment request yet.
+            </p>
+
+            <a
+                href="/investments.html"
+                class="empty-action-btn"
+            >
+                <i class="fa-solid fa-rocket"></i>
+                View Investment Plans
+            </a>
+
+        </div>
 
 
-
-        <!-- =================================================
-             EMPTY STATE
-        ================================================== -->
-
-        <section
-            class="message-card empty-card"
-            id="emptyCard"
-            style="display:none;">
-
-            <div class="message-icon">
-                ◇
-            </div>
-
-            <div>
-
-                <h3>
-                    No investments yet
-                </h3>
-
-                <p>
-                    You have not created an investment yet.
-                    Explore the available investment options
-                    to begin.
-                </p>
-
-                <a
-                    href="investments.html"
-                    class="primary-button">
-
-                    Explore Investments
-                    <span>→</span>
-
-                </a>
-
-            </div>
-
-        </section>
+        <!-- ======================================
+             INVESTMENTS
+        ======================================= -->
+        <div
+            class="investment-list"
+            id="investmentList"
+        ></div>
 
 
-
-        <!-- =================================================
-             INVESTMENT LIST
-        ================================================== -->
-
-        <section
-            class="investments-section"
-            id="investmentsSection"
-            style="display:none;">
-
-            <div class="section-heading">
-
-                <span class="section-tag">
-                    YOUR PORTFOLIO
-                </span>
-
-                <h3>
-                    Investment history
-                </h3>
-
-            </div>
+    </section>
 
 
-            <div
-                class="investment-list"
-                id="investmentList">
-
-                <!-- Investments will be inserted here by JS -->
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             INFORMATION
-        ================================================== -->
-
-        <section class="info-card">
-
-            <div class="info-icon">
-                !
-            </div>
-
-            <div>
-
-                <h3>
-                    Investment information
-                </h3>
-
-                <p>
-                    Investment values and status information
-                    shown on this page are based on records
-                    associated with your Crown Cash account.
-                    Always review the applicable investment
-                    terms before making financial decisions.
-                </p>
-
-            </div>
-
-        </section>
-
-
-    </main>
-
-
-
-    <!-- =====================================================
+    <!-- ==========================================
          FOOTER
-    ====================================================== -->
-
-    <footer>
+    =========================================== -->
+    <footer class="footer">
 
         <p>
-
-            © <span id="year"></span>
+            © <span id="currentYear"></span>
             Crown Cash. All rights reserved.
-
         </p>
+
+        <div class="footer-links">
+            <a href="/terms.html">
+                Terms
+            </a>
+
+            <a href="/privacy.html">
+                Privacy
+            </a>
+
+            <a href="/support.html">
+                Support
+            </a>
+        </div>
 
     </footer>
 
+</main>
 
-</div>
-
-
-
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
-
-<script src="my-investments.js"></script>
-
-</body>
-
+</div><!-- JavaScript --><script src="my-investments.js"></script></body>
 </html>

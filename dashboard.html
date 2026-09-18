@@ -4,16 +4,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#07111f"><title>Crown Cash | Dashboard</title>
 
-<!-- Font Awesome -->
+<!-- Font Awesome retained for other Crown Cash pages -->
 <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-<!-- Dashboard CSS -->
 <link rel="stylesheet" href="dashboard.css">
 
 </head><body><div class="dashboard-wrapper"><!-- =====================================================
      SIDEBAR
 ====================================================== -->
+
 <aside class="sidebar" id="sidebar">
 
     <!-- LOGO -->
@@ -30,11 +30,18 @@
     </div>
 
 
-    <!-- USER MINI PROFILE -->
+    <!-- USER -->
     <div class="user-mini-profile">
 
         <div class="user-avatar">
-            <i class="fa-solid fa-user"></i>
+
+            <span class="avatar-glow"></span>
+
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"></path>
+            </svg>
+
         </div>
 
         <div class="mini-user-details">
@@ -58,91 +65,158 @@
         <a href="dashboard.html"
            class="nav-item active">
 
-            <i class="fa-solid fa-house"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 11.5 12 4l9 7.5"></path>
+                    <path d="M5 10.5V20h14v-9.5"></path>
+                    <path d="M9 20v-6h6v6"></path>
+                </svg>
+            </span>
+
             <span>Dashboard</span>
 
         </a>
 
 
-        <a href="profile.html"
-           class="nav-item">
+        <a href="profile.html" class="nav-item">
 
-            <i class="fa-solid fa-user"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"></path>
+                </svg>
+            </span>
+
             <span>Profile</span>
 
         </a>
 
 
-        <a href="investments.html"
-           class="nav-item">
+        <a href="investments.html" class="nav-item">
 
-            <i class="fa-solid fa-chart-line"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 19V5"></path>
+                    <path d="M4 19h17"></path>
+                    <path d="m7 15 4-4 3 2 6-7"></path>
+                    <path d="M16 6h4v4"></path>
+                </svg>
+            </span>
+
             <span>Investments</span>
 
         </a>
 
 
-        <a href="my-investments.html"
-           class="nav-item">
+        <a href="my-investments.html" class="nav-item">
 
-            <i class="fa-solid fa-wallet"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 7h14v13H5z"></path>
+                    <path d="M8 7V5h8v2"></path>
+                    <path d="M5 11h14"></path>
+                    <path d="M14 15h3"></path>
+                </svg>
+            </span>
+
             <span>My Investments</span>
 
         </a>
 
 
-        <a href="deposit.html"
-           class="nav-item">
+        <a href="deposit.html" class="nav-item">
 
-            <i class="fa-solid fa-circle-arrow-down"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 16V8"></path>
+                    <path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path>
+                </svg>
+            </span>
+
             <span>Deposits</span>
 
         </a>
 
 
-        <a href="withdraw.html"
-           class="nav-item">
+        <a href="withdraw.html" class="nav-item">
 
-            <i class="fa-solid fa-circle-arrow-up"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 8v8"></path>
+                    <path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path>
+                </svg>
+            </span>
+
             <span>Withdrawals</span>
 
         </a>
 
 
-        <a href="team.html"
-           class="nav-item">
+        <a href="team.html" class="nav-item">
 
-            <i class="fa-solid fa-users"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="9" cy="8" r="3"></circle>
+                    <circle cx="17" cy="9" r="2.5"></circle>
+                    <path d="M3.5 20c0-3.5 2.3-6 5.5-6s5.5 2.5 5.5 6"></path>
+                    <path d="M14 15c3.5-.5 6 1.8 6 5"></path>
+                </svg>
+            </span>
+
             <span>Referral Team</span>
 
         </a>
 
 
-        <a href="transactions.html"
-           class="nav-item">
+        <a href="transactions.html" class="nav-item">
 
-            <i class="fa-solid fa-receipt"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 3h12v18H6z"></path>
+                    <path d="M9 7h6"></path>
+                    <path d="M9 11h6"></path>
+                    <path d="M9 15h4"></path>
+                </svg>
+            </span>
+
             <span>Transactions</span>
 
         </a>
 
 
-        <a href="support.html"
-           class="nav-item">
+        <a href="support.html" class="nav-item">
 
-            <i class="fa-solid fa-headset"></i>
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 13a8 8 0 0 1 16 0"></path>
+                    <path d="M4 13v5h4v-5"></path>
+                    <path d="M16 13v5h4v-5"></path>
+                    <path d="M16 20c-1 .7-2.3 1-4 1"></path>
+                </svg>
+            </span>
+
             <span>Support</span>
 
         </a>
 
 
-        <!-- ADMIN PANEL -->
+        <!-- ADMIN -->
         <a href="admin.html"
            class="nav-item admin-nav-item"
            id="adminPanelLink"
            style="display:none;">
 
-            <i class="fa-solid fa-shield-halved"></i>
+            <span class="nav-icon admin-icon">
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 3 20 6v6c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6z"></path>
+                    <path d="m9 12 2 2 4-5"></path>
+                </svg>
+
+            </span>
+
             <span>Admin Panel</span>
 
         </a>
@@ -151,14 +225,19 @@
 
 
     <!-- LOGOUT -->
-    <button class="logout-btn"
-            id="logoutBtn">
+    <button class="logout-btn" id="logoutBtn">
 
-        <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="nav-icon">
 
-        <span>
-            Logout
+            <svg viewBox="0 0 24 24">
+                <path d="M10 4H5v16h5"></path>
+                <path d="M14 8l4 4-4 4"></path>
+                <path d="M9 12h9"></path>
+            </svg>
+
         </span>
+
+        <span>Logout</span>
 
     </button>
 
@@ -167,19 +246,21 @@
 
 
 <!-- =====================================================
-     MAIN CONTENT
+     MAIN
 ====================================================== -->
+
 <main class="main-content">
 
 
-    <!-- TOP BAR -->
+    <!-- TOPBAR -->
     <header class="topbar">
 
         <button class="menu-toggle"
-                id="menuToggle"
-                type="button">
+                id="menuToggle">
 
-            <i class="fa-solid fa-bars"></i>
+            <span></span>
+            <span></span>
+            <span></span>
 
         </button>
 
@@ -201,7 +282,10 @@
 
             <div class="topbar-avatar">
 
-                <i class="fa-solid fa-user"></i>
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"></path>
+                </svg>
 
             </div>
 
@@ -223,13 +307,14 @@
 
 
 
-    <!-- =================================================
-         DASHBOARD CONTENT
-    ================================================== -->
+    <!-- CONTENT -->
     <section class="dashboard-content">
 
 
-        <!-- WELCOME CARD -->
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
+
         <div class="welcome-card">
 
             <div class="welcome-content">
@@ -254,11 +339,24 @@
             </div>
 
 
-            <div class="welcome-icon">
+            <div class="welcome-illustration">
 
-                <div class="icon-orbit"></div>
+                <div class="illustration-ring ring-one"></div>
+                <div class="illustration-ring ring-two"></div>
 
-                <i class="fa-solid fa-crown"></i>
+                <div class="crown-symbol">
+
+                    <svg viewBox="0 0 100 70">
+
+                        <path d="M10 18 28 38 50 10l22 28 18-20-8 39H18z"></path>
+
+                        <circle cx="10" cy="18" r="4"></circle>
+                        <circle cx="50" cy="10" r="4"></circle>
+                        <circle cx="90" cy="18" r="4"></circle>
+
+                    </svg>
+
+                </div>
 
             </div>
 
@@ -269,6 +367,7 @@
         <!-- =================================================
              BALANCE
         ================================================== -->
+
         <div class="balance-card">
 
             <div class="balance-left">
@@ -277,7 +376,14 @@
 
                     <div class="balance-ring"></div>
 
-                    <i class="fa-solid fa-wallet"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 7h16v13H4z"></path>
+                        <path d="M6 7V5h12v2"></path>
+                        <path d="M4 11h16"></path>
+                        <path d="M15 15h3"></path>
+
+                    </svg>
 
                 </div>
 
@@ -302,8 +408,7 @@
                 <a href="deposit.html"
                    class="balance-btn">
 
-                    <i class="fa-solid fa-plus"></i>
-
+                    <span>+</span>
                     Deposit
 
                 </a>
@@ -312,8 +417,7 @@
                 <a href="withdraw.html"
                    class="balance-btn secondary">
 
-                    <i class="fa-solid fa-arrow-up"></i>
-
+                    <span>↑</span>
                     Withdraw
 
                 </a>
@@ -327,15 +431,21 @@
         <!-- =================================================
              STATISTICS
         ================================================== -->
+
         <div class="stats-grid">
 
 
-            <!-- INVESTED -->
             <div class="stat-card">
 
                 <div class="stat-icon">
 
-                    <i class="fa-solid fa-chart-line"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h17"></path>
+                        <path d="m7 15 4-4 3 2 6-7"></path>
+
+                    </svg>
 
                 </div>
 
@@ -354,12 +464,18 @@
             </div>
 
 
-            <!-- EARNINGS -->
+
             <div class="stat-card">
 
                 <div class="stat-icon">
 
-                    <i class="fa-solid fa-coins"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <circle cx="12" cy="12" r="8"></circle>
+                        <path d="M12 7v10"></path>
+                        <path d="M15 9.5c-.7-.8-1.7-1.2-3-1.2-1.8 0-3 .8-3 2s1.2 2 3 2 3 .8 3 2-1.2 2-3 2c-1.3 0-2.4-.4-3-1.2"></path>
+
+                    </svg>
 
                 </div>
 
@@ -378,12 +494,19 @@
             </div>
 
 
-            <!-- TEAM -->
+
             <div class="stat-card">
 
                 <div class="stat-icon">
 
-                    <i class="fa-solid fa-users"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <circle cx="17" cy="9" r="2.5"></circle>
+                        <path d="M3.5 20c0-3.5 2.3-6 5.5-6s5.5 2.5 5.5 6"></path>
+                        <path d="M14 15c3.5-.5 6 1.8 6 5"></path>
+
+                    </svg>
 
                 </div>
 
@@ -402,12 +525,19 @@
             </div>
 
 
-            <!-- TRANSACTIONS -->
+
             <div class="stat-card">
 
                 <div class="stat-icon">
 
-                    <i class="fa-solid fa-money-bill-transfer"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M5 4h14v16H5z"></path>
+                        <path d="M8 8h8"></path>
+                        <path d="M8 12h8"></path>
+                        <path d="M8 16h5"></path>
+
+                    </svg>
 
                 </div>
 
@@ -430,10 +560,10 @@
 
 
         <!-- =================================================
-             INVESTMENT CALCULATOR
+             CALCULATOR
         ================================================== -->
-        <div class="calculator-card">
 
+        <div class="calculator-card">
 
             <div class="section-heading">
 
@@ -452,12 +582,21 @@
 
                 <div class="calculator-icon">
 
-                    <i class="fa-solid fa-calculator"></i>
+                    <svg viewBox="0 0 24 24">
+
+                        <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+                        <path d="M8 7h8"></path>
+                        <path d="M8 11h2"></path>
+                        <path d="M14 11h2"></path>
+                        <path d="M8 15h2"></path>
+                        <path d="M14 15h2"></path>
+                        <path d="M8 18h8"></path>
+
+                    </svg>
 
                 </div>
 
             </div>
-
 
 
             <div class="calculator-body">
@@ -481,6 +620,7 @@
                             id="investmentAmount"
                             min="0"
                             step="1000"
+                            value="10000"
                             placeholder="10000"
                         >
 
@@ -493,14 +633,31 @@
                 <div class="calculator-results">
 
 
-                    <div class="result-box">
+                    <div class="result-box daily-result">
 
                         <span>
                             Daily Return
                         </span>
 
+                        <strong id="dailyReturnPercentage">
+                            10%
+                        </strong>
+
+                        <small>
+                            Display rate
+                        </small>
+
+                    </div>
+
+
+                    <div class="result-box">
+
+                        <span>
+                            Daily Amount
+                        </span>
+
                         <strong id="dailyReturn">
-                            UGX 0
+                            UGX 1,000
                         </strong>
 
                     </div>
@@ -509,30 +666,29 @@
                     <div class="result-box">
 
                         <span>
-                            Monthly Return
+                            30-Day Amount
                         </span>
 
                         <strong id="monthlyReturn">
-                            UGX 0
+                            UGX 30,000
                         </strong>
 
                     </div>
 
 
-                    <div class="result-box">
+                    <div class="result-box total-result">
 
                         <span>
                             Total After 30 Days
                         </span>
 
                         <strong id="totalAfter30">
-                            UGX 0
+                            UGX 40,000
                         </strong>
 
                     </div>
 
                 </div>
-
 
 
                 <button
@@ -542,7 +698,9 @@
 
                     View Investment Plans
 
-                    <i class="fa-solid fa-arrow-right"></i>
+                    <span class="button-arrow">
+                        →
+                    </span>
 
                 </button>
 
@@ -555,8 +713,8 @@
         <!-- =================================================
              QUICK ACTIONS
         ================================================== -->
-        <div class="quick-actions-section">
 
+        <div class="quick-actions-section">
 
             <div class="section-heading">
 
@@ -575,19 +733,23 @@
             </div>
 
 
-
             <div class="quick-actions-grid">
 
 
-                <!-- DEPOSIT -->
                 <a href="deposit.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-circle-arrow-down"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 16V8"></path>
+                            <path d="m8.5 11.5 3.5 3.5 3.5-3.5"></path>
+
+                        </svg>
 
                     </div>
 
@@ -598,15 +760,21 @@
                 </a>
 
 
-                <!-- WITHDRAW -->
+
                 <a href="withdraw.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-circle-arrow-up"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 8v8"></path>
+                            <path d="m8.5 12.5 3.5-3.5 3.5 3.5"></path>
+
+                        </svg>
 
                     </div>
 
@@ -617,15 +785,21 @@
                 </a>
 
 
-                <!-- INVEST -->
+
                 <a href="investments.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-chart-pie"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M4 19V5"></path>
+                            <path d="M4 19h17"></path>
+                            <path d="m7 15 4-4 3 2 6-7"></path>
+
+                        </svg>
 
                     </div>
 
@@ -636,15 +810,21 @@
                 </a>
 
 
-                <!-- REFERRALS -->
+
                 <a href="team.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-user-group"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <circle cx="17" cy="9" r="2.5"></circle>
+                            <path d="M3.5 20c0-3.5 2.3-6 5.5-6s5.5 2.5 5.5 6"></path>
+
+                        </svg>
 
                     </div>
 
@@ -655,15 +835,22 @@
                 </a>
 
 
-                <!-- TRANSACTIONS -->
+
                 <a href="transactions.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-receipt"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M5 4h14v16H5z"></path>
+                            <path d="M8 8h8"></path>
+                            <path d="M8 12h8"></path>
+                            <path d="M8 16h5"></path>
+
+                        </svg>
 
                     </div>
 
@@ -674,15 +861,20 @@
                 </a>
 
 
-                <!-- PROFILE -->
+
                 <a href="profile.html"
                    class="quick-action">
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-user-gear"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"></path>
+
+                        </svg>
 
                     </div>
 
@@ -693,6 +885,7 @@
                 </a>
 
 
+
                 <!-- ADMIN -->
                 <a href="admin.html"
                    class="quick-action admin-quick-action"
@@ -701,9 +894,14 @@
 
                     <div class="quick-icon">
 
-                        <span class="icon-circle"></span>
+                        <span class="icon-orbit"></span>
 
-                        <i class="fa-solid fa-shield-halved"></i>
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M12 3 20 6v6c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6z"></path>
+                            <path d="m9 12 2 2 4-5"></path>
+
+                        </svg>
 
                     </div>
 
@@ -720,18 +918,14 @@
     </section>
 
 
-
-    <!-- FOOTER -->
     <footer class="dashboard-footer">
 
-        <p>
-            © <span id="currentYear"></span>
-            Crown Cash. All rights reserved.
-        </p>
+        © <span id="currentYear"></span>
+        Crown Cash. All rights reserved.
 
     </footer>
 
 </main>
 
-</div><!-- Dashboard JavaScript --><script src="dashboard.js"></script></body>
+</div><script src="dashboard.js"></script></body>
 </html>

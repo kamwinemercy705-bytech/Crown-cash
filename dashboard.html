@@ -1,191 +1,321 @@
 <!DOCTYPE html><html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f"><title>Crown Cash | Dashboard</title>
 
-<title>Crown Cash | Dashboard</title>
-
+<!-- Font Awesome -->
 <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+<!-- Dashboard CSS -->
 <link rel="stylesheet" href="dashboard.css">
 
-</head><body><div class="dashboard-wrapper"><!-- ================= SIDEBAR ================= -->
+</head><body><div class="dashboard-wrapper"><!-- =====================================================
+     SIDEBAR
+====================================================== -->
 <aside class="sidebar" id="sidebar">
 
+    <!-- LOGO -->
     <div class="sidebar-logo">
-        <div class="logo-mark">C</div>
+
+        <div class="logo-mark">
+            C
+        </div>
 
         <div class="logo-text">
             <strong>Crown</strong><span>Cash</span>
         </div>
+
     </div>
 
+
+    <!-- USER MINI PROFILE -->
     <div class="user-mini-profile">
+
         <div class="user-avatar">
             <i class="fa-solid fa-user"></i>
         </div>
 
-        <div>
-            <strong id="sidebarUserName">User</strong>
-            <small id="sidebarUserRole">Member</small>
+        <div class="mini-user-details">
+
+            <strong id="sidebarUserName">
+                Member
+            </strong>
+
+            <small id="sidebarUserRole">
+                Member
+            </small>
+
         </div>
+
     </div>
 
+
+    <!-- NAVIGATION -->
     <nav class="sidebar-nav">
 
-        <a href="dashboard.html" class="nav-item active">
+        <a href="dashboard.html"
+           class="nav-item active">
+
             <i class="fa-solid fa-house"></i>
             <span>Dashboard</span>
+
         </a>
 
-        <a href="profile.html" class="nav-item">
+
+        <a href="profile.html"
+           class="nav-item">
+
             <i class="fa-solid fa-user"></i>
             <span>Profile</span>
+
         </a>
 
-        <a href="investments.html" class="nav-item">
+
+        <a href="investments.html"
+           class="nav-item">
+
             <i class="fa-solid fa-chart-line"></i>
             <span>Investments</span>
+
         </a>
 
-        <a href="my-investments.html" class="nav-item">
+
+        <a href="my-investments.html"
+           class="nav-item">
+
             <i class="fa-solid fa-wallet"></i>
             <span>My Investments</span>
+
         </a>
 
-        <a href="deposit.html" class="nav-item">
+
+        <a href="deposit.html"
+           class="nav-item">
+
             <i class="fa-solid fa-circle-arrow-down"></i>
             <span>Deposits</span>
+
         </a>
 
-        <a href="withdraw.html" class="nav-item">
+
+        <a href="withdraw.html"
+           class="nav-item">
+
             <i class="fa-solid fa-circle-arrow-up"></i>
             <span>Withdrawals</span>
+
         </a>
 
-        <a href="team.html" class="nav-item">
+
+        <a href="team.html"
+           class="nav-item">
+
             <i class="fa-solid fa-users"></i>
             <span>Referral Team</span>
+
         </a>
 
-        <a href="transactions.html" class="nav-item">
+
+        <a href="transactions.html"
+           class="nav-item">
+
             <i class="fa-solid fa-receipt"></i>
             <span>Transactions</span>
+
         </a>
 
-        <a href="support.html" class="nav-item">
+
+        <a href="support.html"
+           class="nav-item">
+
             <i class="fa-solid fa-headset"></i>
             <span>Support</span>
+
         </a>
 
-        <!-- ADMIN PANEL
-             Hidden by default.
-             dashboard.js will show this only for admins. -->
+
+        <!-- ADMIN PANEL -->
         <a href="admin.html"
            class="nav-item admin-nav-item"
            id="adminPanelLink"
-           style="display: none;">
+           style="display:none;">
 
             <i class="fa-solid fa-shield-halved"></i>
             <span>Admin Panel</span>
+
         </a>
 
     </nav>
 
-    <button class="logout-btn" id="logoutBtn">
+
+    <!-- LOGOUT -->
+    <button class="logout-btn"
+            id="logoutBtn">
+
         <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Logout</span>
+
+        <span>
+            Logout
+        </span>
+
     </button>
 
 </aside>
 
 
-<!-- ================= MAIN CONTENT ================= -->
+
+<!-- =====================================================
+     MAIN CONTENT
+====================================================== -->
 <main class="main-content">
 
-    <!-- TOPBAR -->
+
+    <!-- TOP BAR -->
     <header class="topbar">
 
-        <button class="menu-toggle" id="menuToggle">
+        <button class="menu-toggle"
+                id="menuToggle"
+                type="button">
+
             <i class="fa-solid fa-bars"></i>
+
         </button>
 
+
         <div class="topbar-title">
-            <h1>Dashboard</h1>
-            <p>Welcome back to Crown Cash</p>
+
+            <h1>
+                Dashboard
+            </h1>
+
+            <p>
+                Welcome back to Crown Cash
+            </p>
+
         </div>
 
+
         <div class="topbar-user">
+
             <div class="topbar-avatar">
+
                 <i class="fa-solid fa-user"></i>
+
             </div>
 
-            <div>
-                <strong id="topbarUserName">User</strong>
-                <small id="topbarUserRole">Member</small>
+            <div class="topbar-user-details">
+
+                <strong id="topbarUserName">
+                    Member
+                </strong>
+
+                <small id="topbarUserRole">
+                    Member
+                </small>
+
             </div>
+
         </div>
 
     </header>
 
 
-    <!-- ================= CONTENT ================= -->
+
+    <!-- =================================================
+         DASHBOARD CONTENT
+    ================================================== -->
     <section class="dashboard-content">
 
-        <!-- Welcome -->
+
+        <!-- WELCOME CARD -->
         <div class="welcome-card">
 
-            <div>
-                <span class="welcome-label">WELCOME BACK</span>
+            <div class="welcome-content">
+
+                <span class="welcome-label">
+                    WELCOME BACK
+                </span>
 
                 <h2>
                     Hello,
-                    <span id="welcomeUserName">Member</span>!
+                    <span id="welcomeUserName">
+                        Member
+                    </span>!
                 </h2>
 
                 <p>
-                    Manage your Crown Cash account, investments and transactions
-                    from your dashboard.
+                    Manage your Crown Cash account,
+                    investments and transactions from
+                    your dashboard.
                 </p>
+
             </div>
 
+
             <div class="welcome-icon">
+
+                <div class="icon-orbit"></div>
+
                 <i class="fa-solid fa-crown"></i>
+
             </div>
 
         </div>
 
 
-        <!-- ================= BALANCE ================= -->
+
+        <!-- =================================================
+             BALANCE
+        ================================================== -->
         <div class="balance-card">
 
             <div class="balance-left">
 
                 <div class="balance-icon">
+
+                    <div class="balance-ring"></div>
+
                     <i class="fa-solid fa-wallet"></i>
+
                 </div>
 
-                <div>
-                    <span>Available Balance</span>
+
+                <div class="balance-info">
+
+                    <span>
+                        Available Balance
+                    </span>
 
                     <h2 id="availableBalance">
                         UGX 0
                     </h2>
+
                 </div>
 
             </div>
+
 
             <div class="balance-actions">
 
-                <a href="deposit.html" class="balance-btn">
+                <a href="deposit.html"
+                   class="balance-btn">
+
                     <i class="fa-solid fa-plus"></i>
+
                     Deposit
+
                 </a>
 
-                <a href="withdraw.html" class="balance-btn secondary">
+
+                <a href="withdraw.html"
+                   class="balance-btn secondary">
+
                     <i class="fa-solid fa-arrow-up"></i>
+
                     Withdraw
+
                 </a>
 
             </div>
@@ -193,60 +323,104 @@
         </div>
 
 
-        <!-- ================= STAT CARDS ================= -->
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
         <div class="stats-grid">
 
+
+            <!-- INVESTED -->
             <div class="stat-card">
 
                 <div class="stat-icon">
+
                     <i class="fa-solid fa-chart-line"></i>
+
                 </div>
 
-                <div>
-                    <span>Total Invested</span>
-                    <strong id="totalInvested">UGX 0</strong>
+                <div class="stat-content">
+
+                    <span>
+                        Total Invested
+                    </span>
+
+                    <strong id="totalInvested">
+                        UGX 0
+                    </strong>
+
                 </div>
 
             </div>
 
 
+            <!-- EARNINGS -->
             <div class="stat-card">
 
                 <div class="stat-icon">
+
                     <i class="fa-solid fa-coins"></i>
+
                 </div>
 
-                <div>
-                    <span>Total Earnings</span>
-                    <strong id="totalEarnings">UGX 0</strong>
+                <div class="stat-content">
+
+                    <span>
+                        Total Earnings
+                    </span>
+
+                    <strong id="totalEarnings">
+                        UGX 0
+                    </strong>
+
                 </div>
 
             </div>
 
 
+            <!-- TEAM -->
             <div class="stat-card">
 
                 <div class="stat-icon">
+
                     <i class="fa-solid fa-users"></i>
+
                 </div>
 
-                <div>
-                    <span>Referral Team</span>
-                    <strong id="teamCount">0</strong>
+                <div class="stat-content">
+
+                    <span>
+                        Referral Team
+                    </span>
+
+                    <strong id="teamCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
 
 
+            <!-- TRANSACTIONS -->
             <div class="stat-card">
 
                 <div class="stat-icon">
+
                     <i class="fa-solid fa-money-bill-transfer"></i>
+
                 </div>
 
-                <div>
-                    <span>Transactions</span>
-                    <strong id="transactionCount">0</strong>
+                <div class="stat-content">
+
+                    <span>
+                        Transactions
+                    </span>
+
+                    <strong id="transactionCount">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
@@ -254,22 +428,40 @@
         </div>
 
 
-        <!-- ================= INVESTMENT CALCULATOR ================= -->
+
+        <!-- =================================================
+             INVESTMENT CALCULATOR
+        ================================================== -->
         <div class="calculator-card">
+
 
             <div class="section-heading">
 
                 <div>
-                    <span class="section-label">INVESTMENT</span>
-                    <h2>Investment Calculator</h2>
+
+                    <span class="section-label">
+                        INVESTMENT
+                    </span>
+
+                    <h2>
+                        Investment Calculator
+                    </h2>
+
                 </div>
 
-                <i class="fa-solid fa-calculator"></i>
+
+                <div class="calculator-icon">
+
+                    <i class="fa-solid fa-calculator"></i>
+
+                </div>
 
             </div>
 
 
+
             <div class="calculator-body">
+
 
                 <div class="calculator-input">
 
@@ -277,9 +469,12 @@
                         Investment Amount
                     </label>
 
+
                     <div class="input-wrapper">
 
-                        <span>UGX</span>
+                        <span>
+                            UGX
+                        </span>
 
                         <input
                             type="number"
@@ -294,11 +489,15 @@
                 </div>
 
 
+
                 <div class="calculator-results">
+
 
                     <div class="result-box">
 
-                        <span>Daily Return</span>
+                        <span>
+                            Daily Return
+                        </span>
 
                         <strong id="dailyReturn">
                             UGX 0
@@ -309,7 +508,9 @@
 
                     <div class="result-box">
 
-                        <span>Monthly Return</span>
+                        <span>
+                            Monthly Return
+                        </span>
 
                         <strong id="monthlyReturn">
                             UGX 0
@@ -320,7 +521,9 @@
 
                     <div class="result-box">
 
-                        <span>Total After 30 Days</span>
+                        <span>
+                            Total After 30 Days
+                        </span>
 
                         <strong id="totalAfter30">
                             UGX 0
@@ -330,13 +533,16 @@
 
                 </div>
 
+
+
                 <button
                     type="button"
                     class="calculator-btn"
                     onclick="goToInvestment()">
 
-                    <i class="fa-solid fa-arrow-right"></i>
                     View Investment Plans
+
+                    <i class="fa-solid fa-arrow-right"></i>
 
                 </button>
 
@@ -345,100 +551,165 @@
         </div>
 
 
-        <!-- ================= QUICK ACTIONS ================= -->
+
+        <!-- =================================================
+             QUICK ACTIONS
+        ================================================== -->
         <div class="quick-actions-section">
+
 
             <div class="section-heading">
 
                 <div>
-                    <span class="section-label">QUICK ACCESS</span>
-                    <h2>Quick Actions</h2>
+
+                    <span class="section-label">
+                        QUICK ACCESS
+                    </span>
+
+                    <h2>
+                        Quick Actions
+                    </h2>
+
                 </div>
 
             </div>
 
 
+
             <div class="quick-actions-grid">
 
-                <a href="deposit.html" class="quick-action">
 
-                    <div>
+                <!-- DEPOSIT -->
+                <a href="deposit.html"
+                   class="quick-action">
+
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-circle-arrow-down"></i>
+
                     </div>
 
-                    <span>Make Deposit</span>
+                    <span>
+                        Make Deposit
+                    </span>
 
                 </a>
 
 
-                <a href="withdraw.html" class="quick-action">
+                <!-- WITHDRAW -->
+                <a href="withdraw.html"
+                   class="quick-action">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-circle-arrow-up"></i>
+
                     </div>
 
-                    <span>Withdraw Funds</span>
+                    <span>
+                        Withdraw Funds
+                    </span>
 
                 </a>
 
 
-                <a href="investments.html" class="quick-action">
+                <!-- INVEST -->
+                <a href="investments.html"
+                   class="quick-action">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-chart-pie"></i>
+
                     </div>
 
-                    <span>Invest Now</span>
+                    <span>
+                        Invest Now
+                    </span>
 
                 </a>
 
 
-                <a href="team.html" class="quick-action">
+                <!-- REFERRALS -->
+                <a href="team.html"
+                   class="quick-action">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-user-group"></i>
+
                     </div>
 
-                    <span>Referral Team</span>
+                    <span>
+                        Referral Team
+                    </span>
 
                 </a>
 
 
-                <a href="transactions.html" class="quick-action">
+                <!-- TRANSACTIONS -->
+                <a href="transactions.html"
+                   class="quick-action">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-receipt"></i>
+
                     </div>
 
-                    <span>Transactions</span>
+                    <span>
+                        Transactions
+                    </span>
 
                 </a>
 
 
-                <a href="profile.html" class="quick-action">
+                <!-- PROFILE -->
+                <a href="profile.html"
+                   class="quick-action">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-user-gear"></i>
+
                     </div>
 
-                    <span>My Profile</span>
+                    <span>
+                        My Profile
+                    </span>
 
                 </a>
 
 
-                <!-- Admin quick action.
-                     Hidden until dashboard.js confirms admin role. -->
-
+                <!-- ADMIN -->
                 <a href="admin.html"
                    class="quick-action admin-quick-action"
                    id="adminQuickAction"
-                   style="display: none;">
+                   style="display:none;">
 
-                    <div>
+                    <div class="quick-icon">
+
+                        <span class="icon-circle"></span>
+
                         <i class="fa-solid fa-shield-halved"></i>
+
                     </div>
 
-                    <span>Admin Panel</span>
+                    <span>
+                        Admin Panel
+                    </span>
 
                 </a>
 
@@ -449,17 +720,18 @@
     </section>
 
 
-    <!-- ================= FOOTER ================= -->
+
+    <!-- FOOTER -->
     <footer class="dashboard-footer">
 
         <p>
-            © <span id="currentYear"></span> Crown Cash.
-            All rights reserved.
+            © <span id="currentYear"></span>
+            Crown Cash. All rights reserved.
         </p>
 
     </footer>
 
 </main>
 
-</div><script src="dashboard.js"></script></body>
+</div><!-- Dashboard JavaScript --><script src="dashboard.js"></script></body>
 </html>

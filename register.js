@@ -1,532 +1,652 @@
-/* =========================================================
-   CROWN CASH — REGISTRATION
-   register.js
-   ========================================================= */
+// ============================================================
+// CROWN CASH - REGISTRATION JAVASCRIPT
+// File: register.js
+// ============================================================
 
+"use strict";
+
+// Crown Cash backend
 const API_URL = "https://crown-cash1.onrender.com";
 
-document.addEventListener("DOMContentLoaded", () => {
+// ------------------------------------------------------------
+// Get form elements
+// ------------------------------------------------------------
 
-    const form = document.getElementById("registerForm");
-    const message = document.getElementById("formMessage");
+const registerForm = document.getElementById("registerForm");
+const formMessage = document.getElementById("formMessage");
 
-    const firstNameInput = document.getElementById("firstName");
-    const lastNameInput = document.getElementById("lastName");
-    const phoneInput = document.getElementById("phone");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const confirmPasswordInput = document.getElementById("confirmPassword");
-    const referralInput = document.getElementById("referralCode");
-    const termsInput = document.getElementById("terms");
+// Password visibility buttons
+const passwordToggleButtons =
+    document.querySelectorAll("[data-target]");
 
-    /* ---------------------------------------------------------
-       SHOW MESSAGE
-    --------------------------------------------------------- */
+// ------------------------------------------------------------
+// Show message
+// ------------------------------------------------------------
 
-    function showMessage(text, type = "error") {
+function showMessage(message, type = "error") {
 
-        if (!message) return;
-
-        message.textContent = text;
-        message.className = `form-message ${type}`;
-        message.style.display = "block";
-
-        message.scrollIntoView({
-            behavior: "smooth",
-            block: "nearest"
-        });
-    }
-
-
-    /* ---------------------------------------------------------
-       GET REFERRAL CODE FROM URL
-       
-       Example:
-       register.html?ref=CC123456
-    --------------------------------------------------------- */
-
-    const urlParams = new URLSearchParams(window.location.search);
-
-    let referralFromURL = urlParams.get("ref");
-
-    if (referralFromURL) {
-
-        referralFromURL = referralFromURL.trim();
-
-        // Save referral code temporarily
-        sessionStorage.setItem(
-            "crownCashReferralCode",
-            referralFromURL
-        );
-
-        localStorage.setItem(
-            "crownCashReferralCode",
-            referralFromURL
-        );
-    }
-
-
-    /* ---------------------------------------------------------
-       LOAD SAVED REFERRAL CODE
-    --------------------------------------------------------- */
-
-    const savedReferral =
-        referralFromURL ||
-        sessionStorage.getItem("crownCashReferralCode") ||
-        localStorage.getItem("crownCashReferralCode") ||
-        "";
-
-
-    if (referralInput && savedReferral) {
-
-        referralInput.value = savedReferral;
-
-        // Make it visually clear that the referral was detected
-        referralInput.classList.add("referral-detected");
-    }
-
-
-    /* ---------------------------------------------------------
-       PASSWORD SHOW / HIDE BUTTONS
-    --------------------------------------------------------- */
-
-    const passwordToggleButtons =
-        document.querySelectorAll("[data-target]");
-
-    passwordToggleButtons.forEach(button => {
-
-        button.addEventListener("click", () => {
-
-            const targetId =
-                button.getAttribute("data-target");
-
-            const target =
-                document.getElementById(targetId);
-
-            if (!target) return;
-
-            if (target.type === "password") {
-
-                target.type = "text";
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-eye-slash"></i>';
-
-            } else {
-
-                target.type = "password";
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-eye"></i>';
-            }
-
-        });
-
-    });
-
-
-    /* ---------------------------------------------------------
-       PHONE NUMBER CLEANING
-    --------------------------------------------------------- */
-
-    if (phoneInput) {
-
-        phoneInput.addEventListener("input", () => {
-
-            let value = phoneInput.value;
-
-            // Keep only numbers and +
-            value = value.replace(/[^\d+]/g, "");
-
-            // Only allow + at the beginning
-            if (value.indexOf("+") > 0) {
-                value =
-                    value.replace(/\+/g, "");
-            }
-
-            phoneInput.value = value;
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       PASSWORD STRENGTH CHECK
-    --------------------------------------------------------- */
-
-    if (passwordInput) {
-
-        passwordInput.addEventListener("input", () => {
-
-            const password =
-                passwordInput.value;
-
-            if (password.length < 8) {
-
-                passwordInput.setCustomValidity(
-                    "Password must contain at least 8 characters."
-                );
-
-            } else {
-
-                passwordInput.setCustomValidity("");
-            }
-
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       CONFIRM PASSWORD CHECK
-    --------------------------------------------------------- */
-
-    if (confirmPasswordInput && passwordInput) {
-
-        confirmPasswordInput.addEventListener("input", () => {
-
-            if (
-                confirmPasswordInput.value !==
-                passwordInput.value
-            ) {
-
-                confirmPasswordInput.setCustomValidity(
-                    "Passwords do not match."
-                );
-
-            } else {
-
-                confirmPasswordInput.setCustomValidity("");
-            }
-
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       FORM SUBMISSION
-    --------------------------------------------------------- */
-
-    if (!form) {
-
-        console.error(
-            "Crown Cash: registerForm was not found."
-        );
-
+    if (!formMessage) {
+        alert(message);
         return;
     }
 
+    formMessage.textContent = message;
+    formMessage.className = "form-message " + type;
+    formMessage.style.display = "block";
+}
 
-    form.addEventListener("submit", async (event) => {
+// ------------------------------------------------------------
+// Clear message
+// ------------------------------------------------------------
 
-        event.preventDefault();
+function clearMessage() {
 
+    if (!formMessage) {
+        return;
+    }
 
-        /* ---------------------------------------------
-           CLEAR OLD MESSAGE
-        --------------------------------------------- */
+    formMessage.textContent = "";
+    formMessage.className = "form-message";
+    formMessage.style.display = "none";
+}
 
-        if (message) {
+// ------------------------------------------------------------
+// Loading state
+// ------------------------------------------------------------
 
-            message.style.display = "none";
-            message.textContent = "";
-        }
+function setLoading(loading) {
 
+    if (!registerForm) {
+        return;
+    }
 
-        /* ---------------------------------------------
-           GET FORM VALUES
-        --------------------------------------------- */
+    const submitButton =
+        registerForm.querySelector(
+            'button[type="submit"], input[type="submit"]'
+        );
 
-        const firstName =
-            firstNameInput?.value.trim() || "";
+    if (!submitButton) {
+        return;
+    }
 
-        const lastName =
-            lastNameInput?.value.trim() || "";
+    if (loading) {
 
-        const phone =
-            phoneInput?.value.trim() || "";
+        submitButton.disabled = true;
 
-        const email =
-            emailInput?.value.trim().toLowerCase() || "";
+        if (submitButton.tagName.toLowerCase() === "button") {
 
-        const password =
-            passwordInput?.value || "";
-
-        const confirmPassword =
-            confirmPasswordInput?.value || "";
-
-        const referralCode =
-            referralInput?.value.trim() ||
-            savedReferral ||
-            "";
-
-
-        /* ---------------------------------------------
-           BASIC VALIDATION
-        --------------------------------------------- */
-
-        if (!firstName) {
-
-            showMessage(
-                "Please enter your first name."
-            );
-
-            firstNameInput?.focus();
-
-            return;
-        }
-
-
-        if (!lastName) {
-
-            showMessage(
-                "Please enter your last name."
-            );
-
-            lastNameInput?.focus();
-
-            return;
-        }
-
-
-        if (!phone) {
-
-            showMessage(
-                "Please enter your phone number."
-            );
-
-            phoneInput?.focus();
-
-            return;
-        }
-
-
-        if (!email) {
-
-            showMessage(
-                "Please enter your email address."
-            );
-
-            emailInput?.focus();
-
-            return;
-        }
-
-
-        if (!password) {
-
-            showMessage(
-                "Please create a password."
-            );
-
-            passwordInput?.focus();
-
-            return;
-        }
-
-
-        if (password.length < 8) {
-
-            showMessage(
-                "Password must contain at least 8 characters."
-            );
-
-            passwordInput?.focus();
-
-            return;
-        }
-
-
-        if (password !== confirmPassword) {
-
-            showMessage(
-                "Passwords do not match."
-            );
-
-            confirmPasswordInput?.focus();
-
-            return;
-        }
-
-
-        if (termsInput && !termsInput.checked) {
-
-            showMessage(
-                "Please accept the Terms & Conditions and Privacy Policy."
-            );
-
-            termsInput.focus();
-
-            return;
-        }
-
-
-        /* ---------------------------------------------
-           DISABLE SUBMIT BUTTON
-        --------------------------------------------- */
-
-        const submitButton =
-            form.querySelector(
-                'button[type="submit"], input[type="submit"]'
-            );
-
-        const originalButtonText =
-            submitButton?.innerHTML || "";
-
-        if (submitButton) {
-
-            submitButton.disabled = true;
+            submitButton.dataset.originalText =
+                submitButton.textContent;
 
             submitButton.innerHTML =
                 '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
         }
 
+    } else {
 
-        try {
+        submitButton.disabled = false;
 
-            /* -----------------------------------------
-               SEND REGISTRATION DATA TO PHP BACKEND
-            ----------------------------------------- */
+        if (submitButton.tagName.toLowerCase() === "button") {
 
-            const response = await fetch(
-                `${API_URL}/register.php`,
-                {
-                    method: "POST",
+            submitButton.textContent =
+                submitButton.dataset.originalText ||
+                "Create Account";
+        }
+    }
+}
 
-                    credentials: "include",
+// ------------------------------------------------------------
+// Password visibility
+// ------------------------------------------------------------
 
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
+passwordToggleButtons.forEach(button => {
 
-                    body: JSON.stringify({
+    button.addEventListener("click", function () {
 
-                        first_name: firstName,
+        const targetId =
+            this.getAttribute("data-target");
 
-                        last_name: lastName,
+        const passwordInput =
+            document.getElementById(targetId);
 
-                        full_name:
-                            `${firstName} ${lastName}`.trim(),
+        if (!passwordInput) {
+            return;
+        }
 
-                        phone: phone,
+        const icon =
+            this.querySelector("i");
 
-                        email: email,
+        if (passwordInput.type === "password") {
 
-                        password: password,
+            passwordInput.type = "text";
 
-                        confirm_password:
-                            confirmPassword,
+            if (icon) {
 
-                        referral_code:
-                            referralCode
+                icon.classList.remove(
+                    "fa-eye"
+                );
 
-                    })
-                }
-            );
-
-
-            /* -----------------------------------------
-               READ SERVER RESPONSE
-            ----------------------------------------- */
-
-            let data;
-
-            try {
-
-                data = await response.json();
-
-            } catch (jsonError) {
-
-                throw new Error(
-                    "The registration server returned an invalid response."
+                icon.classList.add(
+                    "fa-eye-slash"
                 );
             }
 
+        } else {
 
-            /* -----------------------------------------
-               HANDLE FAILED REGISTRATION
-            ----------------------------------------- */
+            passwordInput.type = "password";
 
-            if (!response.ok || !data.success) {
+            if (icon) {
 
-                showMessage(
-                    data.message ||
-                    "Registration failed. Please try again."
+                icon.classList.remove(
+                    "fa-eye-slash"
                 );
 
-                return;
+                icon.classList.add(
+                    "fa-eye"
+                );
             }
-
-
-            /* -----------------------------------------
-               REGISTRATION SUCCESS
-            ----------------------------------------- */
-
-            showMessage(
-                data.message ||
-                "Account created successfully!",
-                "success"
-            );
-
-
-            /* -----------------------------------------
-               REMOVE USED REFERRAL CODE
-            ----------------------------------------- */
-
-            sessionStorage.removeItem(
-                "crownCashReferralCode"
-            );
-
-            localStorage.removeItem(
-                "crownCashReferralCode"
-            );
-
-
-            /* -----------------------------------------
-               REDIRECT TO LOGIN
-            ----------------------------------------- */
-
-            setTimeout(() => {
-
-                window.location.href =
-                    "/login.html";
-
-            }, 1800);
-
-
-        } catch (error) {
-
-            console.error(
-                "Crown Cash registration error:",
-                error
-            );
-
-
-            showMessage(
-                "Unable to connect to the registration server. Please try again."
-            );
-
-
-        } finally {
-
-            /* -----------------------------------------
-               RESTORE BUTTON
-            ----------------------------------------- */
-
-            if (submitButton) {
-
-                submitButton.disabled = false;
-
-                submitButton.innerHTML =
-                    originalButtonText ||
-                    "Create Account";
-            }
-
         }
 
     });
 
 });
 
+// ------------------------------------------------------------
+// Get referral code from URL
+// Example:
+// https://crown-cash.vercel.app/?ref=CC12345678
+// ------------------------------------------------------------
+
+function loadReferralCodeFromURL() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const referralCode =
+        params.get("ref");
+
+    if (!referralCode) {
+        return;
+    }
+
+    const referralInput =
+        document.getElementById("referral_code");
+
+    if (!referralInput) {
+        return;
+    }
+
+    referralInput.value =
+        referralCode.trim().toUpperCase();
+
+    // Prevent accidental modification when
+    // a referral link was used.
+    referralInput.dataset.fromReferralLink = "true";
+}
+
+// ------------------------------------------------------------
+// Validate Ugandan phone number
+// ------------------------------------------------------------
+
+function isValidUgandanPhone(phone) {
+
+    const cleaned =
+        phone.replace(/[\s-]/g, "");
+
+    const patterns = [
+
+        /^07[0-9]{8}$/,
+
+        /^\+2567[0-9]{8}$/,
+
+        /^2567[0-9]{8}$/
+    ];
+
+    return patterns.some(
+        pattern => pattern.test(cleaned)
+    );
+}
+
+// ------------------------------------------------------------
+// Normalize phone number
+// ------------------------------------------------------------
+
+function normalizePhone(phone) {
+
+    let cleaned =
+        phone.replace(/[\s-]/g, "");
+
+    if (cleaned.startsWith("+256")) {
+
+        return "0" + cleaned.substring(4);
+    }
+
+    if (cleaned.startsWith("256")) {
+
+        return "0" + cleaned.substring(3);
+    }
+
+    return cleaned;
+}
+
+// ------------------------------------------------------------
+// Validate email
+// ------------------------------------------------------------
+
+function isValidEmail(email) {
+
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        email
+    );
+}
+
+// ------------------------------------------------------------
+// Form submission
+// ------------------------------------------------------------
+
+if (registerForm) {
+
+    registerForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+            clearMessage();
+
+            // ------------------------------------------------
+            // Read form fields
+            // ------------------------------------------------
+
+            const firstNameInput =
+                document.getElementById("first_name");
+
+            const lastNameInput =
+                document.getElementById("last_name");
+
+            const fullNameInput =
+                document.getElementById("full_name");
+
+            const emailInput =
+                document.getElementById("email");
+
+            const phoneInput =
+                document.getElementById("phone");
+
+            const passwordInput =
+                document.getElementById("password");
+
+            const confirmPasswordInput =
+                document.getElementById("confirm_password");
+
+            const referralInput =
+                document.getElementById("referral_code");
+
+            const termsInput =
+                document.getElementById("terms");
+
+            // ------------------------------------------------
+            // Get values
+            // ------------------------------------------------
+
+            const firstName =
+                firstNameInput
+                    ? firstNameInput.value.trim()
+                    : "";
+
+            const lastName =
+                lastNameInput
+                    ? lastNameInput.value.trim()
+                    : "";
+
+            const fullName =
+                fullNameInput
+                    ? fullNameInput.value.trim()
+                    : "";
+
+            const email =
+                emailInput
+                    ? emailInput.value.trim().toLowerCase()
+                    : "";
+
+            const phone =
+                phoneInput
+                    ? normalizePhone(
+                        phoneInput.value.trim()
+                    )
+                    : "";
+
+            const password =
+                passwordInput
+                    ? passwordInput.value
+                    : "";
+
+            const confirmPassword =
+                confirmPasswordInput
+                    ? confirmPasswordInput.value
+                    : "";
+
+            const referralCode =
+                referralInput
+                    ? referralInput.value
+                        .trim()
+                        .toUpperCase()
+                    : "";
+
+            // ------------------------------------------------
+            // Validate name
+            // ------------------------------------------------
+
+            if (
+                firstName === "" &&
+                fullName === ""
+            ) {
+
+                showMessage(
+                    "Please enter your first name."
+                );
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Validate email
+            // ------------------------------------------------
+
+            if (!isValidEmail(email)) {
+
+                showMessage(
+                    "Please enter a valid email address."
+                );
+
+                if (emailInput) {
+                    emailInput.focus();
+                }
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Validate phone
+            // ------------------------------------------------
+
+            if (!isValidUgandanPhone(phone)) {
+
+                showMessage(
+                    "Please enter a valid Ugandan phone number."
+                );
+
+                if (phoneInput) {
+                    phoneInput.focus();
+                }
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Validate password
+            // ------------------------------------------------
+
+            if (password.length < 8) {
+
+                showMessage(
+                    "Password must contain at least 8 characters."
+                );
+
+                if (passwordInput) {
+                    passwordInput.focus();
+                }
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Confirm password
+            // ------------------------------------------------
+
+            if (password !== confirmPassword) {
+
+                showMessage(
+                    "Passwords do not match."
+                );
+
+                if (confirmPasswordInput) {
+                    confirmPasswordInput.focus();
+                }
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Terms and conditions
+            // ------------------------------------------------
+
+            if (
+                termsInput &&
+                !termsInput.checked
+            ) {
+
+                showMessage(
+                    "Please agree to the Terms & Conditions and Privacy Policy."
+                );
+
+                return;
+            }
+
+            // ------------------------------------------------
+            // Prepare request
+            // ------------------------------------------------
+
+            const requestData = {
+
+                first_name: firstName,
+
+                last_name: lastName,
+
+                full_name:
+                    fullName ||
+                    [firstName, lastName]
+                        .filter(Boolean)
+                        .join(" "),
+
+                email: email,
+
+                phone: phone,
+
+                password: password,
+
+                confirm_password:
+                    confirmPassword,
+
+                referral_code:
+                    referralCode
+            };
+
+            // ------------------------------------------------
+            // Send registration request
+            // ------------------------------------------------
+
+            setLoading(true);
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/register.php`,
+                        {
+                            method: "POST",
+
+                            credentials: "include",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    requestData
+                                )
+                        }
+                    );
+
+                // ------------------------------------------------
+                // Try to read JSON response
+                // ------------------------------------------------
+
+                let data = null;
+
+                try {
+
+                    data =
+                        await response.json();
+
+                } catch (jsonError) {
+
+                    data = null;
+                }
+
+                // ------------------------------------------------
+                // Handle unsuccessful response
+                // ------------------------------------------------
+
+                if (
+                    !response.ok ||
+                    !data ||
+                    data.success !== true
+                ) {
+
+                    let errorMessage =
+                        "Registration could not be completed.";
+
+                    if (
+                        data &&
+                        data.message
+                    ) {
+
+                        errorMessage =
+                            data.message;
+                    }
+
+                    // Development-only database error
+                    if (
+                        data &&
+                        data.error
+                    ) {
+
+                        console.error(
+                            "Registration API error:",
+                            data.error
+                        );
+                    }
+
+                    showMessage(
+                        errorMessage,
+                        "error"
+                    );
+
+                    return;
+                }
+
+                // ------------------------------------------------
+                // Successful registration
+                // ------------------------------------------------
+
+                showMessage(
+                    "Account created successfully! Redirecting...",
+                    "success"
+                );
+
+                // ------------------------------------------------
+                // Store basic user information locally
+                // ------------------------------------------------
+
+                if (data.user) {
+
+                    try {
+
+                        localStorage.setItem(
+                            "crownCashUser",
+                            JSON.stringify(
+                                data.user
+                            )
+                        );
+
+                    } catch (storageError) {
+
+                        console.warn(
+                            "Could not save user information.",
+                            storageError
+                        );
+                    }
+                }
+
+                // ------------------------------------------------
+                // Redirect
+                // ------------------------------------------------
+
+                setTimeout(
+                    function () {
+
+                        window.location.href =
+                            "/dashboard.html";
+
+                    },
+                    1200
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Registration request failed:",
+                    error
+                );
+
+                showMessage(
+                    "Unable to connect to the registration server. Please check your internet connection and try again.",
+                    "error"
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
+
+        }
+    );
+}
+
+// ------------------------------------------------------------
+// Automatically load referral code from URL
+// ------------------------------------------------------------
+
+loadReferralCodeFromURL();
+
+// ------------------------------------------------------------
+// Mobile menu
+// ------------------------------------------------------------
+
+const menuToggle =
+    document.getElementById("menuToggle");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+if (
+    menuToggle &&
+    sidebar
+) {
+
+    menuToggle.addEventListener(
+        "click",
+        function () {
+
+            sidebar.classList.toggle(
+                "active"
+            );
+
+        }
+    );
+}

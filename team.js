@@ -1,966 +1,448 @@
-/* =========================================================
-   CROWN CASH - REFERRAL TEAM JAVASCRIPT
-   ========================================================= */
-
-"use strict";
-
-
-/* =========================================================
-   CONFIGURATION
-   ========================================================= */
+/* ==========================================
+CROWN CASH - REFERRAL TEAM
+File: team.js
+========================================== */
 
 const API_URL = "https://crown-cash1.onrender.com";
 
-const REFERRAL_PERCENTAGES = {
-    L1: 15,
-    L2: 5,
-    L3: 2
-};
+// ==========================================
+// PAGE ELEMENTS
+// ==========================================
 
+const referralCodeInput =
+document.getElementById("referralCode");
 
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
+const referralLinkInput =
+document.getElementById("referralLink");
 
-const totalTeamEl = document.getElementById("totalTeam");
+const totalTeam =
+document.getElementById("totalTeam");
 
-const level1CountEl = document.getElementById("level1Count");
-const level2CountEl = document.getElementById("level2Count");
-const level3CountEl = document.getElementById("level3Count");
+const level1Count =
+document.getElementById("level1Count");
 
-const referralCodeEl = document.getElementById("referralCode");
-const referralLinkEl = document.getElementById("referralLink");
+const level2Count =
+document.getElementById("level2Count");
 
-const level1IncomeEl = document.getElementById("level1Income");
-const level2IncomeEl = document.getElementById("level2Income");
-const level3IncomeEl = document.getElementById("level3Income");
-const totalIncomeEl = document.getElementById("totalIncome");
+const level3Count =
+document.getElementById("level3Count");
 
-const teamListEl = document.getElementById("teamList");
+const level1Income =
+document.getElementById("level1Income");
 
-const copyCodeBtn = document.getElementById("copyCodeBtn");
-const copyLinkBtn = document.getElementById("copyLinkBtn");
-const shareBtn = document.getElementById("shareBtn");
+const level2Income =
+document.getElementById("level2Income");
 
-const copyMessageEl = document.getElementById("copyMessage");
+const level3Income =
+document.getElementById("level3Income");
 
-const toastEl = document.getElementById("toast");
-const toastMessageEl = document.getElementById("toastMessage");
+const totalIncome =
+document.getElementById("totalIncome");
 
-const filterButtons = document.querySelectorAll(".filter-btn");
+const teamMembers =
+document.getElementById("teamMembers");
 
-const menuToggle = document.getElementById("menuToggle");
-const closeSidebar = document.getElementById("closeSidebar");
-const sidebar = document.getElementById("sidebar");
-const sidebarOverlay = document.getElementById("sidebarOverlay");
+// ==========================================
+// FORMAT MONEY
+// ==========================================
 
-const logoutBtn = document.getElementById("logoutBtn");
+function formatMoney(amount) {
 
+const number = Number(amount || 0);
 
-/* =========================================================
-   STATE
-   ========================================================= */
-
-let teamMembers = [];
-
-let currentFilter = "all";
-
-let referralData = {
-    referral_code: "",
-    referral_link: "",
-
-    counts: {
-        total: 0,
-        L1: 0,
-        L2: 0,
-        L3: 0
-    },
-
-    earnings: {
-        L1: 0,
-        L2: 0,
-        L3: 0,
-        total: 0
-    },
-
-    members: []
-};
-
-
-/* =========================================================
-   INITIALIZE COMMISSION PERCENTAGES
-   ========================================================= */
-
-function initializeCommissionPercentages() {
-
-    const l1 = document.getElementById("level1Percent");
-    const l2 = document.getElementById("level2Percent");
-    const l3 = document.getElementById("level3Percent");
-
-    if (l1) {
-        l1.textContent = REFERRAL_PERCENTAGES.L1 + "%";
-    }
-
-    if (l2) {
-        l2.textContent = REFERRAL_PERCENTAGES.L2 + "%";
-    }
-
-    if (l3) {
-        l3.textContent = REFERRAL_PERCENTAGES.L3 + "%";
-    }
+return "UGX " + number.toLocaleString("en-UG");
 
 }
 
-
-/* =========================================================
-   FORMAT UGX
-   ========================================================= */
-
-function formatUGX(value) {
-
-    const number = Number(value) || 0;
-
-    return "UGX " + new Intl.NumberFormat("en-UG", {
-        maximumFractionDigits: 0
-    }).format(number);
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================================
-   INITIALS
-   ========================================================= */
-
-function getInitials(name) {
-
-    const cleanName = String(name || "").trim();
-
-    if (!cleanName) {
-        return "U";
-    }
-
-    const parts = cleanName.split(/\s+/);
-
-    if (parts.length === 1) {
-        return parts[0].substring(0, 2).toUpperCase();
-    }
-
-    return (
-        parts[0].charAt(0) +
-        parts[parts.length - 1].charAt(0)
-    ).toUpperCase();
-
-}
-
-
-/* =========================================================
-   DATE FORMAT
-   ========================================================= */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    try {
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleDateString("en-UG", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        });
-
-    } catch (error) {
-
-        return "—";
-
-    }
-
-}
-
-
-/* =========================================================
-   SHOW TOAST
-   ========================================================= */
-
-function showToast(message) {
-
-    if (!toastEl || !toastMessageEl) {
-        return;
-    }
-
-    toastMessageEl.textContent = message;
-
-    toastEl.classList.add("show");
-
-    setTimeout(() => {
-        toastEl.classList.remove("show");
-    }, 2500);
-
-}
-
-
-/* =========================================================
-   COPY TEXT
-   ========================================================= */
-
-async function copyText(text, successMessage) {
-
-    if (!text) {
-        return;
-    }
-
-    try {
-
-        if (navigator.clipboard &&
-            window.isSecureContext) {
-
-            await navigator.clipboard.writeText(text);
-
-        } else {
-
-            const temporaryInput =
-                document.createElement("textarea");
-
-            temporaryInput.value = text;
-
-            temporaryInput.style.position = "fixed";
-            temporaryInput.style.opacity = "0";
-
-            document.body.appendChild(temporaryInput);
-
-            temporaryInput.focus();
-            temporaryInput.select();
-
-            document.execCommand("copy");
-
-            temporaryInput.remove();
-        }
-
-        if (copyMessageEl) {
-            copyMessageEl.textContent = successMessage;
-
-            setTimeout(() => {
-                copyMessageEl.textContent = "";
-            }, 2500);
-        }
-
-        showToast(successMessage);
-
-    } catch (error) {
-
-        showToast("Unable to copy. Please copy it manually.");
-
-    }
-
-}
-
-
-/* =========================================================
-   BUILD REFERRAL LINK
-   ========================================================= */
-
-function buildReferralLink(code) {
-
-    if (!code) {
-        return "";
-    }
-
-    /*
-       Your Crown Cash frontend is hosted on Vercel.
-
-       The referral link points to the homepage and adds
-       the referral code as ?ref=CODE.
-    */
-
-    return (
-        "https://crown-cash.vercel.app/" +
-        "?ref=" +
-        encodeURIComponent(code)
-    );
-
-}
-
-
-/* =========================================================
-   DISPLAY REFERRAL INFORMATION
-   ========================================================= */
-
-function displayReferralInformation() {
-
-    const code =
-        referralData.referral_code || "";
-
-    let link =
-        referralData.referral_link || "";
-
-    if (!link && code) {
-        link = buildReferralLink(code);
-    }
-
-    referralCodeEl.value =
-        code || "Not available";
-
-    referralLinkEl.value =
-        link || "Not available";
-
-}
-
-
-/* =========================================================
-   DISPLAY SUMMARY
-   ========================================================= */
-
-function displaySummary() {
-
-    const counts = referralData.counts || {};
-
-    totalTeamEl.textContent =
-        Number(counts.total || 0);
-
-    level1CountEl.textContent =
-        Number(counts.L1 || 0);
-
-    level2CountEl.textContent =
-        Number(counts.L2 || 0);
-
-    level3CountEl.textContent =
-        Number(counts.L3 || 0);
-
-}
-
-
-/* =========================================================
-   DISPLAY EARNINGS
-   ========================================================= */
-
-function displayEarnings() {
-
-    const earnings = referralData.earnings || {};
-
-    const l1 = Number(earnings.L1 || 0);
-    const l2 = Number(earnings.L2 || 0);
-    const l3 = Number(earnings.L3 || 0);
-
-    let total = Number(earnings.total);
-
-    /*
-       If backend does not provide total, calculate it
-       from the three returned earning values.
-    */
-
-    if (!Number.isFinite(total)) {
-        total = l1 + l2 + l3;
-    }
-
-    level1IncomeEl.textContent =
-        formatUGX(l1);
-
-    level2IncomeEl.textContent =
-        formatUGX(l2);
-
-    level3IncomeEl.textContent =
-        formatUGX(l3);
-
-    totalIncomeEl.textContent =
-        formatUGX(total);
-
-}
-
-
-/* =========================================================
-   NORMALIZE MEMBER
-   ========================================================= */
-
-function normalizeMember(member) {
-
-    if (!member || typeof member !== "object") {
-        return null;
-    }
-
-    const name =
-        member.name ||
-        member.full_name ||
-        member.fullName ||
-        (
-            [
-                member.first_name,
-                member.last_name
-            ]
-            .filter(Boolean)
-            .join(" ")
-        ) ||
-        "Crown Cash Member";
-
-    const level =
-        String(
-            member.level ||
-            member.referral_level ||
-            member.referralLevel ||
-            "L1"
-        ).toUpperCase();
-
-    const date =
-        member.created_at ||
-        member.joined_at ||
-        member.member_since ||
-        member.date ||
-        null;
-
-    const phone =
-        member.phone ||
-        member.phone_number ||
-        "";
-
-    return {
-        name,
-        level: ["L1", "L2", "L3"].includes(level)
-            ? level
-            : "L1",
-        date,
-        phone
-    };
-
-}
-
-
-/* =========================================================
-   DISPLAY TEAM
-   ========================================================= */
-
-function displayTeam() {
-
-    if (!teamListEl) {
-        return;
-    }
-
-    let members =
-        Array.isArray(teamMembers)
-            ? teamMembers
-            : [];
-
-    if (currentFilter !== "all") {
-
-        members = members.filter(
-            member =>
-                String(member.level).toUpperCase() ===
-                currentFilter
-        );
-
-    }
-
-
-    /* EMPTY */
-
-    if (members.length === 0) {
-
-        teamListEl.innerHTML = `
-            <div class="empty-team">
-
-                <i class="fa-solid fa-users"></i>
-
-                <h3>
-                    ${
-                        currentFilter === "all"
-                            ? "No team members yet"
-                            : "No members in " + currentFilter
-                    }
-                </h3>
-
-                <p>
-                    ${
-                        currentFilter === "all"
-                            ? "Share your referral link to start building your Crown Cash team."
-                            : "There are currently no members at this referral level."
-                    }
-                </p>
-
-            </div>
-        `;
-
-        return;
-    }
-
-
-    /* MEMBERS */
-
-    teamListEl.innerHTML =
-        members.map(member => {
-
-            const name =
-                escapeHTML(member.name);
-
-            const level =
-                escapeHTML(member.level);
-
-            const phone =
-                escapeHTML(member.phone);
-
-            const date =
-                formatDate(member.date);
-
-            const initials =
-                escapeHTML(getInitials(member.name));
-
-            return `
-                <div class="team-member">
-
-                    <div class="member-avatar">
-                        ${initials}
-                    </div>
-
-                    <div class="member-info">
-
-                        <strong>
-                            ${name}
-                        </strong>
-
-                        <span>
-                            ${
-                                phone
-                                    ? phone
-                                    : "Crown Cash member"
-                            }
-                        </span>
-
-                    </div>
-
-                    <div class="member-level">
-                        ${level}
-                    </div>
-
-                    <div class="member-date">
-                        ${date}
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
-
-}
-
-
-/* =========================================================
-   FETCH REFERRAL DATA
-   ========================================================= */
+// ==========================================
+// LOAD REFERRAL DATA
+// ==========================================
 
 async function loadReferralData() {
 
+if (teamMembers) {
+
+    teamMembers.innerHTML = `
+        <div class="loading-state">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Loading your referral information...</p>
+        </div>
+    `;
+}
+
+
+try {
+
+    const response = await fetch(
+        `${API_URL}/referral.php`,
+        {
+            method: "GET",
+
+            credentials: "include",
+
+            headers: {
+                "Accept": "application/json"
+            },
+
+            cache: "no-store"
+        }
+    );
+
+
+    let data;
+
     try {
+        data = await response.json();
+    } catch (jsonError) {
 
-        /*
-           This endpoint should return the authenticated
-           user's referral information.
-
-           Expected response example:
-
-           {
-             "success": true,
-             "referral_code": "CROWN1234",
-             "counts": {
-                "total": 3,
-                "L1": 2,
-                "L2": 1,
-                "L3": 0
-             },
-             "earnings": {
-                "L1": 5000,
-                "L2": 1000,
-                "L3": 0,
-                "total": 6000
-             },
-             "members": []
-           }
-        */
-
-        const response = await fetch(
-            API_URL + "/referral.php",
-            {
-                method: "GET",
-
-                credentials: "include",
-
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
+        throw new Error(
+            "The referral server returned an invalid response."
         );
+    }
 
 
-        const text =
-            await response.text();
-
-        let data;
-
-        try {
-
-            data = JSON.parse(text);
-
-        } catch (parseError) {
-
-            throw new Error(
-                "The referral server returned an invalid response."
-            );
-
-        }
+    console.log("Referral API response:", data);
 
 
-        if (!response.ok || data.success === false) {
+    if (!response.ok || !data.success) {
 
-            throw new Error(
-                data.message ||
-                "Unable to load referral information."
-            );
-
-        }
-
-
-        /*
-           Accept several possible backend field names
-           so the frontend remains flexible.
-        */
-
-        const counts =
-            data.counts ||
-            data.team_counts ||
-            data.team ||
-            {};
-
-        const earnings =
-            data.earnings ||
-            data.referral_earnings ||
-            data.income ||
-            {};
-
-
-        referralData = {
-
-            referral_code:
-                data.referral_code ||
-                data.referralCode ||
-                data.code ||
-                "",
-
-            referral_link:
-                data.referral_link ||
-                data.referralLink ||
-                "",
-
-            counts: {
-
-                total:
-                    counts.total ??
-                    counts.total_team ??
-                    data.total_team ??
-                    data.total_referrals ??
-                    0,
-
-                L1:
-                    counts.L1 ??
-                    counts.l1 ??
-                    data.level1_count ??
-                    0,
-
-                L2:
-                    counts.L2 ??
-                    counts.l2 ??
-                    data.level2_count ??
-                    0,
-
-                L3:
-                    counts.L3 ??
-                    counts.l3 ??
-                    data.level3_count ??
-                    0
-
-            },
-
-            earnings: {
-
-                L1:
-                    earnings.L1 ??
-                    earnings.l1 ??
-                    earnings.level1 ??
-                    data.level1_income ??
-                    0,
-
-                L2:
-                    earnings.L2 ??
-                    earnings.l2 ??
-                    earnings.level2 ??
-                    data.level2_income ??
-                    0,
-
-                L3:
-                    earnings.L3 ??
-                    earnings.l3 ??
-                    earnings.level3 ??
-                    data.level3_income ??
-                    0,
-
-                total:
-                    earnings.total ??
-                    earnings.total_income ??
-                    data.total_referral_income
-
-            },
-
-            members:
-                Array.isArray(data.members)
-                    ? data.members
-                        .map(normalizeMember)
-                        .filter(Boolean)
-                    : []
-
-        };
-
-
-        /*
-           Save normalized members.
-        */
-
-        teamMembers =
-            referralData.members;
-
-
-        displayReferralInformation();
-
-        displaySummary();
-
-        displayEarnings();
-
-        displayTeam();
-
-
-    } catch (error) {
-
-        console.error(
-            "Referral loading error:",
-            error
+        throw new Error(
+            data.message ||
+            "Unable to load referral data."
         );
+    }
 
 
-        /*
-           Do not destroy the page if the backend
-           is temporarily unavailable.
-        */
+    // ==================================
+    // REFERRAL CODE
+    // ==================================
 
-        referralCodeEl.value =
-            "Unable to load";
-
-        referralLinkEl.value =
-            "Unable to load";
+    const code =
+        data.referral_code ||
+        data.referralCode ||
+        "";
 
 
-        teamListEl.innerHTML = `
-            <div class="empty-team">
+    if (referralCodeInput) {
 
-                <i class="fa-solid fa-cloud-arrow-down"></i>
+        referralCodeInput.value = code;
+    }
+
+
+    // ==================================
+    // REFERRAL LINK
+    // ==================================
+
+    let link =
+        data.referral_link ||
+        data.referralLink ||
+        "";
+
+
+    if (!link && code) {
+
+        link =
+            "https://crown-cash.vercel.app/register.html?ref=" +
+            encodeURIComponent(code);
+    }
+
+
+    if (referralLinkInput) {
+
+        referralLinkInput.value = link;
+    }
+
+
+    // ==================================
+    // COUNTS
+    // ==================================
+
+    const counts =
+        data.counts ||
+        data.team_counts ||
+        {};
+
+
+    if (totalTeam) {
+
+        totalTeam.textContent =
+            Number(counts.total || 0);
+    }
+
+
+    if (level1Count) {
+
+        level1Count.textContent =
+            Number(
+                counts.l1 ||
+                counts.level1 ||
+                0
+            );
+    }
+
+
+    if (level2Count) {
+
+        level2Count.textContent =
+            Number(
+                counts.l2 ||
+                counts.level2 ||
+                0
+            );
+    }
+
+
+    if (level3Count) {
+
+        level3Count.textContent =
+            Number(
+                counts.l3 ||
+                counts.level3 ||
+                0
+            );
+    }
+
+
+    // ==================================
+    // EARNINGS
+    // ==================================
+
+    const earnings =
+        data.earnings ||
+        data.referral_earnings ||
+        {};
+
+
+    if (level1Income) {
+
+        level1Income.textContent =
+            formatMoney(
+                earnings.l1 ||
+                earnings.level1 ||
+                0
+            );
+    }
+
+
+    if (level2Income) {
+
+        level2Income.textContent =
+            formatMoney(
+                earnings.l2 ||
+                earnings.level2 ||
+                0
+            );
+    }
+
+
+    if (level3Income) {
+
+        level3Income.textContent =
+            formatMoney(
+                earnings.l3 ||
+                earnings.level3 ||
+                0
+            );
+    }
+
+
+    if (totalIncome) {
+
+        totalIncome.textContent =
+            formatMoney(
+                earnings.total ||
+                0
+            );
+    }
+
+
+    // ==================================
+    // MEMBERS
+    // ==================================
+
+    renderMembers(
+        data.members || []
+    );
+
+
+} catch (error) {
+
+    console.error(
+        "Referral loading error:",
+        error
+    );
+
+
+    if (teamMembers) {
+
+        teamMembers.innerHTML = `
+
+            <div class="error-state">
+
+                <div class="error-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
 
                 <h3>
                     Unable to load referral data
                 </h3>
 
                 <p>
-                    Please refresh the page and try again.
+                    ${
+                        error.message ||
+                        "Please refresh the page and try again."
+                    }
                 </p>
+
+                <button
+                    type="button"
+                    onclick="loadReferralData()"
+                    class="retry-btn"
+                >
+                    <i class="fa-solid fa-rotate-right"></i>
+                    Try Again
+                </button>
 
             </div>
         `;
-
     }
+}
 
 }
 
+// ==========================================
+// RENDER MEMBERS
+// ==========================================
 
-/* =========================================================
-   COPY REFERRAL CODE
-   ========================================================= */
+function renderMembers(members) {
 
-copyCodeBtn.addEventListener(
-    "click",
-    () => {
-
-        const code =
-            referralData.referral_code ||
-            referralCodeEl.value;
-
-        if (
-            !code ||
-            code === "Not available" ||
-            code === "Unable to load"
-        ) {
-
-            showToast(
-                "Referral code is not available."
-            );
-
-            return;
-        }
-
-        copyText(
-            code,
-            "Referral code copied."
-        );
-
-    }
-);
+if (!teamMembers) {
+    return;
+}
 
 
-/* =========================================================
-   COPY REFERRAL LINK
-   ========================================================= */
+if (!Array.isArray(members) || members.length === 0) {
 
-copyLinkBtn.addEventListener(
-    "click",
-    () => {
+    teamMembers.innerHTML = `
 
-        let link =
-            referralData.referral_link;
+        <div class="empty-state">
 
-        if (!link && referralData.referral_code) {
+            <div class="empty-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
 
-            link =
-                buildReferralLink(
-                    referralData.referral_code
-                );
+            <h3>No Team Members Yet</h3>
 
-        }
+            <p>
+                Share your referral link to start
+                building your Crown Cash team.
+            </p>
 
-        if (
-            !link ||
-            link === "Not available" ||
-            link === "Unable to load"
-        ) {
+        </div>
+    `;
 
-            showToast(
-                "Referral link is not available."
-            );
-
-            return;
-        }
-
-        copyText(
-            link,
-            "Referral link copied."
-        );
-
-    }
-);
+    return;
+}
 
 
-/* =========================================================
-   SHARE
-   ========================================================= */
-
-shareBtn.addEventListener(
-    "click",
-    async () => {
-
-        let link =
-            referralData.referral_link;
-
-        if (!link && referralData.referral_code) {
-
-            link =
-                buildReferralLink(
-                    referralData.referral_code
-                );
-
-        }
-
-        if (!link) {
-
-            showToast(
-                "Referral link is not available."
-            );
-
-            return;
-        }
+teamMembers.innerHTML = "";
 
 
-        const shareText =
-            "Join me on Crown Cash and start building your financial future.";
+members.forEach(member => {
+
+    const name =
+        member.name ||
+        "Crown Cash Member";
+
+    const level =
+        member.level ||
+        "L1";
+
+    const phone =
+        member.phone ||
+        "";
+
+    const initials =
+        name
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(word => word.charAt(0))
+            .join("")
+            .toUpperCase();
 
 
-        /*
-           Native phone share
-        */
+    const card =
+        document.createElement("div");
 
-        if (
-            navigator.share
-        ) {
+    card.className =
+        "team-member-card";
 
-            try {
+    card.dataset.level =
+        level;
 
-                await navigator.share({
-                    title: "Join Crown Cash",
-                    text: shareText,
-                    url: link
-                });
 
-                return;
+    card.innerHTML = `
 
-            } catch (error) {
+        <div class="member-avatar">
+            ${initials || "CC"}
+        </div>
 
-                /*
-                   User cancelled share.
-                   Do nothing.
-                */
+        <div class="member-info">
 
-                if (
-                    error &&
-                    error.name === "AbortError"
-                ) {
-                    return;
-                }
+            <h4>
+                ${escapeHtml(name)}
+            </h4>
 
+            ${
+                phone
+                ? `<p>${escapeHtml(phone)}</p>`
+                : ""
             }
 
-        }
+        </div>
+
+        <span class="member-level">
+            ${escapeHtml(level)}
+        </span>
+    `;
 
 
-        /*
-           If native share is unavailable,
-           copy the referral link.
-        */
+    teamMembers.appendChild(card);
 
-        await copyText(
-            link,
-            "Referral link copied. You can share it with your friends."
-        );
-
-    }
-);
+});
 
 
-/* =========================================================
-   FILTERS
-   ========================================================= */
+setupFilters();
+
+}
+
+// ==========================================
+// ESCAPE HTML
+// ==========================================
+
+function escapeHtml(value) {
+
+return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+// ==========================================
+// FILTERS
+// ==========================================
+
+function setupFilters() {
+
+const filterButtons =
+    document.querySelectorAll(
+        "[data-filter]"
+    );
+
 
 filterButtons.forEach(button => {
 
@@ -968,156 +450,364 @@ filterButtons.forEach(button => {
         "click",
         () => {
 
-            filterButtons.forEach(
-                item =>
-                    item.classList.remove("active")
-            );
+            filterButtons.forEach(btn => {
+                btn.classList.remove("active");
+            });
+
 
             button.classList.add("active");
 
-            currentFilter =
-                button.dataset.level ||
-                "all";
 
-            displayTeam();
+            const filter =
+                button.dataset.filter;
+
+
+            const cards =
+                document.querySelectorAll(
+                    ".team-member-card"
+                );
+
+
+            cards.forEach(card => {
+
+                if (
+                    filter === "all" ||
+                    card.dataset.level === filter
+                ) {
+
+                    card.style.display = "flex";
+
+                } else {
+
+                    card.style.display = "none";
+                }
+            });
 
         }
     );
 
 });
 
+}
 
-/* =========================================================
-   MOBILE SIDEBAR
-   ========================================================= */
+// ==========================================
+// COPY REFERRAL CODE
+// ==========================================
 
-function openSidebar() {
+async function copyReferralCode() {
 
-    if (sidebar) {
-        sidebar.classList.add("open");
-    }
+const code =
+    referralCodeInput
+    ? referralCodeInput.value
+    : "";
 
-    if (sidebarOverlay) {
-        sidebarOverlay.style.display = "block";
-    }
 
+if (!code) {
+    return;
 }
 
 
-function closeSidebarMenu() {
+try {
 
-    if (sidebar) {
-        sidebar.classList.remove("open");
-    }
+    await navigator.clipboard.writeText(code);
 
-    if (sidebarOverlay) {
-        sidebarOverlay.style.display = "none";
-    }
-
-}
-
-
-if (menuToggle) {
-
-    menuToggle.addEventListener(
-        "click",
-        openSidebar
+    showCopyMessage(
+        "Referral code copied successfully."
     );
 
+} catch (error) {
+
+    fallbackCopy(code);
+}
+
+}
+
+// ==========================================
+// COPY REFERRAL LINK
+// ==========================================
+
+async function copyReferralLink() {
+
+const link =
+    referralLinkInput
+    ? referralLinkInput.value
+    : "";
+
+
+if (!link) {
+    return;
 }
 
 
-if (closeSidebar) {
+try {
 
-    closeSidebar.addEventListener(
-        "click",
-        closeSidebarMenu
+    await navigator.clipboard.writeText(link);
+
+    showCopyMessage(
+        "Referral link copied successfully."
     );
 
+} catch (error) {
+
+    fallbackCopy(link);
 }
 
+}
 
-if (sidebarOverlay) {
+// ==========================================
+// FALLBACK COPY
+// ==========================================
 
-    sidebarOverlay.addEventListener(
-        "click",
-        closeSidebarMenu
+function fallbackCopy(text) {
+
+const textarea =
+    document.createElement("textarea");
+
+textarea.value = text;
+
+textarea.style.position = "fixed";
+textarea.style.opacity = "0";
+
+document.body.appendChild(textarea);
+
+textarea.select();
+
+document.execCommand("copy");
+
+textarea.remove();
+
+showCopyMessage(
+    "Copied successfully."
+);
+
+}
+
+// ==========================================
+// COPY MESSAGE
+// ==========================================
+
+function showCopyMessage(message) {
+
+let messageBox =
+    document.getElementById(
+        "copyMessage"
     );
 
+
+if (!messageBox) {
+
+    messageBox =
+        document.createElement("div");
+
+    messageBox.id =
+        "copyMessage";
+
+    messageBox.className =
+        "copy-message";
+
+    document.body.appendChild(
+        messageBox
+    );
 }
 
 
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-if (logoutBtn) {
-
-    logoutBtn.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                /*
-                   If you have logout.php, use it here.
-                   The frontend also clears the local session
-                   state before returning to login.
-                */
-
-                await fetch(
-                    API_URL + "/logout.php",
-                    {
-                        method: "POST",
-                        credentials: "include"
-                    }
-                );
-
-            } catch (error) {
-
-                console.warn(
-                    "Logout endpoint unavailable.",
-                    error
-                );
-
-            }
+messageBox.innerHTML = `
+    <i class="fa-solid fa-circle-check"></i>
+    ${escapeHtml(message)}
+`;
 
 
-            localStorage.removeItem(
-                "crownCashUser"
-            );
+messageBox.classList.add("show");
 
-            sessionStorage.clear();
 
-            window.location.href =
-                "login.html";
+setTimeout(() => {
 
+    messageBox.classList.remove("show");
+
+}, 2500);
+
+}
+
+// ==========================================
+// SHARE REFERRAL LINK
+// ==========================================
+
+async function shareReferralLink() {
+
+const link =
+    referralLinkInput
+    ? referralLinkInput.value
+    : "";
+
+
+const code =
+    referralCodeInput
+    ? referralCodeInput.value
+    : "";
+
+
+if (!link) {
+    return;
+}
+
+
+if (
+    navigator.share &&
+    window.isSecureContext
+) {
+
+    try {
+
+        await navigator.share({
+
+            title:
+                "Join Crown Cash",
+
+            text:
+                "Join Crown Cash using my referral link.",
+
+            url: link
+
+        });
+
+        return;
+
+    } catch (error) {
+
+        if (
+            error.name ===
+            "AbortError"
+        ) {
+            return;
+        }
+    }
+}
+
+
+// WhatsApp fallback
+
+const message =
+    "Join Crown Cash using my referral link: " +
+    link;
+
+
+window.open(
+    "https://wa.me/?text=" +
+    encodeURIComponent(message),
+    "_blank"
+);
+
+}
+
+// ==========================================
+// LOGOUT
+// ==========================================
+
+async function logoutUserFromTeam() {
+
+try {
+
+    await fetch(
+        `${API_URL}/logout.php`,
+        {
+            method: "POST",
+            credentials: "include"
         }
     );
 
+} catch (error) {
+
+    console.error(
+        "Logout error:",
+        error
+    );
+
 }
 
 
-/* =========================================================
-   CLOSE SIDEBAR WHEN NAVIGATION LINK IS CLICKED
-   ========================================================= */
+localStorage.removeItem(
+    "crownCashUser"
+);
 
-document.querySelectorAll(
-    ".sidebar-nav a"
-).forEach(link => {
+localStorage.removeItem(
+    "user"
+);
 
-    link.addEventListener(
-        "click",
-        closeSidebarMenu
+localStorage.removeItem(
+    "loggedIn"
+);
+
+
+window.location.href =
+    "/login.html";
+
+}
+
+// ==========================================
+// MOBILE MENU
+// ==========================================
+
+function setupMobileMenu() {
+
+const menuToggle =
+    document.getElementById(
+        "menuToggle"
     );
 
-});
+const sidebar =
+    document.querySelector(
+        ".sidebar"
+    );
+
+if (!menuToggle || !sidebar) {
+    return;
+}
 
 
-/* =========================================================
-   START
-   ========================================================= */
+menuToggle.addEventListener(
+    "click",
+    () => {
 
-initializeCommissionPercentages();
+        sidebar.classList.toggle(
+            "active"
+        );
 
-loadReferralData();
+    }
+);
+
+}
+
+// ==========================================
+// START
+// ==========================================
+
+document.addEventListener(
+"DOMContentLoaded",
+() => {
+
+    setupMobileMenu();
+
+    loadReferralData();
+
+}
+
+);
+
+// ==========================================
+// GLOBAL FUNCTIONS
+// ==========================================
+
+window.loadReferralData =
+loadReferralData;
+
+window.copyReferralCode =
+copyReferralCode;
+
+window.copyReferralLink =
+copyReferralLink;
+
+window.shareReferralLink =
+shareReferralLink;
+
+window.logoutUserFromTeam =
+logoutUserFromTeam;

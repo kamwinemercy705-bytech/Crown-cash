@@ -1,1045 +1,791 @@
-"use strict";
+/* =========================================================
+   CROWN CASH DASHBOARD JS
+   ========================================================= */
+
+const API = "https://crown-cash1.onrender.com";
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    loadDashboard();
+
+    setupCalculator();
+
+    setupMobileMenu();
+
+    setupLogout();
+
+    document.getElementById("currentYear").textContent =
+        new Date().getFullYear();
+
+});
+
 
 /* =========================================================
-CROWN CASH DASHBOARD
-========================================================= */
+   LOAD DASHBOARD
+   ========================================================= */
 
-const API_BASE =
-"https://crown-cash1.onrender.com";
+async function loadDashboard() {
 
-/*
+    try {
 
-* Display-only calculator rate.
-* 
-* IMPORTANT:
-* This is a placeholder display rate.
-* It does not guarantee actual investment returns.
-  */
+        /*
+         * First check the current PHP session.
+         */
 
-const DISPLAY_DAILY_RATE = 0.10;
-
-/* =========================================================
-DOM
-========================================================= */
-
-const menuToggle =
-document.getElementById("menuToggle");
-
-const sidebar =
-document.getElementById("sidebar");
-
-const logoutBtn =
-document.getElementById("logoutBtn");
-
-const adminPanelLink =
-document.getElementById("adminPanelLink");
-
-const adminQuickAction =
-document.getElementById("adminQuickAction");
-
-const sidebarUserName =
-document.getElementById("sidebarUserName");
-
-const sidebarUserRole =
-document.getElementById("sidebarUserRole");
-
-const topbarUserName =
-document.getElementById("topbarUserName");
-
-const topbarUserRole =
-document.getElementById("topbarUserRole");
-
-const welcomeUserName =
-document.getElementById("welcomeUserName");
-
-const availableBalance =
-document.getElementById("availableBalance");
-
-const totalInvested =
-document.getElementById("totalInvested");
-
-const totalEarnings =
-document.getElementById("totalEarnings");
-
-const teamCount =
-document.getElementById("teamCount");
-
-const transactionCount =
-document.getElementById("transactionCount");
-
-const investmentAmount =
-document.getElementById("investmentAmount");
-
-const dailyReturnPercentage =
-document.getElementById(
-"dailyReturnPercentage"
-);
-
-const dailyReturn =
-document.getElementById("dailyReturn");
-
-const monthlyReturn =
-document.getElementById("monthlyReturn");
-
-const totalAfter30 =
-document.getElementById("totalAfter30");
-
-const currentYear =
-document.getElementById("currentYear");
-
-/* =========================================================
-MOBILE MENU
-========================================================= */
-
-if (menuToggle && sidebar) {
-
-menuToggle.addEventListener(
-    "click",
-    function () {
-
-        sidebar.classList.toggle(
-            "active"
+        const authResponse = await fetch(
+            `${API}/auth-check.php`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
         );
 
+        let authData = null;
+
+        try {
+            authData = await authResponse.json();
+        } catch (e) {
+            authData = null;
+        }
+
+
+        /*
+         * If session is valid, use the returned user data.
+         */
+
+        if (
+            authData &&
+            authData.success === true
+        ) {
+
+            displayUser(authData.user || authData);
+
+        }
+
+
+        /*
+         * Load profile information.
+         */
+
+        await loadProfile();
+
+
+        /*
+         * Load dashboard statistics if dashboard.php exists.
+         */
+
+        await loadStatistics();
+
     }
-);
+
+    catch (error) {
+
+        console.error(
+            "Dashboard loading error:",
+            error
+        );
+
+        /*
+         * Even if the backend is temporarily unavailable,
+         * don't destroy the dashboard interface.
+         */
+
+        loadLocalUser();
+
+    }
 
 }
 
-document.querySelectorAll(".nav-item")
-.forEach(function (item) {
 
-    item.addEventListener(
+/* =========================================================
+   LOAD PROFILE
+   ========================================================= */
+
+async function loadProfile() {
+
+    try {
+
+        const response = await fetch(
+            `${API}/profile.php`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Profile request failed: ${response.status}`
+            );
+        }
+
+        const data = await response.json();
+
+        if (
+            data.success === true ||
+            data.user
+        ) {
+
+            const user =
+                data.user ||
+                data.profile ||
+                data;
+
+            displayUser(user);
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Profile could not be loaded:",
+            error
+        );
+
+        loadLocalUser();
+
+    }
+
+}
+
+
+/* =========================================================
+   DISPLAY USER
+   ========================================================= */
+
+function displayUser(user) {
+
+    if (!user) {
+        return;
+    }
+
+    const firstName =
+        user.first_name ||
+        user.firstName ||
+        "";
+
+    const lastName =
+        user.last_name ||
+        user.lastName ||
+        "";
+
+    const fullName =
+        user.full_name ||
+        user.fullName ||
+        user.name ||
+        `${firstName} ${lastName}`.trim();
+
+
+    const finalName =
+        fullName ||
+        firstName ||
+        "Member";
+
+
+    /*
+     * Welcome heading
+     */
+
+    const welcomeName =
+        document.getElementById(
+            "welcomeName"
+        );
+
+    if (welcomeName) {
+        welcomeName.textContent =
+            firstName || finalName.split(" ")[0];
+    }
+
+
+    /*
+     * Sidebar name
+     */
+
+    const sidebarName =
+        document.getElementById(
+            "sidebarUserName"
+        );
+
+    if (sidebarName) {
+        sidebarName.textContent =
+            finalName;
+    }
+
+
+    /*
+     * Account type
+     */
+
+    const accountType =
+        user.account_type ||
+        user.accountType ||
+        user.role ||
+        "Personal Account";
+
+    const accountElement =
+        document.getElementById(
+            "sidebarAccountType"
+        );
+
+    if (accountElement) {
+
+        accountElement.textContent =
+            accountType === "admin"
+                ? "Administrator"
+                : "Personal Account";
+
+    }
+
+
+    /*
+     * ADMIN VISIBILITY
+     */
+
+    const role =
+        String(
+            user.role ||
+            user.account_type ||
+            user.accountType ||
+            ""
+        ).toLowerCase();
+
+
+    if (role === "admin") {
+
+        showAdminPanel();
+
+    }
+    else {
+
+        hideAdminPanel();
+
+    }
+
+
+    /*
+     * Save useful non-sensitive display information
+     * for temporary UI fallback.
+     */
+
+    try {
+
+        const storedUser = {
+            first_name: firstName,
+            last_name: lastName,
+            full_name: finalName,
+            role: role
+        };
+
+        localStorage.setItem(
+            "crown_cash_user",
+            JSON.stringify(storedUser)
+        );
+
+    }
+
+    catch (e) {}
+
+}
+
+
+/* =========================================================
+   SHOW ADMIN
+   ========================================================= */
+
+function showAdminPanel() {
+
+    const adminNav =
+        document.getElementById(
+            "adminNavLink"
+        );
+
+    const adminCard =
+        document.getElementById(
+            "adminActionCard"
+        );
+
+
+    if (adminNav) {
+
+        adminNav.classList.remove(
+            "hidden"
+        );
+
+    }
+
+
+    if (adminCard) {
+
+        adminCard.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   HIDE ADMIN
+   ========================================================= */
+
+function hideAdminPanel() {
+
+    const adminNav =
+        document.getElementById(
+            "adminNavLink"
+        );
+
+    const adminCard =
+        document.getElementById(
+            "adminActionCard"
+        );
+
+
+    if (adminNav) {
+
+        adminNav.classList.add(
+            "hidden"
+        );
+
+    }
+
+
+    if (adminCard) {
+
+        adminCard.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOCAL USER FALLBACK
+   ========================================================= */
+
+function loadLocalUser() {
+
+    try {
+
+        const stored =
+            localStorage.getItem(
+                "crown_cash_user"
+            );
+
+        if (!stored) {
+            return;
+        }
+
+        const user =
+            JSON.parse(stored);
+
+        displayUser(user);
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Local user data unavailable"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DASHBOARD STATISTICS
+   ========================================================= */
+
+async function loadStatistics() {
+
+    try {
+
+        const response = await fetch(
+            `${API}/dashboard.php`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+
+        if (!response.ok) {
+
+            /*
+             * If dashboard.php isn't currently available,
+             * keep the default zero values.
+             */
+
+            return;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!data) {
+            return;
+        }
+
+
+        const source =
+            data.data ||
+            data.dashboard ||
+            data;
+
+
+        /*
+         * Balance
+         */
+
+        const balance =
+            source.balance ??
+            source.available_balance ??
+            source.wallet_balance ??
+            0;
+
+
+        setText(
+            "availableBalance",
+            formatUGX(balance)
+        );
+
+
+        /*
+         * Total invested
+         */
+
+        setText(
+            "totalInvested",
+            formatUGX(
+                source.total_invested ??
+                source.totalInvested ??
+                0
+            )
+        );
+
+
+        /*
+         * Earnings
+         */
+
+        setText(
+            "totalEarnings",
+            formatUGX(
+                source.total_earnings ??
+                source.totalEarnings ??
+                0
+            )
+        );
+
+
+        /*
+         * Referral team
+         */
+
+        setText(
+            "referralTeam",
+            source.referral_team ??
+            source.referralTeam ??
+            source.total_team ??
+            0
+        );
+
+
+        /*
+         * Transactions
+         */
+
+        setText(
+            "transactionCount",
+            source.transaction_count ??
+            source.transactionCount ??
+            source.transactions ??
+            0
+        );
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Statistics unavailable:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CALCULATOR
+   ========================================================= */
+
+function setupCalculator() {
+
+    const input =
+        document.getElementById(
+            "investmentAmount"
+        );
+
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        calculateReturns
+    );
+
+
+    calculateReturns();
+
+}
+
+
+function calculateReturns() {
+
+    const input =
+        document.getElementById(
+            "investmentAmount"
+        );
+
+    if (!input) {
+        return;
+    }
+
+
+    let amount =
+        Number(input.value) || 0;
+
+
+    if (amount < 0) {
+        amount = 0;
+    }
+
+
+    /*
+     * Configured interface rate.
+     *
+     * This is an illustrative calculation and should
+     * not be treated as a guaranteed investment return.
+     */
+
+    const DAILY_RATE = 0.10;
+
+    const dailyReturn =
+        amount * DAILY_RATE;
+
+    const thirtyDayReturn =
+        dailyReturn * 30;
+
+    const totalAfter30 =
+        amount + thirtyDayReturn;
+
+
+    setText(
+        "dailyReturn",
+        formatUGX(dailyReturn)
+    );
+
+
+    setText(
+        "monthlyReturn",
+        formatUGX(thirtyDayReturn)
+    );
+
+
+    setText(
+        "totalAfter30",
+        formatUGX(totalAfter30)
+    );
+
+}
+
+
+/* =========================================================
+   FORMAT UGX
+   ========================================================= */
+
+function formatUGX(value) {
+
+    let number = 0;
+
+    if (
+        typeof value === "number"
+    ) {
+
+        number = value;
+
+    }
+    else {
+
+        number =
+            Number(value) || 0;
+
+    }
+
+
+    return (
+        "UGX " +
+        Math.round(number)
+            .toLocaleString("en-UG")
+    );
+
+}
+
+
+/* =========================================================
+   SET TEXT
+   ========================================================= */
+
+function setText(id, value) {
+
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+
+        element.textContent =
+            value;
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE MENU
+   ========================================================= */
+
+function setupMobileMenu() {
+
+    const button =
+        document.getElementById(
+            "menuToggle"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
         "click",
-        function () {
+        () => {
 
-            if (
-                window.innerWidth <= 900 &&
-                sidebar
-            ) {
+            /*
+             * Your current mobile design uses the
+             * bottom navigation, so this button simply
+             * gives a visual interaction.
+             */
 
-                sidebar.classList.remove(
-                    "active"
+            button.classList.toggle(
+                "active"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+function setupLogout() {
+
+    const button =
+        document.getElementById(
+            "logoutBtn"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            button.disabled = true;
+
+            try {
+
+                await fetch(
+                    `${API}/logout.php`,
+                    {
+                        method: "GET",
+                        credentials: "include"
+                    }
+                );
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "Logout request failed",
+                    error
                 );
 
             }
 
+
+            try {
+
+                localStorage.removeItem(
+                    "crown_cash_user"
+                );
+
+                localStorage.removeItem(
+                    "user"
+                );
+
+            }
+
+            catch (e) {}
+
+
+            window.location.href =
+                "login.html";
+
         }
     );
 
-});
+}
+
 
 /* =========================================================
-NUMBER HELPER
-========================================================= */
-
-function getNumber(value) {
-
-if (
-    value === null ||
-    value === undefined
-) {
-
-    return 0;
-
-}
-
-
-if (typeof value === "number") {
-
-    return Number.isFinite(value)
-        ? value
-        : 0;
-
-}
-
-
-if (typeof value === "string") {
-
-    const cleaned =
-        value.replace(
-            /[^0-9.-]/g,
-            ""
-        );
-
-    const number =
-        Number(cleaned);
-
-    return Number.isFinite(number)
-        ? number
-        : 0;
-
-}
-
-
-if (typeof value === "object") {
-
-    if (
-        value.$numberDecimal !== undefined
-    ) {
-
-        return (
-            Number(
-                value.$numberDecimal
-            ) || 0
-        );
-
-    }
-
-
-    if (
-        value.$numberLong !== undefined
-    ) {
-
-        return (
-            Number(
-                value.$numberLong
-            ) || 0
-        );
-
-    }
-
-
-    if (
-        value.value !== undefined
-    ) {
-
-        return getNumber(
-            value.value
-        );
-
-    }
-
-}
-
-
-return 0;
-
-}
-
-/* =========================================================
-UGX FORMAT
-========================================================= */
-
-function formatUGX(value) {
-
-return (
-    "UGX " +
-    Math.round(
-        getNumber(value)
-    ).toLocaleString("en-UG")
-);
-
-}
-
-/* =========================================================
-USER NAME
-========================================================= */
-
-function extractUserName(data) {
-
-if (!data) {
-
-    return "Member";
-
-}
-
-
-const user =
-    data.user ||
-    data.account ||
-    data.profile ||
-    data.data ||
-    data;
-
-
-/* Full name */
-
-if (
-    user.full_name &&
-    String(user.full_name).trim()
-) {
-
-    return String(
-        user.full_name
-    ).trim();
-
-}
-
-
-if (
-    user.fullName &&
-    String(user.fullName).trim()
-) {
-
-    return String(
-        user.fullName
-    ).trim();
-
-}
-
-
-if (
-    user.name &&
-    String(user.name).trim()
-) {
-
-    return String(
-        user.name
-    ).trim();
-
-}
-
-
-/* First + last name */
-
-const first =
-    user.first_name ||
-    user.firstName ||
-    "";
-
-const last =
-    user.last_name ||
-    user.lastName ||
-    "";
-
-
-const full =
-    `${first} ${last}`.trim();
-
-
-if (full) {
-
-    return full;
-
-}
-
-
-return "Member";
-
-}
-
-/* =========================================================
-ADMIN CHECK
-========================================================= */
-
-function checkAdmin(data) {
-
-if (!data) {
-
-    return false;
-
-}
-
-
-const user =
-    data.user ||
-    data.account ||
-    data.profile ||
-    data.data ||
-    data;
-
-
-const role =
-    String(
-        user.role ||
-        user.account_type ||
-        user.accountType ||
-        user.user_role ||
-        user.userRole ||
-        ""
-    )
-    .toLowerCase()
-    .trim();
-
-
-return (
-    role === "admin" ||
-    role === "administrator" ||
-    role === "superadmin" ||
-    role === "super_admin"
-);
-
-}
-
-/* =========================================================
-SHOW ADMIN
-========================================================= */
-
-function setAdminVisibility(show) {
-
-if (adminPanelLink) {
-
-    adminPanelLink.style.display =
-        show ? "flex" : "none";
-
-}
-
-
-if (adminQuickAction) {
-
-    adminQuickAction.style.display =
-        show ? "flex" : "none";
-
-}
-
-}
-
-/* =========================================================
-DISPLAY USER
-========================================================= */
-
-function displayUserName(name) {
-
-if (!name) {
-
-    name = "Member";
-
-}
-
-
-if (sidebarUserName) {
-
-    sidebarUserName.textContent =
-        name;
-
-}
-
-
-if (topbarUserName) {
-
-    topbarUserName.textContent =
-        name;
-
-}
-
-
-if (welcomeUserName) {
-
-    welcomeUserName.textContent =
-        name;
-
-}
-
-}
-
-/* =========================================================
-LOAD PROFILE
-========================================================= */
-
-async function loadProfile() {
-
-try {
-
-    const response =
-        await fetch(
-            `${API_BASE}/profile.php`,
-            {
-                method: "GET",
-
-                credentials: "include",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-
-    const data =
-        await response.json();
-
-
-    if (!response.ok) {
-
-        console.warn(
-            "Profile request:",
-            response.status,
-            data
-        );
-
-        return null;
-
-    }
-
-
-    const name =
-        extractUserName(data);
-
-
-    displayUserName(name);
-
-
-    /*
-     * Store name for display only.
-     */
-
-    try {
-
-        localStorage.setItem(
-            "crown_cash_user_name",
-            name
-        );
-
-    } catch (error) {
-        console.warn(
-            "Local storage unavailable."
-        );
-    }
-
-
-    return data;
-
-} catch (error) {
-
-    console.warn(
-        "Could not load profile:",
-        error
-    );
-
-    return null;
-
-}
-
-}
-
-/* =========================================================
-AUTH CHECK
-========================================================= */
-
-async function loadAuthentication() {
-
-try {
-
-    const response =
-        await fetch(
-            `${API_BASE}/auth-check.php`,
-            {
-                method: "GET",
-
-                credentials: "include",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-
-    let data = {};
-
-    try {
-
-        data =
-            await response.json();
-
-    } catch (error) {
-
-        data = {};
-
-    }
-
-
-    if (
-        !response.ok ||
-        data.success === false ||
-        data.logged_in === false
-    ) {
-
-        setAdminVisibility(false);
-
-        window.location.href =
-            "login.html";
-
-        return false;
-
-    }
-
-
-    /*
-     * Determine admin from auth response.
-     */
-
-    const admin =
-        checkAdmin(data);
-
-
-    setAdminVisibility(admin);
-
-
-    const roleText =
-        admin
-            ? "Administrator"
-            : "Member";
-
-
-    if (sidebarUserRole) {
-
-        sidebarUserRole.textContent =
-            roleText;
-
-    }
-
-
-    if (topbarUserRole) {
-
-        topbarUserRole.textContent =
-            roleText;
-
-    }
-
-
-    /*
-     * Try to get name from auth response first.
-     */
-
-    const authName =
-        extractUserName(data);
-
-
-    if (
-        authName &&
-        authName !== "Member"
-    ) {
-
-        displayUserName(
-            authName
-        );
-
-    }
-
-
-    /*
-     * Then get the actual profile.
-     * This fixes the missing user name
-     * when auth-check only returns user_id.
-     */
-
-    await loadProfile();
-
-
-    return true;
-
-} catch (error) {
-
-    console.error(
-        "Authentication error:",
-        error
-    );
-
-    setAdminVisibility(false);
-
-    /*
-     * Do not grant admin access if
-     * authentication cannot be verified.
-     */
-
-    return false;
-
-}
-
-}
-
-/* =========================================================
-LOAD DASHBOARD DATA
-========================================================= */
-
-async function loadDashboardData() {
-
-try {
-
-    const response =
-        await fetch(
-            `${API_BASE}/dashboard.php`,
-            {
-                method: "GET",
-
-                credentials: "include",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-
-    if (!response.ok) {
-
-        console.warn(
-            "Dashboard API:",
-            response.status
-        );
-
-        return;
-
-    }
-
-
-    const data =
-        await response.json();
-
-
-    if (!data) {
-
-        return;
-
-    }
-
-
-    /* BALANCE */
-
-    const balance =
-        getNumber(
-            data.balance ??
-            data.available_balance ??
-            data.wallet_balance ??
-            data.user?.balance ??
-            data.user?.available_balance
-        );
-
-
-    if (availableBalance) {
-
-        availableBalance.textContent =
-            formatUGX(balance);
-
-    }
-
-
-    /* TOTAL INVESTED */
-
-    const invested =
-        getNumber(
-            data.total_invested ??
-            data.totalInvested ??
-            data.invested ??
-            data.statistics?.total_invested
-        );
-
-
-    if (totalInvested) {
-
-        totalInvested.textContent =
-            formatUGX(invested);
-
-    }
-
-
-    /* TOTAL EARNINGS */
-
-    const earnings =
-        getNumber(
-            data.total_earnings ??
-            data.totalEarnings ??
-            data.earnings ??
-            data.statistics?.total_earnings
-        );
-
-
-    if (totalEarnings) {
-
-        totalEarnings.textContent =
-            formatUGX(earnings);
-
-    }
-
-
-    /* TEAM */
-
-    const team =
-        getNumber(
-            data.team_count ??
-            data.teamCount ??
-            data.total_team ??
-            data.referral_count ??
-            data.statistics?.team_count
-        );
-
-
-    if (teamCount) {
-
-        teamCount.textContent =
-            Math.round(team)
-                .toLocaleString("en-UG");
-
-    }
-
-
-    /* TRANSACTIONS */
-
-    const transactions =
-        getNumber(
-            data.transaction_count ??
-            data.transactionCount ??
-            data.total_transactions ??
-            data.statistics?.transaction_count
-        );
-
-
-    if (transactionCount) {
-
-        transactionCount.textContent =
-            Math.round(transactions)
-                .toLocaleString("en-UG");
-
-    }
-
-
-} catch (error) {
-
-    console.warn(
-        "Dashboard data error:",
-        error
-    );
-
-}
-
-}
-
-/* =========================================================
-CALCULATOR
-========================================================= */
-
-function calculateInvestment() {
-
-/*
- * Always display the daily percentage.
- */
-
-if (dailyReturnPercentage) {
-
-    dailyReturnPercentage.textContent =
-        "10%";
-
-}
-
-
-const amount =
-    investmentAmount
-        ? Number(
-            investmentAmount.value
-        ) || 0
-        : 0;
-
-
-if (amount <= 0) {
-
-    if (dailyReturn) {
-
-        dailyReturn.textContent =
-            "UGX 0";
-
-    }
-
-
-    if (monthlyReturn) {
-
-        monthlyReturn.textContent =
-            "UGX 0";
-
-    }
-
-
-    if (totalAfter30) {
-
-        totalAfter30.textContent =
-            "UGX 0";
-
-    }
-
-    return;
-
-}
-
-
-const daily =
-    amount *
-    DISPLAY_DAILY_RATE;
-
-
-const thirtyDayReturn =
-    daily * 30;
-
-
-const total =
-    amount +
-    thirtyDayReturn;
-
-
-if (dailyReturn) {
-
-    dailyReturn.textContent =
-        formatUGX(daily);
-
-}
-
-
-if (monthlyReturn) {
-
-    monthlyReturn.textContent =
-        formatUGX(thirtyDayReturn);
-
-}
-
-
-if (totalAfter30) {
-
-    totalAfter30.textContent =
-        formatUGX(total);
-
-}
-
-}
-
-if (investmentAmount) {
-
-investmentAmount.addEventListener(
-    "input",
-    calculateInvestment
-);
-
-}
-
-/* =========================================================
-INVESTMENT BUTTON
-========================================================= */
-
-function goToInvestment() {
-
-window.location.href =
-    "investments.html";
-
-}
-
-window.goToInvestment =
-goToInvestment;
-
-/* =========================================================
-LOGOUT
-========================================================= */
-
-async function logoutUser() {
-
-if (logoutBtn) {
-
-    logoutBtn.disabled = true;
-
-}
-
-
-try {
-
-    await fetch(
-        `${API_BASE}/logout.php`,
-        {
-            method: "POST",
-
-            credentials: "include",
-
-            headers: {
-                "Accept":
-                    "application/json"
-            }
-        }
-    );
-
-} catch (error) {
-
-    console.warn(
-        "Logout error:",
-        error
-    );
-
-}
-
-
-try {
-
-    localStorage.removeItem(
-        "crown_cash_user"
-    );
-
-    localStorage.removeItem(
-        "crown_cash_user_name"
-    );
-
-    localStorage.removeItem(
-        "crown_cash_role"
-    );
-
-} catch (error) {
-
-    console.warn(
-        "Storage cleanup failed."
-    );
-
-}
-
-
-window.location.href =
-    "login.html";
-
-}
-
-if (logoutBtn) {
-
-logoutBtn.addEventListener(
-    "click",
-    logoutUser
-);
-
-}
-
-/* =========================================================
-YEAR
-========================================================= */
-
-if (currentYear) {
-
-currentYear.textContent =
-    new Date().getFullYear();
-
-}
-
-/* =========================================================
-INITIALIZE
-========================================================= */
-
-document.addEventListener(
-"DOMContentLoaded",
-async function () {
-
-    /*
-     * Put 10% on screen immediately.
-     */
-
-    calculateInvestment();
-
-
-    /*
-     * Authenticate first.
-     */
-
-    const authenticated =
-        await loadAuthentication();
-
-
-    if (!authenticated) {
-
-        return;
-
-    }
-
-
-    /*
-     * Then load balances/statistics.
-     */
-
-    await loadDashboardData();
-
-}
-
-);
+   GLOBAL COMPATIBILITY
+   ========================================================= */
+
+window.CrownCashDashboard = {
+    loadDashboard,
+    calculateReturns,
+    formatUGX
+};

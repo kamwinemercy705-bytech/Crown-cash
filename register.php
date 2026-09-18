@@ -1,450 +1,218 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash — User Registration API
-|--------------------------------------------------------------------------
-| Receives registration data from the Vercel frontend
-| and creates the user in MongoDB.
-|--------------------------------------------------------------------------
-*/
+// ============================================================
+// CROWN CASH - USER REGISTRATION API
+// File: register.php
+// Backend: PHP + MongoDB
+// ============================================================
 
 header("Content-Type: application/json; charset=UTF-8");
-
-/*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
-
-$allowedOrigin = "https://crown-cash.vercel.app";
-
-if (isset($_SERVER["HTTP_ORIGIN"]) &&
-    $_SERVER["HTTP_ORIGIN"] === $allowedOrigin) {
-
-    header("Access-Control-Allow-Origin: " . $allowedOrigin);
-}
-
+header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Accept");
+header("Access-Control-Allow-Headers: Content-Type");
 
-/*
-|--------------------------------------------------------------------------
-| Handle OPTIONS / CORS preflight
-|--------------------------------------------------------------------------
-*/
-
+// Handle CORS preflight
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-
     http_response_code(204);
     exit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Only POST is allowed
-|--------------------------------------------------------------------------
-*/
-
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-
     http_response_code(405);
-
     echo json_encode([
         "success" => false,
         "message" => "Method not allowed."
     ]);
-
     exit;
 }
 
+// ------------------------------------------------------------
+// Load MongoDB configuration
+// ------------------------------------------------------------
 
-/*
-|--------------------------------------------------------------------------
-| Load MongoDB configuration
-|--------------------------------------------------------------------------
-*/
+require_once __DIR__ . "/config.php";
 
 try {
 
-    require_once __DIR__ . "/config.php";
+    // --------------------------------------------------------
+    // Read JSON request
+    // --------------------------------------------------------
 
-} catch (Throwable $e) {
+    $input = json_decode(file_get_contents("php://input"), true);
 
-    error_log(
-        "CROWN CASH REGISTER CONFIG ERROR: " .
-        $e->getMessage()
+    if (!is_array($input)) {
+        $input = $_POST;
+    }
+
+    // --------------------------------------------------------
+    // Get form values
+    // --------------------------------------------------------
+
+    $firstName = trim((string)($input["first_name"] ?? ""));
+    $lastName = trim((string)($input["last_name"] ?? ""));
+    $fullName = trim((string)($input["full_name"] ?? ""));
+
+    $email = strtolower(trim((string)($input["email"] ?? "")));
+
+    $phone = trim((string)($input["phone"] ?? ""));
+    $password = (string)($input["password"] ?? "");
+    $confirmPassword = (string)($input["confirm_password"] ?? "");
+
+    // Referral code entered by the new user
+    $referralCode = strtoupper(
+        trim((string)(
+            $input["referral_code"] ??
+            $input["referralCode"] ??
+            $input["referrer_code"] ??
+            ""
+        ))
     );
 
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Database connection failed."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Read JSON request
-|--------------------------------------------------------------------------
-*/
-
-$rawInput = file_get_contents("php://input");
-
-$data = json_decode($rawInput, true);
-
-
-/*
-|--------------------------------------------------------------------------
-| Also support normal POST form data
-|--------------------------------------------------------------------------
-*/
-
-if (!is_array($data)) {
-
-    $data = $_POST;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Read fields
-|--------------------------------------------------------------------------
-*/
-
-$firstName = trim(
-    (string)($data["first_name"] ?? "")
-);
-
-$lastName = trim(
-    (string)($data["last_name"] ?? "")
-);
-
-$fullName = trim(
-    (string)($data["full_name"] ?? "")
-);
-
-$phone = trim(
-    (string)($data["phone"] ?? "")
-);
-
-$email = strtolower(
-    trim((string)($data["email"] ?? ""))
-);
-
-$password = (string)(
-    $data["password"] ?? ""
-);
-
-$confirmPassword = (string)(
-    $data["confirm_password"] ?? ""
-);
-
-$referralCode = strtoupper(
-    trim((string)($data["referral_code"] ?? ""))
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| Build full name if frontend did not send it
-|--------------------------------------------------------------------------
-*/
-
-if ($fullName === "") {
-
-    $fullName = trim(
-        $firstName . " " . $lastName
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate required fields
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $firstName === "" ||
-    $lastName === "" ||
-    $phone === "" ||
-    $email === "" ||
-    $password === ""
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please complete all required fields."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate email
-|--------------------------------------------------------------------------
-*/
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please enter a valid email address."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate password
-|--------------------------------------------------------------------------
-*/
-
-if (strlen($password) < 8) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Password must contain at least 8 characters."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Confirm password
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $confirmPassword !== "" &&
-    $password !== $confirmPassword
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Passwords do not match."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Normalize Uganda phone number
-|--------------------------------------------------------------------------
-*/
-
-$phone = preg_replace(
-    "/[\s\-\(\)]/",
-    "",
-    $phone
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| Convert +256XXXXXXXXX to 0XXXXXXXXX
-|--------------------------------------------------------------------------
-*/
-
-if (strpos($phone, "+256") === 0) {
-
-    $phone = "0" . substr($phone, 4);
-}
-
-elseif (strpos($phone, "256") === 0) {
-
-    $phone = "0" . substr($phone, 3);
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate Uganda phone number
-|--------------------------------------------------------------------------
-*/
-
-if (!preg_match(
-    "/^0(7[0-8])[0-9]{7}$/",
-    $phone
-)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please enter a valid Ugandan phone number."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Password hashing
-|--------------------------------------------------------------------------
-*/
-
-$passwordHash = password_hash(
-    $password,
-    PASSWORD_DEFAULT
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| Create user
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    /*
-    |--------------------------------------------------------------------------
-    | Check whether email already exists
-    |--------------------------------------------------------------------------
-    */
+    // --------------------------------------------------------
+    // If first/last name were supplied, build full name
+    // --------------------------------------------------------
+
+    if ($fullName === "") {
+        $fullName = trim($firstName . " " . $lastName);
+    }
+
+    // --------------------------------------------------------
+    // Validation
+    // --------------------------------------------------------
+
+    if ($firstName === "" && $fullName === "") {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Please enter your first name."
+        ]);
+        exit;
+    }
+
+    if ($lastName === "" && $fullName !== "") {
+
+        // If only full_name was supplied, keep it.
+        // This allows compatibility with older frontend versions.
+    }
+
+    if ($email === "" || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Please enter a valid email address."
+        ]);
+        exit;
+    }
+
+    if ($phone === "") {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Please enter your phone number."
+        ]);
+        exit;
+    }
+
+    if (strlen($password) < 8) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Password must contain at least 8 characters."
+        ]);
+        exit;
+    }
+
+    if ($password !== $confirmPassword) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Passwords do not match."
+        ]);
+        exit;
+    }
+
+    // --------------------------------------------------------
+    // Make sure MongoDB users collection exists
+    // --------------------------------------------------------
+
+    if (!isset($users)) {
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => "Users database collection is not configured."
+        ]);
+        exit;
+    }
+
+    // --------------------------------------------------------
+    // Check whether email already exists
+    // --------------------------------------------------------
 
     $existingEmail = $users->findOne([
         "email" => $email
     ]);
 
     if ($existingEmail !== null) {
-
         http_response_code(409);
-
         echo json_encode([
             "success" => false,
             "message" => "An account with this email already exists."
         ]);
-
         exit;
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Check whether phone already exists
-    |--------------------------------------------------------------------------
-    */
+    // --------------------------------------------------------
+    // Check whether phone already exists
+    // --------------------------------------------------------
 
     $existingPhone = $users->findOne([
         "phone" => $phone
     ]);
 
     if ($existingPhone !== null) {
-
         http_response_code(409);
-
         echo json_encode([
             "success" => false,
             "message" => "An account with this phone number already exists."
         ]);
-
         exit;
     }
 
+    // --------------------------------------------------------
+    // Generate unique referral code for the new user
+    // --------------------------------------------------------
 
-    /*
-    |--------------------------------------------------------------------------
-    | Registration fee
-    |--------------------------------------------------------------------------
-    */
+    function generateReferralCode($users)
+    {
+        do {
 
-    $registrationFee = 12000;
+            $code = "CC" . strtoupper(
+                substr(
+                    bin2hex(random_bytes(5)),
+                    0,
+                    8
+                )
+            );
 
+            $existing = $users->findOne([
+                "referral_code" => $code
+            ]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Registration bonus
-    |--------------------------------------------------------------------------
-    |
-    | This is stored separately so the amount can be changed later.
-    |
-    */
+        } while ($existing !== null);
 
-    $registrationBonus = 0;
+        return $code;
+    }
 
+    $newReferralCode = generateReferralCode($users);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Prepare user document
-    |--------------------------------------------------------------------------
-    */
+    // --------------------------------------------------------
+    // Find referrer if referral code was supplied
+    // --------------------------------------------------------
 
-    $now = new MongoDB\BSON\UTCDateTime();
-
-    $userDocument = [
-
-        "first_name" => $firstName,
-
-        "last_name" => $lastName,
-
-        "full_name" => $fullName,
-
-        "phone" => $phone,
-
-        "email" => $email,
-
-        "password" => $passwordHash,
-
-        "referral_code" => "",
-
-        "referred_by" => $referralCode,
-
-        "referral_code_used" => $referralCode,
-
-        "balance" => 0,
-
-        "wallet_balance" => 0,
-
-        "registration_fee" => $registrationFee,
-
-        "registration_bonus" => $registrationBonus,
-
-        "account_type" => "user",
-
-        "status" => "active",
-
-        "created_at" => $now,
-
-        "updated_at" => $now
-    ];
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validate referral code
-    |--------------------------------------------------------------------------
-    |
-    | If a referral code was supplied, make sure it belongs to
-    | an existing Crown Cash user.
-    |--------------------------------------------------------------------------
-    */
-
-    $referrer = null;
+    $referrerId = null;
+    $referrerCodeUsed = null;
+    $referrerName = null;
 
     if ($referralCode !== "") {
 
@@ -458,173 +226,208 @@ try {
 
             echo json_encode([
                 "success" => false,
-                "message" => "The referral code is not valid."
+                "message" => "The referral code you entered is invalid."
             ]);
 
             exit;
         }
+
+        $referrerId = $referrer["_id"];
+        $referrerCodeUsed = $referralCode;
+
+        $referrerName = trim(
+            (string)($referrer["full_name"] ?? "")
+        );
+
+        if ($referrerName === "") {
+
+            $referrerName = trim(
+                (string)($referrer["first_name"] ?? "") .
+                " " .
+                (string)($referrer["last_name"] ?? "")
+            );
+        }
     }
 
+    // --------------------------------------------------------
+    // Hash password
+    // --------------------------------------------------------
 
-    /*
-    |--------------------------------------------------------------------------
-    | Generate unique referral code for new user
-    |--------------------------------------------------------------------------
-    */
-
-    do {
-
-        $newReferralCode =
-            "CC" .
-            strtoupper(
-                substr(
-                    bin2hex(random_bytes(5)),
-                    0,
-                    8
-                )
-            );
-
-        $existingReferralCode =
-            $users->findOne([
-                "referral_code" => $newReferralCode
-            ]);
-
-    } while ($existingReferralCode !== null);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Save new user's referral code
-    |--------------------------------------------------------------------------
-    */
-
-    $userDocument["referral_code"] =
-        $newReferralCode;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Insert user into MongoDB
-    |--------------------------------------------------------------------------
-    */
-
-    $result = $users->insertOne(
-        $userDocument
+    $passwordHash = password_hash(
+        $password,
+        PASSWORD_DEFAULT
     );
 
+    // --------------------------------------------------------
+    // Create user document
+    // --------------------------------------------------------
 
-    /*
-    |--------------------------------------------------------------------------
-    | Make sure insertion succeeded
-    |--------------------------------------------------------------------------
-    */
+    $userDocument = [
 
-    if ($result->getInsertedCount() !== 1) {
+        // MongoDB ID is automatically generated
+        "first_name" => $firstName,
+        "last_name" => $lastName,
+        "full_name" => $fullName,
+
+        "email" => $email,
+        "phone" => $phone,
+
+        "password" => $passwordHash,
+
+        // Wallet
+        "balance" => 0,
+        "wallet_balance" => 0,
+
+        // Registration
+        "registration_fee" => 12000,
+        "registration_paid" => false,
+
+        // Account
+        "account_type" => "user",
+        "role" => "user",
+        "status" => "active",
+
+        // Referral code belonging to this user
+        "referral_code" => $newReferralCode,
+
+        // Referral information used to connect this
+        // user to their sponsor.
+        "referred_by" => $referrerCodeUsed,
+        "referral_code_used" => $referrerCodeUsed,
+        "referrer_code" => $referrerCodeUsed,
+
+        // Direct MongoDB reference to sponsor
+        "referrer_id" => $referrerId,
+        "referred_by_id" => $referrerId,
+
+        // Helpful display field
+        "referrer_name" => $referrerName,
+
+        // Referral earnings start at zero
+        "referral_earnings" => 0,
+        "level_1_earnings" => 0,
+        "level_2_earnings" => 0,
+        "level_3_earnings" => 0,
+
+        // Timestamps
+        "created_at" => new MongoDB\BSON\UTCDateTime(),
+        "updated_at" => new MongoDB\BSON\UTCDateTime()
+    ];
+
+    // --------------------------------------------------------
+    // Insert user
+    // --------------------------------------------------------
+
+    $insertResult = $users->insertOne($userDocument);
+
+    if (!$insertResult->isAcknowledged()) {
 
         throw new Exception(
-            "User could not be created."
+            "The user account could not be created."
         );
     }
 
+    $newUserId = $insertResult->getInsertedId();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Get new user's ID
-    |--------------------------------------------------------------------------
-    */
-
-    $newUserId =
-        $result->getInsertedId();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create audit log if collection exists
-    |--------------------------------------------------------------------------
-    */
-
-    try {
-
-        if (isset($audit_logs)) {
-
-            $audit_logs->insertOne([
-
-                "user_id" => $newUserId,
-
-                "action" => "account_created",
-
-                "description" =>
-                    "New Crown Cash account registered.",
-
-                "ip_address" =>
-                    $_SERVER["REMOTE_ADDR"] ?? "",
-
-                "created_at" => $now
-
-            ]);
-        }
-
-    } catch (Throwable $auditError) {
-
-        /*
-        | Do not cancel successful registration
-        | if audit logging fails.
-        */
-
-        error_log(
-            "CROWN CASH AUDIT LOG ERROR: " .
-            $auditError->getMessage()
-        );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create referral record
-    |--------------------------------------------------------------------------
-    */
+    // --------------------------------------------------------
+    // Create referral record when there is a referrer
+    // --------------------------------------------------------
 
     if (
-        $referrer !== null &&
+        $referrerId !== null &&
         isset($referrals)
     ) {
 
         try {
 
-            $referrerId =
-                $referrer["_id"];
-
             $referrals->insertOne([
+
+                "user_id" => $newUserId,
 
                 "referrer_id" => $referrerId,
 
-                "referred_user_id" => $newUserId,
+                "referral_code" => $referrerCodeUsed,
 
-                "referral_code" => $referralCode,
+                "level" => 1,
 
                 "status" => "active",
 
-                "commission" => 0,
+                "commission_earned" => 0,
 
-                "created_at" => $now
+                "created_at" =>
+                    new MongoDB\BSON\UTCDateTime(),
 
+                "updated_at" =>
+                    new MongoDB\BSON\UTCDateTime()
             ]);
 
         } catch (Throwable $referralError) {
 
-            error_log(
-                "CROWN CASH REFERRAL ERROR: " .
-                $referralError->getMessage()
-            );
+            // Do not delete the user if referral-record
+            // creation fails. The user is still registered.
         }
     }
 
+    // --------------------------------------------------------
+    // Create audit record
+    // --------------------------------------------------------
 
-    /*
-    |--------------------------------------------------------------------------
-    | Success response
-    |--------------------------------------------------------------------------
-    */
+    if (isset($audit_logs)) {
+
+        try {
+
+            $audit_logs->insertOne([
+
+                "user_id" => $newUserId,
+
+                "action" => "user_registration",
+
+                "description" =>
+                    "New Crown Cash account registered.",
+
+                "referral_code_used" =>
+                    $referrerCodeUsed,
+
+                "created_at" =>
+                    new MongoDB\BSON\UTCDateTime()
+            ]);
+
+        } catch (Throwable $auditError) {
+
+            // Registration should not fail only because
+            // audit logging failed.
+        }
+    }
+
+    // --------------------------------------------------------
+    // Optional automatic login session
+    // --------------------------------------------------------
+
+    // This allows the user to be logged in immediately
+    // after successful registration if the frontend wants it.
+
+    if (session_status() === PHP_SESSION_NONE) {
+
+        session_set_cookie_params([
+            "lifetime" => 0,
+            "path" => "/",
+            "secure" => true,
+            "httponly" => true,
+            "samesite" => "None"
+        ]);
+
+        session_start();
+    }
+
+    session_regenerate_id(true);
+
+    $_SESSION["logged_in"] = true;
+    $_SESSION["user_id"] = (string)$newUserId;
+    $_SESSION["user_email"] = $email;
+
+    // --------------------------------------------------------
+    // Success response
+    // --------------------------------------------------------
 
     http_response_code(201);
 
@@ -633,82 +436,36 @@ try {
         "success" => true,
 
         "message" =>
-            "Account created successfully!",
+            "Account created successfully.",
 
-        "user_id" =>
-            (string)$newUserId,
+        "user" => [
 
-        "referral_code" =>
-            $newReferralCode,
+            "id" => (string)$newUserId,
 
-        "referred_by" =>
-            $referralCode
+            "first_name" => $firstName,
+
+            "last_name" => $lastName,
+
+            "full_name" => $fullName,
+
+            "email" => $email,
+
+            "phone" => $phone,
+
+            "referral_code" => $newReferralCode,
+
+            "referred_by" => $referrerCodeUsed,
+
+            "status" => "active"
+        ]
 
     ]);
 
-    exit;
-
-
 } catch (Throwable $e) {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Log real database error
-    |--------------------------------------------------------------------------
-    */
-
-    error_log(
-        "CROWN CASH REGISTRATION ERROR: " .
-        $e->getMessage()
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Special handling for MongoDB permission errors
-    |--------------------------------------------------------------------------
-    */
-
-    $errorMessage =
-        strtolower($e->getMessage());
-
-    if (
-        strpos(
-            $errorMessage,
-            "not authorized"
-        ) !== false ||
-
-        strpos(
-            $errorMessage,
-            "not allowed"
-        ) !== false ||
-
-        strpos(
-            $errorMessage,
-            "insert"
-        ) !== false
-    ) {
-
-        http_response_code(500);
-
-        echo json_encode([
-
-            "success" => false,
-
-            "message" =>
-                "The database user does not have permission to create accounts. Please check the MongoDB Atlas database user permissions."
-
-        ]);
-
-        exit;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | General server error
-    |--------------------------------------------------------------------------
-    */
+    // --------------------------------------------------------
+    // Database / server error
+    // --------------------------------------------------------
 
     http_response_code(500);
 
@@ -717,10 +474,11 @@ try {
         "success" => false,
 
         "message" =>
-            "Unable to create your account right now. Please try again."
+            "Registration could not be completed.",
 
+        // Useful during development.
+        // Remove or hide this in the production version.
+        "error" => $e->getMessage()
     ]);
-
-    exit;
 }
 ?>

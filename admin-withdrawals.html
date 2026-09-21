@@ -1,444 +1,793 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#07111f"><title>Crown Cash | Admin Withdrawals</title>
 
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <title>Crown Cash | Admin Withdrawals</title>
 
-<link rel="stylesheet" href="admin-withdrawals.css">
+    <link rel="stylesheet" href="admin-withdrawals.css">
+</head>
 
-</head><body><div class="admin-layout"><!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
+<body>
 
-    <div class="sidebar-header">
-        <div class="logo">
-            <div class="logo-mark">C</div>
+<div class="admin-layout">
 
-            <div class="logo-text">
-                <span>Crown</span>
-                <strong>Cash</strong>
-            </div>
-        </div>
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
 
-        <button class="close-sidebar" id="closeSidebar">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
+        <div class="brand">
 
-    <div class="admin-profile">
-        <div class="admin-avatar">
-            <i class="fa-solid fa-user-shield"></i>
-        </div>
-
-        <div>
-            <strong>Administrator</strong>
-            <span>
-                <i class="fa-solid fa-circle"></i>
-                Admin Account
-            </span>
-        </div>
-    </div>
-
-    <nav class="sidebar-nav">
-
-        <p class="nav-title">MAIN</p>
-
-        <a href="admin.html">
-            <i class="fa-solid fa-gauge-high"></i>
-            <span>Dashboard</span>
-        </a>
-
-        <a href="admin-users.html">
-            <i class="fa-solid fa-users"></i>
-            <span>Users</span>
-        </a>
-
-        <a href="admin-deposits.html">
-            <i class="fa-solid fa-money-bill-transfer"></i>
-            <span>Deposits</span>
-        </a>
-
-        <a href="admin-investments.html">
-            <i class="fa-solid fa-chart-line"></i>
-            <span>Investments</span>
-        </a>
-
-        <a href="admin-withdrawals.html" class="active">
-            <i class="fa-solid fa-hand-holding-dollar"></i>
-            <span>Withdrawals</span>
-        </a>
-
-        <a href="admin-transactions.html">
-            <i class="fa-solid fa-receipt"></i>
-            <span>Transactions</span>
-        </a>
-
-        <p class="nav-title">MANAGEMENT</p>
-
-        <a href="admin-referrals.html">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Referrals</span>
-        </a>
-
-        <a href="admin-security.html">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>Security</span>
-        </a>
-
-    </nav>
-
-    <div class="sidebar-bottom">
-
-        <button class="logout-btn" id="logoutBtn">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Logout</span>
-        </button>
-
-    </div>
-
-</aside>
-
-
-<!-- MAIN CONTENT -->
-<main class="main-content">
-
-    <!-- TOP BAR -->
-    <header class="topbar">
-
-        <button class="menu-btn" id="menuBtn">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-
-        <div class="topbar-title">
-            <h1>Withdrawals</h1>
-            <p>Review and manage user withdrawal requests</p>
-        </div>
-
-        <button class="refresh-btn" id="refreshBtn">
-            <i class="fa-solid fa-rotate"></i>
-            <span>Refresh</span>
-        </button>
-
-    </header>
-
-
-    <!-- SECURITY NOTICE -->
-    <section class="security-notice">
-
-        <div class="notice-icon">
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
-
-        <div class="notice-content">
-            <h3>Withdrawal Review Required</h3>
-
-            <p>
-                Verify the user's balance, withdrawal details and all required
-                checks before approving a request. Approval places the request
-                into the payout queue; it does not automatically send Mobile
-                Money.
-            </p>
-        </div>
-
-    </section>
-
-
-    <!-- STATISTICS -->
-    <section class="stats-grid">
-
-        <div class="stat-card pending-card">
-
-            <div class="stat-icon">
-                <i class="fa-solid fa-clock"></i>
+            <div class="brand-logo">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                    <path d="M10 22L18 38L27 20L32 39L39 20L48 38L55 22"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="4"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                    <path d="M12 44H52"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="4"
+                          stroke-linecap="round"/>
+                </svg>
             </div>
 
-            <div class="stat-info">
-                <span>Pending</span>
-                <strong id="pendingCount">0</strong>
+            <div class="brand-text">
+                <strong>CROWN CASH</strong>
+                <span>ADMIN PANEL</span>
             </div>
 
         </div>
 
 
-        <div class="stat-card approved-card">
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
+            <a href="admin.html" class="nav-item">
 
-            <div class="stat-info">
-                <span>Approved</span>
-                <strong id="approvedCount">0</strong>
-            </div>
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 10.5L12 3l9 7.5"/>
+                        <path d="M5 9.5V21h14V9.5"/>
+                        <path d="M9 21v-7h6v7"/>
+                    </svg>
+                </span>
 
-        </div>
+                <span>Dashboard</span>
 
-
-        <div class="stat-card paid-card">
-
-            <div class="stat-icon">
-                <i class="fa-solid fa-money-bill-wave"></i>
-            </div>
-
-            <div class="stat-info">
-                <span>Paid</span>
-                <strong id="paidCount">0</strong>
-            </div>
-
-        </div>
+            </a>
 
 
-        <div class="stat-card rejected-card">
+            <a href="users.html" class="nav-item">
 
-            <div class="stat-icon">
-                <i class="fa-solid fa-circle-xmark"></i>
-            </div>
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="9" cy="8" r="3"/>
+                        <circle cx="17" cy="9" r="2.5"/>
+                        <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/>
+                        <path d="M14 15c3 0 5 1.5 5 4"/>
+                    </svg>
+                </span>
 
-            <div class="stat-info">
-                <span>Rejected</span>
-                <strong id="rejectedCount">0</strong>
-            </div>
+                <span>Users</span>
 
-        </div>
-
-
-        <div class="stat-card total-card">
-
-            <div class="stat-icon">
-                <i class="fa-solid fa-wallet"></i>
-            </div>
-
-            <div class="stat-info">
-                <span>Total Requests</span>
-                <strong id="totalCount">0</strong>
-            </div>
-
-        </div>
-
-    </section>
+            </a>
 
 
-    <!-- PAGE CARD -->
-    <section class="content-card">
+            <a href="admin-deposits.html" class="nav-item">
 
-        <div class="section-header">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3v14"/>
+                        <path d="M7 12l5 5 5-5"/>
+                        <path d="M4 21h16"/>
+                    </svg>
+                </span>
 
-            <div>
-                <h2>
-                    <i class="fa-solid fa-money-bill-transfer"></i>
-                    Withdrawal Requests
-                </h2>
+                <span>Deposits</span>
 
-                <p>
-                    Manage pending and completed withdrawal requests.
-                </p>
-            </div>
-
-        </div>
+            </a>
 
 
-        <!-- FILTERS -->
-        <div class="filters">
+            <a href="admin-withdrawals.html" class="nav-item active">
 
-            <button class="filter-btn active" data-status="all">
-                <i class="fa-solid fa-layer-group"></i>
-                All
-            </button>
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 21V7"/>
+                        <path d="M7 12l5-5 5 5"/>
+                        <path d="M4 3h16"/>
+                    </svg>
+                </span>
 
-            <button class="filter-btn" data-status="pending">
-                <i class="fa-solid fa-clock"></i>
-                Pending
-            </button>
+                <span>Withdrawals</span>
 
-            <button class="filter-btn" data-status="approved">
-                <i class="fa-solid fa-circle-check"></i>
-                Approved
-            </button>
+            </a>
 
-            <button class="filter-btn" data-status="paid">
-                <i class="fa-solid fa-money-bill-wave"></i>
-                Paid
-            </button>
 
-            <button class="filter-btn" data-status="rejected">
-                <i class="fa-solid fa-circle-xmark"></i>
-                Rejected
+            <a href="admin-investments.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="3"/>
+                        <path d="M8 15l3-4 3 2 3-5"/>
+                    </svg>
+                </span>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <a href="admin-referrals.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="8" cy="8" r="3"/>
+                        <circle cx="16" cy="8" r="3"/>
+                        <circle cx="12" cy="17" r="3"/>
+                        <path d="M10.5 10l1.5 4"/>
+                        <path d="M13.5 10L12 14"/>
+                    </svg>
+                </span>
+
+                <span>Referrals</span>
+
+            </a>
+
+
+            <a href="admin-transactions.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 7h16"/>
+                        <path d="M4 12h16"/>
+                        <path d="M4 17h10"/>
+                        <circle cx="18" cy="17" r="2"/>
+                    </svg>
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <a href="security.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>
+                        <path d="M9 12l2 2 4-5"/>
+                    </svg>
+                </span>
+
+                <span>Security</span>
+
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-divider"></div>
+
+
+        <div class="sidebar-bottom">
+
+            <a href="dashboard.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 10.5L12 3l9 7.5"/>
+                        <path d="M5 9.5V21h14V9.5"/>
+                    </svg>
+                </span>
+
+                <span>User Dashboard</span>
+
+            </a>
+
+
+            <button class="nav-item logout-button" id="logoutBtn">
+
+                <span class="nav-icon logout-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 5H5v14h5"/>
+                        <path d="M14 8l4 4-4 4"/>
+                        <path d="M18 12H9"/>
+                    </svg>
+                </span>
+
+                <span>Logout</span>
+
             </button>
 
         </div>
 
-
-        <!-- MESSAGE -->
-        <div class="message" id="message"></div>
+    </aside>
 
 
-        <!-- LOADING -->
-        <div class="loading-state" id="loadingState">
+    <!-- ================= MAIN ================= -->
+    <main class="main-content">
 
-            <div class="spinner"></div>
+        <!-- Topbar -->
+        <header class="topbar">
 
-            <h3>Loading withdrawals...</h3>
+            <button class="mobile-menu" id="menuBtn" aria-label="Open menu">
 
-            <p>
-                Please wait while withdrawal requests are loaded.
-            </p>
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 6h16"/>
+                    <path d="M4 12h16"/>
+                    <path d="M4 18h16"/>
+                </svg>
 
-        </div>
+            </button>
 
 
-        <!-- ERROR -->
-        <div class="error-state" id="errorState">
-
-            <div class="state-icon">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+            <div class="topbar-title">
+                <span>Crown Cash</span>
+                <small>Administration</small>
             </div>
 
-            <h3>Unable to Load Withdrawals</h3>
 
-            <p id="errorText">
-                Something went wrong while loading withdrawal requests.
-            </p>
+            <div class="topbar-right">
 
-            <button class="retry-btn" id="retryBtn">
-                <i class="fa-solid fa-rotate-right"></i>
-                Try Again
+                <button class="notification-btn" id="notificationBtn">
+
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                        <path d="M10 21h4"/>
+                    </svg>
+
+                    <span class="notification-dot"></span>
+
+                </button>
+
+
+                <div class="admin-user">
+
+                    <div class="admin-avatar" id="adminAvatar">
+                        A
+                    </div>
+
+                    <div class="admin-user-info">
+                        <strong id="adminName">Administrator</strong>
+                        <span id="adminEmail">Admin Account</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- Page -->
+        <section class="page-content">
+
+            <div class="page-heading">
+
+                <div>
+
+                    <span class="eyebrow">
+                        MONEY MANAGEMENT
+                    </span>
+
+                    <h1>Withdrawals</h1>
+
+                    <p>
+                        Review and manage customer withdrawal requests.
+                    </p>
+
+                </div>
+
+
+                <button class="refresh-btn" id="refreshBtn">
+
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 11a8 8 0 00-14.9-3"/>
+                        <path d="M4 4v5h5"/>
+                        <path d="M4 13a8 8 0 0014.9 3"/>
+                        <path d="M20 20v-5h-5"/>
+                    </svg>
+
+                    <span>Refresh</span>
+
+                </button>
+
+            </div>
+
+
+            <!-- ================= STATS ================= -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon gold">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 21V7"/>
+                            <path d="M7 12l5-5 5 5"/>
+                            <path d="M4 3h16"/>
+                        </svg>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>Total Withdrawals</span>
+
+                        <strong id="totalWithdrawals">0</strong>
+
+                        <small>All withdrawal requests</small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M8 12l2.5 2.5L16 9"/>
+                        </svg>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>Approved</span>
+
+                        <strong id="approvedWithdrawals">0</strong>
+
+                        <small>Approved requests</small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">
+
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 7v5l3 2"/>
+                        </svg>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>Pending</span>
+
+                        <strong id="pendingWithdrawals">0</strong>
+
+                        <small>Awaiting review</small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M9 9l6 6"/>
+                            <path d="M15 9l-6 6"/>
+                        </svg>
+
+                    </div>
+
+                    <div class="stat-content">
+
+                        <span>Rejected</span>
+
+                        <strong id="rejectedWithdrawals">0</strong>
+
+                        <small>Rejected requests</small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= FILTER PANEL ================= -->
+            <div class="filter-panel">
+
+                <div class="search-box">
+
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path d="M16 16l5 5"/>
+                    </svg>
+
+                    <input
+                        type="search"
+                        id="searchInput"
+                        placeholder="Search customer, phone or withdrawal ID..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label for="statusFilter">
+                        Status
+                    </label>
+
+                    <select id="statusFilter">
+
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label for="methodFilter">
+                        Method
+                    </label>
+
+                    <select id="methodFilter">
+
+                        <option value="all">All Methods</option>
+                        <option value="mtn">MTN Mobile Money</option>
+                        <option value="airtel">Airtel Money</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= TABLE PANEL ================= -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Withdrawal Requests</h2>
+
+                        <p>
+                            Review customer payout requests before processing.
+                        </p>
+
+                    </div>
+
+
+                    <div class="result-count">
+                        <span id="resultCount">0</span> requests
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table class="withdrawal-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Customer</th>
+
+                                <th>Amount</th>
+
+                                <th>Method</th>
+
+                                <th>Phone / Account</th>
+
+                                <th>Date</th>
+
+                                <th>Status</th>
+
+                                <th>Action</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="withdrawalTableBody">
+
+                            <tr>
+
+                                <td colspan="7">
+
+                                    <div class="loading-state">
+
+                                        <div class="spinner"></div>
+
+                                        <span>
+                                            Loading withdrawals...
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================= WITHDRAWAL MODAL ================= -->
+<div class="modal-overlay" id="withdrawalModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div class="modal-title">
+
+                <div class="modal-icon">
+
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 21V7"/>
+                        <path d="M7 12l5-5 5 5"/>
+                        <path d="M4 3h16"/>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h2>Withdrawal Review</h2>
+
+                    <p>
+                        Review the request before taking action.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button class="close-btn" id="closeModal">
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6l12 12"/>
+                    <path d="M18 6L6 18"/>
+                </svg>
+
             </button>
 
         </div>
 
 
-        <!-- EMPTY -->
-        <div class="empty-state" id="emptyState">
+        <div class="modal-body">
 
-            <div class="state-icon">
-                <i class="fa-solid fa-money-bill-transfer"></i>
+            <!-- Customer -->
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="3"/>
+                        <path d="M5 21c0-4 3-6 7-6s7 2 7 6"/>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <span>Customer</span>
+
+                    <strong id="modalCustomer">
+                        —
+                    </strong>
+
+                </div>
+
             </div>
 
-            <h3>No Withdrawal Requests</h3>
 
-            <p>
-                There are no withdrawal requests matching the selected filter.
-            </p>
+            <!-- Amount -->
+            <div class="amount-card">
+
+                <span>Withdrawal Amount</span>
+
+                <strong id="modalAmount">
+                    UGX 0
+                </strong>
+
+            </div>
+
+
+            <div class="details-grid">
+
+                <div class="detail-item">
+
+                    <span>Phone / Account</span>
+
+                    <strong id="modalPhone">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>Payment Method</span>
+
+                    <strong id="modalMethod">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>Status</span>
+
+                    <strong id="modalStatus">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item">
+
+                    <span>Request ID</span>
+
+                    <strong id="modalWithdrawalId">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-item full">
+
+                    <span>Requested At</span>
+
+                    <strong id="modalDate">
+                        —
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Warning -->
+            <div class="security-warning">
+
+                <div class="warning-icon">
+
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3l9 17H3L12 3z"/>
+                        <path d="M12 9v4"/>
+                        <circle cx="12" cy="17" r="1"/>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <strong>Important</strong>
+
+                    <p>
+                        Approval records the withdrawal as approved.
+                        It does not automatically send Mobile Money.
+                        Actual payout must be completed through an
+                        authorized payment process.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Message -->
+            <div class="modal-message" id="modalMessage"></div>
 
         </div>
 
 
-        <!-- DESKTOP TABLE -->
-        <div class="table-wrapper" id="tableWrapper">
+        <!-- Modal Footer -->
+        <div class="modal-footer">
 
-            <table class="withdrawals-table">
+            <button
+                type="button"
+                class="modal-btn secondary"
+                id="rejectBtn"
+            >
 
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Account</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6l12 12"/>
+                    <path d="M18 6L6 18"/>
+                </svg>
 
-                <tbody id="withdrawalsTableBody"></tbody>
+                Reject
 
-            </table>
+            </button>
+
+
+            <button
+                type="button"
+                class="modal-btn primary"
+                id="approveBtn"
+            >
+
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 12l4 4L19 6"/>
+                </svg>
+
+                Approve
+
+            </button>
 
         </div>
-
-
-        <!-- MOBILE LIST -->
-        <div class="mobile-withdrawals" id="mobileWithdrawals"></div>
-
-    </section>
-
-
-    <!-- FOOTER -->
-    <footer class="admin-footer">
-        <p>
-            © <span id="currentYear"></span> Crown Cash.
-            Admin Panel.
-        </p>
-
-        <span>
-            <i class="fa-solid fa-shield-halved"></i>
-            Secure Administration
-        </span>
-    </footer>
-
-</main>
-
-</div><!-- OVERLAY --><div class="sidebar-overlay" id="sidebarOverlay"></div><!-- CONFIRMATION MODAL --><div class="modal-overlay" id="actionModal"><div class="modal">
-
-    <button class="modal-close" id="modalClose">
-        <i class="fa-solid fa-xmark"></i>
-    </button>
-
-    <div class="modal-icon" id="modalIcon">
-        <i class="fa-solid fa-circle-question"></i>
-    </div>
-
-    <h2 id="modalTitle">Confirm Action</h2>
-
-    <p id="modalText">
-        Are you sure you want to continue?
-    </p>
-
-
-    <!-- WITHDRAWAL DETAILS -->
-    <div class="modal-details" id="modalDetails">
-
-        <div>
-            <span>User</span>
-            <strong id="modalUser">—</strong>
-        </div>
-
-        <div>
-            <span>Amount</span>
-            <strong id="modalAmount">UGX 0</strong>
-        </div>
-
-        <div>
-            <span>Method</span>
-            <strong id="modalMethod">—</strong>
-        </div>
-
-        <div>
-            <span>Account</span>
-            <strong id="modalAccount">—</strong>
-        </div>
-
-    </div>
-
-
-    <!-- WARNING -->
-    <div class="modal-warning">
-
-        <i class="fa-solid fa-triangle-exclamation"></i>
-
-        <p id="modalWarningText">
-            Verify all withdrawal information before continuing.
-        </p>
-
-    </div>
-
-
-    <div class="modal-actions">
-
-        <button class="cancel-btn" id="cancelAction">
-            Cancel
-        </button>
-
-        <button class="confirm-btn" id="confirmAction">
-            <i class="fa-solid fa-check"></i>
-            Confirm
-        </button>
 
     </div>
 
 </div>
 
-</div><script src="admin-withdrawals.js"></script></body>
+
+<!-- ================= TOAST ================= -->
+<div class="toast" id="toast">
+
+    <div class="toast-icon" id="toastIcon">
+
+        <svg viewBox="0 0 24 24">
+            <path d="M5 12l4 4L19 6"/>
+        </svg>
+
+    </div>
+
+    <div class="toast-content">
+
+        <strong id="toastTitle">
+            Success
+        </strong>
+
+        <span id="toastMessage">
+            Done.
+        </span>
+
+    </div>
+
+</div>
+
+
+<script src="admin-withdrawals.js"></script>
+
+</body>
 </html>

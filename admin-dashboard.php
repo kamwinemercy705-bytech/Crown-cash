@@ -1,174 +1,41 @@
 <?php
 
-// ============================================================
-// CROWN CASH - ADMIN DASHBOARD API
-// File: admin-dashboard.php
-// Backend: PHP + MongoDB
-// Purpose: Read-only admin dashboard statistics
-// ============================================================
-
 declare(strict_types=1);
 
-// ------------------------------------------------------------
-// Error handling
-// ------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
+| Crown Cash - Admin Dashboard API
+|--------------------------------------------------------------------------
+| This endpoint is ADMIN ONLY.
+|
+| Security:
+| - Requires authenticated PHP session
+| - Requires role = admin
+| - Session timeout handled by admin-auth.php
+| - Read-only dashboard statistics
+| - Never returns passwords
+|--------------------------------------------------------------------------
+*/
 
-ini_set("display_errors", "0");
-ini_set("log_errors", "1");
-error_reporting(E_ALL);
-
-// ------------------------------------------------------------
-// CORS
-// ------------------------------------------------------------
-
-header("Content-Type: application/json; charset=utf-8");
-
-header(
-    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
-);
-
-header("Access-Control-Allow-Credentials: true");
-
-header(
-    "Access-Control-Allow-Methods: GET, OPTIONS"
-);
-
-header(
-    "Access-Control-Allow-Headers: Content-Type"
-);
-
-// ------------------------------------------------------------
-// OPTIONS
-// ------------------------------------------------------------
-
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-
-    http_response_code(204);
-
-    exit;
-}
-
-// ------------------------------------------------------------
-// Only GET allowed
-// ------------------------------------------------------------
-
-if ($_SERVER["REQUEST_METHOD"] !== "GET") {
-
-    http_response_code(405);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
-    ]);
-
-    exit;
-}
-
-// ------------------------------------------------------------
-// Cross-site session
-// ------------------------------------------------------------
-
-if (session_status() === PHP_SESSION_NONE) {
-
-    session_set_cookie_params([
-        "lifetime" => 0,
-        "path" => "/",
-        "secure" => true,
-        "httponly" => true,
-        "samesite" => "None"
-    ]);
-
-    session_start();
-}
-
-// ------------------------------------------------------------
-// Authentication
-// ------------------------------------------------------------
-
-if (
-    !isset($_SESSION["logged_in"]) ||
-    $_SESSION["logged_in"] !== true ||
-    !isset($_SESSION["user_id"])
-) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please login first."
-    ]);
-
-    exit;
-}
-
-// ------------------------------------------------------------
-// Admin role
-// ------------------------------------------------------------
-
-$sessionRole = strtolower(
-    trim(
-        (string)(
-            $_SESSION["role"]
-            ?? $_SESSION["account_type"]
-            ?? ""
-        )
-    )
-);
-
-$allowedRoles = [
-    "admin",
-    "administrator"
-];
-
-if (!in_array($sessionRole, $allowedRoles, true)) {
-
-    http_response_code(403);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Administrator access required."
-    ]);
-
-    exit;
-}
-
-// ------------------------------------------------------------
-// Load MongoDB configuration
-// ------------------------------------------------------------
-
-try {
-
-    require_once __DIR__ . "/config.php";
-
-} catch (Throwable $e) {
-
-    error_log(
-        "Admin dashboard config error: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Unable to load database configuration."
-    ]);
-
-    exit;
-}
+require_once __DIR__ . "/admin-auth.php";
+require_once __DIR__ . "/config.php";
 
 
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
+/* =========================
+   HELPERS
+========================= */
 
-function ccNumber($value): float
+function mongoNumberToFloat($value): float
 {
     if ($value instanceof MongoDB\BSON\Decimal128) {
         return (float)$value->__toString();
     }
 
     if ($value instanceof MongoDB\BSON\Int64) {
+        return (float)$value->__toString();
+    }
+
+    if ($value instanceof MongoDB\BSON\Int32) {
         return (float)$value->__toString();
     }
 
@@ -180,7 +47,7 @@ function ccNumber($value): float
 }
 
 
-function ccString($value): string
+function valueToString($value): string
 {
     if ($value === null) {
         return "";
@@ -190,46 +57,15 @@ function ccString($value): string
         return (string)$value;
     }
 
-    if ($value instanceof MongoDB\BSON\UTCDateTime) {
-        return $value
-            ->toDateTime()
-            ->format("Y-m-d H:i:s");
-    }
-
     if ($value instanceof MongoDB\BSON\Decimal128) {
         return $value->__toString();
     }
 
-    return (string)$value;
-}
-
-
-function ccDate($value): string
-{
-    if ($value instanceof MongoDB\BSON\UTCDateTime) {
-
-        return $value
-            ->toDateTime()
-            ->format("Y-m-d H:i:s");
+    if ($value instanceof MongoDB\BSON\Int64) {
+        return $value->__toString();
     }
 
-    if ($value instanceof DateTimeInterface) {
-
-        return $value->format("Y-m-d H:i:s");
-    }
-
-    if (is_string($value) && trim($value) !== "") {
-
-        return $value;
-    }
-
-    return "";
-}
-
-
-function ccId($value): string
-{
-    if ($value instanceof MongoDB\BSON\ObjectId) {
+    if ($value instanceof MongoDB\BSON\Int32) {
         return (string)$value;
     }
 
@@ -237,476 +73,421 @@ function ccId($value): string
 }
 
 
-function ccStatus($value): string
+function formatDate($value): string
 {
-    $status = strtolower(
-        trim(
-            (string)$value
-        )
-    );
+    if (
+        $value instanceof MongoDB\BSON\UTCDateTime
+    ) {
+        return $value
+            ->toDateTime()
+            ->format(DATE_ATOM);
+    }
 
-    return $status !== ""
-        ? $status
-        : "pending";
+    if ($value instanceof DateTimeInterface) {
+        return $value->format(DATE_ATOM);
+    }
+
+    if (is_string($value) && trim($value) !== "") {
+        return $value;
+    }
+
+    return "";
 }
 
 
-function ccUserName($user): string
+function getUserName($user): string
 {
     if (!$user) {
         return "Unknown User";
     }
 
-    $fullName = trim(
-        (string)($user["full_name"] ?? "")
-    );
+    $fullName =
+        trim(
+            valueToString(
+                $user["full_name"] ?? ""
+            )
+        );
 
     if ($fullName !== "") {
         return $fullName;
     }
 
-    $firstName = trim(
-        (string)($user["first_name"] ?? "")
-    );
+    $firstName =
+        trim(
+            valueToString(
+                $user["first_name"] ?? ""
+            )
+        );
 
-    $lastName = trim(
-        (string)($user["last_name"] ?? "")
-    );
+    $lastName =
+        trim(
+            valueToString(
+                $user["last_name"] ?? ""
+            )
+        );
 
-    $name = trim(
-        $firstName . " " . $lastName
-    );
+    $name =
+        trim(
+            $firstName . " " . $lastName
+        );
 
-    if ($name !== "") {
-        return $name;
-    }
-
-    return "Unknown User";
+    return $name !== ""
+        ? $name
+        : "Unknown User";
 }
 
 
-function ccUserIdFromRecord($record): ?string
-{
-    $possibleFields = [
-        "user_id",
-        "userId",
-        "userid",
-        "account_id",
-        "accountId"
-    ];
+/* =========================
+   FIND USER
+========================= */
 
-    foreach ($possibleFields as $field) {
+function findUserById(
+    $users,
+    $userId
+) {
 
-        if (!isset($record[$field])) {
-            continue;
-        }
+    if (
+        $userId instanceof MongoDB\BSON\ObjectId
+    ) {
 
-        $value = $record[$field];
-
-        if ($value instanceof MongoDB\BSON\ObjectId) {
-            return (string)$value;
-        }
-
-        if (is_string($value) && trim($value) !== "") {
-            return trim($value);
-        }
+        return $users->findOne([
+            "_id" => $userId
+        ]);
     }
 
-    return null;
-}
+    $id = valueToString($userId);
 
-
-function ccFindUser($users, $record)
-{
-    $userId = ccUserIdFromRecord($record);
-
-    if ($userId === null) {
+    if ($id === "") {
         return null;
     }
 
     try {
 
-        if (
-            preg_match(
-                '/^[a-f0-9]{24}$/i',
-                $userId
-            )
-        ) {
+        $objectId =
+            new MongoDB\BSON\ObjectId($id);
 
-            $user = $users->findOne([
-                "_id" =>
-                    new MongoDB\BSON\ObjectId($userId)
-            ]);
-
-            if ($user) {
-                return $user;
-            }
-        }
+        return $users->findOne([
+            "_id" => $objectId
+        ]);
 
     } catch (Throwable $e) {
-        // Continue to string lookup.
+
+        return $users->findOne([
+            "user_id" => $id
+        ]);
     }
-
-    $possibleFields = [
-        "user_id",
-        "userId",
-        "userid",
-        "account_id",
-        "accountId"
-    ];
-
-    foreach ($possibleFields as $field) {
-
-        try {
-
-            $user = $users->findOne([
-                $field => $userId
-            ]);
-
-            if ($user) {
-                return $user;
-            }
-
-        } catch (Throwable $e) {
-            // Continue.
-        }
-    }
-
-    return null;
 }
 
 
-// ============================================================
-// MAIN DASHBOARD
-// ============================================================
+/* =========================
+   GET STATUS TOTAL
+========================= */
 
-try {
+function getAmountByStatus(
+    $collection,
+    string $status
+): float {
 
-    // --------------------------------------------------------
-    // Get admin account
-    // --------------------------------------------------------
+    $pipeline = [
 
-    $admin = null;
-
-    try {
-
-        $adminId = new MongoDB\BSON\ObjectId(
-            (string)$_SESSION["user_id"]
-        );
-
-        $admin = $users->findOne([
-            "_id" => $adminId
-        ]);
-
-    } catch (Throwable $e) {
-
-        $admin = null;
-    }
-
-
-    // ========================================================
-    // USER STATISTICS
-    // ========================================================
-
-    $totalUsers =
-        $users->countDocuments([]);
-
-    $activeUsers =
-        $users->countDocuments([
-            "status" => [
-                '$in' => [
-                    "active",
-                    "Active"
-                ]
-            ]
-        ]);
-
-    $pendingUsers =
-        $users->countDocuments([
-            "status" => [
-                '$in' => [
-                    "pending",
-                    "Pending"
-                ]
-            ]
-        ]);
-
-    $blockedUsers =
-        $users->countDocuments([
-            "status" => [
-                '$in' => [
-                    "blocked",
-                    "Blocked",
-                    "suspended",
-                    "Suspended",
-                    "disabled",
-                    "Disabled",
-                    "banned",
-                    "Banned"
-                ]
-            ]
-        ]);
-
-
-    // ========================================================
-    // PLATFORM BALANCE
-    // ========================================================
-
-    /*
-    |--------------------------------------------------------------------------
-    | Platform balance is the sum of user balances.
-    |--------------------------------------------------------------------------
-    */
-
-    $platformBalance = 0.0;
-
-    $userBalanceCursor = $users->find(
-        [],
         [
-            "projection" => [
-                "balance" => 1
+            '$match' => [
+                "status" => $status
+            ]
+        ],
+
+        [
+            '$group' => [
+                "_id" => null,
+                "total" => [
+                    '$sum' => '$amount'
+                ]
             ]
         ]
+    ];
+
+    $result =
+        $collection
+            ->aggregate($pipeline)
+            ->toArray();
+
+    if (empty($result)) {
+        return 0.0;
+    }
+
+    return mongoNumberToFloat(
+        $result[0]["total"] ?? 0
+    );
+}
+
+
+/* =========================
+   GET COUNT BY STATUS
+========================= */
+
+function getCountByStatus(
+    $collection,
+    string $status
+): int {
+
+    return $collection->countDocuments([
+        "status" => $status
+    ]);
+}
+
+
+/* =========================
+   USER COUNTS
+========================= */
+
+$totalUsers =
+    $users->countDocuments();
+
+
+$activeUsers =
+    $users->countDocuments([
+        "status" => "active"
+    ]);
+
+
+$pendingUsers =
+    $users->countDocuments([
+        "status" => "pending"
+    ]);
+
+
+$blockedUsers =
+    $users->countDocuments([
+        "status" => [
+            '$in' => [
+                "blocked",
+                "suspended",
+                "disabled"
+            ]
+        ]
+    ]);
+
+
+/* =========================
+   PLATFORM BALANCE
+========================= */
+
+$balancePipeline = [
+
+    [
+        '$group' => [
+            "_id" => null,
+            "total" => [
+                '$sum' => '$balance'
+            ]
+        ]
+    ]
+];
+
+
+$balanceResult =
+    $users
+        ->aggregate($balancePipeline)
+        ->toArray();
+
+
+$platformBalance = 0.0;
+
+
+if (!empty($balanceResult)) {
+
+    $platformBalance =
+        mongoNumberToFloat(
+            $balanceResult[0]["total"] ?? 0
+        );
+}
+
+
+/* =========================
+   DEPOSIT TOTALS
+========================= */
+
+$depositApproved =
+    getAmountByStatus(
+        $deposits,
+        "approved"
     );
 
-    foreach ($userBalanceCursor as $user) {
 
-        $platformBalance += ccNumber(
-            $user["balance"] ?? 0
-        );
-    }
+$depositPending =
+    getAmountByStatus(
+        $deposits,
+        "pending"
+    );
 
 
-    // ========================================================
-    // DEPOSITS
-    // ========================================================
+$depositRejected =
+    getAmountByStatus(
+        $deposits,
+        "rejected"
+    );
 
-    $approvedDepositTotal = 0.0;
 
-    $pendingDepositTotal = 0.0;
+$depositTotal =
+    $depositApproved +
+    $depositPending +
+    $depositRejected;
 
-    $rejectedDepositTotal = 0.0;
 
-    $approvedDepositCount = 0;
+/* =========================
+   DEPOSIT COUNTS
+========================= */
 
-    $pendingDepositCount = 0;
+$depositApprovedCount =
+    getCountByStatus(
+        $deposits,
+        "approved"
+    );
 
-    $rejectedDepositCount = 0;
 
+$depositPendingCount =
+    getCountByStatus(
+        $deposits,
+        "pending"
+    );
 
-    $depositCursor = $deposits->find([]);
 
-    foreach ($depositCursor as $deposit) {
+$depositRejectedCount =
+    getCountByStatus(
+        $deposits,
+        "rejected"
+    );
 
-        $amount = ccNumber(
-            $deposit["amount"] ?? 0
-        );
 
-        $status = ccStatus(
-            $deposit["status"] ?? "pending"
-        );
+/* =========================
+   WITHDRAWAL TOTALS
+========================= */
 
-        if (
-            in_array(
-                $status,
-                [
-                    "approved",
-                    "completed",
-                    "success",
-                    "successful"
-                ],
-                true
-            )
-        ) {
+$withdrawApproved =
+    getAmountByStatus(
+        $withdrawals,
+        "approved"
+    );
 
-            $approvedDepositTotal += $amount;
 
-            $approvedDepositCount++;
+$withdrawPending =
+    getAmountByStatus(
+        $withdrawals,
+        "pending"
+    );
 
-        } elseif (
-            in_array(
-                $status,
-                [
-                    "rejected",
-                    "failed",
-                    "cancelled",
-                    "canceled"
-                ],
-                true
-            )
-        ) {
 
-            $rejectedDepositTotal += $amount;
+$withdrawRejected =
+    getAmountByStatus(
+        $withdrawals,
+        "rejected"
+    );
 
-            $rejectedDepositCount++;
 
-        } else {
+$withdrawTotal =
+    $withdrawApproved +
+    $withdrawPending +
+    $withdrawRejected;
 
-            $pendingDepositTotal += $amount;
 
-            $pendingDepositCount++;
-        }
-    }
+/* =========================
+   WITHDRAWAL COUNTS
+========================= */
 
+$withdrawApprovedCount =
+    getCountByStatus(
+        $withdrawals,
+        "approved"
+    );
 
-    // ========================================================
-    // WITHDRAWALS
-    // ========================================================
 
-    $approvedWithdrawalTotal = 0.0;
+$withdrawPendingCount =
+    getCountByStatus(
+        $withdrawals,
+        "pending"
+    );
 
-    $pendingWithdrawalTotal = 0.0;
 
-    $rejectedWithdrawalTotal = 0.0;
+$withdrawRejectedCount =
+    getCountByStatus(
+        $withdrawals,
+        "rejected"
+    );
 
-    $approvedWithdrawalCount = 0;
 
-    $pendingWithdrawalCount = 0;
+/* =========================
+   INVESTMENT TOTALS
+========================= */
 
-    $rejectedWithdrawalCount = 0;
+$investmentActive =
+    getAmountByStatus(
+        $investments,
+        "active"
+    );
 
 
-    $withdrawalCursor = $withdrawals->find([]);
+$investmentPending =
+    getAmountByStatus(
+        $investments,
+        "pending"
+    );
 
-    foreach ($withdrawalCursor as $withdrawal) {
 
-        $amount = ccNumber(
-            $withdrawal["amount"] ?? 0
-        );
+$investmentCompleted =
+    getAmountByStatus(
+        $investments,
+        "completed"
+    );
 
-        $status = ccStatus(
-            $withdrawal["status"] ?? "pending"
-        );
 
-        if (
-            in_array(
-                $status,
-                [
-                    "approved",
-                    "completed",
-                    "success",
-                    "successful"
-                ],
-                true
-            )
-        ) {
+$investmentTotal =
+    $investmentActive +
+    $investmentPending +
+    $investmentCompleted;
 
-            $approvedWithdrawalTotal += $amount;
 
-            $approvedWithdrawalCount++;
+/* =========================
+   INVESTMENT COUNTS
+========================= */
 
-        } elseif (
-            in_array(
-                $status,
-                [
-                    "rejected",
-                    "failed",
-                    "cancelled",
-                    "canceled"
-                ],
-                true
-            )
-        ) {
+$investmentActiveCount =
+    getCountByStatus(
+        $investments,
+        "active"
+    );
 
-            $rejectedWithdrawalTotal += $amount;
 
-            $rejectedWithdrawalCount++;
+$investmentPendingCount =
+    getCountByStatus(
+        $investments,
+        "pending"
+    );
 
-        } else {
 
-            $pendingWithdrawalTotal += $amount;
+$investmentCompletedCount =
+    getCountByStatus(
+        $investments,
+        "completed"
+    );
 
-            $pendingWithdrawalCount++;
-        }
-    }
 
+/* =========================
+   RECENT USERS
+========================= */
 
-    // ========================================================
-    // INVESTMENTS
-    // ========================================================
+$recentUsers = [];
 
-    $approvedInvestmentTotal = 0.0;
 
-    $pendingInvestmentTotal = 0.0;
-
-    $completedInvestmentTotal = 0.0;
-
-    $approvedInvestmentCount = 0;
-
-    $pendingInvestmentCount = 0;
-
-    $completedInvestmentCount = 0;
-
-
-    $investmentCursor = $investments->find([]);
-
-    foreach ($investmentCursor as $investment) {
-
-        $amount = ccNumber(
-            $investment["amount"] ??
-            $investment["investment_amount"] ??
-            $investment["principal"] ??
-            0
-        );
-
-        $status = ccStatus(
-            $investment["status"] ?? "pending"
-        );
-
-        if (
-            in_array(
-                $status,
-                [
-                    "approved",
-                    "active",
-                    "running"
-                ],
-                true
-            )
-        ) {
-
-            $approvedInvestmentTotal += $amount;
-
-            $approvedInvestmentCount++;
-
-        } elseif (
-            in_array(
-                $status,
-                [
-                    "completed",
-                    "complete",
-                    "matured"
-                ],
-                true
-            )
-        ) {
-
-            $completedInvestmentTotal += $amount;
-
-            $completedInvestmentCount++;
-
-        } else {
-
-            $pendingInvestmentTotal += $amount;
-
-            $pendingInvestmentCount++;
-        }
-    }
-
-
-    // ========================================================
-    // RECENT USERS
-    // ========================================================
-
-    $recentUsers = [];
-
-    $recentUserCursor = $users->find(
+$userCursor =
+    $users->find(
         [],
         [
             "sort" => [
                 "created_at" => -1
             ],
-            "limit" => 10,
+
+            "limit" => 8,
+
             "projection" => [
                 "password" => 0,
                 "password_hash" => 0
@@ -714,494 +495,259 @@ try {
         ]
     );
 
-    foreach ($recentUserCursor as $user) {
 
-        $recentUsers[] = [
+foreach ($userCursor as $user) {
 
-            "id" =>
-                ccId($user["_id"] ?? ""),
+    $recentUsers[] = [
 
-            "name" =>
-                ccUserName($user),
+        "id" =>
+            isset($user["_id"])
+                ? valueToString($user["_id"])
+                : "",
 
-            "full_name" =>
-                ccUserName($user),
+        "full_name" =>
+            getUserName($user),
 
-            "email" =>
-                (string)($user["email"] ?? ""),
+        "email" =>
+            valueToString(
+                $user["email"] ?? ""
+            ),
 
-            "phone" =>
-                (string)($user["phone"] ?? ""),
+        "phone" =>
+            valueToString(
+                $user["phone"] ?? ""
+            ),
 
-            "status" =>
-                ccStatus($user["status"] ?? "active"),
+        "status" =>
+            valueToString(
+                $user["status"] ?? "active"
+            ),
 
-            "role" =>
-                (string)(
-                    $user["role"] ??
-                    $user["account_type"] ??
-                    "user"
-                ),
+        "role" =>
+            valueToString(
+                $user["role"] ??
+                $user["account_type"] ??
+                "user"
+            ),
 
-            "balance" =>
-                ccNumber($user["balance"] ?? 0),
+        "balance" =>
+            mongoNumberToFloat(
+                $user["balance"] ?? 0
+            ),
 
-            "created_at" =>
-                ccDate($user["created_at"] ?? "")
-        ];
-    }
+        "created_at" =>
+            formatDate(
+                $user["created_at"] ?? null
+            )
+    ];
+}
 
 
-    // ========================================================
-    // RECENT TRANSACTIONS
-    // ========================================================
+/* =========================
+   RECENT TRANSACTIONS
+========================= */
 
-    $recentTransactions = [];
+$recentTransactions = [];
 
-    $transactionCursor = $transactions->find(
+
+$transactionCursor =
+    $transactions->find(
         [],
         [
             "sort" => [
                 "created_at" => -1
             ],
-            "limit" => 15
+
+            "limit" => 10
         ]
     );
 
 
-    foreach ($transactionCursor as $transaction) {
+foreach ($transactionCursor as $transaction) {
 
-        $user = ccFindUser(
-            $users,
-            $transaction
-        );
+    $user = null;
 
-        $amount = ccNumber(
-            $transaction["amount"] ?? 0
-        );
 
-        $transactionType = strtolower(
-            trim(
-                (string)(
-                    $transaction["type"] ??
-                    $transaction["transaction_type"] ??
-                    "transaction"
+    if (isset($transaction["user_id"])) {
+
+        $user =
+            findUserById(
+                $users,
+                $transaction["user_id"]
+            );
+    }
+
+
+    $recentTransactions[] = [
+
+        "id" =>
+            isset($transaction["_id"])
+                ? valueToString(
+                    $transaction["_id"]
                 )
+                : "",
+
+        "user_id" =>
+            isset($transaction["user_id"])
+                ? valueToString(
+                    $transaction["user_id"]
+                )
+                : "",
+
+        "user_name" =>
+            getUserName($user),
+
+        "type" =>
+            valueToString(
+                $transaction["type"] ??
+                $transaction["transaction_type"] ??
+                "transaction"
+            ),
+
+        "amount" =>
+            mongoNumberToFloat(
+                $transaction["amount"] ?? 0
+            ),
+
+        "status" =>
+            valueToString(
+                $transaction["status"] ??
+                "pending"
+            ),
+
+        "reference" =>
+            valueToString(
+                $transaction["reference"] ??
+                $transaction["transaction_reference"] ??
+                ""
+            ),
+
+        "created_at" =>
+            formatDate(
+                $transaction["created_at"] ?? null
             )
-        );
-
-        $status = ccStatus(
-            $transaction["status"] ?? "pending"
-        );
-
-        $recentTransactions[] = [
-
-            "id" =>
-                ccId($transaction["_id"] ?? ""),
-
-            "transaction_id" =>
-                (string)(
-                    $transaction["transaction_id"] ??
-                    $transaction["reference"] ??
-                    $transaction["ref"] ??
-                    ccId($transaction["_id"] ?? "")
-                ),
-
-            "user_id" =>
-                ccUserIdFromRecord($transaction),
-
-            "user_name" =>
-                ccUserName($user),
-
-            "name" =>
-                ccUserName($user),
-
-            "type" =>
-                $transactionType,
-
-            "transaction_type" =>
-                $transactionType,
-
-            "amount" =>
-                $amount,
-
-            "status" =>
-                $status,
-
-            "method" =>
-                (string)(
-                    $transaction["method"] ??
-                    $transaction["payment_method"] ??
-                    ""
-                ),
-
-            "created_at" =>
-                ccDate(
-                    $transaction["created_at"] ??
-                    $transaction["date"] ??
-                    ""
-                )
-        ];
-    }
-
-
-    // ========================================================
-    // FALLBACK TRANSACTIONS
-    // ========================================================
-
-    /*
-    |--------------------------------------------------------------------------
-    | If the transactions collection has no records,
-    | show recent deposits and withdrawals.
-    |--------------------------------------------------------------------------
-    */
-
-    if (count($recentTransactions) === 0) {
-
-        $fallbackRecords = [];
-
-        $recentDeposits = $deposits->find(
-            [],
-            [
-                "sort" => [
-                    "created_at" => -1
-                ],
-                "limit" => 10
-            ]
-        );
-
-        foreach ($recentDeposits as $deposit) {
-
-            $user = ccFindUser(
-                $users,
-                $deposit
-            );
-
-            $fallbackRecords[] = [
-
-                "id" =>
-                    ccId($deposit["_id"] ?? ""),
-
-                "transaction_id" =>
-                    (string)(
-                        $deposit["reference"] ??
-                        $deposit["transaction_reference"] ??
-                        ccId($deposit["_id"] ?? "")
-                    ),
-
-                "user_id" =>
-                    ccUserIdFromRecord($deposit),
-
-                "user_name" =>
-                    ccUserName($user),
-
-                "name" =>
-                    ccUserName($user),
-
-                "type" =>
-                    "deposit",
-
-                "transaction_type" =>
-                    "deposit",
-
-                "amount" =>
-                    ccNumber(
-                        $deposit["amount"] ?? 0
-                    ),
-
-                "status" =>
-                    ccStatus(
-                        $deposit["status"] ?? "pending"
-                    ),
-
-                "method" =>
-                    (string)(
-                        $deposit["method"] ??
-                        $deposit["payment_method"] ??
-                        ""
-                    ),
-
-                "created_at" =>
-                    ccDate(
-                        $deposit["created_at"] ??
-                        ""
-                    )
-            ];
-        }
-
-
-        $recentWithdrawals = $withdrawals->find(
-            [],
-            [
-                "sort" => [
-                    "created_at" => -1
-                ],
-                "limit" => 10
-            ]
-        );
-
-        foreach ($recentWithdrawals as $withdrawal) {
-
-            $user = ccFindUser(
-                $users,
-                $withdrawal
-            );
-
-            $fallbackRecords[] = [
-
-                "id" =>
-                    ccId($withdrawal["_id"] ?? ""),
-
-                "transaction_id" =>
-                    (string)(
-                        $withdrawal["reference"] ??
-                        $withdrawal["transaction_reference"] ??
-                        ccId($withdrawal["_id"] ?? "")
-                    ),
-
-                "user_id" =>
-                    ccUserIdFromRecord($withdrawal),
-
-                "user_name" =>
-                    ccUserName($user),
-
-                "name" =>
-                    ccUserName($user),
-
-                "type" =>
-                    "withdrawal",
-
-                "transaction_type" =>
-                    "withdrawal",
-
-                "amount" =>
-                    ccNumber(
-                        $withdrawal["amount"] ?? 0
-                    ),
-
-                "status" =>
-                    ccStatus(
-                        $withdrawal["status"] ?? "pending"
-                    ),
-
-                "method" =>
-                    (string)(
-                        $withdrawal["method"] ??
-                        $withdrawal["payment_method"] ??
-                        ""
-                    ),
-
-                "created_at" =>
-                    ccDate(
-                        $withdrawal["created_at"] ??
-                        ""
-                    )
-            ];
-        }
-
-
-        usort(
-            $fallbackRecords,
-            function ($a, $b) {
-
-                return strcmp(
-                    (string)$b["created_at"],
-                    (string)$a["created_at"]
-                );
-            }
-        );
-
-
-        $recentTransactions =
-            array_slice(
-                $fallbackRecords,
-                0,
-                15
-            );
-    }
-
-
-    // ========================================================
-    // ADMIN INFORMATION
-    // ========================================================
-
-    $adminName = "Administrator";
-
-    $adminEmail =
-        (string)(
-            $_SESSION["user_email"] ?? ""
-        );
-
-    if ($admin) {
-
-        $adminName =
-            ccUserName($admin);
-
-        if ($adminEmail === "") {
-
-            $adminEmail =
-                (string)(
-                    $admin["email"] ?? ""
-                );
-        }
-    }
-
-
-    // ========================================================
-    // FINAL RESPONSE
-    // ========================================================
-
-    echo json_encode([
-
-        "success" => true,
-
-        "message" =>
-            "Admin dashboard loaded successfully.",
-
-        "admin" => [
-
-            "id" =>
-                (string)(
-                    $_SESSION["user_id"] ?? ""
-                ),
-
-            "name" =>
-                $adminName,
-
-            "email" =>
-                $adminEmail,
-
-            "role" =>
-                $sessionRole
-        ],
-
-        "stats" => [
-
-            "total_users" =>
-                $totalUsers,
-
-            "active_users" =>
-                $activeUsers,
-
-            "pending_users" =>
-                $pendingUsers,
-
-            "blocked_users" =>
-                $blockedUsers,
-
-            "platform_balance" =>
-                $platformBalance,
-
-            "total_deposits" =>
-                $approvedDepositTotal,
-
-            "deposit_count" =>
-                $approvedDepositCount,
-
-            "pending_deposits" =>
-                $pendingDepositTotal,
-
-            "pending_deposit_count" =>
-                $pendingDepositCount,
-
-            "rejected_deposits" =>
-                $rejectedDepositTotal,
-
-            "rejected_deposit_count" =>
-                $rejectedDepositCount,
-
-            "total_withdrawals" =>
-                $approvedWithdrawalTotal,
-
-            "withdrawal_count" =>
-                $approvedWithdrawalCount,
-
-            "pending_withdrawals" =>
-                $pendingWithdrawalTotal,
-
-            "pending_withdrawal_count" =>
-                $pendingWithdrawalCount,
-
-            "rejected_withdrawals" =>
-                $rejectedWithdrawalTotal,
-
-            "rejected_withdrawal_count" =>
-                $rejectedWithdrawalCount,
-
-            "total_investments" =>
-                $approvedInvestmentTotal +
-                $completedInvestmentTotal,
-
-            "investment_count" =>
-                $approvedInvestmentCount +
-                $completedInvestmentCount,
-
-            "active_investments" =>
-                $approvedInvestmentTotal,
-
-            "active_investment_count" =>
-                $approvedInvestmentCount,
-
-            "pending_investments" =>
-                $pendingInvestmentTotal,
-
-            "pending_investment_count" =>
-                $pendingInvestmentCount,
-
-            "completed_investments" =>
-                $completedInvestmentTotal,
-
-            "completed_investment_count" =>
-                $completedInvestmentCount
-        ],
-
-        "users" =>
-            $recentUsers,
-
-        "recent_users" =>
-            $recentUsers,
-
-        "transactions" =>
-            $recentTransactions,
-
-        "recent_transactions" =>
-            $recentTransactions
-    ]);
-
-
-// ============================================================
-// ERRORS
-// ============================================================
-
-} catch (MongoDB\Driver\Exception\Exception $e) {
-
-    error_log(
-        "Admin dashboard MongoDB error: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to load admin dashboard data."
-    ]);
-
-} catch (Throwable $e) {
-
-    error_log(
-        "Admin dashboard error: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to load admin dashboard."
-    ]);
+    ];
 }
 
+
+/* =========================
+   RESPONSE
+========================= */
+
+echo json_encode([
+
+    "success" => true,
+
+    "authenticated" => true,
+
+    "authorized" => true,
+
+    "admin" => [
+
+        "user_id" =>
+            (string)($_SESSION["user_id"] ?? ""),
+
+        "email" =>
+            (string)($_SESSION["user_email"] ?? ""),
+
+        "role" =>
+            (string)($_SESSION["role"] ?? "admin")
+    ],
+
+    "stats" => [
+
+        "total_users" =>
+            $totalUsers,
+
+        "active_users" =>
+            $activeUsers,
+
+        "pending_users" =>
+            $pendingUsers,
+
+        "blocked_users" =>
+            $blockedUsers,
+
+        "platform_balance" =>
+            $platformBalance,
+
+        "deposits_total" =>
+            $depositTotal,
+
+        "deposits_approved" =>
+            $depositApproved,
+
+        "deposits_pending" =>
+            $depositPending,
+
+        "deposits_rejected" =>
+            $depositRejected,
+
+        "deposits_approved_count" =>
+            $depositApprovedCount,
+
+        "deposits_pending_count" =>
+            $depositPendingCount,
+
+        "deposits_rejected_count" =>
+            $depositRejectedCount,
+
+        "withdrawals_total" =>
+            $withdrawTotal,
+
+        "withdrawals_approved" =>
+            $withdrawApproved,
+
+        "withdrawals_pending" =>
+            $withdrawPending,
+
+        "withdrawals_rejected" =>
+            $withdrawRejected,
+
+        "withdrawals_approved_count" =>
+            $withdrawApprovedCount,
+
+        "withdrawals_pending_count" =>
+            $withdrawPendingCount,
+
+        "withdrawals_rejected_count" =>
+            $withdrawRejectedCount,
+
+        "investments_total" =>
+            $investmentTotal,
+
+        "investments_active" =>
+            $investmentActive,
+
+        "investments_pending" =>
+            $investmentPending,
+
+        "investments_completed" =>
+            $investmentCompleted,
+
+        "investments_active_count" =>
+            $investmentActiveCount,
+
+        "investments_pending_count" =>
+            $investmentPendingCount,
+
+        "investments_completed_count" =>
+            $investmentCompletedCount
+    ],
+
+    "users" =>
+        $recentUsers,
+
+    "recent_users" =>
+        $recentUsers,
+
+    "transactions" =>
+        $recentTransactions,
+
+    "recent_transactions" =>
+        $recentTransactions
+
+]);
+
+exit;
 ?>

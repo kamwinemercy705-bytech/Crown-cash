@@ -4,14 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="#07111f">
-
     <title>Crown Cash | Admin Deposits</title>
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
 
     <link rel="stylesheet" href="admin-deposits.css">
 </head>
@@ -20,458 +13,934 @@
 
 <div class="admin-layout">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
 
-        <div class="sidebar-logo">
-            <div class="logo-mark">C</div>
+        <div class="brand">
 
-            <div class="logo-text">
-                <strong>Crown</strong>
-                <span>Cash</span>
-            </div>
-        </div>
-
-        <div class="admin-profile">
-            <div class="admin-avatar">
-                <i class="fa-solid fa-user-shield"></i>
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M3 8L6 5L9 8L12 4L15 8L18 5L21 8V19H3V8Z"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"
+                    />
+                    <path
+                        d="M6 12H18"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
+                </svg>
             </div>
 
             <div>
-                <strong>Administrator</strong>
-                <span>Admin Panel</span>
+                <h2>Crown Cash</h2>
+                <span>ADMIN PANEL</span>
             </div>
+
         </div>
 
-        <nav class="admin-nav">
 
-            <a href="admin.html">
-                <i class="fa-solid fa-chart-pie"></i>
+        <nav class="sidebar-nav">
+
+            <a href="admin.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M4 13H10V20H4V13ZM14 4H20V11H14V4ZM14 15H20V20H14V15ZM4 4H10V9H4V4Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+                    </svg>
+                </span>
+
                 <span>Dashboard</span>
+
             </a>
 
-            <a href="admin-users.html">
-                <i class="fa-solid fa-users"></i>
+
+            <a href="users.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle
+                            cx="9"
+                            cy="8"
+                            r="3"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M3.5 20C3.5 16.7 5.9 14.5 9 14.5C12.1 14.5 14.5 16.7 14.5 20"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M16 11C18.2 11 20 9.3 20 7.2C20 5.6 19 4.2 17.5 3.7"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </span>
+
                 <span>Users</span>
+
             </a>
 
-            <a href="admin-deposits.html" class="active">
-                <i class="fa-solid fa-money-bill-transfer"></i>
+
+            <a href="admin-deposits.html" class="nav-item active">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M12 7V17"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M15 9.5C15 8.1 13.7 7 12 7C10.3 7 9 8 9 9.4C9 10.8 10.2 11.4 12 12C13.8 12.6 15 13.2 15 14.6C15 16 13.7 17 12 17C10.3 17 9 16 9 14.5"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+                </span>
+
                 <span>Deposits</span>
+
             </a>
 
-            <a href="admin-investments.html">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Investments</span>
-            </a>
 
-            <a href="admin-withdrawals.html">
-                <i class="fa-solid fa-money-bill-wave"></i>
+            <a href="admin-withdrawals.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M4 7H20V18H4V7Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M7 7V5C7 4.4 7.4 4 8 4H18C19.1 4 20 4.9 20 6V7"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                        <circle
+                            cx="16"
+                            cy="12.5"
+                            r="1.5"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                        />
+
+                    </svg>
+
+                </span>
+
                 <span>Withdrawals</span>
+
             </a>
 
-            <a href="admin-transactions.html">
-                <i class="fa-solid fa-receipt"></i>
-                <span>Transactions</span>
+
+            <a href="admin-investments.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M4 18L9 13L13 16L20 7"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M15 7H20V12"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Investments</span>
+
             </a>
 
-            <a href="admin-referrals.html">
-                <i class="fa-solid fa-people-group"></i>
+
+            <a href="admin-referrals.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <circle
+                            cx="8"
+                            cy="8"
+                            r="3"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <circle
+                            cx="17"
+                            cy="9"
+                            r="2.5"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M3.5 19C3.5 15.8 5.4 14 8 14C10.6 14 12.5 15.8 12.5 19"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M14 14.5C16.8 13.8 19.7 15.2 20.5 18"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
                 <span>Referrals</span>
+
             </a>
 
-            <a href="admin-security.html">
-                <i class="fa-solid fa-shield-halved"></i>
+
+            <a href="admin-transactions.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M6 3H18V21H6V3Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M9 7H15M9 11H15M9 15H13"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <a href="security.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M12 3L20 6V11C20 16.2 16.8 20 12 21C7.2 20 4 16.2 4 11V6L12 3Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M9 12L11 14L15 10"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                </span>
+
                 <span>Security</span>
+
             </a>
 
         </nav>
 
-        <button class="logout-btn" id="logoutBtn">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Logout</span>
-        </button>
+
+        <div class="sidebar-bottom">
+
+            <a href="dashboard.html" class="nav-item">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M4 10L12 4L20 10V20H4V10Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M9 20V14H15V20"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>User Dashboard</span>
+
+            </a>
+
+
+            <button id="logoutBtn" class="nav-item logout-btn">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M10 5H5V19H10"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M13 8L17 12L13 16"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M17 12H9"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Logout</span>
+
+            </button>
+
+        </div>
 
     </aside>
 
 
-    <!-- MAIN -->
+    <!-- ================= MAIN ================= -->
+
     <main class="main-content">
 
-        <!-- TOP BAR -->
+        <!-- TOPBAR -->
+
         <header class="topbar">
 
-            <button
-                class="menu-toggle"
-                id="menuToggle"
-                aria-label="Open menu"
-            >
-                <i class="fa-solid fa-bars"></i>
-            </button>
+            <div class="mobile-menu" id="mobileMenu">
 
-            <div class="topbar-title">
-                <h1>Deposit Management</h1>
-                <p>Review and manage customer deposits</p>
+                <svg viewBox="0 0 24 24" fill="none">
+
+                    <path
+                        d="M4 7H20M4 12H20M4 17H20"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+
+                </svg>
+
             </div>
 
-            <button class="refresh-btn" id="refreshBtn">
-                <i class="fa-solid fa-rotate"></i>
-                <span>Refresh</span>
-            </button>
+
+            <div class="topbar-title">
+                <span>Admin Management</span>
+            </div>
+
+
+            <div class="topbar-right">
+
+                <button class="notification-btn" id="notificationBtn">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M18 9C18 5.7 15.8 3 12 3C8.2 3 6 5.7 6 9C6 14 4 15 4 17H20C20 15 18 14 18 9Z"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M10 20C10.5 21 11.2 21.5 12 21.5C12.8 21.5 13.5 21 14 20"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                    <span class="notification-dot"></span>
+
+                </button>
+
+
+                <div class="admin-profile">
+
+                    <div class="admin-avatar">
+                        A
+                    </div>
+
+                    <div class="admin-details">
+
+                        <strong id="adminName">
+                            Administrator
+                        </strong>
+
+                        <span>
+                            Admin
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </header>
 
 
-        <!-- SECURITY NOTICE -->
-        <section class="security-notice">
+        <!-- PAGE -->
 
-            <div class="notice-icon">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-
-            <div class="notice-content">
-                <h3>Payment Verification Required</h3>
-
-                <p>
-                    Only approve a deposit after independently verifying
-                    the Mobile Money payment. A transaction reference
-                    entered by a customer must not be treated as proof
-                    of payment by itself.
-                </p>
-            </div>
-
-        </section>
+        <section class="page-content">
 
 
-        <!-- STATISTICS -->
-        <section class="stats-grid">
-
-            <div class="stat-card pending">
-                <div class="stat-icon">
-                    <i class="fa-solid fa-clock"></i>
-                </div>
-
-                <div class="stat-info">
-                    <span>Pending</span>
-                    <strong id="pendingCount">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card approved">
-                <div class="stat-icon">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-
-                <div class="stat-info">
-                    <span>Approved</span>
-                    <strong id="approvedCount">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card rejected">
-                <div class="stat-icon">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                </div>
-
-                <div class="stat-info">
-                    <span>Rejected</span>
-                    <strong id="rejectedCount">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card total">
-                <div class="stat-icon">
-                    <i class="fa-solid fa-list"></i>
-                </div>
-
-                <div class="stat-info">
-                    <span>Total Records</span>
-                    <strong id="totalCount">0</strong>
-                </div>
-            </div>
-
-        </section>
-
-
-        <!-- FILTER BAR -->
-        <section class="filter-card">
-
-            <div class="filter-title">
-                <i class="fa-solid fa-filter"></i>
-                <span>Filter Deposits</span>
-            </div>
-
-            <div class="filter-buttons">
-
-                <button
-                    class="filter-btn active"
-                    data-status="all"
-                >
-                    All
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-status="pending"
-                >
-                    Pending
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-status="approved"
-                >
-                    Approved
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-status="rejected"
-                >
-                    Rejected
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- MESSAGE -->
-        <div
-            id="messageBox"
-            class="message-box"
-            hidden
-        ></div>
-
-
-        <!-- LOADING -->
-        <section
-            id="loadingState"
-            class="state-card"
-        >
-            <div class="spinner"></div>
-
-            <h3>Loading deposits...</h3>
-
-            <p>Please wait while the deposit records are loaded.</p>
-        </section>
-
-
-        <!-- ERROR -->
-        <section
-            id="errorState"
-            class="state-card error-state"
-            hidden
-        >
-            <div class="state-icon">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-
-            <h3>Unable to load deposits</h3>
-
-            <p id="errorMessage">
-                Something went wrong.
-            </p>
-
-            <button id="retryBtn" class="primary-btn">
-                <i class="fa-solid fa-rotate"></i>
-                Try Again
-            </button>
-        </section>
-
-
-        <!-- EMPTY -->
-        <section
-            id="emptyState"
-            class="state-card"
-            hidden
-        >
-            <div class="state-icon">
-                <i class="fa-solid fa-inbox"></i>
-            </div>
-
-            <h3>No deposits found</h3>
-
-            <p>
-                There are no deposits matching the selected filter.
-            </p>
-        </section>
-
-
-        <!-- DESKTOP TABLE -->
-        <section
-            id="tableSection"
-            class="table-card"
-            hidden
-        >
-
-            <div class="section-heading">
+            <div class="page-heading">
 
                 <div>
-                    <h2>Deposit Records</h2>
-                    <p>Customer deposit activity</p>
+
+                    <div class="heading-title">
+
+                        <div class="heading-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="8"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                />
+
+                                <path
+                                    d="M12 7V17"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M15 9.5C15 8.1 13.7 7 12 7C10.3 7 9 8 9 9.4C9 10.8 10.2 11.4 12 12C13.8 12.6 15 13.2 15 14.6C15 16 13.7 17 12 17C10.3 17 9 16 9 14.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <h1>Deposits</h1>
+
+                            <p>
+                                Review and manage customer deposit requests
+                            </p>
+
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div class="record-count">
-                    <span id="recordCount">0</span> records
+
+                <button id="refreshBtn" class="refresh-btn">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M20 11A8 8 0 1 0 18 16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M20 5V11H14"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                    Refresh
+
+                </button>
+
+            </div>
+
+
+            <!-- ================= STATS ================= -->
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon gold">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <path
+                                d="M4 7H20V18H4V7Z"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="M7 7V5C7 4.4 7.4 4 8 4H18C19.1 4 20 4.9 20 6V7"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <circle
+                                cx="16"
+                                cy="12.5"
+                                r="1.5"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Total Deposits</span>
+
+                        <strong id="totalDeposits">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon pink">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M8 12L11 15L16 9"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Approved</span>
+
+                        <strong id="approvedDeposits">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M12 8V12L15 14"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Pending</span>
+
+                        <strong id="pendingDeposits">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                            />
+
+                            <path
+                                d="M9 9L15 15M15 9L9 15"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Rejected</span>
+
+                        <strong id="rejectedDeposits">
+                            0
+                        </strong>
+
+                    </div>
+
                 </div>
 
             </div>
 
-            <div class="table-wrapper">
 
-                <table>
+            <!-- ================= FILTER BAR ================= -->
 
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Reference</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
+            <div class="filter-panel">
 
-                    <tbody id="depositTableBody"></tbody>
+                <div class="search-box">
 
-                </table>
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="6"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                        />
+
+                        <path
+                            d="M16 16L21 21"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                    <input
+                        type="search"
+                        id="searchInput"
+                        placeholder="Search deposits..."
+                    >
+
+                </div>
+
+
+                <select id="statusFilter">
+
+                    <option value="all">
+                        All Statuses
+                    </option>
+
+                    <option value="pending">
+                        Pending
+                    </option>
+
+                    <option value="approved">
+                        Approved
+                    </option>
+
+                    <option value="rejected">
+                        Rejected
+                    </option>
+
+                </select>
+
+
+                <select id="methodFilter">
+
+                    <option value="all">
+                        All Methods
+                    </option>
+
+                    <option value="mtn">
+                        MTN Mobile Money
+                    </option>
+
+                    <option value="airtel">
+                        Airtel Money
+                    </option>
+
+                </select>
 
             </div>
+
+
+            <!-- ================= DEPOSIT TABLE ================= -->
+
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div class="panel-title">
+
+                        <div class="panel-title-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M4 6H20M4 12H20M4 18H20"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <h2>Deposit Requests</h2>
+
+                            <p>
+                                Customer payment submissions
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <span id="resultCount" class="result-count">
+                        0 deposits
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Customer</th>
+
+                                <th>Amount</th>
+
+                                <th>Method</th>
+
+                                <th>Reference</th>
+
+                                <th>Date</th>
+
+                                <th>Status</th>
+
+                                <th>Action</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="depositTableBody">
+
+                            <tr>
+
+                                <td colspan="7">
+
+                                    <div class="loading-state">
+
+                                        <div class="loader"></div>
+
+                                        <span>
+                                            Loading deposits...
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
 
         </section>
-
-
-        <!-- MOBILE LIST -->
-        <section
-            id="mobileSection"
-            class="mobile-list"
-            hidden
-        >
-            <div class="section-heading">
-                <div>
-                    <h2>Deposit Records</h2>
-                    <p>Customer deposit activity</p>
-                </div>
-            </div>
-
-            <div id="mobileDepositList"></div>
-        </section>
-
-
-        <!-- FOOTER -->
-        <footer class="admin-footer">
-            <p>
-                &copy; <span id="currentYear"></span>
-                Crown Cash. Admin Panel.
-            </p>
-
-            <span>
-                <i class="fa-solid fa-shield-halved"></i>
-                Secure Administration
-            </span>
-        </footer>
 
     </main>
 
 </div>
 
 
-<!-- APPROVAL MODAL -->
-<div
-    class="modal-overlay"
-    id="actionModal"
-    hidden
->
+<!-- ================= DEPOSIT MODAL ================= -->
+
+<div id="depositModal" class="modal-overlay">
 
     <div class="modal">
 
         <button
-            class="modal-close"
-            id="modalClose"
-            aria-label="Close"
+            type="button"
+            id="closeModal"
+            class="close-modal"
         >
-            <i class="fa-solid fa-xmark"></i>
+            ×
         </button>
 
-        <div
-            class="modal-icon"
-            id="modalIcon"
-        >
-            <i class="fa-solid fa-circle-check"></i>
+
+        <div class="modal-icon">
+
+            <svg viewBox="0 0 24 24" fill="none">
+
+                <path
+                    d="M4 7H20V18H4V7Z"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linejoin="round"
+                />
+
+                <path
+                    d="M7 7V5C7 4.4 7.4 4 8 4H18C19.1 4 20 4.9 20 6V7"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                />
+
+                <circle
+                    cx="16"
+                    cy="12.5"
+                    r="1.5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                />
+
+            </svg>
+
         </div>
 
-        <h2 id="modalTitle">Approve Deposit</h2>
 
-        <p id="modalText">
-            Confirm this action.
+        <h2>Deposit Details</h2>
+
+        <p class="modal-subtitle">
+            Review this deposit before taking action.
         </p>
 
-        <div class="modal-deposit-details">
 
-            <div>
-                <span>Customer</span>
-                <strong id="modalCustomer">—</strong>
-            </div>
+        <div class="details-grid">
 
-            <div>
-                <span>Amount</span>
-                <strong id="modalAmount">UGX 0</strong>
-            </div>
+            <div class="detail-item">
 
-            <div>
-                <span>Reference</span>
-                <strong id="modalReference">—</strong>
-            </div>
-
-        </div>
-
-        <div
-            class="verification-check"
-            id="verificationCheck"
-        >
-            <label>
-                <input
-                    type="checkbox"
-                    id="paymentVerified"
-                >
-
-                <span>
-                    I confirm that I have independently verified
-                    this Mobile Money payment.
-                </span>
-            </label>
-        </div>
-
-        <div class="modal-actions">
-
-            <button
-                class="secondary-btn"
-                id="cancelBtn"
-            >
-                Cancel
-            </button>
-
-            <button
-                class="primary-btn"
-                id="confirmActionBtn"
-            >
-                <i class="fa-solid fa-circle-check"></i>
-                Confirm
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<script src="admin-deposits.js"></script>
-
-</body>
-</html>
+                <span>Customer

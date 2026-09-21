@@ -1,503 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="#6f1020">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <title>Crown Cash | Users</title>
+    <title>
+        Crown Cash | User Management
+    </title>
 
-    <link rel="stylesheet" href="users.css">
+    <link rel="stylesheet"
+          href="admin.css">
+
+    <link rel="stylesheet"
+          href="users.css">
+
 </head>
 
 <body>
 
-<div class="admin-layout">
 
-    <!-- ================= SIDEBAR ================= -->
-    <aside class="sidebar" id="sidebar">
+<!-- SIDEBAR -->
 
-        <div class="brand">
-            <div class="brand-logo">C</div>
+<aside class="admin-sidebar">
 
-            <div class="brand-text">
-                <strong>Crown</strong>
-                <span>Cash</span>
-            </div>
+    <div class="brand-area">
+
+        <div class="brand-icon">
+            ♛
         </div>
 
-        <div class="admin-badge">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3l7 3v5c0 4.7-3 8.2-7 10-4-1.8-7-5.3-7-10V6l7-3z"></path>
-                <path d="M9 12l2 2 4-4"></path>
-            </svg>
-            <span>ADMIN PANEL</span>
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="admin.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 10.5L12 3l9 7.5"></path>
-                        <path d="M5 9.5V21h14V9.5"></path>
-                        <path d="M9 21v-7h6v7"></path>
-                    </svg>
-                </span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="users.html" class="nav-item active">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                        <path d="M16 11c2.8 0 5 2.2 5 5"></path>
-                        <path d="M16 5.5c1.7 0 3 1.3 3 3"></path>
-                    </svg>
-                </span>
-                <span>Users</span>
-            </a>
-
-            <a href="admin-deposits.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 6h16v12H4z"></path>
-                        <path d="M8 10h8"></path>
-                        <path d="M8 14h5"></path>
-                        <path d="M17 4v4"></path>
-                    </svg>
-                </span>
-                <span>Deposits</span>
-            </a>
-
-            <a href="admin-withdrawals.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3v13"></path>
-                        <path d="M7 11l5 5 5-5"></path>
-                        <path d="M5 20h14"></path>
-                    </svg>
-                </span>
-                <span>Withdrawals</span>
-            </a>
-
-            <a href="investments.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 19V9"></path>
-                        <path d="M10 19V5"></path>
-                        <path d="M16 19v-7"></path>
-                        <path d="M22 19H2"></path>
-                    </svg>
-                </span>
-                <span>Investments</span>
-            </a>
-
-            <a href="team.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <circle cx="17" cy="9" r="2.5"></circle>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                        <path d="M15 15c3 0 5 2 5 5"></path>
-                    </svg>
-                </span>
-                <span>Referrals</span>
-            </a>
-
-            <a href="transactions.html" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7h16"></path>
-                        <path d="M4 12h16"></path>
-                        <path d="M4 17h10"></path>
-                        <circle cx="18" cy="17" r="2"></circle>
-                    </svg>
-                </span>
-                <span>Transactions</span>
-            </a>
-
-            <a href="#" class="nav-item">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-2.5V20a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1A1.7 1.7 0 0 0 8.1 15a1.7 1.7 0 0 0-1.6-1H6v-2.5h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 1.8-1.8.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6v-.2h2.5v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2V14h-.2a1.7 1.7 0 0 0-1.6 1z"></path>
-                    </svg>
-                </span>
-                <span>Security</span>
-            </a>
-
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <a href="dashboard.html" class="back-user">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 12H5"></path>
-                        <path d="M12 19l-7-7 7-7"></path>
-                    </svg>
-                </span>
-                User Dashboard
-            </a>
-
-            <button class="logout-btn" id="logoutBtn">
-                <span class="nav-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M10 17l5-5-5-5"></path>
-                        <path d="M15 12H3"></path>
-                        <path d="M13 4h7v16h-7"></path>
-                    </svg>
-                </span>
-                Logout
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- ================= MAIN ================= -->
-    <main class="main-content">
-
-        <!-- TOP BAR -->
-        <header class="topbar">
-
-            <button class="menu-btn" id="menuBtn" aria-label="Open menu">
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 6h16"></path>
-                    <path d="M4 12h16"></path>
-                    <path d="M4 18h16"></path>
-                </svg>
-            </button>
-
-            <div>
-                <h1>User Management</h1>
-                <p>Manage Crown Cash members and accounts</p>
-            </div>
-
-            <div class="admin-profile">
-                <div class="admin-avatar">A</div>
-                <div>
-                    <strong id="adminName">Administrator</strong>
-                    <small>Administrator</small>
-                </div>
-            </div>
-
-        </header>
-
-
-        <!-- ================= STATISTICS ================= -->
-        <section class="stats-grid">
-
-            <div class="stat-card">
-                <div class="stat-icon users-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                        <path d="M16 11c2.8 0 5 2.2 5 5"></path>
-                    </svg>
-                </div>
-
-                <div>
-                    <span>Total Users</span>
-                    <strong id="totalUsers">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card">
-                <div class="stat-icon active-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="8"></circle>
-                        <path d="M8 12l2.5 2.5L16 9"></path>
-                    </svg>
-                </div>
-
-                <div>
-                    <span>Active Users</span>
-                    <strong id="activeUsers">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card">
-                <div class="stat-icon pending-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="8"></circle>
-                        <path d="M12 7v5l3 2"></path>
-                    </svg>
-                </div>
-
-                <div>
-                    <span>Pending</span>
-                    <strong id="pendingUsers">0</strong>
-                </div>
-            </div>
-
-
-            <div class="stat-card">
-                <div class="stat-icon blocked-icon">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="8"></circle>
-                        <path d="M7 7l10 10"></path>
-                    </svg>
-                </div>
-
-                <div>
-                    <span>Blocked</span>
-                    <strong id="blockedUsers">0</strong>
-                </div>
-            </div>
-
-        </section>
-
-
-        <!-- ================= USER MANAGEMENT ================= -->
-        <section class="management-card">
-
-            <div class="section-header">
-
-                <div>
-                    <h2>All Users</h2>
-                    <p>View and manage registered Crown Cash accounts.</p>
-                </div>
-
-                <button class="refresh-btn" id="refreshBtn">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 11a8 8 0 0 0-14.5-4"></path>
-                        <path d="M5 3v4h4"></path>
-                        <path d="M4 13a8 8 0 0 0 14.5 4"></path>
-                        <path d="M19 21v-4h-4"></path>
-                    </svg>
-
-                    Refresh
-                </button>
-
-            </div>
-
-
-            <!-- SEARCH / FILTER -->
-            <div class="filters">
-
-                <div class="search-box">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="7"></circle>
-                        <path d="M16 16l5 5"></path>
-                    </svg>
-
-                    <input
-                        type="search"
-                        id="searchInput"
-                        placeholder="Search name, phone, email or referral code..."
-                    >
-
-                </div>
-
-
-                <select id="statusFilter">
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="blocked">Blocked</option>
-                </select>
-
-
-                <select id="roleFilter">
-                    <option value="all">All Accounts</option>
-                    <option value="user">Users</option>
-                    <option value="admin">Admins</option>
-                </select>
-
-            </div>
-
-
-            <!-- LOADING -->
-            <div class="loading" id="loading">
-
-                <div class="spinner"></div>
-
-                <p>Loading users...</p>
-
-            </div>
-
-
-            <!-- ERROR -->
-            <div class="error-box" id="errorBox" hidden>
-
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <path d="M12 7v6"></path>
-                    <circle cx="12" cy="16.5" r=".7"></circle>
-                </svg>
-
-                <div>
-                    <strong>Unable to load users</strong>
-                    <p id="errorMessage">
-                        Please try again.
-                    </p>
-                </div>
-
-                <button id="retryBtn">Retry</button>
-
-            </div>
-
-
-            <!-- USERS TABLE -->
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>User</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                            <th>Balance</th>
-                            <th>Account</th>
-                            <th>Status</th>
-                            <th>Joined</th>
-                            <th>Action</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="usersTableBody">
-
-                        <!-- Users inserted by users.js -->
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-            <!-- EMPTY -->
-            <div class="empty-state" id="emptyState" hidden>
-
-                <div class="empty-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                        <path d="M16 11c2.8 0 5 2.2 5 5"></path>
-                    </svg>
-
-                </div>
-
-                <h3>No users found</h3>
-
-                <p>
-                    No accounts match your current search or filters.
-                </p>
-
-            </div>
-
-        </section>
-
-    </main>
-
-</div>
-
-
-<!-- ================= USER DETAILS MODAL ================= -->
-<div class="modal-overlay" id="userModal" hidden>
-
-    <div class="modal">
-
-        <button class="modal-close" id="modalClose" aria-label="Close">
-            &times;
-        </button>
-
-        <div class="modal-header">
-
-            <div class="large-avatar" id="modalAvatar">
-                U
-            </div>
-
-            <div>
-
-                <h2 id="modalName">User</h2>
-
-                <p id="modalEmail">
-                    email@example.com
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="user-details">
-
-            <div class="detail-item">
-                <span>Phone</span>
-                <strong id="modalPhone">—</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Referral Code</span>
-                <strong id="modalReferral">—</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Balance</span>
-                <strong id="modalBalance">UGX 0</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Account Type</span>
-                <strong id="modalRole">User</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Status</span>
-                <strong id="modalStatus">Active</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Joined</span>
-                <strong id="modalJoined">—</strong>
-            </div>
-
-        </div>
-
-
-        <div class="modal-actions">
-
-            <button class="action-btn block-btn" id="blockUserBtn">
-
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="8"></circle>
-                    <path d="M7 7l10 10"></path>
-                </svg>
-
-                Block User
-
-            </button>
-
-            <button class="action-btn activate-btn" id="activateUserBtn">
-
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="8"></circle>
-                    <path d="M8 12l2.5 2.5L16 9"></path>
-                </svg>
-
-                Activate User
-
-            </button>
+        <div>
+
+            <h2>
+                CrownCash
+            </h2>
+
+            <small>
+                ADMIN PANEL
+            </small>
 
         </div>
 
     </div>
+
+
+    <div class="menu-title">
+        MAIN MENU
+    </div>
+
+    <nav>
+
+        <a href="admin.html">
+            Dashboard
+        </a>
+
+        <a href="users.html"
+           class="active">
+            Users
+        </a>
+
+        <a href="admin-deposits.html">
+            Deposits
+        </a>
+
+        <a href="admin-withdrawals.html">
+            Withdrawals
+        </a>
+
+        <a href="admin-investments.html">
+            Investments
+        </a>
+
+        <a href="admin-referrals.html">
+            Referrals
+        </a>
+
+        <a href="admin-transactions.html">
+            Transactions
+        </a>
+
+    </nav>
+
+</aside>
+
+
+
+<!-- MAIN -->
+
+<div class="admin-main">
+
+
+    <!-- TOP -->
+
+    <header class="topbar">
+
+        <div>
+
+            <span class="page-tag">
+                ADMINISTRATION
+            </span>
+
+            <h1>
+                User Management
+            </h1>
+
+        </div>
+
+
+        <div class="admin-user">
+
+            <div class="avatar">
+                A
+            </div>
+
+            <div>
+
+                <strong>
+                    Administrator
+                </strong>
+
+                <small>
+                    Admin Account
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- STATS -->
+
+    <section class="stats-grid">
+
+
+        <div class="stat-card">
+
+            <div class="icon-circle users-icon">
+
+                👥
+
+            </div>
+
+            <span>
+                TOTAL USERS
+            </span>
+
+            <h2 id="totalUsers">
+                0
+            </h2>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <div class="icon-circle active-icon">
+
+                ✓
+
+            </div>
+
+            <span>
+                ACTIVE
+            </span>
+
+            <h2 id="activeUsers">
+                0
+            </h2>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <div class="icon-circle pending-icon">
+
+                ⏳
+
+            </div>
+
+            <span>
+                PENDING
+            </span>
+
+            <h2 id="pendingUsers">
+                0
+            </h2>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <div class="icon-circle blocked-icon">
+
+                ✖
+
+            </div>
+
+            <span>
+                BLOCKED
+            </span>
+
+            <h2 id="blockedUsers">
+                0
+            </h2>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- FILTERS -->
+
+    <section class="table-card">
+
+        <div class="table-top">
+
+            <h2>
+                All Users
+            </h2>
+
+            <button id="refreshBtn"
+                    class="glow-btn">
+
+                Refresh
+
+            </button>
+
+        </div>
+
+
+        <div class="filters">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search users...">
+
+            <select id="statusFilter">
+
+                <option value="">
+                    All Status
+                </option>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+                <option value="blocked">
+                    Blocked
+                </option>
+
+            </select>
+
+
+            <select id="roleFilter">
+
+                <option value="">
+                    All Accounts
+                </option>
+
+                <option value="user">
+                    Users
+                </option>
+
+                <option value="admin">
+                    Admins
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- TABLE -->
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>User</th>
+
+                        <th>Phone</th>
+
+                        <th>Email</th>
+
+                        <th>Balance</th>
+
+                        <th>Account</th>
+
+                        <th>Status</th>
+
+                        <th>Joined</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="usersTable">
+
+                    <tr>
+
+                        <td colspan="8">
+
+                            Loading users...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
 
 </div>
 
@@ -505,4 +345,5 @@
 <script src="users.js"></script>
 
 </body>
+
 </html>

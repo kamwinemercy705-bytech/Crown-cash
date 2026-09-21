@@ -1,193 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Crown Cash | Admin Panel</title>
+    <title>Crown Cash | Admin Dashboard</title>
 
     <link rel="stylesheet" href="admin.css">
-
 </head>
 
 <body>
 
-<div class="admin-app">
+<div class="admin-layout">
 
-
-    <!-- =====================================================
+    <!-- =========================
          SIDEBAR
-    ====================================================== -->
+    ========================== -->
+    <aside class="admin-sidebar" id="adminSidebar">
 
-    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
 
-        <div class="brand">
-
-            <div class="brand-crown">
-                ♛
+            <div class="brand-logo">
+                <svg viewBox="0 0 64 64" fill="none">
+                    <path
+                        d="M8 18L18 30L27 15L32 30L38 15L47 30L56 18V43C56 49 51 54 45 54H19C13 54 8 49 8 43V18Z"
+                        stroke="currentColor"
+                        stroke-width="4"
+                        stroke-linejoin="round"
+                    />
+                    <path
+                        d="M19 54H45"
+                        stroke="currentColor"
+                        stroke-width="4"
+                        stroke-linecap="round"
+                    />
+                </svg>
             </div>
 
-            <div class="brand-name">
-                Crown<span>Cash</span>
+            <div>
+                <h2>Crown Cash</h2>
+                <span>ADMIN PANEL</span>
             </div>
 
-            <div class="brand-subtitle">
-                ADMIN PANEL
-            </div>
+            <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M6 6L18 18M18 6L6 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+                </svg>
+            </button>
 
         </div>
 
 
-        <button
-            class="sidebar-close"
-            id="sidebarClose"
-            type="button"
-        >
-            ×
-        </button>
+        <!-- =========================
+             MAIN NAVIGATION
+        ========================== -->
+        <nav class="admin-nav">
 
+            <p class="nav-label">MAIN MENU</p>
 
-        <nav class="sidebar-nav">
+            <a href="admin.html" class="nav-item active">
 
-
-            <!-- DASHBOARD -->
-
-            <a
-                href="admin.html"
-                class="nav-link active"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
-
-                        <rect
-                            x="4"
-                            y="4"
-                            width="6"
-                            height="6"
-                            rx="1"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-
-                        <rect
-                            x="14"
-                            y="4"
-                            width="6"
-                            height="6"
-                            rx="1"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-
-                        <rect
-                            x="4"
-                            y="14"
-                            width="6"
-                            height="6"
-                            rx="1"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-
-                        <rect
-                            x="14"
-                            y="14"
-                            width="6"
-                            height="6"
-                            rx="1"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-
+                        <rect x="3" y="3" width="7" height="7" rx="1.5"
+                              stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"
+                              stroke="currentColor" stroke-width="2"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1.5"
+                              stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"
+                              stroke="currentColor" stroke-width="2"/>
                     </svg>
-
                 </span>
 
                 <span>Dashboard</span>
-
             </a>
 
 
-            <!-- USERS -->
+            <a href="users.html" class="nav-item">
 
-            <a
-                href="users.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M16 21V19C16 16.79 14.21 15 12 15H6C3.79 15 2 16.79 2 19V21"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
 
                         <circle
                             cx="9"
-                            cy="8"
-                            r="3.5"
+                            cy="7"
+                            r="4"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                         />
 
                         <path
-                            d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
+                            d="M22 21V19C22 17.23 20.84 15.73 19.2 15.2"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                             stroke-linecap="round"
-                        />
-
-                        <circle
-                            cx="17"
-                            cy="9"
-                            r="2.5"
-                            stroke="currentColor"
-                            stroke-width="1.6"
                         />
 
                         <path
-                            d="M16 14.5C18.8 14.8 20.5 16.8 20.5 19"
+                            d="M16.8 3.2C18.65 3.68 20 5.35 20 7.35C20 9.35 18.65 11.02 16.8 11.5"
                             stroke="currentColor"
-                            stroke-width="1.6"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
-
                     </svg>
-
                 </span>
 
                 <span>Users</span>
-
             </a>
 
 
-            <!-- DEPOSITS -->
+            <a href="admin-deposits.html" class="nav-item">
 
-            <a
-                href="admin-deposits.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
 
                         <path
-                            d="M12 4V16"
+                            d="M3 9H21"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
+                        />
+
+                        <path
+                            d="M8 14H11"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </span>
+
+                <span>Deposits</span>
+            </a>
+
+
+            <a href="admin-withdrawals.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M12 3V16"
+                            stroke="currentColor"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M7.5 12L12 16.5L16.5 12"
+                            d="M7 11L12 16L17 11"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                         />
@@ -195,361 +176,291 @@
                         <path
                             d="M5 20H19"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
-
                     </svg>
-
-                </span>
-
-                <span>Deposits</span>
-
-            </a>
-
-
-            <!-- WITHDRAWALS -->
-
-            <a
-                href="admin-withdrawals.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
-                    <svg viewBox="0 0 24 24" fill="none">
-
-                        <path
-                            d="M12 20V8"
-                            stroke="currentColor"
-                            stroke-width="1.9"
-                            stroke-linecap="round"
-                        />
-
-                        <path
-                            d="M7.5 12L12 7.5L16.5 12"
-                            stroke="currentColor"
-                            stroke-width="1.9"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-
-                        <path
-                            d="M5 4H19"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                            stroke-linecap="round"
-                        />
-
-                    </svg>
-
                 </span>
 
                 <span>Withdrawals</span>
-
             </a>
 
 
-            <!-- INVESTMENTS -->
+            <a href="admin-investments.html" class="nav-item">
 
-            <a
-                href="admin-investments.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
-
                         <path
-                            d="M4 20V12"
+                            d="M4 19V10"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M10 20V7"
+                            d="M10 19V5"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M16 20V10"
+                            d="M16 19V8"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M22 20V4"
+                            d="M22 19V3"
                             stroke="currentColor"
-                            stroke-width="1.9"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
-
                     </svg>
-
                 </span>
 
                 <span>Investments</span>
-
             </a>
 
 
-            <!-- REFERRALS -->
+            <a href="admin-referrals.html" class="nav-item">
 
-            <a
-                href="admin-referrals.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
 
                         <circle
-                            cx="12"
+                            cx="9"
                             cy="7"
                             r="3"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                         />
 
                         <circle
-                            cx="5"
-                            cy="17"
+                            cx="17"
+                            cy="9"
                             r="2.5"
                             stroke="currentColor"
-                            stroke-width="1.7"
-                        />
-
-                        <circle
-                            cx="19"
-                            cy="17"
-                            r="2.5"
-                            stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                         />
 
                         <path
-                            d="M10 9.5L7 14.5"
+                            d="M3 20C3 16.69 5.69 14 9 14C12.31 14 15 16.69 15 20"
                             stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M14 9.5L17 14.5"
+                            d="M15 14.5C15.75 13.57 16.86 13 18 13C20.21 13 22 14.79 22 17"
                             stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                     </svg>
-
                 </span>
 
                 <span>Referrals</span>
-
             </a>
 
 
-            <!-- TRANSACTIONS -->
+            <a href="admin-transactions.html" class="nav-item">
 
-            <a
-                href="admin-transactions.html"
-                class="nav-link"
-            >
-
-                <span class="nav-icon neon-gold-pink">
-
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
 
-                        <rect
-                            x="5"
-                            y="3"
-                            width="14"
-                            height="18"
-                            rx="2"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        />
-
                         <path
-                            d="M8 8H16"
+                            d="M4 6H20"
                             stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M8 12H16"
+                            d="M4 12H20"
                             stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                         <path
-                            d="M8 16H13"
+                            d="M4 18H15"
                             stroke="currentColor"
-                            stroke-width="1.7"
+                            stroke-width="2"
                             stroke-linecap="round"
+                        />
+
+                        <circle
+                            cx="18"
+                            cy="18"
+                            r="2"
+                            stroke="currentColor"
+                            stroke-width="2"
                         />
 
                     </svg>
-
                 </span>
 
                 <span>Transactions</span>
-
             </a>
 
 
-            <!-- SECURITY -->
+            <p class="nav-label second-label">SYSTEM</p>
 
-            <a
-                href="security.html"
-                class="nav-link"
-            >
 
-                <span class="nav-icon neon-gold-pink">
+            <a href="security.html" class="nav-item">
 
+                <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none">
 
                         <path
-                            d="M12 3L20 6V11C20 16.3 16.7 20 12 21C7.3 20 4 16.3 4 11V6L12 3Z"
+                            d="M12 3L20 6V11C20 16.2 16.8 20.7 12 22C7.2 20.7 4 16.2 4 11V6L12 3Z"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                             stroke-linejoin="round"
                         />
 
                         <path
                             d="M9 12L11 14L15 10"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                             stroke-linecap="round"
                             stroke-linejoin="round"
+                        />
+
+                    </svg>
+                </span>
+
+                <span>Security</span>
+            </a>
+
+
+            <a href="dashboard.html" class="nav-item">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        />
+
+                        <path
+                            d="M8 8H16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M8 12H16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M8 16H13"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+                </span>
+
+                <span>User Dashboard</span>
+            </a>
+
+        </nav>
+
+
+        <!-- =========================
+             SIDEBAR FOOTER
+        ========================== -->
+        <div class="sidebar-footer">
+
+            <div class="sidebar-status">
+
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>System Online</strong>
+                    <small>Crown Cash Server</small>
+                </div>
+
+            </div>
+
+
+            <button class="logout-button" id="logoutButton">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M10 17L15 12L10 7"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M15 12H3"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M21 4V20"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
                         />
 
                     </svg>
 
                 </span>
 
-                <span>Security</span>
+                <span>Logout</span>
 
-            </a>
+            </button>
 
-        </nav>
-
-
-        <div class="sidebar-divider"></div>
-
-
-        <!-- USER DASHBOARD -->
-
-        <a
-            href="dashboard.html"
-            class="nav-link bottom-link"
-        >
-
-            <span class="nav-icon neon-gold-pink">
-
-                <svg viewBox="0 0 24 24" fill="none">
-
-                    <path
-                        d="M3 11L12 3L21 11"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-
-                    <path
-                        d="M5 10V21H19V10"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    />
-
-                    <path
-                        d="M9 21V15H15V21"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    />
-
-                </svg>
-
-            </span>
-
-            <span>User Dashboard</span>
-
-        </a>
-
-
-        <!-- LOGOUT -->
-
-        <button
-            class="nav-link logout-link"
-            id="logoutButton"
-            type="button"
-        >
-
-            <span class="nav-icon neon-gold-pink">
-
-                <svg viewBox="0 0 24 24" fill="none">
-
-                    <path
-                        d="M10 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H10"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                    />
-
-                    <path
-                        d="M14 8L18 12L14 16"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-
-                    <path
-                        d="M18 12H8"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                    />
-
-                </svg>
-
-            </span>
-
-            <span>Logout</span>
-
-        </button>
+        </div>
 
     </aside>
 
 
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <main class="main-content">
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
-        <!-- HEADER -->
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+    <main class="admin-main">
 
-        <header class="top-header">
 
-            <div class="header-left">
+        <!-- =========================
+             TOP BAR
+        ========================== -->
+        <header class="admin-topbar">
+
+            <div class="topbar-left">
 
                 <button
                     class="menu-button"
                     id="menuButton"
-                    type="button"
+                    aria-label="Open menu"
                 >
 
                     <svg viewBox="0 0 24 24" fill="none">
@@ -579,71 +490,98 @@
 
                 </button>
 
+                <div class="page-title">
 
-                <div class="header-logo">
+                    <span>ADMINISTRATION</span>
 
-                    <strong>Crown Cash</strong>
-
-                    <small>
-                        ADMIN DASHBOARD
-                    </small>
+                    <h1>Dashboard</h1>
 
                 </div>
 
             </div>
 
 
-            <div class="header-right">
-
-
-                <!-- NOTIFICATION -->
+            <div class="topbar-right">
 
                 <button
-                    class="notification-button"
-                    id="notificationButton"
-                    type="button"
+                    class="refresh-button"
+                    id="refreshButton"
+                    title="Refresh dashboard"
                 >
 
                     <svg viewBox="0 0 24 24" fill="none">
 
                         <path
-                            d="M18 9C18 5.5 15.7 3 12 3C8.3 3 6 5.5 6 9C6 15 3.5 16 3.5 18H20.5C20.5 16 18 15 18 9Z"
+                            d="M20 11A8.1 8.1 0 0 0 5.5 6.5L4 8"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M4 4V8H8"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M4 13A8.1 8.1 0 0 0 18.5 17.5L20 16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M20 20V16H16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                    <span>Refresh</span>
+
+                </button>
+
+
+                <button class="notification-button" title="Notifications">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M18 8C18 4.69 15.31 2 12 2C8.69 2 6 4.69 6 8C6 15 3 16 3 18H21C21 16 18 15 18 8Z"
+                            stroke="currentColor"
+                            stroke-width="2"
                             stroke-linejoin="round"
                         />
 
                         <path
                             d="M10 21H14"
                             stroke="currentColor"
-                            stroke-width="1.8"
+                            stroke-width="2"
                             stroke-linecap="round"
                         />
 
                     </svg>
 
-                    <span class="notification-count">
-                        3
-                    </span>
+                    <span class="notification-dot"></span>
 
                 </button>
 
 
-                <div class="header-divider"></div>
-
-
-                <!-- ADMIN PROFILE -->
-
                 <div class="admin-profile">
 
-                    <div
-                        class="admin-avatar"
-                        id="adminAvatar"
-                    >
+                    <div class="admin-avatar" id="adminAvatar">
                         A
                     </div>
 
-                    <div class="admin-profile-info">
+                    <div class="admin-profile-text">
 
                         <strong id="adminName">
                             Administrator
@@ -655,9 +593,17 @@
 
                     </div>
 
-                    <span class="profile-arrow">
-                        ⌄
-                    </span>
+                    <svg class="profile-chevron" viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M6 9L12 15L18 9"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
 
                 </div>
 
@@ -666,27 +612,26 @@
         </header>
 
 
-
-        <!-- =====================================================
-             DASHBOARD BODY
-        ====================================================== -->
-
-        <section class="dashboard-body">
+        <!-- =========================
+             PAGE CONTENT
+        ========================== -->
+        <section class="dashboard-content">
 
 
-            <!-- WELCOME -->
-
-            <div class="welcome-row">
+            <!-- Welcome -->
+            <div class="welcome-section">
 
                 <div>
 
-                    <p class="welcome-small">
+                    <p class="welcome-label">
                         Welcome back,
                     </p>
 
-                    <h1 id="welcomeAdminName">
-                        Administrator
-                    </h1>
+                    <h2>
+                        <span id="welcomeAdminName">
+                            Administrator
+                        </span>
+                    </h2>
 
                     <p class="welcome-description">
                         Here's what's happening across Crown Cash today.
@@ -694,176 +639,872 @@
 
                 </div>
 
-
-                <button
-                    class="refresh-button"
-                    id="refreshButton"
-                    type="button"
-                >
-
-                    <svg viewBox="0 0 24 24" fill="none">
-
-                        <path
-                            d="M20 11A8 8 0 1 0 20 13"
-                            stroke="currentColor"
-                            stroke-width="1.9"
-                            stroke-linecap="round"
-                        />
-
-                        <path
-                            d="M20 5V11H14"
-                            stroke="currentColor"
-                            stroke-width="1.9"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-
-                    </svg>
-
-                    Refresh
-
-                </button>
+                <div class="dashboard-date" id="dashboardDate">
+                    Today
+                </div>
 
             </div>
 
 
-
-            <!-- =================================================
-                 STATISTICS
-            ================================================== -->
-
+            <!-- =========================
+                 PRIMARY STAT CARDS
+            ========================== -->
             <div class="stats-grid">
 
 
-                <!-- TOTAL USERS -->
-
+                <!-- Total Users -->
                 <article class="stat-card">
 
-                    <div class="glow-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24" fill="none">
+                        <div class="stat-icon users-icon">
 
-                            <circle
-                                cx="9"
-                                cy="8"
-                                r="3.5"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            />
+                            <svg viewBox="0 0 24 24" fill="none">
 
-                            <path
-                                d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                            />
+                                <path
+                                    d="M16 21V19C16 16.79 14.21 15 12 15H6C3.79 15 2 16.79 2 19V21"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
 
-                            <circle
-                                cx="17"
-                                cy="9"
-                                r="2.5"
-                                stroke="currentColor"
-                                stroke-width="1.6"
-                            />
+                                <circle
+                                    cx="9"
+                                    cy="7"
+                                    r="4"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
 
-                        </svg>
+                                <path
+                                    d="M22 21V19C22 17.23 20.84 15.73 19.2 15.2"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16.8 3.2C18.65 3.68 20 5.35 20 7.35"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-badge neutral">
+                            MEMBERS
+                        </span>
 
                     </div>
 
-                    <div class="stat-info">
+                    <div class="stat-card-body">
 
                         <span>Total Users</span>
 
                         <strong id="totalUsers">0</strong>
 
-                        <small>Registered members</small>
+                        <small>
+                            Registered members
+                        </small>
 
                     </div>
-
-                    <span class="trend-arrow">
-                        ↗
-                    </span>
 
                 </article>
 
 
-                <!-- ACTIVE USERS -->
-
+                <!-- Active Users -->
                 <article class="stat-card">
 
-                    <div class="glow-icon">
+                    <div class="stat-card-top">
+
+                        <div class="stat-icon active-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
+
+                                <path
+                                    d="M8 12L10.8 15L16 9"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-badge success">
+                            ACTIVE
+                        </span>
+
+                    </div>
+
+                    <div class="stat-card-body">
+
+                        <span>Active Users</span>
+
+                        <strong id="activeUsers">0</strong>
+
+                        <small>
+                            Active accounts
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Pending -->
+                <article class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div class="stat-icon pending-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
+
+                                <path
+                                    d="M12 7V12L15 14"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-badge warning">
+                            REVIEW
+                        </span>
+
+                    </div>
+
+                    <div class="stat-card-body">
+
+                        <span>Pending Users</span>
+
+                        <strong id="pendingUsers">0</strong>
+
+                        <small>
+                            Awaiting review
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Blocked -->
+                <article class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div class="stat-icon blocked-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
+
+                                <path
+                                    d="M8.5 8.5L15.5 15.5"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M15.5 8.5L8.5 15.5"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-badge danger">
+                            BLOCKED
+                        </span>
+
+                    </div>
+
+                    <div class="stat-card-body">
+
+                        <span>Blocked Users</span>
+
+                        <strong id="blockedUsers">0</strong>
+
+                        <small>
+                            Restricted accounts
+                        </small>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- =========================
+                 FINANCIAL OVERVIEW
+            ========================== -->
+            <div class="section-heading">
+
+                <div>
+
+                    <span>FINANCIAL OVERVIEW</span>
+
+                    <h3>
+                        Platform Summary
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="overview-grid">
+
+
+                <!-- Deposits -->
+                <article class="overview-card">
+
+                    <div class="overview-icon">
 
                         <svg viewBox="0 0 24 24" fill="none">
 
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="8.5"
+                            <path
+                                d="M12 3V16"
                                 stroke="currentColor"
-                                stroke-width="1.8"
+                                stroke-width="2"
+                                stroke-linecap="round"
                             />
 
                             <path
-                                d="M8 12L10.8 15L16.5 9"
+                                d="M7 11L12 16L17 11"
                                 stroke="currentColor"
                                 stroke-width="2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             />
 
+                            <path
+                                d="M5 20H19"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
                         </svg>
 
                     </div>
 
-                    <div class="stat-info">
+                    <div>
 
-                        <span>Active Users</span>
+                        <span>Total Deposits</span>
 
-                        <strong id="activeUsers">0</strong>
+                        <strong id="totalDeposits">
+                            UGX 0
+                        </strong>
 
-                        <small>Active accounts</small>
+                        <small id="depositCount">
+                            0 deposits
+                        </small>
 
                     </div>
-
-                    <span class="trend-arrow">
-                        ↗
-                    </span>
 
                 </article>
 
 
-                <!-- PENDING -->
+                <!-- Withdrawals -->
+                <article class="overview-card">
 
-                <article class="stat-card">
-
-                    <div class="glow-icon">
+                    <div class="overview-icon">
 
                         <svg viewBox="0 0 24 24" fill="none">
 
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="8.5"
+                            <path
+                                d="M12 21V8"
                                 stroke="currentColor"
-                                stroke-width="1.8"
+                                stroke-width="2"
+                                stroke-linecap="round"
                             />
 
                             <path
-                                d="M12 7V12L15 14"
+                                d="M7 13L12 8L17 13"
                                 stroke="currentColor"
-                                stroke-width="1.8"
+                                stroke-width="2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="M5 4H19"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
                             />
 
                         </svg>
 
                     </div>
 
-                    <div class="stat-info">
+                    <div>
 
-                        <span>Pending</span>
+                        <span>Total Withdrawals</span>
 
-                        <strong id="pendingUsers">0</strong>
+                        <strong id="totalWithdrawals">
+                            UGX 0
+                        </strong>
 
-                        <small>Awaiting review</small>
+                        <small id="withdrawalCount">
+                            0 withdrawals
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Investments -->
+                <article class="overview-card">
+
+                    <div class="overview-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <path
+                                d="M4 19V10"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M10 19V5"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M16 19V8"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M22 19V3"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Total Investments</span>
+
+                        <strong id="totalInvestments">
+                            UGX 0
+                        </strong>
+
+                        <small id="investmentCount">
+                            0 investments
+                        </small>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Balance -->
+                <article class="overview-card">
+
+                    <div class="overview-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <rect
+                                x="3"
+                                y="5"
+                                width="18"
+                                height="14"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            />
+
+                            <path
+                                d="M3 9H21"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            />
+
+                            <circle
+                                cx="16"
+                                cy="14"
+                                r="1.5"
+                                fill="currentColor"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>Platform Balance</span>
+
+                        <strong id="platformBalance">
+                            UGX 0
+                        </strong>
+
+                        <small>
+                            Current recorded balance
+                        </small>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- =========================
+                 LOWER DASHBOARD
+            ========================== -->
+            <div class="dashboard-columns">
+
+
+                <!-- Recent Transactions -->
+                <section class="dashboard-panel transactions-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <span>ACTIVITY</span>
+
+                            <h3>
+                                Recent Transactions
+                            </h3>
+
+                        </div>
+
+                        <a href="admin-transactions.html">
+                            View all
+                        </a>
+
+                    </div>
+
+
+                    <div class="transactions-list" id="recentTransactions">
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M4 6H20"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+
+                                    <path
+                                        d="M4 12H20"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+
+                                    <path
+                                        d="M4 18H14"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+
+                                </svg>
+
+                            </div>
+
+                            <strong>
+                                No recent transactions
+                            </strong>
+
+                            <span>
+                                Transaction activity will appear here.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- Recent Users -->
+                <section class="dashboard-panel users-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <span>MEMBERS</span>
+
+                            <h3>
+                                Recent Users
+                            </h3>
+
+                        </div>
+
+                        <a href="users.html">
+                            View all
+                        </a>
+
+                    </div>
+
+
+                    <div class="recent-users-list" id="recentUsers">
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <circle
+                                        cx="12"
+                                        cy="8"
+                                        r="4"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    />
+
+                                    <path
+                                        d="M4 21C4 16.58 7.58 13 12 13C16.42 13 20 16.58 20 21"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                    />
+
+                                </svg>
+
+                            </div>
+
+                            <strong>
+                                No recent users
+                            </strong>
+
+                            <span>
+                                Newly registered members appear here.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =========================
+                 QUICK ACTIONS
+            ========================== -->
+            <section class="quick-actions-section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span>QUICK ACTIONS</span>
+
+                        <h3>
+                            Manage Crown Cash
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions-grid">
+
+
+                    <a href="users.html" class="quick-action">
+
+                        <div class="quick-action-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="9"
+                                    cy="7"
+                                    r="4"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                />
+
+                                <path
+                                    d="M3 21C3 17.69 5.69 15 9 15C12.31 15 15 17.69 15 21"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M18 8V14"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M15 11H21"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Manage Users
+                            </strong>
+
+                            <span>
+                                View and manage accounts
+                            </span>
+
+                        </div>
+
+                        <span class="quick-arrow">→</span>
+
+                    </a>
+
+
+                    <a href="admin-deposits.html" class="quick-action">
+
+                        <div class="quick-action-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M12 3V16"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M7 11L12 16L17 11"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M5 20H19"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Review Deposits
+                            </strong>
+
+                            <span>
+                                Verify pending deposits
+                            </span>
+
+                        </div>
+
+                        <span class="quick-arrow">→</span>
+
+                    </a>
+
+
+                    <a href="admin-withdrawals.html" class="quick-action">
+
+                        <div class="quick-action-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M12 21V8"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M7 13L12 8L17 13"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M5 4H19"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Review Withdrawals
+                            </strong>
+
+                            <span>
+                                Manage payout requests
+                            </span>
+
+                        </div>
+
+                        <span class="quick-arrow">→</span>
+
+                    </a>
+
+
+                    <a href="admin-investments.html" class="quick-action">
+
+                        <div class="quick-action-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M4 19V10"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M10 19V5"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16 19V8"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M22 19V3"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Investments
+                            </strong>
+
+                            <span>
+                                Monitor investment plans
+                            </span>
+
+                        </div>
+
+                        <span class="quick-arrow">→</span>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 FOOTER
+            ========================== -->
+            <footer class="admin-footer">
+
+                <span>
+                    © 2026 Crown Cash
+                </span>
+
+                <span>
+                    Admin Dashboard
+                </span>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- Dashboard JavaScript -->
+<script src="admin.js"></script>
+
+</body>
+</html>

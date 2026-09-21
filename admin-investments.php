@@ -1,26 +1,24 @@
 <?php
 
-// ======================================================
-// CROWN CASH - ADMIN INVESTMENTS API
-// File: admin-investments.php
-// GET  -> View investment requests
-// POST -> Approve or reject an investment
-// ======================================================
+/* =========================================================
+   CROWN CASH
+   ADMIN INVESTMENTS API
 
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+   GET:
+   Returns investment records for administrators.
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(204);
-    exit;
-}
+   IMPORTANT:
+   - Admin access is required.
+   - This endpoint is READ-ONLY.
+   - It does not create profits.
+   - It does not change balances.
+   - It does not approve investments.
+   ========================================================= */
 
-// ------------------------------------------------------
-// Session configuration for Vercel + Render
-// ------------------------------------------------------
+
+/* =========================================================
+   SESSION COOKIE
+   ========================================================= */
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -33,290 +31,339 @@ session_set_cookie_params([
 session_start();
 
 
-// ------------------------------------------------------
-// Helper function
-// ------------------------------------------------------
+/* =========================================================
+   HEADERS / CORS
+   ========================================================= */
 
-function sendResponse($statusCode, $data)
-{
-    http_response_code($statusCode);
-    echo json_encode($data);
+header("Content-Type: application/json; charset=UTF-8");
+
+header(
+    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+);
+
+header(
+    "Access-Control-Allow-Credentials: true"
+);
+
+header(
+    "Access-Control-Allow-Methods: GET, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type"
+);
+
+
+/* =========================================================
+   OPTIONS REQUEST
+   ========================================================= */
+
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+
+    http_response_code(204);
+
     exit;
 }
 
 
-// ------------------------------------------------------
-// Check admin login
-// ------------------------------------------------------
+/* =========================================================
+   ONLY GET ALLOWED
+   ========================================================= */
+
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
+}
+
+
+/* =========================================================
+   ADMIN AUTHENTICATION
+   ========================================================= */
 
 if (
-    empty($_SESSION["logged_in"]) ||
+    !isset($_SESSION["logged_in"]) ||
     $_SESSION["logged_in"] !== true
 ) {
-    sendResponse(401, [
+
+    http_response_code(401);
+
+    echo json_encode([
         "success" => false,
-        "message" => "You must be logged in."
+        "message" => "Please login first."
     ]);
+
+    exit;
 }
 
 
-// ------------------------------------------------------
-// Check admin role
-// ------------------------------------------------------
+/* =========================================================
+   ADMIN ROLE CHECK
+   ========================================================= */
 
-$sessionRole = strtolower(
-    trim(
-        (string) (
-            $_SESSION["role"]
-            ?? $_SESSION["account_type"]
-            ?? ""
-        )
-    )
-);
-
-if ($sessionRole !== "admin") {
-    sendResponse(403, [
-        "success" => false,
-        "message" => "Administrator access required."
-    ]);
-}
-
-
-// ------------------------------------------------------
-// Load MongoDB configuration
-// ------------------------------------------------------
-
-try {
-
-    require_once __DIR__ . "/config.php";
-
-} catch (Throwable $e) {
-
-    sendResponse(500, [
-        "success" => false,
-        "message" => "Database configuration could not be loaded."
-    ]);
-}
-
-
-// ------------------------------------------------------
-// Check required collections
-// ------------------------------------------------------
-
-if (!isset($investments) || !isset($users)) {
-
-    sendResponse(500, [
-        "success" => false,
-        "message" => "Required database collections are not available."
-    ]);
-}
-
-
-// ------------------------------------------------------
-// MongoDB ObjectId helper
-// ------------------------------------------------------
-
-function makeObjectId($value)
-{
-    if (!$value) {
-        return null;
-    }
-
-    try {
-
-        if ($value instanceof MongoDB\BSON\ObjectId) {
-            return $value;
-        }
-
-        return new MongoDB\BSON\ObjectId((string) $value);
-
-    } catch (Throwable $e) {
-
-        return null;
-    }
-}
-
-
-// ------------------------------------------------------
-// Convert MongoDB numbers to normal PHP numbers
-// ------------------------------------------------------
-
-function normalNumber($value)
-{
-    if ($value === null) {
-        return 0;
-    }
-
-    if ($value instanceof MongoDB\BSON\Decimal128) {
-        return (float) $value->__toString();
-    }
-
-    if ($value instanceof MongoDB\BSON\Int64) {
-        return (int) $value->__toString();
-    }
-
-    if (is_numeric($value)) {
-        return (float) $value;
-    }
-
-    return 0;
-}
-
-
-// ------------------------------------------------------
-// Convert MongoDB date to ISO string
-// ------------------------------------------------------
-
-function normalDate($value)
-{
-    if (!$value) {
-        return null;
-    }
-
-    if ($value instanceof MongoDB\BSON\UTCDateTime) {
-
-        try {
-            return $value
-                ->toDateTime()
-                ->format(DATE_ATOM);
-
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    if ($value instanceof DateTimeInterface) {
-        return $value->format(DATE_ATOM);
-    }
-
-    if (is_string($value)) {
-        return $value;
-    }
-
-    return null;
-}
-
-
-// ------------------------------------------------------
-// Convert any value to string
-// ------------------------------------------------------
-
-function normalString($value)
-{
-    if ($value === null) {
-        return "";
-    }
-
-    if (
-        $value instanceof MongoDB\BSON\ObjectId
-        || $value instanceof MongoDB\BSON\Decimal128
-        || $value instanceof MongoDB\BSON\Int64
-    ) {
-        return (string) $value;
-    }
-
-    return trim((string) $value);
-}
-
-
-// ------------------------------------------------------
-// Find user ID from an investment
-// ------------------------------------------------------
-
-function investmentUserId($investment)
-{
-    $possibleFields = [
-        "user_id",
-        "userId",
-        "user",
-        "account_id"
-    ];
-
-    foreach ($possibleFields as $field) {
-
-        if (!isset($investment[$field])) {
-            continue;
-        }
-
-        $id = makeObjectId($investment[$field]);
-
-        if ($id !== null) {
-            return $id;
-        }
-    }
-
-    return null;
-}
-
-
-// ------------------------------------------------------
-// Get plan name
-// ------------------------------------------------------
-
-function getPlanName($investment)
-{
-    $plan = strtolower(
-        normalString(
-            $investment["plan"]
-            ?? $investment["plan_name"]
-            ?? ""
+$sessionRole =
+    strtolower(
+        trim(
+            (string)(
+                $_SESSION["role"] ?? ""
+            )
         )
     );
 
-    if ($plan === "starter") {
-        return "Starter";
-    }
 
-    if ($plan === "standard") {
-        return "Standard";
-    }
+if (
+    $sessionRole !== "admin" &&
+    $sessionRole !== "administrator"
+) {
 
-    if ($plan === "advanced") {
-        return "Advanced";
-    }
+    http_response_code(403);
 
-    return ucfirst($plan ?: "Investment");
+    echo json_encode([
+        "success" => false,
+        "message" => "Administrator access required."
+    ]);
+
+    exit;
 }
 
 
-// ------------------------------------------------------
-// GET REQUEST
-// ------------------------------------------------------
+/* =========================================================
+   DATABASE
+   ========================================================= */
 
-if ($_SERVER["REQUEST_METHOD"] === "GET") {
+require_once __DIR__ . "/config.php";
 
-    try {
 
-        // ----------------------------------------------
-        // Optional status filter
-        // ----------------------------------------------
+/* =========================================================
+   HELPER FUNCTIONS
+   ========================================================= */
 
-        $status = strtolower(
-            trim($_GET["status"] ?? "")
-        );
+function jsonSafeValue($value)
+{
+    if (
+        $value instanceof MongoDB\BSON\ObjectId
+    ) {
 
-        $filter = [];
+        return (string)$value;
+    }
 
-        if ($status !== "") {
 
-            $filter["status"] = $status;
+    if (
+        $value instanceof MongoDB\BSON\UTCDateTime
+    ) {
 
-        } else {
+        return $value
+            ->toDateTime()
+            ->format(DATE_ATOM);
+    }
 
-            // Admin page normally needs pending first.
-            // All investments are returned when no filter
-            // is supplied.
 
-            $filter = [];
+    if (
+        $value instanceof MongoDB\BSON\Decimal128
+    ) {
+
+        return (float)$value->__toString();
+    }
+
+
+    if (
+        $value instanceof MongoDB\BSON\Int64
+    ) {
+
+        return (int)$value;
+    }
+
+
+    if (
+        is_array($value)
+    ) {
+
+        $result = [];
+
+        foreach ($value as $key => $item) {
+
+            $result[$key] =
+                jsonSafeValue($item);
         }
 
+        return $result;
+    }
 
-        // ----------------------------------------------
-        // Fetch investments
-        // ----------------------------------------------
 
-        $cursor = $investments->find(
-            $filter,
+    if (
+        is_object($value)
+    ) {
+
+        $result = [];
+
+        foreach (
+            get_object_vars($value)
+            as $key => $item
+        ) {
+
+            $result[$key] =
+                jsonSafeValue($item);
+        }
+
+        return $result;
+    }
+
+
+    return $value;
+}
+
+
+function getField($document, $field, $default = null)
+{
+    if (
+        isset($document[$field])
+    ) {
+
+        return $document[$field];
+    }
+
+    return $default;
+}
+
+
+function getCollectionSafely(
+    $database,
+    $possibleVariable,
+    $collectionName
+) {
+
+    if (
+        isset($GLOBALS[$possibleVariable])
+    ) {
+
+        return $GLOBALS[$possibleVariable];
+    }
+
+    return $database
+        ->selectCollection($collectionName);
+}
+
+
+function formatDateValue($value)
+{
+    if (
+        $value instanceof MongoDB\BSON\UTCDateTime
+    ) {
+
+        return $value
+            ->toDateTime()
+            ->format(DATE_ATOM);
+    }
+
+
+    if (
+        $value instanceof MongoDB\BSON\ObjectId
+    ) {
+
+        return null;
+    }
+
+
+    if (
+        is_string($value) &&
+        trim($value) !== ""
+    ) {
+
+        return $value;
+    }
+
+
+    return null;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+try {
+
+    /*
+     * config.php should normally expose:
+     *
+     * $database
+     * $users
+     * $investments
+     *
+     * We support both direct collection variables
+     * and database->selectCollection().
+     */
+
+    if (
+        !isset($database) &&
+        !isset($investments)
+    ) {
+
+        throw new Exception(
+            "Database configuration is unavailable."
+        );
+    }
+
+
+    /* =====================================================
+       INVESTMENTS COLLECTION
+       ===================================================== */
+
+    if (
+        isset($investments)
+    ) {
+
+        $investmentCollection =
+            $investments;
+
+    } else {
+
+        $investmentCollection =
+            $database->selectCollection(
+                "investments"
+            );
+    }
+
+
+    /* =====================================================
+       USERS COLLECTION
+       ===================================================== */
+
+    if (
+        isset($users)
+    ) {
+
+        $userCollection =
+            $users;
+
+    } elseif (
+        isset($database)
+    ) {
+
+        $userCollection =
+            $database->selectCollection(
+                "users"
+            );
+
+    } else {
+
+        $userCollection = null;
+    }
+
+
+    /* =====================================================
+       READ INVESTMENTS
+       ===================================================== */
+
+    $cursor =
+        $investmentCollection->find(
+            [],
             [
                 "sort" => [
                     "created_at" => -1,
@@ -327,719 +374,584 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         );
 
 
-        $investmentList = [];
-
-        foreach ($cursor as $investment) {
-
-            $userId = investmentUserId($investment);
-
-            $user = null;
-
-            if ($userId !== null) {
-
-                $user = $users->findOne([
-                    "_id" => $userId
-                ]);
-            }
+    $investmentRecords = [];
 
 
-            // ------------------------------------------
-            // User information
-            // ------------------------------------------
+    foreach ($cursor as $investment) {
 
-            $firstName = normalString(
-                $user["first_name"] ?? ""
-            );
+        /*
+         * Convert BSON document to array.
+         */
 
-            $lastName = normalString(
-                $user["last_name"] ?? ""
-            );
-
-            $fullName = normalString(
-                $user["full_name"] ?? ""
-            );
-
-            if ($fullName === "") {
-
-                $fullName = trim(
-                    $firstName . " " . $lastName
-                );
-            }
-
-            if ($fullName === "") {
-                $fullName = "Unknown User";
-            }
-
-
-            $email = normalString(
-                $user["email"] ?? ""
-            );
-
-            $phone = normalString(
-                $user["phone"] ?? ""
+        $investment =
+            jsonSafeValue(
+                $investment
             );
 
 
-            // ------------------------------------------
-            // Investment fields
-            // ------------------------------------------
+        /* =================================================
+           INVESTMENT ID
+           ================================================= */
 
-            $investmentId = normalString(
+        $investmentId =
+            (string)(
                 $investment["_id"] ?? ""
             );
 
-            $reference = normalString(
-                $investment["reference"]
-                ?? $investment["investment_reference"]
-                ?? ""
-            );
 
-            $plan = getPlanName($investment);
+        /* =================================================
+           USER ID
+           ================================================= */
 
-            $amount = normalNumber(
-                $investment["amount"]
-                ?? $investment["investment_amount"]
-                ?? 0
-            );
-
-            $duration = (int) normalNumber(
-                $investment["duration_days"]
-                ?? $investment["duration"]
-                ?? 30
-            );
-
-            if ($duration <= 0) {
-                $duration = 30;
-            }
+        $userId =
+            $investment["user_id"] ??
+            $investment["userId"] ??
+            null;
 
 
-            $investmentStatus = strtolower(
-                normalString(
-                    $investment["status"] ?? "pending"
-                )
-            );
+        if (
+            is_array($userId) &&
+            isset($userId["$oid"])
+        ) {
 
-            $createdAt = normalDate(
-                $investment["created_at"]
-                ?? $investment["createdAt"]
-                ?? null
-            );
-
-            $startDate = normalDate(
-                $investment["start_date"]
-                ?? $investment["startDate"]
-                ?? null
-            );
-
-            $endDate = normalDate(
-                $investment["end_date"]
-                ?? $investment["endDate"]
-                ?? null
-            );
-
-
-            $investmentList[] = [
-
-                "id" => $investmentId,
-
-                "user_id" => $userId
-                    ? (string) $userId
-                    : "",
-
-                "user" => [
-
-                    "name" => $fullName,
-
-                    "first_name" => $firstName,
-
-                    "last_name" => $lastName,
-
-                    "email" => $email,
-
-                    "phone" => $phone
-                ],
-
-                "plan" => $plan,
-
-                "plan_key" => strtolower($plan),
-
-                "amount" => $amount,
-
-                "duration_days" => $duration,
-
-                "status" => $investmentStatus,
-
-                "reference" => $reference,
-
-                "created_at" => $createdAt,
-
-                "start_date" => $startDate,
-
-                "end_date" => $endDate
-            ];
+            $userId =
+                $userId["$oid"];
         }
 
 
-        // ----------------------------------------------
-        // Count statuses
-        // ----------------------------------------------
+        if (
+            $userId !== null
+        ) {
 
-        $pendingCount = $investments->countDocuments([
-            "status" => "pending"
-        ]);
-
-        $activeCount = $investments->countDocuments([
-            "status" => "active"
-        ]);
-
-        $completedCount = $investments->countDocuments([
-            "status" => "completed"
-        ]);
-
-        $rejectedCount = $investments->countDocuments([
-            "status" => "rejected"
-        ]);
+            $userId =
+                (string)$userId;
+        }
 
 
-        sendResponse(200, [
+        /* =================================================
+           CUSTOMER INFORMATION
+           ================================================= */
 
+        $fullName =
+            $investment["full_name"] ??
+            $investment["fullName"] ??
+            $investment["customer_name"] ??
+            $investment["customerName"] ??
+            $investment["name"] ??
+            "";
+
+
+        $email =
+            $investment["email"] ??
+            "";
+
+
+        $phone =
+            $investment["phone"] ??
+            "";
+
+
+        /*
+         * If investment does not contain customer
+         * information, look it up in users collection.
+         */
+
+        if (
+            $userCollection !== null &&
+            $userId !== null
+        ) {
+
+            try {
+
+                $userObjectId =
+                    new MongoDB\BSON\ObjectId(
+                        $userId
+                    );
+
+
+                $user =
+                    $userCollection->findOne([
+                        "_id" => $userObjectId
+                    ]);
+
+
+                if ($user) {
+
+                    $user =
+                        jsonSafeValue(
+                            $user
+                        );
+
+
+                    if (
+                        $fullName === ""
+                    ) {
+
+                        $fullName =
+                            $user["full_name"] ??
+                            $user["fullName"] ??
+                            $user["name"] ??
+                            "";
+                    }
+
+
+                    if (
+                        $email === ""
+                    ) {
+
+                        $email =
+                            $user["email"] ??
+                            "";
+                    }
+
+
+                    if (
+                        $phone === ""
+                    ) {
+
+                        $phone =
+                            $user["phone"] ??
+                            "";
+                    }
+                }
+
+            } catch (
+                MongoDB\Driver\Exception\Exception $userError
+            ) {
+
+                /*
+                 * Do not fail the entire investment list
+                 * if one user's ObjectId cannot be resolved.
+                 */
+            }
+        }
+
+
+        if (
+            trim((string)$fullName) === ""
+        ) {
+
+            $fullName =
+                "Unknown User";
+        }
+
+
+        /* =================================================
+           PLAN
+           ================================================= */
+
+        $plan =
+            $investment["plan"] ??
+            $investment["plan_name"] ??
+            $investment["planName"] ??
+            $investment["package"] ??
+            "";
+
+
+        $plan =
+            strtolower(
+                trim(
+                    (string)$plan
+                )
+            );
+
+
+        /* =================================================
+           AMOUNT
+           ================================================= */
+
+        $amount =
+            $investment["amount"] ??
+            $investment["investment_amount"] ??
+            $investment["investmentAmount"] ??
+            0;
+
+
+        if (
+            $amount instanceof MongoDB\BSON\Decimal128
+        ) {
+
+            $amount =
+                (float)$amount->__toString();
+
+        } else {
+
+            $amount =
+                (float)$amount;
+        }
+
+
+        /* =================================================
+           STATUS
+           ================================================= */
+
+        $status =
+            $investment["status"] ??
+            "pending";
+
+
+        $status =
+            strtolower(
+                trim(
+                    (string)$status
+                )
+            );
+
+
+        /*
+         * Normalize a few common backend statuses.
+         */
+
+        if (
+            $status === "approved" ||
+            $status === "running"
+        ) {
+
+            $displayStatus =
+                "active";
+
+        } elseif (
+            $status === "complete" ||
+            $status === "finished"
+        ) {
+
+            $displayStatus =
+                "completed";
+
+        } elseif (
+            $status === "rejected" ||
+            $status === "declined"
+        ) {
+
+            $displayStatus =
+                "cancelled";
+
+        } else {
+
+            $displayStatus =
+                $status;
+        }
+
+
+        /* =================================================
+           DURATION
+           ================================================= */
+
+        $duration =
+            $investment["duration"] ??
+            $investment["duration_days"] ??
+            $investment["durationDays"] ??
+            30;
+
+
+        $duration =
+            (int)$duration;
+
+
+        if (
+            $duration <= 0
+        ) {
+
+            $duration = 30;
+        }
+
+
+        /* =================================================
+           DATES
+           ================================================= */
+
+        $startDate =
+            $investment["start_date"] ??
+            $investment["startDate"] ??
+            $investment["started_at"] ??
+            $investment["startedAt"] ??
+            null;
+
+
+        $endDate =
+            $investment["end_date"] ??
+            $investment["endDate"] ??
+            $investment["maturity_date"] ??
+            $investment["maturityDate"] ??
+            null;
+
+
+        $createdAt =
+            $investment["created_at"] ??
+            $investment["createdAt"] ??
+            null;
+
+
+        $startDate =
+            formatDateValue(
+                $startDate
+            );
+
+
+        $endDate =
+            formatDateValue(
+                $endDate
+            );
+
+
+        $createdAt =
+            formatDateValue(
+                $createdAt
+            );
+
+
+        /* =================================================
+           RECORDED RETURN
+           ================================================= */
+
+        $recordedReturn =
+            $investment["return_amount"] ??
+            $investment["returnAmount"] ??
+            $investment["earnings"] ??
+            $investment["profit"] ??
+            $investment["total_return"] ??
+            $investment["totalReturn"] ??
+            0;
+
+
+        if (
+            $recordedReturn instanceof
+            MongoDB\BSON\Decimal128
+        ) {
+
+            $recordedReturn =
+                (float)$recordedReturn->__toString();
+
+        } else {
+
+            $recordedReturn =
+                (float)$recordedReturn;
+        }
+
+
+        /* =================================================
+           BUILD RESPONSE RECORD
+           ================================================= */
+
+        $investmentRecords[] = [
+
+            "id" =>
+                $investmentId,
+
+            "investment_id" =>
+                $investmentId,
+
+            "user_id" =>
+                $userId,
+
+            "full_name" =>
+                (string)$fullName,
+
+            "fullName" =>
+                (string)$fullName,
+
+            "customer_name" =>
+                (string)$fullName,
+
+            "email" =>
+                (string)$email,
+
+            "phone" =>
+                (string)$phone,
+
+            "plan" =>
+                $plan,
+
+            "plan_name" =>
+                $plan,
+
+            "amount" =>
+                $amount,
+
+            "investment_amount" =>
+                $amount,
+
+            "duration" =>
+                $duration,
+
+            "duration_days" =>
+                $duration,
+
+            "status" =>
+                $displayStatus,
+
+            "original_status" =>
+                $status,
+
+            "start_date" =>
+                $startDate,
+
+            "end_date" =>
+                $endDate,
+
+            "created_at" =>
+                $createdAt,
+
+            "return_amount" =>
+                $recordedReturn,
+
+            "earnings" =>
+                $recordedReturn,
+
+            "profit" =>
+                $recordedReturn
+        ];
+    }
+
+
+    /* =====================================================
+       ADMIN INFORMATION
+       ===================================================== */
+
+    $admin = [
+
+        "name" =>
+            "Administrator",
+
+        "full_name" =>
+            "Administrator",
+
+        "email" =>
+            (string)(
+                $_SESSION["user_email"] ?? ""
+            )
+    ];
+
+
+    /*
+     * If an admin user exists, retrieve the actual
+     * name/email from the database.
+     */
+
+    if (
+        isset($users) &&
+        isset($_SESSION["user_id"])
+    ) {
+
+        try {
+
+            $adminObjectId =
+                new MongoDB\BSON\ObjectId(
+                    $_SESSION["user_id"]
+                );
+
+
+            $adminUser =
+                $users->findOne([
+                    "_id" =>
+                        $adminObjectId
+                ]);
+
+
+            if ($adminUser) {
+
+                $adminUser =
+                    jsonSafeValue(
+                        $adminUser
+                    );
+
+
+                $adminName =
+                    $adminUser["full_name"] ??
+                    $adminUser["fullName"] ??
+                    $adminUser["name"] ??
+                    "Administrator";
+
+
+                $adminEmail =
+                    $adminUser["email"] ??
+                    ($_SESSION["user_email"] ?? "");
+
+
+                $admin = [
+
+                    "name" =>
+                        (string)$adminName,
+
+                    "full_name" =>
+                        (string)$adminName,
+
+                    "email" =>
+                        (string)$adminEmail
+                ];
+            }
+
+        } catch (
+            MongoDB\Driver\Exception\Exception $adminError
+        ) {
+
+            /*
+             * Keep default Administrator information.
+             */
+        }
+    }
+
+
+    /* =====================================================
+       RESPONSE
+       ===================================================== */
+
+    echo json_encode(
+        [
             "success" => true,
 
-            "counts" => [
-
-                "pending" => $pendingCount,
-
-                "active" => $activeCount,
-
-                "completed" => $completedCount,
-
-                "rejected" => $rejectedCount,
-
-                "total" => count($investmentList)
-            ],
-
-            "investments" => $investmentList
-        ]);
-
-
-    } catch (Throwable $e) {
-
-        sendResponse(500, [
-
-            "success" => false,
-
-            "message" => "Unable to load investments.",
-
-            "error" => $e->getMessage()
-        ]);
-    }
-}
-
-
-// ------------------------------------------------------
-// POST REQUEST
-// ------------------------------------------------------
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
-    try {
-
-        // ----------------------------------------------
-        // Read JSON request
-        // ----------------------------------------------
-
-        $rawInput = file_get_contents("php://input");
-
-        $data = json_decode(
-            $rawInput,
-            true
-        );
-
-        if (!is_array($data)) {
-            $data = $_POST;
-        }
-
-
-        $investmentId = trim(
-            (string) (
-                $data["investment_id"]
-                ?? $data["id"]
-                ?? ""
-            )
-        );
-
-        $action = strtolower(
-            trim(
-                (string) (
-                    $data["action"]
-                    ?? ""
-                )
-            )
-        );
-
-
-        // ----------------------------------------------
-        // Validate action
-        // ----------------------------------------------
-
-        if (!in_array(
-            $action,
-            ["approve", "reject"],
-            true
-        )) {
-
-            sendResponse(400, [
-
-                "success" => false,
-
-                "message" =>
-                    "Invalid action. Use approve or reject."
-            ]);
-        }
-
-
-        // ----------------------------------------------
-        // Validate investment ID
-        // ----------------------------------------------
-
-        $objectId = makeObjectId($investmentId);
-
-        if ($objectId === null) {
-
-            sendResponse(400, [
-
-                "success" => false,
-
-                "message" => "Invalid investment ID."
-            ]);
-        }
-
-
-        // ----------------------------------------------
-        // Find investment
-        // ----------------------------------------------
-
-        $investment = $investments->findOne([
-            "_id" => $objectId
-        ]);
-
-        if (!$investment) {
-
-            sendResponse(404, [
-
-                "success" => false,
-
-                "message" => "Investment was not found."
-            ]);
-        }
-
-
-        // ----------------------------------------------
-        // Only pending investments can be processed
-        // ----------------------------------------------
-
-        $currentStatus = strtolower(
-            normalString(
-                $investment["status"] ?? "pending"
-            )
-        );
-
-        if ($currentStatus !== "pending") {
-
-            sendResponse(409, [
-
-                "success" => false,
-
-                "message" =>
-                    "This investment has already been processed.",
-
-                "current_status" => $currentStatus
-            ]);
-        }
-
-
-        $now = new MongoDB\BSON\UTCDateTime(
-            (int) (microtime(true) * 1000)
-        );
-
-
-        // ==================================================
-        // APPROVE INVESTMENT
-        // ==================================================
-
-        if ($action === "approve") {
-
-            $duration = (int) normalNumber(
-                $investment["duration_days"]
-                ?? $investment["duration"]
-                ?? 30
-            );
-
-            if ($duration <= 0) {
-                $duration = 30;
-            }
-
-
-            $startDate = new DateTimeImmutable(
-                "now",
-                new DateTimeZone("UTC")
-            );
-
-            $endDate = $startDate->modify(
-                "+" . $duration . " days"
-            );
-
-
-            $startMongoDate =
-                new MongoDB\BSON\UTCDateTime(
-                    $startDate->getTimestamp() * 1000
-                );
-
-            $endMongoDate =
-                new MongoDB\BSON\UTCDateTime(
-                    $endDate->getTimestamp() * 1000
-                );
-
-
-            // ------------------------------------------
-            // Change pending -> active
-            // ------------------------------------------
-
-            $updateResult = $investments->updateOne(
-
-                [
-                    "_id" => $objectId,
-
-                    "status" => "pending"
-                ],
-
-                [
-                    '$set' => [
-
-                        "status" => "active",
-
-                        "start_date" =>
-                            $startMongoDate,
-
-                        "end_date" =>
-                            $endMongoDate,
-
-                        "approved_at" =>
-                            $now,
-
-                        "approved_by" =>
-                            $_SESSION["user_id"]
-                            ?? $_SESSION["admin_id"]
-                            ?? null,
-
-                        "updated_at" =>
-                            $now
-                    ]
-                ]
-            );
-
-
-            if ($updateResult->getModifiedCount() !== 1) {
-
-                sendResponse(409, [
-
-                    "success" => false,
-
-                    "message" =>
-                        "Investment could not be approved. It may have already been processed."
-                ]);
-            }
-
-
-            // ------------------------------------------
-            // Optional transaction update
-            // ------------------------------------------
-
-            if (isset($transactions)) {
-
-                try {
-
-                    $transactions->updateMany(
-
-                        [
-                            '$or' => [
-
-                                [
-                                    "investment_id" =>
-                                        $objectId
-                                ],
-
-                                [
-                                    "investment_id" =>
-                                        $investmentId
-                                ],
-
-                                [
-                                    "reference" =>
-                                        normalString(
-                                            $investment["reference"]
-                                            ?? ""
-                                        )
-                                ]
-                            ]
-                        ],
-
-                        [
-                            '$set' => [
-
-                                "status" =>
-                                    "completed",
-
-                                "updated_at" =>
-                                    $now
-                            ]
-                        ]
-                    );
-
-                } catch (Throwable $e) {
-
-                    // Do not fail the approval if the
-                    // optional transaction update fails.
-                }
-            }
-
-
-            // ------------------------------------------
-            // Optional audit log
-            // ------------------------------------------
-
-            if (isset($audit_logs)) {
-
-                try {
-
-                    $audit_logs->insertOne([
-
-                        "action" =>
-                            "investment_approved",
-
-                        "investment_id" =>
-                            $objectId,
-
-                        "admin_id" =>
-                            $_SESSION["user_id"]
-                            ?? $_SESSION["admin_id"]
-                            ?? null,
-
-                        "created_at" =>
-                            $now,
-
-                        "details" => [
-
-                            "previous_status" =>
-                                "pending",
-
-                            "new_status" =>
-                                "active",
-
-                            "duration_days" =>
-                                $duration
-                        ]
-                    ]);
-
-                } catch (Throwable $e) {
-
-                    // Audit failure does not cancel approval.
-                }
-            }
-
-
-            sendResponse(200, [
-
-                "success" => true,
-
-                "message" =>
-                    "Investment approved successfully.",
-
-                "status" => "active",
-
-                "start_date" =>
-                    $startDate->format(DATE_ATOM),
-
-                "end_date" =>
-                    $endDate->format(DATE_ATOM)
-            ]);
-        }
-
-
-        // ==================================================
-        // REJECT INVESTMENT
-        // ==================================================
-
-        if ($action === "reject") {
-
-            $updateResult = $investments->updateOne(
-
-                [
-                    "_id" => $objectId,
-
-                    "status" => "pending"
-                ],
-
-                [
-                    '$set' => [
-
-                        "status" => "rejected",
-
-                        "rejected_at" => $now,
-
-                        "rejected_by" =>
-                            $_SESSION["user_id"]
-                            ?? $_SESSION["admin_id"]
-                            ?? null,
-
-                        "updated_at" => $now
-                    ]
-                ]
-            );
-
-
-            if ($updateResult->getModifiedCount() !== 1) {
-
-                sendResponse(409, [
-
-                    "success" => false,
-
-                    "message" =>
-                        "Investment could not be rejected. It may have already been processed."
-                ]);
-            }
-
-
-            // ------------------------------------------
-            // Optional transaction update
-            // ------------------------------------------
-
-            if (isset($transactions)) {
-
-                try {
-
-                    $transactions->updateMany(
-
-                        [
-                            '$or' => [
-
-                                [
-                                    "investment_id" =>
-                                        $objectId
-                                ],
-
-                                [
-                                    "investment_id" =>
-                                        $investmentId
-                                ],
-
-                                [
-                                    "reference" =>
-                                        normalString(
-                                            $investment["reference"]
-                                            ?? ""
-                                        )
-                                ]
-                            ]
-                        ],
-
-                        [
-                            '$set' => [
-
-                                "status" =>
-                                    "rejected",
-
-                                "updated_at" =>
-                                    $now
-                            ]
-                        ]
-                    );
-
-                } catch (Throwable $e) {
-
-                    // Optional update.
-                }
-            }
-
-
-            // ------------------------------------------
-            // Optional audit log
-            // ------------------------------------------
-
-            if (isset($audit_logs)) {
-
-                try {
-
-                    $audit_logs->insertOne([
-
-                        "action" =>
-                            "investment_rejected",
-
-                        "investment_id" =>
-                            $objectId,
-
-                        "admin_id" =>
-                            $_SESSION["user_id"]
-                            ?? $_SESSION["admin_id"]
-                            ?? null,
-
-                        "created_at" =>
-                            $now,
-
-                        "details" => [
-
-                            "previous_status" =>
-                                "pending",
-
-                            "new_status" =>
-                                "rejected"
-                        ]
-                    ]);
-
-                } catch (Throwable $e) {
-
-                    // Audit failure does not cancel rejection.
-                }
-            }
-
-
-            sendResponse(200, [
-
-                "success" => true,
-
-                "message" =>
-                    "Investment rejected successfully.",
-
-                "status" => "rejected"
-            ]);
-        }
-
-
-    } catch (Throwable $e) {
-
-        sendResponse(500, [
-
-            "success" => false,
-
             "message" =>
-                "Unable to process investment.",
+                "Investment records loaded successfully.",
 
-            "error" =>
-                $e->getMessage()
-        ]);
-    }
+            "admin" =>
+                $admin,
+
+            "count" =>
+                count($investmentRecords),
+
+            "investments" =>
+                $investmentRecords
+        ],
+        JSON_UNESCAPED_SLASHES
+    );
+
+
+} catch (
+    MongoDB\Driver\Exception\Exception $e
+) {
+
+    error_log(
+        "admin-investments.php MongoDB error: " .
+        $e->getMessage()
+    );
+
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Database error while loading investments."
+    ]);
+
+
+} catch (
+    Throwable $e
+) {
+
+    error_log(
+        "admin-investments.php error: " .
+        $e->getMessage()
+    );
+
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Unable to load investment records."
+    ]);
 }
-
-
-// ------------------------------------------------------
-// Unsupported request
-// ------------------------------------------------------
-
-sendResponse(405, [
-
-    "success" => false,
-
-    "message" => "Method not allowed."
-]);
 
 ?>

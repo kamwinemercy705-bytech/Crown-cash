@@ -1,38 +1,59 @@
 <?php
 
-// ============================================================
-// CROWN CASH - MONGODB CONFIGURATION
-// File: config.php
-// ============================================================
+/* =========================================================
+   CROWN CASH — MONGODB CONFIGURATION
+========================================================= */
 
 declare(strict_types=1);
 
-// ------------------------------------------------------------
-// MongoDB library
-// ------------------------------------------------------------
 
-require_once __DIR__ . "/vendor/autoload.php";
+/* =========================================================
+   ERROR SETTINGS
+========================================================= */
 
-use MongoDB\Client;
+ini_set("display_errors", "0");
+ini_set("log_errors", "1");
 
-// ------------------------------------------------------------
-// Get MongoDB connection string
-// ------------------------------------------------------------
+error_reporting(E_ALL);
 
-// Render environment variable
-$mongoUri = getenv("MONGODB_URI");
 
-// Fallback for systems using DB_URI
-if (!$mongoUri) {
-    $mongoUri = getenv("DB_URI");
-}
+/* =========================================================
+   LOAD COMPOSER
+========================================================= */
 
-// Stop if no connection string exists
-if (!$mongoUri) {
+$autoload = __DIR__ . "/vendor/autoload.php";
+
+if (!file_exists($autoload)) {
 
     http_response_code(500);
 
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/json; charset=utf-8");
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Server configuration error: Composer autoload file is missing."
+    ]);
+
+    exit;
+}
+
+require_once $autoload;
+
+
+/* =========================================================
+   MONGODB URI
+========================================================= */
+
+$mongoUri = getenv("MONGODB_URI");
+
+if (
+    !$mongoUri ||
+    trim($mongoUri) === ""
+) {
+
+    http_response_code(500);
+
+    header("Content-Type: application/json; charset=utf-8");
 
     echo json_encode([
         "success" => false,
@@ -42,28 +63,99 @@ if (!$mongoUri) {
     exit;
 }
 
-// ------------------------------------------------------------
-// Database name
-// ------------------------------------------------------------
+
+/* =========================================================
+   DATABASE NAME
+========================================================= */
 
 $databaseName = "crowncash";
 
-// ------------------------------------------------------------
-// Connect to MongoDB
-// ------------------------------------------------------------
+
+/* =========================================================
+   CREATE MONGODB CLIENT
+========================================================= */
 
 try {
 
-    $mongoClient = new Client($mongoUri);
+    $mongoClient =
+        new MongoDB\Client(
+            $mongoUri,
+            [],
+            [
+                "serverSelectionTimeoutMS" => 10000,
+                "connectTimeoutMS" => 10000
+            ]
+        );
 
-    // Select Crown Cash database
-    $database = $mongoClient->selectDatabase($databaseName);
 
-} catch (Throwable $e) {
+    /* =====================================================
+       SELECT DATABASE
+    ====================================================== */
+
+    $db =
+        $mongoClient->selectDatabase(
+            $databaseName
+        );
+
+
+    /* =====================================================
+       COLLECTIONS
+    ====================================================== */
+
+    $users =
+        $db->selectCollection(
+            "users"
+        );
+
+
+    $deposits =
+        $db->selectCollection(
+            "deposits"
+        );
+
+
+    $withdrawals =
+        $db->selectCollection(
+            "withdrawals"
+        );
+
+
+    $investments =
+        $db->selectCollection(
+            "investments"
+        );
+
+
+    $transactions =
+        $db->selectCollection(
+            "transactions"
+        );
+
+
+    $referrals =
+        $db->selectCollection(
+            "referrals"
+        );
+
+
+    $auditLogs =
+        $db->selectCollection(
+            "audit_logs"
+        );
+
+
+} catch (
+    MongoDB\Driver\Exception\Exception $e
+) {
+
+    error_log(
+        "MongoDB connection error: " .
+        $e->getMessage()
+    );
 
     http_response_code(500);
 
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/json; charset=utf-8");
 
     echo json_encode([
         "success" => false,
@@ -71,153 +163,22 @@ try {
     ]);
 
     exit;
-}
-
-// ------------------------------------------------------------
-// Collections
-// ------------------------------------------------------------
-
-$users = $database->users;
-
-$transactions = $database->transactions;
-
-$deposits = $database->deposits;
-
-$withdrawals = $database->withdrawals;
-
-$investments = $database->investments;
-
-$referrals = $database->referrals;
-
-$audit_logs = $database->audit_logs;
-
-
-// ============================================================
-// OPTIONAL: Create useful indexes
-// ============================================================
-
-try {
-
-    // Email should be unique
-    $users->createIndex(
-        ["email" => 1],
-        ["unique" => true]
-    );
 
 } catch (Throwable $e) {
 
-    // Ignore index errors so the API can continue.
-}
-
-
-// Phone should be unique
-try {
-
-    $users->createIndex(
-        ["phone" => 1],
-        ["unique" => true]
+    error_log(
+        "Configuration error: " .
+        $e->getMessage()
     );
 
-} catch (Throwable $e) {
+    http_response_code(500);
 
-    // Ignore index errors.
+    header("Content-Type: application/json; charset=utf-8");
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Server configuration error."
+    ]);
+
+    exit;
 }
-
-
-// Referral codes should be unique
-try {
-
-    $users->createIndex(
-        ["referral_code" => 1],
-        ["unique" => true]
-    );
-
-} catch (Throwable $e) {
-
-    // Ignore index errors.
-}
-
-
-// Deposit references should be searchable
-try {
-
-    $deposits->createIndex(
-        ["transaction_reference" => 1]
-    );
-
-} catch (Throwable $e) {
-
-    // Ignore index errors.
-}
-
-
-// Withdrawal history
-try {
-
-    $withdrawals->createIndex(
-        [
-            "user_id" => 1,
-            "created_at" => -1
-        ]
-    );
-
-} catch (Throwable $e) {
-
-    // Ignore index errors.
-}
-
-
-// Investment history
-try {
-
-    $investments->createIndex(
-        [
-            "user_id" => 1,
-            "created_at" => -1
-        ]
-    );
-
-} catch (Throwable $e) {
-
-    // Ignore index errors.
-}
-
-
-// Referral relationships
-try {
-
-    $referrals->createIndex(
-        [
-            "referrer_id" => 1,
-            "created_at" => -1
-        ]
-    );
-
-} catch (Throwable $e) {
-
-    // Ignore index errors.
-}
-
-
-// ============================================================
-// IMPORTANT
-// ============================================================
-//
-// Do NOT put the MongoDB username or password directly
-// into this file.
-//
-// Keep the complete MongoDB URI inside Render:
-//
-// Render
-// → Crown-cash1
-// → Environment
-// → MONGODB_URI
-//
-// Example format:
-//
-// mongodb+srv://USERNAME:PASSWORD@crowncash.xxxxx.mongodb.net/
-//
-// Do not expose the real password in GitHub.
-//
-// ============================================================
-?>

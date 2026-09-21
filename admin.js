@@ -1,141 +1,87 @@
+/* =========================================================
+   CROWN CASH — ADVANCED ADMIN DASHBOARD
+   admin.js
+========================================================= */
+
 "use strict";
 
 
 /* =========================================================
-   CROWN CASH ADMIN DASHBOARD
+   CONFIGURATION
 ========================================================= */
 
 const API_BASE =
     "https://crown-cash1.onrender.com";
 
+
 const DASHBOARD_API =
     `${API_BASE}/admin-dashboard.php`;
+
 
 const LOGOUT_API =
     `${API_BASE}/logout.php`;
 
 
 /* =========================================================
-   DOM
+   DOM HELPERS
+========================================================= */
+
+const $ = (selector) => {
+    return document.querySelector(selector);
+};
+
+
+const $$ = (selector) => {
+    return document.querySelectorAll(selector);
+};
+
+
+/* =========================================================
+   ELEMENTS
 ========================================================= */
 
 const sidebar =
-    document.getElementById("sidebar");
-
-const menuButton =
-    document.getElementById("menuButton");
-
-const sidebarClose =
-    document.getElementById("sidebarClose");
+    $("#adminSidebar");
 
 const sidebarOverlay =
-    document.getElementById("sidebarOverlay");
+    $("#sidebarOverlay");
+
+const menuButton =
+    $("#menuButton");
+
+const sidebarClose =
+    $("#sidebarClose");
 
 const refreshButton =
-    document.getElementById("refreshButton");
+    $("#refreshButton");
 
 const logoutButton =
-    document.getElementById("logoutButton");
-
-const retryButton =
-    document.getElementById("retryButton");
-
-const totalUsers =
-    document.getElementById("totalUsers");
-
-const activeUsers =
-    document.getElementById("activeUsers");
-
-const pendingUsers =
-    document.getElementById("pendingUsers");
-
-const blockedUsers =
-    document.getElementById("blockedUsers");
-
-const totalBalance =
-    document.getElementById("totalBalance");
-
-const totalDeposits =
-    document.getElementById("totalDeposits");
-
-const totalWithdrawals =
-    document.getElementById("totalWithdrawals");
-
-const totalInvestments =
-    document.getElementById("totalInvestments");
+    $("#logoutButton");
 
 const adminName =
-    document.getElementById("adminName");
+    $("#adminName");
 
 const adminEmail =
-    document.getElementById("adminEmail");
+    $("#adminEmail");
 
 const adminAvatar =
-    document.getElementById("adminAvatar");
+    $("#adminAvatar");
 
 const welcomeAdminName =
-    document.getElementById("welcomeAdminName");
+    $("#welcomeAdminName");
+
+const dashboardDate =
+    $("#dashboardDate");
 
 const recentTransactions =
-    document.getElementById("recentTransactions");
+    $("#recentTransactions");
 
-const transactionsLoading =
-    document.getElementById("transactionsLoading");
-
-const transactionsEmpty =
-    document.getElementById("transactionsEmpty");
-
-const transactionsError =
-    document.getElementById("transactionsError");
-
-const dashboardErrorMessage =
-    document.getElementById("dashboardErrorMessage");
+const recentUsers =
+    $("#recentUsers");
 
 
 /* =========================================================
-   MOBILE SIDEBAR
-========================================================= */
-
-function openSidebar() {
-
-    if (!sidebar) return;
-
-    sidebar.classList.add("open");
-
-    sidebarOverlay?.classList.add("show");
-
-}
-
-
-function closeSidebar() {
-
-    if (!sidebar) return;
-
-    sidebar.classList.remove("open");
-
-    sidebarOverlay?.classList.remove("show");
-
-}
-
-
-menuButton?.addEventListener(
-    "click",
-    openSidebar
-);
-
-sidebarClose?.addEventListener(
-    "click",
-    closeSidebar
-);
-
-sidebarOverlay?.addEventListener(
-    "click",
-    closeSidebar
-);
-
-
-/* =========================================================
-   NUMBER FORMAT
+   NUMBER FORMATTER
 ========================================================= */
 
 function formatNumber(value) {
@@ -143,38 +89,30 @@ function formatNumber(value) {
     const number =
         Number(value) || 0;
 
-    return number.toLocaleString(
-        "en-US"
-    );
+    return new Intl.NumberFormat(
+        "en-US",
+        {
+            maximumFractionDigits: 0
+        }
+    ).format(number);
 }
 
+
+/* =========================================================
+   UGX FORMATTER
+========================================================= */
 
 function formatUGX(value) {
 
     const number =
         Number(value) || 0;
 
-    return `UGX ${number.toLocaleString("en-US")}`;
+    return `UGX ${formatNumber(number)}`;
 }
 
 
 /* =========================================================
-   SAFE TEXT
-========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-
-/* =========================================================
-   DATE
+   DATE FORMATTER
 ========================================================= */
 
 function formatDate(value) {
@@ -190,12 +128,40 @@ function formatDate(value) {
         return String(value);
     }
 
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
+}
+
+
+/* =========================================================
+   DATE + TIME FORMATTER
+========================================================= */
+
+function formatDateTime(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date =
+        new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
     return date.toLocaleString(
         "en-GB",
         {
-            year: "numeric",
-            month: "2-digit",
             day: "2-digit",
+            month: "short",
+            year: "numeric",
             hour: "2-digit",
             minute: "2-digit"
         }
@@ -204,652 +170,503 @@ function formatDate(value) {
 
 
 /* =========================================================
-   TRANSACTION ICON
+   ESCAPE HTML
 ========================================================= */
 
-function transactionIcon(type) {
+function escapeHTML(value) {
 
-    const normalized =
-        String(type || "")
-            .toLowerCase();
-
-    if (
-        normalized.includes("withdraw")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24" fill="none">
-
-                <path
-                    d="M12 20V8"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                />
-
-                <path
-                    d="M7.5 12L12 7.5L16.5 12"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                />
-
-            </svg>
-        `;
-
-    }
-
-
-    if (
-        normalized.includes("invest")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24" fill="none">
-
-                <path
-                    d="M4 20V12"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                />
-
-                <path
-                    d="M10 20V7"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                />
-
-                <path
-                    d="M16 20V10"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                />
-
-                <path
-                    d="M22 20V4"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                />
-
-            </svg>
-        `;
-
-    }
-
-
-    return `
-        <svg viewBox="0 0 24 24" fill="none">
-
-            <path
-                d="M12 4V16"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-            />
-
-            <path
-                d="M7.5 12L12 16.5L16.5 12"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            />
-
-        </svg>
-    `;
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
 /* =========================================================
-   STATUS
+   INITIALS
 ========================================================= */
 
-function statusClass(status) {
+function getInitials(name) {
 
-    const value =
-        String(status || "")
-            .toLowerCase();
+    const cleanName =
+        String(name || "Administrator").trim();
 
-    if (
-        value === "approved" ||
-        value === "completed" ||
-        value === "success"
-    ) {
-
-        return "status-approved";
-
+    if (!cleanName) {
+        return "A";
     }
 
-    if (
-        value === "active"
-    ) {
+    const parts =
+        cleanName.split(/\s+/);
 
-        return "status-active";
-
+    if (parts.length === 1) {
+        return parts[0]
+            .substring(0, 2)
+            .toUpperCase();
     }
 
-    return "status-pending";
+    return (
+        parts[0][0] +
+        parts[parts.length - 1][0]
+    ).toUpperCase();
 }
 
 
 /* =========================================================
-   RENDER TRANSACTIONS
+   CURRENT DATE
 ========================================================= */
 
-function renderTransactions(
-    transactions
-) {
+function showCurrentDate() {
 
-    if (!recentTransactions) {
+    if (!dashboardDate) {
         return;
     }
 
-    recentTransactions.innerHTML = "";
+    const today =
+        new Date();
 
-    if (
-        !Array.isArray(transactions) ||
-        transactions.length === 0
-    ) {
+    dashboardDate.textContent =
+        today.toLocaleDateString(
+            "en-GB",
+            {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+}
 
-        transactionsEmpty.hidden = false;
 
-        return;
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(message) {
+
+    let toast =
+        document.querySelector(".admin-toast");
+
+    if (!toast) {
+
+        toast =
+            document.createElement("div");
+
+        toast.className =
+            "admin-toast";
+
+        document.body.appendChild(toast);
     }
 
-    transactionsEmpty.hidden = true;
+    toast.textContent =
+        message;
 
+    toast.classList.add("show");
 
-    transactions.forEach(
-        (transaction) => {
-
-            const type =
-                transaction.type ||
-                transaction.transaction_type ||
-                transaction.category ||
-                "Transaction";
-
-            const user =
-                transaction.user_name ||
-                transaction.full_name ||
-                transaction.name ||
-                transaction.email ||
-                "Unknown User";
-
-            const amount =
-                transaction.amount ??
-                transaction.value ??
-                0;
-
-            const status =
-                transaction.status ||
-                "pending";
-
-            const date =
-                transaction.created_at ||
-                transaction.date ||
-                transaction.timestamp ||
-                "";
-
-
-            const row =
-                document.createElement("tr");
-
-
-            row.innerHTML = `
-
-                <td>
-
-                    <div class="transaction-type">
-
-                        <span class="transaction-mini-icon">
-
-                            ${transactionIcon(type)}
-
-                        </span>
-
-                        <span>
-                            ${escapeHTML(type)}
-                        </span>
-
-                    </div>
-
-                </td>
-
-
-                <td>
-                    ${escapeHTML(user)}
-                </td>
-
-
-                <td>
-                    ${formatUGX(amount)}
-                </td>
-
-
-                <td>
-
-                    <span
-                        class="status-badge ${statusClass(status)}"
-                    >
-                        ${escapeHTML(status)}
-                    </span>
-
-                </td>
-
-
-                <td>
-                    ${escapeHTML(formatDate(date))}
-                </td>
-
-
-                <td>
-
-                    <span class="transaction-view">
-                        View
-                    </span>
-
-                </td>
-
-            `;
-
-
-            recentTransactions.appendChild(row);
-
-        }
+    clearTimeout(
+        toast._timer
     );
 
+    toast._timer =
+        setTimeout(() => {
+
+            toast.classList.remove("show");
+
+        }, 3000);
 }
 
 
 /* =========================================================
-   ANIMATE NUMBER
+   MOBILE SIDEBAR
 ========================================================= */
 
-function animateNumber(
-    element,
-    target
-) {
+function openSidebar() {
 
-    if (!element) return;
-
-    const finalValue =
-        Number(target) || 0;
-
-    const duration = 650;
-
-    const start =
-        performance.now();
-
-
-    function update(now) {
-
-        const progress =
-            Math.min(
-                (now - start) / duration,
-                1
-            );
-
-        const eased =
-            1 -
-            Math.pow(
-                1 - progress,
-                3
-            );
-
-        const current =
-            Math.round(
-                finalValue * eased
-            );
-
-        element.textContent =
-            formatNumber(current);
-
-
-        if (progress < 1) {
-
-            requestAnimationFrame(
-                update
-            );
-
-        }
-
+    if (!sidebar) {
+        return;
     }
 
+    sidebar.classList.add("open");
 
-    requestAnimationFrame(
-        update
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.add("show");
+    }
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+function closeSidebar() {
+
+    if (!sidebar) {
+        return;
+    }
+
+    sidebar.classList.remove("open");
+
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.remove("show");
+    }
+
+    document.body.style.overflow =
+        "";
+}
+
+
+if (menuButton) {
+
+    menuButton.addEventListener(
+        "click",
+        openSidebar
+    );
+}
+
+
+if (sidebarClose) {
+
+    sidebarClose.addEventListener(
+        "click",
+        closeSidebar
+    );
+}
+
+
+if (sidebarOverlay) {
+
+    sidebarOverlay.addEventListener(
+        "click",
+        closeSidebar
     );
 }
 
 
 /* =========================================================
-   LOAD DASHBOARD
+   CLOSE MOBILE SIDEBAR WHEN LINK IS CLICKED
 ========================================================= */
 
-async function loadDashboard() {
+$$(".admin-sidebar .nav-item")
+    .forEach((link) => {
 
-    if (transactionsLoading) {
-        transactionsLoading.style.display =
-            "flex";
-    }
+        link.addEventListener(
+            "click",
+            () => {
 
-    if (transactionsEmpty) {
-        transactionsEmpty.hidden = true;
-    }
-
-    if (transactionsError) {
-        transactionsError.hidden = true;
-    }
-
-    if (refreshButton) {
-        refreshButton.disabled = true;
-        refreshButton.style.opacity = "0.65";
-    }
-
-
-    try {
-
-        const response =
-            await fetch(
-                DASHBOARD_API,
-                {
-                    method: "GET",
-
-                    credentials: "include",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    },
-
-                    cache: "no-store"
+                if (
+                    window.innerWidth <= 760
+                ) {
+                    closeSidebar();
                 }
-            );
 
-
-        const data =
-            await response.json()
-                .catch(
-                    () => ({})
-                );
-
-
-        if (
-            !response.ok ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data.message ||
-                "Unable to load admin dashboard."
-            );
-
-        }
-
-
-        /* ADMIN */
-
-        const admin =
-            data.admin || {};
-
-        const name =
-            admin.full_name ||
-            admin.name ||
-            "Administrator";
-
-        const email =
-            admin.email ||
-            "Admin Account";
-
-
-        if (adminName) {
-            adminName.textContent =
-                name;
-        }
-
-        if (adminEmail) {
-            adminEmail.textContent =
-                email;
-        }
-
-        if (welcomeAdminName) {
-            welcomeAdminName.textContent =
-                name;
-        }
-
-        if (adminAvatar) {
-
-            const firstLetter =
-                name
-                    .trim()
-                    .charAt(0)
-                    .toUpperCase();
-
-            adminAvatar.textContent =
-                firstLetter || "A";
-        }
-
-
-        /* STATS */
-
-        const stats =
-            data.stats || {};
-
-
-        animateNumber(
-            totalUsers,
-            stats.total_users
+            }
         );
 
-        animateNumber(
-            activeUsers,
-            stats.active_users
-        );
-
-        animateNumber(
-            pendingUsers,
-            stats.pending_users
-        );
-
-        animateNumber(
-            blockedUsers,
-            stats.blocked_users
-        );
-
-        animateNumber(
-            totalDeposits,
-            stats.total_deposits
-        );
-
-        animateNumber(
-            totalWithdrawals,
-            stats.total_withdrawals
-        );
-
-        animateNumber(
-            totalInvestments,
-            stats.total_investments
-        );
+    });
 
 
-        if (totalBalance) {
+/* =========================================================
+   NORMALIZE API OBJECT
+========================================================= */
 
-            totalBalance.textContent =
-                formatUGX(
-                    stats.total_balance
-                );
+function normalizeObject(value) {
 
-        }
-
-
-        /* TRANSACTIONS */
-
-        const transactions =
-            data.recent_transactions ||
-            data.transactions ||
-            [];
-
-
-        renderTransactions(
-            transactions
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Admin dashboard:",
-            error
-        );
-
-
-        if (transactionsError) {
-            transactionsError.hidden =
-                false;
-        }
-
-        if (dashboardErrorMessage) {
-
-            dashboardErrorMessage.textContent =
-                error.message ||
-                "Please try again.";
-
-        }
-
-
-    } finally {
-
-        if (transactionsLoading) {
-            transactionsLoading.style.display =
-                "none";
-        }
-
-        if (refreshButton) {
-            refreshButton.disabled = false;
-            refreshButton.style.opacity = "1";
-        }
-
+    if (!value) {
+        return {};
     }
 
-}
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
-
-refreshButton?.addEventListener(
-    "click",
-    loadDashboard
-);
-
-retryButton?.addEventListener(
-    "click",
-    loadDashboard
-);
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-logoutButton?.addEventListener(
-    "click",
-    async () => {
-
-        const confirmed =
-            confirm(
-                "Are you sure you want to logout?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
+    if (
+        typeof value === "string"
+    ) {
 
         try {
-
-            await fetch(
-                LOGOUT_API,
-                {
-                    method: "POST",
-
-                    credentials: "include",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    }
-                }
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Logout error:",
-                error
-            );
-
+            return JSON.parse(value);
+        } catch {
+            return {};
         }
-
-
-        window.location.href =
-            "login.html";
 
     }
-);
+
+    return value;
+}
 
 
 /* =========================================================
-   NOTIFICATIONS
+   EXTRACT ARRAY
 ========================================================= */
 
-document
-    .getElementById("notificationButton")
-    ?.addEventListener(
-        "click",
-        () => {
+function extractArray(data, keys) {
 
-            alert(
-                "Admin notifications will appear here."
-            );
+    for (const key of keys) {
 
+        if (
+            Array.isArray(data?.[key])
+        ) {
+            return data[key];
         }
-    );
-
-
-/* =========================================================
-   CLOSE SIDEBAR AFTER NAVIGATION
-========================================================= */
-
-document
-    .querySelectorAll(".sidebar a")
-    .forEach(
-        (link) => {
-
-            link.addEventListener(
-                "click",
-                closeSidebar
-            );
-
-        }
-    );
-
-
-/* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        loadDashboard();
 
     }
-);
+
+    return [];
+}
+
+
+/* =========================================================
+   GET FIELD
+========================================================= */
+
+function getField(object, fields, fallback = "") {
+
+    for (const field of fields) {
+
+        if (
+            object &&
+            object[field] !== undefined &&
+            object[field] !== null &&
+            object[field] !== ""
+        ) {
+
+            return object[field];
+        }
+
+    }
+
+    return fallback;
+}
+
+
+/* =========================================================
+   UPDATE ADMIN DETAILS
+========================================================= */
+
+function updateAdminDetails(admin) {
+
+    admin =
+        normalizeObject(admin);
+
+    const name =
+        getField(
+            admin,
+            [
+                "full_name",
+                "name",
+                "username",
+                "email"
+            ],
+            "Administrator"
+        );
+
+    const email =
+        getField(
+            admin,
+            [
+                "email",
+                "user_email"
+            ],
+            "Admin Account"
+        );
+
+    if (adminName) {
+        adminName.textContent =
+            name;
+    }
+
+    if (adminEmail) {
+        adminEmail.textContent =
+            email;
+    }
+
+    if (welcomeAdminName) {
+        welcomeAdminName.textContent =
+            name;
+    }
+
+    if (adminAvatar) {
+        adminAvatar.textContent =
+            getInitials(name);
+    }
+}
+
+
+/* =========================================================
+   UPDATE MAIN STATISTICS
+========================================================= */
+
+function updateStats(stats) {
+
+    stats =
+        normalizeObject(stats);
+
+    const totalUsers =
+        getField(
+            stats,
+            [
+                "total_users",
+                "totalUsers",
+                "users",
+                "user_count"
+            ],
+            0
+        );
+
+    const activeUsers =
+        getField(
+            stats,
+            [
+                "active_users",
+                "activeUsers",
+                "active"
+            ],
+            0
+        );
+
+    const pendingUsers =
+        getField(
+            stats,
+            [
+                "pending_users",
+                "pendingUsers",
+                "pending"
+            ],
+            0
+        );
+
+    const blockedUsers =
+        getField(
+            stats,
+            [
+                "blocked_users",
+                "blockedUsers",
+                "blocked"
+            ],
+            0
+        );
+
+
+    const totalUsersElement =
+        $("#totalUsers");
+
+    const activeUsersElement =
+        $("#activeUsers");
+
+    const pendingUsersElement =
+        $("#pendingUsers");
+
+    const blockedUsersElement =
+        $("#blockedUsers");
+
+
+    if (totalUsersElement) {
+        totalUsersElement.textContent =
+            formatNumber(totalUsers);
+    }
+
+    if (activeUsersElement) {
+        activeUsersElement.textContent =
+            formatNumber(activeUsers);
+    }
+
+    if (pendingUsersElement) {
+        pendingUsersElement.textContent =
+            formatNumber(pendingUsers);
+    }
+
+    if (blockedUsersElement) {
+        blockedUsersElement.textContent =
+            formatNumber(blockedUsers);
+    }
+
+
+    /* -----------------------------------------
+       Deposits
+    ----------------------------------------- */
+
+    const totalDeposits =
+        getField(
+            stats,
+            [
+                "total_deposits",
+                "totalDeposits",
+                "deposits_total"
+            ],
+            0
+        );
+
+    const depositCount =
+        getField(
+            stats,
+            [
+                "deposit_count",
+                "depositCount",
+                "deposits_count"
+            ],
+            0
+        );
+
+
+    const depositsElement =
+        $("#totalDeposits");
+
+    const depositCountElement =
+        $("#depositCount");
+
+
+    if (depositsElement) {
+
+        depositsElement.textContent =
+            formatUGX(totalDeposits);
+
+    }
+
+    if (depositCountElement) {
+
+        depositCountElement.textContent =
+            `${formatNumber(depositCount)} deposits`;
+
+    }
+
+
+    /* -----------------------------------------
+       Withdrawals
+    ----------------------------------------- */
+
+    const totalWithdrawals =
+        getField(
+            stats,
+            [
+                "total_withdrawals",
+                "totalWithdrawals",
+                "withdrawals_total"
+            ],
+            0
+        );
+
+    const withdrawalCount =
+        getField(
+            stats,
+            [
+                "withdrawal_count",
+                "withdrawalCount",
+                "withdrawals_count"
+            ],
+            0
+        );
+
+
+    const withdrawalsElement =
+        $("#totalWithdrawals");
+
+    const withdrawalCountElement =
+        $("#withdrawalCount");
+
+
+    if (withdrawalsElement) {
+
+        withdrawalsElement.textContent =
+            formatUGX(totalWithdrawals);
+
+    }
+
+    if (withdrawalCountElement) {
+
+        withdrawalCountElement.textContent

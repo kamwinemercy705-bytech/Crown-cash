@@ -1,1370 +1,678 @@
-/* =========================================================
-   CROWN CASH — ADMIN USERS MANAGEMENT
-   users.js
-   ========================================================= */
-
-const API_BASE = "https://crown-cash1.onrender.com";
-
-let allUsers = [];
-let selectedUser = null;
-
-
-/* =========================================================
-   DOM ELEMENTS
-   ========================================================= */
-
-const usersTableBody = document.getElementById("usersTableBody");
-
-const loading = document.getElementById("loading");
-const emptyState = document.getElementById("emptyState");
-
-const errorBox = document.getElementById("errorBox");
-const errorMessage = document.getElementById("errorMessage");
-
-const searchInput = document.getElementById("searchInput");
-const statusFilter = document.getElementById("statusFilter");
-const roleFilter = document.getElementById("roleFilter");
-
-const totalUsers = document.getElementById("totalUsers");
-const activeUsers = document.getElementById("activeUsers");
-const pendingUsers = document.getElementById("pendingUsers");
-const blockedUsers = document.getElementById("blockedUsers");
-
-const refreshBtn = document.getElementById("refreshBtn");
-const retryBtn = document.getElementById("retryBtn");
-
-const menuBtn = document.getElementById("menuBtn");
-const sidebar = document.getElementById("sidebar");
-
-const logoutBtn = document.getElementById("logoutBtn");
-
-const userModal = document.getElementById("userModal");
-const modalClose = document.getElementById("modalClose");
-
-const modalAvatar = document.getElementById("modalAvatar");
-const modalName = document.getElementById("modalName");
-const modalEmail = document.getElementById("modalEmail");
-const modalPhone = document.getElementById("modalPhone");
-const modalReferral = document.getElementById("modalReferral");
-const modalBalance = document.getElementById("modalBalance");
-const modalRole = document.getElementById("modalRole");
-const modalStatus = document.getElementById("modalStatus");
-const modalJoined = document.getElementById("modalJoined");
-
-const blockUserBtn = document.getElementById("blockUserBtn");
-const activateUserBtn = document.getElementById("activateUserBtn");
-
-const adminName = document.getElementById("adminName");
-
-
-/* =========================================================
-   PAGE START
-   ========================================================= */
-
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "https://crown-cash1.onrender.com";
+    const USERS_API = `${API_BASE}/users.php`;
+    const LOGOUT_API = `${API_BASE}/logout.php`;
 
-    setupEvents();
+    const usersTable = document.getElementById("usersTable");
+    const searchUser = document.getElementById("searchUser");
+    const statusFilter = document.getElementById("statusFilter");
+    const roleFilter = document.getElementById("roleFilter");
+    const refreshBtn = document.getElementById("refreshUsers");
+    const userCount = document.getElementById("userCount");
 
-    loadUsers();
+    const totalUsers = document.getElementById("totalUsers");
+    const activeUsers = document.getElementById("activeUsers");
+    const pendingUsers = document.getElementById("pendingUsers");
+    const blockedUsers = document.getElementById("blockedUsers");
 
-});
+    let allUsers = [];
 
+    /* =========================
+       HELPERS
+    ========================= */
 
-/* =========================================================
-   EVENTS
-   ========================================================= */
-
-function setupEvents() {
-
-    if (searchInput) {
-        searchInput.addEventListener("input", renderUsers);
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-    if (statusFilter) {
-        statusFilter.addEventListener("change", renderUsers);
-    }
+    function getUserId(user) {
+        if (!user) return "";
 
-    if (roleFilter) {
-        roleFilter.addEventListener("change", renderUsers);
-    }
+        if (typeof user.id === "string") {
+            return user.id;
+        }
 
-    if (refreshBtn) {
-        refreshBtn.addEventListener("click", loadUsers);
-    }
-
-    if (retryBtn) {
-        retryBtn.addEventListener("click", loadUsers);
-    }
-
-    if (menuBtn) {
-        menuBtn.addEventListener("click", () => {
-
-            sidebar.classList.toggle("open");
-
-        });
-    }
-
-    if (modalClose) {
-        modalClose.addEventListener("click", closeModal);
-    }
-
-    if (userModal) {
-
-        userModal.addEventListener("click", (event) => {
-
-            if (event.target === userModal) {
-                closeModal();
+        if (user._id) {
+            if (typeof user._id === "string") {
+                return user._id;
             }
 
-        });
-
-    }
-
-    if (blockUserBtn) {
-        blockUserBtn.addEventListener("click", () => {
-
-            if (!selectedUser) {
-                return;
+            if (user._id.$oid) {
+                return user._id.$oid;
             }
+        }
 
-            updateUserStatus(selectedUser, "blocked");
+        return "";
+    }
 
+    function getName(user) {
+        if (!user) return "Unknown User";
+
+        if (user.full_name) {
+            return String(user.full_name).trim();
+        }
+
+        const first = String(user.first_name || "").trim();
+        const last = String(user.last_name || "").trim();
+
+        const name = `${first} ${last}`.trim();
+
+        return name || "Unknown User";
+    }
+
+    function getInitials(name) {
+        const parts = String(name)
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+
+        if (parts.length === 0) {
+            return "U";
+        }
+
+        if (parts.length === 1) {
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+
+        return (
+            parts[0].charAt(0) +
+            parts[parts.length - 1].charAt(0)
+        ).toUpperCase();
+    }
+
+    function formatUGX(amount) {
+        const number = Number(amount || 0);
+
+        return `UGX ${number.toLocaleString("en-UG", {
+            maximumFractionDigits: 0
+        })}`;
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) {
+            return "—";
+        }
+
+        let date;
+
+        if (
+            typeof dateValue === "object" &&
+            dateValue.$date
+        ) {
+            date = new Date(dateValue.$date);
+        } else {
+            date = new Date(dateValue);
+        }
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleDateString("en-UG", {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
         });
     }
 
-    if (activateUserBtn) {
-        activateUserBtn.addEventListener("click", () => {
-
-            if (!selectedUser) {
-                return;
-            }
-
-            updateUserStatus(selectedUser, "active");
-
-        });
+    function normalizeStatus(status) {
+        return String(status || "active")
+            .trim()
+            .toLowerCase();
     }
 
-    if (logoutBtn) {
-
-        logoutBtn.addEventListener("click", async () => {
-
-            try {
-
-                await fetch(`${API_BASE}/logout.php`, {
-                    method: "POST",
-                    credentials: "include"
-                });
-
-            } catch (error) {
-
-                console.warn("Logout request failed:", error);
-
-            }
-
-            window.location.href =
-                "https://crown-cash.vercel.app/login.html";
-
-        });
-
+    function normalizeRole(role) {
+        return String(role || "user")
+            .trim()
+            .toLowerCase();
     }
 
-}
+    function showToast(message, type = "success") {
+        let toast = document.getElementById("usersToast");
 
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "usersToast";
+            toast.className = "users-toast";
+            document.body.appendChild(toast);
+        }
 
-/* =========================================================
-   LOAD USERS
-   ========================================================= */
+        toast.className = `users-toast ${type}`;
+        toast.textContent = message;
 
-async function loadUsers() {
+        requestAnimationFrame(() => {
+            toast.classList.add("show");
+        });
 
-    showLoading();
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3000);
+    }
 
-    hideError();
+    function showLoading() {
+        usersTable.innerHTML = `
+            <tr>
+                <td colspan="8" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <span>Loading users...</span>
+                </td>
+            </tr>
+        `;
+    }
 
-    try {
+    function showEmpty(message = "No users found.") {
+        usersTable.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <div class="empty-icon">♙</div>
+                    <strong>${escapeHTML(message)}</strong>
+                    <span>Try changing your search or filters.</span>
+                </td>
+            </tr>
+        `;
+    }
 
-        /*
-         * This endpoint is expected to be created on the
-         * Crown Cash PHP backend.
-         *
-         * Example:
-         * https://crown-cash1.onrender.com/admin-users.php
-         */
+    function showError(message) {
+        usersTable.innerHTML = `
+            <tr>
+                <td colspan="8" class="error-state">
+                    <div class="error-icon">!</div>
+                    <strong>Unable to load users</strong>
+                    <span>${escapeHTML(message)}</span>
+                    <button type="button" id="retryUsers">
+                        Retry
+                    </button>
+                </td>
+            </tr>
+        `;
 
-        const response = await fetch(
-            `${API_BASE}/admin-users.php`,
-            {
+        const retry = document.getElementById("retryUsers");
+
+        if (retry) {
+            retry.addEventListener("click", loadUsers);
+        }
+    }
+
+    /* =========================
+       FETCH USERS
+    ========================= */
+
+    async function loadUsers() {
+        showLoading();
+
+        try {
+            const response = await fetch(USERS_API, {
                 method: "GET",
                 credentials: "include",
                 headers: {
                     "Accept": "application/json"
                 }
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data || data.success !== true) {
+                throw new Error(
+                    data?.message ||
+                    `Request failed with status ${response.status}`
+                );
             }
-        );
 
+            allUsers = Array.isArray(data.users)
+                ? data.users
+                : [];
 
-        let data = null;
+            updateStats(data.stats || {});
+            applyFilters();
 
-        try {
-            data = await response.json();
-        } catch (jsonError) {
+        } catch (error) {
+            console.error("Users loading error:", error);
 
-            throw new Error(
-                "The server returned an invalid response."
+            showError(
+                error.message ||
+                "Please check your connection and try again."
             );
-
         }
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data?.message ||
-                data?.error ||
-                `Server error (${response.status})`
-            );
-
-        }
-
-
-        if (data.success === false) {
-
-            throw new Error(
-                data.message ||
-                data.error ||
-                "Unable to load users."
-            );
-
-        }
-
-
-        /*
-         * Support different possible API response formats.
-         */
-
-        if (Array.isArray(data)) {
-
-            allUsers = data;
-
-        } else if (Array.isArray(data.users)) {
-
-            allUsers = data.users;
-
-        } else if (Array.isArray(data.data)) {
-
-            allUsers = data.data;
-
-        } else {
-
-            allUsers = [];
-
-        }
-
-
-        updateStatistics();
-
-        renderUsers();
-
-        hideLoading();
-
-    } catch (error) {
-
-        console.error("Users loading error:", error);
-
-        hideLoading();
-
-        showError(
-            error.message ||
-            "Unable to load users. Please try again."
-        );
-
     }
 
-}
+    /* =========================
+       STATISTICS
+    ========================= */
 
+    function updateStats(stats) {
+        const total =
+            stats.total ??
+            allUsers.length;
 
-/* =========================================================
-   NORMALIZE USER DATA
-   ========================================================= */
+        const active =
+            stats.active ??
+            allUsers.filter(
+                user => normalizeStatus(user.status) === "active"
+            ).length;
 
-function normalizeUser(user) {
+        const pending =
+            stats.pending ??
+            allUsers.filter(
+                user => normalizeStatus(user.status) === "pending"
+            ).length;
 
-    if (!user || typeof user !== "object") {
+        const blocked =
+            stats.blocked ??
+            allUsers.filter(user => {
+                const status = normalizeStatus(user.status);
 
-        return {
-            id: "",
-            name: "Unknown User",
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            referralCode: "",
-            balance: 0,
-            role: "user",
-            status: "active",
-            createdAt: null
-        };
+                return (
+                    status === "blocked" ||
+                    status === "suspended" ||
+                    status === "disabled"
+                );
+            }).length;
 
+        if (totalUsers) {
+            totalUsers.textContent =
+                Number(total).toLocaleString();
+        }
+
+        if (activeUsers) {
+            activeUsers.textContent =
+                Number(active).toLocaleString();
+        }
+
+        if (pendingUsers) {
+            pendingUsers.textContent =
+                Number(pending).toLocaleString();
+        }
+
+        if (blockedUsers) {
+            blockedUsers.textContent =
+                Number(blocked).toLocaleString();
+        }
     }
 
+    /* =========================
+       FILTERING
+    ========================= */
 
-    const firstName =
-        user.first_name ||
-        user.firstName ||
-        "";
-
-    const lastName =
-        user.last_name ||
-        user.lastName ||
-        "";
-
-
-    let name =
-        user.name ||
-        user.full_name ||
-        user.fullName ||
-        "";
-
-
-    if (!name) {
-
-        name =
-            `${firstName} ${lastName}`.trim();
-
-    }
-
-
-    if (!name) {
-        name = "Unknown User";
-    }
-
-
-    return {
-
-        id:
-            user.id ||
-            user._id ||
-            user.user_id ||
-            user.userId ||
-            "",
-
-        name,
-
-        firstName,
-
-        lastName,
-
-        email:
-            user.email ||
-            "",
-
-        phone:
-            user.phone ||
-            user.phone_number ||
-            "",
-
-        referralCode:
-            user.referral_code ||
-            user.referralCode ||
-            "",
-
-        balance:
-            Number(
-                user.balance ??
-                user.wallet_balance ??
-                user.walletBalance ??
-                0
-            ) || 0,
-
-        role:
-            String(
-                user.role ||
-                user.account_type ||
-                user.accountType ||
-                "user"
-            ).toLowerCase(),
-
-        status:
-            String(
-                user.status ||
-                user.account_status ||
-                user.accountStatus ||
-                "active"
-            ).toLowerCase(),
-
-        createdAt:
-            user.created_at ||
-            user.createdAt ||
-            user.date_joined ||
-            user.dateJoined ||
-            null
-
-    };
-
-}
-
-
-/* =========================================================
-   FILTER USERS
-   ========================================================= */
-
-function getFilteredUsers() {
-
-    const search =
-        (searchInput?.value || "")
+    function applyFilters() {
+        const search = String(
+            searchUser?.value || ""
+        )
             .trim()
             .toLowerCase();
 
+        const selectedStatus = String(
+            statusFilter?.value || ""
+        )
+            .trim()
+            .toLowerCase();
 
-    const status =
-        statusFilter?.value || "all";
+        const selectedRole = String(
+            roleFilter?.value || ""
+        )
+            .trim()
+            .toLowerCase();
 
+        const filteredUsers = allUsers.filter(user => {
+            const name = getName(user).toLowerCase();
 
-    const role =
-        roleFilter?.value || "all";
+            const email = String(
+                user.email || ""
+            ).toLowerCase();
 
+            const phone = String(
+                user.phone || ""
+            ).toLowerCase();
 
-    return allUsers
-        .map(normalizeUser)
-        .filter(user => {
+            const referralCode = String(
+                user.referral_code || ""
+            ).toLowerCase();
 
-            const searchableText = [
+            const role = normalizeRole(
+                user.role ||
+                user.account_type
+            );
 
-                user.name,
-                user.email,
-                user.phone,
-                user.referralCode
-
-            ]
-                .join(" ")
-                .toLowerCase();
-
+            const status = normalizeStatus(
+                user.status
+            );
 
             const matchesSearch =
                 !search ||
-                searchableText.includes(search);
-
+                name.includes(search) ||
+                email.includes(search) ||
+                phone.includes(search) ||
+                referralCode.includes(search);
 
             const matchesStatus =
-                status === "all" ||
-                normalizeStatus(user.status) === status;
-
+                !selectedStatus ||
+                selectedStatus === "all" ||
+                status === selectedStatus;
 
             const matchesRole =
-                role === "all" ||
-                normalizeRole(user.role) === role;
-
+                !selectedRole ||
+                selectedRole === "all" ||
+                role === selectedRole;
 
             return (
                 matchesSearch &&
                 matchesStatus &&
                 matchesRole
             );
-
         });
 
-}
+        renderUsers(filteredUsers);
 
-
-/* =========================================================
-   RENDER USERS
-   ========================================================= */
-
-function renderUsers() {
-
-    if (!usersTableBody) {
-        return;
+        if (userCount) {
+            userCount.textContent =
+                `${filteredUsers.length} user${
+                    filteredUsers.length === 1 ? "" : "s"
+                }`;
+        }
     }
 
+    /* =========================
+       RENDER USERS
+    ========================= */
 
-    const users = getFilteredUsers();
+    function renderUsers(users) {
+        if (!Array.isArray(users) || users.length === 0) {
+            showEmpty();
+            return;
+        }
 
+        usersTable.innerHTML = users.map(user => {
+            const id = getUserId(user);
+            const name = getName(user);
+            const initials = getInitials(name);
 
-    usersTableBody.innerHTML = "";
+            const email =
+                user.email || "No email";
 
+            const phone =
+                user.phone || "No phone";
 
-    if (users.length === 0) {
+            const balance =
+                user.balance ?? 0;
 
-        emptyState.hidden = false;
+            const role =
+                normalizeRole(
+                    user.role ||
+                    user.account_type
+                );
 
-        return;
+            const status =
+                normalizeStatus(user.status);
 
-    }
+            const joined =
+                formatDate(
+                    user.created_at ||
+                    user.joined_at ||
+                    user.date_created
+                );
 
+            const safeId =
+                escapeHTML(id);
 
-    emptyState.hidden = true;
+            const roleClass =
+                role === "admin"
+                    ? "admin"
+                    : "user";
 
+            let statusClass = "active";
 
-    users.forEach(user => {
+            if (
+                status === "blocked" ||
+                status === "disabled"
+            ) {
+                statusClass = "blocked";
+            } else if (status === "suspended") {
+                statusClass = "suspended";
+            } else if (status === "pending") {
+                statusClass = "pending";
+            }
 
-        const row = document.createElement("tr");
+            return `
+                <tr data-user-id="${safeId}">
 
+                    <td>
+                        <div class="user-cell">
 
-        const initials =
-            getInitials(user.name);
+                            <div class="user-avatar">
+                                ${escapeHTML(initials)}
+                            </div>
 
+                            <div class="user-details">
+                                <strong>
+                                    ${escapeHTML(name)}
+                                </strong>
 
-        const status =
-            normalizeStatus(user.status);
+                                <small>
+                                    ID: ${escapeHTML(
+                                        id
+                                            ? id.substring(0, 10)
+                                            : "N/A"
+                                    )}
+                                </small>
+                            </div>
 
+                        </div>
+                    </td>
 
-        const role =
-            normalizeRole(user.role);
+                    <td>
+                        <span class="user-phone">
+                            ${escapeHTML(phone)}
+                        </span>
+                    </td>
 
+                    <td>
+                        <span class="user-email">
+                            ${escapeHTML(email)}
+                        </span>
+                    </td>
 
-        row.innerHTML = `
-
-            <td>
-
-                <div class="user-cell">
-
-                    <div class="user-avatar">
-                        ${escapeHtml(initials)}
-                    </div>
-
-                    <div class="user-info">
-
-                        <strong>
-                            ${escapeHtml(user.name)}
-                        </strong>
-
-                        <small>
-                            ${escapeHtml(
-                                user.referralCode
-                                    ? "Ref: " + user.referralCode
-                                    : "Crown Cash Member"
+                    <td>
+                        <strong class="balance">
+                            ${escapeHTML(
+                                formatUGX(balance)
                             )}
-                        </small>
+                        </strong>
+                    </td>
 
-                    </div>
+                    <td>
+                        <span class="role-badge ${roleClass}">
+                            ${escapeHTML(
+                                role.charAt(0).toUpperCase() +
+                                role.slice(1)
+                            )}
+                        </span>
+                    </td>
 
-                </div>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            <span class="status-dot"></span>
+                            ${escapeHTML(
+                                status.charAt(0).toUpperCase() +
+                                status.slice(1)
+                            )}
+                        </span>
+                    </td>
 
-            </td>
+                    <td>
+                        <span class="joined-date">
+                            ${escapeHTML(joined)}
+                        </span>
+                    </td>
 
+                    <td>
+                        <div class="user-actions">
 
-            <td>
-                ${escapeHtml(user.phone || "—")}
-            </td>
+                            <button
+                                type="button"
+                                class="action-btn view"
+                                data-action="view"
+                                data-user-id="${safeId}"
+                                title="View user"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
 
+                            <button
+                                type="button"
+                                class="action-btn toggle"
+                                data-action="toggle"
+                                data-user-id="${safeId}"
+                                data-status="${escapeHTML(status)}"
+                                title="${
+                                    status === "blocked" ||
+                                    status === "suspended" ||
+                                    status === "disabled"
+                                        ? "Activate user"
+                                        : "Block user"
+                                }"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    ${
+                                        status === "blocked" ||
+                                        status === "suspended" ||
+                                        status === "disabled"
+                                            ? `
+                                                <path d="M5 12l4 4L19 6"/>
+                                            `
+                                            : `
+                                                <circle cx="12" cy="12" r="9"/>
+                                                <path d="M8 8l8 8"/>
+                                                <path d="M16 8l-8 8"/>
+                                            `
+                                    }
+                                </svg>
+                            </button>
 
-            <td>
-                ${escapeHtml(user.email || "—")}
-            </td>
+                            <button
+                                type="button"
+                                class="action-btn role"
+                                data-action="role"
+                                data-user-id="${safeId}"
+                                data-role="${escapeHTML(role)}"
+                                title="Change role"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path d="M12 15c3 0 5 2 5 5H7c0-3 2-5 5-5Z"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </button>
 
+                        </div>
+                    </td>
 
-            <td>
-                <strong>
-                    ${formatUGX(user.balance)}
-                </strong>
-            </td>
+                </tr>
+            `;
+        }).join("");
+    }
 
+    /* =========================
+       USER ACTIONS
+    ========================= */
 
-            <td>
-
-                <span class="role-badge role-${role}">
-                    ${escapeHtml(
-                        role === "admin"
-                            ? "Admin"
-                            : "User"
-                    )}
-                </span>
-
-            </td>
-
-
-            <td>
-
-                <span class="status-badge status-${status}">
-                    ${escapeHtml(status)}
-                </span>
-
-            </td>
-
-
-            <td>
-                ${formatDate(user.createdAt)}
-            </td>
-
-
-            <td>
-
-                <button
-                    class="view-user-btn"
-                    type="button"
-                    title="View user"
-                    data-user-id="${escapeHtml(String(user.id))}"
-                >
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
-                        ></path>
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="2.5"
-                        ></circle>
-
-                    </svg>
-
-                </button>
-
-            </td>
-
-        `;
-
-
-        const viewButton =
-            row.querySelector(".view-user-btn");
-
-
-        if (viewButton) {
-
-            viewButton.addEventListener(
-                "click",
-                () => openUserModal(user)
+    async function updateUser(action, userId, extra = {}) {
+        if (!userId) {
+            showToast(
+                "User ID is missing.",
+                "error"
             );
-
+            return;
         }
 
-
-        usersTableBody.appendChild(row);
-
-    });
-
-}
-
-
-/* =========================================================
-   STATISTICS
-   ========================================================= */
-
-function updateStatistics() {
-
-    const users =
-        allUsers.map(normalizeUser);
-
-
-    const total =
-        users.length;
-
-
-    const active =
-        users.filter(
-            user => normalizeStatus(user.status) === "active"
-        ).length;
-
-
-    const pending =
-        users.filter(
-            user => normalizeStatus(user.status) === "pending"
-        ).length;
-
-
-    const blocked =
-        users.filter(
-            user => normalizeStatus(user.status) === "blocked"
-        ).length;
-
-
-    if (totalUsers) {
-        animateNumber(totalUsers, total);
-    }
-
-    if (activeUsers) {
-        animateNumber(activeUsers, active);
-    }
-
-    if (pendingUsers) {
-        animateNumber(pendingUsers, pending);
-    }
-
-    if (blockedUsers) {
-        animateNumber(blockedUsers, blocked);
-    }
-
-}
-
-
-/* =========================================================
-   NUMBER ANIMATION
-   ========================================================= */
-
-function animateNumber(element, target) {
-
-    const start =
-        Number(element.textContent) || 0;
-
-
-    const duration = 500;
-
-    const startTime = performance.now();
-
-
-    function update(currentTime) {
-
-        const progress =
-            Math.min(
-                (currentTime - startTime) / duration,
-                1
-            );
-
-
-        const value =
-            Math.floor(
-                start +
-                (target - start) * progress
-            );
-
-
-        element.textContent =
-            value.toLocaleString();
-
-
-        if (progress < 1) {
-
-            requestAnimationFrame(update);
-
-        }
-
-    }
-
-
-    requestAnimationFrame(update);
-
-}
-
-
-/* =========================================================
-   USER MODAL
-   ========================================================= */
-
-function openUserModal(user) {
-
-    selectedUser = user;
-
-
-    if (!userModal) {
-        return;
-    }
-
-
-    const initials =
-        getInitials(user.name);
-
-
-    modalAvatar.textContent =
-        initials;
-
-
-    modalName.textContent =
-        user.name || "Unknown User";
-
-
-    modalEmail.textContent =
-        user.email || "No email";
-
-
-    modalPhone.textContent =
-        user.phone || "—";
-
-
-    modalReferral.textContent =
-        user.referralCode || "—";
-
-
-    modalBalance.textContent =
-        formatUGX(user.balance);
-
-
-    modalRole.textContent =
-        normalizeRole(user.role) === "admin"
-            ? "Administrator"
-            : "User";
-
-
-    modalStatus.textContent =
-        capitalize(
-            normalizeStatus(user.status)
-        );
-
-
-    modalJoined.textContent =
-        formatDate(user.createdAt);
-
-
-    /*
-     * Show the correct action button.
-     */
-
-    const status =
-        normalizeStatus(user.status);
-
-
-    if (blockUserBtn) {
-
-        blockUserBtn.hidden =
-            status === "blocked";
-
-    }
-
-
-    if (activateUserBtn) {
-
-        activateUserBtn.hidden =
-            status === "active";
-
-    }
-
-
-    userModal.hidden = false;
-
-    document.body.style.overflow = "hidden";
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-   ========================================================= */
-
-function closeModal() {
-
-    if (userModal) {
-
-        userModal.hidden = true;
-
-    }
-
-
-    document.body.style.overflow = "";
-
-    selectedUser = null;
-
-}
-
-
-/* =========================================================
-   UPDATE USER STATUS
-   ========================================================= */
-
-async function updateUserStatus(user, newStatus) {
-
-    if (!user || !user.id) {
-
-        alert(
-            "This user does not have a valid user ID."
-        );
-
-        return;
-
-    }
-
-
-    const action =
-        newStatus === "blocked"
-            ? "block"
-            : "activate";
-
-
-    const confirmation =
-        window.confirm(
-            `Are you sure you want to ${action} ${user.name}?`
-        );
-
-
-    if (!confirmation) {
-        return;
-    }
-
-
-    try {
-
-        blockUserBtn.disabled = true;
-        activateUserBtn.disabled = true;
-
-
-        const response = await fetch(
-            `${API_BASE}/admin-users.php`,
-            {
+        try {
+            const response = await fetch(USERS_API, {
                 method: "POST",
-
                 credentials: "include",
-
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-
                 body: JSON.stringify({
-
-                    action: "update_status",
-
-                    user_id: user.id,
-
-                    status: newStatus
-
+                    action,
+                    user_id: userId,
+                    ...extra
                 })
-
-            }
-        );
-
-
-        let data = null;
-
-
-        try {
-
-            data = await response.json();
-
-        } catch (jsonError) {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data?.message ||
-                data?.error ||
-                `Unable to update user (${response.status})`
-            );
-
-        }
-
-
-        if (data.success === false) {
-
-            throw new Error(
-                data.message ||
-                data.error ||
-                "Unable to update user."
-            );
-
-        }
-
-
-        /*
-         * Update the local copy immediately.
-         */
-
-        const index =
-            allUsers.findIndex(item => {
-
-                const normalized =
-                    normalizeUser(item);
-
-                return String(normalized.id) ===
-                    String(user.id);
-
             });
 
-
-        if (index !== -1) {
-
-            allUsers[index].status =
-                newStatus;
-
-        }
-
-
-        closeModal();
-
-        updateStatistics();
-
-        renderUsers();
-
-
-        alert(
-            newStatus === "blocked"
-                ? "User has been blocked."
-                : "User has been activated."
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "User status update error:",
-            error
-        );
-
-
-        alert(
-            error.message ||
-            "Unable to update user."
-        );
-
-
-    } finally {
-
-        if (blockUserBtn) {
-            blockUserBtn.disabled = false;
-        }
-
-        if (activateUserBtn) {
-            activateUserBtn.disabled = false;
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   LOADING
-   ========================================================= */
-
-function showLoading() {
-
-    if (loading) {
-        loading.hidden = false;
-    }
-
-    if (emptyState) {
-        emptyState.hidden = true;
-    }
-
-    if (usersTableBody) {
-        usersTableBody.innerHTML = "";
-    }
-
-}
-
-
-/* =========================================================
-   HIDE LOADING
-   ========================================================= */
-
-function hideLoading() {
-
-    if (loading) {
-        loading.hidden = true;
-    }
-
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    if (!errorBox) {
-        return;
-    }
-
-
-    errorMessage.textContent =
-        message ||
-        "Unable to load users.";
-
-
-    errorBox.hidden = false;
-
-}
-
-
-function hideError() {
-
-    if (errorBox) {
-        errorBox.hidden = true;
-    }
-
-}
-
-
-/* =========================================================
-   STATUS NORMALIZATION
-   ========================================================= */
-
-function normalizeStatus(status) {
-
-    const value =
-        String(status || "active")
-            .trim()
-            .toLowerCase();
-
-
-    if (
-        value === "active" ||
-        value === "approved" ||
-        value === "enabled"
-    ) {
-
-        return "active";
-
-    }
-
-
-    if (
-        value === "pending" ||
-        value === "waiting"
-    ) {
-
-        return "pending";
-
-    }
-
-
-    if (
-        value === "blocked" ||
-        value === "suspended" ||
-        value === "disabled"
-    ) {
-
-        return "blocked";
-
-    }
-
-
-    return "active";
-
-}
-
-
-/* =========================================================
-   ROLE NORMALIZATION
-   ========================================================= */
-
-function normalizeRole(role) {
-
-    const value =
-        String(role || "user")
-            .trim()
-            .toLowerCase();
-
-
-    if (
-        value === "admin" ||
-        value === "administrator"
-    ) {
-
-        return "admin";
-
-    }
-
-
-    return "user";
-
-}
-
-
-/* =========================================================
-   FORMAT UGX
-   ========================================================= */
-
-function formatUGX(amount) {
-
-    const number =
-        Number(amount) || 0;
-
-
-    return (
-        "UGX " +
-        number.toLocaleString(
-            "en-UG",
-            {
-                maximumFractionDigits: 0
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data || data.success !== true) {
+                throw new Error(
+                    data?.message ||
+                    `Action failed with status ${response.status}`
+                );
             }
-        )
-    );
 
-}
+            showToast(
+                data.message ||
+                "User updated successfully."
+            );
 
+            await loadUsers();
 
-/* =========================================================
-   FORMAT DATE
-   ========================================================= */
+        } catch (error) {
+            console.error("User action error:", error);
 
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-
-    let date;
-
-
-    /*
-     * MongoDB Extended JSON:
-     * { "$date": "..." }
-     */
-
-    if (
-        typeof value === "object" &&
-        value.$date
-    ) {
-
-        date =
-            new Date(value.$date);
-
-    } else {
-
-        date =
-            new Date(value);
-
-    }
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return "—";
-
-    }
-
-
-    return date.toLocaleDateString(
-        "en-UG",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
+            showToast(
+                error.message ||
+                "Unable to update user.",
+                "error"
+            );
         }
-    );
-
-}
-
-
-/* =========================================================
-   INITIALS
-   ========================================================= */
-
-function getInitials(name) {
-
-    const clean =
-        String(name || "")
-            .trim();
-
-
-    if (!clean) {
-        return "U";
     }
 
+    function viewUser(userId) {
+        const user = allUsers.find(
+            item => getUserId(item) === userId
+        );
 
-    const parts =
-        clean
-            .split(/\s+/)
-            .filter(Boolean);
-
-
-    if (parts.length === 1) {
-
-        return parts[0]
-            .substring(0, 2)
-            .toUpperCase();
-
-    }
-
-
-    return (
-        parts[0][0] +
-        parts[parts.length - 1][0]
-    ).toUpperCase();
-
-}
-
-
-/* =========================================================
-   CAPITALIZE
-   ========================================================= */
-
-function capitalize(value) {
-
-    const text =
-        String(value || "");
-
-
-    if (!text) {
-        return "";
-    }
-
-
-    return (
-        text.charAt(0).toUpperCase() +
-        text.slice(1)
-    );
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================================
-   CLOSE SIDEBAR AFTER NAVIGATION
-   ========================================================= */
-
-document.querySelectorAll(".sidebar a").forEach(link => {
-
-    link.addEventListener("click", () => {
-
-        if (
-            window.innerWidth <= 760 &&
-            sidebar
-        ) {
-
-            sidebar.classList.remove("open");
-
+        if (!user) {
+            showToast(
+                "User information was not found.",
+                "error"
+            );
+            return;
         }
 
-    });
+        const name = getName(user);
 
-});
-
-
-/* =========================================================
-   ESCAPE KEY
-   ========================================================= */
-
-document.addEventListener("keydown", event => {
-
-    if (event.key === "Escape") {
-
-        if (
-            userModal &&
-            !userModal.hidden
-        ) {
-
-            closeModal();
-
-        }
-
-        if (
-            sidebar &&
-            sidebar.classList.contains("open")
-        ) {
-
-            sidebar.classList.remove("open");
-
-        }
-
-    }
-
-});
+        const details = [
+            `Name: ${name}`,
+            `Email: ${user.email || "N/A"}`,
+            `Phone: ${user.phone || "N/A"}`,
+            `Balance: ${formatUGX(user.balance || 0)}`,
+            `Role: ${user.role || user.account_type || "user"}`,
+            `Status: ${user.status || "active"}`,
+            `Referral

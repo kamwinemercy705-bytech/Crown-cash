@@ -90,7 +90,6 @@ try {
     );
 
     if (!is_array($input)) {
-
         $input = $_POST;
     }
 
@@ -252,6 +251,58 @@ try {
     }
 
     // --------------------------------------------------------
+    // Determine account type / role
+    // --------------------------------------------------------
+
+    $accountType = strtolower(
+        trim(
+            (string)(
+                $user["account_type"] ??
+                ""
+            )
+        )
+    );
+
+    $storedRole = strtolower(
+        trim(
+            (string)(
+                $user["role"] ??
+                ""
+            )
+        )
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Choose the user's effective role
+    |--------------------------------------------------------------------------
+    */
+
+    if ($storedRole !== "") {
+
+        $role = $storedRole;
+
+    } elseif ($accountType !== "") {
+
+        $role = $accountType;
+
+    } else {
+
+        $role = "user";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Keep account type available
+    |--------------------------------------------------------------------------
+    */
+
+    if ($accountType === "") {
+
+        $accountType = $role;
+    }
+
+    // --------------------------------------------------------
     // Regenerate session ID
     // --------------------------------------------------------
 
@@ -273,18 +324,15 @@ try {
         time();
 
     // --------------------------------------------------------
-    // Determine account type / role
+    // IMPORTANT:
+    // Store role in session
     // --------------------------------------------------------
 
-    $role = strtolower(
-        trim(
-            (string)(
-                $user["role"] ??
-                $user["account_type"] ??
-                "user"
-            )
-        )
-    );
+    $_SESSION["role"] =
+        $role;
+
+    $_SESSION["account_type"] =
+        $accountType;
 
     // --------------------------------------------------------
     // Get user's name
@@ -364,6 +412,9 @@ try {
             "role" =>
                 $role,
 
+            "account_type" =>
+                $accountType,
+
             "status" =>
                 $status
         ]
@@ -376,6 +427,11 @@ try {
     // Server/database error
     // --------------------------------------------------------
 
+    error_log(
+        "Crown Cash login error: " .
+        $e->getMessage()
+    );
+
     http_response_code(500);
 
     echo json_encode([
@@ -383,12 +439,9 @@ try {
         "success" => false,
 
         "message" =>
-            "Unable to process login right now.",
+            "Unable to process login right now."
 
-        // Development information.
-        // Remove this field before public launch.
-        "error" =>
-            $e->getMessage()
     ]);
 }
+
 ?>

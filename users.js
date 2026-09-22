@@ -1,678 +1,879 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE = "https://crown-cash1.onrender.com";
-    const USERS_API = `${API_BASE}/users.php`;
-    const LOGOUT_API = `${API_BASE}/logout.php`;
+"use strict";
 
-    const usersTable = document.getElementById("usersTable");
-    const searchUser = document.getElementById("searchUser");
-    const statusFilter = document.getElementById("statusFilter");
-    const roleFilter = document.getElementById("roleFilter");
-    const refreshBtn = document.getElementById("refreshUsers");
-    const userCount = document.getElementById("userCount");
+const API_BASE = "https://crown-cash1.onrender.com";
 
-    const totalUsers = document.getElementById("totalUsers");
-    const activeUsers = document.getElementById("activeUsers");
-    const pendingUsers = document.getElementById("pendingUsers");
-    const blockedUsers = document.getElementById("blockedUsers");
+const ADMIN_CHECK_URL =
+    `${API_BASE}/admin-check.php`;
 
-    let allUsers = [];
+const USERS_API_URL =
+    `${API_BASE}/users.php`;
 
-    /* =========================
-       HELPERS
-    ========================= */
 
-    function escapeHTML(value) {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+// =====================================================
+// REDIRECT UNAUTHORIZED USERS
+// =====================================================
 
-    function getUserId(user) {
-        if (!user) return "";
+async function verifyAdminAccess() {
 
-        if (typeof user.id === "string") {
-            return user.id;
-        }
+    try {
 
-        if (user._id) {
-            if (typeof user._id === "string") {
-                return user._id;
-            }
-
-            if (user._id.$oid) {
-                return user._id.$oid;
-            }
-        }
-
-        return "";
-    }
-
-    function getName(user) {
-        if (!user) return "Unknown User";
-
-        if (user.full_name) {
-            return String(user.full_name).trim();
-        }
-
-        const first = String(user.first_name || "").trim();
-        const last = String(user.last_name || "").trim();
-
-        const name = `${first} ${last}`.trim();
-
-        return name || "Unknown User";
-    }
-
-    function getInitials(name) {
-        const parts = String(name)
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
-
-        if (parts.length === 0) {
-            return "U";
-        }
-
-        if (parts.length === 1) {
-            return parts[0].substring(0, 2).toUpperCase();
-        }
-
-        return (
-            parts[0].charAt(0) +
-            parts[parts.length - 1].charAt(0)
-        ).toUpperCase();
-    }
-
-    function formatUGX(amount) {
-        const number = Number(amount || 0);
-
-        return `UGX ${number.toLocaleString("en-UG", {
-            maximumFractionDigits: 0
-        })}`;
-    }
-
-    function formatDate(dateValue) {
-        if (!dateValue) {
-            return "—";
-        }
-
-        let date;
-
-        if (
-            typeof dateValue === "object" &&
-            dateValue.$date
-        ) {
-            date = new Date(dateValue.$date);
-        } else {
-            date = new Date(dateValue);
-        }
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleDateString("en-UG", {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-        });
-    }
-
-    function normalizeStatus(status) {
-        return String(status || "active")
-            .trim()
-            .toLowerCase();
-    }
-
-    function normalizeRole(role) {
-        return String(role || "user")
-            .trim()
-            .toLowerCase();
-    }
-
-    function showToast(message, type = "success") {
-        let toast = document.getElementById("usersToast");
-
-        if (!toast) {
-            toast = document.createElement("div");
-            toast.id = "usersToast";
-            toast.className = "users-toast";
-            document.body.appendChild(toast);
-        }
-
-        toast.className = `users-toast ${type}`;
-        toast.textContent = message;
-
-        requestAnimationFrame(() => {
-            toast.classList.add("show");
-        });
-
-        setTimeout(() => {
-            toast.classList.remove("show");
-        }, 3000);
-    }
-
-    function showLoading() {
-        usersTable.innerHTML = `
-            <tr>
-                <td colspan="8" class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <span>Loading users...</span>
-                </td>
-            </tr>
-        `;
-    }
-
-    function showEmpty(message = "No users found.") {
-        usersTable.innerHTML = `
-            <tr>
-                <td colspan="8" class="empty-state">
-                    <div class="empty-icon">♙</div>
-                    <strong>${escapeHTML(message)}</strong>
-                    <span>Try changing your search or filters.</span>
-                </td>
-            </tr>
-        `;
-    }
-
-    function showError(message) {
-        usersTable.innerHTML = `
-            <tr>
-                <td colspan="8" class="error-state">
-                    <div class="error-icon">!</div>
-                    <strong>Unable to load users</strong>
-                    <span>${escapeHTML(message)}</span>
-                    <button type="button" id="retryUsers">
-                        Retry
-                    </button>
-                </td>
-            </tr>
-        `;
-
-        const retry = document.getElementById("retryUsers");
-
-        if (retry) {
-            retry.addEventListener("click", loadUsers);
-        }
-    }
-
-    /* =========================
-       FETCH USERS
-    ========================= */
-
-    async function loadUsers() {
-        showLoading();
-
-        try {
-            const response = await fetch(USERS_API, {
+        const response = await fetch(
+            ADMIN_CHECK_URL,
+            {
                 method: "GET",
                 credentials: "include",
+                cache: "no-store",
                 headers: {
                     "Accept": "application/json"
                 }
-            });
-
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok || !data || data.success !== true) {
-                throw new Error(
-                    data?.message ||
-                    `Request failed with status ${response.status}`
-                );
             }
+        );
 
-            allUsers = Array.isArray(data.users)
-                ? data.users
-                : [];
+        let data = null;
 
-            updateStats(data.stats || {});
-            applyFilters();
-
+        try {
+            data = await response.json();
         } catch (error) {
-            console.error("Users loading error:", error);
-
-            showError(
-                error.message ||
-                "Please check your connection and try again."
-            );
+            data = null;
         }
+
+        if (
+            !response.ok ||
+            !data ||
+            data.success !== true ||
+            data.authenticated !== true ||
+            data.authorized !== true
+        ) {
+
+            window.location.replace(
+                "/login.html?admin=login_required"
+            );
+
+            return false;
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Admin authentication check failed:",
+            error
+        );
+
+        window.location.replace(
+            "/login.html?admin=login_required"
+        );
+
+        return false;
     }
+}
 
-    /* =========================
-       STATISTICS
-    ========================= */
 
-    function updateStats(stats) {
-        const total =
-            stats.total ??
-            allUsers.length;
+// =====================================================
+// GLOBAL STATE
+// =====================================================
 
-        const active =
-            stats.active ??
-            allUsers.filter(
-                user => normalizeStatus(user.status) === "active"
-            ).length;
+let allUsers = [];
 
-        const pending =
-            stats.pending ??
-            allUsers.filter(
-                user => normalizeStatus(user.status) === "pending"
-            ).length;
 
-        const blocked =
-            stats.blocked ??
-            allUsers.filter(user => {
-                const status = normalizeStatus(user.status);
+// =====================================================
+// LOAD USERS
+// =====================================================
 
-                return (
-                    status === "blocked" ||
-                    status === "suspended" ||
-                    status === "disabled"
-                );
-            }).length;
+async function loadUsers() {
 
-        if (totalUsers) {
-            totalUsers.textContent =
-                Number(total).toLocaleString();
-        }
+    try {
 
-        if (activeUsers) {
-            activeUsers.textContent =
-                Number(active).toLocaleString();
-        }
+        showLoading();
 
-        if (pendingUsers) {
-            pendingUsers.textContent =
-                Number(pending).toLocaleString();
-        }
+        const response = await fetch(
+            USERS_API_URL,
+            {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
 
-        if (blockedUsers) {
-            blockedUsers.textContent =
-                Number(blocked).toLocaleString();
-        }
-    }
+        if (response.status === 401 ||
+            response.status === 403) {
 
-    /* =========================
-       FILTERING
-    ========================= */
-
-    function applyFilters() {
-        const search = String(
-            searchUser?.value || ""
-        )
-            .trim()
-            .toLowerCase();
-
-        const selectedStatus = String(
-            statusFilter?.value || ""
-        )
-            .trim()
-            .toLowerCase();
-
-        const selectedRole = String(
-            roleFilter?.value || ""
-        )
-            .trim()
-            .toLowerCase();
-
-        const filteredUsers = allUsers.filter(user => {
-            const name = getName(user).toLowerCase();
-
-            const email = String(
-                user.email || ""
-            ).toLowerCase();
-
-            const phone = String(
-                user.phone || ""
-            ).toLowerCase();
-
-            const referralCode = String(
-                user.referral_code || ""
-            ).toLowerCase();
-
-            const role = normalizeRole(
-                user.role ||
-                user.account_type
+            window.location.replace(
+                "/login.html?admin=login_required"
             );
 
-            const status = normalizeStatus(
-                user.status
-            );
-
-            const matchesSearch =
-                !search ||
-                name.includes(search) ||
-                email.includes(search) ||
-                phone.includes(search) ||
-                referralCode.includes(search);
-
-            const matchesStatus =
-                !selectedStatus ||
-                selectedStatus === "all" ||
-                status === selectedStatus;
-
-            const matchesRole =
-                !selectedRole ||
-                selectedRole === "all" ||
-                role === selectedRole;
-
-            return (
-                matchesSearch &&
-                matchesStatus &&
-                matchesRole
-            );
-        });
-
-        renderUsers(filteredUsers);
-
-        if (userCount) {
-            userCount.textContent =
-                `${filteredUsers.length} user${
-                    filteredUsers.length === 1 ? "" : "s"
-                }`;
-        }
-    }
-
-    /* =========================
-       RENDER USERS
-    ========================= */
-
-    function renderUsers(users) {
-        if (!Array.isArray(users) || users.length === 0) {
-            showEmpty();
             return;
         }
 
-        usersTable.innerHTML = users.map(user => {
-            const id = getUserId(user);
-            const name = getName(user);
-            const initials = getInitials(name);
+        const data = await response.json();
 
-            const email =
-                user.email || "No email";
+        if (!response.ok || data.success !== true) {
 
-            const phone =
-                user.phone || "No phone";
+            throw new Error(
+                data.message ||
+                "Unable to load users."
+            );
+        }
 
-            const balance =
-                user.balance ?? 0;
+        allUsers = Array.isArray(data.users)
+            ? data.users
+            : [];
 
-            const role =
-                normalizeRole(
-                    user.role ||
-                    user.account_type
-                );
+        renderStatistics(data.stats || {});
+        renderUsers();
 
-            const status =
-                normalizeStatus(user.status);
+    } catch (error) {
 
-            const joined =
-                formatDate(
-                    user.created_at ||
-                    user.joined_at ||
-                    user.date_created
-                );
+        console.error(
+            "Users loading error:",
+            error
+        );
 
-            const safeId =
-                escapeHTML(id);
+        showError(
+            error.message ||
+            "Unable to load users."
+        );
+    }
+}
 
-            const roleClass =
-                role === "admin"
-                    ? "admin"
-                    : "user";
 
-            let statusClass = "active";
+// =====================================================
+// RENDER STATISTICS
+// =====================================================
+
+function renderStatistics(stats) {
+
+    const totalUsers =
+        document.getElementById("totalUsers");
+
+    const activeUsers =
+        document.getElementById("activeUsers");
+
+    const blockedUsers =
+        document.getElementById("blockedUsers");
+
+    const adminUsers =
+        document.getElementById("adminUsers");
+
+
+    if (totalUsers) {
+
+        totalUsers.textContent =
+            Number(stats.total || 0)
+                .toLocaleString();
+    }
+
+
+    if (activeUsers) {
+
+        activeUsers.textContent =
+            Number(stats.active || 0)
+                .toLocaleString();
+    }
+
+
+    if (blockedUsers) {
+
+        blockedUsers.textContent =
+            Number(
+                stats.blocked ||
+                stats.suspended ||
+                0
+            ).toLocaleString();
+    }
+
+
+    if (adminUsers) {
+
+        adminUsers.textContent =
+            Number(stats.admins || 0)
+                .toLocaleString();
+    }
+}
+
+
+// =====================================================
+// RENDER USERS
+// =====================================================
+
+function renderUsers() {
+
+    const tableBody =
+        document.getElementById("usersTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+
+    const searchInput =
+        document.getElementById("searchUsers");
+
+    const statusFilter =
+        document.getElementById("statusFilter");
+
+    const roleFilter =
+        document.getElementById("roleFilter");
+
+
+    const search =
+        (searchInput?.value || "")
+            .trim()
+            .toLowerCase();
+
+
+    const status =
+        statusFilter?.value || "all";
+
+
+    const role =
+        roleFilter?.value || "all";
+
+
+    const filteredUsers =
+        allUsers.filter(user => {
+
+            const searchableText = [
+
+                user.full_name,
+                user.email,
+                user.phone,
+                user.referral_code
+
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
 
             if (
-                status === "blocked" ||
-                status === "disabled"
+                search &&
+                !searchableText.includes(search)
             ) {
-                statusClass = "blocked";
-            } else if (status === "suspended") {
-                statusClass = "suspended";
-            } else if (status === "pending") {
-                statusClass = "pending";
+                return false;
             }
 
+
+            if (
+                status !== "all" &&
+                String(user.status || "")
+                    .toLowerCase() !== status.toLowerCase()
+            ) {
+                return false;
+            }
+
+
+            const userRole =
+                String(
+                    user.role ||
+                    user.account_type ||
+                    "user"
+                ).toLowerCase();
+
+
+            if (
+                role !== "all" &&
+                userRole !== role.toLowerCase()
+            ) {
+                return false;
+            }
+
+
+            return true;
+        });
+
+
+    if (!filteredUsers.length) {
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-state">
+                    No users found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tableBody.innerHTML =
+        filteredUsers.map(user => {
+
+            const id =
+                escapeHtml(
+                    String(user.id || user._id || "")
+                );
+
+
+            const name =
+                escapeHtml(
+                    String(
+                        user.full_name ||
+                        `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                        "Unknown User"
+                    )
+                );
+
+
+            const email =
+                escapeHtml(
+                    String(user.email || "")
+                );
+
+
+            const phone =
+                escapeHtml(
+                    String(user.phone || "")
+                );
+
+
+            const statusValue =
+                String(
+                    user.status ||
+                    "active"
+                ).toLowerCase();
+
+
+            const roleValue =
+                String(
+                    user.role ||
+                    user.account_type ||
+                    "user"
+                ).toLowerCase();
+
+
             return `
-                <tr data-user-id="${safeId}">
+                <tr>
 
                     <td>
-                        <div class="user-cell">
-
-                            <div class="user-avatar">
-                                ${escapeHTML(initials)}
-                            </div>
-
-                            <div class="user-details">
-                                <strong>
-                                    ${escapeHTML(name)}
-                                </strong>
-
-                                <small>
-                                    ID: ${escapeHTML(
-                                        id
-                                            ? id.substring(0, 10)
-                                            : "N/A"
-                                    )}
-                                </small>
-                            </div>
-
-                        </div>
+                        ${name}
                     </td>
 
                     <td>
-                        <span class="user-phone">
-                            ${escapeHTML(phone)}
+                        ${email}
+                    </td>
+
+                    <td>
+                        ${phone}
+                    </td>
+
+                    <td>
+                        <span class="status-badge ${escapeHtml(statusValue)}">
+                            ${escapeHtml(statusValue)}
                         </span>
                     </td>
 
                     <td>
-                        <span class="user-email">
-                            ${escapeHTML(email)}
+                        <span class="role-badge ${escapeHtml(roleValue)}">
+                            ${escapeHtml(roleValue)}
                         </span>
                     </td>
 
                     <td>
-                        <strong class="balance">
-                            ${escapeHTML(
-                                formatUGX(balance)
-                            )}
-                        </strong>
+                        UGX ${formatMoney(user.balance)}
                     </td>
 
                     <td>
-                        <span class="role-badge ${roleClass}">
-                            ${escapeHTML(
-                                role.charAt(0).toUpperCase() +
-                                role.slice(1)
-                            )}
-                        </span>
+                        ${formatDate(user.created_at)}
                     </td>
 
                     <td>
-                        <span class="status-badge ${statusClass}">
-                            <span class="status-dot"></span>
-                            ${escapeHTML(
-                                status.charAt(0).toUpperCase() +
-                                status.slice(1)
-                            )}
-                        </span>
-                    </td>
 
-                    <td>
-                        <span class="joined-date">
-                            ${escapeHTML(joined)}
-                        </span>
-                    </td>
-
-                    <td>
                         <div class="user-actions">
 
                             <button
                                 type="button"
-                                class="action-btn view"
+                                class="action-btn view-btn"
                                 data-action="view"
-                                data-user-id="${safeId}"
-                                title="View user"
+                                data-id="${id}"
                             >
-                                <svg
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                </svg>
+                                View
                             </button>
 
-                            <button
-                                type="button"
-                                class="action-btn toggle"
-                                data-action="toggle"
-                                data-user-id="${safeId}"
-                                data-status="${escapeHTML(status)}"
-                                title="${
-                                    status === "blocked" ||
-                                    status === "suspended" ||
-                                    status === "disabled"
-                                        ? "Activate user"
-                                        : "Block user"
-                                }"
-                            >
-                                <svg
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    ${
-                                        status === "blocked" ||
-                                        status === "suspended" ||
-                                        status === "disabled"
-                                            ? `
-                                                <path d="M5 12l4 4L19 6"/>
-                                            `
-                                            : `
-                                                <circle cx="12" cy="12" r="9"/>
-                                                <path d="M8 8l8 8"/>
-                                                <path d="M16 8l-8 8"/>
-                                            `
-                                    }
-                                </svg>
-                            </button>
-
-                            <button
-                                type="button"
-                                class="action-btn role"
-                                data-action="role"
-                                data-user-id="${safeId}"
-                                data-role="${escapeHTML(role)}"
-                                title="Change role"
-                            >
-                                <svg
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path d="M12 15c3 0 5 2 5 5H7c0-3 2-5 5-5Z"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                            </button>
+                            ${
+                                statusValue === "active"
+                                ? `
+                                    <button
+                                        type="button"
+                                        class="action-btn danger-btn"
+                                        data-action="block"
+                                        data-id="${id}"
+                                    >
+                                        Block
+                                    </button>
+                                `
+                                : `
+                                    <button
+                                        type="button"
+                                        class="action-btn success-btn"
+                                        data-action="activate"
+                                        data-id="${id}"
+                                    >
+                                        Activate
+                                    </button>
+                                `
+                            }
 
                         </div>
+
                     </td>
 
                 </tr>
             `;
+
         }).join("");
-    }
+}
 
-    /* =========================
-       USER ACTIONS
-    ========================= */
 
-    async function updateUser(action, userId, extra = {}) {
-        if (!userId) {
-            showToast(
-                "User ID is missing.",
-                "error"
-            );
-            return;
-        }
+// =====================================================
+// VIEW USER
+// =====================================================
 
-        try {
-            const response = await fetch(USERS_API, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify({
-                    action,
-                    user_id: userId,
-                    ...extra
-                })
-            });
+function viewUser(userId) {
 
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok || !data || data.success !== true) {
-                throw new Error(
-                    data?.message ||
-                    `Action failed with status ${response.status}`
-                );
-            }
-
-            showToast(
-                data.message ||
-                "User updated successfully."
-            );
-
-            await loadUsers();
-
-        } catch (error) {
-            console.error("User action error:", error);
-
-            showToast(
-                error.message ||
-                "Unable to update user.",
-                "error"
-            );
-        }
-    }
-
-    function viewUser(userId) {
-        const user = allUsers.find(
-            item => getUserId(item) === userId
+    const user =
+        allUsers.find(
+            item =>
+                String(item.id || item._id) ===
+                String(userId)
         );
 
-        if (!user) {
-            showToast(
-                "User information was not found.",
-                "error"
+
+    if (!user) {
+
+        showToast(
+            "User information was not found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const message = [
+
+        `Name: ${user.full_name || "N/A"}`,
+        `Email: ${user.email || "N/A"}`,
+        `Phone: ${user.phone || "N/A"}`,
+        `Status: ${user.status || "N/A"}`,
+        `Role: ${user.role || user.account_type || "user"}`,
+        `Balance: UGX ${formatMoney(user.balance)}`,
+        `Referral Code: ${user.referral_code || "N/A"}`,
+        `Created: ${formatDate(user.created_at)}`
+
+    ].join("\n");
+
+
+    alert(message);
+}
+
+
+// =====================================================
+// CHANGE USER STATUS
+// =====================================================
+
+async function changeUserStatus(
+    userId,
+    action
+) {
+
+    const actionText =
+        action === "block"
+            ? "block"
+            : "activate";
+
+
+    const confirmed =
+        confirm(
+            `Are you sure you want to ${actionText} this user?`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response = await fetch(
+            USERS_API_URL,
+            {
+                method: "POST",
+                credentials: "include",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "Accept":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    action:
+                        action === "block"
+                            ? "block"
+                            : "activate",
+
+                    user_id:
+                        userId
+                })
+            }
+        );
+
+
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            window.location.replace(
+                "/login.html?admin=login_required"
             );
+
             return;
         }
 
-        const name = getName(user);
 
-        const details = [
-            `Name: ${name}`,
-            `Email: ${user.email || "N/A"}`,
-            `Phone: ${user.phone || "N/A"}`,
-            `Balance: ${formatUGX(user.balance || 0)}`,
-            `Role: ${user.role || user.account_type || "user"}`,
-            `Status: ${user.status || "active"}`,
-            `Referral
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            data.success !== true
+        ) {
+
+            throw new Error(
+                data.message ||
+                "Unable to update user."
+            );
+        }
+
+
+        showToast(
+            data.message ||
+            "User updated successfully.",
+            "success"
+        );
+
+
+        await loadUsers();
+
+    } catch (error) {
+
+        console.error(error);
+
+        showToast(
+            error.message ||
+            "Unable to update user.",
+            "error"
+        );
+    }
+}
+
+
+// =====================================================
+// EVENT HANDLERS
+// =====================================================
+
+function setupEventHandlers() {
+
+    const searchInput =
+        document.getElementById("searchUsers");
+
+    const statusFilter =
+        document.getElementById("statusFilter");
+
+    const roleFilter =
+        document.getElementById("roleFilter");
+
+    const refreshButton =
+        document.getElementById("refreshUsers");
+
+    const logoutButton =
+        document.getElementById("logoutBtn");
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            renderUsers
+        );
+    }
+
+
+    if (statusFilter) {
+
+        statusFilter.addEventListener(
+            "change",
+            renderUsers
+        );
+    }
+
+
+    if (roleFilter) {
+
+        roleFilter.addEventListener(
+            "change",
+            renderUsers
+        );
+    }
+
+
+    if (refreshButton) {
+
+        refreshButton.addEventListener(
+            "click",
+            loadUsers
+        );
+    }
+
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            async event => {
+
+                event.preventDefault();
+
+                try {
+
+                    await fetch(
+                        `${API_BASE}/logout.php`,
+                        {
+                            method: "GET",
+                            credentials: "include"
+                        }
+                    );
+
+                } catch (error) {
+
+                    console.error(error);
+
+                } finally {
+
+                    window.location.replace(
+                        "/login.html"
+                    );
+                }
+            }
+        );
+    }
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const button =
+                event.target.closest(
+                    "[data-action]"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            const action =
+                button.dataset.action;
+
+            const userId =
+                button.dataset.id;
+
+
+            if (action === "view") {
+
+                viewUser(userId);
+
+            } else if (
+                action === "block" ||
+                action === "activate"
+            ) {
+
+                changeUserStatus(
+                    userId,
+                    action
+                );
+            }
+        }
+    );
+}
+
+
+// =====================================================
+// UI HELPERS
+// =====================================================
+
+function showLoading() {
+
+    const tableBody =
+        document.getElementById("usersTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="8" class="loading-state">
+                Loading users...
+            </td>
+        </tr>
+    `;
+}
+
+
+function showError(message) {
+
+    const tableBody =
+        document.getElementById("usersTableBody");
+
+    if (!tableBody) {
+        return;
+    }
+
+
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="8" class="error-state">
+                ${escapeHtml(message)}
+            </td>
+        </tr>
+    `;
+}
+
+
+function showToast(
+    message,
+    type = "success"
+) {
+
+    let toast =
+        document.getElementById("adminToast");
+
+
+    if (!toast) {
+
+        toast =
+            document.createElement("div");
+
+        toast.id =
+            "adminToast";
+
+        document.body.appendChild(toast);
+    }
+
+
+    toast.className =
+        `admin-toast ${type}`;
+
+
+    toast.textContent =
+        message;
+
+
+    toast.classList.add("show");
+
+
+    setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    }, 3000);
+}
+
+
+function formatMoney(value) {
+
+    const number =
+        Number(value || 0);
+
+
+    return number.toLocaleString(
+        "en-UG",
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        }
+    );
+}
+
+
+function formatDate(value) {
+
+    if (!value) {
+        return "N/A";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (Number.isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+
+    return date.toLocaleDateString(
+        "en-UG",
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        }
+    );
+}
+
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+// =====================================================
+// START ADMIN PAGE
+// =====================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        /*
+         * Do NOT load any user data until
+         * administrator authorization succeeds.
+         */
+
+        const authorized =
+            await verifyAdminAccess();
+
+
+        if (!authorized) {
+            return;
+        }
+
+
+        setupEventHandlers();
+
+        await loadUsers();
+    }
+);

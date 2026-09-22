@@ -5,6 +5,17 @@
 | CROWN CASH — WITHDRAWAL REQUEST API
 |--------------------------------------------------------------------------
 | Creates a pending withdrawal request for the logged-in user.
+|
+| Withdrawal rules:
+| - Minimum withdrawal: UGX 5,000
+| - Withdrawal fee: 10%
+| - Option A: fee is deducted from requested withdrawal amount
+|
+| Example:
+| Requested: UGX 20,000
+| Fee 10%:   UGX  2,000
+| Payout:    UGX 18,000
+|
 | Admin approval is required before the withdrawal is processed.
 |--------------------------------------------------------------------------
 */
@@ -102,7 +113,8 @@ if (
 
     echo json_encode([
         "success" => false,
-        "message" => "You must be logged in to make a withdrawal."
+        "message" =>
+            "You must be logged in to make a withdrawal."
     ]);
 
     exit;
@@ -120,11 +132,8 @@ require_once __DIR__ . "/config.php";
 
 /*
 |--------------------------------------------------------------------------
-| READ REQUEST
+| READ JSON REQUEST
 |--------------------------------------------------------------------------
-|
-| Supports JSON requests from withdraw.js.
-|
 */
 
 $input = json_decode(
@@ -157,13 +166,8 @@ $amount = $input["amount"] ?? null;
 
 /*
 |--------------------------------------------------------------------------
-| GET METHOD
+| GET PAYMENT METHOD
 |--------------------------------------------------------------------------
-|
-| Accept:
-| mtn / airtel
-| MTN / Airtel
-|
 */
 
 $method =
@@ -210,7 +214,8 @@ if (
 
     echo json_encode([
         "success" => false,
-        "message" => "Enter a valid withdrawal amount."
+        "message" =>
+            "Enter a valid withdrawal amount."
     ]);
 
     exit;
@@ -224,9 +229,12 @@ $amount = (float)$amount;
 |--------------------------------------------------------------------------
 | MINIMUM WITHDRAWAL
 |--------------------------------------------------------------------------
+|
+| Crown Cash minimum withdrawal is UGX 5,000.
+|--------------------------------------------------------------------------
 */
 
-$minimumWithdrawal = 10000;
+$minimumWithdrawal = 5000;
 
 
 if ($amount < $minimumWithdrawal) {
@@ -236,7 +244,7 @@ if ($amount < $minimumWithdrawal) {
     echo json_encode([
         "success" => false,
         "message" =>
-            "Minimum withdrawal amount is UGX 10,000."
+            "Minimum withdrawal amount is UGX 5,000."
     ]);
 
     exit;
@@ -264,6 +272,68 @@ if (floor($amount) != $amount) {
 
 
 $amount = (int)$amount;
+
+
+/*
+|--------------------------------------------------------------------------
+| WITHDRAWAL FEE
+|--------------------------------------------------------------------------
+|
+| Option A:
+|
+| The fee comes out of the requested withdrawal amount.
+|
+| Example:
+|
+| UGX 20,000 requested
+| 10% fee = UGX 2,000
+| User receives = UGX 18,000
+|--------------------------------------------------------------------------
+*/
+
+$withdrawalFeeRate = 0.10;
+
+
+/*
+|--------------------------------------------------------------------------
+| CALCULATE FEE
+|--------------------------------------------------------------------------
+*/
+
+$withdrawalFee =
+    (int)round(
+        $amount * $withdrawalFeeRate
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| CALCULATE PAYOUT
+|--------------------------------------------------------------------------
+*/
+
+$payoutAmount =
+    $amount - $withdrawalFee;
+
+
+/*
+|--------------------------------------------------------------------------
+| SAFETY CHECK
+|--------------------------------------------------------------------------
+*/
+
+if ($payoutAmount <= 0) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Invalid withdrawal amount."
+    ]);
+
+    exit;
+}
 
 
 /*
@@ -494,6 +564,11 @@ try {
 
 } catch (Throwable $e) {
 
+    error_log(
+        "CROWN CASH USER LOOKUP ERROR: " .
+        $e->getMessage()
+    );
+
     http_response_code(500);
 
     echo json_encode([
@@ -541,7 +616,9 @@ if (
         [
             "blocked",
             "suspended",
-            "disabled"
+            "disabled",
+            "banned",
+            "inactive"
         ],
         true
     )
@@ -611,7 +688,36 @@ elseif (isset($user["wallet_balance"])) {
 
 /*
 |--------------------------------------------------------------------------
-| CHECK BALANCE
+| USER MUST HAVE AT LEAST UGX 5,000
+|--------------------------------------------------------------------------
+*/
+
+if ($balance < $minimumWithdrawal) {
+
+    http_response_code(400);
+
+    echo json_encode([
+
+        "success" => false,
+
+        "message" =>
+            "You need at least UGX 5,000 available balance to make a withdrawal.",
+
+        "available_balance" =>
+            $balance,
+
+        "minimum_withdrawal" =>
+            $minimumWithdrawal
+
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK REQUESTED AMOUNT AGAINST BALANCE
 |--------------------------------------------------------------------------
 */
 
@@ -627,7 +733,10 @@ if ($amount > $balance) {
             "Insufficient available balance.",
 
         "available_balance" =>
-            $balance
+            $balance,
+
+        "requested_amount" =>
+            $amount
 
     ]);
 
@@ -655,6 +764,11 @@ try {
         ]);
 
 } catch (Throwable $e) {
+
+    error_log(
+        "CROWN CASH PENDING WITHDRAWAL CHECK ERROR: " .
+        $e->getMessage()
+    );
 
     http_response_code(500);
 
@@ -697,8 +811,29 @@ $withdrawal = [
     "user_id" =>
         $userId,
 
+    /*
+     * Original amount requested by user.
+     */
     "amount" =>
         $amount,
+
+    "requested_amount" =>
+        $amount,
+
+    /*
+     * 10% Crown Cash withdrawal fee.
+     */
+    "fee_rate" =>
+        $withdrawalFeeRate,
+
+    "fee" =>
+        $withdrawalFee,
+
+    /*
+     * Amount the user should receive.
+     */
+    "payout_amount" =>
+        $payoutAmount,
 
     "method" =>
         $method,
@@ -772,8 +907,29 @@ try {
         "type" =>
             "withdrawal",
 
+        /*
+         * Requested amount.
+         */
         "amount" =>
             $amount,
+
+        "requested_amount" =>
+            $amount,
+
+        /*
+         * Withdrawal fee.
+         */
+        "fee_rate" =>
+            $withdrawalFeeRate,
+
+        "fee" =>
+            $withdrawalFee,
+
+        /*
+         * Actual amount to be paid.
+         */
+        "payout_amount" =>
+            $payoutAmount,
 
         "method" =>
             $method,
@@ -797,8 +953,8 @@ try {
 
     /*
     |--------------------------------------------------------------------------
-    | Withdrawal was created even if transaction logging failed.
-    | Log the problem for administrator investigation.
+    | Withdrawal was already created.
+    | Transaction logging failed.
     |--------------------------------------------------------------------------
     */
 
@@ -811,7 +967,7 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| SUCCESS
+| SUCCESS RESPONSE
 |--------------------------------------------------------------------------
 */
 
@@ -830,8 +986,17 @@ echo json_encode([
         $withdrawalResult
             ->getInsertedId(),
 
-    "amount" =>
+    "requested_amount" =>
         $amount,
+
+    "fee_rate" =>
+        $withdrawalFeeRate,
+
+    "fee" =>
+        $withdrawalFee,
+
+    "payout_amount" =>
+        $payoutAmount,
 
     "method" =>
         $method,

@@ -1,29 +1,28 @@
 <?php
+
 declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
 | Crown Cash - Admin Withdrawals API
 |--------------------------------------------------------------------------
+| GET  = View withdrawals
+| POST = Approve / reject withdrawals
 |
-| GET:
-|   Lists customer withdrawal requests.
-|
-| POST:
-|   Approves or rejects a pending withdrawal.
-|
-| IMPORTANT:
-|   Approval here records the administrative decision.
-|   It does NOT automatically send Mobile Money.
-|
-|   Actual MTN/Airtel payout should only be performed through an
-|   authorized payment API after the applicable business/legal
-|   requirements have been verified.
-|
+| Security:
+| - Protected by admin-auth.php
+| - Only designated administrator can access
+| - Only pending withdrawals can be processed
+| - Approval is atomic
+| - Balance is checked and deducted atomically
+| - Same withdrawal cannot be approved twice
+| - Rejected withdrawals do not deduct balance
 |--------------------------------------------------------------------------
 */
 
-header("Content-Type: application/json; charset=UTF-8");
+require_once __DIR__ . "/admin-auth.php";
+
+header("Content-Type: application/json; charset=utf-8");
 
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
@@ -36,8 +35,15 @@ header(
 );
 
 header(
-    "Access-Control-Allow-Headers: Content-Type, Authorization"
+    "Access-Control-Allow-Headers: Content-Type"
 );
+
+
+/*
+|--------------------------------------------------------------------------
+| OPTIONS
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
@@ -47,145 +53,47 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 
 /*
 |--------------------------------------------------------------------------
-| SESSION
+| JSON response helper
 |--------------------------------------------------------------------------
 */
 
-session_set_cookie_params([
-    "lifetime" => 0,
-    "path" => "/",
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
-]);
-
-session_start();
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPERS
-|--------------------------------------------------------------------------
-*/
-
-function jsonResponse(
-    array $data,
-    int $status = 200
+function withdrawalResponse(
+    bool $success,
+    string $message = "",
+    array $data = [],
+    int $statusCode = 200
 ): void {
 
-    http_response_code($status);
+    http_response_code($statusCode);
 
     echo json_encode(
-        $data,
-        JSON_UNESCAPED_SLASHES |
-        JSON_UNESCAPED_UNICODE
+        array_merge(
+            [
+                "success" => $success,
+                "message" => $message
+            ],
+            $data
+        ),
+        JSON_UNESCAPED_SLASHES
     );
 
     exit;
 }
 
 
-function getRequestData(): array
+/*
+|--------------------------------------------------------------------------
+| Convert MongoDB numeric values to float
+|--------------------------------------------------------------------------
+*/
+
+function withdrawalAmountToFloat($value): float
 {
-    $raw = file_get_contents("php://input");
-
-    if (!$raw) {
-        return $_POST ?? [];
-    }
-
-    $data = json_decode(
-        $raw,
-        true
-    );
-
-    if (is_array($data)) {
-        return $data;
-    }
-
-    return $_POST ?? [];
-}
-
-
-function isAdmin(): bool
-{
-    if (
-        empty($_SESSION["logged_in"]) ||
-        $_SESSION["logged_in"] !== true
-    ) {
-        return false;
-    }
-
-    $role = strtolower(
-        trim(
-            (string)(
-                $_SESSION["role"] ?? ""
-            )
-        )
-    );
-
-    $accountType = strtolower(
-        trim(
-            (string)(
-                $_SESSION["account_type"] ?? ""
-            )
-        )
-    );
-
-    return (
-        $role === "admin" ||
-        $accountType === "admin"
-    );
-}
-
-
-function stringValue($value): string
-{
-    if ($value === null) {
-        return "";
-    }
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\ObjectId
-    ) {
-        return (string)$value;
-    }
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\Decimal128
-    ) {
-        return $value->__toString();
-    }
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\Int64
-    ) {
-        return $value->__toString();
-    }
-
-    return trim((string)$value);
-}
-
-
-function numberValue($value): float
-{
-    if ($value === null) {
-        return 0.0;
-    }
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\Decimal128
-    ) {
+    if ($value instanceof MongoDB\BSON\Decimal128) {
         return (float)$value->__toString();
     }
 
-    if (
-        $value instanceof
-        \MongoDB\BSON\Int64
-    ) {
+    if ($value instanceof MongoDB\BSON\Int64) {
         return (float)$value->__toString();
     }
 
@@ -197,448 +105,287 @@ function numberValue($value): float
 }
 
 
-function dateValue($value)
-{
-    if ($value === null) {
-        return null;
-    }
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\UTCDateTime
-    ) {
-        return $value
-            ->toDateTime()
-            ->format("c");
-    }
-
-    return stringValue($value);
-}
-
-
-function userFilter($userId): array
-{
-    $or = [];
-
-    if (
-        $userId instanceof
-        \MongoDB\BSON\ObjectId
-    ) {
-        $or[] = [
-            "_id" => $userId
-        ];
-
-        $or[] = [
-            "user_id" => $userId
-        ];
-    }
-
-    $id = stringValue($userId);
-
-    if ($id !== "") {
-
-        $or[] = [
-            "_id" => $id
-        ];
-
-        $or[] = [
-            "user_id" => $id
-        ];
-
-        if (
-            preg_match(
-                '/^[a-f0-9]{24}$/i',
-                $id
-            )
-        ) {
-
-            try {
-
-                $objectId =
-                    new \MongoDB\BSON\ObjectId($id);
-
-                $or[] = [
-                    "_id" => $objectId
-                ];
-
-                $or[] = [
-                    "user_id" => $objectId
-                ];
-
-            } catch (Throwable $ignored) {
-            }
-        }
-    }
-
-    return [
-        '$or' => $or
-    ];
-}
-
-
-function findUser(
-    $users,
-    $userId
-) {
-
-    if (
-        $userId === null ||
-        $userId === ""
-    ) {
-        return null;
-    }
-
-    $filter = userFilter($userId);
-
-    if (
-        empty($filter["$or"])
-    ) {
-        return null;
-    }
-
-    return $users->findOne(
-        $filter
-    );
-}
-
-
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATION
+| GET - Load withdrawals
 |--------------------------------------------------------------------------
 */
 
-if (!isAdmin()) {
-
-    jsonResponse([
-        "success" => false,
-        "message" =>
-            "Admin access required."
-    ], 403);
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| DATABASE
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    require_once __DIR__ . "/config.php";
-
-} catch (Throwable $e) {
-
-    error_log(
-        "Admin withdrawals config error: " .
-        $e->getMessage()
-    );
-
-    jsonResponse([
-        "success" => false,
-        "message" =>
-            "Database configuration could not be loaded."
-    ], 500);
-}
-
-
-if (
-    !isset($withdrawals) ||
-    !isset($users)
-) {
-
-    jsonResponse([
-        "success" => false,
-        "message" =>
-            "Required database collections are not configured."
-    ], 500);
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| GET WITHDRAWALS
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $_SERVER["REQUEST_METHOD"] === "GET"
-) {
+if ($_SERVER["REQUEST_METHOD"] === "GET") {
 
     try {
 
-        $status =
-            strtolower(
-                trim(
-                    (string)(
-                        $_GET["status"] ?? "all"
-                    )
-                )
-            );
+        $search = trim(
+            (string)($_GET["search"] ?? "")
+        );
 
-        $filter = [];
+        $status = strtolower(
+            trim((string)($_GET["status"] ?? ""))
+        );
 
-        if (
-            $status !== "" &&
-            $status !== "all"
-        ) {
-            $filter["status"] =
-                $status;
+        $method = strtolower(
+            trim((string)($_GET["method"] ?? ""))
+        );
+
+        $limit = (int)($_GET["limit"] ?? 100);
+
+        if ($limit < 1) {
+            $limit = 100;
         }
 
-        $cursor =
-            $withdrawals->find(
-                $filter,
-                [
-                    "sort" => [
-                        "created_at" => -1,
-                        "_id" => -1
-                    ],
-                    "limit" => 500
-                ]
-            );
+        if ($limit > 500) {
+            $limit = 500;
+        }
 
-        $items = [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build query
+        |--------------------------------------------------------------------------
+        */
+
+        $query = [];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($status !== "") {
+            $query["status"] = $status;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Method filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($method !== "") {
+            $query["method"] = $method;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
+
+        if ($search !== "") {
+
+            $searchRegex = [
+                "\$regex" => preg_quote($search),
+                "\$options" => "i"
+            ];
+
+            $query["\$or"] = [
+                [
+                    "user_email" =>
+                        $searchRegex
+                ],
+                [
+                    "phone" =>
+                        $searchRegex
+                ],
+                [
+                    "reference" =>
+                        $searchRegex
+                ],
+                [
+                    "withdrawal_reference" =>
+                        $searchRegex
+                ]
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fetch withdrawals
+        |--------------------------------------------------------------------------
+        */
+
+        $cursor = $withdrawals->find(
+            $query,
+            [
+                "limit" => $limit,
+                "sort" => [
+                    "_id" => -1
+                ]
+            ]
+        );
+
+
+        $withdrawalList = [];
+
 
         foreach ($cursor as $withdrawal) {
 
             $withdrawalId =
-                isset($withdrawal->_id)
-                    ? (string)$withdrawal->_id
-                    : "";
+                isset($withdrawal["_id"])
+                ? (string)$withdrawal["_id"]
+                : "";
 
 
             /*
-             * USER ID
-             */
+            |--------------------------------------------------------------------------
+            | User ID
+            |--------------------------------------------------------------------------
+            */
 
-            $userId =
-                $withdrawal->user_id
-                ?? $withdrawal->user
-                ?? $withdrawal->userId
-                ?? $withdrawal->account_id
-                ?? null;
+            $userId = "";
 
+            if (isset($withdrawal["user_id"])) {
 
-            /*
-             * USER
-             */
+                if (
+                    $withdrawal["user_id"]
+                    instanceof MongoDB\BSON\ObjectId
+                ) {
 
-            $user =
-                findUser(
-                    $users,
-                    $userId
-                );
+                    $userId =
+                        (string)$withdrawal["user_id"];
 
+                } else {
 
-            $name = "";
-            $email = "";
-            $phone = "";
-
-
-            if ($user) {
-
-                $firstName =
-                    stringValue(
-                        $user->first_name ?? ""
-                    );
-
-                $lastName =
-                    stringValue(
-                        $user->last_name ?? ""
-                    );
-
-                $name =
-                    stringValue(
-                        $user->full_name ?? ""
-                    );
-
-                if ($name === "") {
-
-                    $name =
-                        trim(
-                            $firstName .
-                            " " .
-                            $lastName
-                        );
+                    $userId =
+                        (string)$withdrawal["user_id"];
                 }
-
-                if ($name === "") {
-
-                    $name =
-                        stringValue(
-                            $user->name ?? ""
-                        );
-                }
-
-                $email =
-                    stringValue(
-                        $user->email ?? ""
-                    );
-
-                $phone =
-                    stringValue(
-                        $user->phone ?? ""
-                    );
             }
 
 
             /*
-             * WITHDRAWAL DATA
-             */
+            |--------------------------------------------------------------------------
+            | Amount
+            |--------------------------------------------------------------------------
+            */
 
             $amount =
-                numberValue(
-                    $withdrawal->amount ?? 0
+                withdrawalAmountToFloat(
+                    $withdrawal["amount"] ?? 0
                 );
 
 
-            $method =
-                strtolower(
-                    stringValue(
-                        $withdrawal->payment_method
-                        ?? $withdrawal->method
-                        ?? ""
-                    )
-                );
+            /*
+            |--------------------------------------------------------------------------
+            | Dates
+            |--------------------------------------------------------------------------
+            */
 
+            $createdAt = "";
 
             if (
-                $method === "mtn_momo"
+                isset($withdrawal["created_at"]) &&
+                $withdrawal["created_at"]
+                    instanceof MongoDB\BSON\UTCDateTime
             ) {
-                $method = "mtn";
+
+                $createdAt =
+                    $withdrawal["created_at"]
+                        ->toDateTime()
+                        ->format("Y-m-d H:i:s");
             }
+
+
+            $approvedAt = "";
 
             if (
-                $method === "airtel_money"
+                isset($withdrawal["approved_at"]) &&
+                $withdrawal["approved_at"]
+                    instanceof MongoDB\BSON\UTCDateTime
             ) {
-                $method = "airtel";
+
+                $approvedAt =
+                    $withdrawal["approved_at"]
+                        ->toDateTime()
+                        ->format("Y-m-d H:i:s");
             }
 
 
-            $account =
-                stringValue(
-                    $withdrawal->phone
-                    ?? $withdrawal->account
-                    ?? $withdrawal->account_number
-                    ?? $withdrawal->mobile_number
-                    ?? ""
-                );
+            $rejectedAt = "";
+
+            if (
+                isset($withdrawal["rejected_at"]) &&
+                $withdrawal["rejected_at"]
+                    instanceof MongoDB\BSON\UTCDateTime
+            ) {
+
+                $rejectedAt =
+                    $withdrawal["rejected_at"]
+                        ->toDateTime()
+                        ->format("Y-m-d H:i:s");
+            }
 
 
-            $reference =
-                stringValue(
-                    $withdrawal->reference
-                    ?? $withdrawal->transaction_reference
-                    ?? $withdrawal->withdrawal_reference
-                    ?? ""
-                );
+            /*
+            |--------------------------------------------------------------------------
+            | Return safe information only
+            |--------------------------------------------------------------------------
+            */
 
-
-            $withdrawalStatus =
-                strtolower(
-                    stringValue(
-                        $withdrawal->status
-                        ?? "pending"
-                    )
-                );
-
-
-            $createdAt =
-                dateValue(
-                    $withdrawal->created_at
-                    ?? null
-                );
-
-
-            $updatedAt =
-                dateValue(
-                    $withdrawal->updated_at
-                    ?? null
-                );
-
-
-            $approvedAt =
-                dateValue(
-                    $withdrawal->approved_at
-                    ?? null
-                );
-
-
-            $rejectedAt =
-                dateValue(
-                    $withdrawal->rejected_at
-                    ?? null
-                );
-
-
-            $paidAt =
-                dateValue(
-                    $withdrawal->paid_at
-                    ?? null
-                );
-
-
-            $items[] = [
+            $withdrawalList[] = [
 
                 "id" =>
                     $withdrawalId,
 
-                "withdrawal_id" =>
-                    $withdrawalId,
-
                 "user_id" =>
-                    stringValue(
-                        $userId
+                    $userId,
+
+                "user_name" =>
+                    (string)(
+                        $withdrawal["user_name"]
+                        ?? ""
                     ),
 
-                "user" => [
-                    "name" =>
-                        $name,
-
-                    "email" =>
-                        $email,
-
-                    "phone" =>
-                        $phone
-                ],
-
-                "name" =>
-                    $name,
-
-                "email" =>
-                    $email,
-
-                "phone" =>
-                    $phone,
+                "user_email" =>
+                    (string)(
+                        $withdrawal["user_email"]
+                        ?? ""
+                    ),
 
                 "amount" =>
                     $amount,
 
-                "payment_method" =>
-                    $method,
-
                 "method" =>
-                    $method,
+                    (string)(
+                        $withdrawal["method"]
+                        ?? ""
+                    ),
 
-                "account" =>
-                    $account,
-
-                "phone_number" =>
-                    $account,
+                "phone" =>
+                    (string)(
+                        $withdrawal["phone"]
+                        ?? ""
+                    ),
 
                 "reference" =>
-                    $reference,
+                    (string)(
+                        $withdrawal["reference"]
+                        ??
+                        $withdrawal[
+                            "withdrawal_reference"
+                        ]
+                        ??
+                        ""
+                    ),
 
                 "status" =>
-                    $withdrawalStatus,
+                    (string)(
+                        $withdrawal["status"]
+                        ?? "pending"
+                    ),
+
+                "payout_status" =>
+                    (string)(
+                        $withdrawal["payout_status"]
+                        ?? ""
+                    ),
 
                 "created_at" =>
                     $createdAt,
-
-                "updated_at" =>
-                    $updatedAt,
 
                 "approved_at" =>
                     $approvedAt,
@@ -646,18 +393,11 @@ if (
                 "rejected_at" =>
                     $rejectedAt,
 
-                "paid_at" =>
-                    $paidAt,
-
-                "approved_by" =>
-                    stringValue(
-                        $withdrawal->approved_by
-                        ?? ""
-                    ),
-
-                "rejected_by" =>
-                    stringValue(
-                        $withdrawal->rejected_by
+                "rejection_reason" =>
+                    (string)(
+                        $withdrawal[
+                            "rejection_reason"
+                        ]
                         ?? ""
                     )
             ];
@@ -665,75 +405,79 @@ if (
 
 
         /*
-         * COUNTS
-         */
+        |--------------------------------------------------------------------------
+        | Statistics
+        |--------------------------------------------------------------------------
+        */
+
+        $total =
+            $withdrawals->countDocuments([]);
 
         $pending =
-            (int)$withdrawals
-                ->countDocuments([
-                    "status" => "pending"
-                ]);
-
+            $withdrawals->countDocuments([
+                "status" => "pending"
+            ]);
 
         $approved =
-            (int)$withdrawals
-                ->countDocuments([
-                    "status" => "approved"
-                ]);
-
+            $withdrawals->countDocuments([
+                "status" => "approved"
+            ]);
 
         $rejected =
-            (int)$withdrawals
-                ->countDocuments([
-                    "status" => "rejected"
-                ]);
+            $withdrawals->countDocuments([
+                "status" => "rejected"
+            ]);
 
 
-        $paid =
-            (int)$withdrawals
-                ->countDocuments([
-                    "status" => "paid"
-                ]);
+        /*
+        |--------------------------------------------------------------------------
+        | Total approved withdrawals
+        |--------------------------------------------------------------------------
+        */
+
+        $approvedAmount = 0.0;
+
+        $approvedCursor =
+            $withdrawals->find([
+                "status" => "approved"
+            ]);
 
 
-        $totalAmount = 0.0;
+        foreach ($approvedCursor as $approvedWithdrawal) {
 
-        foreach ($items as $item) {
-
-            $totalAmount +=
-                (float)$item["amount"];
+            $approvedAmount +=
+                withdrawalAmountToFloat(
+                    $approvedWithdrawal["amount"]
+                    ?? 0
+                );
         }
 
 
-        jsonResponse([
+        withdrawalResponse(
+            true,
+            "Withdrawals loaded successfully.",
+            [
+                "withdrawals" =>
+                    $withdrawalList,
 
-            "success" =>
-                true,
+                "stats" => [
+                    "total" =>
+                        $total,
 
-            "counts" => [
+                    "pending" =>
+                        $pending,
 
-                "pending" =>
-                    $pending,
+                    "approved" =>
+                        $approved,
 
-                "approved" =>
-                    $approved,
+                    "rejected" =>
+                        $rejected,
 
-                "rejected" =>
-                    $rejected,
-
-                "paid" =>
-                    $paid,
-
-                "total" =>
-                    count($items)
-            ],
-
-            "total_amount" =>
-                $totalAmount,
-
-            "withdrawals" =>
-                $items
-        ]);
+                    "approved_amount" =>
+                        $approvedAmount
+                ]
+            ]
+        );
 
     } catch (Throwable $e) {
 
@@ -742,571 +486,777 @@ if (
             $e->getMessage()
         );
 
-        jsonResponse([
-            "success" => false,
-            "message" =>
-                "Unable to load withdrawals.",
-            "error" =>
-                $e->getMessage()
-        ], 500);
+        withdrawalResponse(
+            false,
+            "Unable to load withdrawals.",
+            [],
+            500
+        );
     }
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| POST ACTION
+| POST - Approve / reject withdrawal
 |--------------------------------------------------------------------------
 */
 
-if (
-    $_SERVER["REQUEST_METHOD"] === "POST"
-) {
-
-    $data =
-        getRequestData();
-
-
-    $withdrawalId =
-        trim(
-            (string)(
-                $data["withdrawal_id"]
-                ?? ""
-            )
-        );
-
-
-    $action =
-        strtolower(
-            trim(
-                (string)(
-                    $data["action"]
-                    ?? ""
-                )
-            )
-        );
-
-
-    if ($withdrawalId === "") {
-
-        jsonResponse([
-            "success" => false,
-            "message" =>
-                "Withdrawal ID is required."
-        ], 400);
-    }
-
-
-    if (
-        !in_array(
-            $action,
-            [
-                "approve",
-                "reject"
-            ],
-            true
-        )
-    ) {
-
-        jsonResponse([
-            "success" => false,
-            "message" =>
-                "Invalid withdrawal action."
-        ], 400);
-    }
-
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     try {
 
+        $rawInput =
+            file_get_contents("php://input");
+
+        $data = json_decode(
+            $rawInput,
+            true
+        );
+
+
+        if (!is_array($data)) {
+
+            withdrawalResponse(
+                false,
+                "Invalid request data.",
+                [],
+                400
+            );
+        }
+
+
+        $action = strtolower(
+            trim((string)(
+                $data["action"] ?? ""
+            ))
+        );
+
+        $withdrawalId = trim(
+            (string)(
+                $data["withdrawal_id"] ?? ""
+            )
+        );
+
+
         /*
-         * OBJECT ID
-         */
+        |--------------------------------------------------------------------------
+        | Validate action
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !in_array(
+                $action,
+                [
+                    "approve",
+                    "reject"
+                ],
+                true
+            )
+        ) {
+
+            withdrawalResponse(
+                false,
+                "Invalid withdrawal action.",
+                [],
+                400
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate withdrawal ID
+        |--------------------------------------------------------------------------
+        */
+
+        if ($withdrawalId === "") {
+
+            withdrawalResponse(
+                false,
+                "Withdrawal ID is required.",
+                [],
+                400
+            );
+        }
+
 
         try {
 
-            $objectId =
-                new \MongoDB\BSON\ObjectId(
+            $withdrawalObjectId =
+                new MongoDB\BSON\ObjectId(
                     $withdrawalId
                 );
 
         } catch (Throwable $e) {
 
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Invalid withdrawal ID."
-            ], 400);
+            withdrawalResponse(
+                false,
+                "Invalid withdrawal ID.",
+                [],
+                400
+            );
         }
 
 
         /*
-         * FIND WITHDRAWAL
-         */
+        |--------------------------------------------------------------------------
+        | Find withdrawal
+        |--------------------------------------------------------------------------
+        */
 
         $withdrawal =
             $withdrawals->findOne([
                 "_id" =>
-                    $objectId
+                    $withdrawalObjectId
             ]);
 
 
         if (!$withdrawal) {
 
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Withdrawal was not found."
-            ], 404);
+            withdrawalResponse(
+                false,
+                "Withdrawal was not found.",
+                [],
+                404
+            );
         }
 
 
         /*
-         * ONLY PENDING REQUESTS
-         */
+        |--------------------------------------------------------------------------
+        | Only pending withdrawals can be processed
+        |--------------------------------------------------------------------------
+        */
 
         $currentStatus =
             strtolower(
-                stringValue(
-                    $withdrawal->status
+                trim((string)(
+                    $withdrawal["status"]
                     ?? "pending"
-                )
+                ))
             );
 
 
-        if (
-            $currentStatus !==
-            "pending"
-        ) {
+        if ($currentStatus !== "pending") {
 
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "This withdrawal has already been processed.",
-                "status" =>
-                    $currentStatus
-            ], 409);
+            withdrawalResponse(
+                false,
+                "This withdrawal has already been processed.",
+                [],
+                409
+            );
         }
 
 
         /*
-         * USER
-         */
+        |--------------------------------------------------------------------------
+        | User ID
+        |--------------------------------------------------------------------------
+        */
 
-        $userId =
-            $withdrawal->user_id
-            ?? $withdrawal->user
-            ?? $withdrawal->userId
-            ?? $withdrawal->account_id
-            ?? null;
+        if (!isset($withdrawal["user_id"])) {
 
-
-        if (
-            $userId === null ||
-            $userId === ""
-        ) {
-
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Withdrawal is not linked to a user."
-            ], 400);
+            withdrawalResponse(
+                false,
+                "Withdrawal has no associated user.",
+                [],
+                400
+            );
         }
 
 
+        $withdrawalUserId =
+            $withdrawal["user_id"];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Convert user ID
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $withdrawalUserId
+            instanceof MongoDB\BSON\ObjectId
+        ) {
+
+            $userObjectId =
+                $withdrawalUserId;
+
+        } else {
+
+            try {
+
+                $userObjectId =
+                    new MongoDB\BSON\ObjectId(
+                        (string)$withdrawalUserId
+                    );
+
+            } catch (Throwable $e) {
+
+                withdrawalResponse(
+                    false,
+                    "Invalid withdrawal user ID.",
+                    [],
+                    400
+                );
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find user
+        |--------------------------------------------------------------------------
+        */
+
         $user =
-            findUser(
-                $users,
-                $userId
-            );
+            $users->findOne([
+                "_id" =>
+                    $userObjectId
+            ]);
 
 
         if (!$user) {
 
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Withdrawal user account was not found."
-            ], 404);
+            withdrawalResponse(
+                false,
+                "Withdrawal user account was not found.",
+                [],
+                404
+            );
         }
 
 
-        $adminId =
-            $_SESSION["user_id"]
-            ?? null;
-
-
-        $now =
-            new \MongoDB\BSON\UTCDateTime();
-
-
         /*
-         * AMOUNT
-         */
+        |--------------------------------------------------------------------------
+        | Amount
+        |--------------------------------------------------------------------------
+        */
 
         $amount =
-            numberValue(
-                $withdrawal->amount
-                ?? 0
+            withdrawalAmountToFloat(
+                $withdrawal["amount"] ?? 0
             );
 
 
         if ($amount < 10000) {
 
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Invalid withdrawal amount."
-            ], 400);
+            withdrawalResponse(
+                false,
+                "Invalid withdrawal amount.",
+                [],
+                400
+            );
         }
 
 
         /*
-         * REJECT
-         */
+        |--------------------------------------------------------------------------
+        | APPROVE
+        |--------------------------------------------------------------------------
+        */
 
-        if (
-            $action === "reject"
-        ) {
+        if ($action === "approve") {
 
             /*
-             * IMPORTANT:
-             *
-             * Because the existing withdrawal.php checks the user's
-             * balance but does not reserve the money, rejection does
-             * not deduct anything.
-             */
+            |--------------------------------------------------------------------------
+            | Get admin ID
+            |--------------------------------------------------------------------------
+            */
 
-            $result =
-                $withdrawals->findOneAndUpdate(
+            $adminId =
+                (string)(
+                    $_SESSION["user_id"]
+                    ?? ""
+                );
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Atomically reserve/deduct balance
+            |--------------------------------------------------------------------------
+            |
+            | This condition is critical:
+            |
+            | balance >= requested withdrawal
+            |
+            | MongoDB performs this update atomically.
+            |
+            | Two simultaneous approvals cannot both spend
+            | the same balance.
+            |--------------------------------------------------------------------------
+            */
+
+            $balanceUpdate =
+                $users->updateOne(
                     [
                         "_id" =>
-                            $objectId,
+                            $userObjectId,
+
+                        "balance" => [
+                            "\$gte" =>
+                                $amount
+                        ],
+
+                        "status" => [
+                            "\$nin" => [
+                                "blocked",
+                                "suspended",
+                                "disabled",
+                                "banned"
+                            ]
+                        ]
+                    ],
+                    [
+                        "\$inc" => [
+                            "balance" =>
+                                -$amount
+                        ],
+
+                        "\$set" => [
+                            "updated_at" =>
+                                new MongoDB\BSON\UTCDateTime()
+                        ]
+                    ]
+                );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Insufficient balance
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $balanceUpdate->getModifiedCount()
+                !== 1
+            ) {
+
+                withdrawalResponse(
+                    false,
+                    "Insufficient available balance or user account is not active.",
+                    [],
+                    400
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Now atomically approve the withdrawal
+            |--------------------------------------------------------------------------
+            |
+            | It MUST still be pending.
+            |--------------------------------------------------------------------------
+            */
+
+            $withdrawalUpdate =
+                $withdrawals->updateOne(
+                    [
+                        "_id" =>
+                            $withdrawalObjectId,
 
                         "status" =>
                             "pending"
                     ],
-
                     [
-                        '$set' => [
-
-                            "status" =>
-                                "rejected",
-
-                            "rejected_at" =>
-                                $now,
-
-                            "rejected_by" =>
-                                $adminId,
-
-                            "updated_at" =>
-                                $now
-                        ]
-                    ],
-
-                    [
-                        "returnDocument" =>
-                            \MongoDB\Operation\
-                            FindOneAndUpdate\
-                            ::RETURN_DOCUMENT_AFTER
-                    ]
-                );
-
-
-            if (!$result) {
-
-                jsonResponse([
-                    "success" => false,
-                    "message" =>
-                        "Withdrawal was already processed."
-                ], 409);
-            }
-
-
-            /*
-             * TRANSACTION
-             */
-
-            if (
-                isset($transactions)
-            ) {
-
-                try {
-
-                    $transactions->updateMany(
-
-                        [
-                            '$or' => [
-
-                                [
-                                    "withdrawal_id" =>
-                                        $objectId
-                                ],
-
-                                [
-                                    "withdrawal_id" =>
-                                        $withdrawalId
-                                ]
-                            ]
-                        ],
-
-                        [
-                            '$set' => [
-
-                                "status" =>
-                                    "rejected",
-
-                                "updated_at" =>
-                                    $now
-                            ]
-                        ]
-                    );
-
-                } catch (Throwable $ignored) {
-                }
-            }
-
-
-            /*
-             * AUDIT
-             */
-
-            if (
-                isset($audit_logs)
-            ) {
-
-                try {
-
-                    $audit_logs->insertOne([
-
-                        "action" =>
-                            "withdrawal_rejected",
-
-                        "admin_id" =>
-                            $adminId,
-
-                        "withdrawal_id" =>
-                            $objectId,
-
-                        "user_id" =>
-                            $userId,
-
-                        "amount" =>
-                            new \MongoDB\BSON\Decimal128(
-                                (string)$amount
-                            ),
-
-                        "created_at" =>
-                            $now
-                    ]);
-
-                } catch (Throwable $ignored) {
-                }
-            }
-
-
-            jsonResponse([
-
-                "success" =>
-                    true,
-
-                "message" =>
-                    "Withdrawal rejected successfully.",
-
-                "status" =>
-                    "rejected"
-            ]);
-        }
-
-
-        /*
-         * APPROVE
-         *
-         * Approval here means the request has passed admin review.
-         * It does NOT send Mobile Money.
-         */
-
-        $result =
-            $withdrawals->findOneAndUpdate(
-
-                [
-                    "_id" =>
-                        $objectId,
-
-                    "status" =>
-                        "pending"
-                ],
-
-                [
-                    '$set' => [
-
-                        "status" =>
-                            "approved",
-
-                        "approved_at" =>
-                            $now,
-
-                        "approved_by" =>
-                            $adminId,
-
-                        "updated_at" =>
-                            $now,
-
-                        "payout_status" =>
-                            "awaiting_payout"
-                    ]
-                ],
-
-                [
-                    "returnDocument" =>
-                        \MongoDB\Operation\
-                        FindOneAndUpdate\
-                        ::RETURN_DOCUMENT_AFTER
-                ]
-            );
-
-
-        if (!$result) {
-
-            jsonResponse([
-                "success" => false,
-                "message" =>
-                    "Withdrawal was already processed."
-            ], 409);
-        }
-
-
-        /*
-         * TRANSACTION
-         *
-         * Keep the transaction pending/approved until actual payout
-         * is completed by the authorized payment system.
-         */
-
-        if (
-            isset($transactions)
-        ) {
-
-            try {
-
-                $transactions->updateMany(
-
-                    [
-                        '$or' => [
-
-                            [
-                                "withdrawal_id" =>
-                                    $objectId
-                            ],
-
-                            [
-                                "withdrawal_id" =>
-                                    $withdrawalId
-                            ]
-                        ]
-                    ],
-
-                    [
-                        '$set' => [
+                        "\$set" => [
 
                             "status" =>
                                 "approved",
 
+                            "payout_status" =>
+                                "awaiting_payout",
+
+                            "approved_at" =>
+                                new MongoDB\BSON\UTCDateTime(),
+
+                            "approved_by" =>
+                                $adminId,
+
                             "updated_at" =>
-                                $now
+                                new MongoDB\BSON\UTCDateTime()
                         ]
                     ]
                 );
 
-            } catch (Throwable $ignored) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Critical protection
+            |--------------------------------------------------------------------------
+            |
+            | If another request processed this withdrawal between
+            | our checks, the balance has already been deducted.
+            |
+            | We therefore log the problem immediately.
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $withdrawalUpdate->getModifiedCount()
+                !== 1
+            {
+
+                error_log(
+                    "CRITICAL: Withdrawal balance deducted but withdrawal approval failed. " .
+                    "Withdrawal ID: " .
+                    $withdrawalId .
+                    " User ID: " .
+                    (string)$userObjectId .
+                    " Amount: " .
+                    $amount
+                );
+
+
+                withdrawalResponse(
+                    false,
+                    "Withdrawal requires administrator investigation.",
+                    [],
+                    500
+                );
             }
-        }
 
 
-        /*
-         * AUDIT
-         */
-
-        if (
-            isset($audit_logs)
-        ) {
+            /*
+            |--------------------------------------------------------------------------
+            | Update transaction
+            |--------------------------------------------------------------------------
+            */
 
             try {
 
-                $audit_logs->insertOne([
+                $transactions->updateMany(
+                    [
+                        "\$or" => [
+                            [
+                                "withdrawal_id" =>
+                                    $withdrawalObjectId
+                            ],
+                            [
+                                "reference" =>
+                                    (string)(
+                                        $withdrawal[
+                                            "reference"
+                                        ]
+                                        ??
+                                        ""
+                                    )
+                            ]
+                        ]
+                    ],
+                    [
+                        "\$set" => [
+                            "status" =>
+                                "approved",
 
+                            "updated_at" =>
+                                new MongoDB\BSON\UTCDateTime()
+                        ]
+                    ]
+                );
+
+            } catch (Throwable $transactionError) {
+
+                error_log(
+                    "Withdrawal transaction update error: " .
+                    $transactionError->getMessage()
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Audit log
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+
+                $auditLogs->insertOne([
                     "action" =>
                         "withdrawal_approved",
 
                     "admin_id" =>
                         $adminId,
 
-                    "withdrawal_id" =>
-                        $objectId,
-
                     "user_id" =>
-                        $userId,
+                        $userObjectId,
+
+                    "withdrawal_id" =>
+                        $withdrawalObjectId,
 
                     "amount" =>
-                        new \MongoDB\BSON\Decimal128(
-                            (string)$amount
-                        ),
+                        $amount,
 
                     "created_at" =>
-                        $now
+                        new MongoDB\BSON\UTCDateTime()
                 ]);
 
-            } catch (Throwable $ignored) {
+            } catch (Throwable $auditError) {
+
+                error_log(
+                    "Withdrawal audit log error: " .
+                    $auditError->getMessage()
+                );
             }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | IMPORTANT
+            |--------------------------------------------------------------------------
+            |
+            | This approval DOES NOT send Mobile Money.
+            |
+            | payout_status = awaiting_payout
+            |
+            | A real MTN/Airtel payout must be performed through
+            | an authorized payment integration.
+            |--------------------------------------------------------------------------
+            */
+
+            withdrawalResponse(
+                true,
+                "Withdrawal approved. Balance deducted and payout is awaiting processing.",
+                [
+                    "withdrawal_id" =>
+                        $withdrawalId,
+
+                    "amount" =>
+                        $amount,
+
+                    "payout_status" =>
+                        "awaiting_payout"
+                ]
+            );
         }
 
 
-        jsonResponse([
+        /*
+        |--------------------------------------------------------------------------
+        | REJECT
+        |--------------------------------------------------------------------------
+        */
 
-            "success" =>
+        if ($action === "reject") {
+
+            $adminId =
+                (string)(
+                    $_SESSION["user_id"]
+                    ?? ""
+                );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rejection reason
+            |--------------------------------------------------------------------------
+            */
+
+            $reason = trim(
+                (string)(
+                    $data["reason"] ?? ""
+                )
+            );
+
+            if ($reason === "") {
+
+                $reason =
+                    "Withdrawal rejected by administrator.";
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Atomically reject pending withdrawal
+            |--------------------------------------------------------------------------
+            */
+
+            $rejectUpdate =
+                $withdrawals->updateOne(
+                    [
+                        "_id" =>
+                            $withdrawalObjectId,
+
+                        "status" =>
+                            "pending"
+                    ],
+                    [
+                        "\$set" => [
+
+                            "status" =>
+                                "rejected",
+
+                            "rejection_reason" =>
+                                $reason,
+
+                            "rejected_at" =>
+                                new MongoDB\BSON\UTCDateTime(),
+
+                            "rejected_by" =>
+                                $adminId,
+
+                            "updated_at" =>
+                                new MongoDB\BSON\UTCDateTime()
+                        ]
+                    ]
+                );
+
+
+            if (
+                $rejectUpdate->getModifiedCount()
+                !== 1
+            ) {
+
+                withdrawalResponse(
+                    false,
+                    "Withdrawal was already processed.",
+                    [],
+                    409
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update transaction
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+
+                $transactions->updateMany(
+                    [
+                        "\$or" => [
+                            [
+                                "withdrawal_id" =>
+                                    $withdrawalObjectId
+                            ],
+                            [
+                                "reference" =>
+                                    (string)(
+                                        $withdrawal[
+                                            "reference"
+                                        ]
+                                        ??
+                                        ""
+                                    )
+                            ]
+                        ]
+                    ],
+                    [
+                        "\$set" => [
+                            "status" =>
+                                "rejected",
+
+                            "updated_at" =>
+                                new MongoDB\BSON\UTCDateTime()
+                        ]
+                    ]
+                );
+
+            } catch (Throwable $transactionError) {
+
+                error_log(
+                    "Withdrawal rejection transaction error: " .
+                    $transactionError->getMessage()
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Audit log
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+
+                $auditLogs->insertOne([
+                    "action" =>
+                        "withdrawal_rejected",
+
+                    "admin_id" =>
+                        $adminId,
+
+                    "user_id" =>
+                        $userObjectId,
+
+                    "withdrawal_id" =>
+                        $withdrawalObjectId,
+
+                    "reason" =>
+                        $reason,
+
+                    "created_at" =>
+                        new MongoDB\BSON\UTCDateTime()
+                ]);
+
+            } catch (Throwable $auditError) {
+
+                error_log(
+                    "Withdrawal audit log error: " .
+                    $auditError->getMessage()
+                );
+            }
+
+
+            withdrawalResponse(
                 true,
+                "Withdrawal rejected successfully.",
+                [
+                    "withdrawal_id" =>
+                        $withdrawalId
+                ]
+            );
+        }
 
-            "message" =>
-                "Withdrawal approved and placed in the payout queue.",
+    } catch (MongoDB\Driver\Exception\Exception $e) {
 
-            "status" =>
-                "approved",
+        error_log(
+            "Admin withdrawals MongoDB error: " .
+            $e->getMessage()
+        );
 
-            "payout_status" =>
-                "awaiting_payout",
+        withdrawalResponse(
+            false,
+            "Database error while processing withdrawal.",
+            [],
+            500
+        );
 
-            "amount" =>
-                $amount
-        ]);
-    }
-
-    catch (Throwable $e) {
+    } catch (Throwable $e) {
 
         error_log(
             "Admin withdrawals POST error: " .
             $e->getMessage()
         );
 
-        jsonResponse([
-            "success" => false,
-            "message" =>
-                "Unable to process withdrawal.",
-            "error" =>
-                $e->getMessage()
-        ], 500);
+        withdrawalResponse(
+            false,
+            "Unable to process withdrawal.",
+            [],
+            500
+        );
     }
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| METHOD NOT ALLOWED
+| Unsupported method
 |--------------------------------------------------------------------------
 */
 
-jsonResponse([
-    "success" => false,
-    "message" =>
-        "Method not allowed."
-], 405);
+withdrawalResponse(
+    false,
+    "Method not allowed.",
+    [],
+    405
+);
+
 ?>

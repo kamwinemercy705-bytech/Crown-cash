@@ -8,13 +8,13 @@
 |
 | Withdrawal rules:
 | - Minimum withdrawal: UGX 5,000
-| - Withdrawal fee: 10%
+| - Withdrawal fee: 20%
 | - Option A: fee is deducted from requested withdrawal amount
 |
 | Example:
 | Requested: UGX 20,000
-| Fee 10%:   UGX  2,000
-| Payout:    UGX 18,000
+| Fee 20%:   UGX  4,000
+| Payout:    UGX 16,000
 |
 | Admin approval is required before the withdrawal is processed.
 |--------------------------------------------------------------------------
@@ -286,12 +286,12 @@ $amount = (int)$amount;
 | Example:
 |
 | UGX 20,000 requested
-| 10% fee = UGX 2,000
-| User receives = UGX 18,000
+| 20% fee = UGX 4,000
+| User receives = UGX 16,000
 |--------------------------------------------------------------------------
 */
 
-$withdrawalFeeRate = 0.10;
+$withdrawalFeeRate = 0.20;
 
 
 /*
@@ -821,7 +821,7 @@ $withdrawal = [
         $amount,
 
     /*
-     * 10% Crown Cash withdrawal fee.
+     * 20% Crown Cash withdrawal fee.
      */
     "fee_rate" =>
         $withdrawalFeeRate,
@@ -917,7 +917,7 @@ try {
             $amount,
 
         /*
-         * Withdrawal fee.
+         * 20% Withdrawal fee.
          */
         "fee_rate" =>
             $withdrawalFeeRate,
@@ -962,6 +962,7 @@ try {
         "CROWN CASH TRANSACTION LOG ERROR: " .
         $e->getMessage()
     );
+
 }
 
 

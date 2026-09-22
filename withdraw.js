@@ -1,170 +1,153 @@
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH — WITHDRAWAL JAVASCRIPT
+|--------------------------------------------------------------------------
+| Withdrawal fee:
+| 20%
+|
+| Example:
+| UGX 10,000 requested
+| UGX 2,000 fee
+| UGX 8,000 received
+|--------------------------------------------------------------------------
+*/
+
 document.addEventListener("DOMContentLoaded", () => {
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONFIGURATION
+    |--------------------------------------------------------------------------
+    */
 
     const API_BASE =
         "https://crown-cash1.onrender.com";
 
+    const PROFILE_API =
+        `${API_BASE}/profile.php`;
 
-    // ==============================
-    // ELEMENTS
-    // ==============================
+    const WITHDRAWAL_API =
+        `${API_BASE}/withdrawal.php`;
 
-    const withdrawForm =
+    const MINIMUM_WITHDRAWAL = 5000;
+
+    const WITHDRAWAL_FEE_RATE = 0.20;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ELEMENTS
+    |--------------------------------------------------------------------------
+    */
+
+    const form =
         document.getElementById("withdrawForm");
 
     const amountInput =
         document.getElementById("amount");
 
     const methodInput =
-        document.getElementById("method");
+        document.getElementById("paymentMethod");
 
     const phoneInput =
         document.getElementById("phone");
 
-    const accountInput =
-        document.getElementById("account");
+    const accountNameInput =
+        document.getElementById("accountName");
 
-    const availableBalanceElement =
+    const balanceDisplay =
         document.getElementById("availableBalance");
 
-    const requestedAmountElement =
-        document.getElementById("requestedAmount");
-
-    const withdrawalFeeElement =
+    const feeDisplay =
         document.getElementById("withdrawalFee");
 
-    const payoutAmountElement =
+    const payoutDisplay =
         document.getElementById("payoutAmount");
 
-    const formMessage =
+    const messageBox =
         document.getElementById("formMessage");
 
-    const withdrawButton =
+    const submitButton =
         document.getElementById("withdrawButton");
 
-    const buttonText =
-        document.getElementById("buttonText");
 
-    const buttonLoader =
-        document.getElementById("buttonLoader");
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER — FORMAT UGX
+    |--------------------------------------------------------------------------
+    */
+
+    function formatUGX(amount) {
+
+        const value =
+            Number(amount) || 0;
+
+        return (
+            "UGX " +
+            Math.round(value).toLocaleString("en-UG")
+        );
+
+    }
 
 
-    // ==============================
-    // SETTINGS
-    // ==============================
+    /*
+    |--------------------------------------------------------------------------
+    | SHOW MESSAGE
+    |--------------------------------------------------------------------------
+    */
 
-    const MINIMUM_WITHDRAWAL = 5000;
+    function showMessage(message, type = "error") {
 
-    const WITHDRAWAL_FEE_RATE = 0.10;
+        if (!messageBox) {
+            alert(message);
+            return;
+        }
+
+        messageBox.textContent = message;
+
+        messageBox.className =
+            `form-message ${type}`;
+
+        messageBox.style.display = "block";
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEAR MESSAGE
+    |--------------------------------------------------------------------------
+    */
+
+    function clearMessage() {
+
+        if (!messageBox) {
+            return;
+        }
+
+        messageBox.textContent = "";
+
+        messageBox.className =
+            "form-message";
+
+        messageBox.style.display =
+            "none";
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | USER BALANCE
+    |--------------------------------------------------------------------------
+    */
 
     let availableBalance = 0;
 
 
-    // ==============================
-    // FORMAT UGX
-    // ==============================
-
-    function formatUGX(amount) {
-
-        const number =
-            Number(amount) || 0;
-
-        return "UGX " +
-            Math.round(number).toLocaleString("en-UG");
-
-    }
-
-
-    // ==============================
-    // SHOW MESSAGE
-    // ==============================
-
-    function showMessage(message, type = "error") {
-
-        formMessage.textContent = message;
-
-        formMessage.className =
-            "form-message " + type;
-
-        formMessage.style.display = "block";
-
-    }
-
-
-    // ==============================
-    // CLEAR MESSAGE
-    // ==============================
-
-    function clearMessage() {
-
-        formMessage.textContent = "";
-
-        formMessage.className =
-            "form-message";
-
-        formMessage.style.display = "none";
-
-    }
-
-
-    // ==============================
-    // CALCULATE WITHDRAWAL
-    // ==============================
-
-    function calculateWithdrawal() {
-
-        let amount =
-            Number(amountInput.value) || 0;
-
-
-        if (amount < 0) {
-            amount = 0;
-        }
-
-
-        // 10% fee
-        const fee =
-            Math.round(
-                amount * WITHDRAWAL_FEE_RATE
-            );
-
-
-        // Amount user receives
-        const payout =
-            amount - fee;
-
-
-        requestedAmountElement.textContent =
-            formatUGX(amount);
-
-
-        withdrawalFeeElement.textContent =
-            formatUGX(fee);
-
-
-        payoutAmountElement.textContent =
-            formatUGX(payout);
-
-
-        // Highlight invalid amount
-        if (
-            amount > 0 &&
-            amount < MINIMUM_WITHDRAWAL
-        ) {
-
-            amountInput.classList.add("invalid");
-
-        } else {
-
-            amountInput.classList.remove("invalid");
-
-        }
-
-    }
-
-
-    // ==============================
-    // LOAD USER PROFILE
-    // ==============================
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD USER PROFILE
+    |--------------------------------------------------------------------------
+    */
 
     async function loadProfile() {
 
@@ -172,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const response =
                 await fetch(
-                    `${API_BASE}/profile.php`,
+                    PROFILE_API,
                     {
                         method: "GET",
                         credentials: "include",
@@ -199,63 +182,89 @@ document.addEventListener("DOMContentLoaded", () => {
                         "/login.html";
 
                     return;
-
                 }
 
                 throw new Error(
                     data.message ||
-                    "Unable to load account."
+                    "Unable to load your profile."
                 );
-
             }
 
 
-            const user =
-                data.user || {};
-
+            /*
+            |--------------------------------------------------------------------------
+            | GET BALANCE
+            |--------------------------------------------------------------------------
+            */
 
             availableBalance =
-                Number(user.balance) || 0;
+                Number(
+                    data.user?.balance ?? 0
+                );
 
 
-            availableBalanceElement.textContent =
-                formatUGX(availableBalance);
+            /*
+            |--------------------------------------------------------------------------
+            | DISPLAY BALANCE
+            |--------------------------------------------------------------------------
+            */
 
+            if (balanceDisplay) {
 
-            // Automatically fill account name
-            if (
-                accountInput &&
-                !accountInput.value
-            ) {
-
-                accountInput.value =
-                    user.full_name || "";
+                balanceDisplay.textContent =
+                    formatUGX(
+                        availableBalance
+                    );
 
             }
 
 
-            // Automatically fill phone
+            /*
+            |--------------------------------------------------------------------------
+            | OPTIONAL ACCOUNT NAME
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                accountNameInput &&
+                !accountNameInput.value
+            ) {
+
+                accountNameInput.value =
+                    data.user?.full_name ||
+                    "";
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | OPTIONAL PHONE
+            |--------------------------------------------------------------------------
+            */
+
             if (
                 phoneInput &&
                 !phoneInput.value
             ) {
 
                 phoneInput.value =
-                    user.phone || "";
+                    data.user?.phone ||
+                    "";
 
             }
+
 
         } catch (error) {
 
             console.error(
-                "Profile error:",
+                "Profile loading error:",
                 error
             );
 
             showMessage(
                 error.message ||
-                "Unable to load your account.",
-                "error"
+                "Unable to load your account balance."
             );
 
         }
@@ -263,433 +272,690 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ==============================
-    // CHECK PHONE NUMBER
-    // ==============================
+    /*
+    |--------------------------------------------------------------------------
+    | CALCULATE WITHDRAWAL
+    |--------------------------------------------------------------------------
+    */
 
-    function isValidUgandaPhone(phone) {
+    function calculateWithdrawal() {
 
-        const cleaned =
-            phone.replace(
-                /[\s-]/g,
-                ""
+        const amount =
+            Number(
+                amountInput?.value || 0
             );
 
 
-        const pattern =
-            /^(?:\+256|256|0)(?:7[0-9]|3[0-9])[0-9]{7}$/;
+        if (
+            !amount ||
+            amount <= 0
+        ) {
+
+            if (feeDisplay) {
+
+                feeDisplay.textContent =
+                    formatUGX(0);
+
+            }
+
+            if (payoutDisplay) {
+
+                payoutDisplay.textContent =
+                    formatUGX(0);
+
+            }
+
+            return {
+                amount: 0,
+                fee: 0,
+                payout: 0
+            };
+
+        }
 
 
-        return pattern.test(cleaned);
+        /*
+        |--------------------------------------------------------------------------
+        | 20% FEE
+        |--------------------------------------------------------------------------
+        */
+
+        const fee =
+            Math.round(
+                amount *
+                WITHDRAWAL_FEE_RATE
+            );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAYOUT
+        |--------------------------------------------------------------------------
+        */
+
+        const payout =
+            amount - fee;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE UI
+        |--------------------------------------------------------------------------
+        */
+
+        if (feeDisplay) {
+
+            feeDisplay.textContent =
+                formatUGX(fee);
+
+        }
+
+
+        if (payoutDisplay) {
+
+            payoutDisplay.textContent =
+                formatUGX(payout);
+
+        }
+
+
+        return {
+            amount,
+            fee,
+            payout
+        };
 
     }
 
 
-    // ==============================
-    // SUBMIT WITHDRAWAL
-    // ==============================
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE CALCULATION WHILE TYPING
+    |--------------------------------------------------------------------------
+    */
 
-    withdrawForm.addEventListener(
-        "submit",
-        async (event) => {
+    if (amountInput) {
 
-            event.preventDefault();
+        amountInput.addEventListener(
+            "input",
+            () => {
 
-            clearMessage();
+                clearMessage();
 
-
-            // --------------------------
-            // GET VALUES
-            // --------------------------
-
-            const amount =
-                Number(amountInput.value);
-
-
-            const method =
-                methodInput.value.trim();
-
-
-            const phone =
-                phoneInput.value.trim();
-
-
-            const account =
-                accountInput.value.trim();
-
-
-            // --------------------------
-            // BASIC VALIDATION
-            // --------------------------
-
-            if (
-                !Number.isFinite(amount) ||
-                amount <= 0
-            ) {
-
-                showMessage(
-                    "Please enter a valid withdrawal amount.",
-                    "error"
-                );
-
-                amountInput.focus();
-
-                return;
+                calculateWithdrawal();
 
             }
+        );
 
+    }
 
-            if (
-                amount < MINIMUM_WITHDRAWAL
-            ) {
 
-                showMessage(
-                    "Minimum withdrawal is UGX 5,000.",
-                    "error"
-                );
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT PHONE NUMBER
+    |--------------------------------------------------------------------------
+    */
 
-                amountInput.focus();
+    function normalizePhone(phone) {
 
-                return;
+        let value =
+            String(phone || "")
+                .trim()
+                .replace(/[\s\-]/g, "");
 
-            }
 
+        if (
+            value.startsWith("+256")
+        ) {
 
-            // Amount must be a whole thousand
-            if (
-                amount % 1000 !== 0
-            ) {
+            value =
+                "0" +
+                value.substring(4);
 
-                showMessage(
-                    "Withdrawal amount must be in multiples of UGX 1,000.",
-                    "error"
-                );
+        }
 
-                amountInput.focus();
 
-                return;
+        return value;
 
-            }
+    }
 
 
-            // --------------------------
-            // BALANCE CHECK
-            // --------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE PHONE NUMBER
+    |--------------------------------------------------------------------------
+    */
 
-            if (
-                amount > availableBalance
-            ) {
+    function validatePhone(
+        phone,
+        method
+    ) {
 
-                showMessage(
-                    `Insufficient balance. Your available balance is ${formatUGX(availableBalance)}.`,
-                    "error"
-                );
+        const normalized =
+            normalizePhone(phone);
 
-                amountInput.focus();
 
-                return;
+        if (!/^07[0-9]{8}$/.test(normalized)) {
 
-            }
+            return {
+                valid: false,
+                message:
+                    "Enter a valid Ugandan Mobile Money number."
+            };
 
+        }
 
-            // --------------------------
-            // METHOD CHECK
-            // --------------------------
 
-            if (
-                method !== "MTN" &&
-                method !== "Airtel"
-            ) {
+        const prefix =
+            normalized.substring(0, 3);
 
-                showMessage(
-                    "Please select MTN Mobile Money or Airtel Money.",
-                    "error"
-                );
 
-                methodInput.focus();
+        const mtnPrefixes = [
+            "077",
+            "078",
+            "076"
+        ];
 
-                return;
 
-            }
+        const airtelPrefixes = [
+            "070",
+            "075",
+            "074"
+        ];
 
 
-            // --------------------------
-            // PHONE CHECK
-            // --------------------------
+        if (
+            method === "MTN" &&
+            !mtnPrefixes.includes(prefix)
+        ) {
 
-            if (
-                !isValidUgandaPhone(phone)
-            ) {
+            return {
+                valid: false,
+                message:
+                    "The number does not appear to be an MTN number."
+            };
 
-                showMessage(
-                    "Please enter a valid Ugandan mobile number.",
-                    "error"
-                );
+        }
 
-                phoneInput.focus();
 
-                return;
+        if (
+            method === "Airtel" &&
+            !airtelPrefixes.includes(prefix)
+        ) {
 
-            }
+            return {
+                valid: false,
+                message:
+                    "The number does not appear to be an Airtel number."
+            };
 
+        }
 
-            // --------------------------
-            // ACCOUNT NAME
-            // --------------------------
 
-            if (
-                account.length < 2
-            ) {
+        return {
+            valid: true,
+            phone: normalized
+        };
 
-                showMessage(
-                    "Please enter the Mobile Money account name.",
-                    "error"
-                );
+    }
 
-                accountInput.focus();
 
-                return;
+    /*
+    |--------------------------------------------------------------------------
+    | SUBMIT WITHDRAWAL
+    |--------------------------------------------------------------------------
+    */
 
-            }
+    if (form) {
 
+        form.addEventListener(
+            "submit",
+            async (event) => {
 
-            // --------------------------
-            // CALCULATE FEE
-            // --------------------------
+                event.preventDefault();
 
-            const fee =
-                Math.round(
-                    amount * WITHDRAWAL_FEE_RATE
-                );
+                clearMessage();
 
 
-            const payout =
-                amount - fee;
+                /*
+                |--------------------------------------------------------------------------
+                | GET AMOUNT
+                |--------------------------------------------------------------------------
+                */
 
-
-            // --------------------------
-            // CONFIRM
-            // --------------------------
-
-            const confirmation =
-                `Withdrawal: ${formatUGX(amount)}\n` +
-                `10% Fee: ${formatUGX(fee)}\n` +
-                `You Receive: ${formatUGX(payout)}\n\n` +
-                `Payment Method: ${method}\n` +
-                `Mobile Number: ${phone}\n\n` +
-                `Submit this withdrawal request?`;
-
-
-            if (
-                !window.confirm(
-                    confirmation
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            // --------------------------
-            // LOADING
-            // --------------------------
-
-            withdrawButton.disabled =
-                true;
-
-            buttonText.hidden =
-                true;
-
-            buttonLoader.hidden =
-                false;
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        `${API_BASE}/withdrawal.php`,
-                        {
-                            method: "POST",
-
-                            credentials: "include",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-
-                                "Accept":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                amount: amount,
-
-                                method: method,
-
-                                phone: phone,
-
-                                account: account,
-
-                                payment_method:
-                                    method
-
-                            })
-
-                        }
+                const amount =
+                    Number(
+                        amountInput?.value || 0
                     );
 
 
-                const data =
-                    await response.json();
+                /*
+                |--------------------------------------------------------------------------
+                | GET METHOD
+                |--------------------------------------------------------------------------
+                */
+
+                let method =
+                    String(
+                        methodInput?.value || ""
+                    )
+                    .trim()
+                    .toLowerCase();
 
 
-                if (
-                    !response.ok ||
-                    !data.success
+                if (method === "mtn") {
+
+                    method = "MTN";
+
+                }
+
+                else if (
+                    method === "airtel"
                 ) {
 
-                    if (
-                        response.status === 401
-                    ) {
+                    method = "Airtel";
 
-                        window.location.href =
-                            "/login.html";
+                }
 
-                        return;
+
+                /*
+                |--------------------------------------------------------------------------
+                | GET PHONE
+                |--------------------------------------------------------------------------
+                */
+
+                const phone =
+                    normalizePhone(
+                        phoneInput?.value || ""
+                    );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | VALIDATE AMOUNT
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    !amount ||
+                    !Number.isFinite(amount)
+                ) {
+
+                    showMessage(
+                        "Enter a valid withdrawal amount."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | MINIMUM
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    amount <
+                    MINIMUM_WITHDRAWAL
+                ) {
+
+                    showMessage(
+                        "Minimum withdrawal amount is UGX 5,000."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | WHOLE UGX
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    !Number.isInteger(amount)
+                ) {
+
+                    showMessage(
+                        "Withdrawal amount must be a whole UGX amount."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | BALANCE CHECK
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    amount >
+                    availableBalance
+                ) {
+
+                    showMessage(
+                        `Insufficient available balance. Your balance is ${formatUGX(availableBalance)}.`
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | METHOD CHECK
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    method !== "MTN" &&
+                    method !== "Airtel"
+                ) {
+
+                    showMessage(
+                        "Please select MTN or Airtel Mobile Money."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | PHONE CHECK
+                |--------------------------------------------------------------------------
+                */
+
+                const phoneResult =
+                    validatePhone(
+                        phone,
+                        method
+                    );
+
+
+                if (!phoneResult.valid) {
+
+                    showMessage(
+                        phoneResult.message
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CALCULATE FINAL VALUES
+                |--------------------------------------------------------------------------
+                */
+
+                const calculation =
+                    calculateWithdrawal();
+
+
+                const fee =
+                    calculation.fee;
+
+                const payout =
+                    calculation.payout;
+
+
+                if (payout <= 0) {
+
+                    showMessage(
+                        "Invalid withdrawal amount."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CONFIRMATION
+                |--------------------------------------------------------------------------
+                */
+
+                const confirmed =
+                    window.confirm(
+                        "Please confirm your withdrawal:\n\n" +
+
+                        `Requested: ${formatUGX(amount)}\n` +
+
+                        `Withdrawal fee (20%): ${formatUGX(fee)}\n` +
+
+                        `You will receive: ${formatUGX(payout)}\n\n` +
+
+                        `Method: ${method}\n` +
+
+                        `Mobile Money: ${phone}\n\n` +
+
+                        "Continue with this withdrawal?"
+                    );
+
+
+                if (!confirmed) {
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | DISABLE BUTTON
+                |--------------------------------------------------------------------------
+                */
+
+                if (submitButton) {
+
+                    submitButton.disabled =
+                        true;
+
+                    submitButton.textContent =
+                        "Submitting...";
+
+                }
+
+
+                try {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SEND REQUEST
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const response =
+                        await fetch(
+                            WITHDRAWAL_API,
+                            {
+                                method: "POST",
+
+                                credentials: "include",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json",
+
+                                    "Accept":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify({
+
+                                        amount:
+                                            amount,
+
+                                        payment_method:
+                                            method,
+
+                                        phone:
+                                            phone
+
+                                    })
+                            }
+                        );
+
+
+                    let data = null;
+
+
+                    try {
+
+                        data =
+                            await response.json();
+
+                    } catch (jsonError) {
+
+                        throw new Error(
+                            "The server returned an invalid response."
+                        );
 
                     }
 
 
-                    throw new Error(
-                        data.message ||
-                        "Withdrawal request failed."
+                    /*
+                    |--------------------------------------------------------------------------
+                    | HANDLE ERROR
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        !response.ok ||
+                        !data.success
+                    ) {
+
+                        throw new Error(
+                            data.message ||
+                            "Withdrawal request failed."
+                        );
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SERVER VALUES
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const serverFee =
+                        Number(
+                            data.fee ??
+                            fee
+                        );
+
+
+                    const serverPayout =
+                        Number(
+                            data.payout_amount ??
+                            payout
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SUCCESS
+                    |--------------------------------------------------------------------------
+                    */
+
+                    showMessage(
+                        `Withdrawal submitted successfully. Requested ${formatUGX(amount)}, fee ${formatUGX(serverFee)}, you will receive ${formatUGX(serverPayout)} after approval.`,
+                        "success"
                     );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | RESET FORM
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (amountInput) {
+
+                        amountInput.value = "";
+
+                    }
+
+
+                    calculateWithdrawal();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | REFRESH BALANCE
+                    |--------------------------------------------------------------------------
+                    |
+                    | The withdrawal is still pending, so the server has
+                    | not deducted the balance yet.
+                    |--------------------------------------------------------------------------
+                    */
+
+                    setTimeout(
+                        loadProfile,
+                        500
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Withdrawal error:",
+                        error
+                    );
+
+
+                    showMessage(
+                        error.message ||
+                        "Unable to submit withdrawal."
+                    );
+
+                } finally {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | ENABLE BUTTON AGAIN
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (submitButton) {
+
+                        submitButton.disabled =
+                            false;
+
+                        submitButton.textContent =
+                            "Request Withdrawal";
+
+                    }
 
                 }
-
-
-                // --------------------------
-                // SUCCESS
-                // --------------------------
-
-                const serverPayout =
-                    Number(
-                        data.payout_amount
-                    );
-
-
-                const serverFee =
-                    Number(
-                        data.fee
-                    );
-
-
-                let successMessage =
-                    "Withdrawal request submitted successfully.";
-
-
-                if (
-                    Number.isFinite(
-                        serverPayout
-                    ) &&
-                    Number.isFinite(
-                        serverFee
-                    )
-                ) {
-
-                    successMessage +=
-                        ` You will receive ${formatUGX(serverPayout)} after the ${formatUGX(serverFee)} fee.`;
-
-                }
-
-
-                showMessage(
-                    successMessage,
-                    "success"
-                );
-
-
-                // Update displayed balance
-                availableBalance -= amount;
-
-
-                if (
-                    availableBalance < 0
-                ) {
-
-                    availableBalance = 0;
-
-                }
-
-
-                availableBalanceElement.textContent =
-                    formatUGX(
-                        availableBalance
-                    );
-
-
-                // Clear form
-                amountInput.value = "";
-
-                methodInput.value = "";
-
-                calculateWithdrawal();
-
-
-            } catch (error) {
-
-                console.error(
-                    "Withdrawal error:",
-                    error
-                );
-
-
-                showMessage(
-                    error.message ||
-                    "Unable to submit withdrawal request.",
-                    "error"
-                );
-
-            } finally {
-
-                withdrawButton.disabled =
-                    false;
-
-                buttonText.hidden =
-                    false;
-
-                buttonLoader.hidden =
-                    true;
 
             }
+        );
 
-        }
-    );
-
-
-    // ==============================
-    // LIVE CALCULATION
-    // ==============================
-
-    amountInput.addEventListener(
-        "input",
-        calculateWithdrawal
-    );
+    }
 
 
-    // ==============================
-    // INITIAL CALCULATION
-    // ==============================
+    /*
+    |--------------------------------------------------------------------------
+    | INITIALIZE
+    |--------------------------------------------------------------------------
+    */
 
     calculateWithdrawal();
-
-
-    // ==============================
-    // LOAD ACCOUNT
-    // ==============================
 
     loadProfile();
 

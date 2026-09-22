@@ -1,48 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 /*
-|--------------------------------------------------------------------------
-| CROWN CASH — WITHDRAWAL REQUEST API
-|--------------------------------------------------------------------------
-| Creates a pending withdrawal request for the logged-in user.
-|
-| Withdrawal rules:
-| - Minimum withdrawal: UGX 5,000
-| - Withdrawal fee: 20%
-| - Option A: fee is deducted from requested withdrawal amount
-|
-| Example:
-| Requested: UGX 20,000
-| Fee 20%:   UGX  4,000
-| Payout:    UGX 16,000
-|
-| Admin approval is required before the withdrawal is processed.
-|--------------------------------------------------------------------------
+=========================================================
+CROWN CASH - USER WITHDRAWAL API
+=========================================================
+
+Features:
+
+✓ Secure user session
+✓ Cross-origin Vercel → Render requests
+✓ MongoDB
+✓ Minimum withdrawal UGX 5,000
+✓ 20% withdrawal fee
+✓ MTN Mobile Money
+✓ Airtel Money
+✓ Registered account phone must be used
+✓ Uganda phone validation
+✓ Blocks suspended/disabled/banned accounts
+✓ Prevents multiple pending withdrawals
+✓ Creates withdrawal record
+✓ Creates transaction record
+✓ Does NOT deduct balance at request time
+✓ Admin approval is required
+✓ Server calculates fee and payout
+=========================================================
 */
 
 
-/*
-|--------------------------------------------------------------------------
-| CROSS-SITE SESSION
-|--------------------------------------------------------------------------
-*/
-
-session_set_cookie_params([
-    "lifetime" => 0,
-    "path" => "/",
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
-]);
-
-session_start();
-
-
-/*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CORS
+   ========================================================= */
 
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
@@ -57,21 +46,21 @@ header(
 );
 
 header(
-    "Access-Control-Allow-Headers: Content-Type"
+    "Access-Control-Allow-Headers: Content-Type, Accept"
 );
 
 header(
-    "Content-Type: application/json; charset=UTF-8"
+    "Content-Type: application/json; charset=utf-8"
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| HANDLE OPTIONS REQUEST
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   OPTIONS REQUEST
+   ========================================================= */
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+if (
+    $_SERVER["REQUEST_METHOD"] === "OPTIONS"
+) {
 
     http_response_code(204);
 
@@ -79,13 +68,13 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| ONLY POST ALLOWED
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   ONLY POST ALLOWED
+   ========================================================= */
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+if (
+    $_SERVER["REQUEST_METHOD"] !== "POST"
+) {
 
     http_response_code(405);
 
@@ -98,827 +87,861 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| CHECK LOGIN
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SECURE CROSS-SITE SESSION
+   ========================================================= */
+
+session_set_cookie_params([
+    "lifetime" => 0,
+    "path" => "/",
+    "secure" => true,
+    "httponly" => true,
+    "samesite" => "None"
+]);
+
+session_start();
+
+
+/* =========================================================
+   AUTHENTICATION CHECK
+   ========================================================= */
 
 if (
-    empty($_SESSION["logged_in"]) ||
-    empty($_SESSION["user_id"])
+    !isset($_SESSION["logged_in"]) ||
+    $_SESSION["logged_in"] !== true ||
+    !isset($_SESSION["user_id"]) ||
+    trim((string)$_SESSION["user_id"]) === ""
 ) {
 
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" =>
-            "You must be logged in to make a withdrawal."
+        "message" => "Please login first."
     ]);
 
     exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| LOAD DATABASE
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   LOAD DATABASE CONFIGURATION
+   ========================================================= */
 
 require_once __DIR__ . "/config.php";
 
 
-/*
-|--------------------------------------------------------------------------
-| READ JSON REQUEST
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   WITHDRAWAL SETTINGS
+   ========================================================= */
 
-$input = json_decode(
-    file_get_contents("php://input"),
+$minimumWithdrawal = 5000;
+
+/*
+20% withdrawal fee.
+*/
+$withdrawalFeeRate = 0.20;
+
+
+/* =========================================================
+   HELPER FUNCTIONS
+   ========================================================= */
+
+function normalizeUgandaPhone(
+    string $phone
+): string {
+
+    /*
+    Remove spaces, brackets, hyphens, etc.
+    */
+
+    $phone = preg_replace(
+        "/[^0-9+]/",
+        "",
+        trim($phone)
+    );
+
+
+    if (!$phone) {
+
+        return "";
+
+    }
+
+
+    /*
+    +256772123456
+    →
+    0772123456
+    */
+
+    if (
+        str_starts_with(
+            $phone,
+            "+256"
+        )
+    ) {
+
+        $phone =
+            "0" .
+            substr(
+                $phone,
+                4
+            );
+
+    }
+
+
+    /*
+    256772123456
+    →
+    0772123456
+    */
+
+    elseif (
+        str_starts_with(
+            $phone,
+            "256"
+        )
+    ) {
+
+        $phone =
+            "0" .
+            substr(
+                $phone,
+                3
+            );
+
+    }
+
+
+    /*
+    Ensure the number is in Uganda
+    local format.
+    */
+
+    if (
+        preg_match(
+            "/^0[0-9]{9}$/",
+            $phone
+        )
+    ) {
+
+        return $phone;
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================================
+   VALIDATE UGANDAN MOBILE NUMBER
+   ========================================================= */
+
+function isValidUgandaPhone(
+    string $phone
+): bool {
+
+    /*
+    Uganda mobile prefixes commonly include:
+
+    MTN:
+    077
+    078
+    076
+
+    Airtel:
+    070
+    075
+
+    Other valid Uganda mobile ranges may also
+    exist, therefore the validation allows
+    recognised 07x mobile ranges.
+    */
+
+    return (bool)preg_match(
+        "/^07[0-9]{8}$/",
+        $phone
+    );
+
+}
+
+
+/* =========================================================
+   JSON INPUT
+   ========================================================= */
+
+$rawInput =
+    file_get_contents(
+        "php://input"
+    );
+
+
+$data = json_decode(
+    $rawInput,
     true
 );
 
 
 /*
-|--------------------------------------------------------------------------
-| ALSO SUPPORT NORMAL POST REQUESTS
-|--------------------------------------------------------------------------
+Support normal form POST as well.
 */
 
-if (!is_array($input)) {
+if (
+    !is_array($data)
+) {
 
-    $input = $_POST;
+    $data = $_POST;
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| GET AMOUNT
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   READ REQUEST DATA
+   ========================================================= */
 
-$amount = $input["amount"] ?? null;
-
-
-/*
-|--------------------------------------------------------------------------
-| GET PAYMENT METHOD
-|--------------------------------------------------------------------------
-*/
-
-$method =
-    strtolower(
-        trim(
-            (string)(
-                $input["payment_method"]
-                ?? $input["method"]
-                ?? ""
-            )
-        )
-    );
+$amountInput =
+    $data["amount"] ??
+    null;
 
 
-/*
-|--------------------------------------------------------------------------
-| GET MOBILE MONEY ACCOUNT
-|--------------------------------------------------------------------------
-*/
-
-$account =
+$paymentMethod =
     trim(
         (string)(
-            $input["phone"]
-            ?? $input["account"]
-            ?? ""
+            $data["payment_method"] ??
+            $data["method"] ??
+            ""
         )
     );
 
 
-/*
-|--------------------------------------------------------------------------
-| VALIDATE AMOUNT
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $amount === null ||
-    $amount === "" ||
-    !is_numeric($amount)
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Enter a valid withdrawal amount."
-    ]);
-
-    exit;
-}
-
-
-$amount = (float)$amount;
-
-
-/*
-|--------------------------------------------------------------------------
-| MINIMUM WITHDRAWAL
-|--------------------------------------------------------------------------
-|
-| Crown Cash minimum withdrawal is UGX 5,000.
-|--------------------------------------------------------------------------
-*/
-
-$minimumWithdrawal = 5000;
-
-
-if ($amount < $minimumWithdrawal) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Minimum withdrawal amount is UGX 5,000."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| ENSURE WHOLE UGX
-|--------------------------------------------------------------------------
-*/
-
-if (floor($amount) != $amount) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Withdrawal amount must be a whole UGX amount."
-    ]);
-
-    exit;
-}
-
-
-$amount = (int)$amount;
-
-
-/*
-|--------------------------------------------------------------------------
-| WITHDRAWAL FEE
-|--------------------------------------------------------------------------
-|
-| Option A:
-|
-| The fee comes out of the requested withdrawal amount.
-|
-| Example:
-|
-| UGX 20,000 requested
-| 20% fee = UGX 4,000
-| User receives = UGX 16,000
-|--------------------------------------------------------------------------
-*/
-
-$withdrawalFeeRate = 0.20;
-
-
-/*
-|--------------------------------------------------------------------------
-| CALCULATE FEE
-|--------------------------------------------------------------------------
-*/
-
-$withdrawalFee =
-    (int)round(
-        $amount * $withdrawalFeeRate
-    );
-
-
-/*
-|--------------------------------------------------------------------------
-| CALCULATE PAYOUT
-|--------------------------------------------------------------------------
-*/
-
-$payoutAmount =
-    $amount - $withdrawalFee;
-
-
-/*
-|--------------------------------------------------------------------------
-| SAFETY CHECK
-|--------------------------------------------------------------------------
-*/
-
-if ($payoutAmount <= 0) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Invalid withdrawal amount."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| NORMALIZE PAYMENT METHOD
-|--------------------------------------------------------------------------
-*/
-
-if ($method === "mtn") {
-
-    $method = "MTN";
-
-}
-
-elseif ($method === "airtel") {
-
-    $method = "Airtel";
-
-}
-
-else {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Please select MTN or Airtel Mobile Money."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| VALIDATE MOBILE MONEY NUMBER
-|--------------------------------------------------------------------------
-*/
-
-if ($account === "") {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Enter the Mobile Money account number."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CLEAN PHONE NUMBER
-|--------------------------------------------------------------------------
-*/
-
-$account = preg_replace(
-    "/[\s\-]/",
-    "",
-    $account
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| CONVERT +256 TO 0XXXXXXXXX
-|--------------------------------------------------------------------------
-*/
-
-if (strpos($account, "+256") === 0) {
-
-    $account =
-        "0" . substr($account, 4);
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| VALIDATE UGANDAN NUMBER
-|--------------------------------------------------------------------------
-*/
-
-if (!preg_match(
-    "/^07[0-9]{8}$/",
-    $account
-)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Enter a valid Ugandan Mobile Money number."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| VERIFY NETWORK PREFIX
-|--------------------------------------------------------------------------
-*/
-
-$prefix =
-    substr($account, 0, 3);
-
-
-/*
-|--------------------------------------------------------------------------
-| MTN PREFIXES
-|--------------------------------------------------------------------------
-*/
-
-$mtnPrefixes = [
-    "077",
-    "078",
-    "076"
-];
-
-
-/*
-|--------------------------------------------------------------------------
-| AIRTEL PREFIXES
-|--------------------------------------------------------------------------
-*/
-
-$airtelPrefixes = [
-    "070",
-    "075",
-    "074"
-];
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK SELECTED NETWORK
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $method === "MTN" &&
-    !in_array(
-        $prefix,
-        $mtnPrefixes,
-        true
-    )
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "The number does not appear to be an MTN number."
-    ]);
-
-    exit;
-}
-
-
-if (
-    $method === "Airtel" &&
-    !in_array(
-        $prefix,
-        $airtelPrefixes,
-        true
-    )
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "The number does not appear to be an Airtel number."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CONVERT SESSION USER ID
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    $userId =
-        new MongoDB\BSON\ObjectId(
-            $_SESSION["user_id"]
-        );
-
-} catch (Throwable $e) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Invalid user session."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| FIND USER
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    $user =
-        $users->findOne([
-            "_id" => $userId
-        ]);
-
-} catch (Throwable $e) {
-
-    error_log(
-        "CROWN CASH USER LOOKUP ERROR: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to access your account."
-    ]);
-
-    exit;
-}
-
-
-if (!$user) {
-
-    http_response_code(404);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "User account not found."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK ACCOUNT STATUS
-|--------------------------------------------------------------------------
-*/
-
-$userStatus =
-    strtolower(
+$submittedPhone =
+    trim(
         (string)(
-            $user["status"]
-            ?? "active"
+            $data["phone"] ??
+            $data["phone_number"] ??
+            $data["mobile"] ??
+            ""
+        )
+    );
+
+
+/* =========================================================
+   VALIDATE AMOUNT
+   ========================================================= */
+
+if (
+    $amountInput === null ||
+    $amountInput === ""
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Please enter a withdrawal amount."
+    ]);
+
+    exit;
+}
+
+
+/*
+Do not accept decimals.
+
+Withdrawals are whole Ugandan shillings.
+*/
+
+if (
+    !is_numeric($amountInput)
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Withdrawal amount must be a valid number."
+    ]);
+
+    exit;
+}
+
+
+$amount =
+    (int)$amountInput;
+
+
+if (
+    $amount <= 0
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Withdrawal amount must be greater than zero."
+    ]);
+
+    exit;
+}
+
+
+/*
+Prevent decimal amounts such as:
+
+5000.50
+*/
+
+if (
+    (float)$amountInput !=
+    (float)$amount
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Withdrawal amount must be a whole UGX amount."
+    ]);
+
+    exit;
+}
+
+
+/* =========================================================
+   MINIMUM WITHDRAWAL
+   ========================================================= */
+
+if (
+    $amount < $minimumWithdrawal
+) {
+
+    http_response_code(400);
+
+    echo json_encode([
+        "success" => false,
+        "message" =>
+            "Minimum withdrawal is UGX " .
+            number_format(
+                $minimumWithdrawal
+            ) .
+            "."
+    ]);
+
+    exit;
+}
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+$paymentMethodNormalized =
+    strtolower(
+        preg_replace(
+            "/[^a-z]/",
+            "",
+            $paymentMethod
         )
     );
 
 
 if (
     in_array(
-        $userStatus,
+        $paymentMethodNormalized,
         [
-            "blocked",
-            "suspended",
-            "disabled",
-            "banned",
-            "inactive"
+            "mtn",
+            "mtnmobilemoney"
         ],
         true
     )
 ) {
 
-    http_response_code(403);
+    $paymentMethod =
+        "MTN";
 
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Your account cannot make withdrawals at this time."
-    ]);
+} elseif (
+    in_array(
+        $paymentMethodNormalized,
+        [
+            "airtel",
+            "airtelmoney"
+        ],
+        true
+    )
+) {
 
-    exit;
-}
+    $paymentMethod =
+        "Airtel";
 
-
-/*
-|--------------------------------------------------------------------------
-| GET USER BALANCE
-|--------------------------------------------------------------------------
-*/
-
-$balance = 0;
-
-
-if (isset($user["balance"])) {
-
-    if (
-        $user["balance"]
-        instanceof MongoDB\BSON\Decimal128
-    ) {
-
-        $balance =
-            (float)$user["balance"]
-                ->toString();
-
-    } else {
-
-        $balance =
-            (float)$user["balance"];
-
-    }
-
-}
-
-elseif (isset($user["wallet_balance"])) {
-
-    if (
-        $user["wallet_balance"]
-        instanceof MongoDB\BSON\Decimal128
-    ) {
-
-        $balance =
-            (float)$user["wallet_balance"]
-                ->toString();
-
-    } else {
-
-        $balance =
-            (float)$user["wallet_balance"];
-
-    }
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| USER MUST HAVE AT LEAST UGX 5,000
-|--------------------------------------------------------------------------
-*/
-
-if ($balance < $minimumWithdrawal) {
+} else {
 
     http_response_code(400);
 
     echo json_encode([
-
         "success" => false,
-
         "message" =>
-            "You need at least UGX 5,000 available balance to make a withdrawal.",
-
-        "available_balance" =>
-            $balance,
-
-        "minimum_withdrawal" =>
-            $minimumWithdrawal
-
+            "Please select MTN Mobile Money or Airtel Money."
     ]);
 
     exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| CHECK REQUESTED AMOUNT AGAINST BALANCE
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   USER ID
+   ========================================================= */
 
-if ($amount > $balance) {
-
-    http_response_code(400);
-
-    echo json_encode([
-
-        "success" => false,
-
-        "message" =>
-            "Insufficient available balance.",
-
-        "available_balance" =>
-            $balance,
-
-        "requested_amount" =>
-            $amount
-
-    ]);
-
-    exit;
-}
+$userIdString =
+    trim(
+        (string)$_SESSION["user_id"]
+    );
 
 
-/*
-|--------------------------------------------------------------------------
-| CHECK EXISTING PENDING WITHDRAWAL
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   DATABASE OPERATION
+   ========================================================= */
 
 try {
 
-    $pending =
-        $withdrawals->findOne([
+    /*
+    Convert session user ID to MongoDB ObjectId.
+    */
 
-            "user_id" =>
-                $userId,
+    try {
 
-            "status" =>
-                "pending"
+        $userId =
+            new MongoDB\BSON\ObjectId(
+                $userIdString
+            );
 
+    } catch (
+        Throwable $e
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid user account."
         ]);
 
-} catch (Throwable $e) {
+        exit;
 
-    error_log(
-        "CROWN CASH PENDING WITHDRAWAL CHECK ERROR: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to check existing withdrawals."
-    ]);
-
-    exit;
-}
+    }
 
 
-if ($pending) {
+    /* =====================================================
+       FIND USER
+       ===================================================== */
 
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "You already have a pending withdrawal request. Please wait for it to be processed."
-    ]);
-
-    exit;
-}
+    $user =
+        $users->findOne([
+            "_id" => $userId
+        ]);
 
 
-/*
-|--------------------------------------------------------------------------
-| CREATE WITHDRAWAL
-|--------------------------------------------------------------------------
-*/
+    if (!$user) {
 
-$now =
-    new MongoDB\BSON\UTCDateTime();
+        http_response_code(404);
 
+        echo json_encode([
+            "success" => false,
+            "message" => "User account was not found."
+        ]);
 
-$withdrawal = [
-
-    "user_id" =>
-        $userId,
-
-    /*
-     * Original amount requested by user.
-     */
-    "amount" =>
-        $amount,
-
-    "requested_amount" =>
-        $amount,
-
-    /*
-     * 20% Crown Cash withdrawal fee.
-     */
-    "fee_rate" =>
-        $withdrawalFeeRate,
-
-    "fee" =>
-        $withdrawalFee,
-
-    /*
-     * Amount the user should receive.
-     */
-    "payout_amount" =>
-        $payoutAmount,
-
-    "method" =>
-        $method,
-
-    "account" =>
-        $account,
-
-    "payment_method" =>
-        strtolower($method),
-
-    "phone" =>
-        $account,
-
-    "status" =>
-        "pending",
-
-    "created_at" =>
-        $now,
-
-    "updated_at" =>
-        $now
-
-];
+        exit;
+    }
 
 
-/*
-|--------------------------------------------------------------------------
-| SAVE WITHDRAWAL
-|--------------------------------------------------------------------------
-*/
+    /* =====================================================
+       ACCOUNT STATUS
+       ===================================================== */
 
-try {
-
-    $withdrawalResult =
-        $withdrawals->insertOne(
-            $withdrawal
+    $accountStatus =
+        strtolower(
+            trim(
+                (string)(
+                    $user["status"] ??
+                    "active"
+                )
+            )
         );
 
-} catch (Throwable $e) {
 
-    error_log(
-        "CROWN CASH WITHDRAWAL ERROR: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to submit withdrawal."
-    ]);
-
-    exit;
-}
+    $blockedStatuses = [
+        "blocked",
+        "suspended",
+        "disabled",
+        "banned",
+        "inactive"
+    ];
 
 
-/*
-|--------------------------------------------------------------------------
-| CREATE TRANSACTION RECORD
-|--------------------------------------------------------------------------
-*/
+    if (
+        in_array(
+            $accountStatus,
+            $blockedStatuses,
+            true
+        )
+    ) {
 
-try {
+        http_response_code(403);
 
-    $transactions->insertOne([
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Your account is not allowed to make withdrawals."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       GET REGISTERED USER PHONE
+       ===================================================== */
+
+    $registeredPhone =
+        trim(
+            (string)(
+                $user["phone"] ??
+                $user["phone_number"] ??
+                $user["mobile"] ??
+                ""
+            )
+        );
+
+
+    /*
+    Normalize the registered number.
+    */
+
+    $normalizedRegisteredPhone =
+        normalizeUgandaPhone(
+            $registeredPhone
+        );
+
+
+    /*
+    The account must have a valid registered
+    Uganda mobile number before withdrawal.
+    */
+
+    if (
+        $normalizedRegisteredPhone === "" ||
+        !isValidUgandaPhone(
+            $normalizedRegisteredPhone
+        )
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Your registered account phone number is missing or invalid. Please update your account phone number before withdrawing."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       USER-SUBMITTED PHONE
+       ===================================================== */
+
+    $normalizedSubmittedPhone =
+        normalizeUgandaPhone(
+            $submittedPhone
+        );
+
+
+    /*
+    The user MUST provide a valid number.
+    */
+
+    if (
+        $normalizedSubmittedPhone === ""
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Please use your registered account phone number for withdrawal."
+        ]);
+
+        exit;
+    }
+
+
+    if (
+        !isValidUgandaPhone(
+            $normalizedSubmittedPhone
+        )
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Please enter a valid Ugandan mobile number."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       IMPORTANT PHONE MATCH CHECK
+       ===================================================== */
+
+    if (
+        $normalizedSubmittedPhone !==
+        $normalizedRegisteredPhone
+    ) {
+
+        http_response_code(403);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Withdrawal must use the mobile number registered on your Crown Cash account."
+        ]);
+
+        exit;
+    }
+
+
+    /*
+    From this point onward we use the
+    registered/verified number from the database,
+    NOT a number supplied by the browser.
+
+    This prevents a user from changing the
+    destination number through developer tools.
+    */
+
+    $withdrawalPhone =
+        $normalizedRegisteredPhone;
+
+
+    /* =====================================================
+       GET USER BALANCE
+       ===================================================== */
+
+    $balanceValue =
+        $user["balance"] ??
+        $user["wallet_balance"] ??
+        0;
+
+
+    if (
+        $balanceValue instanceof
+        MongoDB\BSON\Decimal128
+    ) {
+
+        $balance =
+            (float)$balanceValue->__toString();
+
+    } elseif (
+        $balanceValue instanceof
+        MongoDB\BSON\Int64
+    ) {
+
+        $balance =
+            (float)$balanceValue->__toString();
+
+    } else {
+
+        $balance =
+            (float)$balanceValue;
+
+    }
+
+
+    /* =====================================================
+       CHECK BALANCE
+       ===================================================== */
+
+    if (
+        $balance < $minimumWithdrawal
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Your balance is below the minimum withdrawal amount of UGX " .
+                number_format(
+                    $minimumWithdrawal
+                ) .
+                "."
+        ]);
+
+        exit;
+    }
+
+
+    if (
+        $amount > $balance
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "Insufficient balance."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       PREVENT MULTIPLE PENDING WITHDRAWALS
+       ===================================================== */
+
+    $existingPending =
+        $withdrawals->findOne([
+            "user_id" => $userId,
+
+            "status" => "pending"
+        ]);
+
+
+    if (
+        $existingPending
+    ) {
+
+        http_response_code(409);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "You already have a pending withdrawal. Please wait for it to be processed before creating another withdrawal."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       CALCULATE 20% FEE
+       ===================================================== */
+
+    $withdrawalFee =
+        (int)round(
+            $amount *
+            $withdrawalFeeRate
+        );
+
+
+    /* =====================================================
+       CUSTOMER PAYOUT
+       ===================================================== */
+
+    $payoutAmount =
+        $amount -
+        $withdrawalFee;
+
+
+    if (
+        $payoutAmount <= 0
+    ) {
+
+        http_response_code(400);
+
+        echo json_encode([
+            "success" => false,
+            "message" =>
+                "The withdrawal amount is too small after applying the withdrawal fee."
+        ]);
+
+        exit;
+    }
+
+
+    /* =====================================================
+       CREATE WITHDRAWAL ID
+       ===================================================== */
+
+    $withdrawalId =
+        new MongoDB\BSON\ObjectId();
+
+
+    $now =
+        new MongoDB\BSON\UTCDateTime();
+
+
+    /* =====================================================
+       WITHDRAWAL DOCUMENT
+       ===================================================== */
+
+    $withdrawalDocument = [
+
+        "_id" =>
+            $withdrawalId,
 
         "user_id" =>
             $userId,
 
-        "type" =>
-            "withdrawal",
+        "user_email" =>
+            (string)(
+                $user["email"] ??
+                $_SESSION["user_email"] ??
+                ""
+            ),
+
+        "full_name" =>
+            (string)(
+                $user["full_name"] ??
+                ""
+            ),
 
         /*
-         * Requested amount.
-         */
-        "amount" =>
-            $amount,
+        This is always the registered account
+        phone retrieved from MongoDB.
+        */
+
+        "phone" =>
+            $withdrawalPhone,
+
+        "account_number" =>
+            $withdrawalPhone,
+
+        "payment_method" =>
+            $paymentMethod,
+
+        "method" =>
+            $paymentMethod,
+
+        /*
+        Amount requested by customer.
+
+        This is the amount that will be deducted
+        from the wallet when an admin approves it.
+        */
 
         "requested_amount" =>
             $amount,
 
+        "amount" =>
+            $amount,
+
         /*
-         * 20% Withdrawal fee.
-         */
+        Current Crown Cash withdrawal fee:
+        20%
+        */
+
         "fee_rate" =>
             $withdrawalFeeRate,
 
@@ -926,90 +949,274 @@ try {
             $withdrawalFee,
 
         /*
-         * Actual amount to be paid.
-         */
+        Amount customer receives after fee.
+        */
+
         "payout_amount" =>
             $payoutAmount,
-
-        "method" =>
-            $method,
-
-        "account" =>
-            $account,
 
         "status" =>
             "pending",
 
-        "withdrawal_id" =>
-            $withdrawalResult
-                ->getInsertedId(),
+        /*
+        No money has actually been sent yet.
+        */
+
+        "payout_status" =>
+            "not_paid",
 
         "created_at" =>
+            $now,
+
+        "updated_at" =>
             $now
+
+    ];
+
+
+    /* =====================================================
+       INSERT WITHDRAWAL
+       ===================================================== */
+
+    $withdrawals->insertOne(
+        $withdrawalDocument
+    );
+
+
+    /* =====================================================
+       TRANSACTION RECORD
+       ===================================================== */
+
+    $transactionDocument = [
+
+        "user_id" =>
+            $userId,
+
+        "type" =>
+            "withdrawal",
+
+        "transaction_type" =>
+            "withdrawal",
+
+        "reference" =>
+            "WD-" .
+            strtoupper(
+                substr(
+                    (string)$withdrawalId,
+                    -10
+                )
+            ),
+
+        "withdrawal_id" =>
+            $withdrawalId,
+
+        "amount" =>
+            $amount,
+
+        "requested_amount" =>
+            $amount,
+
+        "fee_rate" =>
+            $withdrawalFeeRate,
+
+        "fee" =>
+            $withdrawalFee,
+
+        "payout_amount" =>
+            $payoutAmount,
+
+        "payment_method" =>
+            $paymentMethod,
+
+        "phone" =>
+            $withdrawalPhone,
+
+        "status" =>
+            "pending",
+
+        "description" =>
+            "Withdrawal request - pending admin approval.",
+
+        "created_at" =>
+            $now,
+
+        "updated_at" =>
+            $now
+
+    ];
+
+
+    /* =====================================================
+       INSERT TRANSACTION
+       ===================================================== */
+
+    $transactions->insertOne(
+        $transactionDocument
+    );
+
+
+    /* =====================================================
+       AUDIT LOG
+       ===================================================== */
+
+    try {
+
+        $auditLogs->insertOne([
+
+            "user_id" =>
+                $userId,
+
+            "action" =>
+                "withdrawal_requested",
+
+            "type" =>
+                "withdrawal",
+
+            "withdrawal_id" =>
+                $withdrawalId,
+
+            "amount" =>
+                $amount,
+
+            "fee" =>
+                $withdrawalFee,
+
+            "payout_amount" =>
+                $payoutAmount,
+
+            "payment_method" =>
+                $paymentMethod,
+
+            "phone" =>
+                $withdrawalPhone,
+
+            "status" =>
+                "pending",
+
+            "description" =>
+                "User submitted withdrawal request using registered account phone number.",
+
+            "created_at" =>
+                $now
+
+        ]);
+
+    } catch (
+        Throwable $auditError
+    ) {
+
+        /*
+        Audit failure should not prevent a valid
+        withdrawal request from being created.
+
+        Log it for server administrators.
+        */
+
+        error_log(
+            "Withdrawal audit log error: " .
+            $auditError->getMessage()
+        );
+
+    }
+
+
+    /* =====================================================
+       SUCCESS RESPONSE
+       ===================================================== */
+
+    echo json_encode([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "Withdrawal request submitted successfully. It is now waiting for admin approval.",
+
+        "withdrawal" => [
+
+            "id" =>
+                (string)$withdrawalId,
+
+            "requested_amount" =>
+                $amount,
+
+            "amount" =>
+                $amount,
+
+            "fee_rate" =>
+                $withdrawalFeeRate,
+
+            "fee" =>
+                $withdrawalFee,
+
+            "payout_amount" =>
+                $payoutAmount,
+
+            "payment_method" =>
+                $paymentMethod,
+
+            /*
+            Return the registered number that was
+            actually used.
+            */
+
+            "phone" =>
+                $withdrawalPhone,
+
+            "status" =>
+                "pending",
+
+            "payout_status" =>
+                "not_paid"
+
+        ]
 
     ]);
 
-} catch (Throwable $e) {
-
-    /*
-    |--------------------------------------------------------------------------
-    | Withdrawal was already created.
-    | Transaction logging failed.
-    |--------------------------------------------------------------------------
-    */
+} catch (
+    MongoDB\Driver\Exception\Exception $e
+) {
 
     error_log(
-        "CROWN CASH TRANSACTION LOG ERROR: " .
+        "Withdrawal MongoDB error: " .
         $e->getMessage()
     );
 
+
+    http_response_code(500);
+
+    echo json_encode([
+
+        "success" =>
+            false,
+
+        "message" =>
+            "Database error while processing withdrawal."
+
+    ]);
+
+} catch (
+    Throwable $e
+) {
+
+    error_log(
+        "Withdrawal error: " .
+        $e->getMessage()
+    );
+
+
+    http_response_code(500);
+
+    echo json_encode([
+
+        "success" =>
+            false,
+
+        "message" =>
+            "Unable to process withdrawal."
+
+    ]);
+
 }
-
-
-/*
-|--------------------------------------------------------------------------
-| SUCCESS RESPONSE
-|--------------------------------------------------------------------------
-*/
-
-http_response_code(201);
-
-echo json_encode([
-
-    "success" =>
-        true,
-
-    "message" =>
-        "Withdrawal request submitted successfully and is pending admin approval.",
-
-    "withdrawal_id" =>
-        (string)
-        $withdrawalResult
-            ->getInsertedId(),
-
-    "requested_amount" =>
-        $amount,
-
-    "fee_rate" =>
-        $withdrawalFeeRate,
-
-    "fee" =>
-        $withdrawalFee,
-
-    "payout_amount" =>
-        $payoutAmount,
-
-    "method" =>
-        $method,
-
-    "account" =>
-        $account,
-
-    "status" =>
-        "pending"
-
-]);
-
-exit;
 
 ?>

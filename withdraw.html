@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Crown Cash | Withdraw</title>
 
-    <link rel="stylesheet" href="withdraw.css">
+    <link
+        rel="stylesheet"
+        href="withdraw.css"
+    >
+
 </head>
 
 <body>
@@ -16,20 +25,52 @@
         <!-- HEADER -->
         <header class="withdraw-header">
 
-            <a href="dashboard.html" class="back-btn">
-                ←
-            </a>
+            <div class="brand">
 
-            <div>
-                <h1>Withdraw Funds</h1>
-                <p>Request money from your Crown Cash account</p>
+                <div class="brand-icon">
+                    👑
+                </div>
+
+                <div>
+                    <h1>Crown Cash</h1>
+                    <span>Withdrawal Center</span>
+                </div>
+
             </div>
+
+            <a
+                href="/dashboard.html"
+                class="back-button"
+            >
+                ← Dashboard
+            </a>
 
         </header>
 
 
         <!-- MAIN CONTENT -->
         <main class="withdraw-container">
+
+            <!-- TITLE -->
+            <section class="page-title">
+
+                <div class="title-icon">
+                    💸
+                </div>
+
+                <div>
+
+                    <h2>Withdraw Funds</h2>
+
+                    <p>
+                        Request a withdrawal to your
+                        MTN or Airtel Mobile Money account.
+                    </p>
+
+                </div>
+
+            </section>
+
 
             <!-- BALANCE CARD -->
             <section class="balance-card">
@@ -38,33 +79,98 @@
                     💰
                 </div>
 
-                <div>
-                    <span>Available Balance</span>
+                <div class="balance-information">
 
-                    <h2 id="availableBalance">
+                    <span>
+                        Available Balance
+                    </span>
+
+                    <strong id="availableBalance">
                         UGX 0
-                    </h2>
+                    </strong>
+
                 </div>
 
             </section>
 
 
-            <!-- WITHDRAW FORM -->
-            <section class="withdraw-card">
+            <!-- WITHDRAWAL CALCULATOR -->
+            <section class="fee-card">
 
-                <div class="section-heading">
+                <div class="fee-row">
 
-                    <h2>Withdrawal Details</h2>
+                    <span>
+                        Withdrawal Amount
+                    </span>
 
-                    <p>
-                        Minimum withdrawal: <strong>UGX 5,000</strong>
-                    </p>
+                    <strong id="displayAmount">
+                        UGX 0
+                    </strong>
 
                 </div>
 
 
-                <form id="withdrawForm">
+                <div class="fee-row">
 
+                    <span>
+                        Withdrawal Fee
+                        <small>(20%)</small>
+                    </span>
+
+                    <strong id="withdrawalFee">
+                        UGX 0
+                    </strong>
+
+                </div>
+
+
+                <div class="fee-divider"></div>
+
+
+                <div class="fee-row payout-row">
+
+                    <span>
+                        You Will Receive
+                    </span>
+
+                    <strong id="payoutAmount">
+                        UGX 0
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <!-- WITHDRAWAL FORM -->
+            <section class="form-card">
+
+                <div class="card-heading">
+
+                    <div class="heading-icon">
+                        💳
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Withdrawal Details
+                        </h3>
+
+                        <p>
+                            Enter the details for your
+                            Mobile Money payment.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="withdrawForm"
+                    autocomplete="off"
+                >
 
                     <!-- AMOUNT -->
                     <div class="form-group">
@@ -75,7 +181,7 @@
 
                         <div class="input-wrapper">
 
-                            <span class="currency">
+                            <span class="input-prefix">
                                 UGX
                             </span>
 
@@ -83,68 +189,18 @@
                                 type="number"
                                 id="amount"
                                 name="amount"
-                                placeholder="Enter amount"
                                 min="5000"
                                 step="1000"
+                                placeholder="Enter amount"
                                 required
                             >
 
                         </div>
 
-                        <small>
-                            Enter an amount in multiples of UGX 1,000.
+                        <small class="input-help">
+                            Minimum withdrawal:
+                            UGX 5,000
                         </small>
-
-                    </div>
-
-
-                    <!-- FEE CALCULATION -->
-                    <div
-                        class="fee-card"
-                        id="feeCard"
-                    >
-
-                        <div class="calculation-row">
-
-                            <span>
-                                Withdrawal Amount
-                            </span>
-
-                            <strong id="requestedAmount">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-
-                        <div class="calculation-row fee-row">
-
-                            <span>
-                                Withdrawal Fee
-                                <small>(10%)</small>
-                            </span>
-
-                            <strong id="withdrawalFee">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-
-                        <div class="calculation-divider"></div>
-
-
-                        <div class="calculation-row payout-row">
-
-                            <span>
-                                You Will Receive
-                            </span>
-
-                            <strong id="payoutAmount">
-                                UGX 0
-                            </strong>
-
-                        </div>
 
                     </div>
 
@@ -152,25 +208,25 @@
                     <!-- PAYMENT METHOD -->
                     <div class="form-group">
 
-                        <label for="method">
+                        <label for="paymentMethod">
                             Payment Method
                         </label>
 
                         <select
-                            id="method"
-                            name="method"
+                            id="paymentMethod"
+                            name="payment_method"
                             required
                         >
 
                             <option value="">
-                                Select payment method
+                                Select Mobile Money
                             </option>
 
-                            <option value="MTN">
+                            <option value="mtn">
                                 MTN Mobile Money
                             </option>
 
-                            <option value="Airtel">
+                            <option value="airtel">
                                 Airtel Money
                             </option>
 
@@ -179,7 +235,7 @@
                     </div>
 
 
-                    <!-- PHONE NUMBER -->
+                    <!-- PHONE -->
                     <div class="form-group">
 
                         <label for="phone">
@@ -190,14 +246,14 @@
                             type="tel"
                             id="phone"
                             name="phone"
-                            placeholder="e.g. 0771234567"
-                            maxlength="12"
+                            placeholder="07XXXXXXXX"
+                            inputmode="tel"
                             required
                         >
 
-                        <small>
-                            Enter the Uganda mobile number that should
-                            receive the payout.
+                        <small class="input-help">
+                            Example:
+                            0771234567
                         </small>
 
                     </div>
@@ -206,23 +262,28 @@
                     <!-- ACCOUNT NAME -->
                     <div class="form-group">
 
-                        <label for="account">
+                        <label for="accountName">
                             Account Name
                         </label>
 
                         <input
                             type="text"
-                            id="account"
-                            name="account"
-                            placeholder="Enter account name"
-                            required
+                            id="accountName"
+                            name="account_name"
+                            placeholder="Account holder name"
+                            autocomplete="name"
                         >
+
+                        <small class="input-help">
+                            Make sure the Mobile Money account
+                            belongs to you.
+                        </small>
 
                     </div>
 
 
-                    <!-- WARNING -->
-                    <div class="withdraw-notice">
+                    <!-- NOTICE -->
+                    <div class="withdrawal-notice">
 
                         <div class="notice-icon">
                             ⚠️
@@ -231,12 +292,27 @@
                         <div>
 
                             <strong>
-                                Please check your details
+                                Important
                             </strong>
 
                             <p>
-                                Make sure your Mobile Money number and
-                                account name are correct before submitting.
+                                A
+                                <strong>20% withdrawal fee</strong>
+                                is deducted from the amount
+                                you request.
+                            </p>
+
+                            <p>
+                                Withdrawals require
+                                <strong>admin approval</strong>
+                                before payment is processed.
+                            </p>
+
+                            <p>
+                                Example:
+                                UGX 10,000 withdrawal =
+                                UGX 2,000 fee =
+                                <strong>UGX 8,000 received.</strong>
                             </p>
 
                         </div>
@@ -244,30 +320,44 @@
                     </div>
 
 
+                    <!-- CONFIRMATION -->
+                    <label class="confirmation-check">
+
+                        <input
+                            type="checkbox"
+                            id="confirmWithdrawal"
+                            required
+                        >
+
+                        <span>
+                            I confirm that the withdrawal
+                            information I provided is correct.
+                        </span>
+
+                    </label>
+
+
                     <!-- MESSAGE -->
                     <div
                         id="formMessage"
                         class="form-message"
+                        style="display: none;"
                     ></div>
 
 
-                    <!-- SUBMIT -->
+                    <!-- BUTTON -->
                     <button
                         type="submit"
                         id="withdrawButton"
-                        class="withdraw-btn"
+                        class="withdraw-button"
                     >
 
-                        <span id="buttonText">
-                            Request Withdrawal
+                        <span class="button-icon">
+                            💸
                         </span>
 
-                        <span
-                            id="buttonLoader"
-                            class="button-loader"
-                            hidden
-                        >
-                            Processing...
+                        <span>
+                            Request Withdrawal
                         </span>
 
                     </button>
@@ -277,45 +367,41 @@
             </section>
 
 
-            <!-- INFORMATION -->
-            <section class="info-card">
+            <!-- SECURITY INFORMATION -->
+            <section class="security-card">
 
-                <h3>Withdrawal Information</h3>
+                <div class="security-icon">
+                    🔐
+                </div>
 
-                <ul>
+                <div>
 
-                    <li>
-                        Minimum withdrawal is
-                        <strong>UGX 5,000</strong>.
-                    </li>
+                    <h3>
+                        Your withdrawal is protected
+                    </h3>
 
-                    <li>
-                        A
-                        <strong>10% withdrawal fee</strong>
-                        is deducted from your requested amount.
-                    </li>
+                    <p>
+                        Your request is securely submitted
+                        to Crown Cash for review. Your
+                        balance is only deducted after the
+                        withdrawal has been approved.
+                    </p>
 
-                    <li>
-                        Example:
-                        UGX 10,000 withdrawal =
-                        UGX 1,000 fee =
-                        <strong>UGX 9,000 received.</strong>
-                    </li>
-
-                    <li>
-                        Withdrawal requests are reviewed before payout.
-                    </li>
-
-                    <li>
-                        Only MTN Mobile Money and Airtel Money are currently
-                        supported.
-                    </li>
-
-                </ul>
+                </div>
 
             </section>
 
         </main>
+
+
+        <!-- FOOTER -->
+        <footer class="withdraw-footer">
+
+            <p>
+                © 2026 Crown Cash. All rights reserved.
+            </p>
+
+        </footer>
 
     </div>
 

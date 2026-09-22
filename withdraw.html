@@ -4,173 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="theme-color" content="#07111f">
-
     <title>Crown Cash | Withdraw</title>
 
-    <!-- Font Awesome -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
-
-    <!-- Withdraw CSS -->
     <link rel="stylesheet" href="withdraw.css">
 </head>
 
 <body>
 
-<div class="app">
+    <div class="withdraw-page">
 
-    <!-- ================= SIDEBAR ================= -->
-    <aside class="sidebar" id="sidebar">
+        <!-- HEADER -->
+        <header class="withdraw-header">
 
-        <div class="logo-area">
-            <div class="logo-icon">
-                <i class="fa-solid fa-crown"></i>
+            <a href="dashboard.html" class="back-btn">
+                ←
+            </a>
+
+            <div>
+                <h1>Withdraw Funds</h1>
+                <p>Request money from your Crown Cash account</p>
             </div>
-
-            <div class="logo-text">
-                <span>Crown</span> Cash
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="dashboard.html">
-                <i class="fa-solid fa-gauge-high"></i>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="profile.html">
-                <i class="fa-solid fa-user"></i>
-                <span>Profile</span>
-            </a>
-
-            <a href="investments.html">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Investments</span>
-            </a>
-
-            <a href="deposit.html">
-                <i class="fa-solid fa-circle-plus"></i>
-                <span>Deposits</span>
-            </a>
-
-            <a href="withdraw.html" class="active">
-                <i class="fa-solid fa-money-bill-transfer"></i>
-                <span>Withdrawals</span>
-            </a>
-
-            <a href="team.html">
-                <i class="fa-solid fa-users"></i>
-                <span>Referral Team</span>
-            </a>
-
-            <a href="transactions.html">
-                <i class="fa-solid fa-receipt"></i>
-                <span>Transactions</span>
-            </a>
-
-            <a href="support.html">
-                <i class="fa-solid fa-headset"></i>
-                <span>Support</span>
-            </a>
-
-            <a href="#" id="logoutBtn" class="logout">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Logout</span>
-            </a>
-
-        </nav>
-
-    </aside>
-
-
-    <!-- ================= MAIN ================= -->
-    <main class="main-content">
-
-        <!-- TOP BAR -->
-        <header class="topbar">
-
-            <button class="menu-btn" id="menuBtn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-
-            <div class="page-title">
-                <h1>Withdraw</h1>
-                <p>Request your funds securely</p>
-            </div>
-
-            <a href="profile.html" class="profile-btn">
-                <i class="fa-solid fa-user"></i>
-            </a>
 
         </header>
 
 
-        <!-- ================= CONTENT ================= -->
-        <section class="content">
+        <!-- MAIN CONTENT -->
+        <main class="withdraw-container">
 
             <!-- BALANCE CARD -->
-            <div class="balance-card">
+            <section class="balance-card">
 
                 <div class="balance-icon">
-                    <i class="fa-solid fa-wallet"></i>
+                    💰
                 </div>
 
                 <div>
                     <span>Available Balance</span>
-                    <h2 id="availableBalance">UGX 0</h2>
+
+                    <h2 id="availableBalance">
+                        UGX 0
+                    </h2>
                 </div>
 
-            </div>
+            </section>
 
 
-            <!-- WITHDRAW FORM CARD -->
-            <div class="card">
+            <!-- WITHDRAW FORM -->
+            <section class="withdraw-card">
 
-                <div class="card-heading">
-                    <div class="heading-icon">
-                        <i class="fa-solid fa-money-bill-transfer"></i>
-                    </div>
+                <div class="section-heading">
 
-                    <div>
-                        <h2>Request Withdrawal</h2>
-                        <p>Enter the amount and mobile money details below.</p>
-                    </div>
+                    <h2>Withdrawal Details</h2>
+
+                    <p>
+                        Minimum withdrawal: <strong>UGX 5,000</strong>
+                    </p>
+
                 </div>
 
 
                 <form id="withdrawForm">
 
+
                     <!-- AMOUNT -->
                     <div class="form-group">
 
                         <label for="amount">
-                            <i class="fa-solid fa-money-bill"></i>
                             Withdrawal Amount
                         </label>
 
                         <div class="input-wrapper">
 
-                            <span class="currency">UGX</span>
+                            <span class="currency">
+                                UGX
+                            </span>
 
                             <input
                                 type="number"
                                 id="amount"
                                 name="amount"
-                                min="10000"
-                                step="1000"
                                 placeholder="Enter amount"
+                                min="5000"
+                                step="1000"
                                 required
                             >
 
                         </div>
 
                         <small>
-                            Minimum withdrawal: UGX 10,000
+                            Enter an amount in multiples of UGX 1,000.
                         </small>
+
+                    </div>
+
+
+                    <!-- FEE CALCULATION -->
+                    <div
+                        class="fee-card"
+                        id="feeCard"
+                    >
+
+                        <div class="calculation-row">
+
+                            <span>
+                                Withdrawal Amount
+                            </span>
+
+                            <strong id="requestedAmount">
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="calculation-row fee-row">
+
+                            <span>
+                                Withdrawal Fee
+                                <small>(10%)</small>
+                            </span>
+
+                            <strong id="withdrawalFee">
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="calculation-divider"></div>
+
+
+                        <div class="calculation-row payout-row">
+
+                            <span>
+                                You Will Receive
+                            </span>
+
+                            <strong id="payoutAmount">
+                                UGX 0
+                            </strong>
+
+                        </div>
 
                     </div>
 
@@ -178,26 +152,25 @@
                     <!-- PAYMENT METHOD -->
                     <div class="form-group">
 
-                        <label for="paymentMethod">
-                            <i class="fa-solid fa-mobile-screen-button"></i>
-                            Mobile Money Network
+                        <label for="method">
+                            Payment Method
                         </label>
 
                         <select
-                            id="paymentMethod"
-                            name="payment_method"
+                            id="method"
+                            name="method"
                             required
                         >
 
                             <option value="">
-                                Select network
+                                Select payment method
                             </option>
 
-                            <option value="mtn">
+                            <option value="MTN">
                                 MTN Mobile Money
                             </option>
 
-                            <option value="airtel">
+                            <option value="Airtel">
                                 Airtel Money
                             </option>
 
@@ -209,14 +182,13 @@
                     <!-- PHONE NUMBER -->
                     <div class="form-group">
 
-                        <label for="phoneNumber">
-                            <i class="fa-solid fa-phone"></i>
+                        <label for="phone">
                             Mobile Money Number
                         </label>
 
                         <input
                             type="tel"
-                            id="phoneNumber"
+                            id="phone"
                             name="phone"
                             placeholder="e.g. 0771234567"
                             maxlength="12"
@@ -224,124 +196,131 @@
                         >
 
                         <small>
-                            Enter the number where you want to receive your money.
+                            Enter the Uganda mobile number that should
+                            receive the payout.
                         </small>
 
                     </div>
 
 
+                    <!-- ACCOUNT NAME -->
+                    <div class="form-group">
+
+                        <label for="account">
+                            Account Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="account"
+                            name="account"
+                            placeholder="Enter account name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- WARNING -->
+                    <div class="withdraw-notice">
+
+                        <div class="notice-icon">
+                            ⚠️
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Please check your details
+                            </strong>
+
+                            <p>
+                                Make sure your Mobile Money number and
+                                account name are correct before submitting.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
                     <!-- MESSAGE -->
-                    <div id="formMessage" class="form-message"></div>
+                    <div
+                        id="formMessage"
+                        class="form-message"
+                    ></div>
 
 
                     <!-- SUBMIT -->
                     <button
                         type="submit"
+                        id="withdrawButton"
                         class="withdraw-btn"
-                        id="withdrawBtn"
                     >
 
-                        <i class="fa-solid fa-paper-plane"></i>
+                        <span id="buttonText">
+                            Request Withdrawal
+                        </span>
 
-                        <span>Submit Withdrawal Request</span>
+                        <span
+                            id="buttonLoader"
+                            class="button-loader"
+                            hidden
+                        >
+                            Processing...
+                        </span>
 
                     </button>
 
                 </form>
 
-            </div>
+            </section>
 
 
-            <!-- INFORMATION CARD -->
-            <div class="card information-card">
+            <!-- INFORMATION -->
+            <section class="info-card">
 
-                <div class="info-title">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <h3>Withdrawal Information</h3>
-                </div>
+                <h3>Withdrawal Information</h3>
 
                 <ul>
 
                     <li>
-                        <i class="fa-solid fa-check"></i>
-                        Minimum withdrawal is UGX 10,000.
+                        Minimum withdrawal is
+                        <strong>UGX 5,000</strong>.
                     </li>
 
                     <li>
-                        <i class="fa-solid fa-check"></i>
-                        Select the correct MTN or Airtel number.
+                        A
+                        <strong>10% withdrawal fee</strong>
+                        is deducted from your requested amount.
                     </li>
 
                     <li>
-                        <i class="fa-solid fa-check"></i>
-                        Your request will be reviewed by an administrator.
+                        Example:
+                        UGX 10,000 withdrawal =
+                        UGX 1,000 fee =
+                        <strong>UGX 9,000 received.</strong>
                     </li>
 
                     <li>
-                        <i class="fa-solid fa-check"></i>
-                        A withdrawal request remains pending until approved.
+                        Withdrawal requests are reviewed before payout.
                     </li>
 
                     <li>
-                        <i class="fa-solid fa-shield-halved"></i>
-                        Never share your PIN or mobile-money password.
+                        Only MTN Mobile Money and Airtel Money are currently
+                        supported.
                     </li>
 
                 </ul>
 
-            </div>
+            </section>
+
+        </main>
+
+    </div>
 
 
-            <!-- RECENT WITHDRAWALS -->
-            <div class="card">
-
-                <div class="card-heading">
-
-                    <div class="heading-icon">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                    </div>
-
-                    <div>
-                        <h2>Recent Withdrawals</h2>
-                        <p>Your latest withdrawal requests.</p>
-                    </div>
-
-                </div>
-
-
-                <div id="withdrawalHistory" class="withdrawal-history">
-
-                    <div class="loading">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        Loading withdrawal history...
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- FOOTER -->
-        <footer class="footer">
-            <p>
-                © <span id="year"></span> Crown Cash.
-                All rights reserved.
-            </p>
-        </footer>
-
-    </main>
-
-</div>
-
-
-<!-- Overlay -->
-<div class="overlay" id="overlay"></div>
-
-
-<!-- Withdraw JS -->
-<script src="withdraw.js"></script>
+    <script src="withdraw.js"></script>
 
 </body>
 </html>

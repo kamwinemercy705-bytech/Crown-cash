@@ -2,40 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#08050d"
+    >
 
     <title>Crown Cash | Admin Withdrawals</title>
 
-    <link rel="stylesheet" href="admin-withdrawals.css">
+    <link
+        rel="stylesheet"
+        href="admin-withdrawals.css"
+    >
 </head>
 
 <body>
 
-<div class="admin-layout">
+<div class="admin-shell">
 
-    <!-- ================= SIDEBAR ================= -->
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
     <aside class="sidebar" id="sidebar">
 
-        <div class="brand">
+        <div class="sidebar-brand">
 
             <div class="brand-logo">
-                <svg viewBox="0 0 64 64" aria-hidden="true">
-                    <path d="M10 22L18 38L27 20L32 39L39 20L48 38L55 22"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="4"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"/>
-                    <path d="M12 44H52"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="4"
-                          stroke-linecap="round"/>
+                <svg
+                    viewBox="0 0 64 64"
+                    aria-hidden="true"
+                >
+                    <defs>
+                        <linearGradient
+                            id="crownGradient"
+                            x1="0%"
+                            y1="0%"
+                            x2="100%"
+                            y2="100%"
+                        >
+                            <stop
+                                offset="0%"
+                                stop-color="#ffd76a"
+                            />
+
+                            <stop
+                                offset="45%"
+                                stop-color="#ffb300"
+                            />
+
+                            <stop
+                                offset="100%"
+                                stop-color="#ff4fd8"
+                            />
+                        </linearGradient>
+                    </defs>
+
+                    <path
+                        d="M10 18L20 30L32 12L44 30L54 18L49 48H15L10 18Z"
+                        fill="none"
+                        stroke="url(#crownGradient)"
+                        stroke-width="4"
+                        stroke-linejoin="round"
+                    />
+
+                    <path
+                        d="M15 42H49"
+                        stroke="#ffd76a"
+                        stroke-width="4"
+                        stroke-linecap="round"
+                    />
                 </svg>
             </div>
 
-            <div class="brand-text">
-                <strong>CROWN CASH</strong>
+            <div>
+                <h2>Crown Cash</h2>
                 <span>ADMIN PANEL</span>
             </div>
 
@@ -43,15 +88,44 @@
 
 
         <!-- Navigation -->
-        <nav class="sidebar-nav">
+        <nav class="admin-nav">
 
-            <a href="admin.html" class="nav-item">
+            <a href="/admin.html" class="nav-item">
 
                 <span class="nav-icon">
+                    <!-- Dashboard -->
                     <svg viewBox="0 0 24 24">
-                        <path d="M3 10.5L12 3l9 7.5"/>
-                        <path d="M5 9.5V21h14V9.5"/>
-                        <path d="M9 21v-7h6v7"/>
+                        <rect
+                            x="3"
+                            y="3"
+                            width="7"
+                            height="7"
+                            rx="1.5"
+                        />
+
+                        <rect
+                            x="14"
+                            y="3"
+                            width="7"
+                            height="7"
+                            rx="1.5"
+                        />
+
+                        <rect
+                            x="3"
+                            y="14"
+                            width="7"
+                            height="7"
+                            rx="1.5"
+                        />
+
+                        <rect
+                            x="14"
+                            y="14"
+                            width="7"
+                            height="7"
+                            rx="1.5"
+                        />
                     </svg>
                 </span>
 
@@ -60,14 +134,30 @@
             </a>
 
 
-            <a href="users.html" class="nav-item">
+            <a href="/users.html" class="nav-item">
 
                 <span class="nav-icon">
+                    <!-- Users -->
                     <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"/>
-                        <circle cx="17" cy="9" r="2.5"/>
-                        <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/>
-                        <path d="M14 15c3 0 5 1.5 5 4"/>
+
+                        <path
+                            d="M16 21V19C16 16.8 14.2 15 12 15H7C4.8 15 3 16.8 3 19V21"
+                        />
+
+                        <circle
+                            cx="9.5"
+                            cy="8"
+                            r="3.5"
+                        />
+
+                        <path
+                            d="M16 4.5C18.2 4.7 20 6.2 20 8.5C20 10.2 19 11.6 17.6 12.2"
+                        />
+
+                        <path
+                            d="M17 15.2C19.2 15.5 21 17.2 21 19.5V21"
+                        />
+
                     </svg>
                 </span>
 
@@ -76,14 +166,35 @@
             </a>
 
 
-            <a href="admin-deposits.html" class="nav-item">
+            <a href="/admin-deposits.html" class="nav-item">
 
                 <span class="nav-icon">
+
+                    <!-- Deposit -->
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 3v14"/>
-                        <path d="M7 12l5 5 5-5"/>
-                        <path d="M4 21h16"/>
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path
+                            d="M7 12H17"
+                        />
+
+                        <path
+                            d="M12 8V16"
+                        />
+
+                        <path
+                            d="M9 11L12 8L15 11"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Deposits</span>
@@ -91,28 +202,77 @@
             </a>
 
 
-            <a href="admin-withdrawals.html" class="nav-item active">
+            <!-- ACTIVE -->
+            <a
+                href="/admin-withdrawals.html"
+                class="nav-item active"
+            >
 
                 <span class="nav-icon">
+
+                    <!-- Withdrawal -->
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 21V7"/>
-                        <path d="M7 12l5-5 5 5"/>
-                        <path d="M4 3h16"/>
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path
+                            d="M7 12H17"
+                        />
+
+                        <path
+                            d="M12 16V8"
+                        />
+
+                        <path
+                            d="M9 13L12 16L15 13"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Withdrawals</span>
 
+                <span class="active-indicator"></span>
+
             </a>
 
 
-            <a href="admin-investments.html" class="nav-item">
+            <a href="/admin-investments.html" class="nav-item">
 
                 <span class="nav-icon">
+
+                    <!-- Investment -->
                     <svg viewBox="0 0 24 24">
-                        <rect x="4" y="4" width="16" height="16" rx="3"/>
-                        <path d="M8 15l3-4 3 2 3-5"/>
+
+                        <path
+                            d="M4 19V10"
+                        />
+
+                        <path
+                            d="M10 19V5"
+                        />
+
+                        <path
+                            d="M16 19V8"
+                        />
+
+                        <path
+                            d="M22 19V3"
+                        />
+
+                        <path
+                            d="M3 21H23"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Investments</span>
@@ -120,16 +280,41 @@
             </a>
 
 
-            <a href="admin-referrals.html" class="nav-item">
+            <a href="/admin-referrals.html" class="nav-item">
 
                 <span class="nav-icon">
+
+                    <!-- Referral network -->
                     <svg viewBox="0 0 24 24">
-                        <circle cx="8" cy="8" r="3"/>
-                        <circle cx="16" cy="8" r="3"/>
-                        <circle cx="12" cy="17" r="3"/>
-                        <path d="M10.5 10l1.5 4"/>
-                        <path d="M13.5 10L12 14"/>
+
+                        <circle
+                            cx="12"
+                            cy="6"
+                            r="3"
+                        />
+
+                        <circle
+                            cx="6"
+                            cy="18"
+                            r="3"
+                        />
+
+                        <circle
+                            cx="18"
+                            cy="18"
+                            r="3"
+                        />
+
+                        <path
+                            d="M10.5 8.5L7.5 15"
+                        />
+
+                        <path
+                            d="M13.5 8.5L16.5 15"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Referrals</span>
@@ -137,15 +322,31 @@
             </a>
 
 
-            <a href="admin-transactions.html" class="nav-item">
+            <a href="/admin-transactions.html" class="nav-item">
 
                 <span class="nav-icon">
+
+                    <!-- Transactions -->
                     <svg viewBox="0 0 24 24">
-                        <path d="M4 7h16"/>
-                        <path d="M4 12h16"/>
-                        <path d="M4 17h10"/>
-                        <circle cx="18" cy="17" r="2"/>
+
+                        <path
+                            d="M4 7H17"
+                        />
+
+                        <path
+                            d="M14 4L17 7L14 10"
+                        />
+
+                        <path
+                            d="M20 17H7"
+                        />
+
+                        <path
+                            d="M10 14L7 17L10 20"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Transactions</span>
@@ -153,13 +354,23 @@
             </a>
 
 
-            <a href="security.html" class="nav-item">
+            <a href="/admin-security.html" class="nav-item">
 
                 <span class="nav-icon">
+
+                    <!-- Security -->
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/>
-                        <path d="M9 12l2 2 4-5"/>
+
+                        <path
+                            d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
+                        />
+
+                        <path
+                            d="M9 12L11 14L15 10"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Security</span>
@@ -169,18 +380,24 @@
         </nav>
 
 
-        <div class="sidebar-divider"></div>
-
-
         <div class="sidebar-bottom">
 
-            <a href="dashboard.html" class="nav-item">
+            <a href="/dashboard.html" class="back-user">
 
                 <span class="nav-icon">
+
                     <svg viewBox="0 0 24 24">
-                        <path d="M3 10.5L12 3l9 7.5"/>
-                        <path d="M5 9.5V21h14V9.5"/>
+
+                        <path
+                            d="M15 18L9 12L15 6"
+                        />
+
+                        <path
+                            d="M9 12H21"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>User Dashboard</span>
@@ -188,14 +405,30 @@
             </a>
 
 
-            <button class="nav-item logout-button" id="logoutBtn">
+            <button
+                type="button"
+                id="logoutButton"
+                class="logout-button"
+            >
 
-                <span class="nav-icon logout-icon">
+                <span class="nav-icon">
+
                     <svg viewBox="0 0 24 24">
-                        <path d="M10 5H5v14h5"/>
-                        <path d="M14 8l4 4-4 4"/>
-                        <path d="M18 12H9"/>
+
+                        <path
+                            d="M10 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H10"
+                        />
+
+                        <path
+                            d="M14 8L18 12L14 16"
+                        />
+
+                        <path
+                            d="M18 12H8"
+                        />
+
                     </svg>
+
                 </span>
 
                 <span>Logout</span>
@@ -207,53 +440,77 @@
     </aside>
 
 
-    <!-- ================= MAIN ================= -->
+    <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
     <main class="main-content">
 
-        <!-- Topbar -->
+
+        <!-- Top Header -->
         <header class="topbar">
 
-            <button class="mobile-menu" id="menuBtn" aria-label="Open menu">
+            <div class="topbar-left">
 
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 6h16"/>
-                    <path d="M4 12h16"/>
-                    <path d="M4 18h16"/>
-                </svg>
-
-            </button>
-
-
-            <div class="topbar-title">
-                <span>Crown Cash</span>
-                <small>Administration</small>
-            </div>
-
-
-            <div class="topbar-right">
-
-                <button class="notification-btn" id="notificationBtn">
+                <button
+                    type="button"
+                    class="mobile-menu"
+                    id="mobileMenuButton"
+                    aria-label="Open menu"
+                >
 
                     <svg viewBox="0 0 24 24">
-                        <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-                        <path d="M10 21h4"/>
-                    </svg>
 
-                    <span class="notification-dot"></span>
+                        <path d="M4 6H20"/>
+                        <path d="M4 12H20"/>
+                        <path d="M4 18H20"/>
+
+                    </svg>
 
                 </button>
 
 
-                <div class="admin-user">
+                <div>
 
-                    <div class="admin-avatar" id="adminAvatar">
-                        A
-                    </div>
+                    <span class="eyebrow">
+                        ADMINISTRATION
+                    </span>
 
-                    <div class="admin-user-info">
-                        <strong id="adminName">Administrator</strong>
-                        <span id="adminEmail">Admin Account</span>
-                    </div>
+                    <h1>Withdrawal Management</h1>
+
+                    <p>
+                        Review, approve and manage customer withdrawal requests.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-profile">
+
+                <div class="admin-avatar">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle
+                            cx="12"
+                            cy="8"
+                            r="3.5"
+                        />
+
+                        <path
+                            d="M5 21C5 17.7 8.1 15 12 15C15.9 15 19 17.7 19 21"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <strong>Administrator</strong>
+
+                    <span>Secure session</span>
 
                 </div>
 
@@ -262,33 +519,390 @@
         </header>
 
 
-        <!-- Page -->
-        <section class="page-content">
+        <!-- =====================================
+             SECURITY BANNER
+        ====================================== -->
+        <section class="security-banner">
 
-            <div class="page-heading">
+            <div class="security-icon">
 
-                <div>
+                <svg viewBox="0 0 24 24">
 
-                    <span class="eyebrow">
-                        MONEY MANAGEMENT
-                    </span>
+                    <path
+                        d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
+                    />
 
-                    <h1>Withdrawals</h1>
+                    <path
+                        d="M9 12L11 14L15 10"
+                    />
 
-                    <p>
-                        Review and manage customer withdrawal requests.
-                    </p>
+                </svg>
+
+            </div>
+
+            <div>
+
+                <strong>Protected Administrator Area</strong>
+
+                <p>
+                    Withdrawal approvals are server-side protected.
+                    Approved withdrawals deduct the requested amount
+                    from the user's balance.
+                </p>
+
+            </div>
+
+            <div class="security-status">
+
+                <span class="status-dot"></span>
+
+                Secure
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             STATISTICS
+        ====================================== -->
+        <section class="stats-grid">
+
+
+            <!-- Total -->
+            <article class="stat-card">
+
+                <div class="stat-icon total-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path
+                            d="M4 7H20"
+                        />
+
+                        <path
+                            d="M6 7V19H18V7"
+                        />
+
+                        <path
+                            d="M9 4H15"
+                        />
+
+                        <path
+                            d="M9 12H15"
+                        />
+
+                        <path
+                            d="M9 16H13"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Total Requests</span>
+
+                    <strong id="totalWithdrawals">
+                        0
+                    </strong>
+
+                    <small>
+                        All withdrawal requests
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <!-- Pending -->
+            <article class="stat-card pending-stat">
+
+                <div class="stat-icon pending-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M12 7V12L15 14"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Pending</span>
+
+                    <strong id="pendingWithdrawals">
+                        0
+                    </strong>
+
+                    <small>
+                        Awaiting review
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <!-- Approved -->
+            <article class="stat-card approved-stat">
+
+                <div class="stat-icon approved-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M8 12L11 15L16 9"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Approved</span>
+
+                    <strong id="approvedWithdrawals">
+                        0
+                    </strong>
+
+                    <small>
+                        Successfully approved
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <!-- Rejected -->
+            <article class="stat-card rejected-stat">
+
+                <div class="stat-icon rejected-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M9 9L15 15"
+                        />
+
+                        <path
+                            d="M15 9L9 15"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Rejected</span>
+
+                    <strong id="rejectedWithdrawals">
+                        0
+                    </strong>
+
+                    <small>
+                        Requests rejected
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <!-- Requested -->
+            <article class="stat-card money-stat">
+
+                <div class="stat-icon money-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="3"
+                            y="6"
+                            width="18"
+                            height="12"
+                            rx="2"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="3"
+                        />
+
+                        <path
+                            d="M7 9H7.01"
+                        />
+
+                        <path
+                            d="M17 15H17.01"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Total Requested</span>
+
+                    <strong id="totalRequested">
+                        UGX 0
+                    </strong>
+
+                    <small>
+                        Requested by users
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <!-- Fees -->
+            <article class="stat-card fee-stat">
+
+                <div class="stat-icon fee-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                        />
+
+                        <path
+                            d="M15 9L9 15"
+                        />
+
+                        <circle
+                            cx="9"
+                            cy="9"
+                            r="1"
+                        />
+
+                        <circle
+                            cx="15"
+                            cy="15"
+                            r="1"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Total Fees</span>
+
+                    <strong id="totalFees">
+                        UGX 0
+                    </strong>
+
+                    <small>
+                        Withdrawal fees
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =====================================
+             TOOLBAR
+        ====================================== -->
+        <section class="management-card">
+
+            <div class="management-header">
+
+                <div class="section-title">
+
+                    <div class="section-icon">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path
+                                d="M4 6H20"
+                            />
+
+                            <path
+                                d="M7 12H17"
+                            />
+
+                            <path
+                                d="M10 18H14"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <h2>Withdrawal Requests</h2>
+
+                        <p>
+                            Manage customer payout requests.
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <button class="refresh-btn" id="refreshBtn">
+                <button
+                    type="button"
+                    class="refresh-button"
+                    id="refreshButton"
+                >
 
                     <svg viewBox="0 0 24 24">
-                        <path d="M20 11a8 8 0 00-14.9-3"/>
-                        <path d="M4 4v5h5"/>
-                        <path d="M4 13a8 8 0 0014.9 3"/>
-                        <path d="M20 20v-5h-5"/>
+
+                        <path
+                            d="M20 11A8 8 0 0 0 6.2 6.2L4 8"
+                        />
+
+                        <path
+                            d="M4 4V8H8"
+                        />
+
+                        <path
+                            d="M4 13A8 8 0 0 0 17.8 17.8L20 16"
+                        />
+
+                        <path
+                            d="M20 20V16H16"
+                        />
+
                     </svg>
 
                     <span>Refresh</span>
@@ -298,158 +912,107 @@
             </div>
 
 
-            <!-- ================= STATS ================= -->
-            <div class="stats-grid">
-
-                <div class="stat-card">
-
-                    <div class="stat-icon gold">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 21V7"/>
-                            <path d="M7 12l5-5 5 5"/>
-                            <path d="M4 3h16"/>
-                        </svg>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span>Total Withdrawals</span>
-
-                        <strong id="totalWithdrawals">0</strong>
-
-                        <small>All withdrawal requests</small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-icon green">
-
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M8 12l2.5 2.5L16 9"/>
-                        </svg>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span>Approved</span>
-
-                        <strong id="approvedWithdrawals">0</strong>
-
-                        <small>Approved requests</small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-icon orange">
-
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 7v5l3 2"/>
-                        </svg>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span>Pending</span>
-
-                        <strong id="pendingWithdrawals">0</strong>
-
-                        <small>Awaiting review</small>
-
-                    </div>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <div class="stat-icon red">
-
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M9 9l6 6"/>
-                            <path d="M15 9l-6 6"/>
-                        </svg>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span>Rejected</span>
-
-                        <strong id="rejectedWithdrawals">0</strong>
-
-                        <small>Rejected requests</small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- ================= FILTER PANEL ================= -->
-            <div class="filter-panel">
+            <!-- Filters -->
+            <div class="filters">
 
                 <div class="search-box">
 
                     <svg viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="7"/>
-                        <path d="M16 16l5 5"/>
+
+                        <circle
+                            cx="11"
+                            cy="11"
+                            r="6"
+                        />
+
+                        <path
+                            d="M16 16L21 21"
+                        />
+
                     </svg>
 
                     <input
                         type="search"
                         id="searchInput"
-                        placeholder="Search customer, phone or withdrawal ID..."
+                        placeholder="Search name, phone, email or ID..."
                         autocomplete="off"
                     >
 
                 </div>
 
 
-                <div class="filter-group">
+                <div class="filter-control">
 
-                    <label for="statusFilter">
-                        Status
-                    </label>
+                    <svg viewBox="0 0 24 24">
+
+                        <path
+                            d="M4 6H20"
+                        />
+
+                        <path
+                            d="M7 12H17"
+                        />
+
+                        <path
+                            d="M10 18H14"
+                        />
+
+                    </svg>
 
                     <select id="statusFilter">
 
-                        <option value="all">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="all">
+                            All Status
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
 
                     </select>
 
                 </div>
 
 
-                <div class="filter-group">
+                <div class="filter-control">
 
-                    <label for="methodFilter">
-                        Method
-                    </label>
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path
+                            d="M7 12H17"
+                        />
+
+                    </svg>
 
                     <select id="methodFilter">
 
-                        <option value="all">All Methods</option>
-                        <option value="mtn">MTN Mobile Money</option>
-                        <option value="airtel">Airtel Money</option>
+                        <option value="all">
+                            All Methods
+                        </option>
+
+                        <option value="mtn">
+                            MTN Mobile Money
+                        </option>
+
+                        <option value="airtel">
+                            Airtel Money
+                        </option>
 
                     </select>
 
@@ -458,84 +1021,230 @@
             </div>
 
 
-            <!-- ================= TABLE PANEL ================= -->
-            <div class="panel">
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <h2>Withdrawal Requests</h2>
-
-                        <p>
-                            Review customer payout requests before processing.
-                        </p>
-
-                    </div>
+            <!-- Message -->
+            <div
+                id="pageMessage"
+                class="page-message"
+                hidden
+            ></div>
 
 
-                    <div class="result-count">
-                        <span id="resultCount">0</span> requests
-                    </div>
+            <!-- Loading -->
+            <div
+                id="loadingState"
+                class="loading-state"
+            >
 
-                </div>
+                <div class="loading-orb">
 
+                    <svg viewBox="0 0 24 24">
 
-                <div class="table-wrapper">
+                        <path
+                            d="M12 4V2"
+                        />
 
-                    <table class="withdrawal-table">
+                        <path
+                            d="M12 22V20"
+                        />
 
-                        <thead>
+                        <path
+                            d="M4 12H2"
+                        />
 
-                            <tr>
+                        <path
+                            d="M22 12H20"
+                        />
 
-                                <th>Customer</th>
+                        <path
+                            d="M5 5L3.5 3.5"
+                        />
 
-                                <th>Amount</th>
+                        <path
+                            d="M20.5 20.5L19 19"
+                        />
 
-                                <th>Method</th>
+                        <path
+                            d="M19 5L20.5 3.5"
+                        />
 
-                                <th>Phone / Account</th>
+                        <path
+                            d="M3.5 20.5L5 19"
+                        />
 
-                                <th>Date</th>
-
-                                <th>Status</th>
-
-                                <th>Action</th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody id="withdrawalTableBody">
-
-                            <tr>
-
-                                <td colspan="7">
-
-                                    <div class="loading-state">
-
-                                        <div class="spinner"></div>
-
-                                        <span>
-                                            Loading withdrawals...
-                                        </span>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                        </tbody>
-
-                    </table>
+                    </svg>
 
                 </div>
+
+                <p>
+                    Loading withdrawal requests...
+                </p>
 
             </div>
 
+
+            <!-- Empty State -->
+            <div
+                id="emptyState"
+                class="empty-state"
+                hidden
+            >
+
+                <div class="empty-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path
+                            d="M8 12H16"
+                        />
+
+                        <path
+                            d="M12 8V16"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <h3>No withdrawal requests found</h3>
+
+                <p>
+                    There are currently no withdrawal requests
+                    matching your selected filters.
+                </p>
+
+            </div>
+
+
+            <!-- Requests -->
+            <div
+                id="withdrawalsContainer"
+                class="withdrawals-container"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================
+             ADMIN INFORMATION
+        ====================================== -->
+        <section class="info-grid">
+
+            <article class="info-card">
+
+                <div class="info-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path
+                            d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
+                        />
+
+                        <path
+                            d="M12 8V12"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="16"
+                            r="1"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h3>Approval Security</h3>
+
+                    <p>
+                        Approving a withdrawal verifies that the
+                        requested amount can be deducted from the
+                        user's available balance.
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <article class="info-card">
+
+                <div class="info-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="4"
+                            y="4"
+                            width="16"
+                            height="16"
+                            rx="3"
+                        />
+
+                        <path
+                            d="M8 12L10.5 14.5L16 9"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h3>20% Withdrawal Fee</h3>
+
+                    <p>
+                        The current platform configuration uses a
+                        20% withdrawal fee. The server calculates
+                        the fee and payout amount.
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <article class="info-card">
+
+                <div class="info-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path
+                            d="M12 3V21"
+                        />
+
+                        <path
+                            d="M17 7C17 5.3 15.2 4 12.5 4C9.8 4 8 5.3 8 7C8 10.8 17 9.2 17 13C17 15 15 16 12 16C9 16 7 14.7 7 13"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h3>Payout Status</h3>
+
+                    <p>
+                        Approval does not automatically send mobile
+                        money. Approved requests remain marked
+                        awaiting payout until an authorized payout
+                        process is completed.
+                    </p>
+
+                </div>
+
+            </article>
 
         </section>
 
@@ -544,195 +1253,115 @@
 </div>
 
 
-<!-- ================= WITHDRAWAL MODAL ================= -->
-<div class="modal-overlay" id="withdrawalModal">
+<!-- =========================================
+     WITHDRAWAL DETAILS MODAL
+========================================== -->
+<div
+    class="modal-overlay"
+    id="withdrawalModal"
+    hidden
+>
 
-    <div class="modal">
+    <div
+        class="withdrawal-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+    >
 
-        <div class="modal-header">
+        <button
+            type="button"
+            class="modal-close"
+            id="closeModal"
+            aria-label="Close"
+        >
 
-            <div class="modal-title">
+            <svg viewBox="0 0 24 24">
 
-                <div class="modal-icon">
+                <path d="M6 6L18 18"/>
+                <path d="M18 6L6 18"/>
 
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 21V7"/>
-                        <path d="M7 12l5-5 5 5"/>
-                        <path d="M4 3h16"/>
-                    </svg>
+            </svg>
 
-                </div>
-
-                <div>
-
-                    <h2>Withdrawal Review</h2>
-
-                    <p>
-                        Review the request before taking action.
-                    </p>
-
-                </div>
-
-            </div>
+        </button>
 
 
-            <button class="close-btn" id="closeModal">
+        <div class="modal-heading">
+
+            <div class="modal-icon">
 
                 <svg viewBox="0 0 24 24">
-                    <path d="M6 6l12 12"/>
-                    <path d="M18 6L6 18"/>
+
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="3"
+                    />
+
+                    <path
+                        d="M7 12H17"
+                    />
+
+                    <path
+                        d="M12 16V8"
+                    />
+
+                    <path
+                        d="M9 13L12 16L15 13"
+                    />
+
                 </svg>
 
-            </button>
+            </div>
+
+            <div>
+
+                <span>WITHDRAWAL REQUEST</span>
+
+                <h2 id="modalTitle">
+                    Withdrawal Details
+                </h2>
+
+            </div>
 
         </div>
 
 
-        <div class="modal-body">
-
-            <!-- Customer -->
-            <div class="detail-card">
-
-                <div class="detail-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="8" r="3"/>
-                        <path d="M5 21c0-4 3-6 7-6s7 2 7 6"/>
-                    </svg>
-
-                </div>
-
-                <div>
-
-                    <span>Customer</span>
-
-                    <strong id="modalCustomer">
-                        —
-                    </strong>
-
-                </div>
-
-            </div>
+        <div
+            id="modalContent"
+            class="modal-content"
+        ></div>
 
 
-            <!-- Amount -->
-            <div class="amount-card">
-
-                <span>Withdrawal Amount</span>
-
-                <strong id="modalAmount">
-                    UGX 0
-                </strong>
-
-            </div>
-
-
-            <div class="details-grid">
-
-                <div class="detail-item">
-
-                    <span>Phone / Account</span>
-
-                    <strong id="modalPhone">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>Payment Method</span>
-
-                    <strong id="modalMethod">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>Status</span>
-
-                    <strong id="modalStatus">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>Request ID</span>
-
-                    <strong id="modalWithdrawalId">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item full">
-
-                    <span>Requested At</span>
-
-                    <strong id="modalDate">
-                        —
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- Warning -->
-            <div class="security-warning">
-
-                <div class="warning-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3l9 17H3L12 3z"/>
-                        <path d="M12 9v4"/>
-                        <circle cx="12" cy="17" r="1"/>
-                    </svg>
-
-                </div>
-
-                <div>
-
-                    <strong>Important</strong>
-
-                    <p>
-                        Approval records the withdrawal as approved.
-                        It does not automatically send Mobile Money.
-                        Actual payout must be completed through an
-                        authorized payment process.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <!-- Message -->
-            <div class="modal-message" id="modalMessage"></div>
-
-        </div>
-
-
-        <!-- Modal Footer -->
-        <div class="modal-footer">
+        <div
+            id="modalActions"
+            class="modal-actions"
+        >
 
             <button
                 type="button"
-                class="modal-btn secondary"
-                id="rejectBtn"
+                class="reject-button"
+                id="rejectButton"
             >
 
                 <svg viewBox="0 0 24 24">
-                    <path d="M6 6l12 12"/>
-                    <path d="M18 6L6 18"/>
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                    />
+
+                    <path
+                        d="M9 9L15 15"
+                    />
+
+                    <path
+                        d="M15 9L9 15"
+                    />
+
                 </svg>
 
                 Reject
@@ -742,15 +1371,25 @@
 
             <button
                 type="button"
-                class="modal-btn primary"
-                id="approveBtn"
+                class="approve-button"
+                id="approveButton"
             >
 
                 <svg viewBox="0 0 24 24">
-                    <path d="M5 12l4 4L19 6"/>
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                    />
+
+                    <path
+                        d="M8 12L11 15L16 9"
+                    />
+
                 </svg>
 
-                Approve
+                Approve Withdrawal
 
             </button>
 
@@ -761,26 +1400,78 @@
 </div>
 
 
-<!-- ================= TOAST ================= -->
-<div class="toast" id="toast">
+<!-- =========================================
+     CONFIRMATION MODAL
+========================================== -->
+<div
+    class="modal-overlay"
+    id="confirmationModal"
+    hidden
+>
 
-    <div class="toast-icon" id="toastIcon">
+    <div class="confirmation-modal">
 
-        <svg viewBox="0 0 24 24">
-            <path d="M5 12l4 4L19 6"/>
-        </svg>
+        <div class="confirmation-icon">
 
-    </div>
+            <svg viewBox="0 0 24 24">
 
-    <div class="toast-content">
+                <path
+                    d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
+                />
 
-        <strong id="toastTitle">
-            Success
-        </strong>
+                <path
+                    d="M12 8V12"
+                />
 
-        <span id="toastMessage">
-            Done.
-        </span>
+                <circle
+                    cx="12"
+                    cy="16"
+                    r="1"
+                />
+
+            </svg>
+
+        </div>
+
+
+        <h2 id="confirmationTitle">
+            Confirm Action
+        </h2>
+
+        <p id="confirmationMessage">
+            Are you sure you want to continue?
+        </p>
+
+
+        <div class="confirmation-actions">
+
+            <button
+                type="button"
+                class="cancel-button"
+                id="cancelConfirmation"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="confirm-button"
+                id="confirmAction"
+            >
+
+                <svg viewBox="0 0 24 24">
+
+                    <path
+                        d="M8 12L11 15L17 9"
+                    />
+
+                </svg>
+
+                Confirm
+
+            </button>
+
+        </div>
 
     </div>
 

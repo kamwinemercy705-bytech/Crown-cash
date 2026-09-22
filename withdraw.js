@@ -2,13 +2,14 @@
 |--------------------------------------------------------------------------
 | CROWN CASH — WITHDRAWAL JAVASCRIPT
 |--------------------------------------------------------------------------
-| Withdrawal fee:
-| 20%
+| Withdrawal fee: 20%
 |
 | Example:
-| UGX 10,000 requested
-| UGX 2,000 fee
-| UGX 8,000 received
+| Requested: UGX 10,000
+| Fee:       UGX 2,000
+| Receive:   UGX 8,000
+|
+| The server-side withdrawal.php remains the final authority.
 |--------------------------------------------------------------------------
 */
 
@@ -16,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | CONFIGURATION
+    | API CONFIGURATION
     |--------------------------------------------------------------------------
     */
 
@@ -29,6 +30,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const WITHDRAWAL_API =
         `${API_BASE}/withdrawal.php`;
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | WITHDRAWAL SETTINGS
+    |--------------------------------------------------------------------------
+    */
+
     const MINIMUM_WITHDRAWAL = 5000;
 
     const WITHDRAWAL_FEE_RATE = 0.20;
@@ -36,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | ELEMENTS
+    | FORM ELEMENTS
     |--------------------------------------------------------------------------
     */
 
@@ -55,8 +63,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const accountNameInput =
         document.getElementById("accountName");
 
+    const confirmationCheckbox =
+        document.getElementById("confirmWithdrawal");
+
     const balanceDisplay =
         document.getElementById("availableBalance");
+
+    const displayAmount =
+        document.getElementById("displayAmount");
 
     const feeDisplay =
         document.getElementById("withdrawalFee");
@@ -73,7 +87,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | HELPER — FORMAT UGX
+    | AVAILABLE BALANCE
+    |--------------------------------------------------------------------------
+    */
+
+    let availableBalance = 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT UGX
     |--------------------------------------------------------------------------
     */
 
@@ -96,19 +119,28 @@ document.addEventListener("DOMContentLoaded", () => {
     |--------------------------------------------------------------------------
     */
 
-    function showMessage(message, type = "error") {
+    function showMessage(
+        message,
+        type = "error"
+    ) {
 
         if (!messageBox) {
+
             alert(message);
+
             return;
         }
 
-        messageBox.textContent = message;
+
+        messageBox.textContent =
+            message;
 
         messageBox.className =
             `form-message ${type}`;
 
-        messageBox.style.display = "block";
+        messageBox.style.display =
+            "block";
+
     }
 
 
@@ -124,23 +156,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        messageBox.textContent = "";
+        messageBox.textContent =
+            "";
 
         messageBox.className =
             "form-message";
 
         messageBox.style.display =
             "none";
+
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | USER BALANCE
-    |--------------------------------------------------------------------------
-    */
-
-    let availableBalance = 0;
 
 
     /*
@@ -158,7 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     PROFILE_API,
                     {
                         method: "GET",
+
                         credentials: "include",
+
                         headers: {
                             "Accept":
                                 "application/json"
@@ -167,33 +194,65 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-            const data =
-                await response.json();
+            /*
+            |--------------------------------------------------------------------------
+            | HANDLE LOGIN EXPIRATION
+            |--------------------------------------------------------------------------
+            */
 
+            if (response.status === 401) {
+
+                window.location.href =
+                    "/login.html";
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | READ RESPONSE
+            |--------------------------------------------------------------------------
+            */
+
+            let data;
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (error) {
+
+                throw new Error(
+                    "Invalid server response."
+                );
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHECK SUCCESS
+            |--------------------------------------------------------------------------
+            */
 
             if (
                 !response.ok ||
                 !data.success
             ) {
 
-                if (response.status === 401) {
-
-                    window.location.href =
-                        "/login.html";
-
-                    return;
-                }
-
                 throw new Error(
                     data.message ||
                     "Unable to load your profile."
                 );
+
             }
 
 
             /*
             |--------------------------------------------------------------------------
-            | GET BALANCE
+            | GET USER BALANCE
             |--------------------------------------------------------------------------
             */
 
@@ -221,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             /*
             |--------------------------------------------------------------------------
-            | OPTIONAL ACCOUNT NAME
+            | LOAD ACCOUNT NAME
             |--------------------------------------------------------------------------
             */
 
@@ -239,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             /*
             |--------------------------------------------------------------------------
-            | OPTIONAL PHONE
+            | LOAD PHONE NUMBER
             |--------------------------------------------------------------------------
             */
 
@@ -261,6 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Profile loading error:",
                 error
             );
+
 
             showMessage(
                 error.message ||
@@ -286,6 +346,26 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | DISPLAY REQUESTED AMOUNT
+        |--------------------------------------------------------------------------
+        */
+
+        if (displayAmount) {
+
+            displayAmount.textContent =
+                formatUGX(amount);
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | EMPTY AMOUNT
+        |--------------------------------------------------------------------------
+        */
+
         if (
             !amount ||
             amount <= 0
@@ -298,6 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }
 
+
             if (payoutDisplay) {
 
                 payoutDisplay.textContent =
@@ -305,10 +386,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }
 
+
             return {
+
                 amount: 0,
+
                 fee: 0,
+
                 payout: 0
+
             };
 
         }
@@ -316,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /*
         |--------------------------------------------------------------------------
-        | 20% FEE
+        | CALCULATE 20% FEE
         |--------------------------------------------------------------------------
         */
 
@@ -329,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /*
         |--------------------------------------------------------------------------
-        | PAYOUT
+        | CALCULATE PAYOUT
         |--------------------------------------------------------------------------
         */
 
@@ -339,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /*
         |--------------------------------------------------------------------------
-        | UPDATE UI
+        | UPDATE FEE
         |--------------------------------------------------------------------------
         */
 
@@ -351,6 +437,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE PAYOUT
+        |--------------------------------------------------------------------------
+        */
+
         if (payoutDisplay) {
 
             payoutDisplay.textContent =
@@ -360,9 +452,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         return {
-            amount,
-            fee,
-            payout
+
+            amount:
+                amount,
+
+            fee:
+                fee,
+
+            payout:
+                payout
+
         };
 
     }
@@ -370,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE CALCULATION WHILE TYPING
+    | UPDATE CALCULATOR WHILE TYPING
     |--------------------------------------------------------------------------
     */
 
@@ -392,7 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | FORMAT PHONE NUMBER
+    | NORMALIZE PHONE NUMBER
     |--------------------------------------------------------------------------
     */
 
@@ -403,6 +502,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 .trim()
                 .replace(/[\s\-]/g, "");
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | CONVERT +256XXXXXXXXX
+        | TO 07XXXXXXXX
+        |--------------------------------------------------------------------------
+        */
 
         if (
             value.startsWith("+256")
@@ -415,6 +521,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | CONVERT 256XXXXXXXXX
+        | TO 07XXXXXXXX
+        |--------------------------------------------------------------------------
+        */
+
+        else if (
+            value.startsWith("256")
+        ) {
+
+            value =
+                "0" +
+                value.substring(3);
+
+        }
+
+
         return value;
 
     }
@@ -422,7 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | VALIDATE PHONE NUMBER
+    | VALIDATE MOBILE MONEY NUMBER
     |--------------------------------------------------------------------------
     */
 
@@ -435,66 +559,138 @@ document.addEventListener("DOMContentLoaded", () => {
             normalizePhone(phone);
 
 
-        if (!/^07[0-9]{8}$/.test(normalized)) {
+        /*
+        |--------------------------------------------------------------------------
+        | GENERAL UGANDA NUMBER CHECK
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !/^07[0-9]{8}$/.test(
+                normalized
+            )
+        ) {
 
             return {
-                valid: false,
+
+                valid:
+                    false,
+
                 message:
                     "Enter a valid Ugandan Mobile Money number."
+
             };
 
         }
 
 
-        const prefix =
-            normalized.substring(0, 3);
+        /*
+        |--------------------------------------------------------------------------
+        | GET NETWORK PREFIX
+        |--------------------------------------------------------------------------
+        */
 
+        const prefix =
+            normalized.substring(
+                0,
+                3
+            );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | MTN PREFIXES
+        |--------------------------------------------------------------------------
+        */
 
         const mtnPrefixes = [
+
             "077",
+
             "078",
+
             "076"
+
         ];
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | AIRTEL PREFIXES
+        |--------------------------------------------------------------------------
+        */
 
         const airtelPrefixes = [
+
             "070",
+
             "075",
+
             "074"
+
         ];
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK MTN
+        |--------------------------------------------------------------------------
+        */
 
         if (
             method === "MTN" &&
-            !mtnPrefixes.includes(prefix)
+            !mtnPrefixes.includes(
+                prefix
+            )
         ) {
 
             return {
-                valid: false,
+
+                valid:
+                    false,
+
                 message:
                     "The number does not appear to be an MTN number."
+
             };
 
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK AIRTEL
+        |--------------------------------------------------------------------------
+        */
+
         if (
             method === "Airtel" &&
-            !airtelPrefixes.includes(prefix)
+            !airtelPrefixes.includes(
+                prefix
+            )
         ) {
 
             return {
-                valid: false,
+
+                valid:
+                    false,
+
                 message:
                     "The number does not appear to be an Airtel number."
+
             };
 
         }
 
 
         return {
-            valid: true,
-            phone: normalized
+
+            valid:
+                true,
+
+            phone:
+                normalized
+
         };
 
     }
@@ -502,7 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | SUBMIT WITHDRAWAL
+    | FORM SUBMISSION
     |--------------------------------------------------------------------------
     */
 
@@ -513,6 +709,13 @@ document.addEventListener("DOMContentLoaded", () => {
             async (event) => {
 
                 event.preventDefault();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CLEAR OLD MESSAGE
+                |--------------------------------------------------------------------------
+                */
 
                 clearMessage();
 
@@ -531,7 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | GET METHOD
+                | GET PAYMENT METHOD
                 |--------------------------------------------------------------------------
                 */
 
@@ -543,9 +746,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     .toLowerCase();
 
 
-                if (method === "mtn") {
+                /*
+                |--------------------------------------------------------------------------
+                | NORMALIZE METHOD
+                |--------------------------------------------------------------------------
+                */
 
-                    method = "MTN";
+                if (
+                    method === "mtn"
+                ) {
+
+                    method =
+                        "MTN";
 
                 }
 
@@ -553,7 +765,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     method === "airtel"
                 ) {
 
-                    method = "Airtel";
+                    method =
+                        "Airtel";
 
                 }
 
@@ -578,7 +791,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (
                     !amount ||
-                    !Number.isFinite(amount)
+                    !Number.isFinite(
+                        amount
+                    )
                 ) {
 
                     showMessage(
@@ -592,7 +807,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | MINIMUM
+                | MINIMUM WITHDRAWAL
                 |--------------------------------------------------------------------------
                 */
 
@@ -617,7 +832,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 */
 
                 if (
-                    !Number.isInteger(amount)
+                    !Number.isInteger(
+                        amount
+                    )
                 ) {
 
                     showMessage(
@@ -641,7 +858,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ) {
 
                     showMessage(
-                        `Insufficient available balance. Your balance is ${formatUGX(availableBalance)}.`
+                        `Insufficient available balance. Your available balance is ${formatUGX(availableBalance)}.`
                     );
 
                     return;
@@ -651,7 +868,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | METHOD CHECK
+                | PAYMENT METHOD CHECK
                 |--------------------------------------------------------------------------
                 */
 
@@ -682,7 +899,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     );
 
 
-                if (!phoneResult.valid) {
+                if (
+                    !phoneResult.valid
+                ) {
 
                     showMessage(
                         phoneResult.message
@@ -695,7 +914,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | CALCULATE FINAL VALUES
+                | CONFIRMATION CHECKBOX
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    confirmationCheckbox &&
+                    !confirmationCheckbox.checked
+                ) {
+
+                    showMessage(
+                        "Please confirm that your withdrawal information is correct."
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CALCULATE WITHDRAWAL
                 |--------------------------------------------------------------------------
                 */
 
@@ -706,11 +945,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 const fee =
                     calculation.fee;
 
+
                 const payout =
                     calculation.payout;
 
 
-                if (payout <= 0) {
+                /*
+                |--------------------------------------------------------------------------
+                | PAYOUT SAFETY CHECK
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    payout <= 0
+                ) {
 
                     showMessage(
                         "Invalid withdrawal amount."
@@ -723,27 +971,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 /*
                 |--------------------------------------------------------------------------
-                | CONFIRMATION
+                | CONFIRM WITH USER
                 |--------------------------------------------------------------------------
                 */
 
                 const confirmed =
                     window.confirm(
+
                         "Please confirm your withdrawal:\n\n" +
 
-                        `Requested: ${formatUGX(amount)}\n` +
+                        `Requested amount: ${formatUGX(amount)}\n` +
 
                         `Withdrawal fee (20%): ${formatUGX(fee)}\n` +
 
                         `You will receive: ${formatUGX(payout)}\n\n` +
 
-                        `Method: ${method}\n` +
+                        `Payment method: ${method}\n` +
 
-                        `Mobile Money: ${phone}\n\n` +
+                        `Mobile Money number: ${phone}\n\n` +
 
-                        "Continue with this withdrawal?"
+                        "Your withdrawal will be sent for admin approval.\n\n" +
+
+                        "Do you want to continue?"
+
                     );
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | USER CANCELLED
+                |--------------------------------------------------------------------------
+                */
 
                 if (!confirmed) {
 
@@ -773,7 +1031,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     /*
                     |--------------------------------------------------------------------------
-                    | SEND REQUEST
+                    | SEND REQUEST TO SERVER
                     |--------------------------------------------------------------------------
                     */
 
@@ -781,182 +1039,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         await fetch(
                             WITHDRAWAL_API,
                             {
-                                method: "POST",
 
-                                credentials: "include",
+                                method:
+                                    "POST",
+
+                                credentials:
+                                    "include",
 
                                 headers: {
+
                                     "Content-Type":
                                         "application/json",
 
-                                    "Accept":
-                                        "application/json"
-                                },
-
-                                body:
-                                    JSON.stringify({
-
-                                        amount:
-                                            amount,
-
-                                        payment_method:
-                                            method,
-
-                                        phone:
-                                            phone
-
-                                    })
-                            }
-                        );
-
-
-                    let data = null;
-
-
-                    try {
-
-                        data =
-                            await response.json();
-
-                    } catch (jsonError) {
-
-                        throw new Error(
-                            "The server returned an invalid response."
-                        );
-
-                    }
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | HANDLE ERROR
-                    |--------------------------------------------------------------------------
-                    */
-
-                    if (
-                        !response.ok ||
-                        !data.success
-                    ) {
-
-                        throw new Error(
-                            data.message ||
-                            "Withdrawal request failed."
-                        );
-
-                    }
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | SERVER VALUES
-                    |--------------------------------------------------------------------------
-                    */
-
-                    const serverFee =
-                        Number(
-                            data.fee ??
-                            fee
-                        );
-
-
-                    const serverPayout =
-                        Number(
-                            data.payout_amount ??
-                            payout
-                        );
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | SUCCESS
-                    |--------------------------------------------------------------------------
-                    */
-
-                    showMessage(
-                        `Withdrawal submitted successfully. Requested ${formatUGX(amount)}, fee ${formatUGX(serverFee)}, you will receive ${formatUGX(serverPayout)} after approval.`,
-                        "success"
-                    );
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | RESET FORM
-                    |--------------------------------------------------------------------------
-                    */
-
-                    if (amountInput) {
-
-                        amountInput.value = "";
-
-                    }
-
-
-                    calculateWithdrawal();
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | REFRESH BALANCE
-                    |--------------------------------------------------------------------------
-                    |
-                    | The withdrawal is still pending, so the server has
-                    | not deducted the balance yet.
-                    |--------------------------------------------------------------------------
-                    */
-
-                    setTimeout(
-                        loadProfile,
-                        500
-                    );
-
-
-                } catch (error) {
-
-                    console.error(
-                        "Withdrawal error:",
-                        error
-                    );
-
-
-                    showMessage(
-                        error.message ||
-                        "Unable to submit withdrawal."
-                    );
-
-                } finally {
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | ENABLE BUTTON AGAIN
-                    |--------------------------------------------------------------------------
-                    */
-
-                    if (submitButton) {
-
-                        submitButton.disabled =
-                            false;
-
-                        submitButton.textContent =
-                            "Request Withdrawal";
-
-                    }
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | INITIALIZE
-    |--------------------------------------------------------------------------
-    */
-
-    calculateWithdrawal();
-
-    loadProfile();
-
-});
+                                   

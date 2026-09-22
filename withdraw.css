@@ -1,6 +1,6 @@
-/* =========================================
-   CROWN CASH WITHDRAW PAGE
-========================================= */
+/* =========================================================
+   CROWN CASH - WITHDRAWAL PAGE
+   ========================================================= */
 
 * {
     margin: 0;
@@ -8,648 +8,855 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #080611;
+    --card: #12101d;
+    --card-light: #181526;
+
+    --maroon: #7b1028;
+    --maroon-light: #a51c3c;
+
+    --gold: #f4c542;
+    --gold-light: #ffe28a;
+
+    --pink: #ff3f91;
+    --purple: #8b4dff;
+
+    --text: #ffffff;
+    --muted: #aaa5b8;
+
+    --success: #28d17c;
+    --danger: #ff5577;
+
+    --border: rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #07111f;
-    color: #ffffff;
-    min-height: 100vh;
-}
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-button,
-input,
-select {
-    font-family: inherit;
-}
-
-
-/* =========================================
-   APP
-========================================= */
-
-.app {
-    display: flex;
-    min-height: 100vh;
-}
-
-
-/* =========================================
-   SIDEBAR
-========================================= */
-
-.sidebar {
-    width: 260px;
-    min-height: 100vh;
-    background: #0b1728;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 1000;
-    transition: 0.3s ease;
-}
-
-.logo-area {
-    height: 85px;
-    display: flex;
-    align-items: center;
-    padding: 0 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.logo-icon {
-    width: 43px;
-    height: 43px;
-    border-radius: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #b800ff, #ff00d4);
-    color: white;
-    font-size: 21px;
-    margin-right: 12px;
-    box-shadow: 0 0 20px rgba(184, 0, 255, 0.35);
-}
-
-.logo-text {
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.logo-text span {
-    color: #c400ff;
-}
-
-.sidebar-nav {
-    padding: 20px 12px;
-}
-
-.sidebar-nav a {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    margin-bottom: 6px;
-    border-radius: 12px;
-    color: #9ba9bb;
-    font-size: 14px;
-    transition: 0.25s ease;
-}
-
-.sidebar-nav a i {
-    width: 20px;
-    text-align: center;
-    font-size: 16px;
-}
-
-.sidebar-nav a:hover {
-    background: rgba(184, 0, 255, 0.1);
-    color: #ffffff;
-}
-
-.sidebar-nav a.active {
-    background: linear-gradient(
-        135deg,
-        rgba(184, 0, 255, 0.22),
-        rgba(255, 0, 212, 0.14)
-    );
-    color: #ffffff;
-    border-left: 3px solid #d000ff;
-}
-
-.sidebar-nav .logout {
-    margin-top: 25px;
-    color: #ff7188;
-}
-
-.sidebar-nav .logout:hover {
-    background: rgba(255, 70, 100, 0.1);
-}
-
-
-/* =========================================
-   MAIN
-========================================= */
-
-.main-content {
-    width: calc(100% - 260px);
-    margin-left: 260px;
-    min-height: 100vh;
-}
-
-
-/* =========================================
-   TOP BAR
-========================================= */
-
-.topbar {
-    height: 85px;
-    display: flex;
-    align-items: center;
-    padding: 0 30px;
-    background: rgba(7, 17, 31, 0.95);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.menu-btn {
-    display: none;
-    border: none;
-    background: transparent;
-    color: white;
-    font-size: 21px;
-    cursor: pointer;
-    margin-right: 15px;
-}
-
-.page-title {
-    flex: 1;
-}
-
-.page-title h1 {
-    font-size: 22px;
-    margin-bottom: 4px;
-}
-
-.page-title p {
-    font-size: 12px;
-    color: #8998aa;
-}
-
-.profile-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(184, 0, 255, 0.15);
-    color: #d400ff;
-}
-
-
-/* =========================================
-   CONTENT
-========================================= */
-
-.content {
-    width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 30px;
-}
-
-
-/* =========================================
-   BALANCE CARD
-========================================= */
-
-.balance-card {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 24px;
-    margin-bottom: 25px;
-    border-radius: 18px;
     background:
-        linear-gradient(
-            135deg,
-            rgba(184, 0, 255, 0.18),
-            rgba(255, 0, 212, 0.08)
-        );
-    border: 1px solid rgba(210, 0, 255, 0.18);
+        radial-gradient(
+            circle at top right,
+            rgba(123, 16, 40, 0.30),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at bottom left,
+            rgba(139, 77, 255, 0.14),
+            transparent 35%
+        ),
+        var(--bg);
+
+    color: var(--text);
+
+    min-height: 100vh;
 }
 
-.balance-icon {
-    width: 55px;
-    height: 55px;
-    border-radius: 15px;
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.withdraw-page {
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.withdraw-header {
+    width: 100%;
+
+    padding: 22px 7%;
+
     display: flex;
+
     align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #b800ff, #ff00d4);
-    font-size: 22px;
+
+    gap: 18px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    background:
+        rgba(8, 6, 17, 0.85);
+
+    backdrop-filter: blur(14px);
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 20;
 }
 
-.balance-card span {
-    color: #9aa9bb;
-    font-size: 13px;
-}
 
-.balance-card h2 {
-    margin-top: 5px;
-    font-size: 25px;
-}
+.withdraw-header h1 {
+    font-size: 26px;
 
-
-/* =========================================
-   CARD
-========================================= */
-
-.card {
-    background: #0b1728;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 18px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.card-heading {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.heading-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(184, 0, 255, 0.14);
-    color: #d000ff;
-    font-size: 20px;
-}
-
-.card-heading h2 {
-    font-size: 19px;
     margin-bottom: 5px;
 }
 
-.card-heading p {
-    color: #8290a2;
+
+.withdraw-header p {
+    color: var(--muted);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   BACK BUTTON
+   ========================================================= */
+
+.back-btn {
+    width: 45px;
+
+    height: 45px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-decoration: none;
+
+    color: white;
+
+    font-size: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--maroon),
+            #4d091a
+        );
+
+    border:
+        1px solid rgba(244, 197, 66, 0.35);
+
+    transition:
+        0.25s ease;
+}
+
+
+.back-btn:hover {
+    transform: translateX(-3px);
+
+    box-shadow:
+        0 0 20px
+        rgba(244, 197, 66, 0.20);
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.withdraw-container {
+    width: min(680px, 92%);
+
+    margin: 35px auto 60px;
+}
+
+
+/* =========================================================
+   BALANCE CARD
+   ========================================================= */
+
+.balance-card {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 22px;
+
+    margin-bottom: 20px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123, 16, 40, 0.85),
+            rgba(38, 18, 35, 0.95)
+        );
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.25);
+
+    box-shadow:
+        0 15px 40px
+        rgba(0, 0, 0, 0.30);
+}
+
+
+.balance-icon {
+    width: 58px;
+
+    height: 58px;
+
+    border-radius: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 28px;
+
+    background:
+        rgba(244, 197, 66, 0.14);
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.30);
+}
+
+
+.balance-card span {
+    display: block;
+
+    color: #d4ceda;
+
+    font-size: 13px;
+
+    margin-bottom: 5px;
+}
+
+
+.balance-card h2 {
+    font-size: 24px;
+
+    color: var(--gold-light);
+}
+
+
+/* =========================================================
+   WITHDRAW CARD
+   ========================================================= */
+
+.withdraw-card {
+    padding: 28px;
+
+    border-radius: 24px;
+
+    background:
+        rgba(18, 16, 29, 0.92);
+
+    border:
+        1px solid var(--border);
+
+    box-shadow:
+        0 20px 60px
+        rgba(0, 0, 0, 0.35);
+
+    backdrop-filter: blur(15px);
+}
+
+
+/* =========================================================
+   HEADING
+   ========================================================= */
+
+.section-heading {
+    margin-bottom: 25px;
+}
+
+
+.section-heading h2 {
+    font-size: 21px;
+
+    margin-bottom: 7px;
+}
+
+
+.section-heading p {
+    color: var(--muted);
+
     font-size: 13px;
 }
 
 
-/* =========================================
+.section-heading strong {
+    color: var(--gold);
+}
+
+
+/* =========================================================
    FORM
-========================================= */
+   ========================================================= */
 
 .form-group {
-    margin-bottom: 22px;
+    margin-bottom: 21px;
 }
+
 
 .form-group label {
     display: block;
+
     margin-bottom: 9px;
-    font-size: 13px;
+
+    font-size: 14px;
+
     font-weight: 600;
-    color: #dce3eb;
 }
 
-.form-group label i {
-    color: #c800ff;
-    margin-right: 7px;
+
+.form-group small {
+    display: block;
+
+    margin-top: 7px;
+
+    color: #898394;
+
+    font-size: 12px;
+
+    line-height: 1.5;
 }
+
 
 .form-group input,
 .form-group select {
     width: 100%;
+
     height: 52px;
+
     padding: 0 15px;
-    border-radius: 11px;
-    border: 1px solid #26364b;
+
+    border-radius: 13px;
+
     outline: none;
-    background: #07111f;
+
     color: white;
-    font-size: 14px;
-    transition: 0.25s ease;
+
+    background:
+        #0d0b16;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.10);
+
+    font-size: 15px;
+
+    transition:
+        0.25s ease;
 }
+
+
+.form-group input::placeholder {
+    color: #6f6a78;
+}
+
 
 .form-group input:focus,
 .form-group select:focus {
-    border-color: #c400ff;
-    box-shadow: 0 0 0 3px rgba(196, 0, 255, 0.09);
+    border-color:
+        var(--gold);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(244, 197, 66, 0.08);
 }
 
-.form-group input::placeholder {
-    color: #65758a;
+
+.form-group input.invalid {
+    border-color:
+        var(--danger);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(255, 85, 119, 0.08);
 }
+
 
 .form-group select {
     cursor: pointer;
 }
 
+
 .form-group select option {
-    background: #0b1728;
+    background: #12101d;
+
     color: white;
 }
 
-.form-group small {
-    display: block;
-    margin-top: 7px;
-    color: #68798e;
-    font-size: 11px;
-}
 
-
-/* =========================================
+/* =========================================================
    CURRENCY INPUT
-========================================= */
+   ========================================================= */
 
 .input-wrapper {
     position: relative;
 }
 
-.currency {
+
+.input-wrapper .currency {
     position: absolute;
+
     left: 15px;
+
     top: 50%;
-    transform: translateY(-50%);
-    color: #c400ff;
-    font-weight: 700;
+
+    transform:
+        translateY(-50%);
+
+    color: var(--gold);
+
     font-size: 13px;
+
+    font-weight: bold;
+
+    pointer-events: none;
 }
+
 
 .input-wrapper input {
-    padding-left: 55px;
+    padding-left: 58px;
 }
 
 
-/* =========================================
+/* =========================================================
+   FEE CALCULATION CARD
+   ========================================================= */
+
+.fee-card {
+    margin: 8px 0 25px;
+
+    padding: 20px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(123, 16, 40, 0.20),
+            rgba(139, 77, 255, 0.08)
+        );
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.18);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.03);
+}
+
+
+.calculation-row {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 9px 0;
+
+    color: #c7c1cf;
+
+    font-size: 14px;
+}
+
+
+.calculation-row strong {
+    color: white;
+
+    font-size: 15px;
+}
+
+
+.calculation-row small {
+    color: var(--gold);
+
+    font-size: 11px;
+}
+
+
+.fee-row strong {
+    color: var(--pink);
+}
+
+
+.calculation-divider {
+    height: 1px;
+
+    margin: 8px 0;
+
+    background:
+        rgba(255, 255, 255, 0.10);
+}
+
+
+/* =========================================================
+   PAYOUT
+   ========================================================= */
+
+.payout-row {
+    padding-top: 13px;
+
+    padding-bottom: 3px;
+}
+
+
+.payout-row span {
+    color: white;
+
+    font-weight: 700;
+
+    font-size: 15px;
+}
+
+
+.payout-row strong {
+    color: var(--gold);
+
+    font-size: 20px;
+
+    text-shadow:
+        0 0 15px
+        rgba(244, 197, 66, 0.20);
+}
+
+
+/* =========================================================
+   NOTICE
+   ========================================================= */
+
+.withdraw-notice {
+    display: flex;
+
+    gap: 13px;
+
+    padding: 15px;
+
+    margin: 5px 0 20px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(244, 197, 66, 0.06);
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.16);
+}
+
+
+.notice-icon {
+    font-size: 20px;
+
+    flex-shrink: 0;
+}
+
+
+.withdraw-notice strong {
+    display: block;
+
+    font-size: 13px;
+
+    color: var(--gold-light);
+
+    margin-bottom: 5px;
+}
+
+
+.withdraw-notice p {
+    color: #aaa5b4;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
    MESSAGE
-========================================= */
+   ========================================================= */
 
 .form-message {
     display: none;
+
     padding: 13px 15px;
-    margin-bottom: 18px;
-    border-radius: 10px;
+
+    margin-bottom: 17px;
+
+    border-radius: 12px;
+
     font-size: 13px;
+
+    line-height: 1.5;
 }
 
-.form-message.success {
-    display: block;
-    background: rgba(0, 210, 130, 0.1);
-    border: 1px solid rgba(0, 210, 130, 0.25);
-    color: #4de2a1;
-}
 
 .form-message.error {
     display: block;
-    background: rgba(255, 60, 90, 0.1);
-    border: 1px solid rgba(255, 60, 90, 0.25);
-    color: #ff8093;
+
+    color: #ff9aae;
+
+    background:
+        rgba(255, 85, 119, 0.09);
+
+    border:
+        1px solid
+        rgba(255, 85, 119, 0.22);
 }
 
 
-/* =========================================
-   BUTTON
-========================================= */
+.form-message.success {
+    display: block;
+
+    color: #8ff0b8;
+
+    background:
+        rgba(40, 209, 124, 0.08);
+
+    border:
+        1px solid
+        rgba(40, 209, 124, 0.22);
+}
+
+
+/* =========================================================
+   WITHDRAW BUTTON
+   ========================================================= */
 
 .withdraw-btn {
     width: 100%;
-    height: 53px;
+
+    min-height: 54px;
+
     border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #b800ff, #ff00d4);
-    color: white;
-    font-size: 14px;
-    font-weight: 700;
+
+    border-radius: 14px;
+
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    transition: 0.25s ease;
-    box-shadow: 0 10px 25px rgba(184, 0, 255, 0.18);
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--maroon-light),
+            var(--maroon),
+            #5c0c21
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(123, 16, 40, 0.35);
+
+    transition:
+        0.25s ease;
 }
+
 
 .withdraw-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 13px 30px rgba(184, 0, 255, 0.28);
+
+    box-shadow:
+        0 14px 35px
+        rgba(165, 28, 60, 0.40);
 }
 
+
+.withdraw-btn:active {
+    transform: translateY(0);
+}
+
+
 .withdraw-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.65;
+
     cursor: not-allowed;
+
     transform: none;
 }
 
 
-/* =========================================
-   INFORMATION
-========================================= */
+/* =========================================================
+   LOADER
+   ========================================================= */
 
-.information-card {
-    border-color: rgba(0, 190, 255, 0.12);
-}
+.button-loader {
+    display: inline-block;
 
-.info-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 17px;
-}
-
-.info-title i {
-    color: #00bfff;
-    font-size: 19px;
-}
-
-.info-title h3 {
-    font-size: 16px;
-}
-
-.information-card ul {
-    list-style: none;
-}
-
-.information-card li {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    color: #9aa9bb;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 12px;
-}
-
-.information-card li i {
-    color: #bd00ff;
-    margin-top: 3px;
+    animation:
+        pulse 1.2s infinite;
 }
 
 
-/* =========================================
-   WITHDRAWAL HISTORY
-========================================= */
+@keyframes pulse {
 
-.withdrawal-history {
-    min-height: 80px;
+    0%,
+    100% {
+        opacity: 0.45;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
-.withdrawal-item {
-    padding: 16px;
-    border-radius: 12px;
-    background: #07111f;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    margin-bottom: 10px;
-}
 
-.withdrawal-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
+/* =========================================================
+   INFORMATION CARD
+   ========================================================= */
 
-.withdrawal-amount {
-    font-size: 16px;
-    font-weight: 700;
-}
+.info-card {
+    margin-top: 20px;
 
-.withdrawal-date {
-    margin-top: 6px;
-    color: #718197;
-    font-size: 11px;
-}
+    padding: 23px;
 
-.withdrawal-method {
-    margin-top: 5px;
-    color: #9aa9bb;
-    font-size: 12px;
-}
-
-.status {
-    padding: 5px 9px;
     border-radius: 20px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
+
+    background:
+        rgba(18, 16, 29, 0.80);
+
+    border:
+        1px solid var(--border);
 }
 
-.status.pending {
-    background: rgba(255, 180, 0, 0.12);
-    color: #ffc94d;
+
+.info-card h3 {
+    color: var(--gold);
+
+    font-size: 17px;
+
+    margin-bottom: 15px;
 }
 
-.status.approved {
-    background: rgba(0, 210, 130, 0.12);
-    color: #4de2a1;
+
+.info-card ul {
+    padding-left: 20px;
 }
 
-.status.rejected {
-    background: rgba(255, 60, 90, 0.12);
-    color: #ff8093;
-}
 
-.status.paid {
-    background: rgba(0, 180, 255, 0.12);
-    color: #52caff;
-}
+.info-card li {
+    color: #aaa5b4;
 
-.loading,
-.empty-history {
-    text-align: center;
-    padding: 25px;
-    color: #748398;
     font-size: 13px;
-}
 
-.loading i {
-    margin-right: 7px;
-}
+    line-height: 1.7;
 
-
-/* =========================================
-   FOOTER
-========================================= */
-
-.footer {
-    padding: 25px 30px;
-    text-align: center;
-    color: #536378;
-    font-size: 11px;
+    margin-bottom: 8px;
 }
 
 
-/* =========================================
-   OVERLAY
-========================================= */
-
-.overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    z-index: 900;
-}
-
-.overlay.show {
-    display: block;
+.info-card li strong {
+    color: #e9e4ee;
 }
 
 
-/* =========================================
+/* =========================================================
    RESPONSIVE
-========================================= */
+   ========================================================= */
 
-@media (max-width: 850px) {
+@media (max-width: 600px) {
 
-    .sidebar {
-        transform: translateX(-100%);
+    .withdraw-header {
+        padding: 17px 4%;
     }
 
-    .sidebar.open {
-        transform: translateX(0);
+
+    .withdraw-header h1 {
+        font-size: 21px;
     }
 
-    .main-content {
-        width: 100%;
-        margin-left: 0;
+
+    .withdraw-header p {
+        font-size: 12px;
     }
 
-    .menu-btn {
-        display: block;
+
+    .back-btn {
+        width: 40px;
+
+        height: 40px;
+
+        font-size: 21px;
     }
 
-    .content {
-        padding: 20px;
+
+    .withdraw-container {
+        width: 94%;
+
+        margin-top: 22px;
     }
 
-    .topbar {
-        padding: 0 20px;
-    }
-}
 
+    .withdraw-card {
+        padding: 20px 16px;
 
-@media (max-width: 500px) {
-
-    .content {
-        padding: 15px;
+        border-radius: 20px;
     }
 
-    .card {
-        padding: 18px;
-        border-radius: 15px;
-    }
 
     .balance-card {
         padding: 18px;
+
+        border-radius: 18px;
     }
+
+
+    .balance-icon {
+        width: 50px;
+
+        height: 50px;
+
+        font-size: 24px;
+    }
+
 
     .balance-card h2 {
         font-size: 21px;
     }
 
-    .card-heading h2 {
-        font-size: 17px;
+
+    .fee-card {
+        padding: 16px;
     }
 
-    .withdrawal-top {
-        align-items: flex-start;
+
+    .calculation-row {
+        font-size: 13px;
+    }
+
+
+    .payout-row strong {
+        font-size: 18px;
     }
 
 }
+
+
+/* =========================================================
+   VERY SMALL SCREENS
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+    .

@@ -1,446 +1,1379 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <title>Crown Cash | Support Center</title>
 
-    <meta name="theme-color"
-          content="#07111f">
+    <meta
+        name="description"
+        content="Crown Cash Support Center - Get help with your account, deposits, withdrawals, referrals and security."
+    >
 
-    <meta name="description"
-          content="Crown Cash Support Center">
-
-    <title>Crown Cash | Support</title>
-
-    <link rel="stylesheet"
-          href="support.css">
+    <link rel="stylesheet" href="support.css">
 </head>
 
 <body>
 
-<aside class="sidebar" id="sidebar">
-
-    <div class="sidebar-top">
-
-        <a href="index.html" class="logo">
-            <span class="logo-mark">C</span>
-            <span>
-                Crown<span class="gold">Cash</span>
-            </span>
-        </a>
-
-        <button
-            type="button"
-            class="close-sidebar"
-            id="closeSidebar">
-            ×
-        </button>
-
-    </div>
+    <!-- ==============================
+         MOBILE OVERLAY
+    =============================== -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
-    <nav class="sidebar-nav">
+    <!-- ==============================
+         SIDEBAR
+    =============================== -->
+    <aside class="sidebar" id="sidebar">
 
-        <a href="dashboard.html">
-            <span>⌂</span>
-            Dashboard
-        </a>
+        <div class="sidebar-top">
 
-        <a href="profile.html">
-            <span>◎</span>
-            My Profile
-        </a>
+            <!-- LOGO -->
+            <a href="index.html" class="brand">
 
-        <a href="investments.html">
-            <span>◇</span>
-            Investments
-        </a>
+                <div class="brand-icon">
 
-        <a href="deposits.html">
-            <span>↓</span>
-            Deposits
-        </a>
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M12 3L19 6V11C19 15.5 16.2 19.3 12 21C7.8 19.3 5 15.5 5 11V6L12 3Z"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linejoin="round"
+                        />
 
-        <a href="withdrawals.html">
-            <span>↑</span>
-            Withdrawals
-        </a>
+                        <path
+                            d="M9 11.5L11 13.5L15 9.5"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
 
-        <a href="referrals.html">
-            <span>↗</span>
-            Referrals
-        </a>
+                </div>
 
-        <a href="transactions.html">
-            <span>≡</span>
-            Transactions
-        </a>
+                <div class="brand-text">
+                    <span>CROWN</span>
+                    <strong>CASH</strong>
+                </div>
 
-    </nav>
-
-
-    <div class="sidebar-bottom">
-
-        <a href="support.html" class="active">
-            <span>?</span>
-            Support
-        </a>
-
-        <a href="login.html">
-            <span>↪</span>
-            Logout
-        </a>
-
-    </div>
-
-</aside>
+            </a>
 
 
-<div class="main-wrapper">
+            <!-- CLOSE BUTTON -->
+            <button
+                type="button"
+                class="sidebar-close"
+                id="sidebarClose"
+                aria-label="Close navigation"
+            >
 
-    <header class="topbar">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M6 6L18 18M18 6L6 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+                </svg>
 
-        <div class="topbar-left">
+            </button>
+
+        </div>
+
+
+        <!-- NAVIGATION -->
+        <nav class="sidebar-nav">
+
+            <div class="nav-section-title">
+                MAIN MENU
+            </div>
+
+
+            <!-- DASHBOARD -->
+            <a href="dashboard.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <rect
+                            x="4"
+                            y="4"
+                            width="6"
+                            height="6"
+                            rx="1"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <rect
+                            x="14"
+                            y="4"
+                            width="6"
+                            height="6"
+                            rx="1"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <rect
+                            x="4"
+                            y="14"
+                            width="6"
+                            height="6"
+                            rx="1"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <rect
+                            x="14"
+                            y="14"
+                            width="6"
+                            height="6"
+                            rx="1"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+                    </svg>
+
+                </span>
+
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <!-- PROFILE -->
+            <a href="profile.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <circle
+                            cx="12"
+                            cy="8"
+                            r="3.2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <path
+                            d="M5 20C5.8 16.5 8.2 14.5 12 14.5C15.8 14.5 18.2 16.5 19 20"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>My Profile</span>
+
+            </a>
+
+
+            <!-- INVESTMENTS -->
+            <a href="investments.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M5 19V10"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M12 19V5"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M19 19V8"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M4 19H20"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <!-- DEPOSITS -->
+            <a href="deposits.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M12 4V16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M7.5 11.5L12 16L16.5 11.5"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M5 20H19"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Deposits</span>
+
+            </a>
+
+
+            <!-- WITHDRAWALS -->
+            <a href="withdrawals.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M12 20V8"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M7.5 12.5L12 8L16.5 12.5"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M5 4H19"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Withdrawals</span>
+
+            </a>
+
+
+            <!-- REFERRALS -->
+            <a href="referrals.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <circle
+                            cx="9"
+                            cy="8"
+                            r="3"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <circle
+                            cx="17"
+                            cy="10"
+                            r="2.4"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <path
+                            d="M3.5 19C4.2 15.7 6.1 14 9 14C11.9 14 13.8 15.7 14.5 19"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M14.5 14.5C15.2 13.4 16.1 13 17.3 13C19.2 13 20.4 14.1 21 16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Referrals</span>
+
+            </a>
+
+
+            <!-- TRANSACTIONS -->
+            <a href="transactions.html" class="nav-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M7 7H19"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M17 4L20 7L17 10"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M17 17H5"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M7 14L4 17L7 20"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <!-- SUPPORT -->
+            <a href="support.html" class="nav-link active">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M4 12C4 7.6 7.6 4 12 4C16.4 4 20 7.6 20 12"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M4 12V16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M20 12V16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <rect
+                            x="3"
+                            y="14"
+                            width="4"
+                            height="6"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <rect
+                            x="17"
+                            y="14"
+                            width="4"
+                            height="6"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Support</span>
+
+            </a>
+
+        </nav>
+
+
+        <!-- SIDEBAR BOTTOM -->
+        <div class="sidebar-bottom">
+
+            <div class="support-mini-card">
+
+                <div class="mini-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M12 3L19 6V11C19 15.5 16.2 19.3 12 21C7.8 19.3 5 15.5 5 11V6L12 3Z"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M9 12L11 14L15 10"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+                    <strong>Need help?</strong>
+                    <span>We're here for you.</span>
+                </div>
+
+            </div>
+
+
+            <a href="login.html" class="logout-link">
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M10 5H6C4.9 5 4 5.9 4 7V17C4 18.1 4.9 19 6 19H10"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M14 8L18 12L14 16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M9 12H18"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                </span>
+
+                <span>Logout</span>
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ==============================
+         MAIN CONTENT
+    =============================== -->
+    <main class="main-content">
+
+        <!-- TOP HEADER -->
+        <header class="top-header">
 
             <button
                 type="button"
                 class="menu-button"
-                id="openSidebar">
-                ☰
+                id="menuButton"
+                aria-label="Open navigation"
+            >
+
+                <svg viewBox="0 0 24 24" fill="none">
+
+                    <path
+                        d="M4 7H20"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+
+                    <path
+                        d="M4 12H20"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+
+                    <path
+                        d="M4 17H20"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
+
+                </svg>
+
             </button>
 
-            <div>
 
-                <span class="topbar-label">
-                    CROWN CASH
-                </span>
+            <div class="mobile-brand">
 
-                <h1>
-                    Support Center
-                </h1>
+                <span>CROWN</span>
+                <strong>CASH</strong>
 
             </div>
 
-        </div>
 
+            <div class="header-account">
 
-        <div class="user-mini">
+                <div class="account-avatar" id="accountAvatar">
+                    U
+                </div>
 
-            <div class="avatar">
-                U
+                <div class="account-details">
+
+                    <strong id="headerUserName">
+                        User Account
+                    </strong>
+
+                    <span>
+                        Member
+                    </span>
+
+                </div>
+
             </div>
 
-            <div>
-
-                <strong>
-                    User Account
-                </strong>
-
-                <small>
-                    Member
-                </small>
-
-            </div>
-
-        </div>
-
-    </header>
+        </header>
 
 
-    <main class="content">
+        <!-- PAGE CONTENT -->
+        <section class="page-container">
 
 
-        <!-- INTRO -->
+            <!-- PAGE TITLE -->
+            <div class="page-heading">
 
-        <section class="intro">
+                <div>
 
-            <span class="section-tag">
-                HELP CENTER
-            </span>
+                    <div class="eyebrow">
+                        HELP CENTER
+                    </div>
 
-            <h2>
-                How can we help you?
-            </h2>
+                    <h1>
+                        Support Center
+                    </h1>
 
-            <p>
-                Find answers or send a support request
-                to the Crown Cash support team.
-            </p>
+                    <p>
+                        Find answers or send a support request to the
+                        Crown Cash support team.
+                    </p>
 
-        </section>
-
-
-        <!-- SUPPORT OPTIONS -->
-
-        <section class="support-grid">
-
-            <article class="support-card">
-
-                <div class="support-icon">
-                    ?
                 </div>
 
-                <h3>
-                    General Support
-                </h3>
+                <div class="heading-icon">
 
-                <p>
-                    Questions about your account,
-                    profile or using the platform.
-                </p>
+                    <svg viewBox="0 0 24 24" fill="none">
 
-                <button
-                    type="button"
-                    class="support-select"
-                    data-category="General Support">
+                        <path
+                            d="M4 12C4 7.6 7.6 4 12 4C16.4 4 20 7.6 20 12"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
 
-                    Get Help →
+                        <path
+                            d="M4 12V16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
 
-                </button>
+                        <path
+                            d="M20 12V16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
 
-            </article>
+                        <rect
+                            x="3"
+                            y="14"
+                            width="4"
+                            height="6"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
 
+                        <rect
+                            x="17"
+                            y="14"
+                            width="4"
+                            height="6"
+                            rx="2"
+                            stroke="currentColor"
+                        />
 
-            <article class="support-card">
+                    </svg>
 
-                <div class="support-icon">
-                    ↓
                 </div>
-
-                <h3>
-                    Deposits
-                </h3>
-
-                <p>
-                    Help with deposit instructions,
-                    payment references or pending deposits.
-                </p>
-
-                <button
-                    type="button"
-                    class="support-select"
-                    data-category="Deposits">
-
-                    Get Help →
-
-                </button>
-
-            </article>
-
-
-            <article class="support-card">
-
-                <div class="support-icon">
-                    ↑
-                </div>
-
-                <h3>
-                    Withdrawals
-                </h3>
-
-                <p>
-                    Questions about withdrawal requests,
-                    reviews or payment status.
-                </p>
-
-                <button
-                    type="button"
-                    class="support-select"
-                    data-category="Withdrawals">
-
-                    Get Help →
-
-                </button>
-
-            </article>
-
-
-            <article class="support-card">
-
-                <div class="support-icon">
-                    ↗
-                </div>
-
-                <h3>
-                    Referrals
-                </h3>
-
-                <p>
-                    Get help with referral links,
-                    referrals and eligible rewards.
-                </p>
-
-                <button
-                    type="button"
-                    class="support-select"
-                    data-category="Referrals">
-
-                    Get Help →
-
-                </button>
-
-            </article>
-
-        </section>
-
-
-        <!-- CONTACT FORM -->
-
-        <section class="form-card">
-
-            <div class="card-heading">
-
-                <span class="section-tag">
-                    CONTACT SUPPORT
-                </span>
-
-                <h3>
-                    Submit a support request
-                </h3>
-
-                <p>
-                    Describe your issue clearly so the
-                    support team can assist you.
-                </p>
 
             </div>
 
 
-            <form id="supportForm">
+            <!-- ==============================
+                 HELP CATEGORIES
+            =============================== -->
+            <section class="help-section">
+
+                <div class="section-title">
+
+                    <div>
+                        <span class="section-kicker">
+                            QUICK HELP
+                        </span>
+
+                        <h2>
+                            How can we help you?
+                        </h2>
+                    </div>
+
+                </div>
 
 
-                <div class="form-grid">
+                <div class="help-grid">
 
-                    <div class="form-group">
 
-                        <label for="category">
-                            Category
-                        </label>
+                    <!-- GENERAL SUPPORT -->
+                    <button
+                        type="button"
+                        class="help-card"
+                        data-category="General Support"
+                    >
 
-                        <select id="category"
-                                name="category"
-                                required>
+                        <div class="help-icon gold-icon">
 
-                            <option value="">
-                                Select category
-                            </option>
+                            <svg viewBox="0 0 24 24" fill="none">
 
-                            <option value="general">
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="8"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M9.8 9.2C10.1 8.2 10.9 7.5 12 7.5C13.4 7.5 14.3 8.4 14.3 9.5C14.3 11.1 12.7 11.4 12 12.3C11.6 12.8 11.5 13.2 11.5 14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <circle
+                                    cx="11.5"
+                                    cy="16.5"
+                                    r="0.8"
+                                    fill="currentColor"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div class="help-content">
+
+                            <h3>
                                 General Support
-                            </option>
+                            </h3>
 
-                            <option value="deposit">
+                            <p>
+                                Questions about your account,
+                                profile or using the platform.
+                            </p>
+
+                            <span class="help-action">
+                                Get Help
+                                <span>→</span>
+                            </span>
+
+                        </div>
+
+                    </button>
+
+
+                    <!-- DEPOSITS -->
+                    <button
+                        type="button"
+                        class="help-card"
+                        data-category="Deposits"
+                    >
+
+                        <div class="help-icon pink-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <rect
+                                    x="4"
+                                    y="6"
+                                    width="16"
+                                    height="13"
+                                    rx="2"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M8 10H16"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M12 13V17"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M10 15L12 17L14 15"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div class="help-content">
+
+                            <h3>
                                 Deposits
-                            </option>
+                            </h3>
 
-                            <option value="withdrawal">
+                            <p>
+                                Help with deposit instructions,
+                                payment references or pending deposits.
+                            </p>
+
+                            <span class="help-action">
+                                Get Help
+                                <span>→</span>
+                            </span>
+
+                        </div>
+
+                    </button>
+
+
+                    <!-- WITHDRAWALS -->
+                    <button
+                        type="button"
+                        class="help-card"
+                        data-category="Withdrawals"
+                    >
+
+                        <div class="help-icon purple-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <rect
+                                    x="4"
+                                    y="6"
+                                    width="16"
+                                    height="13"
+                                    rx="2"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M12 17V10"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M9.5 12.5L12 10L14.5 12.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div class="help-content">
+
+                            <h3>
                                 Withdrawals
-                            </option>
+                            </h3>
 
-                            <option value="referral">
+                            <p>
+                                Questions about withdrawal requests,
+                                reviews or payment status.
+                            </p>
+
+                            <span class="help-action">
+                                Get Help
+                                <span>→</span>
+                            </span>
+
+                        </div>
+
+                    </button>
+
+
+                    <!-- REFERRALS -->
+                    <button
+                        type="button"
+                        class="help-card"
+                        data-category="Referrals"
+                    >
+
+                        <div class="help-icon gold-pink-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <circle
+                                    cx="17"
+                                    cy="10"
+                                    r="2.3"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M3.5 19C4.2 15.7 6.1 14 9 14C11.9 14 13.8 15.7 14.5 19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M14.5 14.5C15.2 13.5 16.1 13 17.2 13C19.1 13 20.3 14.1 20.8 16"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div class="help-content">
+
+                            <h3>
                                 Referrals
-                            </option>
+                            </h3>
 
-                            <option value="account">
-                                Account & Security
-                            </option>
+                            <p>
+                                Get help with referral links,
+                                referrals and eligible rewards.
+                            </p>
 
-                        </select>
+                            <span class="help-action">
+                                Get Help
+                                <span>→</span>
+                            </span>
 
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="subject">
-                            Subject
-                        </label>
-
-                        <input
-                            type="text"
-                            id="subject"
-                            name="subject"
-                            placeholder="Enter subject"
-                            required>
-
-                    </div>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label for="message">
-                        Message
-                    </label>
-
-                    <textarea
-                        id="message"
-                        name="message"
-                        rows="6"
-                        placeholder="Describe your issue..."
-                        required></textarea>
-
-                </div>
-
-
-                <button
-                    type="submit"
-                    class="submit-button">
-
-                    Send Support Request
-
-                </button>
-
-
-                <p id="formMessage"
-                   class="form-message"></p>
-
-            </form>
-
-        </section>
-
-
-        <!-- FAQ -->
-
-        <section class="faq-section">
-
-            <div class="card-heading">
-
-                <span class="section-tag">
-                    FAQ
-                </span>
-
-                <h3>
-                    Frequently asked questions
-                </h3>
-
-            </div>
-
-
-            <div class="faq-list">
-
-
-                <div class="faq-item">
-
-                    <button class="faq-question">
-
-                        How do I make a deposit?
-
-                        <span>+</span>
+                        </div>
 
                     </button>
 
-                    <div class="faq-answer">
+                </div>
+
+            </section>
+
+
+            <!-- ==============================
+                 SUPPORT REQUEST
+            =============================== -->
+            <section class="support-layout">
+
+
+                <!-- FORM -->
+                <div class="support-card">
+
+                    <div class="card-header">
+
+                        <div class="card-header-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M4 5.5C4 4.7 4.7 4 5.5 4H18.5C19.3 4 20 4.7 20 5.5V15.5C20 16.3 19.3 17 18.5 17H13L8 20V17H5.5C4.7 17 4 16.3 4 15.5V5.5Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M8 8H16"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M8 12H14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span class="card-kicker">
+                                CONTACT SUPPORT
+                            </span>
+
+                            <h2>
+                                Submit a support request
+                            </h2>
+
+                            <p>
+                                Describe your issue clearly so the
+                                support team can assist you.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <form id="supportForm" novalidate>
+
+                        <!-- CATEGORY -->
+                        <div class="form-group">
+
+                            <label for="category">
+                                Category
+                            </label>
+
+                            <div class="select-wrapper">
+
+                                <select
+                                    id="category"
+                                    name="category"
+                                    required
+                                >
+
+                                    <option value="">
+                                        Select category
+                                    </option>
+
+                                    <option value="General Support">
+                                        General Support
+                                    </option>
+
+                                    <option value="Deposits">
+                                        Deposits
+                                    </option>
+
+                                    <option value="Withdrawals">
+                                        Withdrawals
+                                    </option>
+
+                                    <option value="Referrals">
+                                        Referrals
+                                    </option>
+
+                                    <option value="Account & Security">
+                                        Account & Security
+                                    </option>
+
+                                </select>
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M7 10L12 15L17 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- SUBJECT -->
+                        <div class="form-group">
+
+                            <label for="subject">
+                                Subject
+                            </label>
+
+                            <div class="input-wrapper">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M5 6H19"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                    />
+
+                                    <path
+                                        d="M5 12H19"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                    />
+
+                                    <path
+                                        d="M5 18H14"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                    />
+
+                                </svg>
+
+                                <input
+                                    type="text"
+                                    id="subject"
+                                    name="subject"
+                                    placeholder="Briefly describe your issue"
+                                    maxlength="120"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- MESSAGE -->
+                        <div class="form-group">
+
+                            <label for="message">
+                                Message
+                            </label>
+
+                            <textarea
+                                id="message"
+                                name="message"
+                                rows="7"
+                                maxlength="2000"
+                                placeholder="Tell us what happened and how we can help..."
+                                required
+                            ></textarea>
+
+                            <div class="character-count">
+                                <span id="messageCount">0</span>/2000
+                            </div>
+
+                        </div>
+
+
+                        <!-- SECURITY NOTICE -->
+                        <div class="security-notice">
+
+                            <div class="security-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M12 3L19 6V11C19 15.5 16.2 19.3 12 21C7.8 19.3 5 15.5 5 11V6L12 3Z"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linejoin="round"
+                                    />
+
+                                    <path
+                                        d="M9 12L11 14L15 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    Security reminder
+                                </strong>
+
+                                <p>
+                                    Never include your password, PIN,
+                                    OTP or other confidential security
+                                    credentials in your support request.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- FORM MESSAGE -->
+                        <div
+                            id="formMessage"
+                            class="form-message"
+                            role="alert"
+                            aria-live="polite"
+                        ></div>
+
+
+                        <!-- SUBMIT -->
+                        <button
+                            type="submit"
+                            class="submit-button"
+                            id="submitSupportBtn"
+                        >
+
+                            <span class="button-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M4 5L20 12L4 19L7 12L4 5Z"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linejoin="round"
+                                    />
+
+                                    <path
+                                        d="M7 12H15"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                    />
+
+                                </svg>
+
+                            </span>
+
+                            <span class="button-text">
+                                Send Support Request
+                            </span>
+
+                            <span class="button-loader" aria-hidden="true"></span>
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+                <!-- SUPPORT INFO -->
+                <aside class="support-side-card">
+
+                    <div class="side-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <path
+                                d="M12 3L19 6V11C19 15.5 16.2 19.3 12 21C7.8 19.3 5 15.5 5 11V6L12 3Z"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linejoin="round"
+                            />
+
+                            <path
+                                d="M9 12L11 14L15 10"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <h3>
+                        We're here to help
+                    </h3>
+
+                    <p>
+                        Our support team can help you with account,
+                        deposit, withdrawal and referral questions.
+                    </p>
+
+
+                    <div class="support-feature">
+
+                        <span class="feature-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="8"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M12 8V12L15 14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </span>
+
+                        <div>
+                            <strong>Track your request</strong>
+                            <span>
+                                Keep your support ticket reference.
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="support-feature">
+
+                        <span class="feature-icon">
+
+                            <svg viewBox="0 0 24 24" fill="none">
+
+                                <path
+                                    d="M5 6H19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M5 12H19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M5 18H14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                            </svg>
+
+                        </span>
+
+                        <div>
+                            <strong>Clear information</strong>
+                            <span>
+                                Give us details so we can help faster.
+                            </span>
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+
+            <!-- ==============================
+                 MY SUPPORT REQUESTS
+            =============================== -->
+            <section class="tickets-section">
+
+                <div class="section-title">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            YOUR SUPPORT
+                        </span>
+
+                        <h2>
+                            My Support Requests
+                        </h2>
 
                         <p>
-                            Open the Deposits section of your
-                            account and follow the current
-                            payment instructions displayed
-                            by the platform.
+                            View your submitted requests and their
+                            current status.
                         </p>
 
                     </div>
@@ -448,121 +1381,320 @@
                 </div>
 
 
-                <div class="faq-item">
+                <div
+                    class="tickets-container"
+                    id="ticketsContainer"
+                >
 
-                    <button class="faq-question">
+                    <div class="tickets-loading">
 
-                        How do withdrawals work?
-
-                        <span>+</span>
-
-                    </button>
-
-                    <div class="faq-answer">
+                        <div class="loading-spinner"></div>
 
                         <p>
-                            Withdrawal requests are submitted
-                            by the user and reviewed by an
-                            authorized administrator before
-                            payment is processed.
+                            Loading your support requests...
                         </p>
 
                     </div>
 
                 </div>
 
-
-                <div class="faq-item">
-
-                    <button class="faq-question">
-
-                        Where can I find my referral link?
-
-                        <span>+</span>
-
-                    </button>
-
-                    <div class="faq-answer">
-
-                        <p>
-                            Your personal referral information
-                            is available from the Referrals
-                            section of your account.
-                        </p>
-
-                    </div>
-
-                </div>
+            </section>
 
 
-                <div class="faq-item">
+            <!-- ==============================
+                 FAQ
+            =============================== -->
+            <section class="faq-section">
 
-                    <button class="faq-question">
+                <div class="section-title">
 
-                        What should I do if I forget my password?
+                    <div>
 
-                        <span>+</span>
+                        <span class="section-kicker">
+                            FAQ
+                        </span>
 
-                    </button>
-
-                    <div class="faq-answer">
-
-                        <p>
-                            Use the password recovery process
-                            provided on the login page. Never
-                            share your password with another person.
-                        </p>
+                        <h2>
+                            Frequently asked questions
+                        </h2>
 
                     </div>
 
                 </div>
 
 
-            </div>
-
-        </section>
+                <div class="faq-list">
 
 
-        <!-- NOTICE -->
+                    <!-- FAQ 1 -->
+                    <div class="faq-item">
 
-        <section class="notice">
+                        <button
+                            type="button"
+                            class="faq-question"
+                            aria-expanded="false"
+                        >
 
-            <div class="notice-icon">
-                !
-            </div>
+                            <span>
+                                How do I make a deposit?
+                            </span>
 
-            <div>
+                            <span class="faq-icon">
 
-                <h3>
-                    Important
-                </h3>
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M7 10L12 15L17 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </span>
+
+                        </button>
+
+                        <div class="faq-answer">
+
+                            <p>
+                                Open the Deposits section from your
+                                dashboard, select the available payment
+                                method and follow the displayed payment
+                                instructions. Keep your transaction
+                                reference for verification.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FAQ 2 -->
+                    <div class="faq-item">
+
+                        <button
+                            type="button"
+                            class="faq-question"
+                            aria-expanded="false"
+                        >
+
+                            <span>
+                                How do withdrawals work?
+                            </span>
+
+                            <span class="faq-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M7 10L12 15L17 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </span>
+
+                        </button>
+
+                        <div class="faq-answer">
+
+                            <p>
+                                Submit a withdrawal request using the
+                                registered mobile number on your Crown
+                                Cash account. Your request is reviewed
+                                before payment processing.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FAQ 3 -->
+                    <div class="faq-item">
+
+                        <button
+                            type="button"
+                            class="faq-question"
+                            aria-expanded="false"
+                        >
+
+                            <span>
+                                Where can I find my referral link?
+                            </span>
+
+                            <span class="faq-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M7 10L12 15L17 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </span>
+
+                        </button>
+
+                        <div class="faq-answer">
+
+                            <p>
+                                Open the Referrals section from your
+                                dashboard. Your referral code and
+                                referral link are displayed there.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FAQ 4 -->
+                    <div class="faq-item">
+
+                        <button
+                            type="button"
+                            class="faq-question"
+                            aria-expanded="false"
+                        >
+
+                            <span>
+                                What should I do if I forget my password?
+                            </span>
+
+                            <span class="faq-icon">
+
+                                <svg viewBox="0 0 24 24" fill="none">
+
+                                    <path
+                                        d="M7 10L12 15L17 10"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                </svg>
+
+                            </span>
+
+                        </button>
+
+                        <div class="faq-answer">
+
+                            <p>
+                                Use the password recovery option on the
+                                login page if it is available. Never send
+                                your password or PIN to Crown Cash support.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==============================
+                 IMPORTANT NOTICE
+            =============================== -->
+            <section class="important-notice">
+
+                <div class="notice-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <path
+                            d="M12 3L19 6V11C19 15.5 16.2 19.3 12 21C7.8 19.3 5 15.5 5 11V6L12 3Z"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M12 8V12"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="15.5"
+                            r="0.8"
+                            fill="currentColor"
+                        />
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h3>
+                        Important
+                    </h3>
+
+                    <p>
+                        Crown Cash support will never ask for your
+                        password, PIN, OTP or other confidential security
+                        credentials. Always verify payment instructions
+                        through the official platform.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- FOOTER -->
+            <footer class="page-footer">
 
                 <p>
-                    Crown Cash support will never ask for your
-                    password, PIN or other confidential security
-                    credentials. Always verify payment instructions
-                    through the official platform.
+                    © 2026 Crown Cash. All rights reserved.
                 </p>
 
-            </div>
+                <div class="footer-links">
+
+                    <a href="terms.html">
+                        Terms
+                    </a>
+
+                    <a href="privacy.html">
+                        Privacy
+                    </a>
+
+                    <a href="support.html">
+                        Support
+                    </a>
+
+                </div>
+
+            </footer>
 
         </section>
-
 
     </main>
 
 
-    <footer>
-
-        © <span id="year"></span>
-        Crown Cash. All rights reserved.
-
-    </footer>
-
-</div>
-
-
-<script src="support.js"></script>
+    <!-- ==============================
+         JAVASCRIPT
+    =============================== -->
+    <script src="support.js"></script>
 
 </body>
 </html>

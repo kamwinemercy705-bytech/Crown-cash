@@ -1,20 +1,33 @@
-/* ==========================================
+/* ============================================================
    CROWN CASH - REFERRAL TEAM
    File: team.js
-========================================== */
+   ============================================================ */
+
+"use strict";
 
 const API_URL = "https://crown-cash1.onrender.com";
 
-
-// ==========================================
-// PAGE ELEMENTS
-// ==========================================
+/* ============================================================
+   PAGE ELEMENTS
+   ============================================================ */
 
 const referralCodeInput =
     document.getElementById("referralCode");
 
 const referralLinkInput =
     document.getElementById("referralLink");
+
+const copyCodeBtn =
+    document.getElementById("copyCodeBtn");
+
+const copyLinkBtn =
+    document.getElementById("copyLinkBtn");
+
+const shareBtn =
+    document.getElementById("shareBtn");
+
+const copyMessage =
+    document.getElementById("copyMessage");
 
 const totalTeam =
     document.getElementById("totalTeam");
@@ -40,18 +53,20 @@ const level3Income =
 const totalIncome =
     document.getElementById("totalIncome");
 
-const teamMembers =
-    document.getElementById("teamMembers");
+/*
+ * IMPORTANT:
+ * team.html uses id="teamList".
+ */
+const teamList =
+    document.getElementById("teamList");
 
-
-// ==========================================
-// FORMAT MONEY
-// ==========================================
+/* ============================================================
+   FORMAT MONEY
+   ============================================================ */
 
 function formatMoney(amount) {
 
-    const number =
-        Number(amount || 0);
+    const number = Number(amount || 0);
 
     return (
         "UGX " +
@@ -59,10 +74,9 @@ function formatMoney(amount) {
     );
 }
 
-
-// ==========================================
-// ESCAPE HTML
-// ==========================================
+/* ============================================================
+   ESCAPE HTML
+   ============================================================ */
 
 function escapeHtml(value) {
 
@@ -74,53 +88,567 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
+/* ============================================================
+   SHOW COPY MESSAGE
+   ============================================================ */
 
-// ==========================================
-// LOADING STATE
-// ==========================================
+function showCopyMessage(message, success = true) {
 
-function showLoadingState() {
+    const box =
+        document.getElementById("copyMessage");
 
-    if (!teamMembers) {
+    if (!box) {
         return;
     }
 
-    teamMembers.innerHTML = `
-        <div class="loading-state">
+    box.textContent = message;
 
-            <div class="loading-icon">
+    box.classList.remove(
+        "show",
+        "success",
+        "error"
+    );
+
+    box.classList.add(
+        success ? "success" : "error"
+    );
+
+    /*
+     * Force animation restart.
+     */
+    void box.offsetWidth;
+
+    box.classList.add("show");
+
+    clearTimeout(
+        window.crownCashCopyMessageTimer
+    );
+
+    window.crownCashCopyMessageTimer =
+        setTimeout(() => {
+
+            box.classList.remove("show");
+
+        }, 3000);
+}
+
+/* ============================================================
+   COPY TEXT
+   ============================================================ */
+
+async function copyText(text) {
+
+    const value =
+        String(text || "").trim();
+
+    if (!value) {
+        return false;
+    }
+
+    /*
+     * METHOD 1:
+     * Modern Clipboard API.
+     */
+    try {
+
+        if (
+            navigator.clipboard &&
+            typeof navigator.clipboard.writeText ===
+                "function"
+        ) {
+
+            await navigator.clipboard.writeText(
+                value
+            );
+
+            return true;
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Clipboard API failed:",
+            error
+        );
+    }
+
+    /*
+     * METHOD 2:
+     * Older browser fallback.
+     */
+    try {
+
+        const textarea =
+            document.createElement("textarea");
+
+        textarea.value = value;
+
+        textarea.setAttribute(
+            "readonly",
+            ""
+        );
+
+        textarea.style.position =
+            "fixed";
+
+        textarea.style.left =
+            "-99999px";
+
+        textarea.style.top =
+            "0";
+
+        textarea.style.width =
+            "1px";
+
+        textarea.style.height =
+            "1px";
+
+        textarea.style.opacity =
+            "0";
+
+        textarea.style.pointerEvents =
+            "none";
+
+        document.body.appendChild(
+            textarea
+        );
+
+        textarea.focus();
+
+        textarea.select();
+
+        textarea.setSelectionRange(
+            0,
+            textarea.value.length
+        );
+
+        const successful =
+            document.execCommand("copy");
+
+        document.body.removeChild(
+            textarea
+        );
+
+        return successful === true;
+
+    } catch (error) {
+
+        console.error(
+            "Copy fallback failed:",
+            error
+        );
+
+        return false;
+    }
+}
+
+/* ============================================================
+   COPY REFERRAL CODE
+   ============================================================ */
+
+async function copyReferralCode() {
+
+    if (!referralCodeInput) {
+
+        showCopyMessage(
+            "Referral code field was not found.",
+            false
+        );
+
+        return;
+    }
+
+    const code =
+        referralCodeInput.value.trim();
+
+    if (
+        !code ||
+        code.toLowerCase() === "loading..."
+    ) {
+
+        showCopyMessage(
+            "Your referral code is still loading.",
+            false
+        );
+
+        return;
+    }
+
+    const copied =
+        await copyText(code);
+
+    if (copied) {
+
+        showCopyMessage(
+            "Referral code copied successfully!",
+            true
+        );
+
+        /*
+         * Change button temporarily.
+         */
+        if (copyCodeBtn) {
+
+            const original =
+                copyCodeBtn.innerHTML;
+
+            copyCodeBtn.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                <span>Copied!</span>
+            `;
+
+            copyCodeBtn.classList.add(
+                "copied"
+            );
+
+            setTimeout(() => {
+
+                copyCodeBtn.innerHTML =
+                    original;
+
+                copyCodeBtn.classList.remove(
+                    "copied"
+                );
+
+            }, 2000);
+        }
+
+    } else {
+
+        /*
+         * If browser blocks clipboard,
+         * select the input so the user can
+         * manually copy it.
+         */
+        referralCodeInput.focus();
+
+        referralCodeInput.select();
+
+        showCopyMessage(
+            "Copy was blocked by your browser. The code has been selected; tap Copy.",
+            false
+        );
+    }
+}
+
+/* ============================================================
+   COPY REFERRAL LINK
+   ============================================================ */
+
+async function copyReferralLink() {
+
+    if (!referralLinkInput) {
+
+        showCopyMessage(
+            "Referral link field was not found.",
+            false
+        );
+
+        return;
+    }
+
+    const link =
+        referralLinkInput.value.trim();
+
+    if (
+        !link ||
+        link.toLowerCase() === "loading..."
+    ) {
+
+        showCopyMessage(
+            "Your referral link is still loading.",
+            false
+        );
+
+        return;
+    }
+
+    const copied =
+        await copyText(link);
+
+    if (copied) {
+
+        showCopyMessage(
+            "Referral link copied successfully!",
+            true
+        );
+
+        if (copyLinkBtn) {
+
+            const original =
+                copyLinkBtn.innerHTML;
+
+            copyLinkBtn.innerHTML = `
+                <i class="fa-solid fa-check"></i>
+                <span>Copied!</span>
+            `;
+
+            copyLinkBtn.classList.add(
+                "copied"
+            );
+
+            setTimeout(() => {
+
+                copyLinkBtn.innerHTML =
+                    original;
+
+                copyLinkBtn.classList.remove(
+                    "copied"
+                );
+
+            }, 2000);
+        }
+
+    } else {
+
+        referralLinkInput.focus();
+
+        referralLinkInput.select();
+
+        showCopyMessage(
+            "Copy was blocked by your browser. The link has been selected; tap Copy.",
+            false
+        );
+    }
+}
+
+/* ============================================================
+   SHARE REFERRAL LINK
+   ============================================================ */
+
+async function shareReferralLink() {
+
+    const link =
+        referralLinkInput
+            ? referralLinkInput.value.trim()
+            : "";
+
+    const code =
+        referralCodeInput
+            ? referralCodeInput.value.trim()
+            : "";
+
+    if (
+        !link ||
+        link.toLowerCase() === "loading..."
+    ) {
+
+        showCopyMessage(
+            "Your referral link is still loading.",
+            false
+        );
+
+        return;
+    }
+
+    /*
+     * Native Android / browser sharing.
+     */
+    if (
+        navigator.share &&
+        typeof navigator.share === "function"
+    ) {
+
+        try {
+
+            await navigator.share({
+
+                title:
+                    "Join Crown Cash",
+
+                text:
+                    code
+                        ? `Join Crown Cash using my referral code ${code}.`
+                        : "Join Crown Cash using my referral link.",
+
+                url:
+                    link
+            });
+
+            return;
+
+        } catch (error) {
+
+            /*
+             * User simply cancelled sharing.
+             */
+            if (
+                error &&
+                error.name === "AbortError"
+            ) {
+                return;
+            }
+
+            console.warn(
+                "Native sharing failed:",
+                error
+            );
+        }
+    }
+
+    /*
+     * WhatsApp fallback.
+     */
+    const message =
+        "Join Crown Cash using my referral link:\n\n" +
+        link;
+
+    const whatsappUrl =
+        "https://wa.me/?text=" +
+        encodeURIComponent(message);
+
+    window.open(
+        whatsappUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+/* ============================================================
+   SHOW TEAM LOADING
+   ============================================================ */
+
+function showLoadingState() {
+
+    if (!teamList) {
+        return;
+    }
+
+    teamList.innerHTML = `
+
+        <div class="loading-team">
+
+            <div class="loading-spinner"></div>
+
+            <p>Loading team members...</p>
+
+        </div>
+
+    `;
+}
+
+/* ============================================================
+   SHOW TEAM ERROR
+   ============================================================ */
+
+function showTeamError(message) {
+
+    if (!teamList) {
+        return;
+    }
+
+    teamList.innerHTML = `
+
+        <div class="error-state">
+
+            <div class="error-icon">
+
                 <svg
                     viewBox="0 0 24 24"
-                    width="28"
-                    height="28"
+                    width="30"
+                    height="30"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.8"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    aria-hidden="true"
                 >
-                    <path d="M12 2v4"></path>
-                    <path d="M12 18v4"></path>
-                    <path d="m4.93 4.93 2.83 2.83"></path>
-                    <path d="m16.24 16.24 2.83 2.83"></path>
-                    <path d="M2 12h4"></path>
-                    <path d="M18 12h4"></path>
-                    <path d="m4.93 19.07 2.83-2.83"></path>
-                    <path d="m16.24 7.76 2.83-2.83"></path>
+                    <path d="M10.3 3.2 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0Z"></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
                 </svg>
+
             </div>
 
-            <p>Loading your team...</p>
+            <h3>
+                Unable to load your team
+            </h3>
+
+            <p>
+                ${escapeHtml(
+                    message ||
+                    "Please try again."
+                )}
+            </p>
+
+            <button
+                type="button"
+                class="retry-btn"
+                id="retryTeamBtn"
+            >
+                <i class="fa-solid fa-rotate-right"></i>
+                Try Again
+            </button>
 
         </div>
+
+    `;
+
+    const retryButton =
+        document.getElementById(
+            "retryTeamBtn"
+        );
+
+    if (retryButton) {
+
+        retryButton.addEventListener(
+            "click",
+            loadReferralData
+        );
+    }
+}
+
+/* ============================================================
+   SHOW EMPTY TEAM
+   ============================================================ */
+
+function showEmptyTeam() {
+
+    if (!teamList) {
+        return;
+    }
+
+    teamList.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    width="32"
+                    height="32"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+
+            </div>
+
+            <h3>
+                No Team Members Yet
+            </h3>
+
+            <p>
+                Share your referral link to start
+                building your Crown Cash team.
+            </p>
+
+        </div>
+
     `;
 }
 
-
-// ==========================================
-// LOAD REFERRAL DATA
-// ==========================================
+/* ============================================================
+   LOAD REFERRAL DATA
+   ============================================================ */
 
 async function loadReferralData() {
 
@@ -145,49 +673,47 @@ async function loadReferralData() {
                 }
             );
 
-
-        let data;
+        let data = null;
 
         try {
 
             data =
                 await response.json();
 
-        } catch (jsonError) {
+        } catch (error) {
 
             throw new Error(
                 "The referral server returned an invalid response."
             );
         }
 
-
         console.log(
             "Crown Cash referral response:",
             data
         );
 
-
         if (!response.ok) {
 
             throw new Error(
-                data.message ||
+                data?.message ||
                 `Referral request failed (${response.status}).`
             );
         }
 
-
-        if (!data.success) {
+        if (
+            !data ||
+            data.success !== true
+        ) {
 
             throw new Error(
-                data.message ||
+                data?.message ||
                 "Unable to load referral data."
             );
         }
 
-
-        // ==================================
-        // REFERRAL CODE
-        // ==================================
+        /* ====================================================
+           REFERRAL CODE
+           ==================================================== */
 
         const code =
             String(
@@ -196,17 +722,15 @@ async function loadReferralData() {
                 ""
             ).trim();
 
-
         if (referralCodeInput) {
 
             referralCodeInput.value =
-                code;
+                code || "Unavailable";
         }
 
-
-        // ==================================
-        // REFERRAL LINK
-        // ==================================
+        /* ====================================================
+           REFERRAL LINK
+           ==================================================== */
 
         let link =
             String(
@@ -215,31 +739,34 @@ async function loadReferralData() {
                 ""
             ).trim();
 
-
-        if (!link && code) {
+        /*
+         * Build the link ourselves if backend
+         * doesn't return one.
+         */
+        if (
+            !link &&
+            code
+        ) {
 
             link =
                 "https://crown-cash.vercel.app/register.html?ref=" +
                 encodeURIComponent(code);
         }
 
-
         if (referralLinkInput) {
 
             referralLinkInput.value =
-                link;
+                link || "Unavailable";
         }
 
-
-        // ==================================
-        // COUNTS
-        // ==================================
+        /* ====================================================
+           COUNTS
+           ==================================================== */
 
         const counts =
             data.counts ||
             data.team_counts ||
             {};
-
 
         const l1 =
             Number(
@@ -248,14 +775,12 @@ async function loadReferralData() {
                 0
             );
 
-
         const l2 =
             Number(
                 counts.l2 ??
                 counts.level2 ??
                 0
             );
-
 
         const l3 =
             Number(
@@ -264,47 +789,44 @@ async function loadReferralData() {
                 0
             );
 
-
         const total =
             Number(
                 counts.total ??
                 (l1 + l2 + l3)
             );
 
-
         if (totalTeam) {
+
             totalTeam.textContent =
                 total;
         }
 
-
         if (level1Count) {
+
             level1Count.textContent =
                 l1;
         }
 
-
         if (level2Count) {
+
             level2Count.textContent =
                 l2;
         }
 
-
         if (level3Count) {
+
             level3Count.textContent =
                 l3;
         }
 
-
-        // ==================================
-        // EARNINGS
-        // ==================================
+        /* ====================================================
+           EARNINGS
+           ==================================================== */
 
         const earnings =
             data.earnings ||
             data.referral_earnings ||
             {};
-
 
         const incomeL1 =
             Number(
@@ -313,7 +835,6 @@ async function loadReferralData() {
                 0
             );
 
-
         const incomeL2 =
             Number(
                 earnings.l2 ??
@@ -321,14 +842,12 @@ async function loadReferralData() {
                 0
             );
 
-
         const incomeL3 =
             Number(
                 earnings.l3 ??
                 earnings.level3 ??
                 0
             );
-
 
         const incomeTotal =
             Number(
@@ -340,13 +859,11 @@ async function loadReferralData() {
                 )
             );
 
-
         if (level1Income) {
 
             level1Income.textContent =
                 formatMoney(incomeL1);
         }
-
 
         if (level2Income) {
 
@@ -354,13 +871,11 @@ async function loadReferralData() {
                 formatMoney(incomeL2);
         }
 
-
         if (level3Income) {
 
             level3Income.textContent =
                 formatMoney(incomeL3);
         }
-
 
         if (totalIncome) {
 
@@ -368,19 +883,66 @@ async function loadReferralData() {
                 formatMoney(incomeTotal);
         }
 
+        /* ====================================================
+           COMMISSION STRUCTURE
+           ==================================================== */
 
-        // ==================================
-        // MEMBERS
-        // ==================================
+        const commission =
+            data.commission_structure ||
+            {};
+
+        const level1Percent =
+            document.getElementById(
+                "level1Percent"
+            );
+
+        const level2Percent =
+            document.getElementById(
+                "level2Percent"
+            );
+
+        const level3Percent =
+            document.getElementById(
+                "level3Percent"
+            );
+
+        if (level1Percent) {
+
+            level1Percent.textContent =
+                Number(
+                    commission.l1 ??
+                    15
+                ) + "%";
+        }
+
+        if (level2Percent) {
+
+            level2Percent.textContent =
+                Number(
+                    commission.l2 ??
+                    5
+                ) + "%";
+        }
+
+        if (level3Percent) {
+
+            level3Percent.textContent =
+                Number(
+                    commission.l3 ??
+                    2
+                ) + "%";
+        }
+
+        /* ====================================================
+           TEAM MEMBERS
+           ==================================================== */
 
         const members =
             Array.isArray(data.members)
                 ? data.members
                 : [];
 
-
         renderMembers(members);
-
 
     } catch (error) {
 
@@ -389,186 +951,74 @@ async function loadReferralData() {
             error
         );
 
-
-        if (teamMembers) {
-
-            teamMembers.innerHTML = `
-
-                <div class="error-state">
-
-                    <div class="error-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="30"
-                            height="30"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M10.3 3.2 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0Z"></path>
-                            <path d="M12 9v4"></path>
-                            <path d="M12 17h.01"></path>
-                        </svg>
-
-                    </div>
-
-                    <h3>
-                        Unable to load your team
-                    </h3>
-
-                    <p>
-                        ${
-                            escapeHtml(
-                                error.message ||
-                                "Please refresh the page and try again."
-                            )
-                        }
-                    </p>
-
-                    <button
-                        type="button"
-                        class="retry-btn"
-                        onclick="loadReferralData()"
-                    >
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
-                            <path d="M21 3v6h-6"></path>
-                        </svg>
-
-                        Try Again
-
-                    </button>
-
-                </div>
-            `;
-        }
+        showTeamError(
+            error.message ||
+            "Unable to load team members."
+        );
     }
 }
 
-
-// ==========================================
-// RENDER MEMBERS
-// ==========================================
+/* ============================================================
+   RENDER TEAM MEMBERS
+   ============================================================ */
 
 function renderMembers(members) {
 
-    if (!teamMembers) {
+    if (!teamList) {
         return;
     }
-
 
     if (
         !Array.isArray(members) ||
         members.length === 0
     ) {
 
-        teamMembers.innerHTML = `
-
-            <div class="empty-state">
-
-                <div class="empty-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        width="30"
-                        height="30"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-
-                </div>
-
-                <h3>
-                    No Team Members Yet
-                </h3>
-
-                <p>
-                    Share your referral link to start
-                    building your Crown Cash team.
-                </p>
-
-            </div>
-        `;
+        showEmptyTeam();
 
         return;
     }
 
-
-    teamMembers.innerHTML = "";
-
+    teamList.innerHTML = "";
 
     members.forEach(member => {
 
         const name =
             String(
                 member.name ||
+                member.full_name ||
                 "Crown Cash Member"
-            );
-
+            ).trim();
 
         const level =
             String(
                 member.level ||
+                member.referral_level ||
                 "L1"
-            );
-
+            ).toUpperCase();
 
         const phone =
             String(
                 member.phone ||
+                member.phone_number ||
                 ""
+            ).trim();
+
+        const status =
+            String(
+                member.status ||
+                "active"
             );
 
-
-        const initials =
-            name
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 2)
-                .map(
-                    word =>
-                        word
-                            .charAt(0)
-                            .toUpperCase()
-                )
-                .join("");
-
-
         const card =
-            document.createElement("div");
-
+            document.createElement(
+                "div"
+            );
 
         card.className =
             "team-member-card";
 
-
         card.dataset.level =
             level;
-
 
         card.innerHTML = `
 
@@ -576,8 +1026,8 @@ function renderMembers(members) {
 
                 <svg
                     viewBox="0 0 24 24"
-                    width="22"
-                    height="22"
+                    width="23"
+                    height="23"
                     fill="none"
                     stroke="currentColor"
                     stroke-width="1.7"
@@ -597,525 +1047,135 @@ function renderMembers(members) {
                     ${escapeHtml(name)}
                 </h4>
 
-                ${
-                    phone
-                        ? `
-                            <p>
-                                ${escapeHtml(phone)}
-                            </p>
-                        `
-                        : `
-                            <p>
-                                Crown Cash Member
-                            </p>
-                        `
-                }
+                <p>
+                    ${
+                        phone
+                            ? escapeHtml(phone)
+                            : "Crown Cash Member"
+                    }
+                </p>
 
             </div>
 
-            <span class="member-level">
-                ${escapeHtml(level)}
-            </span>
+            <div class="member-meta">
+
+                <span class="member-level">
+                    ${escapeHtml(level)}
+                </span>
+
+                <small>
+                    ${escapeHtml(status)}
+                </small>
+
+            </div>
 
         `;
 
-
-        teamMembers.appendChild(card);
-
+        teamList.appendChild(card);
     });
 
-
-    setupFilters();
+    applyCurrentFilter();
 }
 
-
-// ==========================================
-// FILTERS
-// ==========================================
+/* ============================================================
+   FILTERS
+   ============================================================ */
 
 function setupFilters() {
 
     const filterButtons =
         document.querySelectorAll(
-            "[data-filter]"
+            ".filter-btn[data-level]"
         );
-
 
     if (!filterButtons.length) {
         return;
     }
 
-
     filterButtons.forEach(button => {
 
-        // Prevent duplicate listeners
         if (
-            button.dataset.filterReady === "true"
+            button.dataset.filterReady ===
+            "true"
         ) {
             return;
         }
 
-
         button.dataset.filterReady =
             "true";
 
-
         button.addEventListener(
             "click",
-            () => {
+            function () {
 
                 filterButtons.forEach(btn => {
 
                     btn.classList.remove(
                         "active"
                     );
-
                 });
 
-
-                button.classList.add(
+                this.classList.add(
                     "active"
                 );
 
-
-                const filter =
-                    button.dataset.filter ||
-                    "all";
-
-
-                const cards =
-                    document.querySelectorAll(
-                        ".team-member-card"
-                    );
-
-
-                cards.forEach(card => {
-
-                    if (
-                        filter === "all" ||
-                        card.dataset.level === filter
-                    ) {
-
-                        card.style.display =
-                            "flex";
-
-                    } else {
-
-                        card.style.display =
-                            "none";
-                    }
-
-                });
-
+                applyCurrentFilter();
             }
         );
-
     });
 }
 
+/* ============================================================
+   APPLY CURRENT FILTER
+   ============================================================ */
 
-// ==========================================
-// COPY TEXT
-// ==========================================
+function applyCurrentFilter() {
 
-async function copyText(text) {
-
-    const value =
-        String(text || "").trim();
-
-
-    if (!value) {
-
-        showCopyMessage(
-            "Nothing to copy."
+    const activeButton =
+        document.querySelector(
+            ".filter-btn.active[data-level]"
         );
 
-        return false;
-    }
+    const filter =
+        activeButton
+            ? activeButton.dataset.level
+            : "all";
 
+    const cards =
+        document.querySelectorAll(
+            ".team-member-card"
+        );
 
-    // --------------------------------------
-    // Modern clipboard
-    // --------------------------------------
+    cards.forEach(card => {
 
-    try {
+        const cardLevel =
+            String(
+                card.dataset.level ||
+                ""
+            ).toUpperCase();
 
         if (
-            navigator.clipboard &&
-            window.isSecureContext
+            filter === "all" ||
+            cardLevel ===
+                String(filter).toUpperCase()
         ) {
 
-            await navigator.clipboard.writeText(
-                value
-            );
+            card.style.display =
+                "flex";
 
-            return true;
+        } else {
+
+            card.style.display =
+                "none";
         }
-
-    } catch (error) {
-
-        console.warn(
-            "Clipboard API failed:",
-            error
-        );
-    }
-
-
-    // --------------------------------------
-    // Fallback
-    // --------------------------------------
-
-    try {
-
-        const textarea =
-            document.createElement(
-                "textarea"
-            );
-
-
-        textarea.value =
-            value;
-
-
-        textarea.setAttribute(
-            "readonly",
-            ""
-        );
-
-
-        textarea.style.position =
-            "fixed";
-
-        textarea.style.left =
-            "-9999px";
-
-        textarea.style.top =
-            "0";
-
-        textarea.style.opacity =
-            "0";
-
-        textarea.style.pointerEvents =
-            "none";
-
-
-        document.body.appendChild(
-            textarea
-        );
-
-
-        textarea.focus();
-
-        textarea.select();
-
-        textarea.setSelectionRange(
-            0,
-            textarea.value.length
-        );
-
-
-        const copied =
-            document.execCommand(
-                "copy"
-            );
-
-
-        textarea.remove();
-
-
-        if (copied) {
-            return true;
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Fallback copy failed:",
-            error
-        );
-    }
-
-
-    return false;
+    });
 }
 
-
-// ==========================================
-// COPY REFERRAL CODE
-// ==========================================
-
-async function copyReferralCode() {
-
-    const code =
-        referralCodeInput
-            ? referralCodeInput.value.trim()
-            : "";
-
-
-    if (!code) {
-
-        showCopyMessage(
-            "Your referral code is not available yet."
-        );
-
-        return;
-    }
-
-
-    const copied =
-        await copyText(code);
-
-
-    if (copied) {
-
-        showCopyMessage(
-            "Referral code copied successfully."
-        );
-
-    } else {
-
-        showCopyMessage(
-            "Copy failed. Please select the code and copy it manually."
-        );
-    }
-}
-
-
-// ==========================================
-// COPY REFERRAL LINK
-// ==========================================
-
-async function copyReferralLink() {
-
-    const link =
-        referralLinkInput
-            ? referralLinkInput.value.trim()
-            : "";
-
-
-    if (!link) {
-
-        showCopyMessage(
-            "Your referral link is not available yet."
-        );
-
-        return;
-    }
-
-
-    const copied =
-        await copyText(link);
-
-
-    if (copied) {
-
-        showCopyMessage(
-            "Referral link copied successfully."
-        );
-
-    } else {
-
-        showCopyMessage(
-            "Copy failed. Please select the link and copy it manually."
-        );
-    }
-}
-
-
-// ==========================================
-// COPY MESSAGE
-// ==========================================
-
-function showCopyMessage(message) {
-
-    let messageBox =
-        document.getElementById(
-            "copyMessage"
-        );
-
-
-    if (!messageBox) {
-
-        messageBox =
-            document.createElement(
-                "div"
-            );
-
-
-        messageBox.id =
-            "copyMessage";
-
-
-        messageBox.className =
-            "copy-message";
-
-
-        document.body.appendChild(
-            messageBox
-        );
-    }
-
-
-    messageBox.innerHTML = `
-
-        <span class="copy-message-icon">
-
-            <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-            >
-                <path d="m9 12 2 2 4-4"></path>
-                <circle cx="12" cy="12" r="9"></circle>
-            </svg>
-
-        </span>
-
-        <span>
-            ${escapeHtml(message)}
-        </span>
-
-    `;
-
-
-    messageBox.classList.remove(
-        "show"
-    );
-
-
-    // Restart animation
-    void messageBox.offsetWidth;
-
-
-    messageBox.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        window.copyMessageTimer
-    );
-
-
-    window.copyMessageTimer =
-        setTimeout(() => {
-
-            messageBox.classList.remove(
-                "show"
-            );
-
-        }, 2800);
-}
-
-
-// ==========================================
-// SHARE REFERRAL LINK
-// ==========================================
-
-async function shareReferralLink() {
-
-    const link =
-        referralLinkInput
-            ? referralLinkInput.value.trim()
-            : "";
-
-
-    const code =
-        referralCodeInput
-            ? referralCodeInput.value.trim()
-            : "";
-
-
-    if (!link) {
-
-        showCopyMessage(
-            "Your referral link is not available yet."
-        );
-
-        return;
-    }
-
-
-    // --------------------------------------
-    // Native mobile/browser sharing
-    // --------------------------------------
-
-    if (
-        navigator.share &&
-        window.isSecureContext
-    ) {
-
-        try {
-
-            await navigator.share({
-
-                title:
-                    "Join Crown Cash",
-
-                text:
-                    code
-                        ? `Join Crown Cash using my referral code ${code}.`
-                        : "Join Crown Cash using my referral link.",
-
-                url:
-                    link
-
-            });
-
-
-            return;
-
-        } catch (error) {
-
-            if (
-                error &&
-                error.name === "AbortError"
-            ) {
-                return;
-            }
-
-
-            console.warn(
-                "Native share failed:",
-                error
-            );
-        }
-    }
-
-
-    // --------------------------------------
-    // WhatsApp fallback
-    // --------------------------------------
-
-    const message =
-        "Join Crown Cash using my referral link:\n" +
-        link;
-
-
-    const whatsappUrl =
-        "https://wa.me/?text=" +
-        encodeURIComponent(message);
-
-
-    window.open(
-        whatsappUrl,
-        "_blank",
-        "noopener,noreferrer"
-    );
-}
-
-
-// ==========================================
-// LOGOUT
-// ==========================================
-
-async function logoutUserFromTeam() {
+/* ============================================================
+   LOGOUT
+   ============================================================ */
+
+async function logoutUser() {
 
     try {
 
@@ -1129,34 +1189,41 @@ async function logoutUserFromTeam() {
 
     } catch (error) {
 
-        console.error(
-            "Logout error:",
+        console.warn(
+            "Logout request failed:",
             error
         );
     }
 
+    try {
 
-    localStorage.removeItem(
-        "crownCashUser"
-    );
+        localStorage.removeItem(
+            "crownCashUser"
+        );
 
-    localStorage.removeItem(
-        "user"
-    );
+        localStorage.removeItem(
+            "user"
+        );
 
-    localStorage.removeItem(
-        "loggedIn"
-    );
+        localStorage.removeItem(
+            "loggedIn"
+        );
 
+    } catch (error) {
+
+        console.warn(
+            "Could not clear local storage:",
+            error
+        );
+    }
 
     window.location.href =
         "/login.html";
 }
 
-
-// ==========================================
-// MOBILE MENU
-// ==========================================
+/* ============================================================
+   MOBILE MENU
+   ============================================================ */
 
 function setupMobileMenu() {
 
@@ -1165,67 +1232,181 @@ function setupMobileMenu() {
             "menuToggle"
         );
 
-
     const sidebar =
-        document.querySelector(
-            ".sidebar"
+        document.getElementById(
+            "sidebar"
         );
 
+    const closeSidebar =
+        document.getElementById(
+            "closeSidebar"
+        );
+
+    const overlay =
+        document.getElementById(
+            "sidebarOverlay"
+        );
 
     if (
-        !menuToggle ||
-        !sidebar
+        menuToggle &&
+        sidebar
     ) {
-        return;
+
+        menuToggle.addEventListener(
+            "click",
+            function () {
+
+                sidebar.classList.add(
+                    "active"
+                );
+
+                if (overlay) {
+
+                    overlay.classList.add(
+                        "active"
+                    );
+                }
+            }
+        );
     }
 
+    if (closeSidebar) {
 
-    if (
-        menuToggle.dataset.menuReady ===
-        "true"
-    ) {
-        return;
+        closeSidebar.addEventListener(
+            "click",
+            closeMobileSidebar
+        );
     }
 
+    if (overlay) {
 
-    menuToggle.dataset.menuReady =
-        "true";
-
-
-    menuToggle.addEventListener(
-        "click",
-        () => {
-
-            sidebar.classList.toggle(
-                "active"
-            );
-
-        }
-    );
+        overlay.addEventListener(
+            "click",
+            closeMobileSidebar
+        );
+    }
 }
 
+function closeMobileSidebar() {
 
-// ==========================================
-// START
-// ==========================================
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+    const overlay =
+        document.getElementById(
+            "sidebarOverlay"
+        );
 
-        setupMobileMenu();
+    if (sidebar) {
 
-        setupFilters();
-
-        loadReferralData();
-
+        sidebar.classList.remove(
+            "active"
+        );
     }
-);
 
+    if (overlay) {
 
-// ==========================================
-// GLOBAL FUNCTIONS
-// ==========================================
+        overlay.classList.remove(
+            "active"
+        );
+    }
+}
+
+/* ============================================================
+   BUTTON EVENTS
+   ============================================================ */
+
+function setupButtonEvents() {
+
+    /*
+     * COPY REFERRAL CODE
+     */
+    if (copyCodeBtn) {
+
+        copyCodeBtn.addEventListener(
+            "click",
+            copyReferralCode
+        );
+    }
+
+    /*
+     * COPY REFERRAL LINK
+     */
+    if (copyLinkBtn) {
+
+        copyLinkBtn.addEventListener(
+            "click",
+            copyReferralLink
+        );
+    }
+
+    /*
+     * SHARE
+     */
+    if (shareBtn) {
+
+        shareBtn.addEventListener(
+            "click",
+            shareReferralLink
+        );
+    }
+
+    /*
+     * LOGOUT
+     */
+    const logoutBtn =
+        document.getElementById(
+            "logoutBtn"
+        );
+
+    if (logoutBtn) {
+
+        logoutBtn.addEventListener(
+            "click",
+            logoutUser
+        );
+    }
+}
+
+/* ============================================================
+   START PAGE
+   ============================================================ */
+
+function initializeReferralPage() {
+
+    setupMobileMenu();
+
+    setupButtonEvents();
+
+    setupFilters();
+
+    loadReferralData();
+}
+
+/* ============================================================
+   DOM READY
+   ============================================================ */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeReferralPage
+    );
+
+} else {
+
+    initializeReferralPage();
+}
+
+/* ============================================================
+   GLOBAL FUNCTIONS
+   ============================================================ */
 
 window.loadReferralData =
     loadReferralData;
@@ -1239,5 +1420,5 @@ window.copyReferralLink =
 window.shareReferralLink =
     shareReferralLink;
 
-window.logoutUserFromTeam =
-    logoutUserFromTeam;
+window.logoutUser =
+    logoutUser;

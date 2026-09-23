@@ -1,6 +1,8 @@
 /* =========================================================
    CROWN CASH - WITHDRAWAL PAGE
-   ========================================================= */
+   Advanced Fintech UI
+   Gold + Pink + Purple + Maroon
+========================================================= */
 
 * {
     margin: 0;
@@ -9,9 +11,11 @@
 }
 
 :root {
-    --bg: #080611;
-    --card: #12101d;
-    --card-light: #181526;
+    --bg: #07050d;
+    --bg-two: #0c0815;
+
+    --card: rgba(18, 14, 30, 0.92);
+    --card-light: #191329;
 
     --maroon: #7b1028;
     --maroon-light: #a51c3c;
@@ -20,181 +24,353 @@
     --gold-light: #ffe28a;
 
     --pink: #ff3f91;
+    --pink-light: #ff78b3;
+
     --purple: #8b4dff;
+    --purple-light: #b47cff;
 
     --text: #ffffff;
     --muted: #aaa5b8;
+    --muted-light: #d1cbd9;
 
     --success: #28d17c;
     --danger: #ff5577;
 
     --border: rgba(255, 255, 255, 0.08);
+
+    --shadow:
+        0 25px 70px rgba(0, 0, 0, 0.40);
+
+    --gold-glow:
+        0 0 25px rgba(244, 197, 66, 0.22);
+
+    --pink-glow:
+        0 0 25px rgba(255, 63, 145, 0.22);
+
+    --purple-glow:
+        0 0 25px rgba(139, 77, 255, 0.22);
 }
 
 
 /* =========================================================
    BODY
-   ========================================================= */
+========================================================= */
 
 body {
+    min-height: 100vh;
+
     font-family:
+        Inter,
+        "Segoe UI",
         Arial,
         Helvetica,
         sans-serif;
 
-    background:
-        radial-gradient(
-            circle at top right,
-            rgba(123, 16, 40, 0.30),
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at bottom left,
-            rgba(139, 77, 255, 0.14),
-            transparent 35%
-        ),
-        var(--bg);
-
     color: var(--text);
 
-    min-height: 100vh;
+    background:
+        radial-gradient(
+            circle at 90% 0%,
+            rgba(123, 16, 40, 0.34),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 0% 50%,
+            rgba(139, 77, 255, 0.14),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 70% 80%,
+            rgba(255, 63, 145, 0.08),
+            transparent 28%
+        ),
+        linear-gradient(
+            145deg,
+            var(--bg),
+            var(--bg-two)
+        );
+
+    overflow-x: hidden;
 }
 
 
 /* =========================================================
-   PAGE
-   ========================================================= */
+   SELECTION
+========================================================= */
 
-.withdraw-page {
-    min-height: 100vh;
+::selection {
+    background: rgba(255, 63, 145, 0.35);
+    color: white;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #080611;
+}
+
+::-webkit-scrollbar-thumb {
+    background:
+        linear-gradient(
+            180deg,
+            var(--purple),
+            var(--pink)
+        );
+
+    border-radius: 20px;
 }
 
 
 /* =========================================================
    HEADER
-   ========================================================= */
+========================================================= */
 
 .withdraw-header {
     width: 100%;
 
-    padding: 22px 7%;
+    padding: 18px 6%;
 
     display: flex;
 
     align-items: center;
 
-    gap: 18px;
-
-    border-bottom:
-        1px solid var(--border);
-
-    background:
-        rgba(8, 6, 17, 0.85);
-
-    backdrop-filter: blur(14px);
+    gap: 25px;
 
     position: sticky;
 
     top: 0;
 
-    z-index: 20;
-}
+    z-index: 100;
 
+    background:
+        rgba(7, 5, 13, 0.86);
 
-.withdraw-header h1 {
-    font-size: 26px;
+    border-bottom:
+        1px solid var(--border);
 
-    margin-bottom: 5px;
-}
+    backdrop-filter:
+        blur(22px);
 
-
-.withdraw-header p {
-    color: var(--muted);
-
-    font-size: 14px;
+    -webkit-backdrop-filter:
+        blur(22px);
 }
 
 
 /* =========================================================
-   BACK BUTTON
-   ========================================================= */
+   BACK LINK
+========================================================= */
 
-.back-btn {
-    width: 45px;
-
-    height: 45px;
-
-    border-radius: 50%;
-
-    display: flex;
+.back-link {
+    display: inline-flex;
 
     align-items: center;
 
-    justify-content: center;
+    gap: 10px;
+
+    color: var(--muted-light);
 
     text-decoration: none;
 
-    color: white;
+    font-size: 13px;
 
-    font-size: 24px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--maroon),
-            #4d091a
-        );
-
-    border:
-        1px solid rgba(244, 197, 66, 0.35);
+    font-weight: 700;
 
     transition:
         0.25s ease;
 }
 
+.back-link:hover {
+    color: white;
 
-.back-btn:hover {
-    transform: translateX(-3px);
+    transform:
+        translateX(-3px);
+}
+
+
+/* =========================================================
+   BACK ICON
+========================================================= */
+
+.back-icon {
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(244, 197, 66, 0.18),
+            rgba(139, 77, 255, 0.16)
+        );
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.28);
 
     box-shadow:
-        0 0 20px
-        rgba(244, 197, 66, 0.20);
+        var(--gold-glow);
+
+    transition:
+        0.25s ease;
+}
+
+.back-link:hover .back-icon {
+    border-color:
+        rgba(244, 197, 66, 0.60);
+
+    box-shadow:
+        0 0 28px
+        rgba(244, 197, 66, 0.30);
+}
+
+.back-icon svg {
+    width: 21px;
+    height: 21px;
+
+    fill: none;
+
+    stroke: var(--gold-light);
+
+    stroke-width: 2;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   HEADER TITLE
+========================================================= */
+
+.header-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+.header-title h1 {
+    font-size: 25px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.4px;
+}
+
+.header-title p {
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   HEADER ICON
+========================================================= */
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(244, 197, 66, 0.20),
+            rgba(255, 63, 145, 0.17),
+            rgba(139, 77, 255, 0.17)
+        );
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.30);
+
+    box-shadow:
+        0 0 30px
+        rgba(255, 63, 145, 0.14);
+}
+
+.header-icon svg {
+    width: 26px;
+    height: 26px;
+
+    fill: none;
+
+    stroke: var(--gold-light);
+
+    stroke-width: 1.7;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
 }
 
 
 /* =========================================================
    MAIN CONTAINER
-   ========================================================= */
+========================================================= */
 
 .withdraw-container {
-    width: min(680px, 92%);
+    width: min(720px, 92%);
 
-    margin: 35px auto 60px;
+    margin:
+        34px auto 70px;
 }
 
 
 /* =========================================================
    BALANCE CARD
-   ========================================================= */
+========================================================= */
 
 .balance-card {
+    position: relative;
+
+    overflow: hidden;
+
     display: flex;
 
     align-items: center;
 
     gap: 18px;
 
-    padding: 22px;
+    padding: 23px;
 
     margin-bottom: 20px;
 
-    border-radius: 20px;
+    min-height: 104px;
+
+    border-radius: 23px;
 
     background:
         linear-gradient(
             135deg,
-            rgba(123, 16, 40, 0.85),
-            rgba(38, 18, 35, 0.95)
+            rgba(123, 16, 40, 0.92),
+            rgba(43, 15, 38, 0.96),
+            rgba(18, 12, 31, 0.98)
         );
 
     border:
@@ -202,213 +378,611 @@ body {
         rgba(244, 197, 66, 0.25);
 
     box-shadow:
-        0 15px 40px
-        rgba(0, 0, 0, 0.30);
+        var(--shadow);
 }
 
+.balance-glow {
+    position: absolute;
 
-.balance-icon {
-    width: 58px;
+    width: 180px;
+    height: 180px;
 
-    height: 58px;
+    right: -80px;
+    top: -100px;
 
-    border-radius: 18px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-size: 28px;
+    border-radius: 50%;
 
     background:
-        rgba(244, 197, 66, 0.14);
+        radial-gradient(
+            circle,
+            rgba(244, 197, 66, 0.18),
+            transparent 70%
+        );
 
-    border:
-        1px solid
-        rgba(244, 197, 66, 0.30);
-}
-
-
-.balance-card span {
-    display: block;
-
-    color: #d4ceda;
-
-    font-size: 13px;
-
-    margin-bottom: 5px;
-}
-
-
-.balance-card h2 {
-    font-size: 24px;
-
-    color: var(--gold-light);
+    pointer-events: none;
 }
 
 
 /* =========================================================
-   WITHDRAW CARD
-   ========================================================= */
+   BALANCE ICON
+========================================================= */
 
-.withdraw-card {
-    padding: 28px;
+.balance-icon {
+    width: 61px;
+    height: 61px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(244, 197, 66, 0.24),
+            rgba(255, 63, 145, 0.13)
+        );
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.38);
+
+    box-shadow:
+        0 0 28px
+        rgba(244, 197, 66, 0.17);
+}
+
+.balance-icon svg {
+    width: 31px;
+    height: 31px;
+
+    fill: none;
+
+    stroke: var(--gold-light);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   BALANCE INFORMATION
+========================================================= */
+
+.balance-information {
+    position: relative;
+
+    z-index: 2;
+}
+
+.balance-information span {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #d4ceda;
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.7px;
+}
+
+.balance-information strong {
+    display: block;
+
+    color: var(--gold-light);
+
+    font-size: 26px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.5px;
+
+    text-shadow:
+        0 0 20px
+        rgba(244, 197, 66, 0.20);
+}
+
+
+/* =========================================================
+   COMMON SECTION HEADING
+========================================================= */
+
+.section-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    margin-bottom: 25px;
+}
+
+.section-heading h2 {
+    font-size: 20px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.2px;
+}
+
+.section-label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: var(--gold);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1.3px;
+}
+
+
+/* =========================================================
+   SECTION ICON
+========================================================= */
+
+.section-heading-icon {
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(139, 77, 255, 0.20),
+            rgba(255, 63, 145, 0.16)
+        );
+
+    border:
+        1px solid
+        rgba(139, 77, 255, 0.30);
+
+    box-shadow:
+        var(--purple-glow);
+}
+
+.section-heading-icon svg {
+    width: 23px;
+    height: 23px;
+
+    fill: none;
+
+    stroke: var(--purple-light);
+
+    stroke-width: 1.7;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   CALCULATOR CARD
+========================================================= */
+
+.calculator-card,
+.withdraw-card,
+.information-card {
+    position: relative;
+
+    padding: 27px;
+
+    margin-bottom: 20px;
 
     border-radius: 24px;
 
     background:
-        rgba(18, 16, 29, 0.92);
+        rgba(18, 14, 30, 0.91);
 
     border:
         1px solid var(--border);
 
     box-shadow:
-        0 20px 60px
-        rgba(0, 0, 0, 0.35);
+        var(--shadow);
 
-    backdrop-filter: blur(15px);
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
 }
 
 
 /* =========================================================
-   HEADING
-   ========================================================= */
+   CALCULATOR GRID
+========================================================= */
 
-.section-heading {
-    margin-bottom: 25px;
+.calculator-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 12px;
 }
 
 
-.section-heading h2 {
-    font-size: 21px;
+/* =========================================================
+   CALCULATOR ITEM
+========================================================= */
 
-    margin-bottom: 7px;
+.calculator-item {
+    min-height: 126px;
+
+    padding: 16px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.045),
+            rgba(255, 255, 255, 0.018)
+        );
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+
+    transition:
+        0.25s ease;
+}
+
+.calculator-item:hover {
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(244, 197, 66, 0.22);
 }
 
 
-.section-heading p {
+/* =========================================================
+   CALCULATOR ITEM ICON
+========================================================= */
+
+.calculator-item-icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+}
+
+.calculator-item-icon svg {
+    width: 20px;
+    height: 20px;
+
+    fill: none;
+
+    stroke-width: 1.7;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+.amount-icon {
+    background:
+        rgba(244, 197, 66, 0.12);
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.20);
+}
+
+.amount-icon svg {
+    stroke: var(--gold-light);
+}
+
+.fee-icon {
+    background:
+        rgba(255, 63, 145, 0.11);
+
+    border:
+        1px solid
+        rgba(255, 63, 145, 0.20);
+}
+
+.fee-icon svg {
+    stroke: var(--pink-light);
+}
+
+.payout-icon {
+    background:
+        rgba(40, 209, 124, 0.10);
+
+    border:
+        1px solid
+        rgba(40, 209, 124, 0.20);
+}
+
+.payout-icon svg {
+    stroke: #66e6a0;
+}
+
+
+/* =========================================================
+   CALCULATOR TEXT
+========================================================= */
+
+.calculator-item span {
+    display: block;
+
     color: var(--muted);
 
-    font-size: 13px;
+    font-size: 11px;
+
+    line-height: 1.4;
+}
+
+.calculator-item strong {
+    display: block;
+
+    margin-top: 4px;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: 800;
+}
+
+.fee-item strong {
+    color: var(--pink-light);
+}
+
+.payout-item strong {
+    color: #66e6a0;
+}
+
+.calculator-item small {
+    display: inline-block;
+
+    margin-top: 4px;
+
+    color: var(--gold);
+
+    font-size: 10px;
+
+    font-weight: 800;
 }
 
 
-.section-heading strong {
-    color: var(--gold);
+/* =========================================================
+   FEE NOTICE
+========================================================= */
+
+.fee-notice {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin-top: 17px;
+
+    padding: 15px;
+
+    border-radius: 16px;
+
+    background:
+        rgba(244, 197, 66, 0.055);
+
+    border:
+        1px solid
+        rgba(244, 197, 66, 0.14);
+}
+
+.notice-icon {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background:
+        rgba(244, 197, 66, 0.12);
+}
+
+.notice-icon svg {
+    width: 18px;
+    height: 18px;
+
+    fill: none;
+
+    stroke: var(--gold);
+
+    stroke-width: 1.7;
+
+    stroke-linecap: round;
+}
+
+.fee-notice p {
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+.fee-notice strong {
+    color: var(--gold-light);
 }
 
 
 /* =========================================================
    FORM
-   ========================================================= */
+========================================================= */
 
 .form-group {
     margin-bottom: 21px;
 }
-
 
 .form-group label {
     display: block;
 
     margin-bottom: 9px;
 
-    font-size: 14px;
+    color: #eeeaf2;
 
-    font-weight: 600;
+    font-size: 13px;
+
+    font-weight: 700;
 }
 
-
-.form-group small {
+.field-hint {
     display: block;
 
     margin-top: 7px;
 
-    color: #898394;
+    color: #827c8d;
 
-    font-size: 12px;
+    font-size: 11px;
 
     line-height: 1.5;
 }
 
+.field-hint strong {
+    color: var(--gold);
+}
 
-.form-group input,
-.form-group select {
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-prefix {
+    position: absolute;
+
+    left: 15px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    color: var(--gold);
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    pointer-events: none;
+
+    z-index: 2;
+}
+
+.input-wrapper input {
+    padding-left: 58px !important;
+}
+
+.form-group input {
     width: 100%;
 
-    height: 52px;
+    height: 53px;
 
-    padding: 0 15px;
+    padding:
+        0 15px;
 
-    border-radius: 13px;
+    border-radius: 14px;
 
     outline: none;
 
     color: white;
 
     background:
-        #0d0b16;
+        #0c0915;
 
     border:
         1px solid
-        rgba(255, 255, 255, 0.10);
+        rgba(255, 255, 255, 0.09);
 
-    font-size: 15px;
+    font-size: 14px;
 
     transition:
         0.25s ease;
 }
 
-
 .form-group input::placeholder {
-    color: #6f6a78;
+    color: #625d6b;
 }
 
-
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus {
     border-color:
-        var(--gold);
+        rgba(244, 197, 66, 0.55);
 
     box-shadow:
         0 0 0 3px
-        rgba(244, 197, 66, 0.08);
+        rgba(244, 197, 66, 0.07),
+        0 0 20px
+        rgba(244, 197, 66, 0.07);
 }
 
+.form-group input[readonly] {
+    color: #d7d1df;
 
-.form-group input.invalid {
-    border-color:
-        var(--danger);
+    background:
+        rgba(255, 255, 255, 0.035);
 
-    box-shadow:
-        0 0 0 3px
-        rgba(255, 85, 119, 0.08);
-}
-
-
-.form-group select {
-    cursor: pointer;
-}
-
-
-.form-group select option {
-    background: #12101d;
-
-    color: white;
+    cursor: default;
 }
 
 
 /* =========================================================
-   CURRENCY INPUT
-   ========================================================= */
+   ACCOUNT NAME ICON
+========================================================= */
 
-.input-wrapper {
+.input-icon-wrapper {
     position: relative;
 }
 
-
-.input-wrapper .currency {
+.field-icon {
     position: absolute;
 
     left: 15px;
@@ -418,195 +992,668 @@ body {
     transform:
         translateY(-50%);
 
-    color: var(--gold);
+    width: 25px;
+    height: 25px;
 
-    font-size: 13px;
+    display: flex;
 
-    font-weight: bold;
+    align-items: center;
+    justify-content: center;
 
-    pointer-events: none;
+    z-index: 2;
 }
 
+.field-icon svg {
+    width: 19px;
+    height: 19px;
 
-.input-wrapper input {
-    padding-left: 58px;
+    fill: none;
+
+    stroke: var(--purple-light);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+.input-icon-wrapper input {
+    padding-left: 48px;
 }
 
 
 /* =========================================================
-   FEE CALCULATION CARD
-   ========================================================= */
+   PAYMENT METHODS
+========================================================= */
 
-.fee-card {
-    margin: 8px 0 25px;
+.payment-methods {
+    display: grid;
 
-    padding: 20px;
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 12px;
+}
+
+.payment-option {
+    position: relative;
+
+    display: block;
+
+    cursor: pointer;
+}
+
+.payment-option > input {
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+.payment-content {
+    min-height: 82px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border-radius: 17px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    transition:
+        0.25s ease;
+}
+
+.payment-option:hover .payment-content {
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(244, 197, 66, 0.25);
+}
+
+.payment-option > input:checked
+~ .payment-content {
+    border-color:
+        rgba(244, 197, 66, 0.58);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123, 16, 40, 0.28),
+            rgba(139, 77, 255, 0.10)
+        );
+
+    box-shadow:
+        0 0 25px
+        rgba(244, 197, 66, 0.09);
+}
+
+
+/* =========================================================
+   PAYMENT LOGOS
+========================================================= */
+
+.payment-logo {
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    font-size: 9px;
+
+    font-weight: 900;
+
+    overflow: hidden;
+}
+
+.payment-logo svg {
+    width: 29px;
+    height: 29px;
+
+    fill: none;
+
+    stroke-width: 2.1;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+.mtn-logo {
+    background:
+        linear-gradient(
+            145deg,
+            #ffd83d,
+            #e4a900
+        );
+
+    border:
+        1px solid
+        rgba(255, 220, 74, 0.65);
+
+    box-shadow:
+        0 0 18px
+        rgba(244, 197, 66, 0.20);
+}
+
+.mtn-logo svg {
+    stroke: #18120a;
+}
+
+.airtel-logo {
+    background:
+        linear-gradient(
+            145deg,
+            #ff315d,
+            #a80832
+        );
+
+    border:
+        1px solid
+        rgba(255, 75, 115, 0.60);
+
+    box-shadow:
+        0 0 18px
+        rgba(255, 63, 145, 0.20);
+}
+
+.airtel-logo svg {
+    stroke: white;
+}
+
+
+/* =========================================================
+   PAYMENT TEXT
+========================================================= */
+
+.payment-text {
+    min-width: 0;
+
+    flex: 1;
+}
+
+.payment-text strong {
+    display: block;
+
+    color: white;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+}
+
+.payment-text small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   PAYMENT CHECK
+========================================================= */
+
+.payment-check {
+    width: 25px;
+    height: 25px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    opacity: 0;
+
+    transform:
+        scale(0.7);
+
+    background:
+        var(--gold);
+
+    transition:
+        0.2s ease;
+}
+
+.payment-option > input:checked
+~ .payment-content
+.payment-check {
+    opacity: 1;
+
+    transform:
+        scale(1);
+}
+
+.payment-check svg {
+    width: 15px;
+    height: 15px;
+
+    fill: none;
+
+    stroke: #19120b;
+
+    stroke-width: 2.4;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   REGISTERED NUMBER CARD
+========================================================= */
+
+.registered-number-card {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 17px;
+
+    margin:
+        5px 0 22px;
 
     border-radius: 18px;
 
     background:
         linear-gradient(
-            145deg,
-            rgba(123, 16, 40, 0.20),
-            rgba(139, 77, 255, 0.08)
+            135deg,
+            rgba(139, 77, 255, 0.10),
+            rgba(255, 63, 145, 0.06)
         );
 
     border:
         1px solid
-        rgba(244, 197, 66, 0.18);
-
-    box-shadow:
-        inset 0 1px 0
-        rgba(255, 255, 255, 0.03);
+        rgba(139, 77, 255, 0.20);
 }
 
+.registered-number-icon {
+    width: 47px;
+    height: 47px;
 
-.calculation-row {
+    flex-shrink: 0;
+
     display: flex;
-
-    justify-content: space-between;
 
     align-items: center;
+    justify-content: center;
 
-    gap: 15px;
-
-    padding: 9px 0;
-
-    color: #c7c1cf;
-
-    font-size: 14px;
-}
-
-
-.calculation-row strong {
-    color: white;
-
-    font-size: 15px;
-}
-
-
-.calculation-row small {
-    color: var(--gold);
-
-    font-size: 11px;
-}
-
-
-.fee-row strong {
-    color: var(--pink);
-}
-
-
-.calculation-divider {
-    height: 1px;
-
-    margin: 8px 0;
+    border-radius: 15px;
 
     background:
-        rgba(255, 255, 255, 0.10);
-}
-
-
-/* =========================================================
-   PAYOUT
-   ========================================================= */
-
-.payout-row {
-    padding-top: 13px;
-
-    padding-bottom: 3px;
-}
-
-
-.payout-row span {
-    color: white;
-
-    font-weight: 700;
-
-    font-size: 15px;
-}
-
-
-.payout-row strong {
-    color: var(--gold);
-
-    font-size: 20px;
-
-    text-shadow:
-        0 0 15px
-        rgba(244, 197, 66, 0.20);
-}
-
-
-/* =========================================================
-   NOTICE
-   ========================================================= */
-
-.withdraw-notice {
-    display: flex;
-
-    gap: 13px;
-
-    padding: 15px;
-
-    margin: 5px 0 20px;
-
-    border-radius: 14px;
-
-    background:
-        rgba(244, 197, 66, 0.06);
+        linear-gradient(
+            145deg,
+            rgba(139, 77, 255, 0.22),
+            rgba(255, 63, 145, 0.14)
+        );
 
     border:
         1px solid
-        rgba(244, 197, 66, 0.16);
+        rgba(139, 77, 255, 0.32);
+
+    box-shadow:
+        var(--purple-glow);
 }
 
+.registered-number-icon svg {
+    width: 24px;
+    height: 24px;
 
-.notice-icon {
-    font-size: 20px;
+    fill: none;
 
-    flex-shrink: 0;
+    stroke: var(--purple-light);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
 }
 
+.registered-number-content {
+    min-width: 0;
 
-.withdraw-notice strong {
+    flex: 1;
+}
+
+.registered-label {
     display: block;
 
-    font-size: 13px;
+    margin-bottom: 4px;
 
-    color: var(--gold-light);
+    color: var(--muted);
 
-    margin-bottom: 5px;
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.8px;
 }
 
+.registered-number-content strong {
+    display: block;
 
-.withdraw-notice p {
-    color: #aaa5b4;
+    color: white;
 
-    font-size: 12px;
+    font-size: 16px;
 
-    line-height: 1.5;
+    letter-spacing: 0.3px;
+}
+
+.registered-number-content small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #827c8d;
+
+    font-size: 10px;
+
+    line-height: 1.4;
 }
 
 
 /* =========================================================
-   MESSAGE
-   ========================================================= */
+   VERIFIED BADGE
+========================================================= */
+
+.verified-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    padding: 6px 8px;
+
+    border-radius: 30px;
+
+    color: #76e9a7;
+
+    background:
+        rgba(40, 209, 124, 0.08);
+
+    border:
+        1px solid
+        rgba(40, 209, 124, 0.18);
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+.verified-badge svg {
+    width: 12px;
+    height: 12px;
+
+    fill: none;
+
+    stroke: #76e9a7;
+
+    stroke-width: 2;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   SECURITY NOTICE
+========================================================= */
+
+.security-notice {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 14px;
+
+    padding: 17px;
+
+    margin:
+        8px 0 19px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123, 16, 40, 0.13),
+            rgba(255, 63, 145, 0.05)
+        );
+
+    border:
+        1px solid
+        rgba(255, 63, 145, 0.14);
+}
+
+.security-icon {
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 63, 145, 0.20),
+            rgba(139, 77, 255, 0.14)
+        );
+
+    border:
+        1px solid
+        rgba(255, 63, 145, 0.25);
+
+    box-shadow:
+        var(--pink-glow);
+}
+
+.security-icon svg {
+    width: 25px;
+    height: 25px;
+
+    fill: none;
+
+    stroke: var(--pink-light);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+.security-notice strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #fff;
+
+    font-size: 13px;
+}
+
+.security-notice p {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   CONFIRMATION
+========================================================= */
+
+.confirmation-box {
+    padding: 15px;
+
+    margin-bottom: 17px;
+
+    border-radius: 16px;
+
+    background:
+        rgba(255, 255, 255, 0.025);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+}
+
+.checkbox-label {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    position: absolute;
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+.checkmark {
+    width: 23px;
+    height: 23px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 1px;
+
+    border-radius: 7px;
+
+    background:
+        #0c0915;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.16);
+
+    transition:
+        0.2s ease;
+}
+
+.checkmark svg {
+    width: 14px;
+    height: 14px;
+
+    opacity: 0;
+
+    fill: none;
+
+    stroke: #1b1308;
+
+    stroke-width: 2.5;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+.checkbox-label input:checked
+~ .checkmark {
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold),
+            var(--pink)
+        );
+
+    border-color:
+        transparent;
+
+    box-shadow:
+        0 0 16px
+        rgba(244, 197, 66, 0.20);
+}
+
+.checkbox-label input:checked
+~ .checkmark svg {
+    opacity: 1;
+}
+
+.confirmation-text {
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.7;
+}
+
+.confirmation-text strong {
+    color: var(--gold-light);
+}
+
+
+/* =========================================================
+   FORM MESSAGE
+========================================================= */
 
 .form-message {
     display: none;
 
     padding: 13px 15px;
 
-    margin-bottom: 17px;
+    margin-bottom: 16px;
 
-    border-radius: 12px;
+    border-radius: 13px;
 
-    font-size: 13px;
+    font-size: 12px;
 
     line-height: 1.5;
 }
-
 
 .form-message.error {
     display: block;
@@ -614,13 +1661,12 @@ body {
     color: #ff9aae;
 
     background:
-        rgba(255, 85, 119, 0.09);
+        rgba(255, 85, 119, 0.08);
 
     border:
         1px solid
-        rgba(255, 85, 119, 0.22);
+        rgba(255, 85, 119, 0.20);
 }
-
 
 .form-message.success {
     display: block;
@@ -628,68 +1674,83 @@ body {
     color: #8ff0b8;
 
     background:
-        rgba(40, 209, 124, 0.08);
+        rgba(40, 209, 124, 0.07);
 
     border:
         1px solid
-        rgba(40, 209, 124, 0.22);
+        rgba(40, 209, 124, 0.20);
 }
 
 
 /* =========================================================
    WITHDRAW BUTTON
-   ========================================================= */
+========================================================= */
 
-.withdraw-btn {
+.withdraw-button {
     width: 100%;
 
-    min-height: 54px;
+    min-height: 57px;
 
-    border: none;
+    display: flex;
 
-    border-radius: 14px;
+    align-items: center;
+    justify-content: center;
+
+    gap: 11px;
+
+    border: 0;
+
+    border-radius: 16px;
 
     cursor: pointer;
 
     color: white;
 
-    font-size: 15px;
+    font-size: 14px;
 
-    font-weight: 700;
+    font-weight: 800;
 
     background:
         linear-gradient(
             135deg,
             var(--maroon-light),
-            var(--maroon),
-            #5c0c21
+            #8e1534,
+            #68102a
         );
 
+    border:
+        1px solid
+        rgba(255, 63, 145, 0.24);
+
     box-shadow:
-        0 10px 30px
-        rgba(123, 16, 40, 0.35);
+        0 12px 30px
+        rgba(123, 16, 40, 0.34);
 
     transition:
         0.25s ease;
 }
 
+.withdraw-button:hover {
+    transform:
+        translateY(-2px);
 
-.withdraw-btn:hover {
-    transform: translateY(-2px);
+    border-color:
+        rgba(244, 197, 66, 0.38);
 
     box-shadow:
-        0 14px 35px
-        rgba(165, 28, 60, 0.40);
+        0 16px 38px
+        rgba(165, 28, 60, 0.38),
+        0 0 24px
+        rgba(255, 63, 145, 0.10);
 }
 
-
-.withdraw-btn:active {
-    transform: translateY(0);
+.withdraw-button:active {
+    transform:
+        translateY(0);
 }
 
-
-.withdraw-btn:disabled {
-    opacity: 0.65;
+.withdraw-button:disabled {
+    opacity: 0.60;
 
     cursor: not-allowed;
 
@@ -698,165 +1759,469 @@ body {
 
 
 /* =========================================================
-   LOADER
-   ========================================================= */
+   BUTTON ICON
+========================================================= */
 
-.button-loader {
-    display: inline-block;
+.button-icon {
+    width: 35px;
+    height: 35px;
 
-    animation:
-        pulse 1.2s infinite;
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, 0.12);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.14);
+}
+
+.button-icon svg {
+    width: 19px;
+    height: 19px;
+
+    fill: none;
+
+    stroke: var(--gold-light);
+
+    stroke-width: 1.8;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
 }
 
 
-@keyframes pulse {
+/* =========================================================
+   PROCESSING NOTE
+========================================================= */
 
-    0%,
-    100% {
-        opacity: 0.45;
-    }
+.processing-note {
+    display: flex;
 
-    50% {
-        opacity: 1;
-    }
+    align-items: flex-start;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-top: 14px;
+
+    color: #756f80;
+
+    text-align: center;
+
+    font-size: 10px;
+
+    line-height: 1.7;
+}
+
+.processing-icon {
+    display: inline-flex;
+
+    flex-shrink: 0;
+
+    margin-top: 1px;
+}
+
+.processing-icon svg {
+    width: 15px;
+    height: 15px;
+
+    fill: none;
+
+    stroke: var(--purple-light);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
 }
 
 
 /* =========================================================
    INFORMATION CARD
-   ========================================================= */
+========================================================= */
 
-.info-card {
-    margin-top: 20px;
+.information-card {
+    margin-bottom: 0;
+}
 
-    padding: 23px;
+.information-heading {
+    display: flex;
 
-    border-radius: 20px;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.information-icon {
+    width: 45px;
+    height: 45px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
 
     background:
-        rgba(18, 16, 29, 0.80);
+        linear-gradient(
+            135deg,
+            rgba(244, 197, 66, 0.16),
+            rgba(139, 77, 255, 0.13)
+        );
 
     border:
-        1px solid var(--border);
+        1px solid
+        rgba(244, 197, 66, 0.25);
 }
 
+.information-icon svg {
+    width: 23px;
+    height: 23px;
 
-.info-card h3 {
+    fill: none;
+
+    stroke: var(--gold);
+
+    stroke-width: 1.6;
+
+    stroke-linecap: round;
+}
+
+.information-heading span {
+    display: block;
+
+    margin-bottom: 3px;
+
     color: var(--gold);
 
-    font-size: 17px;
+    font-size: 9px;
 
-    margin-bottom: 15px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
 }
 
+.information-heading h3 {
+    color: white;
 
-.info-card ul {
-    padding-left: 20px;
-}
-
-
-.info-card li {
-    color: #aaa5b4;
-
-    font-size: 13px;
-
-    line-height: 1.7;
-
-    margin-bottom: 8px;
-}
-
-
-.info-card li strong {
-    color: #e9e4ee;
+    font-size: 16px;
 }
 
 
 /* =========================================================
-   RESPONSIVE
-   ========================================================= */
+   INFORMATION LIST
+========================================================= */
 
-@media (max-width: 600px) {
+.information-card ul {
+    list-style: none;
+
+    display: grid;
+
+    gap: 10px;
+}
+
+.information-card li {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+
+    line-height: 1.6;
+}
+
+.information-card li strong {
+    color: #e8e1ec;
+}
+
+.list-icon {
+    width: 20px;
+    height: 20px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 1px;
+
+    border-radius: 7px;
+
+    background:
+        rgba(40, 209, 124, 0.08);
+
+    border:
+        1px solid
+        rgba(40, 209, 124, 0.14);
+}
+
+.list-icon svg {
+    width: 12px;
+    height: 12px;
+
+    fill: none;
+
+    stroke: #5ce49a;
+
+    stroke-width: 2.2;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 720px) {
 
     .withdraw-header {
-        padding: 17px 4%;
+        padding:
+            16px 4%;
     }
-
-
-    .withdraw-header h1 {
-        font-size: 21px;
-    }
-
-
-    .withdraw-header p {
-        font-size: 12px;
-    }
-
-
-    .back-btn {
-        width: 40px;
-
-        height: 40px;
-
-        font-size: 21px;
-    }
-
 
     .withdraw-container {
         width: 94%;
 
-        margin-top: 22px;
+        margin-top: 25px;
     }
 
+    .calculator-grid {
+        grid-template-columns:
+            1fr;
+    }
 
-    .withdraw-card {
+    .calculator-item {
+        min-height: 94px;
+
+        flex-direction: row;
+
+        align-items: center;
+    }
+
+    .payment-methods {
+        grid-template-columns:
+            1fr;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 560px) {
+
+    .withdraw-header {
+        align-items: flex-start;
+
+        gap: 12px;
+    }
+
+    .back-link > span:last-child {
+        display: none;
+    }
+
+    .back-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .header-icon {
+        width: 43px;
+        height: 43px;
+
+        border-radius: 14px;
+    }
+
+    .header-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .header-title {
+        gap: 10px;
+    }
+
+    .header-title h1 {
+        font-size: 20px;
+    }
+
+    .header-title p {
+        font-size: 10px;
+
+        max-width: 220px;
+    }
+
+    .withdraw-container {
+        width: 94%;
+
+        margin:
+            20px auto 50px;
+    }
+
+    .balance-card {
+        padding: 18px;
+
+        border-radius: 20px;
+    }
+
+    .balance-icon {
+        width: 52px;
+        height: 52px;
+
+        border-radius: 17px;
+    }
+
+    .balance-icon svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .balance-information strong {
+        font-size: 22px;
+    }
+
+    .calculator-card,
+    .withdraw-card,
+    .information-card {
         padding: 20px 16px;
 
         border-radius: 20px;
     }
 
-
-    .balance-card {
-        padding: 18px;
-
-        border-radius: 18px;
+    .section-heading {
+        margin-bottom: 20px;
     }
 
-
-    .balance-icon {
-        width: 50px;
-
-        height: 50px;
-
-        font-size: 24px;
+    .section-heading-icon {
+        width: 42px;
+        height: 42px;
     }
 
-
-    .balance-card h2 {
-        font-size: 21px;
+    .section-heading h2 {
+        font-size: 17px;
     }
 
+    .registered-number-card {
+        align-items: flex-start;
 
-    .fee-card {
-        padding: 16px;
+        padding: 14px;
     }
 
-
-    .calculation-row {
-        font-size: 13px;
+    .verified-badge {
+        display: none;
     }
 
-
-    .payout-row strong {
-        font-size: 18px;
+    .security-notice {
+        padding: 14px;
     }
 
+    .information-heading h3 {
+        font-size: 14px;
+    }
 }
 
 
 /* =========================================================
-   VERY SMALL SCREENS
-   ========================================================= */
+   VERY SMALL PHONES
+========================================================= */
 
 @media (max-width: 380px) {
 
-    .
+    .header-title h1 {
+        font-size: 18px;
+    }
+
+    .header-title p {
+        display: none;
+    }
+
+    .balance-card {
+        gap: 12px;
+    }
+
+    .balance-information strong {
+        font-size: 20px;
+    }
+
+    .payment-content {
+        padding: 11px;
+    }
+
+    .payment-logo {
+        width: 43px;
+        height: 43px;
+    }
+
+    .payment-text strong {
+        font-size: 11px;
+    }
+
+    .withdraw-button {
+        min-height: 54px;
+
+        font-size: 13px;
+    }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline:
+        2px solid
+        var(--gold);
+
+    outline-offset:
+        3px;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+
+        transition-duration:
+            0.01ms !important;
+
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+    }
+}

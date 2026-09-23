@@ -1,34 +1,46 @@
 <?php
 
-// ============================================
+// ============================================================
 // CROWN CASH - REFERRAL API
 // File: referral.php
-// ============================================
+// ============================================================
 
-// --------------------------------------------
+declare(strict_types=1);
+
+// ------------------------------------------------------------
 // CORS
-// --------------------------------------------
+// ------------------------------------------------------------
 
 header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Accept");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 
-
-// --------------------------------------------
+// ------------------------------------------------------------
 // PREFLIGHT
-// --------------------------------------------
+// ------------------------------------------------------------
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
     exit;
 }
 
+// Only GET is allowed
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+    http_response_code(405);
 
-// --------------------------------------------
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
+}
+
+// ------------------------------------------------------------
 // SESSION
-// --------------------------------------------
+// ------------------------------------------------------------
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -40,13 +52,12 @@ session_set_cookie_params([
 
 session_start();
 
-
-// --------------------------------------------
-// CHECK LOGIN
-// --------------------------------------------
+// ------------------------------------------------------------
+// LOGIN CHECK
+// ------------------------------------------------------------
 
 if (
-    empty($_SESSION["logged_in"]) ||
+    !isset($_SESSION["logged_in"]) ||
     $_SESSION["logged_in"] !== true ||
     empty($_SESSION["user_id"])
 ) {
@@ -60,16 +71,19 @@ if (
     exit;
 }
 
-
-// --------------------------------------------
+// ------------------------------------------------------------
 // LOAD DATABASE
-// --------------------------------------------
+// ------------------------------------------------------------
 
 try {
 
     require_once __DIR__ . "/config.php";
 
 } catch (Throwable $e) {
+
+    error_log(
+        "Referral config error: " . $e->getMessage()
+    );
 
     http_response_code(500);
 
@@ -81,10 +95,9 @@ try {
     exit;
 }
 
-
-// --------------------------------------------
+// ------------------------------------------------------------
 // CHECK USERS COLLECTION
-// --------------------------------------------
+// ------------------------------------------------------------
 
 if (!isset($users)) {
 
@@ -98,21 +111,22 @@ if (!isset($users)) {
     exit;
 }
 
-
-// --------------------------------------------
+// ============================================================
 // HELPER FUNCTIONS
-// --------------------------------------------
+// ============================================================
 
-function getReferralValue($user, $fields)
-{
+function referralValue(
+    $document,
+    array $fields
+) {
     foreach ($fields as $field) {
 
         if (
-            isset($user[$field]) &&
-            $user[$field] !== null &&
-            $user[$field] !== ""
+            isset($document[$field]) &&
+            $document[$field] !== null &&
+            $document[$field] !== ""
         ) {
-            return $user[$field];
+            return $document[$field];
         }
     }
 
@@ -120,102 +134,173 @@ function getReferralValue($user, $fields)
 }
 
 
-function getUserIdString($user)
+// ------------------------------------------------------------
+// Convert MongoDB ID to string safely
+// ------------------------------------------------------------
+
+function idToString($value): string
 {
-    if (!isset($user["_id"])) {
+    if ($value === null || $value === "") {
         return "";
     }
 
-    return (string) $user["_id"];
+    try {
+        return (string)$value;
+    } catch (Throwable $e) {
+        return "";
+    }
 }
 
 
-function getUserName($user)
+// ------------------------------------------------------------
+// Normalize an ID for comparison
+// ------------------------------------------------------------
+
+function normalizeId($value): string
 {
-    $first = trim((string) ($user["first_name"] ?? ""));
-    $last  = trim((string) ($user["last_name"] ?? ""));
+    return strtolower(trim(idToString($value)));
+}
 
-    $full = trim((string) ($user["full_name"] ?? ""));
 
-    if ($first || $last) {
-        return trim($first . " " . $last);
+// ------------------------------------------------------------
+// Normalize referral code
+// ------------------------------------------------------------
+
+function normalizeCode($value): string
+{
+    return strtoupper(
+        trim(
+            (string)($value ?? "")
+        )
+    );
+}
+
+
+// ------------------------------------------------------------
+// Get user's display name
+// ------------------------------------------------------------
+
+function getDisplayName($user): string
+{
+    $firstName = trim(
+        (string)($user["first_name"] ?? "")
+    );
+
+    $lastName = trim(
+        (string)($user["last_name"] ?? "")
+    );
+
+    $fullName = trim(
+        (string)($user["full_name"] ?? "")
+    );
+
+    if ($firstName !== "" || $lastName !== "") {
+        return trim(
+            $firstName . " " . $lastName
+        );
     }
 
-    if ($full) {
-        return $full;
+    if ($fullName !== "") {
+        return $fullName;
     }
 
     return "Crown Cash Member";
 }
 
 
-function getNumberValue($value)
+// ------------------------------------------------------------
+// Convert Mongo numeric values to float
+// ------------------------------------------------------------
+
+function numberValue($value): float
 {
     if ($value === null || $value === "") {
-        return 0;
+        return 0.0;
     }
 
     try {
 
         if ($value instanceof MongoDB\BSON\Decimal128) {
-            return (float) $value->__toString();
+            return (float)$value->__toString();
         }
 
         if ($value instanceof MongoDB\BSON\Int64) {
-            return (float) $value->__toString();
+            return (float)$value->__toString();
         }
 
-        return (float) $value;
+        if ($value instanceof MongoDB\BSON\Int32) {
+            return (float)$value->__toString();
+        }
+
+        return (float)$value;
 
     } catch (Throwable $e) {
 
-        return 0;
+        return 0.0;
     }
 }
 
 
-// --------------------------------------------
-// GET CURRENT USER
-// --------------------------------------------
+// ============================================================
+// MAIN
+// ============================================================
 
 try {
 
-    $currentUserId = (string) $_SESSION["user_id"];
+    // --------------------------------------------------------
+    // CURRENT SESSION USER ID
+    // --------------------------------------------------------
 
-    $objectId = null;
+    $sessionUserId =
+        trim(
+            (string)$_SESSION["user_id"]
+        );
 
-    try {
+    if ($sessionUserId === "") {
 
-        $objectId = new MongoDB\BSON\ObjectId($currentUserId);
+        http_response_code(401);
 
-    } catch (Throwable $e) {
+        echo json_encode([
+            "success" => false,
+            "message" => "Your login session is invalid."
+        ]);
 
-        $objectId = null;
+        exit;
     }
 
 
-    // ----------------------------------------
+    // --------------------------------------------------------
     // FIND CURRENT USER
-    // ----------------------------------------
+    // --------------------------------------------------------
 
     $currentUser = null;
 
-    if ($objectId !== null) {
+    // Try ObjectId first
+    try {
 
-        $currentUser = $users->findOne([
-            "_id" => $objectId
-        ]);
+        $currentObjectId =
+            new MongoDB\BSON\ObjectId(
+                $sessionUserId
+            );
 
+        $currentUser =
+            $users->findOne([
+                "_id" => $currentObjectId
+            ]);
+
+    } catch (Throwable $e) {
+
+        // Ignore and try string ID below
     }
 
 
-    // Fallback: try string ID
+    // Try string ID if necessary
     if (!$currentUser) {
 
-        $currentUser = $users->findOne([
-            "_id" => $currentUserId
-        ]);
-
+        $currentUser =
+            $users->findOne([
+                "_id" => $sessionUserId
+            ]);
     }
 
 
@@ -225,361 +310,453 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "Your Crown Cash account could not be found."
+            "message" =>
+                "Your Crown Cash account could not be found."
         ]);
 
         exit;
     }
 
 
-    // ----------------------------------------
-    // GET REFERRAL CODE
-    // ----------------------------------------
+    // --------------------------------------------------------
+    // CURRENT USER ID
+    // --------------------------------------------------------
 
-    $referralCode = getReferralValue(
-        $currentUser,
-        [
-            "referral_code",
-            "referralCode",
-            "code"
-        ]
-    );
+    $currentUserId =
+        normalizeId(
+            $currentUser["_id"] ?? $sessionUserId
+        );
 
 
-    // ----------------------------------------
-    // MAKE SURE CODE EXISTS
-    // ----------------------------------------
+    // --------------------------------------------------------
+    // CURRENT REFERRAL CODE
+    // --------------------------------------------------------
+
+    $referralCode =
+        referralValue(
+            $currentUser,
+            [
+                "referral_code",
+                "referralCode",
+                "code"
+            ]
+        );
+
+
+    // --------------------------------------------------------
+    // GENERATE CODE IF MISSING
+    // --------------------------------------------------------
 
     if (!$referralCode) {
 
-        // Generate a referral code for older accounts
         $referralCode =
             "CC" .
             strtoupper(
                 substr(
-                    bin2hex(random_bytes(5)),
+                    bin2hex(
+                        random_bytes(5)
+                    ),
                     0,
                     8
                 )
             );
 
-        // Save it
-        if ($objectId !== null) {
+        try {
 
             $users->updateOne(
                 [
-                    "_id" => $objectId
+                    "_id" =>
+                        $currentUser["_id"]
                 ],
                 [
                     '$set' => [
-                        "referral_code" => $referralCode,
-                        "updated_at" => new MongoDB\BSON\UTCDateTime()
+                        "referral_code" =>
+                            $referralCode,
+
+                        "updated_at" =>
+                            new MongoDB\BSON\UTCDateTime()
                     ]
                 ]
             );
 
+        } catch (Throwable $e) {
+
+            error_log(
+                "Referral code update error: " .
+                $e->getMessage()
+            );
         }
     }
 
 
-    // ----------------------------------------
+    $referralCode =
+        (string)$referralCode;
+
+
+    // --------------------------------------------------------
     // REFERRAL LINK
-    // ----------------------------------------
+    // --------------------------------------------------------
 
     $referralLink =
         "https://crown-cash.vercel.app/register.html?ref=" .
-        rawurlencode((string) $referralCode);
+        rawurlencode($referralCode);
 
 
-    // ----------------------------------------
-    // LOAD ALL USERS
-    // ----------------------------------------
+    // ========================================================
+    // LOAD USERS
+    // ========================================================
 
-    $allUsers = $users->find(
-        [],
-        [
-            "projection" => [
-                "_id" => 1,
-                "first_name" => 1,
-                "last_name" => 1,
-                "full_name" => 1,
-                "email" => 1,
-                "phone" => 1,
+    $allUsers =
+        $users->find(
+            [],
+            [
+                "projection" => [
+                    "_id" => 1,
 
-                "referral_code" => 1,
-                "referralCode" => 1,
+                    "first_name" => 1,
+                    "last_name" => 1,
+                    "full_name" => 1,
 
-                "referrer_id" => 1,
-                "referred_by_id" => 1,
-                "parent_id" => 1,
-                "sponsor_id" => 1,
-                "upline_id" => 1,
+                    "email" => 1,
+                    "phone" => 1,
+                    "mobile" => 1,
+                    "phone_number" => 1,
 
-                "referred_by" => 1,
-                "referral_code_used" => 1,
-                "referrer_code" => 1,
+                    "referral_code" => 1,
+                    "referralCode" => 1,
 
-                "referral_earnings" => 1,
-                "l1_earnings" => 1,
-                "l2_earnings" => 1,
-                "l3_earnings" => 1
+                    "referrer_id" => 1,
+                    "referred_by_id" => 1,
+                    "parent_id" => 1,
+                    "sponsor_id" => 1,
+                    "upline_id" => 1,
+
+                    "referred_by" => 1,
+                    "referral_code_used" => 1,
+                    "referrer_code" => 1,
+
+                    "l1_earnings" => 1,
+                    "l2_earnings" => 1,
+                    "l3_earnings" => 1,
+
+                    "referral_earnings" => 1,
+                    "referral_income" => 1,
+                    "total_referral_income" => 1
+                ]
             ]
-        ]
-    )->toArray();
+        )->toArray();
 
 
-    // ----------------------------------------
-    // BUILD USER INDEX
-    // ----------------------------------------
+    // ========================================================
+    // INDEX USERS
+    // ========================================================
 
     $usersById = [];
-    $usersByCode = [];
+    $usersByReferralCode = [];
 
     foreach ($allUsers as $user) {
 
-        $id = getUserIdString($user);
+        $userId =
+            normalizeId(
+                $user["_id"] ?? ""
+            );
 
-        if ($id !== "") {
-            $usersById[$id] = $user;
+        if ($userId !== "") {
+            $usersById[$userId] = $user;
         }
 
 
-        $code = getReferralValue(
-            $user,
-            [
-                "referral_code",
-                "referralCode"
-            ]
-        );
+        $code =
+            referralValue(
+                $user,
+                [
+                    "referral_code",
+                    "referralCode"
+                ]
+            );
 
-        if ($code) {
+        $normalizedCode =
+            normalizeCode($code);
 
-            $usersByCode[strtoupper(trim((string) $code))]
-                = $user;
+        if ($normalizedCode !== "") {
+
+            $usersByReferralCode[
+                $normalizedCode
+            ] = $user;
         }
     }
 
 
-    // ----------------------------------------
-    // CURRENT USER ID
-    // ----------------------------------------
+    // ========================================================
+    // FUNCTION: FIND REFERRER
+    // ========================================================
 
-    $currentId = getUserIdString($currentUser);
+    $findReferrerId =
+        function ($user) {
 
-    if (!$currentId) {
-        $currentId = $currentUserId;
-    }
+            // --------------------------------------------
+            // First check direct referrer ID fields
+            // --------------------------------------------
+
+            $referrerId =
+                referralValue(
+                    $user,
+                    [
+                        "referrer_id",
+                        "referred_by_id",
+                        "parent_id",
+                        "sponsor_id",
+                        "upline_id"
+                    ]
+                );
+
+            if ($referrerId !== null) {
+
+                $normalized =
+                    normalizeId($referrerId);
+
+                if ($normalized !== "") {
+                    return [
+                        "type" => "id",
+                        "value" => $normalized
+                    ];
+                }
+            }
 
 
-    // ----------------------------------------
+            // --------------------------------------------
+            // Then check referral code fields
+            // --------------------------------------------
+
+            $usedCode =
+                referralValue(
+                    $user,
+                    [
+                        "referred_by",
+                        "referral_code_used",
+                        "referrer_code"
+                    ]
+                );
+
+            if ($usedCode !== null) {
+
+                $normalizedCode =
+                    normalizeCode($usedCode);
+
+                if ($normalizedCode !== "") {
+                    return [
+                        "type" => "code",
+                        "value" => $normalizedCode
+                    ];
+                }
+            }
+
+
+            return null;
+        };
+
+
+    // ========================================================
     // FIND LEVEL 1
-    // ----------------------------------------
+    // ========================================================
 
     $level1 = [];
 
     foreach ($allUsers as $user) {
 
-        $userId = getUserIdString($user);
+        $userId =
+            normalizeId(
+                $user["_id"] ?? ""
+            );
 
-        if ($userId === $currentId) {
+
+        // Never count yourself
+        if (
+            $userId !== "" &&
+            $userId === $currentUserId
+        ) {
             continue;
         }
 
 
-        $referrerId = getReferralValue(
-            $user,
-            [
-                "referrer_id",
-                "referred_by_id",
-                "parent_id",
-                "sponsor_id",
-                "upline_id"
-            ]
-        );
+        $relationship =
+            $findReferrerId($user);
 
-
-        if ($referrerId !== null) {
-
-            if ((string) $referrerId === $currentId) {
-
-                $level1[] = $user;
-                continue;
-            }
-
-
-            if (
-                is_object($referrerId) &&
-                isset($referrerId->__toString)
-            ) {
-                if ((string) $referrerId === $currentId) {
-                    $level1[] = $user;
-                    continue;
-                }
-            }
+        if (!$relationship) {
+            continue;
         }
 
 
-        // Check referral code used by the user
-        $usedCode = getReferralValue(
-            $user,
-            [
-                "referred_by",
-                "referral_code_used",
-                "referrer_code"
-            ]
-        );
-
-
+        // Match direct referrer ID
         if (
-            $usedCode &&
-            strtoupper(trim((string) $usedCode))
-            === strtoupper(trim((string) $referralCode))
+            $relationship["type"] === "id" &&
+            $relationship["value"] ===
+            $currentUserId
         ) {
             $level1[] = $user;
+            continue;
+        }
+
+
+        // Match referral code
+        if (
+            $relationship["type"] === "code" &&
+            $relationship["value"] ===
+            normalizeCode($referralCode)
+        ) {
+            $level1[] = $user;
+            continue;
         }
     }
 
 
-    // ----------------------------------------
-    // FIND LEVEL 2
-    // ----------------------------------------
+    // ========================================================
+    // LEVEL 1 INDEX
+    // ========================================================
 
     $level1Ids = [];
-
     $level1Codes = [];
 
     foreach ($level1 as $member) {
 
-        $id = getUserIdString($member);
+        $memberId =
+            normalizeId(
+                $member["_id"] ?? ""
+            );
 
-        if ($id) {
-            $level1Ids[$id] = true;
+        if ($memberId !== "") {
+            $level1Ids[$memberId] = true;
         }
 
-        $code = getReferralValue(
-            $member,
-            [
-                "referral_code",
-                "referralCode"
-            ]
-        );
 
-        if ($code) {
-            $level1Codes[
-                strtoupper(trim((string) $code))
-            ] = true;
+        $memberCode =
+            normalizeCode(
+                referralValue(
+                    $member,
+                    [
+                        "referral_code",
+                        "referralCode"
+                    ]
+                )
+            );
+
+        if ($memberCode !== "") {
+            $level1Codes[$memberCode] = true;
         }
     }
 
+
+    // ========================================================
+    // FIND LEVEL 2
+    // ========================================================
 
     $level2 = [];
 
     foreach ($allUsers as $user) {
 
-        $userId = getUserIdString($user);
+        $userId =
+            normalizeId(
+                $user["_id"] ?? ""
+            );
+
 
         if (
-            $userId === $currentId ||
+            $userId === $currentUserId ||
             isset($level1Ids[$userId])
         ) {
             continue;
         }
 
 
-        $referrerId = getReferralValue(
-            $user,
-            [
-                "referrer_id",
-                "referred_by_id",
-                "parent_id",
-                "sponsor_id",
-                "upline_id"
-            ]
-        );
+        $relationship =
+            $findReferrerId($user);
 
-
-        $usedCode = getReferralValue(
-            $user,
-            [
-                "referred_by",
-                "referral_code_used",
-                "referrer_code"
-            ]
-        );
-
-
-        $matched = false;
-
-
-        if ($referrerId !== null) {
-
-            if (
-                isset($level1Ids[(string) $referrerId])
-            ) {
-                $matched = true;
-            }
+        if (!$relationship) {
+            continue;
         }
 
 
+        // ID relationship
         if (
-            !$matched &&
-            $usedCode &&
+            $relationship["type"] === "id" &&
             isset(
-                $level1Codes[
-                    strtoupper(trim((string) $usedCode))
+                $level1Ids[
+                    $relationship["value"]
                 ]
             )
         ) {
-            $matched = true;
+            $level2[] = $user;
+            continue;
         }
 
 
-        if ($matched) {
+        // Referral code relationship
+        if (
+            $relationship["type"] === "code" &&
+            isset(
+                $level1Codes[
+                    $relationship["value"]
+                ]
+            )
+        ) {
             $level2[] = $user;
+            continue;
         }
     }
 
 
-    // ----------------------------------------
-    // FIND LEVEL 3
-    // ----------------------------------------
+    // ========================================================
+    // LEVEL 2 INDEX
+    // ========================================================
 
     $level2Ids = [];
     $level2Codes = [];
 
     foreach ($level2 as $member) {
 
-        $id = getUserIdString($member);
+        $memberId =
+            normalizeId(
+                $member["_id"] ?? ""
+            );
 
-        if ($id) {
-            $level2Ids[$id] = true;
+        if ($memberId !== "") {
+            $level2Ids[$memberId] = true;
         }
 
-        $code = getReferralValue(
-            $member,
-            [
-                "referral_code",
-                "referralCode"
-            ]
-        );
 
-        if ($code) {
+        $memberCode =
+            normalizeCode(
+                referralValue(
+                    $member,
+                    [
+                        "referral_code",
+                        "referralCode"
+                    ]
+                )
+            );
 
-            $level2Codes[
-                strtoupper(trim((string) $code))
-            ] = true;
+        if ($memberCode !== "") {
+            $level2Codes[$memberCode] = true;
         }
     }
 
+
+    // ========================================================
+    // FIND LEVEL 3
+    // ========================================================
 
     $level3 = [];
 
     foreach ($allUsers as $user) {
 
-        $userId = getUserIdString($user);
+        $userId =
+            normalizeId(
+                $user["_id"] ?? ""
+            );
+
 
         if (
-            $userId === $currentId ||
+            $userId === $currentUserId ||
             isset($level1Ids[$userId]) ||
             isset($level2Ids[$userId])
         ) {
@@ -587,149 +764,155 @@ try {
         }
 
 
-        $referrerId = getReferralValue(
-            $user,
-            [
-                "referrer_id",
-                "referred_by_id",
-                "parent_id",
-                "sponsor_id",
-                "upline_id"
-            ]
-        );
+        $relationship =
+            $findReferrerId($user);
 
-
-        $usedCode = getReferralValue(
-            $user,
-            [
-                "referred_by",
-                "referral_code_used",
-                "referrer_code"
-            ]
-        );
-
-
-        $matched = false;
-
-
-        if (
-            $referrerId !== null &&
-            isset($level2Ids[(string) $referrerId])
-        ) {
-            $matched = true;
+        if (!$relationship) {
+            continue;
         }
 
 
+        // ID relationship
         if (
-            !$matched &&
-            $usedCode &&
+            $relationship["type"] === "id" &&
             isset(
-                $level2Codes[
-                    strtoupper(trim((string) $usedCode))
+                $level2Ids[
+                    $relationship["value"]
                 ]
             )
         ) {
-            $matched = true;
+            $level3[] = $user;
+            continue;
         }
 
 
-        if ($matched) {
+        // Referral code relationship
+        if (
+            $relationship["type"] === "code" &&
+            isset(
+                $level2Codes[
+                    $relationship["value"]
+                ]
+            )
+        ) {
             $level3[] = $user;
+            continue;
         }
     }
 
 
-    // ----------------------------------------
-    // BUILD TEAM MEMBERS
-    // ----------------------------------------
+    // ========================================================
+    // BUILD MEMBERS RESPONSE
+    // ========================================================
 
     $members = [];
 
 
+    $addMember =
+        function (
+            $member,
+            string $level
+        ) use (&$members) {
+
+            $phone =
+                referralValue(
+                    $member,
+                    [
+                        "phone",
+                        "phone_number",
+                        "mobile"
+                    ]
+                );
+
+            $members[] = [
+                "id" =>
+                    idToString(
+                        $member["_id"] ?? ""
+                    ),
+
+                "name" =>
+                    getDisplayName($member),
+
+                "phone" =>
+                    (string)($phone ?? ""),
+
+                "email" =>
+                    (string)(
+                        $member["email"] ?? ""
+                    ),
+
+                "level" =>
+                    $level
+            ];
+        };
+
+
     foreach ($level1 as $member) {
-
-        $members[] = [
-            "id" => getUserIdString($member),
-            "name" => getUserName($member),
-            "phone" => (string) ($member["phone"] ?? ""),
-            "email" => (string) ($member["email"] ?? ""),
-            "level" => "L1"
-        ];
+        $addMember($member, "L1");
     }
-
 
     foreach ($level2 as $member) {
-
-        $members[] = [
-            "id" => getUserIdString($member),
-            "name" => getUserName($member),
-            "phone" => (string) ($member["phone"] ?? ""),
-            "email" => (string) ($member["email"] ?? ""),
-            "level" => "L2"
-        ];
+        $addMember($member, "L2");
     }
-
 
     foreach ($level3 as $member) {
-
-        $members[] = [
-            "id" => getUserIdString($member),
-            "name" => getUserName($member),
-            "phone" => (string) ($member["phone"] ?? ""),
-            "email" => (string) ($member["email"] ?? ""),
-            "level" => "L3"
-        ];
+        $addMember($member, "L3");
     }
 
 
-    // ----------------------------------------
-    // REFERRAL EARNINGS
-    // ----------------------------------------
+    // ========================================================
+    // EARNINGS
+    // ========================================================
 
-    $l1Income = getNumberValue(
-        getReferralValue(
-            $currentUser,
-            [
-                "l1_earnings"
-            ]
-        )
-    );
-
-
-    $l2Income = getNumberValue(
-        getReferralValue(
-            $currentUser,
-            [
-                "l2_earnings"
-            ]
-        )
-    );
+    $l1Income =
+        numberValue(
+            referralValue(
+                $currentUser,
+                [
+                    "l1_earnings"
+                ]
+            )
+        );
 
 
-    $l3Income = getNumberValue(
-        getReferralValue(
-            $currentUser,
-            [
-                "l3_earnings"
-            ]
-        )
-    );
+    $l2Income =
+        numberValue(
+            referralValue(
+                $currentUser,
+                [
+                    "l2_earnings"
+                ]
+            )
+        );
 
 
-    // If separate earnings are not available,
-    // try the combined referral earnings field.
+    $l3Income =
+        numberValue(
+            referralValue(
+                $currentUser,
+                [
+                    "l3_earnings"
+                ]
+            )
+        );
 
-    $combinedIncome = getNumberValue(
-        getReferralValue(
-            $currentUser,
-            [
-                "referral_earnings",
-                "referral_income",
-                "total_referral_income"
-            ]
-        )
-    );
 
+    $combinedIncome =
+        numberValue(
+            referralValue(
+                $currentUser,
+                [
+                    "referral_earnings",
+                    "referral_income",
+                    "total_referral_income"
+                ]
+            )
+        );
+
+
+    // If only a combined value exists,
+    // keep it as referral income without
+    // changing the commission structure.
 
     if (
         $l1Income == 0 &&
@@ -737,7 +920,8 @@ try {
         $l3Income == 0 &&
         $combinedIncome > 0
     ) {
-        $l1Income = $combinedIncome;
+        $l1Income =
+            $combinedIncome;
     }
 
 
@@ -747,75 +931,96 @@ try {
         $l3Income;
 
 
-    // ----------------------------------------
-    // RESPONSE
-    // ----------------------------------------
+    // ========================================================
+    // FINAL RESPONSE
+    // ========================================================
 
     http_response_code(200);
 
-    echo json_encode([
-        "success" => true,
+    echo json_encode(
+        [
+            "success" => true,
 
-        "referral_code" => (string) $referralCode,
+            "referral_code" =>
+                $referralCode,
 
-        "referral_link" => $referralLink,
+            "referral_link" =>
+                $referralLink,
 
-        "counts" => [
-            "total" =>
-                count($level1) +
-                count($level2) +
-                count($level3),
+            "counts" => [
+                "total" =>
+                    count($level1) +
+                    count($level2) +
+                    count($level3),
 
-            "l1" => count($level1),
-            "l2" => count($level2),
-            "l3" => count($level3)
+                "l1" =>
+                    count($level1),
+
+                "l2" =>
+                    count($level2),
+
+                "l3" =>
+                    count($level3)
+            ],
+
+            "team_counts" => [
+                "total" =>
+                    count($level1) +
+                    count($level2) +
+                    count($level3),
+
+                "l1" =>
+                    count($level1),
+
+                "l2" =>
+                    count($level2),
+
+                "l3" =>
+                    count($level3)
+            ],
+
+            "commission_structure" => [
+                "l1" => 15,
+                "l2" => 5,
+                "l3" => 2
+            ],
+
+            "earnings" => [
+                "l1" => $l1Income,
+                "l2" => $l2Income,
+                "l3" => $l3Income,
+                "total" => $totalIncome
+            ],
+
+            "referral_earnings" => [
+                "l1" => $l1Income,
+                "l2" => $l2Income,
+                "l3" => $l3Income,
+                "total" => $totalIncome
+            ],
+
+            "members" =>
+                $members
         ],
-
-        "team_counts" => [
-            "total" =>
-                count($level1) +
-                count($level2) +
-                count($level3),
-
-            "l1" => count($level1),
-            "l2" => count($level2),
-            "l3" => count($level3)
-        ],
-
-        "commission_structure" => [
-            "l1" => 15,
-            "l2" => 5,
-            "l3" => 2
-        ],
-
-        "earnings" => [
-            "l1" => $l1Income,
-            "l2" => $l2Income,
-            "l3" => $l3Income,
-            "total" => $totalIncome
-        ],
-
-        "referral_earnings" => [
-            "l1" => $l1Income,
-            "l2" => $l2Income,
-            "l3" => $l3Income,
-            "total" => $totalIncome
-        ],
-
-        "members" => $members
-    ]);
+        JSON_UNESCAPED_SLASHES
+    );
 
     exit;
 
 
 } catch (Throwable $e) {
 
+    error_log(
+        "Referral API error: " .
+        $e->getMessage()
+    );
+
     http_response_code(500);
 
     echo json_encode([
         "success" => false,
-        "message" => "Unable to load referral data.",
-        "error" => $e->getMessage()
+        "message" =>
+            "Unable to load referral data."
     ]);
 
     exit;

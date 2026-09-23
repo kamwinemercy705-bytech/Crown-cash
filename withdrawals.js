@@ -1,5 +1,8 @@
 const API_BASE = "https://crown-cash1.onrender.com";
 
+const PROFILE_API = `${API_BASE}/profile.php`;
+const WITHDRAWALS_API = `${API_BASE}/withdrawals.php`;
+
 
 // ======================================================
 // ELEMENTS
@@ -46,6 +49,11 @@ const statusFilter =
 
 const methodFilter =
     document.getElementById("methodFilter");
+
+
+// ======================================================
+// MODAL ELEMENTS
+// ======================================================
 
 const detailsModal =
     document.getElementById("detailsModal");
@@ -103,8 +111,7 @@ let allWithdrawals = [];
 
 function formatMoney(value) {
 
-    const amount =
-        Number(value) || 0;
+    const amount = Number(value) || 0;
 
     return new Intl.NumberFormat("en-UG", {
         maximumFractionDigits: 0
@@ -208,7 +215,8 @@ function getMethodClass(method) {
         return "airtel";
     }
 
-    return "";
+    return "unknown";
+
 }
 
 
@@ -323,6 +331,159 @@ function formatDate(dateValue) {
 
 
 // ======================================================
+// SAFE API JSON
+// ======================================================
+
+async function getJSON(url) {
+
+    const response =
+        await fetch(
+            url,
+            {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+
+    if (response.status === 401) {
+
+        window.location.href =
+            "/login.html?redirect=withdrawals";
+
+        throw new Error(
+            "Your session has expired."
+        );
+
+    }
+
+
+    let data;
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (error) {
+
+        throw new Error(
+            "The server returned an invalid response."
+        );
+
+    }
+
+
+    if (
+        !response.ok ||
+        !data ||
+        data.success !== true
+    ) {
+
+        throw new Error(
+            data?.message ||
+            "Unable to load information."
+        );
+
+    }
+
+
+    return data;
+
+}
+
+
+// ======================================================
+// LOAD PROFILE
+// ======================================================
+
+async function loadProfile() {
+
+    try {
+
+        const data =
+            await getJSON(PROFILE_API);
+
+
+        const user =
+            data.user || {};
+
+
+        // ----------------------------------------------
+        // BALANCE
+        // ----------------------------------------------
+
+        const balance =
+            user.balance ??
+            user.wallet_balance ??
+            0;
+
+
+        if (availableBalance) {
+
+            availableBalance.textContent =
+                `UGX ${formatMoney(balance)}`;
+
+        }
+
+
+        // ----------------------------------------------
+        // PHONE
+        // ----------------------------------------------
+
+        const phone =
+            user.phone ||
+            user.phone_number ||
+            user.mobile ||
+            "";
+
+
+        if (registeredPhone) {
+
+            registeredPhone.textContent =
+                phone || "No registered phone";
+
+        }
+
+
+        return user;
+
+    } catch (error) {
+
+        console.error(
+            "Profile loading error:",
+            error
+        );
+
+
+        if (availableBalance) {
+
+            availableBalance.textContent =
+                "UGX 0";
+
+        }
+
+
+        if (registeredPhone) {
+
+            registeredPhone.textContent =
+                "Unable to load";
+
+        }
+
+
+        throw error;
+
+    }
+
+}
+
+
+// ======================================================
 // LOAD WITHDRAWALS
 // ======================================================
 
@@ -335,92 +496,120 @@ async function loadWithdrawals() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_BASE}/withdrawals.php`,
-                {
-                    method: "GET",
+        /*
+         * Load both APIs independently.
+         *
+         * profile.php:
+         * - balance
+         * - registered phone
+         *
+         * withdrawals.php:
+         * - withdrawal history
+         * - summary
+         */
 
-                    credentials: "include",
+        const profilePromise =
+            loadProfile()
+                .catch(
+                    function(error) {
 
-                    cache: "no-store",
+                        console.error(
+                            "Profile API failed:",
+                            error
+                        );
 
-                    headers: {
-                        "Accept":
-                            "application/json"
+                        return null;
+
                     }
-                }
-            );
+                );
 
 
-        if (response.status === 401) {
-
-            window.location.href =
-                "/login.html?redirect=withdrawals";
-
-            return;
-
-        }
+        const withdrawalsPromise =
+            getJSON(WITHDRAWALS_API);
 
 
-        let data = null;
+        const results =
+            await Promise.allSettled([
+                profilePromise,
+                withdrawalsPromise
+            ]);
 
 
-        try {
-
-            data =
-                await response.json();
-
-        } catch (error) {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
+        const withdrawalResult =
+            results[1];
 
 
         if (
-            !response.ok ||
-            !data ||
-            data.success !== true
+            withdrawalResult.status !==
+            "fulfilled"
         ) {
 
-            throw new Error(
-                data?.message ||
-                "Unable to load withdrawal history."
+            throw (
+                withdrawalResult.reason ||
+                new Error(
+                    "Unable to load withdrawal history."
+                )
             );
 
         }
 
 
+        const data =
+            withdrawalResult.value;
+
+
         // ----------------------------------------------
-        // Account information
+        // ACCOUNT INFORMATION FROM WITHDRAWALS API
         // ----------------------------------------------
 
         const user =
             data.user || {};
 
 
-        if (availableBalance) {
+        /*
+         * Only replace profile information if the
+         * withdrawal API actually returned it.
+         */
+
+        if (
+            availableBalance &&
+            (
+                user.balance !== undefined ||
+                user.wallet_balance !== undefined
+            )
+        ) {
+
+            const balance =
+                user.balance ??
+                user.wallet_balance ??
+                0;
+
 
             availableBalance.textContent =
-                `UGX ${formatMoney(user.balance)}`;
+                `UGX ${formatMoney(balance)}`;
 
         }
 
 
-        if (registeredPhone) {
+        if (
+            registeredPhone &&
+            (
+                user.phone ||
+                user.phone_number ||
+                user.mobile
+            )
+        ) {
 
             registeredPhone.textContent =
                 user.phone ||
-                "No registered phone";
+                user.phone_number ||
+                user.mobile;
 
         }
 
 
         // ----------------------------------------------
-        // Withdrawals
+        // WITHDRAWALS
         // ----------------------------------------------
 
         allWithdrawals =
@@ -430,7 +619,7 @@ async function loadWithdrawals() {
 
 
         // ----------------------------------------------
-        // Summary
+        // SUMMARY
         // ----------------------------------------------
 
         const summary =
@@ -441,7 +630,7 @@ async function loadWithdrawals() {
 
             totalRequested.textContent =
                 `UGX ${formatMoney(
-                    summary.total_requested
+                    summary.total_requested ?? 0
                 )}`;
 
         }
@@ -451,7 +640,7 @@ async function loadWithdrawals() {
 
             totalFees.textContent =
                 `UGX ${formatMoney(
-                    summary.total_fees
+                    summary.total_fees ?? 0
                 )}`;
 
         }
@@ -461,7 +650,7 @@ async function loadWithdrawals() {
 
             totalPayout.textContent =
                 `UGX ${formatMoney(
-                    summary.total_payout
+                    summary.total_payout ?? 0
                 )}`;
 
         }
@@ -471,11 +660,17 @@ async function loadWithdrawals() {
 
             pendingCount.textContent =
                 String(
-                    Number(summary.pending_count) || 0
+                    Number(
+                        summary.pending_count
+                    ) || 0
                 );
 
         }
 
+
+        // ----------------------------------------------
+        // RENDER
+        // ----------------------------------------------
 
         renderWithdrawals();
 
@@ -490,15 +685,23 @@ async function loadWithdrawals() {
 
         allWithdrawals = [];
 
+
         hideLoading();
 
+
         if (withdrawalsList) {
+
             withdrawalsList.innerHTML = "";
+
         }
 
+
         if (emptyState) {
+
             emptyState.hidden = true;
+
         }
+
 
         showMessage(
             error.message ||
@@ -564,7 +767,7 @@ function getFilteredWithdrawals() {
 
 
     return allWithdrawals.filter(
-        function (withdrawal) {
+        function(withdrawal) {
 
             const status =
                 normalizeStatus(
@@ -583,6 +786,8 @@ function getFilteredWithdrawals() {
             const searchText =
                 [
                     withdrawal.id,
+                    withdrawal._id,
+                    withdrawal.reference,
                     withdrawal.requested_amount,
                     withdrawal.amount,
                     withdrawal.fee,
@@ -632,9 +837,14 @@ function renderWithdrawals() {
 
     hideLoading();
 
+
     const filtered =
         getFilteredWithdrawals();
 
+
+    // ----------------------------------------------
+    // REQUEST COUNT
+    // ----------------------------------------------
 
     if (withdrawalCount) {
 
@@ -647,6 +857,10 @@ function renderWithdrawals() {
 
     }
 
+
+    // ----------------------------------------------
+    // NO WITHDRAWALS AT ALL
+    // ----------------------------------------------
 
     if (!allWithdrawals.length) {
 
@@ -663,6 +877,10 @@ function renderWithdrawals() {
     }
 
 
+    // ----------------------------------------------
+    // NO MATCHING RESULTS
+    // ----------------------------------------------
+
     if (!filtered.length) {
 
         if (emptyState) {
@@ -674,10 +892,33 @@ function renderWithdrawals() {
 
             withdrawalsList.innerHTML = `
 
-                <div class="empty-state">
+                <div class="filtered-empty">
 
-                    <div class="empty-icon">
-                        🔎
+                    <div class="filtered-empty-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <circle
+                                cx="11"
+                                cy="11"
+                                r="6"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            />
+
+                            <path
+                                d="M16 16L21 21"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
                     </div>
 
                     <h2>
@@ -713,7 +954,7 @@ function renderWithdrawals() {
     withdrawalsList.innerHTML =
         filtered
             .map(
-                function (withdrawal) {
+                function(withdrawal) {
 
                     return createWithdrawalCard(
                         withdrawal
@@ -751,10 +992,6 @@ function createWithdrawalCard(withdrawal) {
         normalizeStatus(
             withdrawal.status
         );
-
-
-    const statusText =
-        statusLabel(status);
 
 
     const requested =
@@ -805,5 +1042,629 @@ function createWithdrawalCard(withdrawal) {
         );
 
 
+    const id =
+        withdrawal.id ||
+        withdrawal._id ||
+        withdrawal.reference ||
+        "";
+
+
     const safeId =
-        escape
+        escapeHTML(id);
+
+
+    const reference =
+        withdrawal.reference ||
+        withdrawal.withdrawal_id ||
+        id ||
+        "Withdrawal";
+
+
+    const safeReference =
+        escapeHTML(reference);
+
+
+    const safePhone =
+        escapeHTML(phone);
+
+
+    const statusText =
+        statusLabel(status);
+
+
+    return `
+
+        <article
+            class="withdrawal-card"
+            data-withdrawal-id="${safeId}"
+        >
+
+            <div class="withdrawal-card-top">
+
+                <div class="withdrawal-method">
+
+                    <div
+                        class="method-icon ${methodClass}"
+                    >
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M5 8H19"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <rect
+                                x="4"
+                                y="5"
+                                width="16"
+                                height="14"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            />
+
+                            <path
+                                d="M8 13H12"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(method)}
+                        </strong>
+
+                        <span>
+                            ${safePhone}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <span
+                    class="status-badge ${status}"
+                >
+                    ${escapeHTML(statusText)}
+                </span>
+
+            </div>
+
+
+            <div class="withdrawal-reference">
+
+                <span>
+                    Reference
+                </span>
+
+                <strong>
+                    ${safeReference}
+                </strong>
+
+            </div>
+
+
+            <div class="withdrawal-amount-grid">
+
+                <div>
+
+                    <span>
+                        Requested
+                    </span>
+
+                    <strong>
+                        UGX ${formatMoney(requested)}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Fee
+                    </span>
+
+                    <strong>
+                        UGX ${formatMoney(fee)}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        You'll receive
+                    </span>
+
+                    <strong>
+                        UGX ${formatMoney(payout)}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="withdrawal-card-bottom">
+
+                <div class="withdrawal-date">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                    >
+
+                        <rect
+                            x="4"
+                            y="5"
+                            width="16"
+                            height="15"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        />
+
+                        <path
+                            d="M8 3V7M16 3V7M4 10H20"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+
+                    </svg>
+
+                    <span>
+                        ${escapeHTML(createdAt)}
+                    </span>
+
+                </div>
+
+
+                <div class="withdrawal-card-actions">
+
+                    ${
+                        status === "approved"
+                            ? `
+                                <span class="payout-status">
+                                    ${escapeHTML(
+                                        payoutStatusText
+                                    )}
+                                </span>
+                              `
+                            : ""
+                    }
+
+
+                    <button
+                        type="button"
+                        class="details-button"
+                        data-withdrawal-id="${safeId}"
+                    >
+
+                        <span>
+                            View Details
+                        </span>
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+
+                            <path
+                                d="M5 12H19"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M13 6L19 12L13 18"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+
+                        </svg>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </article>
+
+    `;
+
+}
+
+
+// ======================================================
+// ATTACH DETAILS BUTTONS
+// ======================================================
+
+function attachDetailsButtons() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".details-button"
+        );
+
+
+    buttons.forEach(
+        function(button) {
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    const id =
+                        button.dataset.withdrawalId;
+
+
+                    const withdrawal =
+                        allWithdrawals.find(
+                            function(item) {
+
+                                const itemId =
+                                    item.id ||
+                                    item._id ||
+                                    item.reference ||
+                                    "";
+
+                                return String(itemId) ===
+                                    String(id);
+
+                            }
+                        );
+
+
+                    if (withdrawal) {
+
+                        openDetailsModal(
+                            withdrawal
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+// ======================================================
+// OPEN MODAL
+// ======================================================
+
+function openDetailsModal(withdrawal) {
+
+    if (!detailsModal) {
+        return;
+    }
+
+
+    const status =
+        normalizeStatus(
+            withdrawal.status
+        );
+
+
+    const requested =
+        Number(
+            withdrawal.requested_amount ??
+            withdrawal.amount ??
+            0
+        );
+
+
+    const fee =
+        Number(
+            withdrawal.fee ??
+            requested * 0.20
+        );
+
+
+    const payout =
+        Number(
+            withdrawal.payout_amount ??
+            requested - fee
+        );
+
+
+    const method =
+        normalizeMethod(
+            withdrawal.payment_method
+        );
+
+
+    const phone =
+        withdrawal.phone ||
+        withdrawal.account_number ||
+        "—";
+
+
+    const payoutStatus =
+        withdrawal.payout_status ||
+        "not_paid";
+
+
+    if (modalStatus) {
+
+        modalStatus.textContent =
+            statusLabel(status);
+
+        modalStatus.className =
+            `modal-status ${status}`;
+
+    }
+
+
+    if (modalRequested) {
+
+        modalRequested.textContent =
+            `UGX ${formatMoney(requested)}`;
+
+    }
+
+
+    if (modalFee) {
+
+        modalFee.textContent =
+            `UGX ${formatMoney(fee)}`;
+
+    }
+
+
+    if (modalPayout) {
+
+        modalPayout.textContent =
+            `UGX ${formatMoney(payout)}`;
+
+    }
+
+
+    if (modalMethod) {
+
+        modalMethod.textContent =
+            method;
+
+    }
+
+
+    if (modalPhone) {
+
+        modalPhone.textContent =
+            phone;
+
+    }
+
+
+    if (modalDate) {
+
+        modalDate.textContent =
+            formatDate(
+                withdrawal.created_at
+            );
+
+    }
+
+
+    if (modalPayoutStatus) {
+
+        modalPayoutStatus.textContent =
+            payoutStatusLabel(
+                payoutStatus
+            );
+
+    }
+
+
+    if (modalPayoutStatusRow) {
+
+        modalPayoutStatusRow.hidden =
+            status !== "approved";
+
+    }
+
+
+    if (modalRejectionRow) {
+
+        modalRejectionRow.hidden =
+            status !== "rejected";
+
+    }
+
+
+    if (modalRejectionReason) {
+
+        modalRejectionReason.textContent =
+            withdrawal.rejection_reason ||
+            withdrawal.rejected_reason ||
+            "No rejection reason was provided.";
+
+    }
+
+
+    detailsModal.hidden = false;
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+}
+
+
+// ======================================================
+// CLOSE MODAL
+// ======================================================
+
+function closeDetailsModal() {
+
+    if (!detailsModal) {
+        return;
+    }
+
+
+    detailsModal.hidden = true;
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+}
+
+
+// ======================================================
+// SEARCH / FILTER EVENTS
+// ======================================================
+
+if (searchInput) {
+
+    searchInput.addEventListener(
+        "input",
+        renderWithdrawals
+    );
+
+}
+
+
+if (statusFilter) {
+
+    statusFilter.addEventListener(
+        "change",
+        renderWithdrawals
+    );
+
+}
+
+
+if (methodFilter) {
+
+    methodFilter.addEventListener(
+        "change",
+        renderWithdrawals
+    );
+
+}
+
+
+// ======================================================
+// MODAL EVENTS
+// ======================================================
+
+if (closeModal) {
+
+    closeModal.addEventListener(
+        "click",
+        closeDetailsModal
+    );
+
+}
+
+
+if (modalCloseButton) {
+
+    modalCloseButton.addEventListener(
+        "click",
+        closeDetailsModal
+    );
+
+}
+
+
+if (detailsModal) {
+
+    detailsModal.addEventListener(
+        "click",
+        function(event) {
+
+            if (
+                event.target ===
+                detailsModal
+            ) {
+
+                closeDetailsModal();
+
+            }
+
+        }
+    );
+
+}
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Escape" &&
+            detailsModal &&
+            !detailsModal.hidden
+        ) {
+
+            closeDetailsModal();
+
+        }
+
+    }
+);
+
+
+// ======================================================
+// START
+// ======================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        loadWithdrawals();
+
+    }
+);
+
+
+// ======================================================
+// GLOBAL HELPERS
+// ======================================================
+
+window.CrownCashWithdrawals = {
+
+    reload: loadWithdrawals,
+
+    refresh: loadWithdrawals,
+
+    getWithdrawals:
+        function() {
+            return allWithdrawals;
+        },
+
+    getFilteredWithdrawals:
+        getFilteredWithdrawals
+
+};

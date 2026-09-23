@@ -1,7 +1,9 @@
 /* =========================================================
    CROWN CASH — SUPPORT CENTER
    support.css
+   Complete polished version
 ========================================================= */
+
 
 /* =========================================================
    ROOT
@@ -11,7 +13,7 @@
     --bg-main: #08090f;
     --bg-secondary: #0d0f18;
     --bg-card: rgba(18, 20, 31, 0.88);
-    --bg-card-light: rgba(24, 26, 39, 0.92);
+    --bg-card-light: rgba(24, 26, 39, 0.94);
 
     --border: rgba(255, 255, 255, 0.08);
     --border-light: rgba(255, 255, 255, 0.13);
@@ -44,10 +46,13 @@
         0 20px 55px rgba(0, 0, 0, 0.28);
 
     --shadow-glow-gold:
-        0 0 25px rgba(244, 197, 66, 0.18);
+        0 0 28px rgba(244, 197, 66, 0.18);
 
     --shadow-glow-pink:
-        0 0 25px rgba(255, 61, 154, 0.18);
+        0 0 28px rgba(255, 61, 154, 0.18);
+
+    --shadow-glow-purple:
+        0 0 28px rgba(155, 92, 255, 0.16);
 
     --transition: 0.25s ease;
 }
@@ -120,6 +125,39 @@ a {
 
 svg {
     display: block;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: #08090f;
+}
+
+::-webkit-scrollbar-thumb {
+    background:
+        linear-gradient(
+            180deg,
+            var(--purple),
+            var(--pink)
+        );
+
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold),
+            var(--pink)
+        );
 }
 
 
@@ -211,27 +249,33 @@ svg {
     align-items: center;
     justify-content: center;
 
-    border-radius: 14px;
+    border-radius: 50%;
 
-    color: var(--gold);
+    color: var(--gold-light);
 
     background:
-        linear-gradient(
-            145deg,
-            rgba(244, 197, 66, 0.16),
-            rgba(255, 61, 154, 0.10)
+        radial-gradient(
+            circle,
+            rgba(244, 197, 66, 0.20),
+            rgba(255, 61, 154, 0.12) 60%,
+            rgba(155, 92, 255, 0.08)
         );
 
-    border: 1px solid rgba(244, 197, 66, 0.23);
+    border: 1px solid rgba(244, 197, 66, 0.28);
 
     box-shadow:
-        0 0 25px rgba(244, 197, 66, 0.12);
+        0 0 22px rgba(244, 197, 66, 0.13),
+        inset 0 0 16px rgba(255, 61, 154, 0.07);
 
     transition: var(--transition);
 }
 
 .brand:hover .brand-icon {
     transform: rotate(-5deg) scale(1.05);
+
+    box-shadow:
+        0 0 30px rgba(244, 197, 66, 0.22),
+        0 0 45px rgba(255, 61, 154, 0.10);
 }
 
 .brand-icon svg {
@@ -249,6 +293,7 @@ svg {
 .brand-text span {
     font-size: 11px;
     letter-spacing: 2px;
+
     color: var(--text-secondary);
 }
 
@@ -285,14 +330,24 @@ svg {
 
     border: 1px solid var(--border);
 
-    border-radius: 10px;
+    border-radius: 50%;
 
     transition: var(--transition);
 }
 
 .sidebar-close:hover {
     color: white;
-    background: rgba(255, 61, 154, 0.10);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 61, 154, 0.16),
+            rgba(155, 92, 255, 0.08)
+        );
+
+    border-color: rgba(255, 61, 154, 0.25);
+
+    transform: rotate(90deg);
 }
 
 .sidebar-close svg {
@@ -340,7 +395,7 @@ svg {
     color: var(--text-secondary);
 
     border: 1px solid transparent;
-    border-radius: 13px;
+    border-radius: 14px;
 
     font-size: 13px;
     font-weight: 600;
@@ -408,9 +463,15 @@ svg {
         0 0 12px rgba(244, 197, 66, 0.55);
 }
 
+
+/* =========================================================
+   NAV ICONS
+   MEDIUM CIRCULAR PROFESSIONAL STYLE
+========================================================= */
+
 .nav-icon {
-    width: 35px;
-    height: 35px;
+    width: 42px;
+    height: 42px;
 
     flex-shrink: 0;
 
@@ -418,42 +479,70 @@ svg {
     align-items: center;
     justify-content: center;
 
-    border-radius: 11px;
+    border-radius: 50%;
 
-    color: var(--text-muted);
+    color: var(--text-secondary);
 
-    background: rgba(255, 255, 255, 0.035);
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            rgba(244, 197, 66, 0.12),
+            rgba(255, 61, 154, 0.07) 55%,
+            rgba(155, 92, 255, 0.06)
+        );
 
-    border: 1px solid rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+
+    box-shadow:
+        0 0 14px rgba(155, 92, 255, 0.05),
+        inset 0 0 12px rgba(255, 255, 255, 0.025);
 
     transition: var(--transition);
 }
 
 .nav-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 21px;
+    height: 21px;
+
+    stroke-width: 1.8;
 }
 
 .nav-link:hover .nav-icon {
     color: var(--pink-light);
-    border-color: rgba(255, 61, 154, 0.20);
+
+    border-color:
+        rgba(255, 61, 154, 0.30);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 61, 154, 0.17),
+            rgba(155, 92, 255, 0.09)
+        );
+
+    box-shadow:
+        0 0 20px rgba(255, 61, 154, 0.15);
+
+    transform: scale(1.05);
 }
 
 .nav-link.active .nav-icon {
     color: var(--gold-light);
 
     background:
-        linear-gradient(
-            145deg,
-            rgba(244, 197, 66, 0.15),
-            rgba(255, 61, 154, 0.10)
+        radial-gradient(
+            circle at 35% 30%,
+            rgba(244, 197, 66, 0.24),
+            rgba(255, 61, 154, 0.13) 60%,
+            rgba(155, 92, 255, 0.08)
         );
 
     border-color:
-        rgba(244, 197, 66, 0.22);
+        rgba(244, 197, 66, 0.32);
 
     box-shadow:
-        0 0 18px rgba(244, 197, 66, 0.10);
+        0 0 20px rgba(244, 197, 66, 0.14),
+        0 0 30px rgba(255, 61, 154, 0.06);
 }
 
 
@@ -487,12 +576,12 @@ svg {
     border:
         1px solid rgba(155, 92, 255, 0.12);
 
-    border-radius: 15px;
+    border-radius: 17px;
 }
 
 .mini-icon {
-    width: 35px;
-    height: 35px;
+    width: 42px;
+    height: 42px;
 
     flex-shrink: 0;
 
@@ -500,16 +589,26 @@ svg {
     align-items: center;
     justify-content: center;
 
-    color: var(--gold);
+    color: var(--gold-light);
 
-    border-radius: 11px;
+    border-radius: 50%;
 
-    background: rgba(244, 197, 66, 0.08);
+    background:
+        radial-gradient(
+            circle,
+            rgba(244, 197, 66, 0.18),
+            rgba(255, 61, 154, 0.09)
+        );
+
+    border: 1px solid rgba(244, 197, 66, 0.22);
+
+    box-shadow:
+        0 0 18px rgba(244, 197, 66, 0.09);
 }
 
 .mini-icon svg {
-    width: 19px;
-    height: 19px;
+    width: 21px;
+    height: 21px;
 }
 
 .support-mini-card strong,
@@ -540,7 +639,7 @@ svg {
 
     color: var(--text-muted);
 
-    border-radius: 12px;
+    border-radius: 14px;
 
     font-size: 13px;
     font-weight: 600;
@@ -556,6 +655,11 @@ svg {
 
 .logout-link:hover .nav-icon {
     color: var(--red);
+
+    border-color: rgba(255, 93, 108, 0.24);
+
+    box-shadow:
+        0 0 18px rgba(255, 93, 108, 0.12);
 }
 
 
@@ -609,16 +713,30 @@ svg {
 
     color: var(--text-main);
 
-    background: rgba(255, 255, 255, 0.045);
+    background:
+        radial-gradient(
+            circle,
+            rgba(244, 197, 66, 0.10),
+            rgba(255, 61, 154, 0.06)
+        );
 
     border: 1px solid var(--border);
 
-    border-radius: 12px;
+    border-radius: 50%;
+
+    transition: var(--transition);
+}
+
+.menu-button:hover {
+    border-color: rgba(244, 197, 66, 0.25);
+
+    box-shadow:
+        0 0 20px rgba(244, 197, 66, 0.10);
 }
 
 .menu-button svg {
-    width: 20px;
-    height: 20px;
+    width: 21px;
+    height: 21px;
 }
 
 .mobile-brand {
@@ -654,8 +772,8 @@ svg {
 }
 
 .account-avatar {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
 
     display: flex;
     align-items: center;
@@ -663,20 +781,21 @@ svg {
 
     color: #fff;
 
-    border-radius: 13px;
+    border-radius: 50%;
 
     background:
-        linear-gradient(
-            145deg,
-            rgba(244, 197, 66, 0.28),
-            rgba(255, 61, 154, 0.24)
+        radial-gradient(
+            circle at 35% 30%,
+            rgba(244, 197, 66, 0.30),
+            rgba(255, 61, 154, 0.20) 58%,
+            rgba(155, 92, 255, 0.14)
         );
 
     border:
-        1px solid rgba(244, 197, 66, 0.22);
+        1px solid rgba(244, 197, 66, 0.27);
 
     box-shadow:
-        0 0 20px rgba(244, 197, 66, 0.08);
+        0 0 22px rgba(244, 197, 66, 0.10);
 
     font-size: 14px;
     font-weight: 800;
@@ -711,7 +830,7 @@ svg {
 
     margin: 0 auto;
 
-    padding: 42px 0 45px;
+    padding: 42px 0 55px;
 }
 
 
@@ -726,7 +845,9 @@ svg {
     align-items: center;
     justify-content: space-between;
 
-    margin-bottom: 34px;
+    gap: 30px;
+
+    margin-bottom: 38px;
 
     animation: fadeUp 0.55s ease both;
 }
@@ -762,8 +883,8 @@ svg {
 }
 
 .heading-icon {
-    width: 74px;
-    height: 74px;
+    width: 80px;
+    height: 80px;
 
     flex-shrink: 0;
 
@@ -777,24 +898,29 @@ svg {
 
     background:
         radial-gradient(
-            circle,
-            rgba(244, 197, 66, 0.14),
-            rgba(255, 61, 154, 0.07) 58%,
-            transparent 70%
+            circle at center,
+            rgba(244, 197, 66, 0.20),
+            rgba(255, 61, 154, 0.10) 55%,
+            rgba(155, 92, 255, 0.06) 70%,
+            transparent 75%
         );
 
     border:
-        1px solid rgba(244, 197, 66, 0.20);
+        1px solid rgba(244, 197, 66, 0.27);
 
     box-shadow:
-        0 0 35px rgba(244, 197, 66, 0.10);
+        0 0 30px rgba(244, 197, 66, 0.13),
+        0 0 55px rgba(255, 61, 154, 0.06),
+        inset 0 0 25px rgba(255, 61, 154, 0.06);
 
     animation: floatIcon 4s ease-in-out infinite;
 }
 
 .heading-icon svg {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+
+    stroke-width: 1.7;
 }
 
 
@@ -829,4 +955,95 @@ svg {
 
     color: var(--text-secondary);
 
-   
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   HELP CARDS
+========================================================= */
+
+.help-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+
+    margin-bottom: 42px;
+}
+
+.help-card {
+    position: relative;
+
+    min-height: 190px;
+
+    padding: 22px 18px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(24, 26, 39, 0.92),
+            rgba(13, 15, 24, 0.94)
+        );
+
+    border:
+        1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-card);
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition),
+        border var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
+}
+
+.help-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    top: -55px;
+    right: -55px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 61, 154, 0.12),
+            transparent 70%
+        );
+
+    pointer-events: none;
+}
+
+.help-card::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 2px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(244, 197, 66, 0.35),
+            rgba(255, 

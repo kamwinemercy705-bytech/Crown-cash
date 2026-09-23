@@ -5,23 +5,35 @@
 
 "use strict";
 
-// Crown Cash backend
+// ============================================================
+// CROWN CASH BACKEND
+// ============================================================
+
 const API_URL = "https://crown-cash1.onrender.com";
 
-// ------------------------------------------------------------
-// Get form elements
-// ------------------------------------------------------------
+// ============================================================
+// GET FORM ELEMENTS
+// ============================================================
 
-const registerForm = document.getElementById("registerForm");
-const formMessage = document.getElementById("formMessage");
+const registerForm =
+    document.getElementById("registerForm");
+
+const formMessage =
+    document.getElementById("formMessage");
 
 // Password visibility buttons
 const passwordToggleButtons =
     document.querySelectorAll("[data-target]");
 
-// ------------------------------------------------------------
-// Show message
-// ------------------------------------------------------------
+// ============================================================
+// REFERRAL CODE
+// ============================================================
+
+let referralCodeFromURL = "";
+
+// ============================================================
+// SHOW MESSAGE
+// ============================================================
 
 function showMessage(message, type = "error") {
 
@@ -31,13 +43,16 @@ function showMessage(message, type = "error") {
     }
 
     formMessage.textContent = message;
-    formMessage.className = "form-message " + type;
+
+    formMessage.className =
+        "form-message " + type;
+
     formMessage.style.display = "block";
 }
 
-// ------------------------------------------------------------
-// Clear message
-// ------------------------------------------------------------
+// ============================================================
+// CLEAR MESSAGE
+// ============================================================
 
 function clearMessage() {
 
@@ -46,13 +61,16 @@ function clearMessage() {
     }
 
     formMessage.textContent = "";
-    formMessage.className = "form-message";
+
+    formMessage.className =
+        "form-message";
+
     formMessage.style.display = "none";
 }
 
-// ------------------------------------------------------------
-// Loading state
-// ------------------------------------------------------------
+// ============================================================
+// LOADING STATE
+// ============================================================
 
 function setLoading(loading) {
 
@@ -73,7 +91,10 @@ function setLoading(loading) {
 
         submitButton.disabled = true;
 
-        if (submitButton.tagName.toLowerCase() === "button") {
+        if (
+            submitButton.tagName.toLowerCase() ===
+            "button"
+        ) {
 
             submitButton.dataset.originalText =
                 submitButton.textContent;
@@ -86,7 +107,10 @@ function setLoading(loading) {
 
         submitButton.disabled = false;
 
-        if (submitButton.tagName.toLowerCase() === "button") {
+        if (
+            submitButton.tagName.toLowerCase() ===
+            "button"
+        ) {
 
             submitButton.textContent =
                 submitButton.dataset.originalText ||
@@ -95,105 +119,222 @@ function setLoading(loading) {
     }
 }
 
-// ------------------------------------------------------------
-// Password visibility
-// ------------------------------------------------------------
+// ============================================================
+// PASSWORD VISIBILITY
+// ============================================================
 
 passwordToggleButtons.forEach(button => {
 
-    button.addEventListener("click", function () {
+    button.addEventListener(
+        "click",
+        function () {
 
-        const targetId =
-            this.getAttribute("data-target");
+            const targetId =
+                this.getAttribute("data-target");
 
-        const passwordInput =
-            document.getElementById(targetId);
+            const passwordInput =
+                document.getElementById(targetId);
 
-        if (!passwordInput) {
-            return;
-        }
-
-        const icon =
-            this.querySelector("i");
-
-        if (passwordInput.type === "password") {
-
-            passwordInput.type = "text";
-
-            if (icon) {
-
-                icon.classList.remove(
-                    "fa-eye"
-                );
-
-                icon.classList.add(
-                    "fa-eye-slash"
-                );
+            if (!passwordInput) {
+                return;
             }
 
-        } else {
+            const icon =
+                this.querySelector("i");
 
-            passwordInput.type = "password";
+            if (
+                passwordInput.type ===
+                "password"
+            ) {
 
-            if (icon) {
+                passwordInput.type = "text";
 
-                icon.classList.remove(
-                    "fa-eye-slash"
-                );
+                if (icon) {
 
-                icon.classList.add(
-                    "fa-eye"
-                );
+                    icon.classList.remove(
+                        "fa-eye"
+                    );
+
+                    icon.classList.add(
+                        "fa-eye-slash"
+                    );
+                }
+
+            } else {
+
+                passwordInput.type =
+                    "password";
+
+                if (icon) {
+
+                    icon.classList.remove(
+                        "fa-eye-slash"
+                    );
+
+                    icon.classList.add(
+                        "fa-eye"
+                    );
+                }
             }
         }
-
-    });
-
+    );
 });
 
-// ------------------------------------------------------------
-// Get referral code from URL
+// ============================================================
+// LOAD REFERRAL CODE FROM URL
+//
 // Example:
-// https://crown-cash.vercel.app/?ref=CC12345678
-// ------------------------------------------------------------
+//
+// https://crown-cash.vercel.app/register.html?ref=CC88D54467
+//
+// ============================================================
 
 function loadReferralCodeFromURL() {
 
-    const params =
-        new URLSearchParams(
-            window.location.search
+    try {
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const referralCode =
+            params.get("ref");
+
+        if (!referralCode) {
+            return;
+        }
+
+        referralCodeFromURL =
+            referralCode
+                .trim()
+                .toUpperCase();
+
+        if (!referralCodeFromURL) {
+            return;
+        }
+
+        const referralInput =
+            document.getElementById(
+                "referral_code"
+            );
+
+        if (referralInput) {
+
+            referralInput.value =
+                referralCodeFromURL;
+
+            referralInput.dataset.fromReferralLink =
+                "true";
+
+            // Keep the referral code even if
+            // the user clicks into the field.
+            referralInput.dataset.referralCode =
+                referralCodeFromURL;
+        }
+
+        // Save temporarily so the code survives
+        // page/form interaction.
+        try {
+
+            sessionStorage.setItem(
+                "crownCashReferralCode",
+                referralCodeFromURL
+            );
+
+        } catch (storageError) {
+
+            console.warn(
+                "Could not save referral code:",
+                storageError
+            );
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Could not read referral code from URL:",
+            error
         );
-
-    const referralCode =
-        params.get("ref");
-
-    if (!referralCode) {
-        return;
     }
-
-    const referralInput =
-        document.getElementById("referral_code");
-
-    if (!referralInput) {
-        return;
-    }
-
-    referralInput.value =
-        referralCode.trim().toUpperCase();
-
-    // Prevent accidental modification when
-    // a referral link was used.
-    referralInput.dataset.fromReferralLink = "true";
 }
 
-// ------------------------------------------------------------
-// Validate Ugandan phone number
-// ------------------------------------------------------------
+// ============================================================
+// GET SAVED REFERRAL CODE
+// ============================================================
+
+function getReferralCode() {
+
+    // --------------------------------------------------------
+    // 1. Referral code captured directly from URL
+    // --------------------------------------------------------
+
+    if (referralCodeFromURL) {
+
+        return referralCodeFromURL
+            .trim()
+            .toUpperCase();
+    }
+
+    // --------------------------------------------------------
+    // 2. Referral input
+    // --------------------------------------------------------
+
+    const referralInput =
+        document.getElementById(
+            "referral_code"
+        );
+
+    if (
+        referralInput &&
+        referralInput.value.trim()
+    ) {
+
+        return referralInput.value
+            .trim()
+            .toUpperCase();
+    }
+
+    // --------------------------------------------------------
+    // 3. Session storage fallback
+    // --------------------------------------------------------
+
+    try {
+
+        const savedCode =
+            sessionStorage.getItem(
+                "crownCashReferralCode"
+            );
+
+        if (savedCode) {
+
+            return savedCode
+                .trim()
+                .toUpperCase();
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Could not read saved referral code:",
+            error
+        );
+    }
+
+    return "";
+}
+
+// ============================================================
+// VALIDATE UGANDAN PHONE NUMBER
+// ============================================================
 
 function isValidUgandanPhone(phone) {
 
     const cleaned =
-        phone.replace(/[\s-]/g, "");
+        phone.replace(
+            /[\s-]/g,
+            ""
+        );
 
     const patterns = [
 
@@ -205,35 +346,45 @@ function isValidUgandanPhone(phone) {
     ];
 
     return patterns.some(
-        pattern => pattern.test(cleaned)
+        pattern =>
+            pattern.test(cleaned)
     );
 }
 
-// ------------------------------------------------------------
-// Normalize phone number
-// ------------------------------------------------------------
+// ============================================================
+// NORMALIZE PHONE NUMBER
+// ============================================================
 
 function normalizePhone(phone) {
 
     let cleaned =
-        phone.replace(/[\s-]/g, "");
+        phone.replace(
+            /[\s-]/g,
+            ""
+        );
 
-    if (cleaned.startsWith("+256")) {
+    if (
+        cleaned.startsWith("+256")
+    ) {
 
-        return "0" + cleaned.substring(4);
+        return "0" +
+            cleaned.substring(4);
     }
 
-    if (cleaned.startsWith("256")) {
+    if (
+        cleaned.startsWith("256")
+    ) {
 
-        return "0" + cleaned.substring(3);
+        return "0" +
+            cleaned.substring(3);
     }
 
     return cleaned;
 }
 
-// ------------------------------------------------------------
-// Validate email
-// ------------------------------------------------------------
+// ============================================================
+// VALIDATE EMAIL
+// ============================================================
 
 function isValidEmail(email) {
 
@@ -242,9 +393,9 @@ function isValidEmail(email) {
     );
 }
 
-// ------------------------------------------------------------
-// Form submission
-// ------------------------------------------------------------
+// ============================================================
+// FORM SUBMISSION
+// ============================================================
 
 if (registerForm) {
 
@@ -256,40 +407,58 @@ if (registerForm) {
 
             clearMessage();
 
-            // ------------------------------------------------
-            // Read form fields
-            // ------------------------------------------------
+            // =================================================
+            // GET FORM FIELDS
+            // =================================================
 
             const firstNameInput =
-                document.getElementById("first_name");
+                document.getElementById(
+                    "first_name"
+                );
 
             const lastNameInput =
-                document.getElementById("last_name");
+                document.getElementById(
+                    "last_name"
+                );
 
             const fullNameInput =
-                document.getElementById("full_name");
+                document.getElementById(
+                    "full_name"
+                );
 
             const emailInput =
-                document.getElementById("email");
+                document.getElementById(
+                    "email"
+                );
 
             const phoneInput =
-                document.getElementById("phone");
+                document.getElementById(
+                    "phone"
+                );
 
             const passwordInput =
-                document.getElementById("password");
+                document.getElementById(
+                    "password"
+                );
 
             const confirmPasswordInput =
-                document.getElementById("confirm_password");
+                document.getElementById(
+                    "confirm_password"
+                );
 
             const referralInput =
-                document.getElementById("referral_code");
+                document.getElementById(
+                    "referral_code"
+                );
 
             const termsInput =
-                document.getElementById("terms");
+                document.getElementById(
+                    "terms"
+                );
 
-            // ------------------------------------------------
-            // Get values
-            // ------------------------------------------------
+            // =================================================
+            // GET VALUES
+            // =================================================
 
             const firstName =
                 firstNameInput
@@ -308,7 +477,9 @@ if (registerForm) {
 
             const email =
                 emailInput
-                    ? emailInput.value.trim().toLowerCase()
+                    ? emailInput.value
+                        .trim()
+                        .toLowerCase()
                     : "";
 
             const phone =
@@ -328,16 +499,27 @@ if (registerForm) {
                     ? confirmPasswordInput.value
                     : "";
 
-            const referralCode =
-                referralInput
-                    ? referralInput.value
-                        .trim()
-                        .toUpperCase()
-                    : "";
+            // =================================================
+            // GET REFERRAL CODE
+            // =================================================
 
-            // ------------------------------------------------
-            // Validate name
-            // ------------------------------------------------
+            const referralCode =
+                getReferralCode();
+
+            // Make sure the referral input also
+            // contains the final referral code.
+            if (
+                referralInput &&
+                referralCode
+            ) {
+
+                referralInput.value =
+                    referralCode;
+            }
+
+            // =================================================
+            // VALIDATE NAME
+            // =================================================
 
             if (
                 firstName === "" &&
@@ -348,14 +530,20 @@ if (registerForm) {
                     "Please enter your first name."
                 );
 
+                if (firstNameInput) {
+                    firstNameInput.focus();
+                }
+
                 return;
             }
 
-            // ------------------------------------------------
-            // Validate email
-            // ------------------------------------------------
+            // =================================================
+            // VALIDATE EMAIL
+            // =================================================
 
-            if (!isValidEmail(email)) {
+            if (
+                !isValidEmail(email)
+            ) {
 
                 showMessage(
                     "Please enter a valid email address."
@@ -368,11 +556,13 @@ if (registerForm) {
                 return;
             }
 
-            // ------------------------------------------------
-            // Validate phone
-            // ------------------------------------------------
+            // =================================================
+            // VALIDATE PHONE
+            // =================================================
 
-            if (!isValidUgandanPhone(phone)) {
+            if (
+                !isValidUgandanPhone(phone)
+            ) {
 
                 showMessage(
                     "Please enter a valid Ugandan phone number."
@@ -385,11 +575,13 @@ if (registerForm) {
                 return;
             }
 
-            // ------------------------------------------------
-            // Validate password
-            // ------------------------------------------------
+            // =================================================
+            // VALIDATE PASSWORD
+            // =================================================
 
-            if (password.length < 8) {
+            if (
+                password.length < 8
+            ) {
 
                 showMessage(
                     "Password must contain at least 8 characters."
@@ -402,11 +594,14 @@ if (registerForm) {
                 return;
             }
 
-            // ------------------------------------------------
-            // Confirm password
-            // ------------------------------------------------
+            // =================================================
+            // CONFIRM PASSWORD
+            // =================================================
 
-            if (password !== confirmPassword) {
+            if (
+                password !==
+                confirmPassword
+            ) {
 
                 showMessage(
                     "Passwords do not match."
@@ -419,9 +614,9 @@ if (registerForm) {
                 return;
             }
 
-            // ------------------------------------------------
-            // Terms and conditions
-            // ------------------------------------------------
+            // =================================================
+            // TERMS AND CONDITIONS
+            // =================================================
 
             if (
                 termsInput &&
@@ -435,42 +630,75 @@ if (registerForm) {
                 return;
             }
 
-            // ------------------------------------------------
-            // Prepare request
-            // ------------------------------------------------
+            // =================================================
+            // PREPARE FULL NAME
+            // =================================================
+
+            const finalFullName =
+                fullName ||
+                [firstName, lastName]
+                    .filter(Boolean)
+                    .join(" ");
+
+            // =================================================
+            // PREPARE REQUEST
+            // =================================================
 
             const requestData = {
 
-                first_name: firstName,
+                first_name:
+                    firstName,
 
-                last_name: lastName,
+                last_name:
+                    lastName,
 
                 full_name:
-                    fullName ||
-                    [firstName, lastName]
-                        .filter(Boolean)
-                        .join(" "),
+                    finalFullName,
 
-                email: email,
+                email:
+                    email,
 
-                phone: phone,
+                phone:
+                    phone,
 
-                password: password,
+                password:
+                    password,
 
                 confirm_password:
                     confirmPassword,
 
+                // IMPORTANT:
+                // This is the field expected by
+                // register.php.
                 referral_code:
                     referralCode
             };
 
-            // ------------------------------------------------
-            // Send registration request
-            // ------------------------------------------------
+            // =================================================
+            // DEBUG REFERRAL INFORMATION
+            // =================================================
+
+            console.log(
+                "Crown Cash registration data:",
+                {
+                    email: email,
+                    phone: phone,
+                    referral_code:
+                        referralCode
+                }
+            );
+
+            // =================================================
+            // START LOADING
+            // =================================================
 
             setLoading(true);
 
             try {
+
+                // =================================================
+                // SEND REGISTRATION REQUEST
+                // =================================================
 
                 const response =
                     await fetch(
@@ -478,7 +706,8 @@ if (registerForm) {
                         {
                             method: "POST",
 
-                            credentials: "include",
+                            credentials:
+                                "include",
 
                             headers: {
                                 "Content-Type":
@@ -492,9 +721,9 @@ if (registerForm) {
                         }
                     );
 
-                // ------------------------------------------------
-                // Try to read JSON response
-                // ------------------------------------------------
+                // =================================================
+                // READ JSON RESPONSE
+                // =================================================
 
                 let data = null;
 
@@ -505,12 +734,17 @@ if (registerForm) {
 
                 } catch (jsonError) {
 
+                    console.error(
+                        "Invalid registration response:",
+                        jsonError
+                    );
+
                     data = null;
                 }
 
-                // ------------------------------------------------
-                // Handle unsuccessful response
-                // ------------------------------------------------
+                // =================================================
+                // HANDLE ERROR
+                // =================================================
 
                 if (
                     !response.ok ||
@@ -530,7 +764,6 @@ if (registerForm) {
                             data.message;
                     }
 
-                    // Development-only database error
                     if (
                         data &&
                         data.error
@@ -550,18 +783,18 @@ if (registerForm) {
                     return;
                 }
 
-                // ------------------------------------------------
-                // Successful registration
-                // ------------------------------------------------
+                // =================================================
+                // SUCCESS
+                // =================================================
 
                 showMessage(
                     "Account created successfully! Redirecting...",
                     "success"
                 );
 
-                // ------------------------------------------------
-                // Store basic user information locally
-                // ------------------------------------------------
+                // =================================================
+                // SAVE USER INFORMATION
+                // =================================================
 
                 if (data.user) {
 
@@ -574,7 +807,9 @@ if (registerForm) {
                             )
                         );
 
-                    } catch (storageError) {
+                    } catch (
+                        storageError
+                    ) {
 
                         console.warn(
                             "Could not save user information.",
@@ -583,9 +818,27 @@ if (registerForm) {
                     }
                 }
 
-                // ------------------------------------------------
-                // Redirect
-                // ------------------------------------------------
+                // =================================================
+                // CLEAR TEMPORARY REFERRAL STORAGE
+                // =================================================
+
+                try {
+
+                    sessionStorage.removeItem(
+                        "crownCashReferralCode"
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "Could not clear referral storage.",
+                        error
+                    );
+                }
+
+                // =================================================
+                // REDIRECT TO DASHBOARD
+                // =================================================
 
                 setTimeout(
                     function () {
@@ -613,26 +866,29 @@ if (registerForm) {
 
                 setLoading(false);
             }
-
         }
     );
 }
 
-// ------------------------------------------------------------
-// Automatically load referral code from URL
-// ------------------------------------------------------------
+// ============================================================
+// LOAD REFERRAL CODE IMMEDIATELY
+// ============================================================
 
 loadReferralCodeFromURL();
 
-// ------------------------------------------------------------
-// Mobile menu
-// ------------------------------------------------------------
+// ============================================================
+// MOBILE MENU
+// ============================================================
 
 const menuToggle =
-    document.getElementById("menuToggle");
+    document.getElementById(
+        "menuToggle"
+    );
 
 const sidebar =
-    document.querySelector(".sidebar");
+    document.querySelector(
+        ".sidebar"
+    );
 
 if (
     menuToggle &&
@@ -646,7 +902,6 @@ if (
             sidebar.classList.toggle(
                 "active"
             );
-
         }
     );
 }

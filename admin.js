@@ -13,26 +13,47 @@ document.addEventListener("DOMContentLoaded", () => {
         `${API_BASE}/logout.php`;
 
 
-    /* =========================
+    /* =====================================================
        ELEMENTS
-    ========================= */
-
-    const menuToggle =
-        document.getElementById("menuToggle");
+    ===================================================== */
 
     const sidebar =
-        document.querySelector(".sidebar");
+        document.getElementById("adminSidebar");
+
+    const sidebarOverlay =
+        document.getElementById("sidebarOverlay");
+
+    const sidebarClose =
+        document.getElementById("sidebarClose");
+
+    const menuButton =
+        document.getElementById("menuButton");
 
     const refreshButton =
-        document.getElementById("refreshDashboard");
+        document.getElementById("refreshButton");
 
     const logoutButton =
-        document.getElementById("logoutBtn");
+        document.getElementById("logoutButton");
+
+    const adminName =
+        document.getElementById("adminName");
+
+    const adminEmail =
+        document.getElementById("adminEmail");
+
+    const adminAvatar =
+        document.getElementById("adminAvatar");
+
+    const welcomeAdminName =
+        document.getElementById("welcomeAdminName");
+
+    const dashboardDate =
+        document.getElementById("dashboardDate");
 
 
-    /* =========================
-       REDIRECT TO LOGIN
-    ========================= */
+    /* =====================================================
+       LOGIN REDIRECT
+    ===================================================== */
 
     function redirectToLogin() {
 
@@ -42,30 +63,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
+    /* =====================================================
        ADMIN ACCESS CHECK
-    ========================= */
+    ===================================================== */
 
     async function checkAdminAccess() {
 
         try {
 
-            const response =
-                await fetch(
-                    ADMIN_CHECK_API,
-                    {
-                        method: "GET",
+            const response = await fetch(
+                ADMIN_CHECK_API,
+                {
+                    method: "GET",
 
-                        credentials: "include",
+                    credentials: "include",
 
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        },
+                    headers: {
+                        "Accept": "application/json"
+                    },
 
-                        cache: "no-store"
-                    }
-                );
+                    cache: "no-store"
+                }
+            );
 
 
             const data =
@@ -73,11 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     .json()
                     .catch(() => null);
 
-
-            /*
-             * 401 = not logged in
-             * 403 = logged in but not admin
-             */
 
             if (
                 response.status === 401 ||
@@ -103,6 +117,60 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            /*
+             * If the API returns admin information,
+             * display it in the header.
+             */
+
+            const user =
+                data.user ||
+                data.admin ||
+                null;
+
+
+            if (user) {
+
+                const name =
+                    user.full_name ||
+                    user.name ||
+                    user.email ||
+                    "Administrator";
+
+                const email =
+                    user.email ||
+                    "Admin Account";
+
+
+                if (adminName) {
+                    adminName.textContent =
+                        name;
+                }
+
+
+                if (adminEmail) {
+                    adminEmail.textContent =
+                        email;
+                }
+
+
+                if (welcomeAdminName) {
+                    welcomeAdminName.textContent =
+                        name.split(" ")[0] ||
+                        "Administrator";
+                }
+
+
+                if (adminAvatar) {
+
+                    adminAvatar.textContent =
+                        name
+                            .trim()
+                            .charAt(0)
+                            .toUpperCase();
+                }
+            }
+
+
             return true;
 
         } catch (error) {
@@ -112,13 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 error
             );
 
-
-            /*
-             * If the server cannot verify
-             * the admin session, do not
-             * display the admin dashboard.
-             */
-
             redirectToLogin();
 
             return false;
@@ -126,9 +187,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
-       FORMAT MONEY
-    ========================= */
+    /* =====================================================
+       FORMAT UGX
+    ===================================================== */
 
     function formatUGX(amount) {
 
@@ -147,9 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
+    /* =====================================================
        FORMAT DATE
-    ========================= */
+    ===================================================== */
 
     function formatDate(value) {
 
@@ -197,21 +258,52 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
-       SAFE TEXT
-    ========================= */
+    /* =====================================================
+       SAFE HTML
+    ===================================================== */
 
-    function safeText(value) {
+    function escapeHTML(value) {
 
-        return String(
-            value ?? ""
-        );
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
 
-    /* =========================
+    /* =====================================================
+       DASHBOARD DATE
+    ===================================================== */
+
+    function updateDashboardDate() {
+
+        if (!dashboardDate) {
+            return;
+        }
+
+
+        const now =
+            new Date();
+
+
+        dashboardDate.textContent =
+            now.toLocaleDateString(
+                "en-UG",
+                {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
+    }
+
+
+    /* =====================================================
        UPDATE STATISTICS
-    ========================= */
+    ===================================================== */
 
     function updateStats(stats) {
 
@@ -242,19 +334,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     "blockedUsers"
                 ),
 
-            platformBalance:
-                document.getElementById(
-                    "platformBalance"
-                ),
-
             totalDeposits:
                 document.getElementById(
                     "totalDeposits"
                 ),
 
-            pendingDeposits:
+            depositCount:
                 document.getElementById(
-                    "pendingDeposits"
+                    "depositCount"
                 ),
 
             totalWithdrawals:
@@ -262,9 +349,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     "totalWithdrawals"
                 ),
 
-            pendingWithdrawals:
+            withdrawalCount:
                 document.getElementById(
-                    "pendingWithdrawals"
+                    "withdrawalCount"
                 ),
 
             totalInvestments:
@@ -272,9 +359,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     "totalInvestments"
                 ),
 
-            activeInvestments:
+            investmentCount:
                 document.getElementById(
-                    "activeInvestments"
+                    "investmentCount"
+                ),
+
+            platformBalance:
+                document.getElementById(
+                    "platformBalance"
                 )
         };
 
@@ -315,15 +407,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (elements.platformBalance) {
-
-            elements.platformBalance.textContent =
-                formatUGX(
-                    stats.platform_balance ?? 0
-                );
-        }
-
-
         if (elements.totalDeposits) {
 
             elements.totalDeposits.textContent =
@@ -333,12 +416,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (elements.pendingDeposits) {
+        if (elements.depositCount) {
 
-            elements.pendingDeposits.textContent =
-                formatUGX(
-                    stats.deposits_pending ?? 0
+            const count =
+                Number(
+                    stats.deposits_count ??
+                    stats.deposit_count ??
+                    0
                 );
+
+            elements.depositCount.textContent =
+                `${count.toLocaleString()} deposits`;
         }
 
 
@@ -351,12 +439,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (elements.pendingWithdrawals) {
+        if (elements.withdrawalCount) {
 
-            elements.pendingWithdrawals.textContent =
-                formatUGX(
-                    stats.withdrawals_pending ?? 0
+            const count =
+                Number(
+                    stats.withdrawals_count ??
+                    stats.withdrawal_count ??
+                    0
                 );
+
+            elements.withdrawalCount.textContent =
+                `${count.toLocaleString()} withdrawals`;
         }
 
 
@@ -369,19 +462,168 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        if (elements.activeInvestments) {
+        if (elements.investmentCount) {
 
-            elements.activeInvestments.textContent =
+            const count =
+                Number(
+                    stats.investments_count ??
+                    stats.investment_count ??
+                    0
+                );
+
+            elements.investmentCount.textContent =
+                `${count.toLocaleString()} investments`;
+        }
+
+
+        if (elements.platformBalance) {
+
+            elements.platformBalance.textContent =
                 formatUGX(
-                    stats.investments_active ?? 0
+                    stats.platform_balance ?? 0
                 );
         }
     }
 
 
-    /* =========================
+    /* =====================================================
+       TRANSACTION ICON
+    ===================================================== */
+
+    function transactionIcon(type) {
+
+        const value =
+            String(type || "")
+                .toLowerCase();
+
+
+        if (value.includes("deposit")) {
+
+            return `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="3"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    />
+
+                    <path
+                        d="M12 8V15"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
+
+                    <path
+                        d="M9 12L12 15L15 12"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            `;
+        }
+
+
+        if (value.includes("withdraw")) {
+
+            return `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="3"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    />
+
+                    <path
+                        d="M12 16V9"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
+
+                    <path
+                        d="M9 12L12 9L15 12"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            `;
+        }
+
+
+        if (value.includes("investment")) {
+
+            return `
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                        d="M4 18L9 13L13 16L20 8"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+
+                    <path
+                        d="M15 8H20V13"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            `;
+        }
+
+
+        return `
+            <svg viewBox="0 0 24 24" fill="none">
+                <path
+                    d="M6 4H18"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                />
+
+                <path
+                    d="M6 9H18"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                />
+
+                <path
+                    d="M6 14H14"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                />
+
+                <path
+                    d="M6 19H11"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                />
+            </svg>
+        `;
+    }
+
+
+    /* =====================================================
        RENDER RECENT USERS
-    ========================= */
+    ===================================================== */
 
     function renderUsers(users) {
 
@@ -403,7 +645,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
             container.innerHTML = `
                 <div class="empty-state">
-                    No users found.
+                    <div class="empty-icon">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="4"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            />
+
+                            <path
+                                d="M4 21C4 16.58 7.58 13 12 13C16.42 13 20 16.58 20 21"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+                    </div>
+
+                    <strong>
+                        No recent users
+                    </strong>
+
+                    <span>
+                        Newly registered members appear here.
+                    </span>
                 </div>
             `;
 
@@ -415,27 +682,31 @@ document.addEventListener("DOMContentLoaded", () => {
             users.map(user => {
 
                 const name =
-                    safeText(
+                    escapeHTML(
                         user.full_name ||
                         user.name ||
                         "Unknown User"
                     );
 
                 const email =
-                    safeText(
+                    escapeHTML(
                         user.email ||
                         "No email"
                     );
 
                 const status =
-                    safeText(
+                    escapeHTML(
                         user.status ||
                         "active"
                     );
 
 
                 const initials =
-                    name
+                    String(
+                        user.full_name ||
+                        user.name ||
+                        "U"
+                    )
                         .trim()
                         .split(/\s+/)
                         .map(
@@ -449,10 +720,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                 return `
-                    <div class="recent-user">
+                    <div class="user-item">
 
                         <div class="user-avatar">
-                            ${initials || "U"}
+                            ${escapeHTML(
+                                initials || "U"
+                            )}
                         </div>
 
                         <div class="user-info">
@@ -461,13 +734,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ${name}
                             </strong>
 
-                            <small>
+                            <span>
                                 ${email}
-                            </small>
+                            </span>
 
                         </div>
 
-                        <span class="status-badge">
+                        <span class="status-badge ${status}">
                             ${status}
                         </span>
 
@@ -478,9 +751,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
+    /* =====================================================
        RENDER TRANSACTIONS
-    ========================= */
+    ===================================================== */
 
     function renderTransactions(
         transactions
@@ -504,7 +777,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
             container.innerHTML = `
                 <div class="empty-state">
-                    No recent transactions.
+
+                    <div class="empty-icon">
+
+                        <svg viewBox="0 0 24 24" fill="none">
+
+                            <rect
+                                x="5"
+                                y="3"
+                                width="14"
+                                height="18"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            />
+
+                            <path
+                                d="M8 8H16"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M8 12H16"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M8 16H13"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <strong>
+                        No recent transactions
+                    </strong>
+
+                    <span>
+                        Transaction activity will appear here.
+                    </span>
+
                 </div>
             `;
 
@@ -516,7 +836,7 @@ document.addEventListener("DOMContentLoaded", () => {
             transactions.map(transaction => {
 
                 const type =
-                    safeText(
+                    escapeHTML(
                         transaction.type ||
                         transaction.transaction_type ||
                         "transaction"
@@ -524,7 +844,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                 const status =
-                    safeText(
+                    escapeHTML(
                         transaction.status ||
                         "pending"
                     );
@@ -544,31 +864,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                 return `
-                    <div class="recent-transaction">
+                    <div class="transaction-item">
 
                         <div class="transaction-icon">
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path
-                                    d="M12 3v18"
-                                />
-
-                                <path
-                                    d="M7 8l5-5 5 5"
-                                />
-
-                                <path
-                                    d="M7 16l5 5 5-5"
-                                />
-                            </svg>
-
+                            ${transactionIcon(type)}
                         </div>
-
 
                         <div class="transaction-info">
 
@@ -576,20 +876,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 ${type}
                             </strong>
 
-                            <small>
+                            <span>
                                 ${date}
-                            </small>
+                            </span>
 
                         </div>
 
-
-                        <div class="transaction-right">
+                        <div class="transaction-amount">
 
                             <strong>
                                 ${amount}
                             </strong>
 
-                            <span class="status-badge">
+                            <span class="status-badge ${status}">
                                 ${status}
                             </span>
 
@@ -602,24 +901,44 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
+    /* =====================================================
        LOAD DASHBOARD
-    ========================= */
+    ===================================================== */
 
     async function loadDashboard(
-        showLoading = true
+        showLoading = false
     ) {
 
         if (showLoading) {
 
-            const loading =
+            const transactions =
                 document.getElementById(
-                    "dashboardLoading"
+                    "recentTransactions"
                 );
 
-            if (loading) {
-                loading.style.display =
-                    "flex";
+            const users =
+                document.getElementById(
+                    "recentUsers"
+                );
+
+
+            if (transactions) {
+
+                transactions.innerHTML = `
+                    <div class="loading">
+                        Loading transactions...
+                    </div>
+                `;
+            }
+
+
+            if (users) {
+
+                users.innerHTML = `
+                    <div class="loading">
+                        Loading users...
+                    </div>
+                `;
             }
         }
 
@@ -649,11 +968,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     .json()
                     .catch(() => null);
 
-
-            /*
-             * Never continue if the
-             * server rejects admin access.
-             */
 
             if (
                 response.status === 401 ||
@@ -706,44 +1020,67 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
-            const message =
+            const transactions =
                 document.getElementById(
-                    "dashboardError"
+                    "recentTransactions"
+                );
+
+            const users =
+                document.getElementById(
+                    "recentUsers"
                 );
 
 
-            if (message) {
+            if (transactions) {
 
-                message.textContent =
-                    error.message ||
-                    "Unable to load dashboard.";
+                transactions.innerHTML = `
+                    <div class="empty-state">
+                        <strong>
+                            Unable to load transactions
+                        </strong>
+
+                        <span>
+                            Please refresh the dashboard.
+                        </span>
+                    </div>
+                `;
             }
 
-        } finally {
 
-            const loading =
-                document.getElementById(
-                    "dashboardLoading"
-                );
+            if (users) {
 
-            if (loading) {
+                users.innerHTML = `
+                    <div class="empty-state">
+                        <strong>
+                            Unable to load users
+                        </strong>
 
-                loading.style.display =
-                    "none";
+                        <span>
+                            Please refresh the dashboard.
+                        </span>
+                    </div>
+                `;
             }
         }
     }
 
 
-    /* =========================
-       REFRESH
-    ========================= */
+    /* =====================================================
+       REFRESH BUTTON
+    ===================================================== */
 
     if (refreshButton) {
 
         refreshButton.addEventListener(
             "click",
             async () => {
+
+                if (
+                    refreshButton.disabled
+                ) {
+                    return;
+                }
+
 
                 const original =
                     refreshButton.innerHTML;
@@ -753,33 +1090,86 @@ document.addEventListener("DOMContentLoaded", () => {
                     true;
 
 
+                refreshButton.classList.add(
+                    "is-refreshing"
+                );
+
+
                 refreshButton.innerHTML = `
-                    <span class="refresh-spinner"></span>
-                    Refreshing...
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path
+                            d="M20 11A8 8 0 0 0 5.2 6.2L4 8"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M4 4V8H8"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M4 13A8 8 0 0 0 18.8 17.8L20 16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+
+                        <path
+                            d="M20 20V16H16"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+
+                    <span>Refreshing...</span>
                 `;
 
 
                 await loadDashboard(
-                    false
+                    true
                 );
+
+
+                refreshButton.innerHTML =
+                    original;
 
 
                 refreshButton.disabled =
                     false;
 
 
-                refreshButton.innerHTML =
-                    original;
+                refreshButton.classList.remove(
+                    "is-refreshing"
+                );
             }
         );
     }
 
 
-    /* =========================
+    /* =====================================================
        LOGOUT
-    ========================= */
+    ===================================================== */
 
     async function logout() {
+
+        if (logoutButton) {
+
+            logoutButton.disabled =
+                true;
+        }
+
 
         try {
 
@@ -826,31 +1216,88 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    /* =========================
+    /* =====================================================
        MOBILE SIDEBAR
-    ========================= */
+    ===================================================== */
 
-    if (
-        menuToggle &&
-        sidebar
-    ) {
+    function openSidebar() {
 
-        menuToggle.addEventListener(
-            "click",
-            () => {
+        if (!sidebar) {
+            return;
+        }
 
-                sidebar.classList.toggle(
-                    "open"
-                );
-            }
+
+        sidebar.classList.add(
+            "open"
+        );
+
+
+        if (sidebarOverlay) {
+
+            sidebarOverlay.classList.add(
+                "show"
+            );
+        }
+
+
+        document.body.classList.add(
+            "sidebar-open"
         );
     }
 
 
-    /* =========================
-       CLOSE SIDEBAR
-       AFTER LINK CLICK
-    ========================= */
+    function closeSidebar() {
+
+        if (!sidebar) {
+            return;
+        }
+
+
+        sidebar.classList.remove(
+            "open"
+        );
+
+
+        if (sidebarOverlay) {
+
+            sidebarOverlay.classList.remove(
+                "show"
+            );
+        }
+
+
+        document.body.classList.remove(
+            "sidebar-open"
+        );
+    }
+
+
+    if (menuButton) {
+
+        menuButton.addEventListener(
+            "click",
+            openSidebar
+        );
+    }
+
+
+    if (sidebarClose) {
+
+        sidebarClose.addEventListener(
+            "click",
+            closeSidebar
+        );
+    }
+
+
+    if (sidebarOverlay) {
+
+        sidebarOverlay.addEventListener(
+            "click",
+            closeSidebar
+        );
+    }
+
 
     if (sidebar) {
 
@@ -864,27 +1311,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
             link.addEventListener(
                 "click",
-                () => {
-
-                    sidebar.classList.remove(
-                        "open"
-                    );
-                }
+                closeSidebar
             );
         });
     }
 
 
-    /* =========================
-       START SECURITY CHECK
-    ========================= */
+    /* =====================================================
+       ESCAPE KEY
+    ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeSidebar();
+            }
+        }
+    );
+
+
+    /* =====================================================
+       START ADMIN PANEL
+    ===================================================== */
 
     async function startAdminPanel() {
 
-        /*
-         * Do not load dashboard data
-         * until authorization succeeds.
-         */
+        updateDashboardDate();
+
 
         const authorized =
             await checkAdminAccess();
@@ -895,12 +1353,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        /*
-         * Only an authenticated
-         * administrator reaches here.
-         */
-
-        await loadDashboard(false);
+        await loadDashboard(
+            true
+        );
     }
 
 

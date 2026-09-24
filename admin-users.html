@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Crown Cash | User Management</title>
+
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         PAGE LOADER
+    ========================== -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-ring"></div>
+        <p>Loading user management...</p>
+    </div>
+
+
+    <!-- =========================
+         ADMIN LAYOUT
+    ========================== -->
+    <div class="admin-layout">
+
+
+        <!-- =========================
+             SIDEBAR
+        ========================== -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z"
+                        />
+                        <path
+                            d="M6 10.5V16c0 1.5 2.7 4 6 4s6-2.5 6-4v-5.5"
+                        />
+                        <path d="M21 9v6" />
+                    </svg>
+                </div>
+
+                <div class="brand-text">
+                    <strong>Crown Cash</strong>
+                    <span>Administration</span>
+                </div>
+
+            </div>
+
+
+            <!-- Admin Profile -->
+            <div class="admin-profile">
+
+                <div class="admin-avatar" id="adminAvatar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="3.5"></circle>
+                        <path d="M5 20c.8-3.7 3.1-5.5 7-5.5s6.2 1.8 7 5.5"></path>
+                    </svg>
+                </div>
+
+                <div class="admin-profile-info">
+                    <strong id="adminName">Administrator</strong>
+                    <span id="adminAccountType">Admin Account</span>
+                </div>
+
+            </div>
+
+
+            <!-- Navigation -->
+            <nav class="admin-nav">
+
+                <a href="admin.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                    </span>
+
+                    <span>Dashboard</span>
+
+                </a>
+
+
+                <a href="admin-users.html" class="nav-item active">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <path d="M3.5 20c.6-3.7 2.4-5.5 5.5-5.5s4.9 1.8 5.5 5.5"></path>
+                            <path d="M16 5.5c2.2.2 3.5 1.4 3.5 3.3 0 1.6-1 2.7-2.6 3.1"></path>
+                            <path d="M16.5 14.7c2.5.5 3.8 2.2 4 5.3"></path>
+                        </svg>
+                    </span>
+
+                    <span>Users</span>
+
+                </a>
+
+
+                <a href="admin-deposits.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                            <path d="M3 9h18"></path>
+                            <path d="M7 14h4"></path>
+                            <path d="M17 14h.01"></path>
+                        </svg>
+                    </span>
+
+                    <span>Deposits</span>
+
+                </a>
+
+
+                <a href="admin-withdrawals.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3v14"></path>
+                            <path d="m7 12 5 5 5-5"></path>
+                            <path d="M5 20h14"></path>
+                        </svg>
+                    </span>
+
+                    <span>Withdrawals</span>
+
+                </a>
+
+
+                <a href="admin-investments.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 19V9"></path>
+                            <path d="M10 19V5"></path>
+                            <path d="M16 19v-7"></path>
+                            <path d="M22 19V3"></path>
+                        </svg>
+                    </span>
+
+                    <span>Investments</span>
+
+                </a>
+
+
+                <a href="admin-transactions.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h13"></path>
+                            <path d="m14 4 3 3-3 3"></path>
+                            <path d="M20 17H7"></path>
+                            <path d="m10 14-3 3 3 3"></path>
+                        </svg>
+                    </span>
+
+                    <span>Transactions</span>
+
+                </a>
+
+
+                <a href="admin-referrals.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <circle cx="17" cy="10" r="2.5"></circle>
+                            <path d="M3.5 20c.7-3.7 2.5-5.5 5.5-5.5s4.8 1.8 5.5 5.5"></path>
+                            <path d="M14.5 15c2.8.2 4.5 1.8 5 5"></path>
+                        </svg>
+                    </span>
+
+                    <span>Referrals</span>
+
+                </a>
+
+
+                <a href="admin-support.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 13a8 8 0 0 1 16 0"></path>
+                            <path d="M4 13v4a2 2 0 0 0 2 2h2v-6H6"></path>
+                            <path d="M20 13v4a2 2 0 0 1-2 2h-2v-6h2"></path>
+                            <path d="M12 21h3"></path>
+                        </svg>
+                    </span>
+
+                    <span>Support</span>
+
+                </a>
+
+
+                <a href="admin-security.html" class="nav-item">
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3 20 6v5c0 5-3.2 8.3-8 10-4.8-1.7-8-5-8-10V6l8-3Z"></path>
+                            <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+                    </span>
+
+                    <span>Security & Audit</span>
+
+                </a>
+
+            </nav>
+
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+
+                <button
+                    type="button"
+                    class="nav-item logout-item"
+                    id="logoutBtn"
+                >
+
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"></path>
+                            <path d="M14 8l4 4-4 4"></path>
+                            <path d="M8 12h10"></path>
+                        </svg>
+                    </span>
+
+                    <span>Logout</span>
+
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Sidebar Overlay -->
+        <div
+            class="sidebar-overlay"
+            id="sidebarOverlay"
+        ></div>
+
+
+        <!-- =========================
+             MAIN
+        ========================== -->
+        <main class="admin-main">
+
+
+            <!-- Header -->
+            <header class="admin-header">
+
+                <div class="header-left">
+
+                    <button
+                        type="button"
+                        class="menu-button"
+                        id="menuButton"
+                        aria-label="Open menu"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 6h16"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 18h16"></path>
+                        </svg>
+                    </button>
+
+
+                    <div class="header-title">
+                        <span>Administration</span>
+                        <h1>User Management</h1>
+                    </div>
+
+                </div>
+
+
+                <div class="header-right">
+
+                    <div class="header-account">
+
+                        <div
+                            class="account-avatar"
+                            id="accountAvatar"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="8" r="3.5"></circle>
+                                <path d="M5 20c.8-3.7 3.1-5.5 7-5.5s6.2 1.8 7 5.5"></path>
+                            </svg>
+                        </div>
+
+                        <div class="header-account-info">
+                            <strong id="headerUserName">Administrator</strong>
+                            <span>Admin</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =========================
+                 PAGE CONTENT
+            ========================== -->
+            <div class="main-content">
+
+
+                <!-- Page Heading -->
+                <section class="page-heading">
+
+                    <div class="page-heading-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <path d="M3.5 20c.6-3.7 2.4-5.5 5.5-5.5s4.9 1.8 5.5 5.5"></path>
+                            <circle cx="17" cy="9" r="2.5"></circle>
+                            <path d="M15 15c2.6.3 4.2 2 4.7 5"></path>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h2>Registered Users</h2>
+                        <p>
+                            View, search and manage Crown Cash user accounts.
+                        </p>
+                    </div>
+
+                </section>
+
+
+                <!-- =========================
+                     STATISTICS
+                ========================== -->
+                <section class="stats-grid">
+
+
+                    <!-- Total Users -->
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="9" cy="8" r="3"></circle>
+                                <path d="M3.5 20c.6-3.7 2.4-5.5 5.5-5.5s4.9 1.8 5.5 5.5"></path>
+                                <path d="M16 5.5c2.2.2 3.5 1.4 3.5 3.3"></path>
+                                <path d="M16 14.7c2.5.5 3.8 2.2 4 5.3"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-content">
+                            <span>Total Users</span>
+                            <strong id="totalUsers">0</strong>
+                        </div>
+
+                    </article>
+
+
+                    <!-- Active Users -->
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="8"></circle>
+                                <path d="m8.5 12 2.3 2.3 4.8-5"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-content">
+                            <span>Active Users</span>
+                            <strong id="activeUsers">0</strong>
+                        </div>
+
+                    </article>
+
+
+                    <!-- Blocked Users -->
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="8"></circle>
+                                <path d="m8 8 8 8"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-content">
+                            <span>Blocked / Suspended</span>
+                            <strong id="blockedUsers">0</strong>
+                        </div>
+
+                    </article>
+
+
+                    <!-- Admin Users -->
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3 20 7v5c0 4.5-3 7.6-8 9-5-1.4-8-4.5-8-9V7l8-4Z"></path>
+                                <circle cx="12" cy="10" r="2.2"></circle>
+                                <path d="M8.5 16c.4-2.1 1.5-3.2 3.5-3.2s3.1 1.1 3.5 3.2"></path>
+                            </svg>
+                        </div>
+
+                        <div class="stat-content">
+                            <span>Admin Accounts</span>
+                            <strong id="adminUsers">0</strong>
+                        </div>
+
+                    </article>
+
+                </section>
+
+
+                <!-- =========================
+                     USER MANAGEMENT CARD
+                ========================== -->
+                <section class="admin-card users-management-card">
+
+
+                    <!-- Card Header -->
+                    <div class="card-header">
+
+                        <div class="card-title">
+
+                            <div class="card-title-icon">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 6h16"></path>
+                                    <path d="M7 12h10"></path>
+                                    <path d="M10 18h4"></path>
+                                </svg>
+                            </div>
+
+                            <div>
+                                <h3>All Users</h3>
+                                <p>
+                                    Manage registered Crown Cash accounts.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            id="refreshUsersBtn"
+                        >
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M20 11a8 8 0 0 0-14.7-4L4 9"></path>
+                                <path d="M4 4v5h5"></path>
+                                <path d="M4 13a8 8 0 0 0 14.7 4L20 15"></path>
+                                <path d="M20 20v-5h-5"></path>
+                            </svg>
+
+                            <span>Refresh</span>
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- =========================
+                         FILTERS
+                    ========================== -->
+                    <div class="users-toolbar">
+
+
+                        <!-- Search -->
+                        <div class="search-box">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="6.5"></circle>
+                                <path d="m16 16 5 5"></path>
+                            </svg>
+
+                            <input
+                                type="search"
+                                id="searchUsers"
+                                placeholder="Search by name, email, phone or referral code..."
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+
+                        <!-- Status -->
+                        <div class="filter-control">
+
+                            <label for="statusFilter">
+                                Status
+                            </label>
+
+                            <div class="select-wrapper">
+
+                                <select id="statusFilter">
+
+                                    <option value="all">
+                                        All Statuses
+                                    </option>
+
+                                    <option value="active">
+                                        Active
+                                    </option>
+
+                                    <option value="pending">
+                                        Pending
+                                    </option>
+
+                                    <option value="suspended">
+                                        Suspended
+                                    </option>
+
+                                    <option value="blocked">
+                                        Blocked
+                                    </option>
+
+                                    <option value="disabled">
+                                        Disabled
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Account Type -->
+                        <div class="filter-control">
+
+                            <label for="accountTypeFilter">
+                                Account Type
+                            </label>
+
+                            <div class="select-wrapper">
+
+                                <select id="accountTypeFilter">
+
+                                    <option value="all">
+                                        All Accounts
+                                    </option>
+
+                                    <option value="user">
+                                        Users
+                                    </option>
+
+                                    <option value="admin">
+                                        Administrators
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================
+                         MESSAGE
+                    ========================== -->
+                    <div
+                        class="admin-message"
+                        id="usersMessage"
+                        hidden
+                    ></div>
+
+
+                    <!-- =========================
+                         USERS TABLE
+                    ========================== -->
+                    <div class="table-wrapper">
+
+                        <table class="admin-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>User</th>
+
+                                    <th>Phone</th>
+
+                                    <th>Balance</th>
+
+                                    <th>Status</th>
+
+                                    <th>Account Type</th>
+
+                                    <th>Joined</th>
+
+                                    <th>Actions</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="usersTableBody">
+
+                                <!-- JS will populate users -->
+
+                            </tbody>
+
+                        </table>
+
+
+                        <!-- Loading -->
+                        <div
+                            class="table-state"
+                            id="usersLoading"
+                            hidden
+                        >
+
+                            <div class="loader-ring small"></div>
+
+                            <p>
+                                Loading users...
+                            </p>
+
+                        </div>
+
+
+                        <!-- Empty -->
+                        <div
+                            class="table-state"
+                            id="usersEmpty"
+                            hidden
+                        >
+
+                            <div class="empty-state-icon">
+
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="9" cy="8" r="3"></circle>
+                                    <path d="M3.5 20c.6-3.7 2.4-5.5 5.5-5.5s4.9 1.8 5.5 5.5"></path>
+                                    <path d="M16 16h5"></path>
+                                    <path d="M18.5 13.5v5"></path>
+                                </svg>
+
+                            </div>
+
+                            <h3>No users found</h3>
+
+                            <p>
+                                No user accounts match your current search or filters.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================
+                         PAGINATION
+                    ========================== -->
+                    <div
+                        class="pagination"
+                        id="pagination"
+                    ></div>
+
+
+                </section>
+
+
+                <!-- =========================
+                     USER DETAILS MODAL
+                ========================== -->
+                <div
+                    class="modal"
+                    id="userModal"
+                    hidden
+                >
+
+                    <div
+                        class="modal-overlay"
+                        data-close-modal
+                    ></div>
+
+
+                    <div class="modal-dialog">
+
+
+                        <!-- Modal Header -->
+                        <div class="modal-header">
+
+                            <div class="modal-title">
+
+                                <div class="modal-title-icon">
+
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="12" cy="8" r="3.5"></circle>
+                                        <path d="M5 20c.8-3.7 3.1-5.5 7-5.5s6.2 1.8 7 5.5"></path>
+                                    </svg>
+
+                                </div>
+
+                                <div>
+                                    <h3>User Details</h3>
+                                    <p>
+                                        Account information
+                                    </p>
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                type="button"
+                                class="modal-close"
+                                id="closeUserModal"
+                                aria-label="Close user details"
+                            >
+
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m7 7 10 10"></path>
+                                    <path d="m17 7-10 10"></path>
+                                </svg>
+
+                            </button>
+
+                        </div>
+
+
+                        <!-- Modal Body -->
+                        <div class="modal-body">
+
+
+                            <!-- User Identity -->
+                            <div class="user-modal-profile">
+
+                                <div class="large-avatar" id="modalUserAvatar">
+
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="12" cy="8" r="3.5"></circle>
+                                        <path d="M5 20c.8-3.7 3.1-5.5 7-5.5s6.2 1.8 7 5.5"></path>
+                                    </svg>
+
+                                </div>
+
+                                <div>
+
+                                    <h3 id="modalUserName">
+                                        User Name
+                                    </h3>
+
+                                    <p id="modalUserEmail">
+                                        user@example.com
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Details Grid -->
+                            <div class="details-grid">
+
+
+                                <div class="detail-item">
+
+                                    <span>Phone Number</span>
+
+                                    <strong id="modalUserPhone">
+                                        —
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="detail-item">
+
+                                    <span>Referral Code</span>
+
+                                    <strong id="modalReferralCode">
+                                        —
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="detail-item">
+
+                                    <span>Account Balance</span>
+
+                                    <strong id="modalUserBalance">
+                                        UGX 0
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="detail-item">
+
+                                    <span>Status</span>
+
+                                    <strong id="modalUserStatus">
+                                        —
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="detail-item">
+
+                                    <span>Account Type</span>
+
+                                    <strong id="modalAccountType">
+                                        —
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="detail-item">
+
+                                    <span>Member Since</span>
+
+                                    <strong id="modalCreatedAt">
+                                        —
+                                    </strong>
+
+                                </div>
+
+
+                            </div>
+
+
+                            <!-- Modal Notice -->
+                            <div class="security-notice">
+
+                                <div class="security-notice-icon">
+
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M12 3 20 6v5c0 5-3.2 8.3-8 10-4.8-1.7-8-5-8-10V6l8-3Z"></path>
+                                        <path d="M12 8v4"></path>
+                                        <path d="M12 16h.01"></path>
+                                    </svg>
+
+                                </div>
+
+                                <div>
+
+                                    <strong>Administrator Access</strong>
+
+                                    <p>
+                                        Account changes should only be made after verifying the
+                                        user's account information and activity.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                data-close-modal
+                            >
+                                Close
+                            </button>
+
+                            <button
+                                type="button"
+                                class="primary-button"
+                                id="manageUserBtn"
+                            >
+
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 3 20 7v5c0 4.5-3 7.6-8 9-5-1.4-8-4.5-8-9V7l8-4Z"></path>
+                                    <path d="M9 12h6"></path>
+                                    <path d="M12 9v6"></path>
+                                </svg>
+
+                                <span>Manage Account</span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================
+                     FOOTER
+                ========================== -->
+                <footer class="admin-footer">
+
+                    <div>
+                        <strong>Crown Cash</strong>
+                        <span>Administration Panel</span>
+                    </div>
+
+                    <span>
+                        © 2026 Crown Cash. All rights reserved.
+                    </span>
+
+                </footer>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================== -->
+    <script src="admin-users.js"></script>
+
+</body>
+
+</html>

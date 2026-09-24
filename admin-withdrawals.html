@@ -9,869 +9,1852 @@
     >
 
     <meta
-        name="theme-color"
-        content="#08050d"
+        name="description"
+        content="Crown Cash Administrator Withdrawals Management"
     >
 
     <title>Crown Cash | Admin Withdrawals</title>
 
-    <link
-        rel="stylesheet"
-        href="admin-withdrawals.css"
-    >
+    <link rel="stylesheet" href="admin.css">
+
+    <style>
+        /* =========================================================
+           WITHDRAWALS PAGE
+        ========================================================= */
+
+        .withdrawals-page {
+            width: 100%;
+        }
+
+        .withdrawals-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .withdrawal-stat {
+            position: relative;
+            overflow: hidden;
+            min-height: 135px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            background:
+                radial-gradient(
+                    circle at 100% 0%,
+                    rgba(255, 193, 7, 0.10),
+                    transparent 42%
+                ),
+                rgba(15, 15, 24, 0.88);
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03);
+        }
+
+        .withdrawal-stat::after {
+            content: "";
+            position: absolute;
+            right: -30px;
+            bottom: -45px;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: radial-gradient(
+                circle,
+                rgba(255, 0, 153, 0.12),
+                transparent 68%
+            );
+            pointer-events: none;
+        }
+
+        .withdrawal-stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .withdrawal-stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 193, 7, 0.22);
+            border-radius: 50%;
+            background:
+                radial-gradient(
+                    circle at 35% 30%,
+                    rgba(255, 211, 77, 0.28),
+                    rgba(255, 0, 153, 0.12)
+                );
+            color: #ffd34d;
+            box-shadow:
+                0 0 18px rgba(255, 193, 7, 0.10);
+        }
+
+        .withdrawal-stat-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawal-stat-label {
+            margin: 18px 0 6px;
+            color: rgba(255, 255, 255, 0.56);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .withdrawal-stat-value {
+            margin: 0;
+            color: #ffffff;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .withdrawal-stat-sub {
+            margin-top: 5px;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.76rem;
+        }
+
+        /* =========================================================
+           TOOLBAR
+        ========================================================= */
+
+        .withdrawals-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 17px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 18px;
+            background: rgba(14, 14, 23, 0.82);
+        }
+
+        .withdrawal-filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .withdrawal-search {
+            position: relative;
+            min-width: 250px;
+            flex: 1;
+        }
+
+        .withdrawal-search svg {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 18px;
+            height: 18px;
+            color: rgba(255, 255, 255, 0.42);
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .withdrawal-search input,
+        .withdrawal-filter {
+            width: 100%;
+            height: 44px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 12px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.045);
+            color: #ffffff;
+            font: inherit;
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .withdrawal-search input {
+            padding: 0 14px 0 42px;
+        }
+
+        .withdrawal-filter {
+            min-width: 155px;
+            padding: 0 12px;
+            cursor: pointer;
+        }
+
+        .withdrawal-search input::placeholder {
+            color: rgba(255, 255, 255, 0.38);
+        }
+
+        .withdrawal-search input:focus,
+        .withdrawal-filter:focus {
+            border-color: rgba(255, 193, 7, 0.45);
+            background: rgba(255, 255, 255, 0.065);
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.07);
+        }
+
+        .withdrawal-filter option {
+            background: #171722;
+            color: #ffffff;
+        }
+
+        .withdrawal-refresh {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 17px;
+            border: 1px solid rgba(255, 193, 7, 0.22);
+            border-radius: 12px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 193, 7, 0.14),
+                rgba(255, 0, 153, 0.10)
+            );
+            color: #ffd34d;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .withdrawal-refresh:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 193, 7, 0.42);
+            box-shadow: 0 8px 24px rgba(255, 193, 7, 0.08);
+        }
+
+        .withdrawal-refresh svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* =========================================================
+           TABLE CARD
+        ========================================================= */
+
+        .withdrawals-table-card {
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 20px;
+            background: rgba(14, 14, 23, 0.86);
+            box-shadow:
+                0 18px 45px rgba(0, 0, 0, 0.24),
+                inset 0 1px 0 rgba(255, 255, 255, 0.025);
+        }
+
+        .withdrawals-table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 20px 22px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .withdrawals-table-title {
+            margin: 0;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .withdrawals-table-subtitle {
+            margin: 5px 0 0;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.78rem;
+        }
+
+        .withdrawals-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .withdrawals-table {
+            width: 100%;
+            min-width: 1050px;
+            border-collapse: collapse;
+        }
+
+        .withdrawals-table th {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.018);
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.71rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-align: left;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .withdrawals-table td {
+            padding: 15px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+            color: rgba(255, 255, 255, 0.76);
+            font-size: 0.82rem;
+            vertical-align: middle;
+        }
+
+        .withdrawals-table tbody tr {
+            transition: background 0.18s ease;
+        }
+
+        .withdrawals-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .withdrawals-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .withdrawal-user {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            min-width: 180px;
+        }
+
+        .withdrawal-user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 193, 7, 0.18);
+            border-radius: 50%;
+            background:
+                radial-gradient(
+                    circle at 30% 25%,
+                    rgba(255, 211, 77, 0.22),
+                    rgba(255, 0, 153, 0.14)
+                );
+            color: #ffd34d;
+        }
+
+        .withdrawal-user-avatar svg {
+            width: 19px;
+            height: 19px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawal-user-name {
+            max-width: 175px;
+            overflow: hidden;
+            color: #ffffff;
+            font-weight: 750;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .withdrawal-user-email {
+            max-width: 175px;
+            margin-top: 3px;
+            overflow: hidden;
+            color: rgba(255, 255, 255, 0.40);
+            font-size: 0.72rem;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .withdrawal-amount {
+            color: #ffffff;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .withdrawal-fee {
+            color: #ffb4d9;
+            white-space: nowrap;
+        }
+
+        .withdrawal-payout {
+            color: #ffd34d;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .withdrawal-phone {
+            color: rgba(255, 255, 255, 0.68);
+            white-space: nowrap;
+        }
+
+        .withdrawal-method {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+
+        .method-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffd34d;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.30);
+        }
+
+        .method-dot.airtel {
+            background: #ff4f91;
+            box-shadow: 0 0 8px rgba(255, 79, 145, 0.30);
+        }
+
+        .withdrawal-status,
+        .payout-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 27px;
+            padding: 4px 9px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            border-color: rgba(255, 193, 7, 0.20);
+            background: rgba(255, 193, 7, 0.08);
+            color: #ffd34d;
+        }
+
+        .status-approved {
+            border-color: rgba(55, 220, 150, 0.20);
+            background: rgba(55, 220, 150, 0.08);
+            color: #70e7b0;
+        }
+
+        .status-rejected {
+            border-color: rgba(255, 80, 110, 0.20);
+            background: rgba(255, 80, 110, 0.08);
+            color: #ff849c;
+        }
+
+        .status-cancelled {
+            border-color: rgba(180, 180, 200, 0.18);
+            background: rgba(180, 180, 200, 0.06);
+            color: rgba(255, 255, 255, 0.52);
+        }
+
+        .status-awaiting {
+            border-color: rgba(177, 104, 255, 0.22);
+            background: rgba(177, 104, 255, 0.09);
+            color: #c79aff;
+        }
+
+        .withdrawal-actions {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .withdrawal-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.66);
+            cursor: pointer;
+            transition:
+                transform 0.18s ease,
+                background 0.18s ease,
+                border-color 0.18s ease,
+                color 0.18s ease;
+        }
+
+        .withdrawal-action-btn:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 193, 7, 0.30);
+            background: rgba(255, 193, 7, 0.08);
+            color: #ffd34d;
+        }
+
+        .withdrawal-action-btn.approve:hover {
+            border-color: rgba(55, 220, 150, 0.30);
+            background: rgba(55, 220, 150, 0.08);
+            color: #70e7b0;
+        }
+
+        .withdrawal-action-btn.reject:hover {
+            border-color: rgba(255, 80, 110, 0.30);
+            background: rgba(255, 80, 110, 0.08);
+            color: #ff849c;
+        }
+
+        .withdrawal-action-btn svg {
+            width: 17px;
+            height: 17px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* =========================================================
+           EMPTY / LOADING
+        ========================================================= */
+
+        .withdrawals-state {
+            padding: 55px 25px;
+            text-align: center;
+        }
+
+        .withdrawals-state-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 62px;
+            height: 62px;
+            margin: 0 auto 15px;
+            border: 1px solid rgba(255, 193, 7, 0.18);
+            border-radius: 50%;
+            background: rgba(255, 193, 7, 0.06);
+            color: #ffd34d;
+        }
+
+        .withdrawals-state-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawals-state h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .withdrawals-state p {
+            max-width: 430px;
+            margin: 7px auto 0;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+
+        .withdrawals-spinner {
+            width: 32px;
+            height: 32px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(255, 255, 255, 0.10);
+            border-top-color: #ffd34d;
+            border-right-color: #ff4fa3;
+            border-radius: 50%;
+            animation: withdrawalSpin 0.8s linear infinite;
+        }
+
+        @keyframes withdrawalSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================================
+           PAGINATION
+        ========================================================= */
+
+        .withdrawals-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 7px;
+            padding: 17px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .withdrawal-page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 35px;
+            height: 35px;
+            padding: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.035);
+            color: rgba(255, 255, 255, 0.65);
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .withdrawal-page-btn.active {
+            border-color: rgba(255, 193, 7, 0.35);
+            background: linear-gradient(
+                135deg,
+                rgba(255, 193, 7, 0.15),
+                rgba(255, 0, 153, 0.10)
+            );
+            color: #ffd34d;
+        }
+
+        .withdrawal-page-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* =========================================================
+           DETAILS MODAL
+        ========================================================= */
+
+        .withdrawal-modal {
+            position: fixed;
+            z-index: 2000;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.74);
+            backdrop-filter: blur(8px);
+        }
+
+        .withdrawal-modal.show {
+            display: flex;
+        }
+
+        .withdrawal-modal-card {
+            position: relative;
+            width: min(620px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 24px;
+            background:
+                radial-gradient(
+                    circle at 100% 0%,
+                    rgba(255, 193, 7, 0.09),
+                    transparent 38%
+                ),
+                #11111b;
+            box-shadow:
+                0 30px 90px rgba(0, 0, 0, 0.55),
+                0 0 35px rgba(255, 0, 153, 0.05);
+        }
+
+        .withdrawal-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 21px 23px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .withdrawal-modal-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .withdrawal-modal-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 43px;
+            height: 43px;
+            border: 1px solid rgba(255, 193, 7, 0.20);
+            border-radius: 50%;
+            background: rgba(255, 193, 7, 0.08);
+            color: #ffd34d;
+        }
+
+        .withdrawal-modal-icon svg {
+            width: 21px;
+            height: 21px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawal-modal-title {
+            margin: 0;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .withdrawal-modal-subtitle {
+            margin: 3px 0 0;
+            color: rgba(255, 255, 255, 0.40);
+            font-size: 0.72rem;
+        }
+
+        .withdrawal-modal-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.62);
+            cursor: pointer;
+        }
+
+        .withdrawal-modal-close:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .withdrawal-modal-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+        }
+
+        .withdrawal-modal-body {
+            padding: 23px;
+        }
+
+        .withdrawal-detail-user {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 22px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .withdrawal-detail-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 193, 7, 0.18),
+                rgba(255, 0, 153, 0.18)
+            );
+            color: #ffd34d;
+        }
+
+        .withdrawal-detail-avatar svg {
+            width: 23px;
+            height: 23px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawal-detail-name {
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
+
+        .withdrawal-detail-email {
+            margin-top: 3px;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.75rem;
+        }
+
+        .withdrawal-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 11px;
+        }
+
+        .withdrawal-detail-item {
+            padding: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .withdrawal-detail-item.full {
+            grid-column: 1 / -1;
+        }
+
+        .withdrawal-detail-label {
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.38);
+            font-size: 0.68rem;
+            font-weight: 750;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .withdrawal-detail-value {
+            color: #ffffff;
+            font-size: 0.84rem;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .withdrawal-detail-value.gold {
+            color: #ffd34d;
+        }
+
+        .withdrawal-detail-value.pink {
+            color: #ff91c7;
+        }
+
+        .withdrawal-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 18px 23px 22px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .withdrawal-modal-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 16px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 11px;
+            font: inherit;
+            font-size: 0.78rem;
+            font-weight: 750;
+            cursor: pointer;
+            transition:
+                transform 0.18s ease,
+                box-shadow 0.18s ease,
+                border-color 0.18s ease;
+        }
+
+        .withdrawal-modal-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .withdrawal-modal-btn svg {
+            width: 17px;
+            height: 17px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .withdrawal-modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(255, 255, 255, 0.70);
+        }
+
+        .withdrawal-modal-btn.approve {
+            border-color: rgba(55, 220, 150, 0.22);
+            background: rgba(55, 220, 150, 0.08);
+            color: #70e7b0;
+        }
+
+        .withdrawal-modal-btn.reject {
+            border-color: rgba(255, 80, 110, 0.22);
+            background: rgba(255, 80, 110, 0.08);
+            color: #ff849c;
+        }
+
+        .withdrawal-modal-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* =========================================================
+           MESSAGE
+        ========================================================= */
+
+        .withdrawal-message {
+            display: none;
+            margin-bottom: 17px;
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 193, 7, 0.20);
+            border-radius: 12px;
+            background: rgba(255, 193, 7, 0.06);
+            color: #ffd978;
+            font-size: 0.79rem;
+            line-height: 1.5;
+        }
+
+        .withdrawal-message.show {
+            display: block;
+        }
+
+        .withdrawal-message.error {
+            border-color: rgba(255, 80, 110, 0.22);
+            background: rgba(255, 80, 110, 0.06);
+            color: #ff91a5;
+        }
+
+        .withdrawal-message.success {
+            border-color: rgba(55, 220, 150, 0.22);
+            background: rgba(55, 220, 150, 0.06);
+            color: #7ceab8;
+        }
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 1200px) {
+            .withdrawals-summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 900px) {
+            .withdrawals-toolbar {
+                align-items: stretch;
+            }
+
+            .withdrawal-filters {
+                width: 100%;
+            }
+
+            .withdrawal-search {
+                min-width: 220px;
+            }
+
+            .withdrawal-refresh {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .withdrawals-summary {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .withdrawal-stat {
+                min-height: 120px;
+            }
+
+            .withdrawals-table-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .withdrawal-search {
+                min-width: 100%;
+                flex-basis: 100%;
+            }
+
+            .withdrawal-filter {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .withdrawal-modal {
+                padding: 10px;
+            }
+
+            .withdrawal-modal-card {
+                border-radius: 18px;
+            }
+
+            .withdrawal-details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .withdrawal-detail-item.full {
+                grid-column: auto;
+            }
+
+            .withdrawal-modal-footer {
+                flex-direction: column;
+            }
+
+            .withdrawal-modal-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .withdrawals-toolbar {
+                padding: 12px;
+            }
+
+            .withdrawal-filters {
+                flex-direction: column;
+            }
+
+            .withdrawal-filter {
+                width: 100%;
+                flex: none;
+            }
+
+            .withdrawal-stat {
+                padding: 17px;
+            }
+
+            .withdrawal-stat-value {
+                font-size: 1.25rem;
+            }
+
+            .withdrawal-modal-header,
+            .withdrawal-modal-body {
+                padding-left: 17px;
+                padding-right: 17px;
+            }
+
+            .withdrawal-modal-footer {
+                padding-left: 17px;
+                padding-right: 17px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .withdrawals-page *,
+            .withdrawals-page *::before,
+            .withdrawals-page *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="admin-shell">
+    <!-- =========================================================
+         PAGE LOADER
+    ========================================================== -->
+    <div id="pageLoader" class="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Verifying administrator access...</p>
+    </div>
 
-    <!-- =========================================
-         SIDEBAR
-    ========================================== -->
-    <aside class="sidebar" id="sidebar">
 
-        <div class="sidebar-brand">
+    <!-- =========================================================
+         ADMIN LAYOUT
+    ========================================================== -->
+    <div class="admin-layout">
 
-            <div class="brand-logo">
-                <svg
-                    viewBox="0 0 64 64"
-                    aria-hidden="true"
-                >
-                    <defs>
-                        <linearGradient
-                            id="crownGradient"
-                            x1="0%"
-                            y1="0%"
-                            x2="100%"
-                            y2="100%"
+
+        <!-- =====================================================
+             SIDEBAR
+        ====================================================== -->
+        <aside id="sidebar" class="sidebar">
+
+            <div class="sidebar-header">
+
+                <a href="admin.html" class="admin-brand">
+
+                    <span class="brand-logo">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
                         >
-                            <stop
-                                offset="0%"
-                                stop-color="#ffd76a"
+                            <path
+                                d="M12 3.5l2.1 4.25 4.7.68-3.4 3.31.8 4.68L12 14.2l-4.2 2.22.8-4.68-3.4-3.31 4.7-.68L12 3.5z"
                             />
+                        </svg>
 
-                            <stop
-                                offset="45%"
-                                stop-color="#ffb300"
-                            />
-
-                            <stop
-                                offset="100%"
-                                stop-color="#ff4fd8"
-                            />
-                        </linearGradient>
-                    </defs>
-
-                    <path
-                        d="M10 18L20 30L32 12L44 30L54 18L49 48H15L10 18Z"
-                        fill="none"
-                        stroke="url(#crownGradient)"
-                        stroke-width="4"
-                        stroke-linejoin="round"
-                    />
-
-                    <path
-                        d="M15 42H49"
-                        stroke="#ffd76a"
-                        stroke-width="4"
-                        stroke-linecap="round"
-                    />
-                </svg>
-            </div>
-
-            <div>
-                <h2>Crown Cash</h2>
-                <span>ADMIN PANEL</span>
-            </div>
-
-        </div>
-
-
-        <!-- Navigation -->
-        <nav class="admin-nav">
-
-            <a href="/admin.html" class="nav-item">
-
-                <span class="nav-icon">
-                    <!-- Dashboard -->
-                    <svg viewBox="0 0 24 24">
-                        <rect
-                            x="3"
-                            y="3"
-                            width="7"
-                            height="7"
-                            rx="1.5"
-                        />
-
-                        <rect
-                            x="14"
-                            y="3"
-                            width="7"
-                            height="7"
-                            rx="1.5"
-                        />
-
-                        <rect
-                            x="3"
-                            y="14"
-                            width="7"
-                            height="7"
-                            rx="1.5"
-                        />
-
-                        <rect
-                            x="14"
-                            y="14"
-                            width="7"
-                            height="7"
-                            rx="1.5"
-                        />
-                    </svg>
-                </span>
-
-                <span>Dashboard</span>
-
-            </a>
-
-
-            <a href="/users.html" class="nav-item">
-
-                <span class="nav-icon">
-                    <!-- Users -->
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M16 21V19C16 16.8 14.2 15 12 15H7C4.8 15 3 16.8 3 19V21"
-                        />
-
-                        <circle
-                            cx="9.5"
-                            cy="8"
-                            r="3.5"
-                        />
-
-                        <path
-                            d="M16 4.5C18.2 4.7 20 6.2 20 8.5C20 10.2 19 11.6 17.6 12.2"
-                        />
-
-                        <path
-                            d="M17 15.2C19.2 15.5 21 17.2 21 19.5V21"
-                        />
-
-                    </svg>
-                </span>
-
-                <span>Users</span>
-
-            </a>
-
-
-            <a href="/admin-deposits.html" class="nav-item">
-
-                <span class="nav-icon">
-
-                    <!-- Deposit -->
-                    <svg viewBox="0 0 24 24">
-
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="14"
-                            rx="3"
-                        />
-
-                        <path
-                            d="M7 12H17"
-                        />
-
-                        <path
-                            d="M12 8V16"
-                        />
-
-                        <path
-                            d="M9 11L12 8L15 11"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Deposits</span>
-
-            </a>
-
-
-            <!-- ACTIVE -->
-            <a
-                href="/admin-withdrawals.html"
-                class="nav-item active"
-            >
-
-                <span class="nav-icon">
-
-                    <!-- Withdrawal -->
-                    <svg viewBox="0 0 24 24">
-
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="14"
-                            rx="3"
-                        />
-
-                        <path
-                            d="M7 12H17"
-                        />
-
-                        <path
-                            d="M12 16V8"
-                        />
-
-                        <path
-                            d="M9 13L12 16L15 13"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Withdrawals</span>
-
-                <span class="active-indicator"></span>
-
-            </a>
-
-
-            <a href="/admin-investments.html" class="nav-item">
-
-                <span class="nav-icon">
-
-                    <!-- Investment -->
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M4 19V10"
-                        />
-
-                        <path
-                            d="M10 19V5"
-                        />
-
-                        <path
-                            d="M16 19V8"
-                        />
-
-                        <path
-                            d="M22 19V3"
-                        />
-
-                        <path
-                            d="M3 21H23"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Investments</span>
-
-            </a>
-
-
-            <a href="/admin-referrals.html" class="nav-item">
-
-                <span class="nav-icon">
-
-                    <!-- Referral network -->
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="12"
-                            cy="6"
-                            r="3"
-                        />
-
-                        <circle
-                            cx="6"
-                            cy="18"
-                            r="3"
-                        />
-
-                        <circle
-                            cx="18"
-                            cy="18"
-                            r="3"
-                        />
-
-                        <path
-                            d="M10.5 8.5L7.5 15"
-                        />
-
-                        <path
-                            d="M13.5 8.5L16.5 15"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Referrals</span>
-
-            </a>
-
-
-            <a href="/admin-transactions.html" class="nav-item">
-
-                <span class="nav-icon">
-
-                    <!-- Transactions -->
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M4 7H17"
-                        />
-
-                        <path
-                            d="M14 4L17 7L14 10"
-                        />
-
-                        <path
-                            d="M20 17H7"
-                        />
-
-                        <path
-                            d="M10 14L7 17L10 20"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Transactions</span>
-
-            </a>
-
-
-            <a href="/admin-security.html" class="nav-item">
-
-                <span class="nav-icon">
-
-                    <!-- Security -->
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
-                        />
-
-                        <path
-                            d="M9 12L11 14L15 10"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Security</span>
-
-            </a>
-
-        </nav>
-
-
-        <div class="sidebar-bottom">
-
-            <a href="/dashboard.html" class="back-user">
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M15 18L9 12L15 6"
-                        />
-
-                        <path
-                            d="M9 12H21"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>User Dashboard</span>
-
-            </a>
-
-
-            <button
-                type="button"
-                id="logoutButton"
-                class="logout-button"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M10 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H10"
-                        />
-
-                        <path
-                            d="M14 8L18 12L14 16"
-                        />
-
-                        <path
-                            d="M18 12H8"
-                        />
-
-                    </svg>
-
-                </span>
-
-                <span>Logout</span>
-
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =========================================
-         MAIN CONTENT
-    ========================================== -->
-    <main class="main-content">
-
-
-        <!-- Top Header -->
-        <header class="topbar">
-
-            <div class="topbar-left">
-
-                <button
-                    type="button"
-                    class="mobile-menu"
-                    id="mobileMenuButton"
-                    aria-label="Open menu"
-                >
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M4 6H20"/>
-                        <path d="M4 12H20"/>
-                        <path d="M4 18H20"/>
-
-                    </svg>
-
-                </button>
-
-
-                <div>
-
-                    <span class="eyebrow">
-                        ADMINISTRATION
                     </span>
 
-                    <h1>Withdrawal Management</h1>
+                    <span class="brand-text">
+                        <strong>Crown</strong>
+                        <span>Cash</span>
+                    </span>
 
-                    <p>
-                        Review, approve and manage customer withdrawal requests.
-                    </p>
+                </a>
 
-                </div>
+                <button
+                    id="sidebarClose"
+                    class="sidebar-close"
+                    type="button"
+                    aria-label="Close menu"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M6 6l12 12"></path>
+                        <path d="M18 6L6 18"></path>
+                    </svg>
+                </button>
 
             </div>
 
 
+            <!-- ADMIN PROFILE -->
             <div class="admin-profile">
 
-                <div class="admin-avatar">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="12"
-                            cy="8"
-                            r="3.5"
-                        />
-
-                        <path
-                            d="M5 21C5 17.7 8.1 15 12 15C15.9 15 19 17.7 19 21"
-                        />
-
+                <div class="admin-avatar" id="adminAvatar">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="8" r="3.2"></circle>
+                        <path d="M5.5 20c.7-3.7 3-5.5 6.5-5.5s5.8 1.8 6.5 5.5"></path>
                     </svg>
-
                 </div>
 
-                <div>
+                <div class="admin-profile-info">
 
-                    <strong>Administrator</strong>
+                    <strong id="adminName">
+                        Administrator
+                    </strong>
 
-                    <span>Secure session</span>
+                    <span id="adminAccountType">
+                        Administrator
+                    </span>
 
                 </div>
 
             </div>
 
-        </header>
+
+            <!-- NAVIGATION -->
+            <nav class="admin-nav">
+
+                <div class="nav-section-title">
+                    MAIN MENU
+                </div>
 
 
-        <!-- =====================================
-             SECURITY BANNER
-        ====================================== -->
-        <section class="security-banner">
-
-            <div class="security-icon">
-
-                <svg viewBox="0 0 24 24">
-
-                    <path
-                        d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
-                    />
-
-                    <path
-                        d="M9 12L11 14L15 10"
-                    />
-
-                </svg>
-
-            </div>
-
-            <div>
-
-                <strong>Protected Administrator Area</strong>
-
-                <p>
-                    Withdrawal approvals are server-side protected.
-                    Approved withdrawals deduct the requested amount
-                    from the user's balance.
-                </p>
-
-            </div>
-
-            <div class="security-status">
-
-                <span class="status-dot"></span>
-
-                Secure
-
-            </div>
-
-        </section>
+                <a
+                    href="admin.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                        </svg>
+                    </span>
+                    <span>Dashboard</span>
+                </a>
 
 
-        <!-- =====================================
-             STATISTICS
-        ====================================== -->
-        <section class="stats-grid">
+                <a
+                    href="admin-users.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <path d="M3.5 20c.6-3.6 2.4-5.4 5.5-5.4s4.9 1.8 5.5 5.4"></path>
+                            <path d="M16 11c2.5 0 4 1.5 4.5 4"></path>
+                            <path d="M15.5 5.5c1.8.2 3 1.4 3 3"></path>
+                        </svg>
+                    </span>
+                    <span>Users</span>
+                </a>
 
 
-            <!-- Total -->
-            <article class="stat-card">
+                <a
+                    href="admin-deposits.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3v14"></path>
+                            <path d="M7 8l5-5 5 5"></path>
+                            <path d="M5 20h14"></path>
+                            <path d="M7 20v-3"></path>
+                            <path d="M17 20v-3"></path>
+                        </svg>
+                    </span>
+                    <span>Deposits</span>
+                </a>
 
-                <div class="stat-icon total-icon">
 
-                    <svg viewBox="0 0 24 24">
+                <a
+                    href="admin-withdrawals.html"
+                    class="admin-nav-link active"
+                    aria-current="page"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 21V7"></path>
+                            <path d="M7 16l5 5 5-5"></path>
+                            <path d="M5 3h14"></path>
+                            <path d="M7 3v4"></path>
+                            <path d="M17 3v4"></path>
+                        </svg>
+                    </span>
+                    <span>Withdrawals</span>
+                </a>
 
-                        <path
-                            d="M4 7H20"
-                        />
 
-                        <path
-                            d="M6 7V19H18V7"
-                        />
+                <a
+                    href="admin-investments.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 19V5"></path>
+                            <path d="M4 19h16"></path>
+                            <path d="M7 15l4-4 3 2 5-6"></path>
+                            <path d="M15 7h4v4"></path>
+                        </svg>
+                    </span>
+                    <span>Investments</span>
+                </a>
 
-                        <path
-                            d="M9 4H15"
-                        />
 
-                        <path
-                            d="M9 12H15"
-                        />
+                <a
+                    href="admin-transactions.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 7h16"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 17h10"></path>
+                            <circle cx="18" cy="17" r="2"></circle>
+                        </svg>
+                    </span>
+                    <span>Transactions</span>
+                </a>
 
-                        <path
-                            d="M9 16H13"
-                        />
 
-                    </svg>
+                <a
+                    href="admin-referrals.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3"></circle>
+                            <circle cx="17" cy="10" r="2.5"></circle>
+                            <path d="M3.5 20c.6-3.6 2.5-5.4 5.5-5.4s4.9 1.8 5.5 5.4"></path>
+                            <path d="M14.5 15.5c2.4.2 4.1 1.5 4.8 4.5"></path>
+                        </svg>
+                    </span>
+                    <span>Referrals</span>
+                </a>
+
+
+                <a
+                    href="admin-support.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 13a8 8 0 0116 0"></path>
+                            <path d="M4 13v4a2 2 0 002 2h2v-6H6a2 2 0 00-2 2"></path>
+                            <path d="M20 13v4a2 2 0 01-2 2h-2v-6h2a2 2 0 012 2"></path>
+                            <path d="M12 21h3"></path>
+                        </svg>
+                    </span>
+                    <span>Support</span>
+                </a>
+
+
+                <div class="nav-section-title">
+                    SECURITY
+                </div>
+
+
+                <a
+                    href="admin-security.html"
+                    class="admin-nav-link"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3l8 3v5c0 5.1-3.3 8.5-8 10-4.7-1.5-8-4.9-8-10V6l8-3z"></path>
+                            <path d="M9 12l2 2 4-4"></path>
+                        </svg>
+                    </span>
+                    <span>Security / Audit</span>
+                </a>
+
+
+                <button
+                    id="logoutBtn"
+                    class="admin-nav-link logout-link"
+                    type="button"
+                >
+                    <span class="nav-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10 5H6a2 2 0 00-2 2v10a2 2 0 002 2h4"></path>
+                            <path d="M14 8l4 4-4 4"></path>
+                            <path d="M18 12H9"></path>
+                        </svg>
+                    </span>
+                    <span>Logout</span>
+                </button>
+
+            </nav>
+
+        </aside>
+
+
+        <div
+            id="sidebarOverlay"
+            class="sidebar-overlay"
+        ></div>
+
+
+        <!-- =====================================================
+             MAIN CONTENT
+        ====================================================== -->
+        <main class="admin-main">
+
+
+            <!-- HEADER -->
+            <header class="admin-header">
+
+                <div class="header-left">
+
+                    <button
+                        id="menuButton"
+                        class="menu-button"
+                        type="button"
+                        aria-label="Open menu"
+                    >
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 7h16"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 17h16"></path>
+                        </svg>
+                    </button>
+
+                    <div>
+                        <h1>Withdrawals</h1>
+                        <p>
+                            Review and manage customer withdrawal requests.
+                        </p>
+                    </div>
 
                 </div>
 
-                <div class="stat-content">
 
-                    <span>Total Requests</span>
+                <div class="header-right">
 
-                    <strong id="totalWithdrawals">
-                        0
-                    </strong>
+                    <div class="header-user">
 
-                    <small>
-                        All withdrawal requests
-                    </small>
+                        <div class="header-user-avatar" id="accountAvatar">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="8" r="3"></circle>
+                                <path d="M5.5 20c.7-3.7 3-5.5 6.5-5.5s5.8 1.8 6.5 5.5"></path>
+                            </svg>
+                        </div>
 
-                </div>
+                        <div class="header-user-info">
 
-            </article>
+                            <strong id="headerUserName">
+                                Administrator
+                            </strong>
 
+                            <span>
+                                Admin Panel
+                            </span>
 
-            <!-- Pending -->
-            <article class="stat-card pending-stat">
+                        </div>
 
-                <div class="stat-icon pending-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
-
-                        <path
-                            d="M12 7V12L15 14"
-                        />
-
-                    </svg>
+                    </div>
 
                 </div>
 
-                <div class="stat-content">
+            </header>
 
-                    <span>Pending</span>
 
-                    <strong id="pendingWithdrawals">
-                        0
-                    </strong>
+            <!-- PAGE CONTENT -->
+            <div class="main-content withdrawals-page">
 
-                    <small>
-                        Awaiting review
-                    </small>
 
-                </div>
+                <!-- =================================================
+                     MESSAGE
+                ================================================== -->
+                <div
+                    id="withdrawalMessage"
+                    class="withdrawal-message"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
 
-            </article>
 
+                <!-- =================================================
+                     SUMMARY
+                ================================================== -->
+                <section class="withdrawals-summary">
 
-            <!-- Approved -->
-            <article class="stat-card approved-stat">
 
-                <div class="stat-icon approved-icon">
+                    <!-- TOTAL -->
+                    <article class="withdrawal-stat">
 
-                    <svg viewBox="0 0 24 24">
+                        <div class="withdrawal-stat-top">
 
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
+                            <div class="withdrawal-stat-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 21V7"></path>
+                                    <path d="M7 16l5 5 5-5"></path>
+                                    <path d="M5 3h14"></path>
+                                </svg>
+                            </div>
 
-                        <path
-                            d="M8 12L11 15L16 9"
-                        />
+                        </div>
 
-                    </svg>
+                        <div class="withdrawal-stat-label">
+                            Total Withdrawals
+                        </div>
 
-                </div>
+                        <p
+                            id="totalWithdrawals"
+                            class="withdrawal-stat-value"
+                        >
+                            UGX 0
+                        </p>
 
-                <div class="stat-content">
+                        <div class="withdrawal-stat-sub">
+                            All withdrawal requests
+                        </div>
 
-                    <span>Approved</span>
+                    </article>
 
-                    <strong id="approvedWithdrawals">
-                        0
-                    </strong>
 
-                    <small>
-                        Successfully approved
-                    </small>
+                    <!-- PENDING -->
+                    <article class="withdrawal-stat">
 
-                </div>
+                        <div class="withdrawal-stat-top">
 
-            </article>
+                            <div class="withdrawal-stat-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8.5"></circle>
+                                    <path d="M12 7v5l3 2"></path>
+                                </svg>
+                            </div>
 
+                        </div>
 
-            <!-- Rejected -->
-            <article class="stat-card rejected-stat">
+                        <div class="withdrawal-stat-label">
+                            Pending Requests
+                        </div>
 
-                <div class="stat-icon rejected-icon">
+                        <p
+                            id="pendingWithdrawals"
+                            class="withdrawal-stat-value"
+                        >
+                            UGX 0
+                        </p>
 
-                    <svg viewBox="0 0 24 24">
+                        <div class="withdrawal-stat-sub">
+                            Awaiting admin review
+                        </div>
 
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
+                    </article>
 
-                        <path
-                            d="M9 9L15 15"
-                        />
 
-                        <path
-                            d="M15 9L9 15"
-                        />
+                    <!-- APPROVED -->
+                    <article class="withdrawal-stat">
 
-                    </svg>
+                        <div class="withdrawal-stat-top">
 
-                </div>
+                            <div class="withdrawal-stat-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8.5"></circle>
+                                    <path d="M8.5 12l2.3 2.3 4.7-5"></path>
+                                </svg>
+                            </div>
 
-                <div class="stat-content">
+                        </div>
 
-                    <span>Rejected</span>
+                        <div class="withdrawal-stat-label">
+                            Approved
+                        </div>
 
-                    <strong id="rejectedWithdrawals">
-                        0
-                    </strong>
+                        <p
+                            id="approvedWithdrawals"
+                            class="withdrawal-stat-value"
+                        >
+                            UGX 0
+                        </p>
 
-                    <small>
-                        Requests rejected
-                    </small>
+                        <div class="withdrawal-stat-sub">
+                            Approved withdrawal requests
+                        </div>
 
-                </div>
+                    </article>
 
-            </article>
 
+                    <!-- REJECTED -->
+                    <article class="withdrawal-stat">
 
-            <!-- Requested -->
-            <article class="stat-card money-stat">
+                        <div class="withdrawal-stat-top">
 
-                <div class="stat-icon money-icon">
+                            <div class="withdrawal-stat-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="8.5"></circle>
+                                    <path d="M9 9l6 6"></path>
+                                    <path d="M15 9l-6 6"></path>
+                                </svg>
+                            </div>
 
-                    <svg viewBox="0 0 24 24">
+                        </div>
 
-                        <rect
-                            x="3"
-                            y="6"
-                            width="18"
-                            height="12"
-                            rx="2"
-                        />
+                        <div class="withdrawal-stat-label">
+                            Rejected
+                        </div>
 
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="3"
-                        />
+                        <p
+                            id="rejectedWithdrawals"
+                            class="withdrawal-stat-value"
+                        >
+                            UGX 0
+                        </p>
 
-                        <path
-                            d="M7 9H7.01"
-                        />
+                        <div class="withdrawal-stat-sub">
+                            Rejected withdrawal requests
+                        </div>
 
-                        <path
-                            d="M17 15H17.01"
-                        />
+                    </article>
 
-                    </svg>
+                </section>
 
-                </div>
 
-                <div class="stat-content">
+                <!-- =================================================
+                     TOOLBAR
+                ================================================== -->
+                <section class="withdrawals-toolbar">
 
-                    <span>Total Requested</span>
+                    <div class="withdrawal-filters">
 
-                    <strong id="totalRequested">
-                        UGX 0
-                    </strong>
+                        <div class="withdrawal-search">
 
-                    <small>
-                        Requested by users
-                    </small>
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="6.5"></circle>
+                                <path d="M16 16l5 5"></path>
+                            </svg>
 
-                </div>
+                            <input
+                                type="search"
+                                id="searchWithdrawals"
+                                placeholder="Search user, phone or ID..."
+                                autocomplete="off"
+                            >
 
-            </article>
+                        </div>
 
 
-            <!-- Fees -->
-            <article class="stat-card fee-stat">
+                        <select
+                            id="statusFilter"
+                            class="withdrawal-filter"
+                            aria-label="Filter by withdrawal status"
+                        >
+                            <option value="all">
+                                All Statuses
+                            </option>
 
-                <div class="stat-icon fee-icon">
+                            <option value="pending">
+                                Pending
+                            </option>
 
-                    <svg viewBox="0 0 24 24">
+                            <option value="approved">
+                                Approved
+                            </option>
 
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        />
+                            <option value="rejected">
+                                Rejected
+                            </option>
 
-                        <path
-                            d="M15 9L9 15"
-                        />
+                            <option value="cancelled">
+                                Cancelled
+                            </option>
+                        </select>
 
-                        <circle
-                            cx="9"
-                            cy="9"
-                            r="1"
-                        />
 
-                        <circle
-                            cx="15"
-                            cy="15"
-                            r="1"
-                        />
+                        <select
+                            id="methodFilter"
+                            class="withdrawal-filter"
+                            aria-label="Filter by payment method"
+                        >
+                            <option value="all">
+                                All Methods
+                            </option>
 
-                    </svg>
+                            <option value="MTN">
+                                MTN Mobile Money
+                            </option>
 
-                </div>
+                            <option value="Airtel">
+                                Airtel Money
+                            </option>
+                        </select>
 
-                <div class="stat-content">
 
-                    <span>Total Fees</span>
+                        <select
+                            id="payoutStatusFilter"
+                            class="withdrawal-filter"
+                            aria-label="Filter by payout status"
+                        >
+                            <option value="all">
+                                All Payout Statuses
+                            </option>
 
-                    <strong id="totalFees">
-                        UGX 0
-                    </strong>
+                            <option value="not_required">
+                                Not Required
+                            </option>
 
-                    <small>
-                        Withdrawal fees
-                    </small>
+                            <option value="awaiting_payout">
+                                Awaiting Payout
+                            </option>
 
-                </div>
+                            <option value="paid">
+                                Paid
+                            </option>
 
-            </article>
+                            <option value="failed">
+                                Payout Failed
+                            </option>
+                        </select>
 
-        </section>
+                    </div>
 
 
-        <!-- =====================================
-             TOOLBAR
-        ====================================== -->
-        <section class="management-card">
-
-            <div class="management-header">
-
-                <div class="section-title">
-
-                    <div class="section-icon">
+                    <button
+                        id="refreshWithdrawalsBtn"
+                        class="withdrawal-refresh"
+                        type="button"
+                    >
 
                         <svg viewBox="0 0 24 24">
+                            <path d="M20 11a8 8 0 00-14.8-4"></path>
+                            <path d="M5 3v4h4"></path>
+                            <path d="M4 13a8 8 0 0014.8 4"></path>
+                            <path d="M19 21v-4h-4"></path>
+                        </svg>
 
-                            <path
-                                d="M4 6H20"
-                            />
+                        <span>Refresh</span>
 
-                            <path
-                                d="M7 12H17"
-                            />
+                    </button>
 
-                            <path
-                                d="M10 18H14"
-                            />
+                </section>
 
+
+                <!-- =================================================
+                     TABLE
+                ================================================== -->
+                <section class="withdrawals-table-card">
+
+                    <div class="withdrawals-table-header">
+
+                        <div>
+                            <h2 class="withdrawals-table-title">
+                                Withdrawal Requests
+                            </h2>
+
+                            <p class="withdrawals-table-subtitle">
+                                Review requested amounts, fees, payout values
+                                and customer payment details.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawals-table-wrapper">
+
+                        <table class="withdrawals-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>User</th>
+                                    <th>Requested</th>
+                                    <th>Fee</th>
+                                    <th>Payout</th>
+                                    <th>Method</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Payout Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="withdrawalsTableBody">
+
+                                <!-- Loading state inserted by JS -->
+
+                            </tbody>
+
+                        </table>
+
+
+                        <!-- LOADING -->
+                        <div
+                            id="withdrawalsLoading"
+                            class="withdrawals-state"
+                        >
+
+                            <div class="withdrawals-spinner"></div>
+
+                            <h3>
+                                Loading withdrawals...
+                            </h3>
+
+                            <p>
+                                Please wait while withdrawal requests
+                                are retrieved securely.
+                            </p>
+
+                        </div>
+
+
+                        <!-- EMPTY -->
+                        <div
+                            id="withdrawalsEmpty"
+                            class="withdrawals-state"
+                            style="display: none;"
+                        >
+
+                            <div class="withdrawals-state-icon">
+
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 21V7"></path>
+                                    <path d="M7 16l5 5 5-5"></path>
+                                    <path d="M5 3h14"></path>
+                                </svg>
+
+                            </div>
+
+                            <h3>
+                                No withdrawals found
+                            </h3>
+
+                            <p>
+                                There are no withdrawal requests matching
+                                the current search or filter.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PAGINATION -->
+                    <div
+                        id="withdrawalsPagination"
+                        class="withdrawals-pagination"
+                    ></div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =====================================================
+                 FOOTER
+            ====================================================== -->
+            <footer class="admin-footer">
+
+                <p>
+                    &copy; <span id="currentYear"></span>
+                    Crown Cash. Administrator Panel.
+                </p>
+
+                <p>
+                    Secure financial management system.
+                </p>
+
+            </footer>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================================
+         WITHDRAWAL DETAILS MODAL
+    ========================================================== -->
+    <div
+        id="withdrawalModal"
+        class="withdrawal-modal"
+        aria-hidden="true"
+    >
+
+        <div
+            class="withdrawal-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdrawalModalTitle"
+        >
+
+
+            <!-- HEADER -->
+            <div class="withdrawal-modal-header">
+
+                <div class="withdrawal-modal-title-wrap">
+
+                    <div class="withdrawal-modal-icon">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 21V7"></path>
+                            <path d="M7 16l5 5 5-5"></path>
+                            <path d="M5 3h14"></path>
                         </svg>
 
                     </div>
 
                     <div>
 
-                        <h2>Withdrawal Requests</h2>
+                        <h2
+                            id="withdrawalModalTitle"
+                            class="withdrawal-modal-title"
+                        >
+                            Withdrawal Details
+                        </h2>
 
-                        <p>
-                            Manage customer payout requests.
+                        <p class="withdrawal-modal-subtitle">
+                            Review the request before taking action.
                         </p>
 
                     </div>
@@ -880,605 +1863,292 @@
 
 
                 <button
+                    id="closeWithdrawalModal"
+                    class="withdrawal-modal-close"
                     type="button"
-                    class="refresh-button"
-                    id="refreshButton"
+                    aria-label="Close withdrawal details"
                 >
 
                     <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M20 11A8 8 0 0 0 6.2 6.2L4 8"
-                        />
-
-                        <path
-                            d="M4 4V8H8"
-                        />
-
-                        <path
-                            d="M4 13A8 8 0 0 0 17.8 17.8L20 16"
-                        />
-
-                        <path
-                            d="M20 20V16H16"
-                        />
-
+                        <path d="M6 6l12 12"></path>
+                        <path d="M18 6L6 18"></path>
                     </svg>
-
-                    <span>Refresh</span>
 
                 </button>
 
             </div>
 
 
-            <!-- Filters -->
-            <div class="filters">
-
-                <div class="search-box">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="11"
-                            cy="11"
-                            r="6"
-                        />
-
-                        <path
-                            d="M16 16L21 21"
-                        />
-
-                    </svg>
-
-                    <input
-                        type="search"
-                        id="searchInput"
-                        placeholder="Search name, phone, email or ID..."
-                        autocomplete="off"
-                    >
-
-                </div>
+            <!-- BODY -->
+            <div class="withdrawal-modal-body">
 
 
-                <div class="filter-control">
+                <!-- USER -->
+                <div class="withdrawal-detail-user">
 
-                    <svg viewBox="0 0 24 24">
+                    <div class="withdrawal-detail-avatar">
 
-                        <path
-                            d="M4 6H20"
-                        />
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="8" r="3.2"></circle>
+                            <path d="M5.5 20c.7-3.7 3-5.5 6.5-5.5s5.8 1.8 6.5 5.5"></path>
+                        </svg>
 
-                        <path
-                            d="M7 12H17"
-                        />
+                    </div>
 
-                        <path
-                            d="M10 18H14"
-                        />
+                    <div>
 
-                    </svg>
+                        <div
+                            id="modalWithdrawalUser"
+                            class="withdrawal-detail-name"
+                        >
+                            —
+                        </div>
 
-                    <select id="statusFilter">
+                        <div
+                            id="modalWithdrawalEmail"
+                            class="withdrawal-detail-email"
+                        >
+                            —
+                        </div>
 
-                        <option value="all">
-                            All Status
-                        </option>
-
-                        <option value="pending">
-                            Pending
-                        </option>
-
-                        <option value="approved">
-                            Approved
-                        </option>
-
-                        <option value="rejected">
-                            Rejected
-                        </option>
-
-                    </select>
+                    </div>
 
                 </div>
 
 
-                <div class="filter-control">
+                <!-- DETAILS -->
+                <div class="withdrawal-details-grid">
 
-                    <svg viewBox="0 0 24 24">
 
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="14"
-                            rx="3"
-                        />
+                    <div class="withdrawal-detail-item">
 
-                        <path
-                            d="M7 12H17"
-                        />
+                        <div class="withdrawal-detail-label">
+                            Requested Amount
+                        </div>
 
-                    </svg>
+                        <div
+                            id="modalWithdrawalAmount"
+                            class="withdrawal-detail-value"
+                        >
+                            UGX 0
+                        </div>
 
-                    <select id="methodFilter">
+                    </div>
 
-                        <option value="all">
-                            All Methods
-                        </option>
 
-                        <option value="mtn">
-                            MTN Mobile Money
-                        </option>
+                    <div class="withdrawal-detail-item">
 
-                        <option value="airtel">
-                            Airtel Money
-                        </option>
+                        <div class="withdrawal-detail-label">
+                            Withdrawal Fee
+                        </div>
 
-                    </select>
+                        <div
+                            id="modalWithdrawalFee"
+                            class="withdrawal-detail-value pink"
+                        >
+                            UGX 0
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Payout Amount
+                        </div>
+
+                        <div
+                            id="modalWithdrawalPayout"
+                            class="withdrawal-detail-value gold"
+                        >
+                            UGX 0
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Payment Method
+                        </div>
+
+                        <div
+                            id="modalWithdrawalMethod"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Registered Phone
+                        </div>
+
+                        <div
+                            id="modalWithdrawalPhone"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Withdrawal Status
+                        </div>
+
+                        <div
+                            id="modalWithdrawalStatus"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Payout Status
+                        </div>
+
+                        <div
+                            id="modalWithdrawalPayoutStatus"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item">
+
+                        <div class="withdrawal-detail-label">
+                            Requested Date
+                        </div>
+
+                        <div
+                            id="modalWithdrawalDate"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item full">
+
+                        <div class="withdrawal-detail-label">
+                            Withdrawal ID
+                        </div>
+
+                        <div
+                            id="modalWithdrawalId"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+
+                    <div class="withdrawal-detail-item full">
+
+                        <div class="withdrawal-detail-label">
+                            Admin Note
+                        </div>
+
+                        <div
+                            id="modalWithdrawalNote"
+                            class="withdrawal-detail-value"
+                        >
+                            —
+                        </div>
+
+                    </div>
 
                 </div>
 
             </div>
 
 
-            <!-- Message -->
-            <div
-                id="pageMessage"
-                class="page-message"
-                hidden
-            ></div>
+            <!-- FOOTER -->
+            <div class="withdrawal-modal-footer">
 
-
-            <!-- Loading -->
-            <div
-                id="loadingState"
-                class="loading-state"
-            >
-
-                <div class="loading-orb">
+                <button
+                    id="modalRejectWithdrawalBtn"
+                    class="withdrawal-modal-btn reject"
+                    type="button"
+                >
 
                     <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M12 4V2"
-                        />
-
-                        <path
-                            d="M12 22V20"
-                        />
-
-                        <path
-                            d="M4 12H2"
-                        />
-
-                        <path
-                            d="M22 12H20"
-                        />
-
-                        <path
-                            d="M5 5L3.5 3.5"
-                        />
-
-                        <path
-                            d="M20.5 20.5L19 19"
-                        />
-
-                        <path
-                            d="M19 5L20.5 3.5"
-                        />
-
-                        <path
-                            d="M3.5 20.5L5 19"
-                        />
-
+                        <circle cx="12" cy="12" r="8.5"></circle>
+                        <path d="M9 9l6 6"></path>
+                        <path d="M15 9l-6 6"></path>
                     </svg>
 
-                </div>
+                    Reject
 
-                <p>
-                    Loading withdrawal requests...
-                </p>
+                </button>
+
+
+                <button
+                    id="modalApproveWithdrawalBtn"
+                    class="withdrawal-modal-btn approve"
+                    type="button"
+                >
+
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8.5"></circle>
+                        <path d="M8.5 12l2.3 2.3 4.7-5"></path>
+                    </svg>
+
+                    Approve Withdrawal
+
+                </button>
+
+
+                <button
+                    id="modalCloseWithdrawalBtn"
+                    class="withdrawal-modal-btn secondary"
+                    type="button"
+                >
+                    Close
+                </button>
 
             </div>
-
-
-            <!-- Empty State -->
-            <div
-                id="emptyState"
-                class="empty-state"
-                hidden
-            >
-
-                <div class="empty-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="14"
-                            rx="3"
-                        />
-
-                        <path
-                            d="M8 12H16"
-                        />
-
-                        <path
-                            d="M12 8V16"
-                        />
-
-                    </svg>
-
-                </div>
-
-                <h3>No withdrawal requests found</h3>
-
-                <p>
-                    There are currently no withdrawal requests
-                    matching your selected filters.
-                </p>
-
-            </div>
-
-
-            <!-- Requests -->
-            <div
-                id="withdrawalsContainer"
-                class="withdrawals-container"
-            ></div>
-
-        </section>
-
-
-        <!-- =====================================
-             ADMIN INFORMATION
-        ====================================== -->
-        <section class="info-grid">
-
-            <article class="info-card">
-
-                <div class="info-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
-                        />
-
-                        <path
-                            d="M12 8V12"
-                        />
-
-                        <circle
-                            cx="12"
-                            cy="16"
-                            r="1"
-                        />
-
-                    </svg>
-
-                </div>
-
-                <div>
-
-                    <h3>Approval Security</h3>
-
-                    <p>
-                        Approving a withdrawal verifies that the
-                        requested amount can be deducted from the
-                        user's available balance.
-                    </p>
-
-                </div>
-
-            </article>
-
-
-            <article class="info-card">
-
-                <div class="info-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <rect
-                            x="4"
-                            y="4"
-                            width="16"
-                            height="16"
-                            rx="3"
-                        />
-
-                        <path
-                            d="M8 12L10.5 14.5L16 9"
-                        />
-
-                    </svg>
-
-                </div>
-
-                <div>
-
-                    <h3>20% Withdrawal Fee</h3>
-
-                    <p>
-                        The current platform configuration uses a
-                        20% withdrawal fee. The server calculates
-                        the fee and payout amount.
-                    </p>
-
-                </div>
-
-            </article>
-
-
-            <article class="info-card">
-
-                <div class="info-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M12 3V21"
-                        />
-
-                        <path
-                            d="M17 7C17 5.3 15.2 4 12.5 4C9.8 4 8 5.3 8 7C8 10.8 17 9.2 17 13C17 15 15 16 12 16C9 16 7 14.7 7 13"
-                        />
-
-                    </svg>
-
-                </div>
-
-                <div>
-
-                    <h3>Payout Status</h3>
-
-                    <p>
-                        Approval does not automatically send mobile
-                        money. Approved requests remain marked
-                        awaiting payout until an authorized payout
-                        process is completed.
-                    </p>
-
-                </div>
-
-            </article>
-
-        </section>
-
-    </main>
-
-</div>
-
-
-<!-- =========================================
-     WITHDRAWAL DETAILS MODAL
-========================================== -->
-<div
-    class="modal-overlay"
-    id="withdrawalModal"
-    hidden
->
-
-    <div
-        class="withdrawal-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modalTitle"
-    >
-
-        <button
-            type="button"
-            class="modal-close"
-            id="closeModal"
-            aria-label="Close"
-        >
-
-            <svg viewBox="0 0 24 24">
-
-                <path d="M6 6L18 18"/>
-                <path d="M18 6L6 18"/>
-
-            </svg>
-
-        </button>
-
-
-        <div class="modal-heading">
-
-            <div class="modal-icon">
-
-                <svg viewBox="0 0 24 24">
-
-                    <rect
-                        x="3"
-                        y="5"
-                        width="18"
-                        height="14"
-                        rx="3"
-                    />
-
-                    <path
-                        d="M7 12H17"
-                    />
-
-                    <path
-                        d="M12 16V8"
-                    />
-
-                    <path
-                        d="M9 13L12 16L15 13"
-                    />
-
-                </svg>
-
-            </div>
-
-            <div>
-
-                <span>WITHDRAWAL REQUEST</span>
-
-                <h2 id="modalTitle">
-                    Withdrawal Details
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div
-            id="modalContent"
-            class="modal-content"
-        ></div>
-
-
-        <div
-            id="modalActions"
-            class="modal-actions"
-        >
-
-            <button
-                type="button"
-                class="reject-button"
-                id="rejectButton"
-            >
-
-                <svg viewBox="0 0 24 24">
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="8"
-                    />
-
-                    <path
-                        d="M9 9L15 15"
-                    />
-
-                    <path
-                        d="M15 9L9 15"
-                    />
-
-                </svg>
-
-                Reject
-
-            </button>
-
-
-            <button
-                type="button"
-                class="approve-button"
-                id="approveButton"
-            >
-
-                <svg viewBox="0 0 24 24">
-
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="8"
-                    />
-
-                    <path
-                        d="M8 12L11 15L16 9"
-                    />
-
-                </svg>
-
-                Approve Withdrawal
-
-            </button>
 
         </div>
 
     </div>
 
-</div>
 
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
 
-<!-- =========================================
-     CONFIRMATION MODAL
-========================================== -->
-<div
-    class="modal-overlay"
-    id="confirmationModal"
-    hidden
->
+    <script>
+        /* Current year fallback */
+        const yearElement = document.getElementById("currentYear");
 
-    <div class="confirmation-modal">
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
+    </script>
 
-        <div class="confirmation-icon">
-
-            <svg viewBox="0 0 24 24">
-
-                <path
-                    d="M12 3L20 6V11C20 16.2 16.7 20 12 21C7.3 20 4 16.2 4 11V6L12 3Z"
-                />
-
-                <path
-                    d="M12 8V12"
-                />
-
-                <circle
-                    cx="12"
-                    cy="16"
-                    r="1"
-                />
-
-            </svg>
-
-        </div>
-
-
-        <h2 id="confirmationTitle">
-            Confirm Action
-        </h2>
-
-        <p id="confirmationMessage">
-            Are you sure you want to continue?
-        </p>
-
-
-        <div class="confirmation-actions">
-
-            <button
-                type="button"
-                class="cancel-button"
-                id="cancelConfirmation"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="confirm-button"
-                id="confirmAction"
-            >
-
-                <svg viewBox="0 0 24 24">
-
-                    <path
-                        d="M8 12L11 15L17 9"
-                    />
-
-                </svg>
-
-                Confirm
-
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<script src="admin-withdrawals.js"></script>
+    <script src="admin-withdrawals.js"></script>
 
 </body>
 </html>

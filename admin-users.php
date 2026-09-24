@@ -1,40 +1,76 @@
 <?php
 
-/* =========================================================
-   CROWN CASH — ADMIN USERS API
-   admin-users.php
-   ========================================================= */
-
 declare(strict_types=1);
+
+/*
+|--------------------------------------------------------------------------
+| Crown Cash - Admin Users API
+|--------------------------------------------------------------------------
+| GET /admin-users.php
+|
+| Returns registered users for the administrator panel.
+|
+| Security:
+| - CORS restricted to Crown Cash frontend
+| - Secure cross-site session
+| - Administrator authorization
+| - Optional ADMIN_USER_ID enforcement
+| - Blocked/suspended admin accounts denied
+|--------------------------------------------------------------------------
+*/
 
 
 /* =========================================================
    CORS
-   ========================================================= */
+========================================================= */
 
-header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Accept");
+header("Content-Type: application/json; charset=utf-8");
 
-header("Content-Type: application/json; charset=UTF-8");
+header(
+    "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+);
+
+header(
+    "Access-Control-Allow-Credentials: true"
+);
+
+header(
+    "Access-Control-Allow-Methods: GET, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type"
+);
 
 
-/* =========================================================
-   PREFLIGHT REQUEST
-   ========================================================= */
-
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+if (
+    $_SERVER["REQUEST_METHOD"] === "OPTIONS"
+) {
 
     http_response_code(204);
-    exit;
 
+    exit;
+}
+
+
+if (
+    $_SERVER["REQUEST_METHOD"] !== "GET"
+) {
+
+    http_response_code(405);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Method not allowed."
+    ]);
+
+    exit;
 }
 
 
 /* =========================================================
-   SESSION
-   ========================================================= */
+   SECURE SESSION
+========================================================= */
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -48,37 +84,15 @@ session_start();
 
 
 /* =========================================================
-   LOAD DATABASE CONFIG
-   ========================================================= */
+   RESPONSE HELPER
+========================================================= */
 
-try {
-
-    require_once __DIR__ . "/config.php";
-
-} catch (Throwable $e) {
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Server configuration error."
-    ]);
-
-    exit;
-
-}
-
-
-/* =========================================================
-   HELPER RESPONSE
-   ========================================================= */
-
-function respond(
+function jsonResponse(
     bool $success,
     string $message = "",
     array $data = [],
     int $statusCode = 200
-): void {
+): never {
 
     http_response_code($statusCode);
 
@@ -94,738 +108,697 @@ function respond(
     );
 
     exit;
-
 }
 
 
 /* =========================================================
-   ADMIN AUTHENTICATION
-   ========================================================= */
-
-/*
- * Never rely only on the fact that the page is called
- * "admin.html".
- *
- * The backend must verify the logged-in session.
- */
+   LOGIN CHECK
+========================================================= */
 
 if (
-    empty($_SESSION["logged_in"]) ||
+    !isset($_SESSION["logged_in"]) ||
+    $_SESSION["logged_in"] !== true ||
     empty($_SESSION["user_id"])
 ) {
 
-    respond(
+    jsonResponse(
         false,
-        "Authentication required.",
+        "Please login first.",
         [],
         401
     );
-
 }
 
 
 /* =========================================================
-   CHECK ADMIN ROLE
-   ========================================================= */
+   LOAD DATABASE
+========================================================= */
 
-$sessionRole =
-    strtolower(
-        trim(
-            (string)(
-                $_SESSION["role"] ??
-                ""
-            )
-        )
+try {
+
+    require_once __DIR__ . "/config.php";
+
+} catch (Throwable $e) {
+
+    error_log(
+        "admin-users.php config error: " .
+        $e->getMessage()
     );
 
-
-if (
-    $sessionRole !== "admin" &&
-    $sessionRole !== "administrator"
-) {
-
-    respond(
+    jsonResponse(
         false,
-        "Administrator access required.",
-        [],
-        403
-    );
-
-}
-
-
-/* =========================================================
-   CHECK DATABASE OBJECTS
-   ========================================================= */
-
-if (
-    !isset($database) ||
-    !isset($users)
-) {
-
-    respond(
-        false,
-        "Database configuration is incomplete.",
+        "Database configuration error.",
         [],
         500
     );
-
 }
 
 
 /* =========================================================
-   REQUEST METHOD
-   ========================================================= */
+   ADMIN AUTHORIZATION
+========================================================= */
 
-$method =
-    strtoupper(
-        $_SERVER["REQUEST_METHOD"] ?? "GET"
-    );
+try {
+
+    $users = $db->selectCollection("users");
 
 
-/* =========================================================
-   GET USERS
-   ========================================================= */
+    /*
+    |--------------------------------------------------------------------------
+    | Current Session User
+    |--------------------------------------------------------------------------
+    */
 
-if ($method === "GET") {
+    $sessionUserId =
+        (string)$_SESSION["user_id"];
+
+
+    $adminUser = null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Convert Session ID to ObjectId
+    |--------------------------------------------------------------------------
+    */
 
     try {
 
-        /*
-         * Retrieve users.
-         *
-         * We do not expose password fields.
-         */
-
-        $cursor =
-            $users->find(
-                [],
-                [
-                    "projection" => [
-                        "password" => 0,
-                        "password_hash" => 0
-                    ],
-
-                    "sort" => [
-                        "created_at" => -1
-                    ]
-                ]
+        $adminObjectId =
+            new MongoDB\BSON\ObjectId(
+                $sessionUserId
             );
 
-
-        $result = [];
-
-
-        foreach ($cursor as $user) {
-
-            $result[] =
-                formatUser($user);
-
-        }
-
-
-        respond(
-            true,
-            "Users loaded successfully.",
-            [
-                "users" => $result,
-                "count" => count($result)
-            ]
-        );
-
+        $adminUser =
+            $users->findOne([
+                "_id" => $adminObjectId
+            ]);
 
     } catch (Throwable $e) {
 
-        error_log(
-            "Admin users GET error: " .
-            $e->getMessage()
-        );
-
-
-        respond(
-            false,
-            "Unable to load users.",
-            [],
-            500
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   POST REQUEST
-   ========================================================= */
-
-if ($method === "POST") {
-
-    $rawInput =
-        file_get_contents("php://input");
-
-
-    if (!$rawInput) {
-
-        respond(
-            false,
-            "Request body is empty.",
-            [],
-            400
-        );
-
+        $adminUser = null;
     }
 
 
-    $input =
-        json_decode(
-            $rawInput,
-            true
-        );
+    /*
+    |--------------------------------------------------------------------------
+    | Fallback: String ID
+    |--------------------------------------------------------------------------
+    */
 
+    if (!$adminUser) {
 
-    if (
-        !is_array($input)
-    ) {
-
-        respond(
-            false,
-            "Invalid JSON request.",
-            [],
-            400
-        );
-
+        $adminUser =
+            $users->findOne([
+                "_id" => $sessionUserId
+            ]);
     }
 
 
-    $action =
+    if (!$adminUser) {
+
+        jsonResponse(
+            false,
+            "Administrator account was not found.",
+            [],
+            403
+        );
+    }
+
+
+    /* =====================================================
+       CHECK ACCOUNT STATUS
+    ===================================================== */
+
+    $accountStatus =
         strtolower(
             trim(
                 (string)(
-                    $input["action"] ?? ""
+                    $adminUser["status"]
+                    ?? "active"
                 )
             )
         );
 
 
+    $blockedStatuses = [
+        "blocked",
+        "suspended",
+        "disabled",
+        "banned",
+        "inactive"
+    ];
+
+
+    if (
+        in_array(
+            $accountStatus,
+            $blockedStatuses,
+            true
+        )
+    ) {
+
+        jsonResponse(
+            false,
+            "Administrator account is not active.",
+            [],
+            403
+        );
+    }
+
+
     /* =====================================================
-       UPDATE USER STATUS
-       ===================================================== */
-
-    if ($action === "update_status") {
-
-        updateUserStatus(
-            $users,
-            $input
-        );
-
-    }
-
-
-    respond(
-        false,
-        "Unknown admin action.",
-        [],
-        400
-    );
-
-}
-
-
-/* =========================================================
-   UNSUPPORTED METHOD
-   ========================================================= */
-
-respond(
-    false,
-    "Method not allowed.",
-    [],
-    405
-);
-
-
-/* =========================================================
-   FORMAT USER
-   ========================================================= */
-
-function formatUser(
-    $user
-): array {
-
-    /*
-     * MongoDB ObjectId
-     */
-
-    $id = "";
-
-    if (
-        isset($user["_id"])
-    ) {
-
-        $id =
-            (string)$user["_id"];
-
-    }
-
-
-    /* -----------------------------------------------------
-       NAME
-       ----------------------------------------------------- */
-
-    $firstName =
-        (string)(
-            $user["first_name"] ??
-            $user["firstName"] ??
-            ""
-        );
-
-
-    $lastName =
-        (string)(
-            $user["last_name"] ??
-            $user["lastName"] ??
-            ""
-        );
-
-
-    $name =
-        trim(
-            (string)(
-                $user["name"] ??
-                $user["full_name"] ??
-                $user["fullName"] ??
-                ""
-            )
-        );
-
-
-    if ($name === "") {
-
-        $name =
-            trim(
-                $firstName .
-                " " .
-                $lastName
-            );
-
-    }
-
-
-    if ($name === "") {
-
-        $name = "Unknown User";
-
-    }
-
-
-    /* -----------------------------------------------------
-       EMAIL
-       ----------------------------------------------------- */
-
-    $email =
-        (string)(
-            $user["email"] ??
-            ""
-        );
-
-
-    /* -----------------------------------------------------
-       PHONE
-       ----------------------------------------------------- */
-
-    $phone =
-        (string)(
-            $user["phone"] ??
-            $user["phone_number"] ??
-            ""
-        );
-
-
-    /* -----------------------------------------------------
-       REFERRAL CODE
-       ----------------------------------------------------- */
-
-    $referralCode =
-        (string)(
-            $user["referral_code"] ??
-            $user["referralCode"] ??
-            ""
-        );
-
-
-    /* -----------------------------------------------------
-       BALANCE
-       ----------------------------------------------------- */
-
-    $balance = 0;
-
-
-    if (
-        isset($user["balance"])
-    ) {
-
-        $balance =
-            numericValue(
-                $user["balance"]
-            );
-
-    } elseif (
-        isset($user["wallet_balance"])
-    ) {
-
-        $balance =
-            numericValue(
-                $user["wallet_balance"]
-            );
-
-    } elseif (
-        isset($user["walletBalance"])
-    ) {
-
-        $balance =
-            numericValue(
-                $user["walletBalance"]
-            );
-
-    }
-
-
-    /* -----------------------------------------------------
-       ROLE
-       ----------------------------------------------------- */
+       CHECK ROLE / ACCOUNT TYPE
+    ===================================================== */
 
     $role =
         strtolower(
             trim(
                 (string)(
-                    $user["role"] ??
-                    $user["account_type"] ??
-                    $user["accountType"] ??
-                    "user"
+                    $adminUser["role"]
+                    ?? ""
                 )
             )
         );
 
 
-    if (
-        $role !== "admin" &&
-        $role !== "administrator"
-    ) {
-
-        $role = "user";
-
-    }
-
-
-    /* -----------------------------------------------------
-       STATUS
-       ----------------------------------------------------- */
-
-    $status =
+    $accountType =
         strtolower(
             trim(
                 (string)(
-                    $user["status"] ??
-                    $user["account_status"] ??
-                    $user["accountStatus"] ??
-                    "active"
+                    $adminUser["account_type"]
+                    ?? ""
                 )
             )
         );
 
 
-    if (
-        !in_array(
-            $status,
-            [
-                "active",
-                "pending",
-                "blocked"
-            ],
-            true
-        )
-    ) {
+    $isAdmin =
+        (
+            $role === "admin" ||
+            $role === "administrator" ||
+            $accountType === "admin" ||
+            $accountType === "administrator"
+        );
 
-        $status = "active";
 
+    if (!$isAdmin) {
+
+        jsonResponse(
+            false,
+            "Administrator access required.",
+            [],
+            403
+        );
     }
 
 
-    /* -----------------------------------------------------
-       CREATED DATE
-       ----------------------------------------------------- */
+    /* =====================================================
+       OPTIONAL ADMIN USER ID LOCK
+    ===================================================== */
 
-    $createdAt = null;
-
-
-    if (
-        isset($user["created_at"])
-    ) {
-
-        $createdAt =
-            formatDateValue(
-                $user["created_at"]
-            );
-
-    } elseif (
-        isset($user["createdAt"])
-    ) {
-
-        $createdAt =
-            formatDateValue(
-                $user["createdAt"]
-            );
-
-    }
-
-
-    return [
-
-        "id" => $id,
-
-        "name" => $name,
-
-        "first_name" => $firstName,
-
-        "last_name" => $lastName,
-
-        "email" => $email,
-
-        "phone" => $phone,
-
-        "referral_code" => $referralCode,
-
-        "balance" => $balance,
-
-        "role" => $role,
-
-        "status" => $status,
-
-        "created_at" => $createdAt
-
-    ];
-
-}
-
-
-/* =========================================================
-   UPDATE USER STATUS
-   ========================================================= */
-
-function updateUserStatus(
-    $users,
-    array $input
-): void {
-
-    $userId =
+    $configuredAdminId =
         trim(
             (string)(
-                $input["user_id"] ?? ""
+                getenv("ADMIN_USER_ID")
+                ?: ""
             )
         );
-
-
-    $newStatus =
-        strtolower(
-            trim(
-                (string)(
-                    $input["status"] ?? ""
-                )
-            )
-        );
-
-
-    if ($userId === "") {
-
-        respond(
-            false,
-            "User ID is required.",
-            [],
-            400
-        );
-
-    }
 
 
     if (
-        !in_array(
-            $newStatus,
-            [
-                "active",
-                "blocked"
-            ],
-            true
-        )
+        $configuredAdminId !== "" &&
+        $configuredAdminId !== $sessionUserId
     ) {
 
-        respond(
+        jsonResponse(
             false,
-            "Invalid user status.",
+            "Administrator access denied.",
             [],
-            400
+            403
         );
-
     }
 
 
-    try {
+    /* =====================================================
+       LOAD USERS
+    ===================================================== */
 
-        /*
-         * Convert the supplied ID to MongoDB ObjectId.
-         */
-
-        $objectId =
-            new \MongoDB\BSON\ObjectId(
-                $userId
-            );
-
-
-        /*
-         * Prevent an administrator from accidentally
-         * changing another admin through this basic
-         * user-management action.
-         */
-
-        $targetUser =
-            $users->findOne(
-                [
-                    "_id" => $objectId
-                ],
-                [
-                    "projection" => [
-                        "role" => 1,
-                        "account_type" => 1
-                    ]
+    $cursor =
+        $users->find(
+            [],
+            [
+                "sort" => [
+                    "created_at" => -1,
+                    "_id" => -1
                 ]
-            );
+            ]
+        );
 
 
-        if (!$targetUser) {
-
-            respond(
-                false,
-                "User not found.",
-                [],
-                404
-            );
-
-        }
+    $userList = [];
 
 
-        $targetRole =
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    $totalUsers = 0;
+    $activeUsers = 0;
+    $blockedUsers = 0;
+    $adminUsers = 0;
+
+
+    foreach ($cursor as $user) {
+
+        $totalUsers++;
+
+
+        /* -----------------------------------------------
+           Status
+        ------------------------------------------------ */
+
+        $status =
             strtolower(
                 trim(
                     (string)(
-                        $targetUser["role"] ??
-                        $targetUser["account_type"] ??
-                        "user"
+                        $user["status"]
+                        ?? "active"
                     )
                 )
             );
 
 
         if (
-            $targetRole === "admin" ||
-            $targetRole === "administrator"
+            $status === "active"
         ) {
 
-            respond(
-                false,
-                "Administrator accounts cannot be changed from this page.",
-                [],
-                403
-            );
-
+            $activeUsers++;
         }
 
 
-        /*
-         * Update only the account status.
-         */
-
-        $update =
-            $users->updateOne(
+        if (
+            in_array(
+                $status,
                 [
-                    "_id" => $objectId
+                    "blocked",
+                    "suspended",
+                    "disabled",
+                    "banned"
                 ],
-                [
-                    '$set' => [
-                        "status" => $newStatus,
-                        "updated_at" =>
-                            new \MongoDB\BSON\UTCDateTime()
-                    ]
-                ]
+                true
+            )
+        ) {
+
+            $blockedUsers++;
+        }
+
+
+        /* -----------------------------------------------
+           Role / Account Type
+        ------------------------------------------------ */
+
+        $userRole =
+            strtolower(
+                trim(
+                    (string)(
+                        $user["role"]
+                        ?? ""
+                    )
+                )
+            );
+
+
+        $userAccountType =
+            strtolower(
+                trim(
+                    (string)(
+                        $user["account_type"]
+                        ?? ""
+                    )
+                )
             );
 
 
         if (
-            $update->getMatchedCount() === 0
+            $userRole === "admin" ||
+            $userRole === "administrator" ||
+            $userAccountType === "admin" ||
+            $userAccountType === "administrator"
         ) {
 
-            respond(
-                false,
-                "User was not found.",
-                [],
-                404
-            );
-
+            $adminUsers++;
         }
 
 
-        respond(
-            true,
-            "User status updated successfully.",
-            [
-                "user_id" => $userId,
-                "status" => $newStatus
-            ]
-        );
+        /* -----------------------------------------------
+           User ID
+        ------------------------------------------------ */
+
+        $userId = "";
 
 
-    } catch (
-        \MongoDB\Driver\Exception\Exception $e
-    ) {
+        if (
+            isset($user["_id"]) &&
+            $user["_id"] instanceof MongoDB\BSON\ObjectId
+        ) {
 
-        error_log(
-            "MongoDB admin status error: " .
-            $e->getMessage()
-        );
+            $userId =
+                (string)$user["_id"];
 
+        } elseif (
+            isset($user["_id"])
+        ) {
 
-        respond(
-            false,
-            "Database operation failed.",
-            [],
-            500
-        );
-
-
-    } catch (Throwable $e) {
-
-        error_log(
-            "Admin status error: " .
-            $e->getMessage()
-        );
+            $userId =
+                (string)$user["_id"];
+        }
 
 
-        respond(
-            false,
-            "Unable to update user.",
-            [],
-            500
-        );
+        /* -----------------------------------------------
+           Full Name
+        ------------------------------------------------ */
 
+        $fullName =
+            trim(
+                (string)(
+                    $user["full_name"]
+                    ?? ""
+                )
+            );
+
+
+        if ($fullName === "") {
+
+            $firstName =
+                trim(
+                    (string)(
+                        $user["first_name"]
+                        ?? ""
+                    )
+                );
+
+
+            $lastName =
+                trim(
+                    (string)(
+                        $user["last_name"]
+                        ?? ""
+                    )
+                );
+
+
+            $fullName =
+                trim(
+                    $firstName .
+                    " " .
+                    $lastName
+                );
+        }
+
+
+        if ($fullName === "") {
+
+            $fullName =
+                "Unknown User";
+        }
+
+
+        /* -----------------------------------------------
+           Email
+        ------------------------------------------------ */
+
+        $email =
+            trim(
+                (string)(
+                    $user["email"]
+                    ?? ""
+                )
+            );
+
+
+        /* -----------------------------------------------
+           Phone
+        ------------------------------------------------ */
+
+        $phone = "";
+
+
+        if (
+            isset($user["phone"])
+        ) {
+
+            $phone =
+                trim(
+                    (string)$user["phone"]
+                );
+
+        } elseif (
+            isset($user["phone_number"])
+        ) {
+
+            $phone =
+                trim(
+                    (string)$user["phone_number"]
+                );
+
+        } elseif (
+            isset($user["mobile"])
+        ) {
+
+            $phone =
+                trim(
+                    (string)$user["mobile"]
+                );
+        }
+
+
+        /* -----------------------------------------------
+           Referral Code
+        ------------------------------------------------ */
+
+        $referralCode =
+            trim(
+                (string)(
+                    $user["referral_code"]
+                    ?? $user["referralCode"]
+                    ?? ""
+                )
+            );
+
+
+        /* -----------------------------------------------
+           Balance
+        ------------------------------------------------ */
+
+        $balance = 0;
+
+
+        if (
+            isset($user["balance"])
+        ) {
+
+            $balance =
+                mongoNumberToFloat(
+                    $user["balance"]
+                );
+
+        } elseif (
+            isset($user["wallet_balance"])
+        ) {
+
+            $balance =
+                mongoNumberToFloat(
+                    $user["wallet_balance"]
+                );
+        }
+
+
+        /* -----------------------------------------------
+           Created At
+        ------------------------------------------------ */
+
+        $createdAt =
+            formatDateValue(
+                $user["created_at"]
+                ?? null
+            );
+
+
+        /* -----------------------------------------------
+           Account Type
+        ------------------------------------------------ */
+
+        $displayAccountType =
+            "user";
+
+
+        if (
+            $userRole === "admin" ||
+            $userRole === "administrator" ||
+            $userAccountType === "admin" ||
+            $userAccountType === "administrator"
+        ) {
+
+            $displayAccountType =
+                "admin";
+        }
+
+
+        /* -----------------------------------------------
+           First / Last Names
+        ------------------------------------------------ */
+
+        $firstName =
+            trim(
+                (string)(
+                    $user["first_name"]
+                    ?? ""
+                )
+            );
+
+
+        $lastName =
+            trim(
+                (string)(
+                    $user["last_name"]
+                    ?? ""
+                )
+            );
+
+
+        /* -----------------------------------------------
+           Add User
+        ------------------------------------------------ */
+
+        $userList[] = [
+
+            "id" => $userId,
+
+            "_id" => $userId,
+
+            "first_name" =>
+                $firstName,
+
+            "last_name" =>
+                $lastName,
+
+            "full_name" =>
+                $fullName,
+
+            "email" =>
+                $email,
+
+            "phone" =>
+                $phone,
+
+            "referral_code" =>
+                $referralCode,
+
+            "balance" =>
+                $balance,
+
+            "wallet_balance" =>
+                $balance,
+
+            "status" =>
+                $status,
+
+            "role" =>
+                $userRole,
+
+            "account_type" =>
+                $displayAccountType,
+
+            "created_at" =>
+                $createdAt
+        ];
     }
 
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
+
+    jsonResponse(
+        true,
+        "Users loaded successfully.",
+        [
+
+            "users" =>
+                $userList,
+
+            "stats" => [
+
+                "total_users" =>
+                    $totalUsers,
+
+                "active_users" =>
+                    $activeUsers,
+
+                "blocked_users" =>
+                    $blockedUsers,
+
+                "admin_users" =>
+                    $adminUsers
+            ],
+
+            "count" =>
+                count($userList)
+        ]
+    );
+
+
+} catch (
+    MongoDB\Driver\Exception\Exception $e
+) {
+
+    error_log(
+        "admin-users.php MongoDB error: " .
+        $e->getMessage()
+    );
+
+
+    jsonResponse(
+        false,
+        "Database error while loading users.",
+        [],
+        500
+    );
+
+} catch (
+    Throwable $e
+) {
+
+    error_log(
+        "admin-users.php error: " .
+        $e->getMessage()
+    );
+
+
+    jsonResponse(
+        false,
+        "Unable to load users.",
+        [],
+        500
+    );
 }
 
 
 /* =========================================================
-   NUMERIC VALUE HELPER
-   ========================================================= */
+   HELPERS
+========================================================= */
 
-function numericValue(
-    $value
+function mongoNumberToFloat(
+    mixed $value
 ): float {
+
+    if (
+        $value === null
+    ) {
+        return 0.0;
+    }
+
 
     if (
         is_int($value) ||
@@ -833,89 +806,93 @@ function numericValue(
     ) {
 
         return (float)$value;
-
     }
 
 
     if (
-        is_numeric($value)
-    ) {
-
-        return (float)$value;
-
-    }
-
-
-    /*
-     * MongoDB Decimal128
-     */
-
-    if (
-        $value instanceof
-        \MongoDB\BSON\Decimal128
+        $value instanceof MongoDB\BSON\Decimal128
     ) {
 
         return (float)(
-            (string)$value
-        );
-
+            string)$value;
     }
 
 
-    return 0;
+    if (
+        $value instanceof MongoDB\BSON\Int64
+    ) {
 
+        return (float)(
+            string)$value;
+    }
+
+
+    if (
+        is_string($value)
+    ) {
+
+        return is_numeric($value)
+            ? (float)$value
+            : 0.0;
+    }
+
+
+    return 0.0;
 }
 
 
-/* =========================================================
-   DATE HELPER
-   ========================================================= */
-
 function formatDateValue(
-    $value
-): ?string {
+    mixed $value
+): string {
 
     if (
-        $value instanceof
-        \MongoDB\BSON\UTCDateTime
+        $value instanceof MongoDB\BSON\UTCDateTime
     ) {
 
         return $value
             ->toDateTime()
             ->format(
-                DATE_ATOM
+                "c"
             );
-
     }
 
 
     if (
-        is_string($value) ||
-        is_int($value) ||
-        is_float($value)
+        $value instanceof DateTimeInterface
+    ) {
+
+        return $value
+            ->format(
+                "c"
+            );
+    }
+
+
+    if (
+        is_string($value) &&
+        trim($value) !== ""
     ) {
 
         try {
 
-            $date =
+            return (
                 new DateTime(
-                    (string)$value
-                );
-
-
-            return $date->format(
-                DATE_ATOM
+                    $value
+                )
+            )->format(
+                "c"
             );
 
-        } catch (Throwable $e) {
+        } catch (
+            Throwable $e
+        ) {
 
-            return null;
-
+            return $value;
         }
-
     }
 
 
-    return null;
-
+    return "";
 }
+
+?>

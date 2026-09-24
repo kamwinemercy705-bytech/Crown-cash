@@ -1,20 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
     >
 
-    <meta
-        name="theme-color"
-        content="#09070d"
-    >
-
-    <title>Crown Cash | Administration Dashboard</title>
+    <title>Crown Cash | Administration</title>
 
     <link
         rel="stylesheet"
@@ -24,159 +18,194 @@
 
 <body>
 
-    <!-- =====================================================
-         PAGE LOADER
-    ====================================================== -->
+<!-- =====================================================
+     PAGE LOADER
+===================================================== -->
 
-    <div
-        class="page-loader"
-        id="pageLoader"
-    >
+<div
+    id="pageLoader"
+    class="page-loader"
+>
+
+    <div class="loader-content">
+
         <div class="loader-logo">
-            <span class="loader-crown">C</span>
+            <svg
+                viewBox="0 0 64 64"
+                fill="none"
+                aria-hidden="true"
+            >
+                <circle
+                    cx="32"
+                    cy="32"
+                    r="29"
+                />
+
+                <path
+                    d="M22 31.5L28.5 38L43 23"
+                />
+            </svg>
         </div>
 
-        <div class="loader-ring"></div>
+        <h2>
+            Loading Administration
+        </h2>
 
-        <p>Loading Administration</p>
+        <p>
+            Securing your administrator session...
+        </p>
+
+        <div class="loader-spinner"></div>
+
     </div>
 
-
-    <!-- =====================================================
-         ADMIN LAYOUT
-    ====================================================== -->
-
-    <div class="admin-layout">
+</div>
 
 
-        <!-- =================================================
-             SIDEBAR
-        ================================================== -->
+<!-- =====================================================
+     MOBILE SIDEBAR OVERLAY
+===================================================== -->
 
-        <aside
-            class="sidebar"
-            id="sidebar"
-        >
-
-            <!-- Sidebar Brand -->
-
-            <div class="sidebar-brand">
-
-                <a
-                    href="admin.html"
-                    class="brand-link"
-                >
-
-                    <div class="brand-icon">
-
-                        <svg
-                            viewBox="0 0 64 64"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M14 25L20 14L27 20L32 11L37 20L44 14L50 25"
-                            />
-
-                            <path
-                                d="M14 25H50"
-                            />
-
-                            <path
-                                d="M18 25L21 48H43L46 25"
-                            />
-
-                            <path
-                                d="M25 32V42"
-                            />
-
-                            <path
-                                d="M32 30V43"
-                            />
-
-                            <path
-                                d="M39 32V42"
-                            />
-                        </svg>
-
-                    </div>
-
-                    <div class="brand-text">
-                        <strong>CROWN</strong>
-                        <span>CASH</span>
-                    </div>
-
-                </a>
+<div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+></div>
 
 
-                <button
-                    class="sidebar-close"
-                    id="sidebarClose"
-                    type="button"
-                    aria-label="Close menu"
-                >
+<!-- =====================================================
+     ADMIN LAYOUT
+===================================================== -->
+
+<div class="admin-layout">
+
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+    >
+
+        <!-- BRAND -->
+
+        <div class="sidebar-brand">
+
+            <a
+                href="admin.html"
+                class="brand-link"
+            >
+
+                <div class="brand-icon">
 
                     <svg
-                        viewBox="0 0 24 24"
+                        viewBox="0 0 48 48"
+                        fill="none"
                         aria-hidden="true"
                     >
-                        <path d="M6 6L18 18"></path>
-                        <path d="M18 6L6 18"></path>
+                        <path
+                            d="M24 5L39 12V23C39 32.5 33.5 39 24 43C14.5 39 9 32.5 9 23V12L24 5Z"
+                        />
+
+                        <path
+                            d="M17 24L22 29L32 18"
+                        />
+
                     </svg>
 
-                </button>
-
-            </div>
-
-
-            <!-- Admin Profile -->
-
-            <div class="sidebar-admin">
-
-                <div
-                    class="admin-avatar"
-                    id="adminAvatar"
-                >
-                    A
                 </div>
 
-                <div class="admin-profile-text">
+                <div class="brand-text">
 
-                    <strong id="adminName">
-                        Administrator
+                    <strong>
+                        CROWN
                     </strong>
 
-                    <span id="adminAccountType">
-                        Admin Account
+                    <span>
+                        CASH
                     </span>
 
-                    <small id="adminEmail">
-                        Administrator
-                    </small>
-
                 </div>
+
+            </a>
+
+
+            <button
+                type="button"
+                id="sidebarClose"
+                class="sidebar-close"
+                aria-label="Close menu"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                >
+                    <path d="M6 6L18 18"></path>
+                    <path d="M18 6L6 18"></path>
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <!-- ADMIN PROFILE -->
+
+        <div class="sidebar-admin-card">
+
+            <div
+                id="adminAvatar"
+                class="admin-avatar"
+            >
+                A
+            </div>
+
+            <div class="admin-profile-info">
+
+                <strong id="adminName">
+                    Administrator
+                </strong>
+
+                <span id="adminAccountType">
+                    Administrator
+                </span>
+
+                <small id="adminEmail">
+                    Admin Account
+                </small>
 
             </div>
 
+        </div>
 
-            <!-- Navigation -->
 
-            <nav class="admin-nav">
+        <!-- NAVIGATION -->
 
-                <div class="nav-section-label">
+        <nav class="admin-navigation">
+
+
+            <!-- MAIN -->
+
+            <div class="nav-section">
+
+                <span class="nav-section-title">
                     MAIN
-                </div>
+                </span>
 
 
                 <a
                     href="admin.html"
-                    class="nav-item active"
+                    class="nav-link active"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path d="M3 11.5L12 4L21 11.5"></path>
                             <path d="M5 10.5V20H19V10.5"></path>
@@ -185,21 +214,23 @@
 
                     </span>
 
-                    <span>Dashboard</span>
+                    <span>
+                        Dashboard
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-users.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <circle
                                 cx="9"
@@ -208,40 +239,45 @@
                             ></circle>
 
                             <path
-                                d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
+                                d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
                             ></path>
 
-                            <path
-                                d="M16 5.5C18.2 5.5 20 7.2 20 9.5C20 11.2 19 12.7 17.5 13.4"
-                            ></path>
+                            <circle
+                                cx="17"
+                                cy="9"
+                                r="2.5"
+                            ></circle>
 
                             <path
-                                d="M17 16C19.5 16.3 21 17.7 21 20"
+                                d="M16 14.5C18.8 14.9 21 17.2 21 20"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Users</span>
+                    <span>
+                        Users
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-deposits.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <circle
                                 cx="12"
                                 cy="12"
-                                r="8.5"
+                                r="9"
                             ></circle>
 
                             <path
@@ -249,129 +285,151 @@
                             ></path>
 
                             <path
-                                d="M15 9.5C14.3 8.6 13.3 8 12 8C10.3 8 9 8.9 9 10.2C9 13.2 15 11.8 15 14.1C15 15.4 13.7 16.2 12 16.2C10.7 16.2 9.6 15.7 8.8 14.7"
+                                d="M8.5 10C8.5 8.6 10 7.5 12 7.5C14 7.5 15.5 8.5 15.5 10C15.5 12 13.8 12.4 12 12.7C10.2 13 8.5 13.5 8.5 15C8.5 16.4 10 17.5 12 17.5C14 17.5 15.5 16.4 15.5 15"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Deposits</span>
+                    <span>
+                        Deposits
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-withdrawals.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path
-                                d="M12 3V15"
+                                d="M12 4V20"
                             ></path>
 
                             <path
-                                d="M7 10L12 15L17 10"
+                                d="M6 14L12 20L18 14"
                             ></path>
 
                             <path
-                                d="M5 19H19"
+                                d="M6 4H18"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Withdrawals</span>
+                    <span>
+                        Withdrawals
+                    </span>
 
                 </a>
 
+            </div>
 
-                <div class="nav-section-label">
+
+            <!-- FINANCE -->
+
+            <div class="nav-section">
+
+                <span class="nav-section-title">
                     FINANCE
-                </div>
+                </span>
 
 
                 <a
                     href="admin-investments.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path
-                                d="M4 18L9 13L13 16L20 7"
+                                d="M4 19V5"
                             ></path>
 
                             <path
-                                d="M15 7H20V12"
+                                d="M4 19H20"
                             ></path>
 
                             <path
-                                d="M4 21H20"
+                                d="M7 15L11 11L14 13L20 6"
                             ></path>
+
+                            <path
+                                d="M16 6H20V10"
+                            ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Investments</span>
+                    <span>
+                        Investments
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-transactions.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path
-                                d="M5 7H19"
+                                d="M7 7H20"
                             ></path>
 
                             <path
-                                d="M15 3L19 7L15 11"
+                                d="M17 4L20 7L17 10"
                             ></path>
 
                             <path
-                                d="M19 17H5"
+                                d="M17 17H4"
                             ></path>
 
                             <path
-                                d="M9 13L5 17L9 21"
+                                d="M7 14L4 17L7 20"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Transactions</span>
+                    <span>
+                        Transactions
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-referrals.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <circle
                                 cx="9"
@@ -386,276 +444,298 @@
                             ></circle>
 
                             <path
-                                d="M3.5 20C3.5 16.4 5.7 14.5 9 14.5C12.3 14.5 14.5 16.4 14.5 20"
+                                d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
                             ></path>
 
                             <path
-                                d="M14.5 15.5C17.8 15.5 20.5 17 20.5 20"
+                                d="M15 15C17.8 15.2 20 17.2 20.5 20"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Referrals</span>
+                    <span>
+                        Referrals
+                    </span>
 
                 </a>
 
+            </div>
 
-                <div class="nav-section-label">
+
+            <!-- MANAGEMENT -->
+
+            <div class="nav-section">
+
+                <span class="nav-section-title">
                     MANAGEMENT
-                </div>
+                </span>
 
 
                 <a
                     href="admin-support.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path
-                                d="M4 13V11C4 6.6 7.5 3.5 12 3.5C16.5 3.5 20 6.6 20 11V13"
+                                d="M4 13C4 8 7.6 4 12 4C16.4 4 20 8 20 13"
                             ></path>
 
                             <path
-                                d="M4 12H3C2.4 12 2 12.5 2 13V16C2 16.6 2.4 17 3 17H4"
+                                d="M4 13V17H7V12H4"
                             ></path>
 
                             <path
-                                d="M20 12H21C21.6 12 22 12.5 22 13V16C22 16.6 21.6 17 21 17H20"
+                                d="M20 13V17H17V12H20"
                             ></path>
 
                             <path
-                                d="M20 17C19 20 16.5 21 13.5 21H11"
+                                d="M17 18C16 20 14.5 21 12 21H10"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Support</span>
+                    <span>
+                        Support
+                    </span>
 
                 </a>
 
 
                 <a
                     href="admin-security.html"
-                    class="nav-item"
+                    class="nav-link"
                 >
 
                     <span class="nav-icon">
 
                         <svg
                             viewBox="0 0 24 24"
-                            aria-hidden="true"
+                            fill="none"
                         >
                             <path
-                                d="M12 3L20 6V11C20 16.2 16.7 19.7 12 21C7.3 19.7 4 16.2 4 11V6L12 3Z"
+                                d="M12 3L20 6V11C20 16 17 19.5 12 21C7 19.5 4 16 4 11V6L12 3Z"
                             ></path>
 
                             <path
-                                d="M9 12L11 14L15.5 9.5"
+                                d="M9 12L11 14L15 10"
                             ></path>
+
                         </svg>
 
                     </span>
 
-                    <span>Security & Audit</span>
+                    <span>
+                        Security & Audit
+                    </span>
 
                 </a>
 
-            </nav>
+            </div>
+
+        </nav>
 
 
-            <!-- Sidebar Footer -->
+        <!-- LOGOUT -->
 
-            <div class="sidebar-footer">
+        <div class="sidebar-footer">
+
+            <button
+                type="button"
+                id="logoutBtn"
+                class="logout-button"
+            >
+
+                <span class="nav-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path
+                            d="M10 5H5V19H10"
+                        ></path>
+
+                        <path
+                            d="M14 8L19 12L14 16"
+                        ></path>
+
+                        <path
+                            d="M19 12H9"
+                        ></path>
+
+                    </svg>
+
+                </span>
+
+                <span>
+                    Logout
+                </span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =================================================
+         MAIN CONTENT
+    ================================================== -->
+
+    <main class="admin-main">
+
+
+        <!-- TOP HEADER -->
+
+        <header class="admin-header">
+
+            <div class="header-left">
 
                 <button
                     type="button"
-                    class="logout-button"
-                    id="logoutBtn"
+                    id="menuButton"
+                    class="menu-button"
+                    aria-label="Open menu"
                 >
 
-                    <span class="nav-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M10 5H5V19H10"
-                            ></path>
-
-                            <path
-                                d="M14 8L18 12L14 16"
-                            ></path>
-
-                            <path
-                                d="M18 12H9"
-                            ></path>
-                        </svg>
-
-                    </span>
-
-                    <span>Logout</span>
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path d="M4 6H20"></path>
+                        <path d="M4 12H20"></path>
+                        <path d="M4 18H20"></path>
+                    </svg>
 
                 </button>
 
+
+                <div class="header-title">
+
+                    <span>
+                        ADMINISTRATION
+                    </span>
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                </div>
+
             </div>
 
-        </aside>
 
+            <div class="header-right">
 
-        <!-- =================================================
-             SIDEBAR OVERLAY
-        ================================================== -->
+                <button
+                    type="button"
+                    class="header-refresh"
+                    onclick="window.CrownCashAdmin?.reload()"
+                    aria-label="Refresh dashboard"
+                >
 
-        <div
-            class="sidebar-overlay"
-            id="sidebarOverlay"
-        ></div>
-
-
-        <!-- =================================================
-             MAIN
-        ================================================== -->
-
-        <main class="admin-main">
-
-
-            <!-- =================================================
-                 HEADER
-            ================================================== -->
-
-            <header class="admin-header">
-
-                <div class="header-left">
-
-                    <button
-                        type="button"
-                        class="menu-button"
-                        id="menuButton"
-                        aria-label="Open menu"
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
                     >
+                        <path
+                            d="M20 11A8 8 0 0 0 6 6L4 8"
+                        ></path>
 
-                        <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                        >
-                            <path d="M4 6H20"></path>
-                            <path d="M4 12H20"></path>
-                            <path d="M4 18H20"></path>
-                        </svg>
+                        <path
+                            d="M4 4V8H8"
+                        ></path>
 
-                    </button>
+                        <path
+                            d="M4 13A8 8 0 0 0 18 18L20 16"
+                        ></path>
+
+                        <path
+                            d="M20 20V16H16"
+                        ></path>
+
+                    </svg>
+
+                </button>
 
 
-                    <div class="header-title">
+                <div class="header-admin">
 
-                        <span>
-                            ADMINISTRATION
-                        </span>
-
-                        <h1>
-                            Dashboard
-                        </h1>
-
+                    <div
+                        id="accountAvatar"
+                        class="header-avatar"
+                    >
+                        A
                     </div>
 
-                </div>
+                    <div>
 
-
-                <div class="header-right">
-
-                    <button
-                        type="button"
-                        class="header-action"
-                        id="refreshDashboardBtn"
-                        onclick="window.location.reload()"
-                        aria-label="Refresh dashboard"
-                    >
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M20 11A8 8 0 0 0 6.3 5.5L4 8"
-                            ></path>
-
-                            <path
-                                d="M4 4V8H8"
-                            ></path>
-
-                            <path
-                                d="M4 13A8 8 0 0 0 17.7 18.5L20 16"
-                            ></path>
-
-                            <path
-                                d="M20 20V16H16"
-                            ></path>
-                        </svg>
-
-                        <span>Refresh</span>
-
-                    </button>
-
-
-                    <div class="header-account">
-
-                        <div
-                            class="account-avatar"
-                            id="accountAvatar"
-                        >
-                            A
-                        </div>
-
-                        <div class="header-account-text">
-
-                            <strong id="headerUserName">
+                        <strong>
+                            <span id="headerUserName">
                                 Administrator
-                            </strong>
-
-                            <span>
-                                Admin
                             </span>
+                        </strong>
 
-                        </div>
+                        <small>
+                            Admin Account
+                        </small>
 
                     </div>
 
                 </div>
 
-            </header>
+            </div>
+
+        </header>
 
 
-            <!-- =================================================
-                 CONTENT
-            ================================================== -->
+        <!-- PAGE CONTENT -->
 
-            <div class="main-content">
+        <div class="main-content">
 
 
-                <!-- =================================================
-                     WELCOME HERO
-                ================================================== -->
+            <!-- HERO -->
 
-                <section class="welcome-panel">
+            <section class="admin-hero">
 
-                    <div class="welcome-content">
+                <div class="hero-content">
 
-                        <div class="welcome-eyebrow">
+                    <div class="hero-icon">
 
-                            <span class="eyebrow-dot"></span>
+                        <svg
+                            viewBox="0 0 64 64"
+                            fill="none"
+                            aria-hidden="true"
+                        >
 
+                            <path
+                                d="M32 7L52 15V29C52 41 45 50 32 56C19 50 12 41 12 29V15L32 7Z"
+                            ></path>
+
+                            <path
+                                d="M23 31L29 37L42 23"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+
+                    <div class="hero-text">
+
+                        <span class="eyebrow">
                             CROWN CASH ADMINISTRATION
-
-                        </div>
-
+                        </span>
 
                         <h2>
                             Welcome back,
@@ -664,727 +744,30 @@
                             </strong>
                         </h2>
 
-
                         <p>
-                            Here's what's happening across
-                            Crown Cash today. Monitor users,
-                            deposits, withdrawals, investments
-                            and platform activity from one place.
+                            Monitor users, deposits,
+                            withdrawals, investments,
+                            referrals and platform activity
+                            from one powerful control center.
                         </p>
 
-
-                        <div class="welcome-actions">
-
-                            <a
-                                href="admin-users.html"
-                                class="primary-button"
-                            >
-
-                                <span class="button-icon">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="9"
-                                            cy="8"
-                                            r="3"
-                                        ></circle>
-
-                                        <path
-                                            d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
-                                        ></path>
-
-                                        <path
-                                            d="M16 8H21"
-                                        ></path>
-
-                                        <path
-                                            d="M18.5 5.5V10.5"
-                                        ></path>
-                                    </svg>
-
-                                </span>
-
-                                Manage Users
-
-                            </a>
-
-
-                            <a
-                                href="admin-deposits.html"
-                                class="secondary-button"
-                            >
-
-                                View Deposits
-
-                            </a>
-
-                        </div>
-
                     </div>
 
+                </div>
 
-                    <div class="welcome-visual">
 
-                        <div class="visual-glow"></div>
-
-                        <div class="visual-orbit orbit-one"></div>
-
-                        <div class="visual-orbit orbit-two"></div>
-
-
-                        <div class="visual-card">
-
-                            <div class="visual-crown">
-
-                                <svg
-                                    viewBox="0 0 80 80"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M17 31L25 16L34 25L40 12L46 25L55 16L63 31"
-                                    ></path>
-
-                                    <path
-                                        d="M17 31H63"
-                                    ></path>
-
-                                    <path
-                                        d="M21 31L25 59H55L59 31"
-                                    ></path>
-
-                                    <path
-                                        d="M30 39V51"
-                                    ></path>
-
-                                    <path
-                                        d="M40 37V53"
-                                    ></path>
-
-                                    <path
-                                        d="M50 39V51"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-
-                            <div class="visual-card-text">
-
-                                <span>
-                                    CROWN CASH
-                                </span>
-
-                                <strong>
-                                    ADMIN
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
-                     QUICK OVERVIEW
-                ================================================== -->
-
-                <section class="section-block">
-
-                    <div class="section-heading">
-
-                        <div>
-
-                            <span class="section-kicker">
-                                PLATFORM OVERVIEW
-                            </span>
-
-                            <h2>
-                                Quick Overview
-                            </h2>
-
-                        </div>
-
-                        <span class="live-status">
-
-                            <i></i>
-
-                            Live
-
-                        </span>
-
-                    </div>
-
-
-                    <div class="stats-grid">
-
-
-                        <!-- USERS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon gold">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="9"
-                                            cy="8"
-                                            r="3"
-                                        ></circle>
-
-                                        <path
-                                            d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
-                                        ></path>
-
-                                        <path
-                                            d="M16 6C18.2 6 20 7.7 20 10"
-                                        ></path>
-
-                                        <path
-                                            d="M17 15C19.5 15.5 21 17.1 21 20"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Total Users
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value"
-                                id="totalUsers"
-                            >
-                                0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span class="stat-positive">
-                                    <i></i>
-                                    Registered accounts
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- ACTIVE USERS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon pink">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="12"
-                                            cy="12"
-                                            r="8"
-                                        ></circle>
-
-                                        <path
-                                            d="M8 12L11 15L16.5 9"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Active Users
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value"
-                                id="activeUsers"
-                            >
-                                0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span class="stat-positive">
-                                    <i></i>
-                                    Currently active
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- DEPOSITS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon purple">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="12"
-                                            cy="12"
-                                            r="8.5"
-                                        ></circle>
-
-                                        <path
-                                            d="M12 7V17"
-                                        ></path>
-
-                                        <path
-                                            d="M15 9.5C14.3 8.6 13.3 8 12 8C10.3 8 9 8.9 9 10.2C9 13.2 15 11.8 15 14.1C15 15.4 13.7 16.2 12 16.2C10.7 16.2 9.6 15.7 8.8 14.7"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Total Deposits
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value currency"
-                                id="totalDeposits"
-                            >
-                                UGX 0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Platform deposits
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- WITHDRAWALS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon gold">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M12 4V16"
-                                        ></path>
-
-                                        <path
-                                            d="M7 11L12 16L17 11"
-                                        ></path>
-
-                                        <path
-                                            d="M5 20H19"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Withdrawals
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value currency"
-                                id="totalWithdrawals"
-                            >
-                                UGX 0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Withdrawal requests
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- INVESTMENTS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon pink">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M4 18L9 13L13 16L20 7"
-                                        ></path>
-
-                                        <path
-                                            d="M15 7H20V12"
-                                        ></path>
-
-                                        <path
-                                            d="M4 21H20"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Investments
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value currency"
-                                id="totalInvestments"
-                            >
-                                UGX 0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Total invested
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- REFERRALS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon purple">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="9"
-                                            cy="8"
-                                            r="3"
-                                        ></circle>
-
-                                        <circle
-                                            cx="17"
-                                            cy="10"
-                                            r="2.5"
-                                        ></circle>
-
-                                        <path
-                                            d="M3.5 20C3.5 16.4 5.7 14.5 9 14.5C12.3 14.5 14.5 16.4 14.5 20"
-                                        ></path>
-
-                                        <path
-                                            d="M14.5 15.5C17.8 15.5 20.5 17 20.5 20"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Referrals
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value"
-                                id="totalReferrals"
-                            >
-                                0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Referral network
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- TRANSACTIONS -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon gold">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M5 7H19"
-                                        ></path>
-
-                                        <path
-                                            d="M15 3L19 7L15 11"
-                                        ></path>
-
-                                        <path
-                                            d="M19 17H5"
-                                        ></path>
-
-                                        <path
-                                            d="M9 13L5 17L9 21"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Transactions
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value"
-                                id="totalTransactions"
-                            >
-                                0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Platform activity
-                                </span>
-
-                            </div>
-
-                        </article>
-
-
-                        <!-- SUPPORT -->
-
-                        <article class="stat-card">
-
-                            <div class="stat-card-top">
-
-                                <div class="stat-icon pink">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M4 13V11C4 6.6 7.5 3.5 12 3.5C16.5 3.5 20 6.6 20 11V13"
-                                        ></path>
-
-                                        <path
-                                            d="M4 12H3C2.4 12 2 12.5 2 13V16C2 16.6 2.4 17 3 17H4"
-                                        ></path>
-
-                                        <path
-                                            d="M20 12H21C21.6 12 22 12.5 22 13V16C22 16.6 21.6 17 21 17H20"
-                                        ></path>
-
-                                        <path
-                                            d="M20 17C19 20 16.5 21 13.5 21H11"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <span class="stat-label">
-                                    Open Support
-                                </span>
-
-                            </div>
-
-                            <div
-                                class="stat-value"
-                                id="openTickets"
-                            >
-                                0
-                            </div>
-
-                            <div class="stat-footer">
-
-                                <span>
-                                    Tickets needing attention
-                                </span>
-
-                            </div>
-
-                        </article>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
-                     ATTENTION CENTER
-                ================================================== -->
-
-                <section class="attention-grid">
-
-
-                    <a
-                        href="admin-deposits.html"
-                        class="attention-card deposit-attention"
-                    >
-
-                        <div class="attention-icon">
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="8.5"
-                                ></circle>
-
-                                <path
-                                    d="M12 7V17"
-                                ></path>
-
-                                <path
-                                    d="M15 9.5C14.3 8.6 13.3 8 12 8C10.3 8 9 8.9 9 10.2C9 13.2 15 11.8 15 14.1C15 15.4 13.7 16.2 12 16.2C10.7 16.2 9.6 15.7 8.8 14.7"
-                                ></path>
-                            </svg>
-
-                        </div>
-
-                        <div class="attention-content">
-
-                            <span>
-                                Pending Deposits
-                            </span>
-
-                            <strong id="pendingDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                        <span class="attention-arrow">
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
-                                <path d="M5 12H19"></path>
-                                <path d="M13 6L19 12L13 18"></path>
-                            </svg>
-
-                        </span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-withdrawals.html"
-                        class="attention-card withdrawal-attention"
-                    >
-
-                        <div class="attention-icon">
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    d="M12 4V16"
-                                ></path>
-
-                                <path
-                                    d="M7 11L12 16L17 11"
-                                ></path>
-
-                                <path
-                                    d="M5 20H19"
-                                ></path>
-                            </svg>
-
-                        </div>
-
-                        <div class="attention-content">
-
-                            <span>
-                                Pending Withdrawals
-                            </span>
-
-                            <strong id="pendingWithdrawals">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                        <span class="attention-arrow">
-
-                            <svg
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
-                                <path d="M5 12H19"></path>
-                                <path d="M13 6L19 12L13 18"></path>
-                            </svg>
-
-                        </span>
-
-                    </a>
-
+                <div class="hero-actions">
 
                     <a
                         href="admin-users.html"
-                        class="attention-card user-attention"
+                        class="primary-action"
                     >
 
-                        <div class="attention-icon">
+                        <span class="action-icon">
 
                             <svg
                                 viewBox="0 0 24 24"
-                                aria-hidden="true"
+                                fill="none"
                             >
                                 <circle
                                     cx="9"
@@ -1393,544 +776,1099 @@
                                 ></circle>
 
                                 <path
-                                    d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
+                                    d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
                                 ></path>
 
                                 <path
-                                    d="M16 6H21"
+                                    d="M17 8V14"
                                 ></path>
 
                                 <path
-                                    d="M18.5 3.5V8.5"
+                                    d="M14 11H20"
                                 ></path>
+
+                            </svg>
+
+                        </span>
+
+                        <span>
+                            Manage Users
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="admin-deposits.html"
+                        class="secondary-action"
+                    >
+
+                        <span class="action-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
+
+                                <path
+                                    d="M12 7V17"
+                                ></path>
+
+                                <path
+                                    d="M8.5 10C8.5 8.6 10 7.5 12 7.5C14 7.5 15.5 8.5 15.5 10C15.5 12 13.8 12.4 12 12.7C10.2 13 8.5 13.5 8.5 15C8.5 16.4 10 17.5 12 17.5C14 17.5 15.5 16.4 15.5 15"
+                                ></path>
+
+                            </svg>
+
+                        </span>
+
+                        <span>
+                            View Deposits
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+            <!-- OVERVIEW TITLE -->
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        PLATFORM OVERVIEW
+                    </span>
+
+                    <h2>
+                        Quick Overview
+                    </h2>
+
+                </div>
+
+                <span class="live-status">
+
+                    <i></i>
+
+                    Live
+
+                </span>
+
+            </div>
+
+
+            <!-- STAT CARDS -->
+
+            <section class="stats-grid">
+
+
+                <!-- USERS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon gold">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                ></circle>
+
+                                <path
+                                    d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
+                                ></path>
+
+                                <circle
+                                    cx="17"
+                                    cy="9"
+                                    r="2.5"
+                                ></circle>
+
+                                <path
+                                    d="M16 14.5C18.8 14.9 21 17.2 21 20"
+                                ></path>
+
                             </svg>
 
                         </div>
 
-                        <div class="attention-content">
+                        <span class="stat-label">
+                            Registered accounts
+                        </span>
 
-                            <span>
-                                New Accounts
-                            </span>
+                    </div>
 
-                            <strong id="newUsers">
-                                View Users
-                            </strong>
+                    <div class="stat-number">
+                        <span id="totalUsers">
+                            0
+                        </span>
+                    </div>
 
-                        </div>
+                    <div class="stat-footer">
+                        Total Users
+                    </div>
 
-                        <span class="attention-arrow">
+                </article>
+
+
+                <!-- ACTIVE USERS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon pink">
 
                             <svg
                                 viewBox="0 0 24 24"
-                                aria-hidden="true"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="8"
+                                    r="3"
+                                ></circle>
+
+                                <path
+                                    d="M5 20C5 16.7 8.1 14 12 14C15.9 14 19 16.7 19 20"
+                                ></path>
+
+                                <path
+                                    d="M19 6L20 7L22 5"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Currently active
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number">
+                        <span id="activeUsers">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Active Users
+                    </div>
+
+                </article>
+
+
+                <!-- DEPOSITS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon purple">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
+
+                                <path
+                                    d="M12 7V17"
+                                ></path>
+
+                                <path
+                                    d="M8.5 10C8.5 8.6 10 7.5 12 7.5C14 7.5 15.5 8.5 15.5 10C15.5 12 13.8 12.4 12 12.7C10.2 13 8.5 13.5 8.5 15C8.5 16.4 10 17.5 12 17.5C14 17.5 15.5 16.4 15.5 15"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Platform deposits
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number currency">
+                        <span id="totalDeposits">
+                            UGX 0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Total Deposits
+                    </div>
+
+                </article>
+
+
+                <!-- WITHDRAWALS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon gold">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M12 4V20"
+                                ></path>
+
+                                <path
+                                    d="M6 14L12 20L18 14"
+                                ></path>
+
+                                <path
+                                    d="M6 4H18"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Withdrawal requests
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number currency">
+                        <span id="totalWithdrawals">
+                            UGX 0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Withdrawals
+                    </div>
+
+                </article>
+
+
+                <!-- INVESTMENTS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon pink">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M4 19V5"
+                                ></path>
+
+                                <path
+                                    d="M4 19H20"
+                                ></path>
+
+                                <path
+                                    d="M7 15L11 11L14 13L20 6"
+                                ></path>
+
+                                <path
+                                    d="M16 6H20V10"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Total invested
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number currency">
+                        <span id="totalInvestments">
+                            UGX 0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Investments
+                    </div>
+
+                </article>
+
+
+                <!-- REFERRALS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon purple">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                ></circle>
+
+                                <circle
+                                    cx="17"
+                                    cy="10"
+                                    r="2.5"
+                                ></circle>
+
+                                <path
+                                    d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
+                                ></path>
+
+                                <path
+                                    d="M15 15C17.8 15.2 20 17.2 20.5 20"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Referral network
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number">
+                        <span id="totalReferrals">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Referrals
+                    </div>
+
+                </article>
+
+
+                <!-- TRANSACTIONS -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon gold">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M7 7H20"
+                                ></path>
+
+                                <path
+                                    d="M17 4L20 7L17 10"
+                                ></path>
+
+                                <path
+                                    d="M17 17H4"
+                                ></path>
+
+                                <path
+                                    d="M7 14L4 17L7 20"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Platform activity
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number">
+                        <span id="totalTransactions">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Transactions
+                    </div>
+
+                </article>
+
+
+                <!-- SUPPORT -->
+
+                <article class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon pink">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M4 13C4 8 7.6 4 12 4C16.4 4 20 8 20 13"
+                                ></path>
+
+                                <path
+                                    d="M4 13V17H7V12H4"
+                                ></path>
+
+                                <path
+                                    d="M20 13V17H17V12H20"
+                                ></path>
+
+                                <path
+                                    d="M17 18C16 20 14.5 21 12 21H10"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Tickets needing attention
+                        </span>
+
+                    </div>
+
+                    <div class="stat-number">
+                        <span id="openTickets">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stat-footer">
+                        Open Support
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- PENDING MINI CARDS -->
+
+            <section class="mini-grid">
+
+
+                <a
+                    href="admin-deposits.html"
+                    class="mini-card"
+                >
+
+                    <div class="mini-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
+                            <path d="M12 17V7"></path>
+                            <path d="M8 11L12 7L16 11"></path>
+                        </svg>
+
+                    </div>
+
+                    <div>
+                        <span>
+                            Pending Deposits
+                        </span>
+
+                        <strong id="pendingDeposits">
+                            UGX 0
+                        </strong>
+                    </div>
+
+                    <svg
+                        class="mini-arrow"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path d="M5 12H19"></path>
+                        <path d="M13 6L19 12L13 18"></path>
+                    </svg>
+
+                </a>
+
+
+                <a
+                    href="admin-withdrawals.html"
+                    class="mini-card"
+                >
+
+                    <div class="mini-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
+                            <path d="M12 7V17"></path>
+                            <path d="M8 13L12 17L16 13"></path>
+                        </svg>
+
+                    </div>
+
+                    <div>
+                        <span>
+                            Pending Withdrawals
+                        </span>
+
+                        <strong id="pendingWithdrawals">
+                            UGX 0
+                        </strong>
+                    </div>
+
+                    <svg
+                        class="mini-arrow"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path d="M5 12H19"></path>
+                        <path d="M13 6L19 12L13 18"></path>
+                    </svg>
+
+                </a>
+
+
+                <a
+                    href="admin-users.html"
+                    class="mini-card"
+                >
+
+                    <div class="mini-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="3"
+                            ></circle>
+
+                            <path
+                                d="M5 20C5 16.7 8.1 14 12 14C15.9 14 19 16.7 19 20"
+                            ></path>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+                        <span>
+                            Active Users
+                        </span>
+
+                        <strong id="activeUsers">
+                            0
+                        </strong>
+                    </div>
+
+                    <svg
+                        class="mini-arrow"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path d="M5 12H19"></path>
+                        <path d="M13 6L19 12L13 18"></path>
+                    </svg>
+
+                </a>
+
+            </section>
+
+
+            <!-- ACTIVITY -->
+
+            <section class="activity-grid">
+
+
+                <!-- TRANSACTIONS -->
+
+                <article class="admin-card">
+
+                    <div class="card-heading">
+
+                        <div>
+
+                            <span class="card-kicker">
+                                FINANCIAL ACTIVITY
+                            </span>
+
+                            <h3>
+                                Recent Transactions
+                            </h3>
+
+                        </div>
+
+                        <a
+                            href="admin-transactions.html"
+                            class="view-all"
+                        >
+                            View All
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
                             >
                                 <path d="M5 12H19"></path>
                                 <path d="M13 6L19 12L13 18"></path>
                             </svg>
 
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        id="recentTransactions"
+                        class="transaction-list"
+                    >
+
+                        <div class="loading-row">
+                            Loading transactions...
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+                <!-- USERS -->
+
+                <article class="admin-card">
+
+                    <div class="card-heading">
+
+                        <div>
+
+                            <span class="card-kicker">
+                                CUSTOMER ACTIVITY
+                            </span>
+
+                            <h3>
+                                Recent Users
+                            </h3>
+
+                        </div>
+
+                        <a
+                            href="admin-users.html"
+                            class="view-all"
+                        >
+                            View All
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path d="M5 12H19"></path>
+                                <path d="M13 6L19 12L13 18"></path>
+                            </svg>
+
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        id="recentUsers"
+                        class="users-list"
+                    >
+
+                        <div class="loading-row">
+                            Loading users...
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- QUICK ACTIONS -->
+
+            <section class="quick-section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            ADMIN TOOLS
+                        </span>
+
+                        <h2>
+                            Quick Actions
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-grid">
+
+
+                    <a
+                        href="admin-users.html"
+                        class="quick-card"
+                    >
+
+                        <div class="quick-icon gold">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                ></circle>
+
+                                <path
+                                    d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20"
+                                ></path>
+
+                                <path
+                                    d="M17 8V14"
+                                ></path>
+
+                                <path
+                                    d="M14 11H20"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>
+                                Manage Users
+                            </strong>
+
+                            <span>
+                                Accounts & status
+                            </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
                         </span>
 
                     </a>
 
-                </section>
 
+                    <a
+                        href="admin-deposits.html"
+                        class="quick-card"
+                    >
 
-                <!-- =================================================
-                     RECENT ACTIVITY
-                ================================================== -->
+                        <div class="quick-icon pink">
 
-                <section class="activity-grid">
-
-
-                    <!-- RECENT TRANSACTIONS -->
-
-                    <div class="dashboard-card">
-
-                        <div class="card-header">
-
-                            <div>
-
-                                <span class="card-kicker">
-                                    FINANCIAL ACTIVITY
-                                </span>
-
-                                <h3>
-                                    Recent Transactions
-                                </h3>
-
-                            </div>
-
-
-                            <a
-                                href="admin-transactions.html"
-                                class="view-all"
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
                             >
-                                View All
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
 
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M5 12H19"></path>
-                                    <path d="M13 6L19 12L13 18"></path>
-                                </svg>
+                                <path d="M12 7V17"></path>
+                                <path d="M8 12H16"></path>
 
-                            </a>
+                            </svg>
 
-                        </div>
-
-
-                        <div
-                            class="transaction-list"
-                            id="recentTransactions"
-                        >
-
-                            <div class="empty-state">
-
-                                <div class="empty-icon">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            d="M5 7H19"
-                                        ></path>
-
-                                        <path
-                                            d="M15 3L19 7L15 11"
-                                        ></path>
-
-                                        <path
-                                            d="M19 17H5"
-                                        ></path>
-
-                                        <path
-                                            d="M9 13L5 17L9 21"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <p>
-                                    Loading transactions...
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- RECENT USERS -->
-
-                    <div class="dashboard-card">
-
-                        <div class="card-header">
-
-                            <div>
-
-                                <span class="card-kicker">
-                                    CUSTOMER ACTIVITY
-                                </span>
-
-                                <h3>
-                                    Recent Users
-                                </h3>
-
-                            </div>
-
-
-                            <a
-                                href="admin-users.html"
-                                class="view-all"
-                            >
-                                View All
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M5 12H19"></path>
-                                    <path d="M13 6L19 12L13 18"></path>
-                                </svg>
-
-                            </a>
-
-                        </div>
-
-
-                        <div
-                            class="user-list"
-                            id="recentUsers"
-                        >
-
-                            <div class="empty-state">
-
-                                <div class="empty-icon">
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
-                                    >
-                                        <circle
-                                            cx="9"
-                                            cy="8"
-                                            r="3"
-                                        ></circle>
-
-                                        <path
-                                            d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
-                                        ></path>
-                                    </svg>
-
-                                </div>
-
-                                <p>
-                                    Loading users...
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
-                     QUICK ACTIONS
-                ================================================== -->
-
-                <section class="section-block quick-section">
-
-                    <div class="section-heading">
-
-                        <div>
-
-                            <span class="section-kicker">
-                                ADMIN TOOLS
-                            </span>
-
-                            <h2>
-                                Quick Actions
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="quick-grid">
-
-
-                        <a
-                            href="admin-users.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon gold">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <circle
-                                        cx="9"
-                                        cy="8"
-                                        r="3"
-                                    ></circle>
-
-                                    <path
-                                        d="M3.5 20C3.5 16.5 5.8 14.5 9 14.5C12.2 14.5 14.5 16.5 14.5 20"
-                                    ></path>
-
-                                    <path
-                                        d="M16 6H21"
-                                    ></path>
-
-                                    <path
-                                        d="M18.5 3.5V8.5"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Manage Users
-                                </strong>
-
-                                <span>
-                                    Accounts & status
-                                </span>
-
-                            </div>
-
-                        </a>
-
-
-                        <a
-                            href="admin-deposits.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon pink">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="8.5"
-                                    ></circle>
-
-                                    <path
-                                        d="M12 17V7"
-                                    ></path>
-
-                                    <path
-                                        d="M8 11L12 7L16 11"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Review Deposits
-                                </strong>
-
-                                <span>
-                                    Approve payments
-                                </span>
-
-                            </div>
-
-                        </a>
-
-
-                        <a
-                            href="admin-withdrawals.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon purple">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M12 4V16"
-                                    ></path>
-
-                                    <path
-                                        d="M7 11L12 16L17 11"
-                                    ></path>
-
-                                    <path
-                                        d="M5 20H19"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Review Withdrawals
-                                </strong>
-
-                                <span>
-                                    Approvals & payouts
-                                </span>
-
-                            </div>
-
-                        </a>
-
-
-                        <a
-                            href="admin-investments.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon gold">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M4 18L9 13L13 16L20 7"
-                                    ></path>
-
-                                    <path
-                                        d="M15 7H20V12"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Investments
-                                </strong>
-
-                                <span>
-                                    Monitor investments
-                                </span>
-
-                            </div>
-
-                        </a>
-
-
-                        <a
-                            href="admin-support.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon pink">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M4 13V11C4 6.6 7.5 3.5 12 3.5C16.5 3.5 20 6.6 20 11V13"
-                                    ></path>
-
-                                    <path
-                                        d="M4 12H3C2.4 12 2 12.5 2 13V16C2 16.6 2.4 17 3 17H4"
-                                    ></path>
-
-                                    <path
-                                        d="M20 12H21C21.6 12 22 12.5 22 13V16C22 16.6 21.6 17 21 17H20"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Support
-                                </strong>
-
-                                <span>
-                                    Customer tickets
-                                </span>
-
-                            </div>
-
-                        </a>
-
-
-                        <a
-                            href="admin-security.html"
-                            class="quick-card"
-                        >
-
-                            <div class="quick-icon purple">
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                >
-                                    <path
-                                        d="M12 3L20 6V11C20 16.2 16.7 19.7 12 21C7.3 19.7 4 16.2 4 11V6L12 3Z"
-                                    ></path>
-
-                                    <path
-                                        d="M9 12L11 14L15.5 9.5"
-                                    ></path>
-                                </svg>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Security & Audit
-                                </strong>
-
-                                <span>
-                                    Monitor system activity
-                                </span>
-
-                            </div>
-
-                        </a>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
-                     FOOTER
-                ================================================== -->
-
-                <footer class="admin-footer">
-
-                    <div class="footer-brand">
-
-                        <div class="footer-logo">
-                            C
                         </div>
 
                         <div>
-
                             <strong>
-                                CROWN CASH
+                                Review Deposits
                             </strong>
 
                             <span>
-                                Administration Panel
+                                Approve payments
                             </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="admin-withdrawals.html"
+                        class="quick-card"
+                    >
+
+                        <div class="quick-icon purple">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M12 5V19"
+                                ></path>
+
+                                <path
+                                    d="M7 14L12 19L17 14"
+                                ></path>
+
+                                <path
+                                    d="M7 5H17"
+                                ></path>
+
+                            </svg>
 
                         </div>
 
+                        <div>
+                            <strong>
+                                Review Withdrawals
+                            </strong>
+
+                            <span>
+                                Approvals & payouts
+                            </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="admin-investments.html"
+                        class="quick-card"
+                    >
+
+                        <div class="quick-icon gold">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19H20"></path>
+                                <path d="M7 15L11 11L14 13L20 6"></path>
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>
+                                Investments
+                            </strong>
+
+                            <span>
+                                Monitor investments
+                            </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="admin-support.html"
+                        class="quick-card"
+                    >
+
+                        <div class="quick-icon pink">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M4 13C4 8 7.6 4 12 4C16.4 4 20 8 20 13"
+                                ></path>
+
+                                <path
+                                    d="M4 13V17H7V12H4"
+                                ></path>
+
+                                <path
+                                    d="M20 13V17H17V12H20"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>
+                                Support
+                            </strong>
+
+                            <span>
+                                Customer tickets
+                            </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="admin-security.html"
+                        class="quick-card"
+                    >
+
+                        <div class="quick-icon purple">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <path
+                                    d="M12 3L20 6V11C20 16 17 19.5 12 21C7 19.5 4 16 4 11V6L12 3Z"
+                                ></path>
+
+                                <path
+                                    d="M9 12L11 14L15 10"
+                                ></path>
+
+                            </svg>
+
+                        </div>
+
+                        <div>
+                            <strong>
+                                Security & Audit
+                            </strong>
+
+                            <span>
+                                Monitor system activity
+                            </span>
+                        </div>
+
+                        <span class="quick-arrow">
+                            →
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+            <!-- FOOTER -->
+
+            <footer class="admin-footer">
+
+                <div class="footer-brand">
+
+                    <div class="footer-logo">
+                        CC
                     </div>
 
+                    <div>
 
-                    <div class="footer-security">
+                        <strong>
+                            CROWN CASH
+                        </strong>
 
-                        <span class="security-dot"></span>
-
-                        Secure Admin Session
+                        <span>
+                            Administration Panel
+                        </span>
 
                     </div>
 
-                    <p>
-                        © 2026 Crown Cash. Administration Portal.
-                    </p>
-
-                </footer>
-
-            </div>
-
-        </main>
-
-    </div>
+                </div>
 
 
-    <!-- =====================================================
-         JAVASCRIPT
-    ====================================================== -->
+                <div class="footer-security">
 
-    <script src="admin.js"></script>
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                    >
+                        <path
+                            d="M12 3L20 6V11C20 16 17 19.5 12 21C7 19.5 4 16 4 11V6L12 3Z"
+                        ></path>
+
+                        <path
+                            d="M9 12L11 14L15 10"
+                        ></path>
+
+                    </svg>
+
+                    Secure Admin Session
+
+                </div>
+
+
+                <p>
+                    © 2026 Crown Cash.
+                    Administration Portal.
+                </p>
+
+            </footer>
+
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script src="admin.js"></script>
 
 </body>
-
 </html>

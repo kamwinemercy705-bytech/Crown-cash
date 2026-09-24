@@ -1,13 +1,9 @@
 /* =========================================================
-   CROWN CASH — ADMIN DASHBOARD
+   CROWN CASH ADMINISTRATION
    admin.js
    ========================================================= */
 
 "use strict";
-
-/* =========================================================
-   API CONFIGURATION
-   ========================================================= */
 
 const API_BASE = "https://crown-cash1.onrender.com";
 
@@ -28,122 +24,101 @@ const LOGOUT_API =
    GLOBAL STATE
    ========================================================= */
 
-const AdminDashboardState = {
-    profile: null,
-    dashboard: null,
-    loading: false
+const AdminState = {
+    authenticated: false,
+    loading: false,
+    sidebarOpen: false,
+    dashboardLoaded: false
 };
 
 
 /* =========================================================
-   DOM HELPERS
+   HELPERS
    ========================================================= */
 
-function $(selector) {
-    return document.querySelector(selector);
+function getElement(id) {
+    return document.getElementById(id);
 }
 
-function $all(selector) {
-    return document.querySelectorAll(selector);
-}
-
-
-/* =========================================================
-   TEXT HELPERS
-   ========================================================= */
-
-function setText(selector, value) {
-
-    const element = $(selector);
-
-    if (!element) {
-        return;
-    }
-
-    element.textContent =
-        value === null ||
-        value === undefined ||
-        value === ""
-            ? "—"
-            : String(value);
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
 
 function escapeHTML(value) {
+    const div = document.createElement("div");
 
-    if (value === null || value === undefined) {
-        return "";
-    }
+    div.textContent =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return div.innerHTML;
 }
 
 
-/* =========================================================
-   NUMBER HELPERS
-   ========================================================= */
+function getInitial(name) {
+    const value =
+        String(name || "A").trim();
 
-function toNumber(value) {
-
-    if (value === null || value === undefined) {
-        return 0;
-    }
-
-    if (typeof value === "number") {
-        return Number.isFinite(value) ? value : 0;
-    }
-
-    if (typeof value === "object") {
-
-        if (value.$numberDecimal !== undefined) {
-            return Number(value.$numberDecimal) || 0;
-        }
-
-        if (value.$numberInt !== undefined) {
-            return Number(value.$numberInt) || 0;
-        }
-
-        if (value.$numberLong !== undefined) {
-            return Number(value.$numberLong) || 0;
-        }
-    }
-
-    const number = Number(value);
-
-    return Number.isFinite(number)
-        ? number
-        : 0;
+    return (
+        value.charAt(0).toUpperCase() ||
+        "A"
+    );
 }
 
-
-/* =========================================================
-   CURRENCY FORMATTER
-   ========================================================= */
 
 function formatCurrency(value) {
 
-    const amount = toNumber(value);
+    let number = 0;
 
-    return "UGX " +
-        amount.toLocaleString("en-UG", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
+    if (
+        value &&
+        typeof value === "object"
+    ) {
+        if (
+            typeof value.$numberDecimal !==
+            "undefined"
+        ) {
+            number =
+                Number(value.$numberDecimal) || 0;
+        } else if (
+            typeof value.$numberLong !==
+            "undefined"
+        ) {
+            number =
+                Number(value.$numberLong) || 0;
+        } else {
+            number =
+                Number(value.value) || 0;
+        }
+    } else {
+        number =
+            Number(value) || 0;
+    }
+
+    return (
+        "UGX " +
+        number.toLocaleString(
+            "en-UG",
+            {
+                maximumFractionDigits: 0
+            }
+        )
+    );
 }
 
 
-/* =========================================================
-   DATE FORMATTER
-   ========================================================= */
+function formatNumber(value) {
+
+    let number =
+        Number(value) || 0;
+
+    return number.toLocaleString(
+        "en-UG",
+        {
+            maximumFractionDigits: 0
+        }
+    );
+}
+
 
 function formatDate(value) {
 
@@ -151,41 +126,37 @@ function formatDate(value) {
         return "—";
     }
 
-    try {
+    let date;
 
-        let date;
+    if (
+        typeof value === "object" &&
+        value.$date
+    ) {
+        date =
+            new Date(value.$date);
+    } else {
+        date =
+            new Date(value);
+    }
 
-        if (
-            typeof value === "object" &&
-            value.$date
-        ) {
-            date = new Date(value.$date);
-        } else {
-            date = new Date(value);
-        }
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleDateString(
-            "en-UG",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            }
-        );
-
-    } catch (error) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
         return "—";
     }
+
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
 }
 
-
-/* =========================================================
-   DATE + TIME FORMATTER
-   ========================================================= */
 
 function formatDateTime(value) {
 
@@ -193,283 +164,248 @@ function formatDateTime(value) {
         return "—";
     }
 
-    try {
+    let date;
 
-        let date;
+    if (
+        typeof value === "object" &&
+        value.$date
+    ) {
+        date =
+            new Date(value.$date);
+    } else {
+        date =
+            new Date(value);
+    }
 
-        if (
-            typeof value === "object" &&
-            value.$date
-        ) {
-            date = new Date(value.$date);
-        } else {
-            date = new Date(value);
-        }
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleString(
-            "en-UG",
-            {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
-
-    } catch (error) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
         return "—";
     }
+
+    return date.toLocaleString(
+        "en-GB",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
 }
 
 
 /* =========================================================
-   INITIAL LETTER
+   LOADER
    ========================================================= */
 
-function getInitial(name) {
+function showLoader() {
 
-    if (!name) {
-        return "A";
+    const loader =
+        getElement("pageLoader");
+
+    if (!loader) {
+        return;
     }
 
-    const cleanName =
-        String(name).trim();
+    loader.classList.remove(
+        "hidden"
+    );
 
-    if (!cleanName) {
-        return "A";
+    loader.style.display = "flex";
+
+    loader.style.opacity = "1";
+
+    loader.style.visibility =
+        "visible";
+}
+
+
+function hideLoader() {
+
+    const loader =
+        getElement("pageLoader");
+
+    if (!loader) {
+        return;
     }
 
-    return cleanName
-        .charAt(0)
-        .toUpperCase();
+    loader.classList.add(
+        "hidden"
+    );
+
+    loader.style.opacity = "0";
+
+    loader.style.visibility =
+        "hidden";
+
+    loader.style.pointerEvents =
+        "none";
+
+    /*
+     * Extra protection.
+     * Even if CSS has a problem, the loader
+     * cannot remain permanently visible.
+     */
+    setTimeout(() => {
+
+        if (
+            loader.classList.contains(
+                "hidden"
+            )
+        ) {
+            loader.style.display =
+                "none";
+        }
+
+    }, 400);
 }
 
 
 /* =========================================================
-   STATUS CLASS
+   PAGE MESSAGE
    ========================================================= */
 
-function getStatusClass(status) {
+function showAdminMessage(
+    message,
+    type = "error"
+) {
 
-    const value =
-        String(status || "")
-            .toLowerCase()
-            .replace(/\s+/g, "-");
+    let element =
+        getElement("adminMessage");
 
-    if (
-        value === "approved" ||
-        value === "active" ||
-        value === "completed" ||
-        value === "success" ||
-        value === "successful"
-    ) {
-        return "status-success";
+    if (!element) {
+
+        element =
+            document.createElement(
+                "div"
+            );
+
+        element.id =
+            "adminMessage";
+
+        element.className =
+            "admin-message";
+
+        const main =
+            document.querySelector(
+                ".main-content"
+            );
+
+        if (main) {
+            main.prepend(element);
+        }
     }
 
-    if (
-        value === "pending" ||
-        value === "processing" ||
-        value === "awaiting-payout"
-    ) {
-        return "status-pending";
+    element.textContent =
+        message;
+
+    element.className =
+        `admin-message ${type}`;
+
+    element.style.display =
+        "block";
+}
+
+
+function clearAdminMessage() {
+
+    const element =
+        getElement("adminMessage");
+
+    if (!element) {
+        return;
     }
 
-    if (
-        value === "rejected" ||
-        value === "failed" ||
-        value === "blocked" ||
-        value === "suspended" ||
-        value === "disabled"
-    ) {
-        return "status-danger";
-    }
+    element.textContent = "";
 
-    return "status-neutral";
+    element.style.display =
+        "none";
 }
 
 
 /* =========================================================
-   STATUS LABEL
+   FETCH JSON
    ========================================================= */
 
-function formatStatus(status) {
-
-    if (!status) {
-        return "Unknown";
-    }
-
-    return String(status)
-        .replace(/_/g, " ")
-        .replace(/-/g, " ")
-        .replace(/\b\w/g, letter =>
-            letter.toUpperCase()
-        );
-}
-
-
-/* =========================================================
-   TRANSACTION ICON
-   ========================================================= */
-
-function transactionIcon(type) {
-
-    const value =
-        String(type || "")
-            .toLowerCase();
-
-    if (
-        value.includes("deposit") ||
-        value.includes("credit")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24"
-                 aria-hidden="true">
-                <path d="M12 3v12"/>
-                <path d="M7 10l5 5 5-5"/>
-                <path d="M5 21h14"/>
-            </svg>
-        `;
-    }
-
-    if (
-        value.includes("withdraw") ||
-        value.includes("debit")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24"
-                 aria-hidden="true">
-                <path d="M12 21V9"/>
-                <path d="M7 14l5-5 5 5"/>
-                <path d="M5 3h14"/>
-            </svg>
-        `;
-    }
-
-    if (
-        value.includes("invest")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24"
-                 aria-hidden="true">
-                <path d="M4 19V9"/>
-                <path d="M10 19V5"/>
-                <path d="M16 19v-7"/>
-                <path d="M22 19V3"/>
-                <path d="M3 21h20"/>
-            </svg>
-        `;
-    }
-
-    if (
-        value.includes("referral") ||
-        value.includes("commission")
-    ) {
-
-        return `
-            <svg viewBox="0 0 24 24"
-                 aria-hidden="true">
-                <circle cx="9" cy="7" r="3"/>
-                <circle cx="17" cy="9" r="2.5"/>
-                <path d="M3 20c0-3.2 2.5-5 6-5s6 1.8 6 5"/>
-                <path d="M15 15c3.2.2 5 1.7 5 4.5"/>
-            </svg>
-        `;
-    }
-
-    return `
-        <svg viewBox="0 0 24 24"
-             aria-hidden="true">
-            <rect x="4" y="5" width="16" height="14" rx="2"/>
-            <path d="M8 9h8"/>
-            <path d="M8 13h5"/>
-        </svg>
-    `;
-}
-
-
-/* =========================================================
-   API REQUEST HELPER
-   ========================================================= */
-
-async function apiRequest(
+async function fetchJSON(
     url,
     options = {}
 ) {
 
-    const requestOptions = {
-        credentials: "include",
-        ...options,
-        headers: {
-            "Accept": "application/json",
-            ...(options.headers || {})
-        }
-    };
+    const controller =
+        new AbortController();
 
-    const response =
-        await fetch(
-            url,
-            requestOptions
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            15000
         );
-
-    let data = null;
 
     try {
-        data = await response.json();
-    } catch (error) {
-        data = null;
+
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+
+                    credentials:
+                        "include",
+
+                    signal:
+                        controller.signal,
+
+                    headers: {
+                        "Accept":
+                            "application/json",
+
+                        ...(options.headers ||
+                            {})
+                    }
+                }
+            );
+
+        const text =
+            await response.text();
+
+        let data = {};
+
+        try {
+            data =
+                text
+                    ? JSON.parse(text)
+                    : {};
+        } catch (error) {
+
+            throw new Error(
+                "The server returned an invalid response."
+            );
+        }
+
+        if (!response.ok) {
+
+            const error =
+                new Error(
+                    data.message ||
+                    `Server error ${response.status}`
+                );
+
+            error.status =
+                response.status;
+
+            throw error;
+        }
+
+        return data;
+
+    } finally {
+
+        clearTimeout(timeout);
     }
-
-    if (
-        response.status === 401 ||
-        response.status === 403
-    ) {
-
-        redirectToLogin();
-
-        throw new Error(
-            "Administrator authentication required."
-        );
-    }
-
-    if (!response.ok) {
-
-        throw new Error(
-            data?.message ||
-            `Request failed (${response.status}).`
-        );
-    }
-
-    if (
-        data &&
-        data.success === false
-    ) {
-
-        throw new Error(
-            data.message ||
-            "Request failed."
-        );
-    }
-
-    return data;
-}
-
-
-/* =========================================================
-   REDIRECT TO LOGIN
-   ========================================================= */
-
-function redirectToLogin() {
-
-    window.location.href =
-        "login.html";
 }
 
 
@@ -482,7 +418,7 @@ async function verifyAdmin() {
     try {
 
         const data =
-            await apiRequest(
+            await fetchJSON(
                 ADMIN_AUTH_API,
                 {
                     method: "GET"
@@ -490,29 +426,82 @@ async function verifyAdmin() {
             );
 
         if (
-            data &&
-            data.success === true &&
-            data.authorized === true
+            !data ||
+            data.success !== true ||
+            data.authorized !== true
         ) {
 
-            return true;
+            throw new Error(
+                data?.message ||
+                "Administrator access was not confirmed."
+            );
         }
 
-        redirectToLogin();
+        AdminState.authenticated =
+            true;
 
-        return false;
+        return true;
 
     } catch (error) {
+
+        AdminState.authenticated =
+            false;
 
         console.error(
             "Admin authentication error:",
             error
         );
 
-        redirectToLogin();
+        if (
+            error.status === 401 ||
+            error.status === 403
+        ) {
+
+            redirectToLogin(
+                "Your administrator session has expired."
+            );
+
+            return false;
+        }
+
+        showAdminMessage(
+            error.name === "AbortError"
+                ? "The administrator server took too long to respond."
+                : (
+                    error.message ||
+                    "Unable to verify administrator access."
+                ),
+            "error"
+        );
 
         return false;
     }
+}
+
+
+/* =========================================================
+   REDIRECT
+   ========================================================= */
+
+function redirectToLogin(
+    message = ""
+) {
+
+    try {
+
+        sessionStorage.setItem(
+            "crownCashAdminMessage",
+            message
+        );
+
+    } catch (error) {
+        console.warn(
+            "Could not save login message."
+        );
+    }
+
+    window.location.href =
+        "login.html";
 }
 
 
@@ -525,7 +514,7 @@ async function loadAdminProfile() {
     try {
 
         const data =
-            await apiRequest(
+            await fetchJSON(
                 PROFILE_API,
                 {
                     method: "GET"
@@ -534,17 +523,13 @@ async function loadAdminProfile() {
 
         if (
             !data ||
-            data.success !== true ||
-            !data.user
+            data.success !== true
         ) {
-            return;
+            return null;
         }
 
         const user =
-            data.user;
-
-        AdminDashboardState.profile =
-            user;
+            data.user || {};
 
         const fullName =
             user.full_name ||
@@ -558,131 +543,699 @@ async function loadAdminProfile() {
 
         const firstName =
             user.first_name ||
-            fullName.split(" ")[0] ||
+            fullName
+                .trim()
+                .split(/\s+/)[0] ||
             "Administrator";
 
-        setText(
-            "#adminName",
-            fullName
-        );
+        const email =
+            user.email ||
+            "";
 
-        setText(
-            "#adminFirstName",
-            firstName
-        );
-
-        setText(
-            "#adminEmail",
-            user.email || "—"
-        );
-
-        setText(
-            "#headerUserName",
-            firstName
-        );
-
-        setText(
-            "#accountName",
-            fullName
-        );
-
-        setText(
-            "#adminAccountType",
+        const accountType =
             user.account_type ||
             user.role ||
-            "Admin Account"
+            "admin";
+
+
+        setText(
+            "adminName",
+            fullName
         );
 
-        const initials =
-            getInitial(fullName);
-
-        const avatarElements = [
-            "#accountAvatar",
-            "#adminAvatar"
-        ];
-
-        avatarElements.forEach(
-            selector => {
-
-                const element =
-                    $(selector);
-
-                if (!element) {
-                    return;
-                }
-
-                if (
-                    element.tagName === "IMG"
-                ) {
-
-                    if (
-                        element.dataset &&
-                        element.dataset.defaultAvatar
-                    ) {
-                        return;
-                    }
-
-                    element.alt =
-                        fullName;
-                } else {
-
-                    element.textContent =
-                        initials;
-                }
-            }
+        setText(
+            "adminFirstName",
+            firstName
         );
+
+        setText(
+            "adminEmail",
+            email
+        );
+
+        setText(
+            "headerUserName",
+            firstName
+        );
+
+        setText(
+            "accountName",
+            fullName
+        );
+
+        setText(
+            "adminAccountType",
+            "Administrator"
+        );
+
+
+        setInitial(
+            "adminAvatar",
+            getInitial(fullName)
+        );
+
+        setInitial(
+            "accountAvatar",
+            getInitial(fullName)
+        );
+
+
+        return user;
 
     } catch (error) {
 
         console.error(
-            "Unable to load admin profile:",
+            "Profile loading error:",
             error
         );
+
+        return null;
     }
 }
 
 
 /* =========================================================
-   FIND STAT VALUE
+   TEXT HELPERS
    ========================================================= */
 
-function findStat(
-    data,
-    ...keys
+function setText(
+    id,
+    value
 ) {
 
-    for (const key of keys) {
+    const element =
+        getElement(id);
 
-        if (
-            data &&
-            data[key] !== undefined &&
-            data[key] !== null
-        ) {
-            return data[key];
-        }
+    if (!element) {
+        return;
     }
 
-    return 0;
+    element.textContent =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
+}
+
+
+function setInitial(
+    id,
+    value
+) {
+
+    const element =
+        getElement(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent =
+        getInitial(value);
 }
 
 
 /* =========================================================
-   LOAD DASHBOARD DATA
+   DASHBOARD STATISTICS
+   ========================================================= */
+
+function getStat(
+    data,
+    key,
+    fallback = 0
+) {
+
+    if (
+        data &&
+        data[key] !== undefined &&
+        data[key] !== null
+    ) {
+        return data[key];
+    }
+
+    if (
+        data &&
+        data.summary &&
+        data.summary[key] !== undefined
+    ) {
+        return data.summary[key];
+    }
+
+    if (
+        data &&
+        data.statistics &&
+        data.statistics[key] !== undefined
+    ) {
+        return data.statistics[key];
+    }
+
+    return fallback;
+}
+
+
+function updateDashboardStats(
+    data
+) {
+
+    setText(
+        "totalUsers",
+        formatNumber(
+            getStat(
+                data,
+                "total_users"
+            )
+        )
+    );
+
+    setText(
+        "activeUsers",
+        formatNumber(
+            getStat(
+                data,
+                "active_users"
+            )
+        )
+    );
+
+    setText(
+        "totalDeposits",
+        formatCurrency(
+            getStat(
+                data,
+                "total_deposits"
+            )
+        )
+    );
+
+    setText(
+        "pendingDeposits",
+        formatCurrency(
+            getStat(
+                data,
+                "pending_deposits"
+            )
+        )
+    );
+
+    setText(
+        "totalWithdrawals",
+        formatCurrency(
+            getStat(
+                data,
+                "total_withdrawals"
+            )
+        )
+    );
+
+    setText(
+        "pendingWithdrawals",
+        formatCurrency(
+            getStat(
+                data,
+                "pending_withdrawals"
+            )
+        )
+    );
+
+    setText(
+        "totalInvestments",
+        formatCurrency(
+            getStat(
+                data,
+                "total_investments"
+            )
+        )
+    );
+
+    setText(
+        "activeInvestments",
+        formatNumber(
+            getStat(
+                data,
+                "active_investments"
+            )
+        )
+    );
+
+    setText(
+        "totalReferrals",
+        formatNumber(
+            getStat(
+                data,
+                "total_referrals"
+            )
+        )
+    );
+
+    setText(
+        "totalTransactions",
+        formatNumber(
+            getStat(
+                data,
+                "total_transactions"
+            )
+        )
+    );
+
+    setText(
+        "openTickets",
+        formatNumber(
+            getStat(
+                data,
+                "open_tickets"
+            )
+        )
+    );
+}
+
+
+/* =========================================================
+   RECENT TRANSACTIONS
+   ========================================================= */
+
+function getTransactionArray(
+    data
+) {
+
+    if (
+        Array.isArray(
+            data?.recent_transactions
+        )
+    ) {
+        return data.recent_transactions;
+    }
+
+    if (
+        Array.isArray(
+            data?.transactions
+        )
+    ) {
+        return data.transactions;
+    }
+
+    return [];
+}
+
+
+function getTransactionIcon(
+    transaction
+) {
+
+    const type =
+        String(
+            transaction?.type ||
+            transaction?.transaction_type ||
+            ""
+        ).toLowerCase();
+
+    if (
+        type.includes("deposit")
+    ) {
+
+        return `
+            <svg viewBox="0 0 24 24"
+                 aria-hidden="true">
+                <path d="M12 19V5"></path>
+                <path d="M6 11l6-6 6 6"></path>
+            </svg>
+        `;
+    }
+
+    if (
+        type.includes("withdraw")
+    ) {
+
+        return `
+            <svg viewBox="0 0 24 24"
+                 aria-hidden="true">
+                <path d="M12 5v14"></path>
+                <path d="M18 13l-6 6-6-6"></path>
+            </svg>
+        `;
+    }
+
+    if (
+        type.includes("investment")
+    ) {
+
+        return `
+            <svg viewBox="0 0 24 24"
+                 aria-hidden="true">
+                <path d="M4 19V5"></path>
+                <path d="M4 19h16"></path>
+                <path d="M7 15l4-5 3 3 5-7"></path>
+            </svg>
+        `;
+    }
+
+    return `
+        <svg viewBox="0 0 24 24"
+             aria-hidden="true">
+            <path d="M12 3v18"></path>
+            <path d="M7 8l5-5 5 5"></path>
+            <path d="M7 16l5 5 5-5"></path>
+        </svg>
+    `;
+}
+
+
+function getStatusClass(
+    status
+) {
+
+    const value =
+        String(
+            status || ""
+        ).toLowerCase();
+
+    if (
+        [
+            "approved",
+            "completed",
+            "success",
+            "successful",
+            "active"
+        ].includes(value)
+    ) {
+        return "status-success";
+    }
+
+    if (
+        [
+            "pending",
+            "processing",
+            "awaiting_payout"
+        ].includes(value)
+    ) {
+        return "status-pending";
+    }
+
+    if (
+        [
+            "rejected",
+            "failed",
+            "cancelled",
+            "blocked"
+        ].includes(value)
+    ) {
+        return "status-danger";
+    }
+
+    return "status-neutral";
+}
+
+
+function renderRecentTransactions(
+    data
+) {
+
+    const container =
+        getElement(
+            "recentTransactions"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    const transactions =
+        getTransactionArray(data);
+
+    if (!transactions.length) {
+
+        container.innerHTML = `
+            <div class="admin-empty-state">
+                <div class="empty-state-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 5h16"></path>
+                        <path d="M4 10h16"></path>
+                        <path d="M4 15h10"></path>
+                        <path d="M4 20h7"></path>
+                    </svg>
+                </div>
+
+                <strong>
+                    No recent transactions
+                </strong>
+
+                <span>
+                    Transaction activity will appear here.
+                </span>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        transactions
+            .slice(0, 8)
+            .map(
+                transaction => {
+
+                    const name =
+                        transaction.full_name ||
+                        transaction.user_name ||
+                        transaction.name ||
+                        "Customer";
+
+                    const type =
+                        transaction.type ||
+                        transaction.transaction_type ||
+                        "Transaction";
+
+                    const status =
+                        transaction.status ||
+                        "pending";
+
+                    const amount =
+                        transaction.amount ||
+                        transaction.value ||
+                        0;
+
+                    return `
+                        <div class="transaction-row">
+
+                            <div class="transaction-icon">
+                                ${getTransactionIcon(
+                                    transaction
+                                )}
+                            </div>
+
+                            <div class="transaction-info">
+
+                                <strong>
+                                    ${escapeHTML(
+                                        name
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHTML(
+                                        type
+                                    )}
+                                </span>
+
+                                <small>
+                                    ${formatDateTime(
+                                        transaction.created_at ||
+                                        transaction.date
+                                    )}
+                                </small>
+
+                            </div>
+
+                            <div class="transaction-value">
+
+                                <strong>
+                                    ${formatCurrency(
+                                        amount
+                                    )}
+                                </strong>
+
+                                <span class="status-badge
+                                    ${getStatusClass(
+                                        status
+                                    )}">
+                                    ${escapeHTML(
+                                        status
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   RECENT USERS
+   ========================================================= */
+
+function getUsersArray(
+    data
+) {
+
+    if (
+        Array.isArray(
+            data?.recent_users
+        )
+    ) {
+        return data.recent_users;
+    }
+
+    if (
+        Array.isArray(
+            data?.users
+        )
+    ) {
+        return data.users;
+    }
+
+    return [];
+}
+
+
+function renderRecentUsers(
+    data
+) {
+
+    const container =
+        getElement(
+            "recentUsers"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    const users =
+        getUsersArray(data);
+
+    if (!users.length) {
+
+        container.innerHTML = `
+            <div class="admin-empty-state">
+                <div class="empty-state-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                        <path d="M17 5.5a3 3 0 010 5.8"></path>
+                        <path d="M18 14c2.2.7 3.8 2.8 3.8 5.2"></path>
+                    </svg>
+                </div>
+
+                <strong>
+                    No recent users
+                </strong>
+
+                <span>
+                    New customer accounts will appear here.
+                </span>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        users
+            .slice(0, 8)
+            .map(
+                user => {
+
+                    const name =
+                        user.full_name ||
+                        [
+                            user.first_name,
+                            user.last_name
+                        ]
+                            .filter(Boolean)
+                            .join(" ") ||
+                        "Customer";
+
+                    const status =
+                        user.status ||
+                        "active";
+
+                    return `
+                        <div class="user-row">
+
+                            <div class="user-avatar-small">
+                                ${escapeHTML(
+                                    getInitial(
+                                        name
+                                    )
+                                )}
+                            </div>
+
+                            <div class="user-info">
+
+                                <strong>
+                                    ${escapeHTML(
+                                        name
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHTML(
+                                        user.email ||
+                                        "No email"
+                                    )}
+                                </span>
+
+                                <small>
+                                    Joined
+                                    ${formatDate(
+                                        user.created_at
+                                    )}
+                                </small>
+
+                            </div>
+
+                            <div class="user-status">
+
+                                <span class="status-badge
+                                    ${getStatusClass(
+                                        status
+                                    )}">
+                                    ${escapeHTML(
+                                        status
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   LOAD DASHBOARD
    ========================================================= */
 
 async function loadDashboard() {
 
-    if (AdminDashboardState.loading) {
+    if (
+        !AdminState.authenticated
+    ) {
         return;
     }
-
-    AdminDashboardState.loading =
-        true;
 
     try {
 
         const data =
-            await apiRequest(
+            await fetchJSON(
                 ADMIN_DASHBOARD_API,
                 {
                     method: "GET"
@@ -693,18 +1246,29 @@ async function loadDashboard() {
             !data ||
             data.success !== true
         ) {
+
             throw new Error(
                 data?.message ||
-                "Unable to load dashboard."
+                "Unable to load dashboard information."
             );
         }
 
-        AdminDashboardState.dashboard =
-            data;
-
-        renderDashboard(
+        updateDashboardStats(
             data
         );
+
+        renderRecentTransactions(
+            data
+        );
+
+        renderRecentUsers(
+            data
+        );
+
+        AdminState.dashboardLoaded =
+            true;
+
+        animateDashboardCards();
 
     } catch (error) {
 
@@ -713,442 +1277,365 @@ async function loadDashboard() {
             error
         );
 
-        showDashboardError(
-            error.message
+        if (
+            error.status === 401 ||
+            error.status === 403
+        ) {
+
+            redirectToLogin(
+                "Your administrator session has expired."
+            );
+
+            return;
+        }
+
+        showAdminMessage(
+            error.name === "AbortError"
+                ? "The dashboard server took too long to respond."
+                : (
+                    error.message ||
+                    "Unable to load administration dashboard."
+                ),
+            "error"
+        );
+
+        renderDashboardError();
+    }
+}
+
+
+/* =========================================================
+   DASHBOARD ERROR
+   ========================================================= */
+
+function renderDashboardError() {
+
+    const transactionContainer =
+        getElement(
+            "recentTransactions"
+        );
+
+    if (
+        transactionContainer &&
+        !transactionContainer.children.length
+    ) {
+
+        transactionContainer.innerHTML = `
+            <div class="admin-error-state">
+
+                <div class="error-state-icon">
+
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 8v5"></path>
+                        <path d="M12 16h.01"></path>
+                    </svg>
+
+                </div>
+
+                <strong>
+                    Dashboard data could not be loaded
+                </strong>
+
+                <span>
+                    Please use the refresh button to try again.
+                </span>
+
+                <button
+                    type="button"
+                    class="admin-action-button secondary"
+                    id="dashboardRetryButton"
+                >
+                    Retry
+                </button>
+
+            </div>
+        `;
+
+        const retry =
+            getElement(
+                "dashboardRetryButton"
+            );
+
+        if (retry) {
+
+            retry.addEventListener(
+                "click",
+                loadDashboard
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   ANIMATE CARDS
+   ========================================================= */
+
+function animateDashboardCards() {
+
+    const cards =
+        document.querySelectorAll(
+            ".stat-card"
+        );
+
+    cards.forEach(
+        (card, index) => {
+
+            setTimeout(
+                () => {
+
+                    card.classList.add(
+                        "dashboard-card-visible"
+                    );
+
+                },
+                index * 60
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+function openSidebar() {
+
+    const sidebar =
+        getElement("sidebar");
+
+    const overlay =
+        getElement(
+            "sidebarOverlay"
+        );
+
+    if (!sidebar) {
+        return;
+    }
+
+    sidebar.classList.add(
+        "mobile-open"
+    );
+
+    sidebar.classList.add(
+        "open"
+    );
+
+    if (overlay) {
+
+        overlay.classList.add(
+            "visible"
+        );
+
+        overlay.classList.add(
+            "active"
+        );
+    }
+
+    document.body.classList.add(
+        "sidebar-open"
+    );
+
+    AdminState.sidebarOpen =
+        true;
+}
+
+
+function closeSidebar() {
+
+    const sidebar =
+        getElement("sidebar");
+
+    const overlay =
+        getElement(
+            "sidebarOverlay"
+        );
+
+    if (sidebar) {
+
+        sidebar.classList.remove(
+            "mobile-open"
+        );
+
+        sidebar.classList.remove(
+            "open"
+        );
+    }
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "visible"
+        );
+
+        overlay.classList.remove(
+            "active"
+        );
+    }
+
+    document.body.classList.remove(
+        "sidebar-open"
+    );
+
+    AdminState.sidebarOpen =
+        false;
+}
+
+
+function setupSidebar() {
+
+    const menuButton =
+        getElement("menuButton");
+
+    const sidebarClose =
+        getElement(
+            "sidebarClose"
+        );
+
+    const overlay =
+        getElement(
+            "sidebarOverlay"
+        );
+
+    /*
+     * IMPORTANT:
+     * Always start closed on mobile.
+     */
+    closeSidebar();
+
+
+    if (menuButton) {
+
+        menuButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                if (
+                    AdminState.sidebarOpen
+                ) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+        );
+    }
+
+
+    if (sidebarClose) {
+
+        sidebarClose.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+                closeSidebar();
+            }
+        );
+    }
+
+
+    if (overlay) {
+
+        overlay.addEventListener(
+            "click",
+            closeSidebar
+        );
+    }
+
+
+    /*
+     * Close sidebar when a navigation
+     * link is selected on mobile.
+     */
+    const links =
+        document.querySelectorAll(
+            "#sidebar a"
+        );
+
+    links.forEach(
+        link => {
+
+            link.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        window.innerWidth <= 900
+                    ) {
+                        closeSidebar();
+                    }
+                }
+            );
+        }
+    );
+
+
+    /*
+     * If the phone changes back to
+     * desktop width, remove mobile
+     * sidebar state.
+     */
+    window.addEventListener(
+        "resize",
+        () => {
+
+            if (
+                window.innerWidth > 900
+            ) {
+                closeSidebar();
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+async function logout() {
+
+    const button =
+        getElement("logoutBtn");
+
+    if (button) {
+        button.disabled = true;
+    }
+
+    try {
+
+        await fetchJSON(
+            LOGOUT_API,
+            {
+                method: "GET"
+            }
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Logout request failed:",
+            error
         );
 
     } finally {
 
-        AdminDashboardState.loading =
-            false;
+        window.location.href =
+            "login.html";
     }
 }
 
 
-/* =========================================================
-   RENDER DASHBOARD
-   ========================================================= */
+function setupLogout() {
 
-function renderDashboard(data) {
+    const button =
+        getElement("logoutBtn");
 
-    const stats =
-        data.stats ||
-        data.summary ||
-        data;
-
-    /* -----------------------------
-       USERS
-       ----------------------------- */
-
-    setText(
-        "#totalUsers",
-        toNumber(
-            findStat(
-                stats,
-                "total_users",
-                "users",
-                "totalUsers"
-            )
-        ).toLocaleString()
-    );
-
-    setText(
-        "#activeUsers",
-        toNumber(
-            findStat(
-                stats,
-                "active_users",
-                "activeUsers"
-            )
-        ).toLocaleString()
-    );
-
-
-    /* -----------------------------
-       DEPOSITS
-       ----------------------------- */
-
-    setText(
-        "#totalDeposits",
-        formatCurrency(
-            findStat(
-                stats,
-                "total_deposits",
-                "deposits",
-                "deposit_total"
-            )
-        )
-    );
-
-    setText(
-        "#pendingDeposits",
-        formatCurrency(
-            findStat(
-                stats,
-                "pending_deposits",
-                "pendingDepositAmount"
-            )
-        )
-    );
-
-
-    /* -----------------------------
-       WITHDRAWALS
-       ----------------------------- */
-
-    setText(
-        "#totalWithdrawals",
-        formatCurrency(
-            findStat(
-                stats,
-                "total_withdrawals",
-                "withdrawals",
-                "withdrawal_total"
-            )
-        )
-    );
-
-    setText(
-        "#pendingWithdrawals",
-        formatCurrency(
-            findStat(
-                stats,
-                "pending_withdrawals",
-                "pendingWithdrawalAmount"
-            )
-        )
-    );
-
-
-    /* -----------------------------
-       INVESTMENTS
-       ----------------------------- */
-
-    setText(
-        "#totalInvestments",
-        formatCurrency(
-            findStat(
-                stats,
-                "total_investments",
-                "investments",
-                "investment_total"
-            )
-        )
-    );
-
-    setText(
-        "#activeInvestments",
-        toNumber(
-            findStat(
-                stats,
-                "active_investments",
-                "activeInvestments"
-            )
-        ).toLocaleString()
-    );
-
-
-    /* -----------------------------
-       REFERRALS
-       ----------------------------- */
-
-    setText(
-        "#totalReferrals",
-        toNumber(
-            findStat(
-                stats,
-                "total_referrals",
-                "referrals",
-                "totalReferrals"
-            )
-        ).toLocaleString()
-    );
-
-
-    /* -----------------------------
-       TRANSACTIONS
-       ----------------------------- */
-
-    setText(
-        "#totalTransactions",
-        toNumber(
-            findStat(
-                stats,
-                "total_transactions",
-                "transactions",
-                "totalTransactions"
-            )
-        ).toLocaleString()
-    );
-
-
-    /* -----------------------------
-       SUPPORT
-       ----------------------------- */
-
-    setText(
-        "#openTickets",
-        toNumber(
-            findStat(
-                stats,
-                "open_tickets",
-                "openTickets"
-            )
-        ).toLocaleString()
-    );
-
-
-    /* -----------------------------
-       RECENT DATA
-       ----------------------------- */
-
-    renderRecentTransactions(
-        data.recent_transactions ||
-        data.recentTransactions ||
-        []
-    );
-
-    renderRecentUsers(
-        data.recent_users ||
-        data.recentUsers ||
-        []
-    );
-}
-
-
-/* =========================================================
-   RECENT TRANSACTIONS
-   ========================================================= */
-
-function renderRecentTransactions(
-    transactions
-) {
-
-    const container =
-        $("#recentTransactions");
-
-    if (!container) {
+    if (!button) {
         return;
-    }
-
-    if (
-        !Array.isArray(transactions) ||
-        transactions.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="admin-empty-state">
-                <div class="empty-state-icon">
-                    <svg viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <rect x="4" y="5"
-                              width="16"
-                              height="14"
-                              rx="2"/>
-                        <path d="M8 9h8"/>
-                        <path d="M8 13h5"/>
-                    </svg>
-                </div>
-
-                <strong>No recent transactions</strong>
-
-                <span>
-                    New platform transactions
-                    will appear here.
-                </span>
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML =
-        transactions
-            .slice(0, 8)
-            .map(transaction => {
-
-                const type =
-                    transaction.type ||
-                    transaction.transaction_type ||
-                    transaction.category ||
-                    "Transaction";
-
-                const status =
-                    transaction.status ||
-                    "pending";
-
-                const amount =
-                    transaction.amount ||
-                    transaction.value ||
-                    0;
-
-                const name =
-                    transaction.full_name ||
-                    transaction.user_name ||
-                    transaction.name ||
-                    "Crown Cash User";
-
-                const date =
-                    transaction.created_at ||
-                    transaction.date ||
-                    transaction.timestamp;
-
-                const amountClass =
-                    String(type)
-                        .toLowerCase()
-                        .includes("withdraw")
-                        ? "amount-negative"
-                        : "amount-positive";
-
-                return `
-                    <div class="transaction-row">
-
-                        <div class="transaction-icon">
-                            ${transactionIcon(type)}
-                        </div>
-
-                        <div class="transaction-info">
-
-                            <strong>
-                                ${escapeHTML(type)}
-                            </strong>
-
-                            <span>
-                                ${escapeHTML(name)}
-                            </span>
-
-                            <small>
-                                ${escapeHTML(
-                                    formatDateTime(date)
-                                )}
-                            </small>
-
-                        </div>
-
-                        <div class="transaction-value">
-
-                            <strong class="${amountClass}">
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span class="status-badge ${getStatusClass(status)}">
-                                ${escapeHTML(
-                                    formatStatus(status)
-                                )}
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-
-            })
-            .join("");
-}
-
-
-/* =========================================================
-   RECENT USERS
-   ========================================================= */
-
-function renderRecentUsers(
-    users
-) {
-
-    const container =
-        $("#recentUsers");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        !Array.isArray(users) ||
-        users.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="admin-empty-state">
-
-                <div class="empty-state-icon">
-                    <svg viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <circle cx="12"
-                                cy="8"
-                                r="3"/>
-                        <path d="M5 21c0-4 3-6 7-6s7 2 7 6"/>
-                    </svg>
-                </div>
-
-                <strong>No users yet</strong>
-
-                <span>
-                    Newly registered users
-                    will appear here.
-                </span>
-
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML =
-        users
-            .slice(0, 8)
-            .map(user => {
-
-                const fullName =
-                    user.full_name ||
-                    [
-                        user.first_name,
-                        user.last_name
-                    ]
-                        .filter(Boolean)
-                        .join(" ") ||
-                    "Crown Cash User";
-
-                const status =
-                    user.status ||
-                    "active";
-
-                const email =
-                    user.email ||
-                    "No email";
-
-                const createdAt =
-                    user.created_at ||
-                    user.date;
-
-                const initial =
-                    getInitial(fullName);
-
-                return `
-                    <div class="user-row">
-
-                        <div class="user-avatar-small">
-                            ${escapeHTML(initial)}
-                        </div>
-
-                        <div class="user-info">
-
-                            <strong>
-                                ${escapeHTML(fullName)}
-                            </strong>
-
-                            <span>
-                                ${escapeHTML(email)}
-                            </span>
-
-                            <small>
-                                Joined
-                                ${escapeHTML(
-                                    formatDate(createdAt)
-                                )}
-                            </small>
-
-                        </div>
-
-                        <div class="user-status">
-
-                            <span class="status

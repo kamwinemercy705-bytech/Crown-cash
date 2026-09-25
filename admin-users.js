@@ -1,12 +1,13 @@
 "use strict";
 
 /*
-=========================================================
-CROWN CASH ADMIN — USER MANAGEMENT
-=========================================================
+|--------------------------------------------------------------------------
+| Crown Cash - Admin Users
+|--------------------------------------------------------------------------
 */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_BASE =
+    "https://crown-cash1.onrender.com";
 
 const ADMIN_AUTH_API =
     `${API_BASE}/admin-auth.php`;
@@ -23,526 +24,1342 @@ const LOGOUT_API =
 const PAGE_SIZE = 10;
 
 
-/* =========================================================
-   STATE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| State
+|--------------------------------------------------------------------------
+*/
 
-const state = {
-    users: [],
-    filteredUsers: [],
-    currentPage: 1,
-    selectedUser: null,
-    loading: false
-};
+let allUsers = [];
 
+let filteredUsers = [];
 
-/* =========================================================
-   DOM
-========================================================= */
+let currentPage = 1;
 
-const $ = (id) => document.getElementById(id);
+let selectedUser = null;
 
 
-/* =========================================================
-   ELEMENTS
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| DOM Helpers
+|--------------------------------------------------------------------------
+*/
 
-const sidebar =
-    $("sidebar");
-
-const sidebarOverlay =
-    $("sidebarOverlay");
-
-const menuButton =
-    $("menuButton");
-
-const sidebarClose =
-    $("sidebarClose");
-
-const logoutBtn =
-    $("logoutBtn");
-
-const adminName =
-    $("adminName");
-
-const adminAvatar =
-    $("adminAvatar");
-
-const adminAccountType =
-    $("adminAccountType");
-
-const headerUserName =
-    $("headerUserName");
-
-const accountAvatar =
-    $("accountAvatar");
-
-const totalUsers =
-    $("totalUsers");
-
-const activeUsers =
-    $("activeUsers");
-
-const blockedUsers =
-    $("blockedUsers");
-
-const adminUsers =
-    $("adminUsers");
-
-const searchUsers =
-    $("searchUsers");
-
-const statusFilter =
-    $("statusFilter");
-
-const accountTypeFilter =
-    $("accountTypeFilter");
-
-const refreshUsersBtn =
-    $("refreshUsersBtn");
-
-const usersMessage =
-    $("usersMessage");
-
-const usersTableBody =
-    $("usersTableBody");
-
-const pagination =
-    $("pagination");
-
-const usersCountBadge =
-    $("usersCountBadge");
-
-const userModal =
-    $("userModal");
-
-const closeUserModal =
-    $("closeUserModal");
-
-const modalUserAvatar =
-    $("modalUserAvatar");
-
-const modalUserName =
-    $("modalUserName");
-
-const modalUserEmail =
-    $("modalUserEmail");
-
-const modalUserPhone =
-    $("modalUserPhone");
-
-const modalReferralCode =
-    $("modalReferralCode");
-
-const modalUserBalance =
-    $("modalUserBalance");
-
-const modalUserStatus =
-    $("modalUserStatus");
-
-const modalAccountType =
-    $("modalAccountType");
-
-const modalCreatedAt =
-    $("modalCreatedAt");
-
-const manageUserBtn =
-    $("manageUserBtn");
+function byId(id) {
+    return document.getElementById(id);
+}
 
 
-/* =========================================================
-   SAFE JSON FETCH
-========================================================= */
+function showMessage(message, type = "error") {
 
-async function fetchJSON(
-    url,
-    options = {},
-    timeout = 15000
-) {
+    const element = byId("usersMessage");
 
-    const controller =
-        new AbortController();
+    if (!element) return;
 
-    const timer =
-        setTimeout(
-            () => controller.abort(),
-            timeout
-        );
+    element.textContent = message;
+
+    element.className =
+        `admin-message ${type}`;
+
+    element.style.display = "block";
+}
+
+
+function hideMessage() {
+
+    const element = byId("usersMessage");
+
+    if (!element) return;
+
+    element.style.display = "none";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Page Loader
+|--------------------------------------------------------------------------
+*/
+
+function hidePageLoader() {
+
+    const loader = byId("pageLoader");
+
+    if (!loader) return;
+
+    loader.classList.add("hidden");
+
+    setTimeout(() => {
+
+        loader.style.display = "none";
+
+    }, 300);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
+async function verifyAdministrator() {
 
     try {
 
-        const response =
-            await fetch(url, {
+        const response = await fetch(
+            ADMIN_AUTH_API,
+            {
+                method: "GET",
                 credentials: "include",
                 cache: "no-store",
-                ...options,
-                signal: controller.signal
-            });
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
 
-        const text =
-            await response.text();
 
         let data = {};
 
         try {
-            data = text
-                ? JSON.parse(text)
-                : {};
+
+            data = await response.json();
+
         } catch (error) {
 
-            throw new Error(
-                `Server returned invalid JSON (${response.status}).`
+            data = {};
+        }
+
+
+        if (response.status === 401) {
+
+            showMessage(
+                "Your administrator session has expired. Please login again.",
+                "error"
             );
+
+            hidePageLoader();
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "login.html";
+
+            }, 1200);
+
+            return false;
         }
 
-        if (!response.ok) {
 
-            const message =
+        if (response.status === 403) {
+
+            showMessage(
                 data.message ||
-                `Request failed with status ${response.status}.`;
+                "Administrator access is required.",
+                "error"
+            );
 
-            const error =
-                new Error(message);
+            hidePageLoader();
 
-            error.status =
-                response.status;
-
-            throw error;
+            return false;
         }
 
-        return data;
+
+        if (!response.ok || data.success !== true) {
+
+            showMessage(
+                data.message ||
+                "Administrator verification failed.",
+                "error"
+            );
+
+            hidePageLoader();
+
+            return false;
+        }
+
+
+        return true;
+
 
     } catch (error) {
 
-        if (
-            error.name === "AbortError"
-        ) {
-            throw new Error(
-                "The server took too long to respond."
-            );
-        }
-
-        throw error;
-
-    } finally {
-
-        clearTimeout(timer);
-    }
-}
-
-
-/* =========================================================
-   SHOW MESSAGE
-========================================================= */
-
-function showMessage(
-    message,
-    type = "info"
-) {
-
-    if (!usersMessage) {
-        return;
-    }
-
-    usersMessage.textContent =
-        message;
-
-    usersMessage.className =
-        `users-message show ${type}`;
-
-}
-
-
-/* =========================================================
-   HIDE MESSAGE
-========================================================= */
-
-function hideMessage() {
-
-    if (!usersMessage) {
-        return;
-    }
-
-    usersMessage.textContent = "";
-
-    usersMessage.className =
-        "users-message";
-}
-
-
-/* =========================================================
-   ADMIN AUTHENTICATION
-========================================================= */
-
-async function verifyAdmin() {
-
-    const data =
-        await fetchJSON(
-            ADMIN_AUTH_API,
-            {
-                method: "GET"
-            },
-            12000
+        console.error(
+            "Administrator verification error:",
+            error
         );
 
-    if (
-        !data ||
-        data.success !== true ||
-        data.authorized !== true
-    ) {
+        showMessage(
+            "Unable to verify administrator session. Please check your connection.",
+            "error"
+        );
 
-        const error =
-            new Error(
-                data?.message ||
-                "Administrator access is required."
-            );
+        hidePageLoader();
 
-        error.status =
-            403;
-
-        throw error;
+        return false;
     }
-
-    return data;
 }
 
 
-/* =========================================================
-   LOAD ADMIN PROFILE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Load Admin Profile
+|--------------------------------------------------------------------------
+*/
 
 async function loadAdminProfile() {
 
     try {
 
-        const data =
-            await fetchJSON(
-                PROFILE_API,
-                {
-                    method: "GET"
-                },
-                12000
-            );
+        const response = await fetch(
+            PROFILE_API,
+            {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
 
-        if (
-            !data ||
-            data.success !== true
-        ) {
+
+        if (!response.ok) {
+
             return;
         }
 
-        const user =
-            data.user || {};
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data.success ||
+            !data.user
+        ) {
+
+            return;
+        }
+
+
+        const user = data.user;
+
 
         const fullName =
             user.full_name ||
-            `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+            `${user.first_name || ""} ${user.last_name || ""}`
+                .trim() ||
             "Administrator";
+
 
         const firstName =
             user.first_name ||
-            fullName.split(/\s+/)[0] ||
+            fullName.split(" ")[0] ||
             "Administrator";
+
+
+        const email =
+            user.email ||
+            "";
+
 
         const accountType =
             user.account_type ||
-            user.role ||
-            "admin";
+            "Admin Account";
 
-        if (adminName) {
-            adminName.textContent =
-                fullName;
-        }
 
-        if (headerUserName) {
-            headerUserName.textContent =
+        [
+            "adminName",
+            "headerUserName"
+        ].forEach(id => {
+
+            const element = byId(id);
+
+            if (element) {
+
+                element.textContent =
+                    fullName;
+            }
+        });
+
+
+        const firstNameElement =
+            byId("adminFirstName");
+
+        if (firstNameElement) {
+
+            firstNameElement.textContent =
                 firstName;
         }
 
-        if (adminAccountType) {
-            adminAccountType.textContent =
-                accountType === "admin" ||
-                accountType === "administrator"
-                    ? "Admin Account"
-                    : accountType;
+
+        const emailElement =
+            byId("adminEmail");
+
+        if (emailElement) {
+
+            emailElement.textContent =
+                email;
         }
 
-        const avatar =
-            firstName
-                .charAt(0)
-                .toUpperCase();
 
-        if (adminAvatar) {
-            adminAvatar.textContent =
-                avatar || "A";
+        const typeElement =
+            byId("adminAccountType");
+
+        if (typeElement) {
+
+            typeElement.textContent =
+                accountType;
         }
 
-        if (accountAvatar) {
-            accountAvatar.textContent =
-                avatar || "A";
-        }
+
+        [
+            "adminAvatar",
+            "accountAvatar"
+        ].forEach(id => {
+
+            const element = byId(id);
+
+            if (element) {
+
+                element.textContent =
+                    firstName
+                        .charAt(0)
+                        .toUpperCase();
+            }
+        });
+
 
     } catch (error) {
 
-        console.warn(
-            "Admin profile could not be loaded:",
+        console.error(
+            "Profile loading error:",
             error
         );
     }
 }
 
 
-/* =========================================================
-   NORMALIZE NUMBER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Load Users
+|--------------------------------------------------------------------------
+*/
 
-function numberValue(value) {
+async function loadUsers() {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return 0;
+    const loading =
+        byId("usersLoading");
+
+    const empty =
+        byId("usersEmpty");
+
+    const tableBody =
+        byId("usersTableBody");
+
+
+    if (loading) {
+
+        loading.style.display =
+            "block";
     }
 
-    if (
-        typeof value === "number"
-    ) {
-        return value;
+
+    if (empty) {
+
+        empty.style.display =
+            "none";
     }
 
-    if (
-        typeof value === "object"
-    ) {
 
-        if (
-            value.$numberDecimal !== undefined
-        ) {
-            return Number(
-                value.$numberDecimal
-            ) || 0;
-        }
+    if (tableBody) {
 
-        if (
-            value.$numberInt !== undefined
-        ) {
-            return Number(
-                value.$numberInt
-            ) || 0;
-        }
-
-        if (
-            value.$numberLong !== undefined
-        ) {
-            return Number(
-                value.$numberLong
-            ) || 0;
-        }
-
-        if (
-            value.value !== undefined
-        ) {
-            return Number(
-                value.value
-            ) || 0;
-        }
+        tableBody.innerHTML = "";
     }
 
-    const number =
-        Number(value);
 
-    return Number.isFinite(number)
-        ? number
-        : 0;
-}
+    hideMessage();
 
-
-/* =========================================================
-   DATE
-========================================================= */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    let date;
 
     try {
 
-        if (
-            typeof value === "object" &&
-            value.$date
-        ) {
-
-            if (
-                typeof value.$date === "object" &&
-                value.$date.$numberLong
-            ) {
-                date =
-                    new Date(
-                        Number(
-                            value.$date.$numberLong
-                        )
-                    );
-            } else {
-                date =
-                    new Date(
-                        value.$date
-                    );
+        const response = await fetch(
+            USERS_API,
+            {
+                method: "GET",
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    "Accept": "application/json"
+                }
             }
+        );
 
-        } else if (
-            typeof value === "object" &&
-            value.$numberLong
-        ) {
 
-            date =
-                new Date(
-                    Number(
-                        value.$numberLong
-                    )
-                );
+        let data = {};
 
-        } else {
+        try {
 
-            date =
-                new Date(value);
+            data = await response.json();
+
+        } catch (error) {
+
+            data = {};
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Unauthorized
+        |--------------------------------------------------------------------------
+        */
+
+        if (response.status === 401) {
+
+            showMessage(
+                "Your administrator session has expired. Please login again.",
+                "error"
+            );
+
+            setTimeout(() => {
+
+                window.location.href =
+                    "login.html";
+
+            }, 1200);
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Forbidden
+        |--------------------------------------------------------------------------
+        */
+
+        if (response.status === 403) {
+
+            showMessage(
+                data.message ||
+                "Administrator access is required.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Server Error
+        |--------------------------------------------------------------------------
+        */
+
+        if (!response.ok) {
+
+            showMessage(
+                data.message ||
+                "Unable to load users.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | API Error
+        |--------------------------------------------------------------------------
+        */
+
+        if (data.success !== true) {
+
+            showMessage(
+                data.message ||
+                "Unable to load users.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get User Array
+        |--------------------------------------------------------------------------
+        */
+
+        allUsers =
+            Array.isArray(data.users)
+                ? data.users
+                : Array.isArray(data.data)
+                    ? data.data
+                    : [];
+
+
+        filteredUsers =
+            [...allUsers];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistics
+        |--------------------------------------------------------------------------
+        */
+
+        updateStatistics(
+            data.stats || data
+        );
+
+
+        currentPage = 1;
+
+        renderUsers();
+
+        renderPagination();
+
 
     } catch (error) {
 
-        return "—";
-    }
+        console.error(
+            "Users loading error:",
+            error
+        );
 
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-        return "—";
-    }
+        showMessage(
+            "Unable to connect to the Crown Cash user management server.",
+            "error"
+        );
 
-    return date.toLocaleDateString(
-        "en-UG",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
+
+    } finally {
+
+        if (loading) {
+
+            loading.style.display =
+                "none";
         }
+
+        hidePageLoader();
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Statistics
+|--------------------------------------------------------------------------
+*/
+
+function updateStatistics(stats) {
+
+    const total =
+        Number(
+            stats.total_users ??
+            allUsers.length ??
+            0
+        );
+
+
+    const active =
+        Number(
+            stats.active_users ??
+            allUsers.filter(
+                user =>
+                    String(
+                        user.status || ""
+                    ).toLowerCase() === "active"
+            ).length
+        );
+
+
+    const blocked =
+        Number(
+            stats.blocked_users ??
+            allUsers.filter(
+                user =>
+                    [
+                        "blocked",
+                        "suspended",
+                        "disabled",
+                        "banned"
+                    ].includes(
+                        String(
+                            user.status || ""
+                        ).toLowerCase()
+                    )
+            ).length
+        );
+
+
+    const admins =
+        Number(
+            stats.admin_users ??
+            allUsers.filter(user => {
+
+                const role =
+                    String(
+                        user.role || ""
+                    ).toLowerCase();
+
+                const type =
+                    String(
+                        user.account_type || ""
+                    ).toLowerCase();
+
+                return (
+                    role === "admin" ||
+                    role === "administrator" ||
+                    type === "admin" ||
+                    type === "administrator"
+                );
+            }).length
+        );
+
+
+    setText(
+        "totalUsers",
+        total
+    );
+
+    setText(
+        "activeUsers",
+        active
+    );
+
+    setText(
+        "blockedUsers",
+        blocked
+    );
+
+    setText(
+        "adminUsers",
+        admins
     );
 }
 
 
-/* =========================================================
-   CURRENCY
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Render Users
+|--------------------------------------------------------------------------
+*/
+
+function renderUsers() {
+
+    const tableBody =
+        byId("usersTableBody");
+
+    const empty =
+        byId("usersEmpty");
+
+
+    if (!tableBody) return;
+
+
+    tableBody.innerHTML = "";
+
+
+    const start =
+        (currentPage - 1) *
+        PAGE_SIZE;
+
+
+    const end =
+        start + PAGE_SIZE;
+
+
+    const pageUsers =
+        filteredUsers.slice(
+            start,
+            end
+        );
+
+
+    if (
+        pageUsers.length === 0
+    ) {
+
+        if (empty) {
+
+            empty.style.display =
+                "block";
+        }
+
+        return;
+    }
+
+
+    if (empty) {
+
+        empty.style.display =
+            "none";
+    }
+
+
+    pageUsers.forEach(user => {
+
+        const row =
+            document.createElement("tr");
+
+
+        const name =
+            escapeHTML(
+                user.full_name ||
+                `${user.first_name || ""} ${user.last_name || ""}`
+                    .trim() ||
+                "Unknown User"
+            );
+
+
+        const phone =
+            escapeHTML(
+                user.phone || "—"
+            );
+
+
+        const balance =
+            formatCurrency(
+                user.balance ??
+                user.wallet_balance ??
+                0
+            );
+
+
+        const status =
+            String(
+                user.status ||
+                "active"
+            ).toLowerCase();
+
+
+        const accountType =
+            String(
+                user.account_type ||
+                "user"
+            );
+
+
+        const joined =
+            formatDate(
+                user.created_at
+            );
+
+
+        const id =
+            escapeAttribute(
+                user.id ||
+                user._id ||
+                user.user_id ||
+                ""
+            );
+
+
+        row.innerHTML = `
+
+            <td>
+
+                <div class="user-cell">
+
+                    <div class="user-avatar">
+                        ${escapeHTML(
+                            getInitial(
+                                user.full_name ||
+                                user.first_name ||
+                                "U"
+                            )
+                        )}
+                    </div>
+
+                    <div class="user-info">
+
+                        <strong>
+                            ${name}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(
+                                user.email || "No email"
+                            )}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+
+            <td>
+                ${phone}
+            </td>
+
+
+            <td>
+                ${balance}
+            </td>
+
+
+            <td>
+                <span class="status-badge ${statusClass(status)}">
+                    ${capitalize(status)}
+                </span>
+            </td>
+
+
+            <td>
+                <span class="account-badge">
+                    ${escapeHTML(
+                        capitalize(accountType)
+                    )}
+                </span>
+            </td>
+
+
+            <td>
+                ${joined}
+            </td>
+
+
+            <td>
+
+                <button
+                    type="button"
+                    class="table-action"
+                    data-user-id="${id}"
+                >
+                    <span class="table-action-icon">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            aria-hidden="true"
+                        >
+                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </span>
+                    View
+                </button>
+
+            </td>
+        `;
+
+
+        tableBody.appendChild(row);
+    });
+
+
+    tableBody
+        .querySelectorAll(
+            "[data-user-id]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const userId =
+                        button.dataset.userId;
+
+                    openUserModal(
+                        userId
+                    );
+                }
+            );
+        });
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Search + Filters
+|--------------------------------------------------------------------------
+*/
+
+function applyFilters() {
+
+    const search =
+        (
+            byId("searchUsers")
+                ?.value ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    const status =
+        (
+            byId("statusFilter")
+                ?.value ||
+            "all"
+        )
+            .toLowerCase();
+
+
+    const accountType =
+        (
+            byId("accountTypeFilter")
+                ?.value ||
+            "all"
+        )
+            .toLowerCase();
+
+
+    filteredUsers =
+        allUsers.filter(user => {
+
+            const text = [
+
+                user.full_name,
+
+                user.first_name,
+
+                user.last_name,
+
+                user.email,
+
+                user.phone,
+
+                user.referral_code
+
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+
+
+            const userStatus =
+                String(
+                    user.status ||
+                    ""
+                ).toLowerCase();
+
+
+            const userType =
+                String(
+                    user.account_type ||
+                    "user"
+                ).toLowerCase();
+
+
+            const matchesSearch =
+                !search ||
+                text.includes(search);
+
+
+            const matchesStatus =
+                status === "all" ||
+                userStatus === status;
+
+
+            const matchesType =
+                accountType === "all" ||
+                userType === accountType;
+
+
+            return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesType
+            );
+        });
+
+
+    currentPage = 1;
+
+    renderUsers();
+
+    renderPagination();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Pagination
+|--------------------------------------------------------------------------
+*/
+
+function renderPagination() {
+
+    const container =
+        byId("pagination");
+
+    if (!container) return;
+
+
+    container.innerHTML = "";
+
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                filteredUsers.length /
+                PAGE_SIZE
+            )
+        );
+
+
+    if (totalPages <= 1) {
+
+        return;
+    }
+
+
+    for (
+        let page = 1;
+        page <= totalPages;
+        page++
+    ) {
+
+        const button =
+            document.createElement("button");
+
+
+        button.type =
+            "button";
+
+
+        button.className =
+            page === currentPage
+                ? "active"
+                : "";
+
+
+        button.textContent =
+            page;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                currentPage =
+                    page;
+
+                renderUsers();
+
+                renderPagination();
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            }
+        );
+
+
+        container.appendChild(
+            button
+        );
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| User Modal
+|--------------------------------------------------------------------------
+*/
+
+function openUserModal(userId) {
+
+    const user =
+        allUsers.find(
+            item =>
+                String(
+                    item.id ||
+                    item._id ||
+                    item.user_id ||
+                    ""
+                ) === String(userId)
+        );
+
+
+    if (!user) {
+
+        showMessage(
+            "User details could not be found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    selectedUser =
+        user;
+
+
+    setText(
+        "modalUserName",
+        user.full_name ||
+        `${user.first_name || ""} ${user.last_name || ""}`
+            .trim() ||
+        "Unknown User"
+    );
+
+
+    setText(
+        "modalUserEmail",
+        user.email || "—"
+    );
+
+
+    setText(
+        "modalUserPhone",
+        user.phone || "—"
+    );
+
+
+    setText(
+        "modalReferralCode",
+        user.referral_code || "—"
+    );
+
+
+    setText(
+        "modalUserBalance",
+        formatCurrency(
+            user.balance ??
+            user.wallet_balance ??
+            0
+        )
+    );
+
+
+    setText(
+        "modalUserStatus",
+        capitalize(
+            user.status ||
+            "active"
+        )
+    );
+
+
+    setText(
+        "modalAccountType",
+        capitalize(
+            user.account_type ||
+            "user"
+        )
+    );
+
+
+    setText(
+        "modalCreatedAt",
+        formatDate(
+            user.created_at
+        )
+    );
+
+
+    const avatar =
+        byId("modalUserAvatar");
+
+
+    if (avatar) {
+
+        avatar.textContent =
+            getInitial(
+                user.full_name ||
+                user.first_name ||
+                "U"
+            );
+    }
+
+
+    const modal =
+        byId("userModal");
+
+
+    if (modal) {
+
+        modal.classList.add(
+            "open"
+        );
+
+        modal.style.display =
+            "flex";
+    }
+}
+
+
+function closeUserModal() {
+
+    const modal =
+        byId("userModal");
+
+
+    if (!modal) return;
+
+
+    modal.classList.remove(
+        "open"
+    );
+
+
+    modal.style.display =
+        "none";
+
+
+    selectedUser =
+        null;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Sidebar
+|--------------------------------------------------------------------------
+*/
+
+function setupSidebar() {
+
+    const sidebar =
+        byId("sidebar");
+
+    const overlay =
+        byId("sidebarOverlay");
+
+    const menuButton =
+        byId("menuButton");
+
+    const closeButton =
+        byId("sidebarClose");
+
+
+    function openSidebar() {
+
+        sidebar?.classList.add(
+            "open"
+        );
+
+        overlay?.classList.add(
+            "open"
+        );
+
+        document.body.classList.add(
+            "sidebar-open"
+        );
+    }
+
+
+    function closeSidebar() {
+
+        sidebar?.classList.remove(
+            "open"
+        );
+
+        overlay?.classList.remove(
+            "open"
+        );
+
+        document.body.classList.remove(
+            "sidebar-open"
+        );
+    }
+
+
+    menuButton?.addEventListener(
+        "click",
+        openSidebar
+    );
+
+
+    closeButton?.addEventListener(
+        "click",
+        closeSidebar
+    );
+
+
+    overlay?.addEventListener(
+        "click",
+        closeSidebar
+    );
+
+
+    sidebar
+        ?.querySelectorAll("a")
+        .forEach(link => {
+
+            link.addEventListener(
+                "click",
+                closeSidebar
+            );
+        });
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+*/
+
+async function logout() {
+
+    try {
+
+        await fetch(
+            LOGOUT_API,
+            {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                }
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Logout error:",
+            error
+        );
+    }
+
+
+    window.location.href =
+        "login.html";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Utilities
+|--------------------------------------------------------------------------
+*/
+
+function setText(id, value) {
+
+    const element =
+        byId(id);
+
+    if (element) {
+
+        element.textContent =
+            value;
+    }
+}
+
 
 function formatCurrency(value) {
 
     const amount =
-        numberValue(value);
+        Number(value) || 0;
+
 
     return (
         "UGX " +
@@ -556,943 +1373,100 @@ function formatCurrency(value) {
 }
 
 
-/* =========================================================
-   USER ID
-========================================================= */
+function formatDate(value) {
 
-function getUserId(user) {
+    if (!value) {
 
-    if (!user) {
-        return "";
+        return "—";
     }
 
-    if (
-        typeof user.id === "string"
-    ) {
-        return user.id;
+
+    const date =
+        new Date(value);
+
+
+    if (Number.isNaN(
+        date.getTime()
+    )) {
+
+        return String(value);
     }
 
-    if (
-        typeof user._id === "string"
-    ) {
-        return user._id;
-    }
 
-    if (
-        user._id &&
-        typeof user._id === "object"
-    ) {
-
-        if (
-            user._id.$oid
-        ) {
-            return user._id.$oid;
+    return date.toLocaleDateString(
+        "en-UG",
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
         }
-
-        if (
-            user._id.$numberLong
-        ) {
-            return user._id.$numberLong;
-        }
-    }
-
-    return "";
+    );
 }
 
 
-/* =========================================================
-   USER NAME
-========================================================= */
+function getInitial(name) {
 
-function getUserName(user) {
-
-    if (!user) {
-        return "Unknown User";
-    }
-
-    if (
-        user.full_name
-    ) {
-        return String(
-            user.full_name
-        ).trim();
-    }
-
-    const fullName =
-        [
-            user.first_name,
-            user.last_name
-        ]
-            .filter(Boolean)
-            .join(" ")
-            .trim();
-
-    return fullName ||
-        user.email ||
-        "Unknown User";
+    return String(name || "U")
+        .trim()
+        .charAt(0)
+        .toUpperCase();
 }
 
 
-/* =========================================================
-   USER INITIALS
-========================================================= */
+function capitalize(value) {
 
-function getInitials(name) {
+    const text =
+        String(value || "");
 
-    const parts =
-        String(name)
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
 
-    if (!parts.length) {
-        return "U";
-    }
-
-    if (parts.length === 1) {
-        return parts[0]
-            .substring(0, 2)
-            .toUpperCase();
-    }
-
-    return (
-        parts[0].charAt(0) +
-        parts[parts.length - 1].charAt(0)
-    ).toUpperCase();
+    return text
+        .charAt(0)
+        .toUpperCase() +
+        text.slice(1);
 }
 
 
-/* =========================================================
-   NORMALIZE USER
-========================================================= */
+function statusClass(status) {
 
-function normalizeUser(user) {
-
-    const name =
-        getUserName(user);
-
-    return {
-
-        ...user,
-
-        id:
-            getUserId(user),
-
-        full_name:
-            name,
-
-        email:
-            String(
-                user.email ||
-                ""
-            ),
-
-        phone:
-            String(
-                user.phone ||
-                user.phone_number ||
-                user.mobile ||
-                ""
-            ),
-
-        referral_code:
-            String(
-                user.referral_code ||
-                ""
-            ),
-
-        balance:
-            numberValue(
-                user.balance ??
-                user.wallet_balance ??
-                0
-            ),
-
-        status:
-            String(
-                user.status ||
-                "active"
-            ).toLowerCase(),
-
-        account_type:
-            String(
-                user.account_type ||
-                user.role ||
-                "user"
-            ).toLowerCase(),
-
-        created_at:
-            user.created_at ||
-            user.createdAt ||
-            null
-    };
-}
-
-
-/* =========================================================
-   LOAD USERS
-========================================================= */
-
-async function loadUsers() {
-
-    if (state.loading) {
-        return;
-    }
-
-    state.loading =
-        true;
-
-    if (refreshUsersBtn) {
-
-        refreshUsersBtn.classList.add(
-            "loading"
-        );
-
-        refreshUsersBtn.disabled =
-            true;
-    }
-
-    renderLoading();
-
-    hideMessage();
-
-    try {
-
-        const data =
-            await fetchJSON(
-                USERS_API,
-                {
-                    method: "GET"
-                },
-                15000
-            );
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Unable to load users."
-            );
-        }
-
-        const rawUsers =
-            Array.isArray(
-                data.users
-            )
-                ? data.users
-                : [];
-
-        state.users =
-            rawUsers.map(
-                normalizeUser
-            );
-
-        state.currentPage =
-            1;
-
-        updateStatistics(
-            data
-        );
-
-        applyFilters();
-
-        hideMessage();
-
-    } catch (error) {
-
-        console.error(
-            "User loading error:",
-            error
-        );
-
-        state.users = [];
-        state.filteredUsers = [];
-
-        updateStatistics({
-            total_users: 0,
-            active_users: 0,
-            blocked_users: 0,
-            admin_users: 0
-        });
-
-        renderUsers();
-
-        if (
-            error.status === 401 ||
-            error.status === 403
-        ) {
-
-            showMessage(
-                "Administrator authorization failed. Please log in again.",
-                "error"
-            );
-
-            setTimeout(
-                () => {
-                    window.location.href =
-                        "login.html";
-                },
-                1800
-            );
-
-        } else {
-
-            showMessage(
-                error.message ||
-                "Unable to load users. Please try again.",
-                "error"
-            );
-        }
-
-    } finally {
-
-        state.loading =
-            false;
-
-        if (refreshUsersBtn) {
-
-            refreshUsersBtn.classList.remove(
-                "loading"
-            );
-
-            refreshUsersBtn.disabled =
-                false;
-        }
-    }
-}
-
-
-/* =========================================================
-   UPDATE STATISTICS
-========================================================= */
-
-function updateStatistics(data) {
-
-    const users =
-        state.users;
-
-    const total =
-        data.total_users !== undefined
-            ? numberValue(
-                data.total_users
-            )
-            : users.length;
-
-    const active =
-        data.active_users !== undefined
-            ? numberValue(
-                data.active_users
-            )
-            : users.filter(
-                user =>
-                    user.status === "active"
-            ).length;
-
-    const blocked =
-        data.blocked_users !== undefined
-            ? numberValue(
-                data.blocked_users
-            )
-            : users.filter(
-                user =>
-                    user.status === "blocked"
-            ).length;
-
-    const admins =
-        data.admin_users !== undefined
-            ? numberValue(
-                data.admin_users
-            )
-            : users.filter(
-                user =>
-                    user.account_type === "admin" ||
-                    user.account_type === "administrator"
-            ).length;
-
-    if (totalUsers) {
-        totalUsers.textContent =
-            total.toLocaleString();
-    }
-
-    if (activeUsers) {
-        activeUsers.textContent =
-            active.toLocaleString();
-    }
-
-    if (blockedUsers) {
-        blockedUsers.textContent =
-            blocked.toLocaleString();
-    }
-
-    if (adminUsers) {
-        adminUsers.textContent =
-            admins.toLocaleString();
-    }
-}
-
-
-/* =========================================================
-   APPLY FILTERS
-========================================================= */
-
-function applyFilters() {
-
-    const search =
-        String(
-            searchUsers?.value ||
-            ""
-        )
-            .trim()
+    const value =
+        String(status || "")
             .toLowerCase();
 
-    const status =
-        String(
-            statusFilter?.value ||
-            "all"
-        ).toLowerCase();
-
-    const accountType =
-        String(
-            accountTypeFilter?.value ||
-            "all"
-        ).toLowerCase();
-
-    state.filteredUsers =
-        state.users.filter(
-            user => {
-
-                const searchable =
-                    [
-                        user.full_name,
-                        user.email,
-                        user.phone,
-                        user.referral_code,
-                        user.id
-                    ]
-                        .join(" ")
-                        .toLowerCase();
-
-                const searchMatches =
-                    !search ||
-                    searchable.includes(
-                        search
-                    );
-
-                const statusMatches =
-                    status === "all" ||
-                    user.status === status;
-
-                const accountMatches =
-                    accountType === "all" ||
-                    user.account_type === accountType;
-
-                return (
-                    searchMatches &&
-                    statusMatches &&
-                    accountMatches
-                );
-            }
-        );
-
-    state.currentPage =
-        1;
-
-    renderUsers();
-}
-
-
-/* =========================================================
-   LOADING ROW
-========================================================= */
-
-function renderLoading() {
-
-    if (!usersTableBody) {
-        return;
-    }
-
-    usersTableBody.innerHTML = `
-        <tr>
-            <td
-                colspan="7"
-                class="users-loading-row"
-            >
-                <div class="users-loading-spinner"></div>
-                Loading users...
-            </td>
-        </tr>
-    `;
-
-    if (pagination) {
-        pagination.innerHTML = "";
-    }
-}
-
-
-/* =========================================================
-   RENDER USERS
-========================================================= */
-
-function renderUsers() {
-
-    if (!usersTableBody) {
-        return;
-    }
-
-    const total =
-        state.filteredUsers.length;
-
-    if (usersCountBadge) {
-
-        usersCountBadge.textContent =
-            `${total.toLocaleString()} ${
-                total === 1
-                    ? "user"
-                    : "users"
-            }`;
-    }
-
-    if (!total) {
-
-        usersTableBody.innerHTML = `
-            <tr>
-                <td
-                    colspan="7"
-                    class="users-empty-row"
-                >
-                    No users found.
-                </td>
-            </tr>
-        `;
-
-        renderPagination();
-
-        return;
-    }
-
-    const start =
-        (state.currentPage - 1) *
-        PAGE_SIZE;
-
-    const end =
-        start + PAGE_SIZE;
-
-    const pageUsers =
-        state.filteredUsers.slice(
-            start,
-            end
-        );
-
-    usersTableBody.innerHTML =
-        pageUsers
-            .map(
-                user =>
-                    renderUserRow(user)
-            )
-            .join("");
-
-    renderPagination();
-}
-
-
-/* =========================================================
-   RENDER USER ROW
-========================================================= */
-
-function renderUserRow(user) {
-
-    const name =
-        getUserName(user);
-
-    const initials =
-        getInitials(name);
-
-    const status =
-        user.status ||
-        "active";
-
-    const statusClass =
-        [
-            "active",
-            "pending",
-            "suspended",
-            "blocked",
-            "disabled"
-        ].includes(status)
-            ? `status-${status}`
-            : "status-pending";
-
-    const account =
-        user.account_type ||
-        "user";
-
-    const accountLabel =
-        account === "administrator"
-            ? "Admin"
-            : account.charAt(0).toUpperCase() +
-              account.slice(1);
-
-    const safeId =
-        escapeHTML(
-            String(
-                user.id || ""
-            )
-        );
-
-    return `
-        <tr>
-
-            <td>
-                <div class="user-cell">
-
-                    <div class="user-avatar">
-                        ${escapeHTML(initials)}
-                    </div>
-
-                    <div>
-                        <div class="user-name">
-                            ${escapeHTML(name)}
-                        </div>
-
-                        <div class="user-email">
-                            ${escapeHTML(
-                                user.email || "No email"
-                            )}
-                        </div>
-                    </div>
-
-                </div>
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    user.phone || "—"
-                )}
-            </td>
-
-            <td>
-                <span class="balance-value">
-                    ${formatCurrency(
-                        user.balance
-                    )}
-                </span>
-            </td>
-
-            <td>
-                <span
-                    class="status-pill ${statusClass}"
-                >
-                    ${escapeHTML(status)}
-                </span>
-            </td>
-
-            <td>
-                <span class="account-pill">
-                    ${escapeHTML(
-                        accountLabel
-                    )}
-                </span>
-            </td>
-
-            <td>
-                ${formatDate(
-                    user.created_at
-                )}
-            </td>
-
-            <td>
-
-                <button
-                    type="button"
-                    class="view-user-btn"
-                    data-user-id="${safeId}"
-                    aria-label="View user"
-                >
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                    >
-                        <path
-                            d="M2.8 12s3.4-6 9.2-6 9.2 6 9.2 6-3.4 6-9.2 6-9.2-6-9.2-6Z"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                            stroke-linejoin="round"
-                        />
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="2.7"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                        />
-                    </svg>
-
-                </button>
-
-            </td>
-
-        </tr>
-    `;
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-function renderPagination() {
-
-    if (!pagination) {
-        return;
-    }
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                state.filteredUsers.length /
-                PAGE_SIZE
-            )
-        );
 
     if (
-        state.filteredUsers.length <=
-        PAGE_SIZE
+        value === "active"
     ) {
 
-        pagination.innerHTML = "";
-        return;
+        return "success";
     }
 
-    const start =
-        (state.currentPage - 1) *
-        PAGE_SIZE + 1;
 
-    const end =
-        Math.min(
-            state.currentPage * PAGE_SIZE,
-            state.filteredUsers.length
-        );
-
-    let buttons = "";
-
-    buttons += `
-        <button
-            type="button"
-            class="pagination-btn"
-            data-page="${state.currentPage - 1}"
-            ${state.currentPage === 1 ? "disabled" : ""}
-        >
-            ‹
-        </button>
-    `;
-
-    for (
-        let page = 1;
-        page <= totalPages;
-        page++
+    if (
+        value === "pending"
     ) {
 
-        if (
-            totalPages > 7 &&
-            page > 3 &&
-            page < totalPages - 2 &&
-            Math.abs(
-                page - state.currentPage
-            ) > 1
-        ) {
-
-            if (
-                page === 4 ||
-                page === totalPages - 3
-            ) {
-
-                buttons += `
-                    <span
-                        style="
-                            padding: 0 4px;
-                            color: rgba(255,255,255,.35);
-                            align-self:center;
-                        "
-                    >
-                        …
-                    </span>
-                `;
-            }
-
-            continue;
-        }
-
-        buttons += `
-            <button
-                type="button"
-                class="pagination-btn ${
-                    page === state.currentPage
-                        ? "active"
-                        : ""
-                }"
-                data-page="${page}"
-            >
-                ${page}
-            </button>
-        `;
+        return "pending";
     }
 
-    buttons += `
-        <button
-            type="button"
-            class="pagination-btn"
-            data-page="${state.currentPage + 1}"
-            ${
-                state.currentPage === totalPages
-                    ? "disabled"
-                    : ""
-            }
-        >
-            ›
-        </button>
-    `;
 
-    pagination.innerHTML = `
+    if (
+        value === "suspended" ||
+        value === "blocked" ||
+        value === "disabled" ||
+        value === "banned"
+    ) {
 
-        <div class="pagination-info">
-            Showing ${start}–${end}
-            of ${state.filteredUsers.length}
-        </div>
+        return "danger";
+    }
 
-        <div class="pagination-buttons">
-            ${buttons}
-        </div>
-    `;
+
+    return "neutral";
 }
 
-
-/* =========================================================
-   OPEN USER MODAL
-========================================================= */
-
-function openUserModal(user) {
-
-    if (!userModal) {
-        return;
-    }
-
-    state.selectedUser =
-        user;
-
-    const name =
-        getUserName(user);
-
-    if (modalUserAvatar) {
-        modalUserAvatar.textContent =
-            getInitials(name);
-    }
-
-    if (modalUserName) {
-        modalUserName.textContent =
-            name;
-    }
-
-    if (modalUserEmail) {
-        modalUserEmail.textContent =
-            user.email || "No email";
-    }
-
-    if (modalUserPhone) {
-        modalUserPhone.textContent =
-            user.phone || "—";
-    }
-
-    if (modalReferralCode) {
-        modalReferralCode.textContent =
-            user.referral_code || "—";
-    }
-
-    if (modalUserBalance) {
-        modalUserBalance.textContent =
-            formatCurrency(
-                user.balance
-            );
-    }
-
-    if (modalUserStatus) {
-        modalUserStatus.textContent =
-            user.status || "—";
-    }
-
-    if (modalAccountType) {
-        modalAccountType.textContent =
-            user.account_type || "user";
-    }
-
-    if (modalCreatedAt) {
-        modalCreatedAt.textContent =
-            formatDate(
-                user.created_at
-            );
-    }
-
-    userModal.classList.add(
-        "show"
-    );
-
-    userModal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-}
-
-
-/* =========================================================
-   CLOSE USER MODAL
-========================================================= */
-
-function closeModal() {
-
-    if (!userModal) {
-        return;
-    }
-
-    userModal.classList.remove(
-        "show"
-    );
-
-    userModal.setAttribute(
-        "aria-hidden",
-        "true"
-    );
-}
-
-
-/* =========================================================
-   FIND USER
-========================================================= */
-
-function findUserById(id) {
-
-    return state.users.find(
-        user =>
-            String(
-                user.id
-            ) === String(id)
-    );
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
 
 function escapeHTML(value) {
 
-    return String(
-        value ?? ""
-    )
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -1501,419 +1475,136 @@ function escapeHTML(value) {
 }
 
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
+function escapeAttribute(value) {
 
-function openSidebar() {
-
-    if (sidebar) {
-        sidebar.classList.add(
-            "open"
-        );
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.classList.add(
-            "show"
-        );
-    }
-
-    document.body.classList.add(
-        "sidebar-open"
-    );
+    return escapeHTML(value);
 }
 
 
-function closeSidebar() {
-
-    if (sidebar) {
-        sidebar.classList.remove(
-            "open"
-        );
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.classList.remove(
-            "show"
-        );
-    }
-
-    document.body.classList.remove(
-        "sidebar-open"
-    );
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logout() {
-
-    if (logoutBtn) {
-        logoutBtn.disabled = true;
-    }
-
-    try {
-
-        await fetchJSON(
-            LOGOUT_API,
-            {
-                method: "POST"
-            },
-            10000
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Logout request:",
-            error
-        );
-
-    } finally {
-
-        window.location.href =
-            "login.html";
-    }
-}
-
-
-/* =========================================================
-   EVENTS
-========================================================= */
-
-function attachEvents() {
-
-    if (menuButton) {
-        menuButton.addEventListener(
-            "click",
-            openSidebar
-        );
-    }
-
-    if (sidebarClose) {
-        sidebarClose.addEventListener(
-            "click",
-            closeSidebar
-        );
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener(
-            "click",
-            closeSidebar
-        );
-    }
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener(
-            "click",
-            logout
-        );
-    }
-
-    if (refreshUsersBtn) {
-
-        refreshUsersBtn.addEventListener(
-            "click",
-            loadUsers
-        );
-    }
-
-    if (searchUsers) {
-
-        searchUsers.addEventListener(
-            "input",
-            applyFilters
-        );
-    }
-
-    if (statusFilter) {
-
-        statusFilter.addEventListener(
-            "change",
-            applyFilters
-        );
-    }
-
-    if (accountTypeFilter) {
-
-        accountTypeFilter.addEventListener(
-            "change",
-            applyFilters
-        );
-    }
-
-    if (usersTableBody) {
-
-        usersTableBody.addEventListener(
-            "click",
-            event => {
-
-                const button =
-                    event.target.closest(
-                        "[data-user-id]"
-                    );
-
-                if (!button) {
-                    return;
-                }
-
-                const id =
-                    button.dataset.userId;
-
-                const user =
-                    findUserById(id);
-
-                if (user) {
-                    openUserModal(
-                        user
-                    );
-                }
-            }
-        );
-    }
-
-    if (pagination) {
-
-        pagination.addEventListener(
-            "click",
-            event => {
-
-                const button =
-                    event.target.closest(
-                        "[data-page]"
-                    );
-
-                if (
-                    !button ||
-                    button.disabled
-                ) {
-                    return;
-                }
-
-                const page =
-                    Number(
-                        button.dataset.page
-                    );
-
-                if (
-                    !Number.isFinite(page)
-                ) {
-                    return;
-                }
-
-                const totalPages =
-                    Math.ceil(
-                        state.filteredUsers.length /
-                        PAGE_SIZE
-                    );
-
-                if (
-                    page < 1 ||
-                    page > totalPages
-                ) {
-                    return;
-                }
-
-                state.currentPage =
-                    page;
-
-                renderUsers();
-
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-            }
-        );
-    }
-
-    if (closeUserModal) {
-
-        closeUserModal.addEventListener(
-            "click",
-            closeModal
-        );
-    }
-
-    if (userModal) {
-
-        userModal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    userModal
-                ) {
-                    closeModal();
-                }
-            }
-        );
-    }
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Escape"
-            ) {
-                closeModal();
-                closeSidebar();
-            }
-        }
-    );
-
-    /*
-    ---------------------------------------------------------
-    Manage Account button
-    ---------------------------------------------------------
-    */
-
-    if (manageUserBtn) {
-
-        manageUserBtn.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    !state.selectedUser
-                ) {
-                    return;
-                }
-
-                /*
-                admin-user-actions.js can use
-                this event to open its management
-                controls.
-                */
-
-                window.dispatchEvent(
-                    new CustomEvent(
-                        "crowncash:manage-user",
-                        {
-                            detail: {
-                                user:
-                                    state.selectedUser
-                            }
-                        }
-                    )
-                );
-            }
-        );
-    }
-}
-
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-async function initializePage() {
-
-    /*
-    IMPORTANT:
-    There is intentionally NO full-screen loader here.
-    The page itself must remain visible.
-    */
-
-    attachEvents();
-
-    /*
-    Show the page immediately.
-    */
-
-    try {
-
-        await verifyAdmin();
-
-    } catch (error) {
-
-        console.error(
-            "Admin authentication failed:",
-            error
-        );
-
-        showMessage(
-            error.message ||
-            "Administrator authorization failed.",
-            "error"
-        );
-
-        if (
-            error.status === 401 ||
-            error.status === 403
-        ) {
-
-            setTimeout(
-                () => {
-                    window.location.href =
-                        "login.html";
-                },
-                1800
+/*
+|--------------------------------------------------------------------------
+| Events
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        setupSidebar();
+
+
+        byId("searchUsers")
+            ?.addEventListener(
+                "input",
+                applyFilters
             );
+
+
+        byId("statusFilter")
+            ?.addEventListener(
+                "change",
+                applyFilters
+            );
+
+
+        byId("accountTypeFilter")
+            ?.addEventListener(
+                "change",
+                applyFilters
+            );
+
+
+        byId("refreshUsersBtn")
+            ?.addEventListener(
+                "click",
+                async () => {
+
+                    await loadUsers();
+                }
+            );
+
+
+        byId("closeUserModal")
+            ?.addEventListener(
+                "click",
+                closeUserModal
+            );
+
+
+        byId("userModal")
+            ?.addEventListener(
+                "click",
+                event => {
+
+                    if (
+                        event.target.id ===
+                        "userModal"
+                    ) {
+
+                        closeUserModal();
+                    }
+                }
+            );
+
+
+        byId("logoutBtn")
+            ?.addEventListener(
+                "click",
+                logout
+            );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authenticate First
+        |--------------------------------------------------------------------------
+        */
+
+        const authenticated =
+            await verifyAdministrator();
+
+
+        if (!authenticated) {
+
+            return;
         }
 
-        return;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Load Profile + Users
+        |--------------------------------------------------------------------------
+        */
+
+        await Promise.all([
+            loadAdminProfile(),
+            loadUsers()
+        ]);
+
+
+        hidePageLoader();
     }
-
-    /*
-    Load profile and users independently.
-    If profile fails, users can still load.
-    */
-
-    await Promise.allSettled([
-        loadAdminProfile(),
-        loadUsers()
-    ]);
-}
+);
 
 
-/* =========================================================
-   GLOBAL ADMIN USERS OBJECT
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Public API
+|--------------------------------------------------------------------------
+*/
 
 window.CrownCashAdminUsers = {
 
     loadUsers,
 
-    getUsers: () =>
-        state.users,
+    applyFilters,
 
-    getFilteredUsers: () =>
-        state.filteredUsers,
+    getUsers: () =>
+        [...allUsers],
 
     getSelectedUser: () =>
-        state.selectedUser,
+        selectedUser,
 
-    refresh: loadUsers,
-
-    showMessage,
-
-    openUserModal,
-
-    closeModal
+    closeUserModal
 };
-
-
-/* =========================================================
-   START
-========================================================= */
-
-if (
-    document.readyState === "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializePage
-    );
-
-} else {
-
-    initializePage();
-}

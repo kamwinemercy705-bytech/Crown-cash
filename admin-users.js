@@ -1,107 +1,65 @@
 /* =========================================================
-   CROWN CASH — ADMIN USERS
-   Complete User Management Controller
+   CROWN CASH — ADMIN USER MANAGEMENT
+   admin-users.js
    ========================================================= */
 
 (() => {
     "use strict";
 
-    /* ---------------------------------------------------------
-       CONFIG
-    --------------------------------------------------------- */
-
     const API_BASE = "https://crown-cash1.onrender.com";
 
-    const ADMIN_AUTH_API =
-        `${API_BASE}/admin-auth.php`;
-
-    const PROFILE_API =
-        `${API_BASE}/profile.php`;
-
-    const USERS_API =
-        `${API_BASE}/admin-users.php`;
-
-    const LOGOUT_API =
-        `${API_BASE}/logout.php`;
+    const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
+    const PROFILE_API = `${API_BASE}/profile.php`;
+    const USERS_API = `${API_BASE}/admin-users.php`;
+    const LOGOUT_API = `${API_BASE}/logout.php`;
 
     const PAGE_SIZE = 10;
 
-    /* ---------------------------------------------------------
-       STATE
-    --------------------------------------------------------- */
+    let users = [];
+    let filteredUsers = [];
+    let currentPage = 1;
+    let selectedUser = null;
+    let isLoading = false;
 
-    const state = {
-        users: [],
-        filteredUsers: [],
-        currentPage: 1,
-        selectedUser: null,
-        loading: false
-    };
-
-    /* ---------------------------------------------------------
+    /* =========================================================
        DOM HELPERS
-    --------------------------------------------------------- */
+       ========================================================= */
 
     const $ = (id) => document.getElementById(id);
 
-    function escapeHTML(value) {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function showElement(id) {
+        const el = $(id);
+
+        if (!el) return;
+
+        el.hidden = false;
+        el.style.display = "";
+        el.classList.remove("hidden");
     }
 
-    /* ---------------------------------------------------------
-       JSON FETCH HELPER
-    --------------------------------------------------------- */
+    function hideElement(id) {
+        const el = $(id);
 
-    async function request(url, options = {}) {
+        if (!el) return;
 
-        const response = await fetch(url, {
-            credentials: "include",
-            cache: "no-store",
-            ...options,
-            headers: {
-                "Accept": "application/json",
-                ...(options.body
-                    ? { "Content-Type": "application/json" }
-                    : {}),
-                ...(options.headers || {})
-            }
-        });
-
-        let data = null;
-
-        try {
-            data = await response.json();
-        } catch (error) {
-            data = null;
-        }
-
-        if (!response.ok) {
-
-            const error = new Error(
-                data?.message ||
-                `Request failed with status ${response.status}`
-            );
-
-            error.status = response.status;
-            error.data = data;
-
-            throw error;
-        }
-
-        return data;
+        el.hidden = true;
+        el.style.display = "none";
+        el.classList.add("hidden");
     }
 
-    /* ---------------------------------------------------------
-       LOADING SCREEN
-    --------------------------------------------------------- */
+    function setText(id, value) {
+        const el = $(id);
+
+        if (el) {
+            el.textContent = value ?? "";
+        }
+    }
+
+    /* =========================================================
+       PAGE LOADER
+       ========================================================= */
 
     function hidePageLoader() {
-
         const loader = $("pageLoader");
 
         if (!loader) return;
@@ -114,488 +72,639 @@
 
         setTimeout(() => {
             loader.style.display = "none";
-        }, 350);
+        }, 250);
     }
 
-    function showPageLoader(message = "Loading user management...") {
-
+    function showPageLoader() {
         const loader = $("pageLoader");
 
         if (!loader) return;
 
+        loader.hidden = false;
+        loader.classList.remove("hidden");
+
         loader.style.display = "flex";
         loader.style.opacity = "1";
         loader.style.visibility = "visible";
-        loader.style.pointerEvents = "all";
-
-        const text =
-            loader.querySelector(".loader-text") ||
-            loader.querySelector("[data-loader-text]") ||
-            loader.querySelector("p");
-
-        if (text) {
-            text.textContent = message;
-        }
+        loader.style.pointerEvents = "auto";
     }
 
-    /* ---------------------------------------------------------
-       PAGE ERROR
-    --------------------------------------------------------- */
+    /* =========================================================
+       MESSAGE
+       ========================================================= */
 
-    function showPageError(message) {
+    function showMessage(message, type = "info") {
+        const box = $("usersMessage");
 
-        hidePageLoader();
+        if (!box) return;
 
-        const messageBox = $("usersMessage");
+        box.textContent = message;
+        box.className = `admin-message ${type}`;
+        box.style.display = "block";
 
-        if (messageBox) {
+        clearTimeout(showMessage.timer);
 
-            messageBox.innerHTML = `
-                <div class="admin-message error">
-                    <span class="message-icon">
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="20"
-                            height="20"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <line x1="12" y1="8" x2="12" y2="13"></line>
-                            <circle cx="12" cy="16.5" r="1"></circle>
-                        </svg>
-                    </span>
+        showMessage.timer = setTimeout(() => {
+            box.style.display = "none";
+        }, 5000);
+    }
 
-                    <span>
-                        ${escapeHTML(message)}
-                    </span>
+    /* =========================================================
+       NUMBER HELPERS
+       ========================================================= */
 
-                    <button
-                        type="button"
-                        id="retryUsersBtn"
-                        class="message-action"
-                    >
-                        Retry
-                    </button>
-                </div>
-            `;
+    function numberValue(value) {
+        if (value === null || value === undefined) {
+            return 0;
+        }
 
-            messageBox.style.display = "block";
+        if (typeof value === "number") {
+            return Number.isFinite(value) ? value : 0;
+        }
 
-            const retry =
-                $("retryUsersBtn");
+        if (typeof value === "object") {
+            if (value.$numberDecimal !== undefined) {
+                return Number(value.$numberDecimal) || 0;
+            }
 
-            if (retry) {
-                retry.addEventListener(
-                    "click",
-                    () => {
-                        loadUsersPage();
-                    }
-                );
+            if (value.$numberInt !== undefined) {
+                return Number(value.$numberInt) || 0;
+            }
+
+            if (value.$numberLong !== undefined) {
+                return Number(value.$numberLong) || 0;
             }
         }
+
+        const cleaned = String(value)
+            .replace(/,/g, "")
+            .replace(/[^\d.-]/g, "");
+
+        const result = Number(cleaned);
+
+        return Number.isFinite(result) ? result : 0;
     }
 
-    /* ---------------------------------------------------------
-       ADMIN AUTHENTICATION
-    --------------------------------------------------------- */
+    function formatCurrency(value) {
+        return new Intl.NumberFormat("en-UG", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(numberValue(value));
+    }
 
-    async function verifyAdmin() {
-
-        const data = await request(
-            ADMIN_AUTH_API,
-            {
-                method: "GET"
-            }
-        );
-
-        if (
-            !data ||
-            data.success !== true ||
-            data.authorized !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Administrator authorization failed."
-            );
+    function formatDate(value) {
+        if (!value) {
+            return "—";
         }
 
-        return data;
+        let date;
+
+        if (typeof value === "object") {
+            if (value.$date) {
+                date = new Date(value.$date);
+            } else {
+                return "—";
+            }
+        } else {
+            date = new Date(value);
+        }
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return new Intl.DateTimeFormat("en-UG", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }).format(date);
     }
 
-    /* ---------------------------------------------------------
-       PROFILE
-    --------------------------------------------------------- */
+    /* =========================================================
+       HTML ESCAPE
+       ========================================================= */
 
-    async function loadAdminProfile() {
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
+    /* =========================================================
+       ID HELPERS
+       ========================================================= */
+
+    function getUserId(user) {
+        if (!user) return "";
+
+        if (typeof user.id === "string") {
+            return user.id;
+        }
+
+        if (typeof user._id === "string") {
+            return user._id;
+        }
+
+        if (user._id && typeof user._id === "object") {
+            if (user._id.$oid) {
+                return user._id.$oid;
+            }
+        }
+
+        if (user.user_id) {
+            return String(user.user_id);
+        }
+
+        return "";
+    }
+
+    /* =========================================================
+       USER NORMALIZATION
+       ========================================================= */
+
+    function normalizeUser(raw) {
+        const user = raw || {};
+
+        let firstName = user.first_name || user.firstName || "";
+        let lastName = user.last_name || user.lastName || "";
+
+        let fullName =
+            user.full_name ||
+            user.fullName ||
+            `${firstName} ${lastName}`.trim();
+
+        if (!fullName) {
+            fullName = "Unknown User";
+        }
+
+        if (!firstName && fullName) {
+            const parts = fullName.trim().split(/\s+/);
+
+            firstName = parts.shift() || "";
+            lastName = parts.join(" ");
+        }
+
+        const status = String(
+            user.status ||
+            "active"
+        ).toLowerCase();
+
+        const role = String(
+            user.role ||
+            ""
+        ).toLowerCase();
+
+        const accountType = String(
+            user.account_type ||
+            user.accountType ||
+            user.account_type_name ||
+            "user"
+        ).toLowerCase();
+
+        return {
+            ...user,
+
+            id: getUserId(user),
+
+            first_name: firstName,
+            last_name: lastName,
+            full_name: fullName,
+
+            email: String(user.email || ""),
+
+            phone: String(
+                user.phone ||
+                user.phone_number ||
+                user.mobile ||
+                ""
+            ),
+
+            referral_code: String(
+                user.referral_code ||
+                user.referralCode ||
+                ""
+            ),
+
+            balance: numberValue(
+                user.balance ??
+                user.wallet_balance ??
+                0
+            ),
+
+            status,
+
+            role,
+
+            account_type: accountType,
+
+            created_at:
+                user.created_at ||
+                user.createdAt ||
+                ""
+        };
+    }
+
+    /* =========================================================
+       AUTHENTICATION
+       ========================================================= */
+
+    async function checkAdminAuthentication() {
         try {
-
-            const data = await request(
-                PROFILE_API,
+            const response = await fetch(
+                ADMIN_AUTH_API,
                 {
-                    method: "GET"
+                    method: "GET",
+                    credentials: "include",
+                    cache: "no-store"
                 }
             );
 
-            if (!data?.success || !data.user) {
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = "login.html";
+                return false;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    `Authentication failed (${response.status})`
+                );
+            }
+
+            const data = await response.json();
+
+            if (
+                data.success !== true ||
+                data.authenticated !== true ||
+                data.authorized !== true
+            ) {
+                window.location.href = "login.html";
+                return false;
+            }
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "Admin authentication error:",
+                error
+            );
+
+            showMessage(
+                "Unable to verify administrator session. Please try again.",
+                "error"
+            );
+
+            return false;
+        }
+    }
+
+    /* =========================================================
+       LOAD ADMIN PROFILE
+       ========================================================= */
+
+    async function loadAdminProfile() {
+        try {
+            const response = await fetch(
+                PROFILE_API,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    cache: "no-store"
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            if (!data.success || !data.user) {
                 return;
             }
 
             const user = data.user;
 
-            const firstName =
-                user.first_name ||
-                user.full_name?.split(" ")[0] ||
-                "Administrator";
-
             const fullName =
                 user.full_name ||
-                `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                `${user.first_name || ""} ${user.last_name || ""}`
+                    .trim() ||
                 "Administrator";
 
-            const email =
-                user.email ||
-                "";
+            const firstName =
+                user.first_name ||
+                fullName.split(/\s+/)[0] ||
+                "Administrator";
 
-            const accountType =
-                user.account_type ||
-                user.role ||
-                "Admin Account";
+            setText("adminName", fullName);
+            setText("headerUserName", firstName);
+            setText("accountName", fullName);
+            setText("adminFirstName", firstName);
 
-            /* Header/sidebar */
+            setText(
+                "adminEmail",
+                user.email || ""
+            );
 
-            if ($("adminName")) {
-                $("adminName").textContent = fullName;
-            }
+            setText(
+                "adminAccountType",
+                "Admin Account"
+            );
 
-            if ($("headerUserName")) {
-                $("headerUserName").textContent = firstName;
-            }
+            setText(
+                "accountAvatar",
+                firstName.charAt(0).toUpperCase()
+            );
 
-            if ($("adminAccountType")) {
-                $("adminAccountType").textContent =
-                    formatAccountType(accountType);
-            }
-
-            if ($("accountName")) {
-                $("accountName").textContent = fullName;
-            }
-
-            if ($("adminEmail")) {
-                $("adminEmail").textContent = email;
-            }
-
-            const initials =
-                getInitials(fullName);
-
-            if ($("adminAvatar")) {
-                $("adminAvatar").textContent = initials;
-            }
-
-            if ($("accountAvatar")) {
-                $("accountAvatar").textContent = initials;
-            }
-
-            if ($("modalUserAvatar")) {
-                $("modalUserAvatar").textContent = initials;
-            }
+            setText(
+                "adminAvatar",
+                firstName.charAt(0).toUpperCase()
+            );
 
         } catch (error) {
 
-            /*
-             * Profile failure should NOT freeze the entire
-             * user-management page.
-             */
-
             console.warn(
-                "Admin profile could not be loaded:",
+                "Profile could not be loaded:",
                 error
             );
         }
     }
 
-    /* ---------------------------------------------------------
-       USERS
-    --------------------------------------------------------- */
+    /* =========================================================
+       LOAD USERS
+       ========================================================= */
 
-    async function fetchUsers() {
+    async function loadUsers() {
 
-        const data = await request(
-            USERS_API,
-            {
-                method: "GET"
-            }
-        );
-
-        if (!data || data.success !== true) {
-
-            throw new Error(
-                data?.message ||
-                "Unable to load users."
-            );
+        if (isLoading) {
+            return;
         }
 
-        return data;
-    }
+        isLoading = true;
 
-    async function loadUsersPage() {
-
-        if (state.loading) return;
-
-        state.loading = true;
-
-        showPageLoader(
-            "Loading user management..."
-        );
-
-        clearMessage();
+        showUsersLoading();
 
         try {
 
-            await verifyAdmin();
+            const response = await fetch(
+                USERS_API,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    cache: "no-store",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                }
+            );
 
-            await loadAdminProfile();
+            if (
+                response.status === 401 ||
+                response.status === 403
+            ) {
+                window.location.href = "login.html";
+                return;
+            }
 
-            const data =
-                await fetchUsers();
+            const text = await response.text();
 
-            const users =
+            let data;
+
+            try {
+                data = JSON.parse(text);
+            } catch (error) {
+
+                console.error(
+                    "Invalid users API response:",
+                    text
+                );
+
+                throw new Error(
+                    "The server returned an invalid response."
+                );
+            }
+
+            if (!response.ok || data.success !== true) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to load users."
+                );
+            }
+
+            const rawUsers =
                 Array.isArray(data.users)
                     ? data.users
                     : [];
 
-            state.users =
-                users.map(normalizeUser);
-
-            state.filteredUsers =
-                [...state.users];
-
-            state.currentPage = 1;
+            users = rawUsers.map(normalizeUser);
 
             updateStatistics(data);
 
             applyFilters();
 
-            hidePageLoader();
+            hideUsersLoading();
+
+            if (users.length === 0) {
+                showUsersEmpty();
+            } else {
+                hideUsersEmpty();
+            }
 
         } catch (error) {
 
             console.error(
-                "Admin users loading error:",
+                "Load users error:",
                 error
             );
 
-            if (
-                error.status === 401 ||
-                error.status === 403
-            ) {
+            users = [];
+            filteredUsers = [];
 
-                window.location.href =
-                    "login.html";
+            hideUsersLoading();
 
-                return;
-            }
+            showUsersEmpty(
+                "Unable to load users. Please refresh and try again."
+            );
 
-            showPageError(
+            showMessage(
                 error.message ||
-                "Unable to load user management. Please try again."
+                "Unable to load users.",
+                "error"
             );
 
         } finally {
 
-            state.loading = false;
+            isLoading = false;
+
+            /*
+             * IMPORTANT:
+             * Always remove the full-screen loader.
+             * This prevents the page from remaining stuck on
+             * "Loading user management..."
+             */
+            hidePageLoader();
         }
     }
 
-    /* ---------------------------------------------------------
-       NORMALIZE USER
-    --------------------------------------------------------- */
+    /* =========================================================
+       LOADING / EMPTY STATES
+       ========================================================= */
 
-    function normalizeUser(user) {
+    function showUsersLoading() {
 
-        const firstName =
-            user.first_name ||
-            "";
+        hideElement("usersEmpty");
 
-        const lastName =
-            user.last_name ||
-            "";
+        const loading = $("usersLoading");
 
-        const fullName =
-            user.full_name ||
-            `${firstName} ${lastName}`.trim() ||
-            "Unknown User";
+        if (!loading) return;
 
-        const balance =
-            toNumber(
-                user.balance ??
-                user.wallet_balance ??
-                0
-            );
-
-        return {
-            ...user,
-
-            id:
-                user.id ||
-                user._id ||
-                "",
-
-            first_name:
-                firstName,
-
-            last_name:
-                lastName,
-
-            full_name:
-                fullName,
-
-            email:
-                user.email ||
-                "",
-
-            phone:
-                user.phone ||
-                user.phone_number ||
-                user.mobile ||
-                "",
-
-            referral_code:
-                user.referral_code ||
-                "",
-
-            balance,
-
-            wallet_balance:
-                toNumber(
-                    user.wallet_balance ??
-                    balance
-                ),
-
-            status:
-                String(
-                    user.status ||
-                    "active"
-                ).toLowerCase(),
-
-            role:
-                user.role ||
-                "",
-
-            account_type:
-                user.account_type ||
-                user.role ||
-                "user",
-
-            created_at:
-                user.created_at ||
-                ""
-        };
+        loading.hidden = false;
+        loading.style.display = "block";
     }
 
-    /* ---------------------------------------------------------
-       STATISTICS
-    --------------------------------------------------------- */
+    function hideUsersLoading() {
 
-    function updateStatistics(data) {
+        const loading = $("usersLoading");
+
+        if (!loading) return;
+
+        loading.hidden = true;
+        loading.style.display = "none";
+    }
+
+    function showUsersEmpty(message) {
+
+        const empty = $("usersEmpty");
+
+        if (!empty) return;
+
+        empty.hidden = false;
+        empty.style.display = "block";
+
+        const messageElement =
+            empty.querySelector(
+                "[data-empty-message]"
+            );
+
+        if (messageElement && message) {
+            messageElement.textContent = message;
+        }
+    }
+
+    function hideUsersEmpty() {
+        hideElement("usersEmpty");
+    }
+
+    /* =========================================================
+       STATISTICS
+       ========================================================= */
+
+    function updateStatistics(data = {}) {
 
         const stats =
-            data?.stats ||
+            data.stats ||
+            data.statistics ||
             {};
 
-        const users =
-            state.users;
-
         const total =
-            Number(
-                stats.total_users ??
-                users.length
-            );
+            stats.total_users ??
+            data.total_users ??
+            users.length;
 
         const active =
-            Number(
-                stats.active_users ??
-                users.filter(
-                    user =>
-                        user.status === "active"
-                ).length
-            );
+            stats.active_users ??
+            data.active_users ??
+            users.filter(
+                user => user.status === "active"
+            ).length;
 
         const blocked =
-            Number(
-                stats.blocked_users ??
-                users.filter(
-                    user =>
-                        [
-                            "blocked",
-                            "suspended",
-                            "disabled",
-                            "banned"
-                        ].includes(user.status)
-                ).length
-            );
+            stats.blocked_users ??
+            data.blocked_users ??
+            users.filter(
+                user =>
+                    user.status === "blocked" ||
+                    user.status === "suspended" ||
+                    user.status === "disabled"
+            ).length;
 
         const admins =
-            Number(
-                stats.admin_users ??
-                users.filter(
-                    user =>
-                        user.role === "admin" ||
-                        user.account_type === "admin" ||
-                        user.account_type === "administrator"
-                ).length
-            );
+            stats.admin_users ??
+            data.admin_users ??
+            users.filter(
+                user =>
+                    user.role === "admin" ||
+                    user.account_type === "admin" ||
+                    user.account_type === "administrator"
+            ).length;
 
         setText(
             "totalUsers",
-            total
+            formatNumber(total)
         );
 
         setText(
             "activeUsers",
-            active
+            formatNumber(active)
         );
 
         setText(
             "blockedUsers",
-            blocked
+            formatNumber(blocked)
         );
 
         setText(
             "adminUsers",
-            admins
+            formatNumber(admins)
         );
     }
 
-    /* ---------------------------------------------------------
+    function formatNumber(value) {
+        return new Intl.NumberFormat(
+            "en-UG"
+        ).format(numberValue(value));
+    }
+
+    /* =========================================================
        FILTERS
-    --------------------------------------------------------- */
+       ========================================================= */
 
     function applyFilters() {
 
         const search =
-            ($("searchUsers")?.value || "")
+            (
+                $("searchUsers")?.value ||
+                ""
+            )
                 .trim()
                 .toLowerCase();
 
         const status =
-            ($("statusFilter")?.value || "all")
+            (
+                $("statusFilter")?.value ||
+                "all"
+            )
                 .toLowerCase();
 
         const accountType =
-            ($("accountTypeFilter")?.value || "all")
+            (
+                $("accountTypeFilter")?.value ||
+                "all"
+            )
                 .toLowerCase();
 
-        state.filteredUsers =
-            state.users.filter(user => {
+        filteredUsers = users.filter(
+            user => {
 
                 const searchable = [
                     user.full_name,
+                    user.first_name,
+                    user.last_name,
                     user.email,
                     user.phone,
                     user.referral_code,
@@ -604,86 +713,75 @@
                     .join(" ")
                     .toLowerCase();
 
-                const matchesSearch =
-                    !search ||
-                    searchable.includes(search);
+                if (
+                    search &&
+                    !searchable.includes(search)
+                ) {
+                    return false;
+                }
 
-                const matchesStatus =
-                    status === "all" ||
-                    user.status === status;
+                if (
+                    status !== "all" &&
+                    user.status !== status
+                ) {
+                    return false;
+                }
 
-                const userType =
-                    String(
-                        user.account_type ||
-                        user.role ||
-                        "user"
-                    ).toLowerCase();
+                if (
+                    accountType !== "all" &&
+                    user.account_type !== accountType
+                ) {
+                    return false;
+                }
 
-                const matchesType =
-                    accountType === "all" ||
-                    userType === accountType;
+                return true;
+            }
+        );
 
-                return (
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesType
-                );
-            });
-
-        state.currentPage = 1;
+        currentPage = 1;
 
         renderUsers();
         renderPagination();
     }
 
-    /* ---------------------------------------------------------
+    /* =========================================================
        RENDER USERS
-    --------------------------------------------------------- */
+       ========================================================= */
 
     function renderUsers() {
 
         const tbody =
             $("usersTableBody");
 
-        const loading =
-            $("usersLoading");
-
-        const empty =
-            $("usersEmpty");
-
-        if (!tbody) return;
-
-        if (loading) {
-            loading.style.display = "none";
+        if (!tbody) {
+            return;
         }
 
         tbody.innerHTML = "";
 
+        if (filteredUsers.length === 0) {
+
+            showUsersEmpty(
+                "No users match the selected filters."
+            );
+
+            return;
+        }
+
+        hideUsersEmpty();
+
         const start =
-            (state.currentPage - 1) *
+            (currentPage - 1) *
             PAGE_SIZE;
 
         const end =
             start + PAGE_SIZE;
 
         const pageUsers =
-            state.filteredUsers.slice(
+            filteredUsers.slice(
                 start,
                 end
             );
-
-        if (!pageUsers.length) {
-
-            if (empty) {
-                empty.style.display = "block";
-            }
-
-            return;
-        }
-
-        if (empty) {
-            empty.style.display = "none";
-        }
 
         pageUsers.forEach(user => {
 
@@ -691,8 +789,26 @@
                 document.createElement("tr");
 
             const initials =
-                getInitials(
-                    user.full_name
+                (
+                    user.full_name ||
+                    "U"
+                )
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map(
+                        part =>
+                            part.charAt(0)
+                                .toUpperCase()
+                    )
+                    .join("");
+
+            const statusClass =
+                getStatusClass(user.status);
+
+            const accountClass =
+                getAccountClass(
+                    user.account_type
                 );
 
             row.innerHTML = `
@@ -700,12 +816,14 @@
                     <div class="user-table-profile">
 
                         <div class="user-table-avatar">
-                            ${escapeHTML(initials)}
+                            ${escapeHTML(initials || "U")}
                         </div>
 
-                        <div class="user-table-info">
+                        <div class="user-table-name">
                             <strong>
-                                ${escapeHTML(user.full_name)}
+                                ${escapeHTML(
+                                    user.full_name
+                                )}
                             </strong>
 
                             <span>
@@ -714,70 +832,83 @@
                                 )}
                             </span>
                         </div>
+
                     </div>
                 </td>
 
                 <td>
-                    ${escapeHTML(
-                        user.phone || "—"
-                    )}
+                    <span class="user-phone">
+                        ${escapeHTML(
+                            user.phone || "—"
+                        )}
+                    </span>
                 </td>
 
                 <td>
-                    <strong>
-                        ${formatCurrency(
+                    <strong class="user-balance">
+                        UGX ${formatCurrency(
                             user.balance
                         )}
                     </strong>
                 </td>
 
                 <td>
-                    ${formatAccountType(
-                        user.account_type ||
-                        user.role ||
-                        "user"
-                    )}
-                </td>
-
-                <td>
-                    <span class="status-badge ${statusClass(
-                        user.status
-                    )}">
-                        ${formatStatus(
-                            user.status
+                    <span class="status-badge ${statusClass}">
+                        ${escapeHTML(
+                            capitalize(user.status)
                         )}
                     </span>
                 </td>
 
                 <td>
-                    ${formatDate(
-                        user.created_at
-                    )}
+                    <span class="account-badge ${accountClass}">
+                        ${escapeHTML(
+                            capitalize(
+                                user.account_type
+                            )
+                        )}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="joined-date">
+                        ${escapeHTML(
+                            formatDate(
+                                user.created_at
+                            )
+                        )}
+                    </span>
                 </td>
 
                 <td>
                     <button
                         type="button"
                         class="table-action-button"
-                        data-user-id="${escapeHTML(
+                        data-view-user="${escapeHTML(
                             user.id
                         )}"
                         aria-label="View user"
                     >
                         <svg
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
                             fill="none"
                             stroke="currentColor"
-                            stroke-width="2"
+                            stroke-width="1.8"
                             stroke-linecap="round"
                             stroke-linejoin="round"
+                            aria-hidden="true"
                         >
-                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
-                            <circle cx="12" cy="12" r="2.5"></circle>
+                            <path
+                                d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
+                            />
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="3"
+                            />
                         </svg>
-
                         <span>View</span>
                     </button>
                 </td>
@@ -787,42 +918,126 @@
         });
     }
 
-    /* ---------------------------------------------------------
+    /* =========================================================
+       STATUS / ACCOUNT CLASSES
+       ========================================================= */
+
+    function getStatusClass(status) {
+
+        switch (String(status).toLowerCase()) {
+
+            case "active":
+                return "status-active";
+
+            case "pending":
+                return "status-pending";
+
+            case "suspended":
+                return "status-suspended";
+
+            case "blocked":
+                return "status-blocked";
+
+            case "disabled":
+                return "status-disabled";
+
+            default:
+                return "status-default";
+        }
+    }
+
+    function getAccountClass(type) {
+
+        const value =
+            String(type).toLowerCase();
+
+        if (
+            value === "admin" ||
+            value === "administrator"
+        ) {
+            return "account-admin";
+        }
+
+        return "account-user";
+    }
+
+    function capitalize(value) {
+
+        if (!value) {
+            return "";
+        }
+
+        return String(value)
+            .charAt(0)
+            .toUpperCase() +
+            String(value)
+                .slice(1)
+                .toLowerCase();
+    }
+
+    /* =========================================================
        PAGINATION
-    --------------------------------------------------------- */
+       ========================================================= */
 
     function renderPagination() {
 
-        const container =
+        const pagination =
             $("pagination");
 
-        if (!container) return;
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    state.filteredUsers.length /
-                    PAGE_SIZE
-                )
-            );
-
-        if (totalPages <= 1) {
-
-            container.innerHTML = "";
+        if (!pagination) {
             return;
         }
 
-        let html = `
-            <button
-                type="button"
-                class="pagination-button"
-                data-page="prev"
-                ${state.currentPage === 1 ? "disabled" : ""}
+        pagination.innerHTML = "";
+
+        const totalPages =
+            Math.ceil(
+                filteredUsers.length /
+                PAGE_SIZE
+            );
+
+        if (totalPages <= 1) {
+            return;
+        }
+
+        const previous =
+            document.createElement("button");
+
+        previous.type = "button";
+        previous.className =
+            "pagination-button";
+
+        previous.disabled =
+            currentPage === 1;
+
+        previous.innerHTML = `
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             >
-                Previous
-            </button>
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
         `;
+
+        previous.addEventListener(
+            "click",
+            () => {
+
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderUsers();
+                    renderPagination();
+                }
+            }
+        );
+
+        pagination.appendChild(previous);
 
         for (
             let page = 1;
@@ -830,47 +1045,81 @@
             page++
         ) {
 
-            html += `
-                <button
-                    type="button"
-                    class="pagination-button ${
-                        page === state.currentPage
-                            ? "active"
-                            : ""
-                    }"
-                    data-page="${page}"
-                >
-                    ${page}
-                </button>
-            `;
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+            button.className =
+                "pagination-button";
+
+            if (page === currentPage) {
+                button.classList.add("active");
+            }
+
+            button.textContent = page;
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    currentPage = page;
+
+                    renderUsers();
+                    renderPagination();
+                }
+            );
+
+            pagination.appendChild(button);
         }
 
-        html += `
-            <button
-                type="button"
-                class="pagination-button"
-                data-page="next"
-                ${
-                    state.currentPage === totalPages
-                        ? "disabled"
-                        : ""
-                }
+        const next =
+            document.createElement("button");
+
+        next.type = "button";
+        next.className =
+            "pagination-button";
+
+        next.disabled =
+            currentPage === totalPages;
+
+        next.innerHTML = `
+            <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             >
-                Next
-            </button>
+                <path d="m9 18 6-6-6-6"/>
+            </svg>
         `;
 
-        container.innerHTML = html;
+        next.addEventListener(
+            "click",
+            () => {
+
+                if (currentPage < totalPages) {
+                    currentPage++;
+
+                    renderUsers();
+                    renderPagination();
+                }
+            }
+        );
+
+        pagination.appendChild(next);
     }
 
-    /* ---------------------------------------------------------
+    /* =========================================================
        USER MODAL
-    --------------------------------------------------------- */
+       ========================================================= */
 
     function openUserModal(user) {
 
-        state.selectedUser =
-            user;
+        selectedUser = user;
 
         setText(
             "modalUserName",
@@ -879,7 +1128,7 @@
 
         setText(
             "modalUserEmail",
-            user.email || "—"
+            user.email || "No email"
         );
 
         setText(
@@ -894,54 +1143,62 @@
 
         setText(
             "modalUserBalance",
-            formatCurrency(
+            `UGX ${formatCurrency(
                 user.balance
-            )
+            )}`
         );
 
         setText(
             "modalUserStatus",
-            formatStatus(
-                user.status
-            )
+            capitalize(user.status)
         );
 
         setText(
             "modalAccountType",
-            formatAccountType(
-                user.account_type ||
-                user.role ||
-                "user"
-            )
+            capitalize(user.account_type)
         );
 
         setText(
             "modalCreatedAt",
-            formatDate(
-                user.created_at
-            )
+            formatDate(user.created_at)
         );
 
         const avatar =
             $("modalUserAvatar");
 
         if (avatar) {
+
+            const initials =
+                user.full_name
+                    .trim()
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map(
+                        part =>
+                            part
+                                .charAt(0)
+                                .toUpperCase()
+                    )
+                    .join("");
+
             avatar.textContent =
-                getInitials(
-                    user.full_name
-                );
+                initials || "U";
         }
 
         const modal =
             $("userModal");
 
-        if (modal) {
-            modal.classList.add("open");
-            modal.style.display = "flex";
-            document.body.classList.add(
-                "modal-open"
-            );
+        if (!modal) {
+            return;
         }
+
+        modal.hidden = false;
+        modal.style.display = "flex";
+        modal.classList.add("open");
+
+        document.body.classList.add(
+            "modal-open"
+        );
     }
 
     function closeUserModal() {
@@ -949,218 +1206,170 @@
         const modal =
             $("userModal");
 
-        if (modal) {
-            modal.classList.remove("open");
-            modal.style.display = "none";
+        if (!modal) {
+            return;
         }
+
+        modal.classList.remove("open");
+
+        modal.hidden = true;
+        modal.style.display = "none";
 
         document.body.classList.remove(
             "modal-open"
         );
 
-        state.selectedUser =
-            null;
+        selectedUser = null;
     }
 
-    /* ---------------------------------------------------------
-       EVENTS
-    --------------------------------------------------------- */
+    /* =========================================================
+       SIDEBAR
+       ========================================================= */
+
+    function setupSidebar() {
+
+        const sidebar =
+            $("sidebar");
+
+        const overlay =
+            $("sidebarOverlay");
+
+        const menuButton =
+            $("menuButton");
+
+        const closeButton =
+            $("sidebarClose");
+
+        if (!sidebar) {
+            return;
+        }
+
+        function openSidebar() {
+
+            sidebar.classList.add("open");
+
+            if (overlay) {
+                overlay.classList.add("show");
+                overlay.style.display = "block";
+            }
+
+            document.body.classList.add(
+                "sidebar-open"
+            );
+        }
+
+        function closeSidebar() {
+
+            sidebar.classList.remove("open");
+
+            if (overlay) {
+                overlay.classList.remove("show");
+                overlay.style.display = "none";
+            }
+
+            document.body.classList.remove(
+                "sidebar-open"
+            );
+        }
+
+        menuButton?.addEventListener(
+            "click",
+            openSidebar
+        );
+
+        closeButton?.addEventListener(
+            "click",
+            closeSidebar
+        );
+
+        overlay?.addEventListener(
+            "click",
+            closeSidebar
+        );
+
+        document
+            .querySelectorAll(
+                ".admin-nav a"
+            )
+            .forEach(link => {
+
+                link.addEventListener(
+                    "click",
+                    () => {
+
+                        if (
+                            window.innerWidth <= 900
+                        ) {
+                            closeSidebar();
+                        }
+                    }
+                );
+            });
+    }
+
+    /* =========================================================
+       EVENT LISTENERS
+       ========================================================= */
 
     function setupEvents() {
 
-        /* Search */
+        $("searchUsers")?.addEventListener(
+            "input",
+            applyFilters
+        );
 
-        const search =
-            $("searchUsers");
+        $("statusFilter")?.addEventListener(
+            "change",
+            applyFilters
+        );
 
-        if (search) {
-            search.addEventListener(
-                "input",
-                debounce(
-                    applyFilters,
-                    250
-                )
-            );
-        }
+        $("accountTypeFilter")?.addEventListener(
+            "change",
+            applyFilters
+        );
 
-        /* Status */
+        $("refreshUsersBtn")?.addEventListener(
+            "click",
+            async () => {
 
-        const status =
-            $("statusFilter");
+                const button =
+                    $("refreshUsersBtn");
 
-        if (status) {
-            status.addEventListener(
-                "change",
-                applyFilters
-            );
-        }
-
-        /* Account type */
-
-        const type =
-            $("accountTypeFilter");
-
-        if (type) {
-            type.addEventListener(
-                "change",
-                applyFilters
-            );
-        }
-
-        /* Refresh */
-
-        const refresh =
-            $("refreshUsersBtn");
-
-        if (refresh) {
-
-            refresh.addEventListener(
-                "click",
-                () => {
-                    loadUsersPage();
+                if (button) {
+                    button.disabled = true;
+                    button.classList.add(
+                        "is-loading"
+                    );
                 }
-            );
-        }
 
-        /* Table */
+                await loadUsers();
 
-        const table =
-            $("usersTableBody");
-
-        if (table) {
-
-            table.addEventListener(
-                "click",
-                event => {
-
-                    const button =
-                        event.target.closest(
-                            "[data-user-id]"
-                        );
-
-                    if (!button) return;
-
-                    const id =
-                        button.dataset.userId;
-
-                    const user =
-                        state.users.find(
-                            item =>
-                                String(item.id) ===
-                                String(id)
-                        );
-
-                    if (user) {
-                        openUserModal(user);
-                    }
+                if (button) {
+                    button.disabled = false;
+                    button.classList.remove(
+                        "is-loading"
+                    );
                 }
-            );
-        }
+            }
+        );
 
-        /* Pagination */
+        $("closeUserModal")?.addEventListener(
+            "click",
+            closeUserModal
+        );
 
-        const pagination =
-            $("pagination");
+        $("userModal")?.addEventListener(
+            "click",
+            event => {
 
-        if (pagination) {
-
-            pagination.addEventListener(
-                "click",
-                event => {
-
-                    const button =
-                        event.target.closest(
-                            "[data-page]"
-                        );
-
-                    if (
-                        !button ||
-                        button.disabled
-                    ) {
-                        return;
-                    }
-
-                    const value =
-                        button.dataset.page;
-
-                    const totalPages =
-                        Math.max(
-                            1,
-                            Math.ceil(
-                                state.filteredUsers.length /
-                                PAGE_SIZE
-                            )
-                        );
-
-                    if (value === "prev") {
-
-                        state.currentPage =
-                            Math.max(
-                                1,
-                                state.currentPage - 1
-                            );
-
-                    } else if (
-                        value === "next"
-                    ) {
-
-                        state.currentPage =
-                            Math.min(
-                                totalPages,
-                                state.currentPage + 1
-                            );
-
-                    } else {
-
-                        state.currentPage =
-                            Number(value);
-                    }
-
-                    renderUsers();
-                    renderPagination();
-
-                    window.scrollTo({
-                        top: 0,
-                        behavior: "smooth"
-                    });
+                if (
+                    event.target ===
+                    $("userModal")
+                ) {
+                    closeUserModal();
                 }
-            );
-        }
-
-        /* Close modal */
-
-        const closeModal =
-            $("closeUserModal");
-
-        if (closeModal) {
-            closeModal.addEventListener(
-                "click",
-                closeUserModal
-            );
-        }
-
-        /* Click outside modal */
-
-        const modal =
-            $("userModal");
-
-        if (modal) {
-
-            modal.addEventListener(
-                "click",
-                event => {
-
-                    if (
-                        event.target ===
-                        modal
-                    ) {
-                        closeUserModal();
-                    }
-                }
-            );
-        }
-
-        /* Escape */
+            }
+        );
 
         document.addEventListener(
             "keydown",
@@ -1174,171 +1383,67 @@
             }
         );
 
-        /* Manage user */
+        $("usersTableBody")?.addEventListener(
+            "click",
+            event => {
 
-        const manageButton =
-            $("manageUserBtn");
+                const button =
+                    event.target.closest(
+                        "[data-view-user]"
+                    );
 
-        if (manageButton) {
-
-            manageButton.addEventListener(
-                "click",
-                () => {
-
-                    if (
-                        !state.selectedUser
-                    ) {
-                        showMessage(
-                            "Please select a user first.",
-                            "error"
-                        );
-                        return;
-                    }
-
-                    /*
-                     * admin-user-actions.js can
-                     * take over from here.
-                     */
-
-                    if (
-                        window.CrownCashAdminUserActions &&
-                        typeof window
-                            .CrownCashAdminUserActions
-                            .open === "function"
-                    ) {
-
-                        window
-                            .CrownCashAdminUserActions
-                            .open(
-                                state.selectedUser
-                            );
-
-                    } else {
-
-                        showMessage(
-                            "User management controls are not available yet.",
-                            "error"
-                        );
-                    }
+                if (!button) {
+                    return;
                 }
-            );
-        }
 
-        /* Sidebar */
+                const userId =
+                    button.dataset.viewUser;
 
-        setupSidebar();
+                const user =
+                    users.find(
+                        item =>
+                            item.id === userId
+                    );
 
-        /* Logout */
+                if (user) {
+                    openUserModal(user);
+                }
+            }
+        );
 
-        const logout =
-            $("logoutBtn");
-
-        if (logout) {
-
-            logout.addEventListener(
-                "click",
-                logoutAdmin
-            );
-        }
+        $("logoutBtn")?.addEventListener(
+            "click",
+            logoutAdmin
+        );
     }
 
-    /* ---------------------------------------------------------
-       SIDEBAR
-    --------------------------------------------------------- */
-
-    function setupSidebar() {
-
-        const sidebar =
-            $("sidebar");
-
-        const overlay =
-            $("sidebarOverlay");
-
-        const menu =
-            $("menuButton");
-
-        const close =
-            $("sidebarClose");
-
-        function openSidebar() {
-
-            if (sidebar) {
-                sidebar.classList.add(
-                    "open"
-                );
-            }
-
-            if (overlay) {
-                overlay.classList.add(
-                    "open"
-                );
-            }
-
-            document.body.classList.add(
-                "sidebar-open"
-            );
-        }
-
-        function closeSidebar() {
-
-            if (sidebar) {
-                sidebar.classList.remove(
-                    "open"
-                );
-            }
-
-            if (overlay) {
-                overlay.classList.remove(
-                    "open"
-                );
-            }
-
-            document.body.classList.remove(
-                "sidebar-open"
-            );
-        }
-
-        if (menu) {
-            menu.addEventListener(
-                "click",
-                openSidebar
-            );
-        }
-
-        if (close) {
-            close.addEventListener(
-                "click",
-                closeSidebar
-            );
-        }
-
-        if (overlay) {
-            overlay.addEventListener(
-                "click",
-                closeSidebar
-            );
-        }
-    }
-
-    /* ---------------------------------------------------------
+    /* =========================================================
        LOGOUT
-    --------------------------------------------------------- */
+       ========================================================= */
 
     async function logoutAdmin() {
 
-        const button =
-            $("logoutBtn");
+        const confirmed =
+            window.confirm(
+                "Are you sure you want to logout?"
+            );
 
-        if (button) {
-            button.disabled = true;
+        if (!confirmed) {
+            return;
         }
 
         try {
 
-            await request(
+            await fetch(
                 LOGOUT_API,
                 {
-                    method: "GET"
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({})
                 }
             );
 
@@ -1356,328 +1461,113 @@
         }
     }
 
-    /* ---------------------------------------------------------
-       MESSAGE
-    --------------------------------------------------------- */
+    /* =========================================================
+       START APPLICATION
+       ========================================================= */
 
-    function showMessage(
-        message,
-        type = "info"
-    ) {
+    async function init() {
 
-        const box =
-            $("usersMessage");
+        /*
+         * The loader is shown initially.
+         */
+        showPageLoader();
 
-        if (!box) return;
+        /*
+         * Set up the UI immediately.
+         */
+        setupSidebar();
+        setupEvents();
 
-        box.innerHTML = `
-            <div class="admin-message ${escapeHTML(type)}">
-                ${escapeHTML(message)}
-            </div>
-        `;
+        /*
+         * Always have a maximum loader duration.
+         * Even if an API request gets stuck, the actual page
+         * will become visible.
+         */
+        const loaderFailsafe =
+            setTimeout(() => {
 
-        box.style.display =
-            "block";
-    }
+                hidePageLoader();
 
-    function clearMessage() {
-
-        const box =
-            $("usersMessage");
-
-        if (!box) return;
-
-        box.innerHTML = "";
-        box.style.display = "none";
-    }
-
-    /* ---------------------------------------------------------
-       FORMATTING
-    --------------------------------------------------------- */
-
-    function toNumber(value) {
-
-        if (
-            value &&
-            typeof value === "object"
-        ) {
-
-            if (
-                typeof value.$numberDecimal !==
-                "undefined"
-            ) {
-                return Number(
-                    value.$numberDecimal
-                );
-            }
-
-            if (
-                typeof value.toString ===
-                "function"
-            ) {
-                return Number(
-                    value.toString()
-                );
-            }
-        }
-
-        const number =
-            Number(value);
-
-        return Number.isFinite(number)
-            ? number
-            : 0;
-    }
-
-    function formatCurrency(value) {
-
-        const amount =
-            toNumber(value);
-
-        return (
-            "UGX " +
-            amount.toLocaleString(
-                "en-UG",
-                {
-                    maximumFractionDigits: 0
-                }
-            )
-        );
-    }
-
-    function formatDate(value) {
-
-        if (!value) {
-            return "—";
-        }
-
-        let date;
+            }, 10000);
 
         try {
 
-            if (
-                typeof value === "object" &&
-                value.$date
-            ) {
-                date =
-                    new Date(
-                        value.$date
-                    );
-            } else {
-                date =
-                    new Date(value);
+            const authorized =
+                await checkAdminAuthentication();
+
+            if (!authorized) {
+                return;
             }
 
-            if (
-                Number.isNaN(
-                    date.getTime()
-                )
-            ) {
-                return "—";
-            }
+            await loadAdminProfile();
 
-            return date.toLocaleDateString(
-                "en-UG",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                }
-            );
+            await loadUsers();
 
         } catch (error) {
 
-            return "—";
-        }
-    }
-
-    function formatStatus(status) {
-
-        const value =
-            String(
-                status ||
-                "active"
-            )
-                .replace(/[_-]/g, " ")
-                .trim();
-
-        return value
-            .replace(/\b\w/g, char =>
-                char.toUpperCase()
+            console.error(
+                "Admin users initialization error:",
+                error
             );
-    }
 
-    function formatAccountType(type) {
-
-        const value =
-            String(
-                type ||
-                "user"
-            )
-                .replace(/[_-]/g, " ")
-                .trim();
-
-        return value
-            .replace(/\b\w/g, char =>
-                char.toUpperCase()
+            showMessage(
+                "Something went wrong while loading User Management.",
+                "error"
             );
-    }
 
-    function statusClass(status) {
+        } finally {
 
-        switch (
-            String(status)
-                .toLowerCase()
-        ) {
+            clearTimeout(loaderFailsafe);
 
-            case "active":
-                return "success";
-
-            case "pending":
-                return "warning";
-
-            case "blocked":
-            case "suspended":
-            case "disabled":
-            case "banned":
-                return "danger";
-
-            case "inactive":
-                return "muted";
-
-            default:
-                return "info";
+            /*
+             * VERY IMPORTANT:
+             * No matter what happens above, the loader must
+             * disappear.
+             */
+            hidePageLoader();
         }
     }
 
-    function getInitials(name) {
-
-        const parts =
-            String(
-                name ||
-                "Administrator"
-            )
-                .trim()
-                .split(/\s+/)
-                .filter(Boolean);
-
-        if (!parts.length) {
-            return "A";
-        }
-
-        if (parts.length === 1) {
-            return parts[0]
-                .substring(0, 2)
-                .toUpperCase();
-        }
-
-        return (
-            parts[0][0] +
-            parts[parts.length - 1][0]
-        ).toUpperCase();
-    }
-
-    function setText(id, value) {
-
-        const element =
-            $(id);
-
-        if (element) {
-            element.textContent =
-                value ?? "";
-        }
-    }
-
-    function debounce(
-        callback,
-        delay
-    ) {
-
-        let timeout;
-
-        return function (...args) {
-
-            clearTimeout(timeout);
-
-            timeout =
-                setTimeout(
-                    () => callback(...args),
-                    delay
-                );
-        };
-    }
-
-    /* ---------------------------------------------------------
-       PUBLIC API
-    --------------------------------------------------------- */
+    /* =========================================================
+       GLOBAL API
+       ========================================================= */
 
     window.CrownCashAdminUsers = {
 
-        loadUsers:
-            loadUsersPage,
+        loadUsers,
 
-        getUsers:
-            () => state.users,
-
-        getSelectedUser:
-            () => state.selectedUser,
-
-        refresh:
-            loadUsersPage,
+        applyFilters,
 
         openUserModal,
 
-        closeUserModal
+        closeUserModal,
+
+        getUsers: () => users,
+
+        getFilteredUsers: () =>
+            filteredUsers,
+
+        getSelectedUser: () =>
+            selectedUser
     };
 
-    /* ---------------------------------------------------------
-       INITIALIZE
-    --------------------------------------------------------- */
+    /* =========================================================
+       DOM READY
+       ========================================================= */
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
+    if (
+        document.readyState ===
+        "loading"
+    ) {
 
-            setupEvents();
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
 
-            /*
-             * Safety timeout.
-             *
-             * Even if an unexpected JavaScript/API
-             * problem happens, the page will not remain
-             * on the loading screen forever.
-             */
+    } else {
 
-            const safetyTimer =
-                setTimeout(
-                    () => {
-
-                        const loader =
-                            $("pageLoader");
-
-                        if (
-                            loader &&
-                            !loader.classList.contains(
-                                "hidden"
-                            )
-                        ) {
-
-                            showPageError(
-                                "User management took too long to load. Please check your connection and try again."
-                            );
-                        }
-
-                    },
-                    15000
-                );
-
-            loadUsersPage()
-                .finally(() => {
-                    clearTimeout(
-                        safetyTimer
-                    );
-                });
-        }
-    );
+        init();
+    }
 
 })();

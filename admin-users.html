@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     >
 
     <title>Crown Cash Admin | User Management</title>
@@ -14,998 +13,593 @@
 
     <style>
         /* =========================================================
-           CROWN CASH — USER MANAGEMENT PAGE
-           Compact responsive layout
+           CROWN CASH - USERS PAGE LAYOUT FIX
            ========================================================= */
 
-        .users-page {
+        :root {
+            --users-bg: #08050b;
+            --users-card: rgba(22, 12, 25, 0.92);
+            --users-card-2: rgba(31, 15, 34, 0.88);
+            --users-border: rgba(255,255,255,0.09);
+            --users-gold: #ffd34d;
+            --users-pink: #ff4fd8;
+            --users-purple: #a82cff;
+            --users-text: #f8f5fa;
+            --users-muted: #a9a0ad;
+            --users-green: #45e6a3;
+            --users-red: #ff617d;
+        }
+
+        /* ---------------------------------------------------------
+           PAGE BASE
+           --------------------------------------------------------- */
+
+        body.users-page {
+            overflow-x: hidden;
+            background:
+                radial-gradient(
+                    circle at 75% 10%,
+                    rgba(255, 30, 170, 0.10),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 20% 55%,
+                    rgba(137, 25, 255, 0.08),
+                    transparent 32%
+                ),
+                #08050b;
+        }
+
+        .users-page .admin-layout {
             width: 100%;
-            max-width: 100%;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .users-content {
+        /* ---------------------------------------------------------
+           DESKTOP SIDEBAR
+           --------------------------------------------------------- */
+
+        .users-page .sidebar {
+            width: 270px;
+            min-width: 270px;
+        }
+
+        .users-page .admin-main {
+            margin-left: 270px;
+            width: calc(100% - 270px);
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .users-page .main-content {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
+            padding: 24px 28px 35px;
+            box-sizing: border-box;
         }
 
-        /* PAGE HERO */
+        /* ---------------------------------------------------------
+           HEADER
+           --------------------------------------------------------- */
 
-        .users-hero {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            padding: 22px 24px;
+        .users-page .admin-header {
+            width: 100%;
+            min-height: 72px;
+            box-sizing: border-box;
+        }
+
+        .users-page .page-heading,
+        .users-page .page-title,
+        .users-page .content-header {
             margin-bottom: 18px;
-
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 22px;
-
-            background:
-                radial-gradient(
-                    circle at 15% 30%,
-                    rgba(255, 0, 170, 0.10),
-                    transparent 38%
-                ),
-                linear-gradient(
-                    135deg,
-                    rgba(255,255,255,0.035),
-                    rgba(255,255,255,0.012)
-                );
-
-            box-shadow:
-                0 15px 45px rgba(0,0,0,0.22);
         }
 
-        .users-hero-icon {
-            width: 66px;
-            height: 66px;
-            min-width: 66px;
+        /* ---------------------------------------------------------
+           HERO / PAGE INTRO
+           --------------------------------------------------------- */
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 20px;
-
-            background:
-                radial-gradient(
-                    circle at 30% 25%,
-                    #ffe36a 0%,
-                    #ffb84d 28%,
-                    #ff4fb8 68%,
-                    #9c27d9 100%
-                );
-
-            box-shadow:
-                0 0 28px rgba(255, 70, 190, 0.25);
+        .users-page .users-hero,
+        .users-page .page-hero {
+            margin-bottom: 18px;
         }
 
-        .users-hero-icon svg {
-            width: 34px;
-            height: 34px;
-            stroke: #170916;
-            stroke-width: 1.9;
-            fill: none;
+        .users-page .users-hero h1,
+        .users-page .page-hero h1 {
+            margin: 4px 0 8px;
         }
 
-        .users-hero-text {
-            min-width: 0;
-        }
-
-        .users-kicker {
-            margin: 0 0 5px;
-
-            color: #d45cff;
-
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 2.2px;
-            text-transform: uppercase;
-        }
-
-        .users-hero h1 {
-            margin: 0 0 5px;
-
-            color: #fff;
-
-            font-size: clamp(25px, 4vw, 36px);
-            line-height: 1.12;
-            font-weight: 800;
-        }
-
-        .users-hero p {
-            margin: 0;
-
+        .users-page .users-hero p,
+        .users-page .page-hero p {
             max-width: 760px;
-
-            color: rgba(255,255,255,0.58);
-
-            font-size: 14px;
             line-height: 1.55;
+            margin: 0;
         }
 
-
-        /* =========================================================
+        /* ---------------------------------------------------------
            STAT CARDS
-           ========================================================= */
+           --------------------------------------------------------- */
 
-        .users-stats {
+        .users-page .stats-grid {
             display: grid;
-
-            grid-template-columns:
-                repeat(4, minmax(0, 1fr));
-
-            gap: 12px;
-
-            margin-bottom: 18px;
-        }
-
-        .user-stat-card {
-            position: relative;
-
-            min-width: 0;
-
-            padding: 16px;
-
-            border-radius: 18px;
-
-            border: 1px solid rgba(255,255,255,0.07);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.045),
-                    rgba(255,255,255,0.012)
-                );
-
-            overflow: hidden;
-        }
-
-        .user-stat-card::after {
-            content: "";
-
-            position: absolute;
-
-            width: 100px;
-            height: 100px;
-
-            right: -45px;
-            top: -45px;
-
-            border-radius: 50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(255,0,170,0.14),
-                    transparent 70%
-                );
-
-            pointer-events: none;
-        }
-
-        .user-stat-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 10px;
-
-            margin-bottom: 12px;
-        }
-
-        .user-stat-icon {
-            width: 42px;
-            height: 42px;
-            min-width: 42px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 13px;
-
-            background:
-                radial-gradient(
-                    circle at 30% 25%,
-                    #ffe26a,
-                    #ffb14d 35%,
-                    #f34fae 72%,
-                    #9b25d4
-                );
-
-            box-shadow:
-                0 0 20px rgba(255,72,190,0.16);
-        }
-
-        .user-stat-icon svg {
-            width: 21px;
-            height: 21px;
-
-            fill: none;
-            stroke: #180a18;
-            stroke-width: 1.9;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .user-stat-label {
-            margin: 0;
-
-            color: rgba(255,255,255,0.53);
-
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        .user-stat-value {
-            margin: 4px 0 0;
-
-            color: #fff;
-
-            font-size: 25px;
-            line-height: 1;
-
-            font-weight: 800;
-        }
-
-
-        /* =========================================================
-           FILTER CARD
-           ========================================================= */
-
-        .users-controls {
-            display: grid;
-
-            grid-template-columns:
-                minmax(180px, 1.5fr)
-                minmax(145px, 1fr)
-                minmax(145px, 1fr)
-                auto;
-
-            gap: 10px;
-
-            padding: 14px;
-
-            margin-bottom: 16px;
-
-            border-radius: 18px;
-
-            border: 1px solid rgba(255,255,255,0.07);
-
-            background:
-                rgba(255,255,255,0.025);
-        }
-
-        .users-search {
-            position: relative;
-            min-width: 0;
-        }
-
-        .users-search svg {
-            position: absolute;
-
-            left: 13px;
-            top: 50%;
-
-            width: 18px;
-            height: 18px;
-
-            transform: translateY(-50%);
-
-            stroke: rgba(255,255,255,0.48);
-            fill: none;
-
-            pointer-events: none;
-        }
-
-        .users-controls input,
-        .users-controls select {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
             width: 100%;
-            height: 44px;
-
-            padding: 0 13px;
-
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 12px;
-
-            background: rgba(0,0,0,0.18);
-
-            color: #fff;
-
-            outline: none;
-
-            font: inherit;
-            font-size: 13px;
+            margin: 18px 0;
         }
 
-        .users-search input {
-            padding-left: 40px;
-        }
-
-        .users-controls input::placeholder {
-            color: rgba(255,255,255,0.35);
-        }
-
-        .users-controls input:focus,
-        .users-controls select:focus {
-            border-color: rgba(255,82,211,0.55);
-
-            box-shadow:
-                0 0 0 3px rgba(255,55,190,0.08);
-        }
-
-        .users-controls select option {
-            background: #180a19;
-            color: #fff;
-        }
-
-        .refresh-users {
-            height: 44px;
-
-            padding: 0 16px;
-
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 12px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(255,193,76,0.12),
-                    rgba(255,50,190,0.10)
-                );
-
-            color: #fff;
-
-            cursor: pointer;
-
-            font-size: 13px;
-            font-weight: 700;
-
-            transition:
-                transform .2s ease,
-                border-color .2s ease,
-                box-shadow .2s ease;
-        }
-
-        .refresh-users svg {
-            width: 18px;
-            height: 18px;
-
-            fill: none;
-            stroke: #ffd45d;
-            stroke-width: 1.9;
-        }
-
-        .refresh-users:hover {
-            transform: translateY(-1px);
-
-            border-color: rgba(255,78,200,0.4);
-
-            box-shadow:
-                0 8px 24px rgba(255,45,190,0.10);
-        }
-
-
-        /* =========================================================
-           USERS TABLE CARD
-           ========================================================= */
-
-        .users-card {
-            width: 100%;
-
+        .users-page .stat-card {
+            min-width: 0;
+            min-height: 120px;
+            padding: 17px;
             border-radius: 20px;
-
-            border: 1px solid rgba(255,255,255,0.07);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.035),
-                    rgba(255,255,255,0.012)
-                );
-
-            overflow: hidden;
+            box-sizing: border-box;
         }
 
-        .users-card-header {
-            display: flex;
+        .users-page .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 15px;
+        }
+
+        .users-page .stat-card h3,
+        .users-page .stat-card .stat-value {
+            margin-top: 8px;
+        }
+
+        /* ---------------------------------------------------------
+           MESSAGE
+           --------------------------------------------------------- */
+
+        .users-page #usersMessage {
+            margin: 10px 0 14px;
+            padding: 11px 14px;
+            border-radius: 13px;
+            line-height: 1.4;
+        }
+
+        /* ---------------------------------------------------------
+           FILTER / TOOLBAR
+           --------------------------------------------------------- */
+
+        .users-page .users-toolbar,
+        .users-page .table-toolbar,
+        .users-page .toolbar {
+            width: 100%;
+            display: grid;
+            grid-template-columns: minmax(180px, 1.4fr)
+                               minmax(150px, 1fr)
+                               minmax(150px, 1fr)
+                               auto;
+            gap: 10px;
             align-items: center;
-            justify-content: space-between;
-
-            gap: 12px;
-
-            padding: 17px 18px;
-
-            border-bottom:
-                1px solid rgba(255,255,255,0.07);
+            margin: 14px 0;
         }
 
-        .users-card-heading {
+        .users-page .search-box,
+        .users-page .filter-group {
             min-width: 0;
         }
 
-        .users-card-heading h2 {
+        .users-page input,
+        .users-page select {
+            width: 100%;
+            min-width: 0;
+            height: 46px;
+            box-sizing: border-box;
+        }
+
+        .users-page #refreshUsersBtn {
+            height: 46px;
+            white-space: nowrap;
+            padding: 0 18px;
+        }
+
+        /* ---------------------------------------------------------
+           USERS CARD
+           --------------------------------------------------------- */
+
+        .users-page .admin-card,
+        .users-page .users-card,
+        .users-page .table-card {
+            width: 100%;
+            min-width: 0;
+            margin-top: 16px;
+            border-radius: 22px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .users-page .card-header {
+            padding: 17px 19px;
+        }
+
+        .users-page .card-header h2,
+        .users-page .card-header h3 {
             margin: 0;
-
-            color: #fff;
-
-            font-size: 17px;
-            font-weight: 800;
         }
 
-        .users-card-heading p {
-            margin: 3px 0 0;
-
-            color: rgba(255,255,255,0.45);
-
-            font-size: 12px;
+        .users-page .card-header p {
+            margin: 5px 0 0;
         }
 
-        .users-live {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        /* ---------------------------------------------------------
+           TABLE
+           --------------------------------------------------------- */
 
-            padding: 6px 9px;
-
-            border-radius: 999px;
-
-            background: rgba(50,210,145,0.08);
-
-            color: #77e5b4;
-
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .7px;
-        }
-
-        .users-live-dot {
-            width: 6px;
-            height: 6px;
-
-            border-radius: 50%;
-
-            background: #61dfa8;
-
-            box-shadow:
-                0 0 9px rgba(90,225,165,0.75);
-        }
-
-
-        /* =========================================================
-           DESKTOP TABLE
-           ========================================================= */
-
-        .users-table-wrapper {
+        .users-page .table-wrapper,
+        .users-page .users-table-wrapper {
             width: 100%;
             overflow-x: auto;
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
         }
 
-        .users-table {
+        .users-page table {
             width: 100%;
-
+            min-width: 820px;
             border-collapse: collapse;
-
-            min-width: 720px;
         }
 
-        .users-table th {
-            padding: 11px 14px;
-
-            text-align: left;
-
-            color: rgba(255,255,255,0.38);
-
-            font-size: 10px;
-            font-weight: 800;
-
-            text-transform: uppercase;
-            letter-spacing: .8px;
-
-            white-space: nowrap;
-
-            background: rgba(0,0,0,0.12);
-        }
-
-        .users-table td {
+        .users-page th,
+        .users-page td {
             padding: 13px 14px;
-
-            color: rgba(255,255,255,0.75);
-
-            font-size: 12px;
-
-            border-top:
-                1px solid rgba(255,255,255,0.055);
-
-            vertical-align: middle;
+            white-space: nowrap;
         }
 
-        .users-table tr:hover td {
-            background:
-                rgba(255,255,255,0.018);
+        .users-page th {
+            font-size: 11px;
+            letter-spacing: 0.08em;
         }
 
-        .user-name-cell {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            min-width: 170px;
-        }
-
-        .user-avatar-small {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 11px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ffd65a,
-                    #ff54b5
-                );
-
-            color: #190a18;
-
-            font-size: 12px;
-            font-weight: 900;
-
-            box-shadow:
-                0 0 15px rgba(255,70,180,0.14);
-        }
-
-        .user-name-main {
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .user-name-email {
-            margin-top: 2px;
-
-            color: rgba(255,255,255,0.38);
-
-            font-size: 10px;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-
-            padding: 5px 8px;
-
-            border-radius: 999px;
-
-            font-size: 9px;
-            font-weight: 800;
-
-            text-transform: uppercase;
-            letter-spacing: .5px;
-        }
-
-        .account-badge {
-            color: #ffd86b;
-            background: rgba(255,207,82,0.09);
-        }
-
-        .view-user-btn {
-            width: 34px;
-            height: 34px;
-
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 10px;
-
-            border: 1px solid rgba(255,255,255,0.08);
-
-            background:
-                rgba(255,255,255,0.025);
-
-            color: #fff;
-
-            cursor: pointer;
-
-            transition: .2s ease;
-        }
-
-        .view-user-btn svg {
-            width: 17px;
-            height: 17px;
-
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-        }
-
-        .view-user-btn:hover {
-            border-color: rgba(255,74,195,0.4);
-
-            background:
-                rgba(255,50,190,0.08);
-
-            transform: translateY(-1px);
-        }
-
-
-        /* =========================================================
-           LOADING / EMPTY
-           ========================================================= */
-
-        .users-loading,
-        .users-empty {
-            padding: 36px 18px;
-
-            text-align: center;
-
-            color: rgba(255,255,255,0.45);
-
+        .users-page td {
             font-size: 13px;
         }
 
-        .users-loading::before {
-            content: "";
-
-            display: block;
-
-            width: 28px;
-            height: 28px;
-
-            margin: 0 auto 10px;
-
-            border: 2px solid rgba(255,255,255,0.10);
-            border-top-color: #ffca55;
-            border-right-color: #e94fc1;
-
-            border-radius: 50%;
-
-            animation: usersSpin .8s linear infinite;
+        .users-page .user-cell {
+            min-width: 190px;
         }
 
-        @keyframes usersSpin {
-            to {
-                transform: rotate(360deg);
-            }
+        .users-page .user-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 13px;
         }
 
+        .users-page .user-name {
+            font-size: 13px;
+        }
 
-        /* =========================================================
+        .users-page .user-email {
+            font-size: 11px;
+        }
+
+        /* ---------------------------------------------------------
+           LOADING / EMPTY
+           --------------------------------------------------------- */
+
+        .users-page #usersLoading,
+        .users-page #usersEmpty {
+            padding: 35px 18px;
+            text-align: center;
+        }
+
+        /* ---------------------------------------------------------
            PAGINATION
-           ========================================================= */
+           --------------------------------------------------------- */
 
-        #pagination {
+        .users-page #pagination {
             display: flex;
-            align-items: center;
             justify-content: center;
-
+            align-items: center;
+            flex-wrap: wrap;
             gap: 7px;
-
-            padding: 14px;
+            padding: 14px 16px 17px;
         }
 
-
-        /* =========================================================
+        /* ---------------------------------------------------------
            MODAL
-           ========================================================= */
+           --------------------------------------------------------- */
 
-        #userModal {
-            position: fixed;
-
-            inset: 0;
-
-            z-index: 9999;
-
-            display: none;
-
-            align-items: center;
-            justify-content: center;
-
-            padding: 16px;
-
-            background:
-                rgba(3,2,6,0.78);
-
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+        .users-page #userModal {
+            padding: 15px;
+            box-sizing: border-box;
         }
 
-        #userModal.show {
-            display: flex;
-        }
-
-        .user-modal-card {
-            width: 100%;
-            max-width: 500px;
+        .users-page .user-modal-content {
+            width: min(560px, 100%);
             max-height: 90vh;
-
             overflow-y: auto;
-
-            padding: 20px;
-
             border-radius: 22px;
-
-            border:
-                1px solid rgba(255,255,255,0.09);
-
-            background:
-                linear-gradient(
-                    145deg,
-                    #180b19,
-                    #0c080e
-                );
-
-            box-shadow:
-                0 30px 80px rgba(0,0,0,0.55);
         }
-
 
         /* =========================================================
-           MOBILE — IMPORTANT
+           MOBILE LAYOUT
+           THIS IS THE IMPORTANT FIX
            ========================================================= */
 
         @media (max-width: 900px) {
 
-            .users-content {
-                width: 100%;
+            /*
+             * Remove desktop sidebar space completely.
+             * The sidebar becomes an off-canvas menu.
+             */
+
+            .users-page .admin-main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
 
-            .users-hero {
-                padding: 17px;
-                gap: 13px;
-
-                margin-bottom: 13px;
-
-                border-radius: 17px;
+            .users-page .sidebar {
+                width: min(290px, 86vw);
+                min-width: 0;
+                transform: translateX(-105%);
+                z-index: 2000;
             }
 
-            .users-hero-icon {
-                width: 52px;
-                height: 52px;
-                min-width: 52px;
-
-                border-radius: 15px;
+            .users-page .sidebar.open {
+                transform: translateX(0);
             }
 
-            .users-hero-icon svg {
-                width: 27px;
-                height: 27px;
+            .users-page .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 1900;
+                background: rgba(0,0,0,0.68);
+                backdrop-filter: blur(4px);
             }
 
-            .users-kicker {
-                font-size: 9px;
-                letter-spacing: 1.6px;
-            }
-
-            .users-hero h1 {
-                font-size: 24px;
-            }
-
-            .users-hero p {
-                font-size: 12px;
-                line-height: 1.4;
-            }
-
-            .users-stats {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-
-                gap: 9px;
-
-                margin-bottom: 13px;
-            }
-
-            .user-stat-card {
-                padding: 13px;
-
-                border-radius: 15px;
-            }
-
-            .user-stat-top {
-                margin-bottom: 9px;
-            }
-
-            .user-stat-icon {
-                width: 36px;
-                height: 36px;
-                min-width: 36px;
-
-                border-radius: 11px;
-            }
-
-            .user-stat-icon svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .user-stat-label {
-                font-size: 9px;
-            }
-
-            .user-stat-value {
-                font-size: 21px;
-            }
-
-            .users-controls {
-                grid-template-columns:
-                    1fr 1fr;
-
-                gap: 8px;
-
-                padding: 10px;
-
-                margin-bottom: 12px;
-
-                border-radius: 15px;
-            }
-
-            .users-search {
-                grid-column: 1 / -1;
-            }
-
-            .refresh-users {
-                width: 100%;
-            }
-
-            .users-card {
-                border-radius: 16px;
-            }
-
-            .users-card-header {
-                padding: 13px;
-
-                align-items: center;
-            }
-
-            .users-card-heading h2 {
-                font-size: 15px;
-            }
-
-            .users-card-heading p {
-                font-size: 10px;
-            }
-
-            .users-table th {
-                padding: 9px 10px;
-            }
-
-            .users-table td {
-                padding: 10px;
-            }
-        }
-
-
-        /* SMALL PHONES */
-
-        @media (max-width: 600px) {
-
-            .users-page {
-                padding-bottom: 20px;
-            }
-
-            .users-hero {
+            .users-page .sidebar-overlay.active {
                 display: block;
             }
 
-            .users-hero-icon {
-                margin-bottom: 11px;
-            }
-
-            .users-hero h1 {
-                font-size: 23px;
-            }
-
-            .users-hero p {
+            .users-page .main-content {
+                width: 100%;
                 max-width: 100%;
+                padding: 18px 16px 28px;
             }
 
-            .users-stats {
-                gap: 8px;
+            .users-page .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin: 14px 0;
             }
 
-            .user-stat-card {
-                padding: 11px;
+            .users-page .stat-card {
+                min-height: 108px;
+                padding: 14px;
+                border-radius: 17px;
             }
 
-            .user-stat-value {
-                font-size: 20px;
-            }
-
-            .users-controls {
-                grid-template-columns: 1fr;
-            }
-
-            .users-search {
-                grid-column: auto;
-            }
-
-            .users-controls input,
-            .users-controls select,
-            .refresh-users {
+            .users-page .stat-card .stat-icon {
+                width: 42px;
                 height: 42px;
+                min-width: 42px;
+                border-radius: 13px;
             }
 
-            .users-card-header {
-                padding: 12px;
+            .users-page .users-toolbar,
+            .users-page .table-toolbar,
+            .users-page .toolbar {
+                grid-template-columns: 1fr 1fr;
+                gap: 9px;
+                margin: 12px 0;
             }
 
-            .users-live {
-                display: none;
+            .users-page .search-box {
+                grid-column: 1 / -1;
+            }
+
+            .users-page #refreshUsersBtn {
+                width: 100%;
+            }
+
+            .users-page .admin-card,
+            .users-page .users-card,
+            .users-page .table-card {
+                margin-top: 12px;
+                border-radius: 18px;
+            }
+
+            .users-page .card-header {
+                padding: 15px;
             }
         }
 
+        /* ---------------------------------------------------------
+           SMALL PHONE
+           --------------------------------------------------------- */
 
-        /* VERY SMALL PHONES */
+        @media (max-width: 600px) {
 
-        @media (max-width: 380px) {
-
-            .users-hero {
-                padding: 14px;
+            .users-page .admin-header {
+                min-height: 64px;
             }
 
-            .users-hero h1 {
-                font-size: 21px;
+            .users-page .main-content {
+                padding: 14px 12px 24px;
             }
 
-            .users-hero p {
+            .users-page .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .users-page .stat-card {
+                min-height: 100px;
+                padding: 12px;
+            }
+
+            .users-page .stat-card .stat-icon {
+                width: 38px;
+                height: 38px;
+                min-width: 38px;
+                border-radius: 12px;
+            }
+
+            .users-page .stat-card h3 {
                 font-size: 11px;
             }
 
-            .users-stats {
-                grid-template-columns: 1fr 1fr;
+            .users-page .stat-card .stat-value {
+                font-size: 20px;
             }
 
-            .user-stat-card {
+            .users-page .users-toolbar,
+            .users-page .table-toolbar,
+            .users-page .toolbar {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .users-page .search-box {
+                grid-column: auto;
+            }
+
+            .users-page input,
+            .users-page select,
+            .users-page #refreshUsersBtn {
+                height: 44px;
+            }
+
+            .users-page .card-header {
+                padding: 14px;
+            }
+
+            .users-page .card-header h2,
+            .users-page .card-header h3 {
+                font-size: 17px;
+            }
+
+            .users-page .card-header p {
+                font-size: 12px;
+            }
+
+            .users-page #usersLoading,
+            .users-page #usersEmpty {
+                padding: 28px 12px;
+            }
+        }
+
+        /* ---------------------------------------------------------
+           VERY SMALL PHONES
+           --------------------------------------------------------- */
+
+        @media (max-width: 380px) {
+
+            .users-page .main-content {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .users-page .stats-grid {
+                gap: 7px;
+            }
+
+            .users-page .stat-card {
                 padding: 10px;
+                min-height: 94px;
             }
 
-            .user-stat-value {
+            .users-page .stat-card .stat-icon {
+                width: 35px;
+                height: 35px;
+                min-width: 35px;
+            }
+
+            .users-page .stat-card .stat-value {
                 font-size: 18px;
+            }
+        }
+
+        /* ---------------------------------------------------------
+           PREVENT HORIZONTAL PAGE SCROLL
+           --------------------------------------------------------- */
+
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* ---------------------------------------------------------
+           KEEP CONTENT ABOVE MOBILE NAV
+           --------------------------------------------------------- */
+
+        @media (max-width: 900px) {
+
+            .users-page .admin-main {
+                padding-bottom: 20px;
+            }
+
+            .users-page .page-footer {
+                margin-top: 20px;
+                padding-bottom: 20px;
             }
         }
     </style>
 </head>
 
-<body>
+<body class="users-page">
 
     <!-- =========================================================
          PAGE LOADER
          ========================================================= -->
 
-    <div id="pageLoader" class="page-loader">
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
 
-        <div class="loader-icon">
+            <div class="loader-icon">
+                <svg
+                    viewBox="0 0 64 64"
+                    width="54"
+                    height="54"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <circle
+                        cx="32"
+                        cy="32"
+                        r="27"
+                        stroke="url(#loaderGradient)"
+                        stroke-width="3"
+                    />
 
-            <svg viewBox="0 0 64 64" aria-hidden="true">
-                <circle cx="32" cy="32" r="25"></circle>
-                <path d="M22 32l7 7 14-16"></path>
-            </svg>
+                    <path
+                        d="M22 32.5L28.5 39L42 25"
+                        stroke="#ffffff"
+                        stroke-width="4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+
+                    <defs>
+                        <linearGradient
+                            id="loaderGradient"
+                            x1="10"
+                            y1="10"
+                            x2="55"
+                            y2="55"
+                        >
+                            <stop stop-color="#FFD34D"/>
+                            <stop offset="0.55" stop-color="#FF4FD8"/>
+                            <stop offset="1" stop-color="#A82CFF"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+
+            <h2>Loading user management</h2>
+            <p>Securing your administrator session...</p>
+
+            <div class="loader-spinner"></div>
 
         </div>
-
-        <h2>Loading user management</h2>
-        <p>Securing your administrator session...</p>
-
-        <div class="loader-spinner"></div>
-
     </div>
 
 
@@ -1015,39 +609,76 @@
 
     <div class="admin-layout">
 
-
         <!-- SIDEBAR -->
 
-        <aside id="sidebar" class="sidebar">
+        <aside class="sidebar" id="sidebar">
 
             <div class="sidebar-brand">
 
-                <a href="admin.html">
+                <a href="admin.html" class="brand-link">
 
-                    <span class="brand-icon">
+                    <div class="brand-mark">
+                        <svg
+                            viewBox="0 0 64 64"
+                            width="42"
+                            height="42"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M32 5L56 19V45L32 59L8 45V19L32 5Z"
+                                stroke="url(#brandGradient)"
+                                stroke-width="5"
+                            />
 
-                        <svg viewBox="0 0 64 64" aria-hidden="true">
-                            <path d="M32 8l22 10v16c0 12-8 20-22 22C18 54 10 46 10 34V18L32 8z"></path>
-                            <path d="M23 31l6 6 13-13"></path>
+                            <path
+                                d="M20 30L32 23L44 30L32 37L20 30Z"
+                                stroke="#ffffff"
+                                stroke-width="4"
+                                stroke-linejoin="round"
+                            />
+
+                            <defs>
+                                <linearGradient
+                                    id="brandGradient"
+                                    x1="8"
+                                    y1="5"
+                                    x2="56"
+                                    y2="59"
+                                >
+                                    <stop stop-color="#FFD34D"/>
+                                    <stop offset="0.5" stop-color="#FF4FD8"/>
+                                    <stop offset="1" stop-color="#A82CFF"/>
+                                </linearGradient>
+                            </defs>
                         </svg>
+                    </div>
 
-                    </span>
-
-                    <span class="brand-text">
+                    <div class="brand-text">
                         <strong>CROWN</strong>
-                        <small>CASH ADMIN</small>
-                    </span>
+                        <span>CASH ADMIN</span>
+                    </div>
 
                 </a>
 
                 <button
                     type="button"
-                    id="sidebarClose"
                     class="sidebar-close"
+                    id="sidebarClose"
                     aria-label="Close menu"
                 >
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="22"
+                        height="22"
+                        fill="none"
+                    >
+                        <path
+                            d="M6 6L18 18M18 6L6 18"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
                     </svg>
                 </button>
 
@@ -1083,68 +714,156 @@
 
                 <div class="nav-section">
 
-                    <div class="nav-label">
+                    <span class="nav-section-title">
                         MAIN
-                    </div>
+                    </span>
 
-                    <a href="admin.html" class="nav-item">
-
+                    <a
+                        href="admin.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M3 10.5L12 3l9 7.5"></path>
-                                <path d="M5 9.5V21h14V9.5"></path>
-                                <path d="M9 21v-6h6v6"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M3 10.5L12 3L21 10.5V20H14.5V14H9.5V20H3V10.5Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Dashboard</span>
-
                     </a>
 
 
-                    <a href="admin-users.html" class="nav-item active">
-
+                    <a
+                        href="admin-users.html"
+                        class="nav-link active"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="9" cy="8" r="3"></circle>
-                                <path d="M3 20c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5"></path>
-                                <path d="M16 5.5a3 3 0 010 5.5"></path>
-                                <path d="M18 14.5c2 .7 3 2.2 3 4.5"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M3.5 20C3.9 16.3 5.8 14.5 9 14.5C12.2 14.5 14.1 16.3 14.5 20"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16 11C17.7 11 19 9.7 19 8C19 6.3 17.7 5 16 5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16 14.5C18.7 14.5 20.2 16.2 20.5 19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Users</span>
-
                     </a>
 
 
-                    <a href="admin-deposits.html" class="nav-item">
-
+                    <a
+                        href="admin-deposits.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="9"></circle>
-                                <path d="M12 7v10"></path>
-                                <path d="M9 10h5a2 2 0 010 4H9"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M12 7V17M8.5 10.5C8.5 9.1 10 8 12 8C14 8 15.5 9.1 15.5 10.5C15.5 13 8.5 11.5 8.5 14C8.5 15.4 10 16 12 16C14 16 15.5 14.9 15.5 13.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"
+                                    stroke-linecap="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Deposits</span>
-
                     </a>
 
 
-                    <a href="admin-withdrawals.html" class="nav-item">
-
+                    <a
+                        href="admin-withdrawals.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 3v14"></path>
-                                <path d="M7 12l5 5 5-5"></path>
-                                <path d="M5 21h14"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M12 3V17"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M7 12L12 17L17 12"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M5 21H19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Withdrawals</span>
-
                     </a>
 
                 </div>
@@ -1152,53 +871,140 @@
 
                 <div class="nav-section">
 
-                    <div class="nav-label">
+                    <span class="nav-section-title">
                         FINANCE
-                    </div>
+                    </span>
 
-                    <a href="admin-investments.html" class="nav-item">
-
+                    <a
+                        href="admin-investments.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M4 17l6-6 4 3 6-8"></path>
-                                <path d="M15 6h5v5"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M4 17L9 12L13 15L20 7"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M16 7H20V11"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Investments</span>
-
                     </a>
 
 
-                    <a href="admin-transactions.html" class="nav-item">
-
+                    <a
+                        href="admin-transactions.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M4 7h13"></path>
-                                <path d="M14 4l3 3-3 3"></path>
-                                <path d="M20 17H7"></path>
-                                <path d="M10 14l-3 3 3 3"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M4 7H20"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16 3L20 7L16 11"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M20 17H4"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M8 13L4 17L8 21"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Transactions</span>
-
                     </a>
 
 
-                    <a href="admin-referrals.html" class="nav-item">
-
+                    <a
+                        href="admin-referrals.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="8" cy="8" r="3"></circle>
-                                <circle cx="17" cy="9" r="2.5"></circle>
-                                <path d="M2.5 20c0-3.3 2.4-5.5 5.5-5.5s5.5 2.2 5.5 5.5"></path>
-                                <path d="M14 15c3 0 5 1.8 5 5"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <circle
+                                    cx="8"
+                                    cy="8"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <circle
+                                    cx="17"
+                                    cy="9"
+                                    r="2.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M3 20C3.4 16.4 5.1 14.5 8 14.5C10.9 14.5 12.6 16.4 13 20"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M14 15C16.9 14.8 18.8 16.3 19.5 19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Referrals</span>
-
                     </a>
 
                 </div>
@@ -1206,37 +1012,85 @@
 
                 <div class="nav-section">
 
-                    <div class="nav-label">
+                    <span class="nav-section-title">
                         MANAGEMENT
-                    </div>
+                    </span>
 
-                    <a href="admin-support.html" class="nav-item">
-
+                    <a
+                        href="admin-support.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M4 13v-1a8 8 0 0116 0v1"></path>
-                                <path d="M4 13h3v6H4z"></path>
-                                <path d="M17 13h3v6h-3z"></path>
-                                <path d="M17 19c0 2-2 3-5 3"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M5 13V11C5 7.1 8.1 4 12 4C15.9 4 19 7.1 19 11V13"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M5 13H3.5V17H5C6.1 17 7 16.1 7 15V15C7 13.9 6.1 13 5 13Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M19 13H20.5V17H19C17.9 17 17 16.1 17 15V15C17 13.9 17.9 13 19 13Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M17 18C15.8 19.3 14.2 20 12 20"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Support</span>
-
                     </a>
 
 
-                    <a href="admin-security.html" class="nav-item">
-
+                    <a
+                        href="admin-security.html"
+                        class="nav-link"
+                    >
                         <span class="nav-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"></path>
-                                <path d="M9 12l2 2 4-5"></path>
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                width="22"
+                                height="22"
+                            >
+                                <path
+                                    d="M12 3L20 6V11C20 16 16.8 19.5 12 21C7.2 19.5 4 16 4 11V6L12 3Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M9 12L11 14L15.5 9.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
                             </svg>
+
                         </span>
 
                         <span>Security &amp; Audit</span>
-
                     </a>
 
                 </div>
@@ -1246,24 +1100,50 @@
 
             <button
                 type="button"
+                class="logout-btn"
                 id="logoutBtn"
-                class="logout-button"
             >
+                <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                >
+                    <path
+                        d="M10 4H5C4.4 4 4 4.4 4 5V19C4 19.6 4.4 20 5 20H10"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
 
-                <svg viewBox="0 0 24 24">
-                    <path d="M10 4H5v16h5"></path>
-                    <path d="M14 8l4 4-4 4"></path>
-                    <path d="M18 12H9"></path>
+                    <path
+                        d="M14 8L18 12L14 16"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+
+                    <path
+                        d="M18 12H9"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                    />
                 </svg>
 
                 <span>Logout</span>
-
             </button>
 
         </aside>
 
 
-        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+        <!-- MOBILE OVERLAY -->
+
+        <div
+            class="sidebar-overlay"
+            id="sidebarOverlay"
+        ></div>
 
 
         <!-- =====================================================
@@ -1272,23 +1152,58 @@
 
         <main class="admin-main">
 
+            <!-- HEADER -->
+
             <header class="admin-header">
 
                 <button
                     type="button"
-                    id="menuButton"
                     class="menu-button"
+                    id="menuButton"
                     aria-label="Open menu"
                 >
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 6h16M4 12h16M4 18h16"></path>
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="24"
+                        height="24"
+                        fill="none"
+                    >
+                        <path
+                            d="M4 6H20"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M4 12H20"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
+
+                        <path
+                            d="M4 18H20"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                        />
                     </svg>
                 </button>
 
+
                 <div class="header-title">
-                    <span>CROWN CASH ADMIN</span>
-                    <strong>User Management</strong>
+
+                    <span>
+                        CROWN CASH ADMIN
+                    </span>
+
+                    <strong>
+                        User Management
+                    </strong>
+
                 </div>
+
 
                 <div class="header-account">
 
@@ -1296,7 +1211,8 @@
                         A
                     </div>
 
-                    <div>
+                    <div class="header-account-info">
+
                         <strong id="headerUserName">
                             Administrator
                         </strong>
@@ -1304,6 +1220,7 @@
                         <span>
                             Admin Account
                         </span>
+
                     </div>
 
                 </div>
@@ -1311,356 +1228,534 @@
             </header>
 
 
-            <div class="main-content users-page">
+            <!-- CONTENT -->
 
-                <div class="users-content">
+            <div class="main-content">
+
+                <!-- PAGE INTRO -->
+
+                <section class="page-heading">
+
+                    <div class="heading-icon">
+
+                        <svg
+                            viewBox="0 0 64 64"
+                            width="56"
+                            height="56"
+                            fill="none"
+                        >
+                            <defs>
+                                <linearGradient
+                                    id="headingGradient"
+                                    x1="8"
+                                    y1="8"
+                                    x2="56"
+                                    y2="56"
+                                >
+                                    <stop stop-color="#FFD34D"/>
+                                    <stop offset="0.5" stop-color="#FF4FD8"/>
+                                    <stop offset="1" stop-color="#A82CFF"/>
+                                </linearGradient>
+                            </defs>
+
+                            <circle
+                                cx="32"
+                                cy="32"
+                                r="27"
+                                fill="url(#headingGradient)"
+                            />
+
+                            <circle
+                                cx="24"
+                                cy="27"
+                                r="5"
+                                stroke="#ffffff"
+                                stroke-width="3"
+                            />
+
+                            <path
+                                d="M15 45C15.7 38.8 18.7 35.5 24 35.5C29.3 35.5 32.3 38.8 33 45"
+                                stroke="#ffffff"
+                                stroke-width="3"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M39 31C42.3 31 45 28.3 45 25C45 21.7 42.3 19 39 19"
+                                stroke="#ffffff"
+                                stroke-width="3"
+                                stroke-linecap="round"
+                            />
+
+                            <path
+                                d="M39 36C44.2 36 47.6 39 48.5 44"
+                                stroke="#ffffff"
+                                stroke-width="3"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span class="eyebrow">
+                            CROWN CASH ADMINISTRATION
+                        </span>
+
+                        <h1>
+                            User Management
+                        </h1>
+
+                        <p>
+                            View registered accounts, monitor account status
+                            and manage Crown Cash users from one secure
+                            control center.
+                        </p>
+
+                    </div>
+
+                </section>
 
 
-                    <!-- HERO -->
+                <!-- MESSAGE -->
 
-                    <section class="users-hero">
+                <div
+                    class="admin-message"
+                    id="usersMessage"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
 
-                        <div class="users-hero-icon">
 
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="9" cy="8" r="3"></circle>
-                                <path d="M3 20c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5"></path>
-                                <path d="M16 5.5a3 3 0 010 5.5"></path>
-                                <path d="M18 14.5c2 .7 3 2.2 3 4.5"></path>
+                <!-- =================================================
+                     STATISTICS
+                     ================================================= -->
+
+                <section class="stats-grid">
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="25"
+                                height="25"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M3.5 20C3.9 16.3 5.8 14.5 9 14.5C12.2 14.5 14.1 16.3 14.5 20"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+
+                                <path
+                                    d="M16 11C17.7 11 19 9.7 19 8C19 6.3 17.7 5 16 5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
                             </svg>
 
                         </div>
 
-                        <div class="users-hero-text">
+                        <div>
 
-                            <div class="users-kicker">
-                                CROWN CASH ADMINISTRATION
-                            </div>
+                            <span>
+                                Total Users
+                            </span>
 
-                            <h1>
-                                User Management
-                            </h1>
+                            <strong id="totalUsers">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="25"
+                                height="25"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="8.5"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                />
+
+                                <path
+                                    d="M8 12L10.7 14.7L16.5 8.8"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Active Users
+                            </span>
+
+                            <strong id="activeUsers">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="25"
+                                height="25"
+                                fill="none"
+                            >
+                                <path
+                                    d="M5 6H19V18H5V6Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M9 10H15M9 14H13"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Blocked Users
+                            </span>
+
+                            <strong id="blockedUsers">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </article>
+
+
+                    <article class="stat-card">
+
+                        <div class="stat-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="25"
+                                height="25"
+                                fill="none"
+                            >
+                                <path
+                                    d="M12 3L20 6V11C20 16 16.8 19.5 12 21C7.2 19.5 4 16 4 11V6L12 3Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linejoin="round"
+                                />
+
+                                <circle
+                                    cx="12"
+                                    cy="10"
+                                    r="2.2"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"
+                                />
+
+                                <path
+                                    d="M8.5 17C8.9 14.7 10.1 13.5 12 13.5C13.9 13.5 15.1 14.7 15.5 17"
+                                    stroke="currentColor"
+                                    stroke-width="1.6"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Admin Accounts
+                            </span>
+
+                            <strong id="adminUsers">
+                                0
+                            </strong>
+
+                        </div>
+
+                    </article>
+
+                </section>
+
+
+                <!-- =================================================
+                     FILTERS
+                     ================================================= -->
+
+                <section class="admin-card users-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="eyebrow">
+                                CUSTOMER ACCOUNTS
+                            </span>
+
+                            <h2>
+                                Registered Users
+                            </h2>
 
                             <p>
-                                View registered accounts, monitor account
-                                status and manage Crown Cash users from one
-                                secure control center.
+                                Customer accounts and account activity
                             </p>
 
                         </div>
-
-                    </section>
-
-
-                    <!-- MESSAGE -->
-
-                    <div
-                        id="usersMessage"
-                        class="admin-message"
-                        style="display:none;"
-                    ></div>
-
-
-                    <!-- STATS -->
-
-                    <section class="users-stats">
-
-                        <div class="user-stat-card">
-
-                            <div class="user-stat-top">
-
-                                <div class="user-stat-icon">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="9" cy="8" r="3"></circle>
-                                        <path d="M3 20c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5"></path>
-                                        <path d="M16 5.5a3 3 0 010 5.5"></path>
-                                        <path d="M18 14.5c2 .7 3 2.2 3 4.5"></path>
-                                    </svg>
-                                </div>
-
-                                <p class="user-stat-label">
-                                    Total Users
-                                </p>
-
-                            </div>
-
-                            <p
-                                id="totalUsers"
-                                class="user-stat-value"
-                            >
-                                0
-                            </p>
-
-                        </div>
-
-
-                        <div class="user-stat-card">
-
-                            <div class="user-stat-top">
-
-                                <div class="user-stat-icon">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="9"></circle>
-                                        <path d="M8 12l3 3 5-6"></path>
-                                    </svg>
-                                </div>
-
-                                <p class="user-stat-label">
-                                    Active Users
-                                </p>
-
-                            </div>
-
-                            <p
-                                id="activeUsers"
-                                class="user-stat-value"
-                            >
-                                0
-                            </p>
-
-                        </div>
-
-
-                        <div class="user-stat-card">
-
-                            <div class="user-stat-top">
-
-                                <div class="user-stat-icon">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"></path>
-                                        <path d="M8 12h8"></path>
-                                    </svg>
-                                </div>
-
-                                <p class="user-stat-label">
-                                    Blocked Users
-                                </p>
-
-                            </div>
-
-                            <p
-                                id="blockedUsers"
-                                class="user-stat-value"
-                            >
-                                0
-                            </p>
-
-                        </div>
-
-
-                        <div class="user-stat-card">
-
-                            <div class="user-stat-top">
-
-                                <div class="user-stat-icon">
-                                    <svg viewBox="0 0 24 24">
-                                        <circle cx="12" cy="7" r="3"></circle>
-                                        <path d="M5 21c0-4 3-6 7-6s7 2 7 6"></path>
-                                        <path d="M17 5l2 2 3-3"></path>
-                                    </svg>
-                                </div>
-
-                                <p class="user-stat-label">
-                                    Admin Accounts
-                                </p>
-
-                            </div>
-
-                            <p
-                                id="adminUsers"
-                                class="user-stat-value"
-                            >
-                                0
-                            </p>
-
-                        </div>
-
-                    </section>
-
-
-                    <!-- CONTROLS -->
-
-                    <section class="users-controls">
-
-                        <div class="users-search">
-
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="7"></circle>
-                                <path d="M16 16l5 5"></path>
-                            </svg>
-
-                            <input
-                                type="search"
-                                id="searchUsers"
-                                placeholder="Search users..."
-                                autocomplete="off"
-                            >
-
-                        </div>
-
-
-                        <select id="statusFilter">
-
-                            <option value="">
-                                All Statuses
-                            </option>
-
-                            <option value="active">
-                                Active
-                            </option>
-
-                            <option value="pending">
-                                Pending
-                            </option>
-
-                            <option value="suspended">
-                                Suspended
-                            </option>
-
-                            <option value="blocked">
-                                Blocked
-                            </option>
-
-                            <option value="disabled">
-                                Disabled
-                            </option>
-
-                        </select>
-
-
-                        <select id="accountTypeFilter">
-
-                            <option value="">
-                                All Accounts
-                            </option>
-
-                            <option value="user">
-                                Users
-                            </option>
-
-                            <option value="admin">
-                                Admins
-                            </option>
-
-                        </select>
-
 
                         <button
                             type="button"
+                            class="secondary-button"
                             id="refreshUsersBtn"
-                            class="refresh-users"
                         >
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="18"
+                                height="18"
+                                fill="none"
+                            >
+                                <path
+                                    d="M20 11A8 8 0 0 0 6.5 5.5L4 8"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
 
-                            <svg viewBox="0 0 24 24">
-                                <path d="M20 11a8 8 0 00-14-5L4 8"></path>
-                                <path d="M4 4v4h4"></path>
-                                <path d="M4 13a8 8 0 0014 5l2-2"></path>
-                                <path d="M20 20v-4h-4"></path>
+                                <path
+                                    d="M4 4V8H8"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M4 13A8 8 0 0 0 17.5 18.5L20 16"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+
+                                <path
+                                    d="M20 20V16H16"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
                             </svg>
 
-                            <span>Refresh</span>
-
+                            Refresh
                         </button>
 
-                    </section>
+                    </div>
 
 
-                    <!-- USERS CARD -->
+                    <div class="users-toolbar">
 
-                    <section class="users-card">
+                        <div class="search-box">
 
-                        <div class="users-card-header">
+                            <div class="input-wrapper">
 
-                            <div class="users-card-heading">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="19"
+                                    height="19"
+                                    fill="none"
+                                >
+                                    <circle
+                                        cx="11"
+                                        cy="11"
+                                        r="6.5"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                    />
 
-                                <h2>
-                                    Registered Users
-                                </h2>
+                                    <path
+                                        d="M16 16L21 21"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                    />
+                                </svg>
 
-                                <p>
-                                    Customer accounts and account activity
-                                </p>
+                                <input
+                                    type="search"
+                                    id="searchUsers"
+                                    placeholder="Search users..."
+                                    autocomplete="off"
+                                >
 
                             </div>
 
-                            <div class="users-live">
+                        </div>
 
-                                <span class="users-live-dot"></span>
 
-                                Live
+                        <div class="filter-group">
 
-                            </div>
+                            <select id="statusFilter">
+
+                                <option value="all">
+                                    All Statuses
+                                </option>
+
+                                <option value="active">
+                                    Active
+                                </option>
+
+                                <option value="pending">
+                                    Pending
+                                </option>
+
+                                <option value="suspended">
+                                    Suspended
+                                </option>
+
+                                <option value="blocked">
+                                    Blocked
+                                </option>
+
+                                <option value="disabled">
+                                    Disabled
+                                </option>
+
+                            </select>
 
                         </div>
 
 
-                        <div
-                            id="usersLoading"
-                            class="users-loading"
-                        >
-                            Loading users...
-                        </div>
+                        <div class="filter-group">
 
+                            <select id="accountTypeFilter">
 
-                        <div
-                            id="usersEmpty"
-                            class="users-empty"
-                            style="display:none;"
-                        >
-                            No users found.
-                        </div>
+                                <option value="all">
+                                    All Accounts
+                                </option>
 
+                                <option value="user">
+                                    Users
+                                </option>
 
-                        <div class="users-table-wrapper">
+                                <option value="admin">
+                                    Admins
+                                </option>
 
-                            <table class="users-table">
-
-                                <thead>
-
-                                    <tr>
-
-                                        <th>User</th>
-                                        <th>Phone</th>
-                                        <th>Balance</th>
-                                        <th>Status</th>
-                                        <th>Account</th>
-                                        <th>Joined</th>
-                                        <th>View</th>
-
-                                    </tr>
-
-                                </thead>
-
-                                <tbody id="usersTableBody"></tbody>
-
-                            </table>
+                            </select>
 
                         </div>
 
+                    </div>
 
-                        <div id="pagination"></div>
 
-                    </section>
+                    <!-- =================================================
+                         USERS TABLE
+                         ================================================= -->
 
-                </div>
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>User</th>
+                                    <th>Phone</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Account</th>
+                                    <th>Joined</th>
+                                    <th>View</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="usersTableBody"></tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div id="usersLoading">
+                        Loading users...
+                    </div>
+
+
+                    <div
+                        id="usersEmpty"
+                        style="display:none;"
+                    >
+                        No users found.
+                    </div>
+
+
+                    <div id="pagination"></div>
+
+                </section>
 
             </div>
 
 
             <!-- FOOTER -->
 
-            <footer class="admin-footer">
+            <footer class="page-footer">
 
-                <div>
+                <div class="footer-brand">
                     <strong>CROWN CASH</strong>
-                    Administration Panel
+                    <span>Administration Panel</span>
                 </div>
 
-                <div>
+                <div class="footer-security">
                     Secure Admin Session
                 </div>
 
-                <div>
+                <div class="footer-copy">
                     © 2026 Crown Cash. Administration Portal.
                 </div>
 
@@ -1675,67 +1770,88 @@
          USER MODAL
          ========================================================= -->
 
-    <div id="userModal">
+    <div
+        class="modal"
+        id="userModal"
+        aria-hidden="true"
+    >
 
-        <div class="user-modal-card">
+        <div class="user-modal-content">
 
             <button
                 type="button"
-                id="closeUserModal"
                 class="modal-close"
+                id="closeUserModal"
                 aria-label="Close"
             >
-                <svg viewBox="0 0 24 24">
-                    <path d="M6 6l12 12M18 6L6 18"></path>
+                <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                >
+                    <path
+                        d="M6 6L18 18M18 6L6 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    />
                 </svg>
             </button>
 
 
-            <div
-                id="modalUserAvatar"
-                class="modal-user-avatar"
-            >
-                U
+            <div class="modal-user-header">
+
+                <div
+                    class="modal-user-avatar"
+                    id="modalUserAvatar"
+                >
+                    U
+                </div>
+
+                <div>
+
+                    <h2 id="modalUserName">
+                        User
+                    </h2>
+
+                    <p id="modalUserEmail">
+                        —
+                    </p>
+
+                </div>
+
             </div>
 
 
-            <h2 id="modalUserName">
-                User
-            </h2>
+            <div class="modal-user-grid">
 
-            <p id="modalUserEmail">
-                —
-            </p>
-
-
-            <div class="modal-details">
-
-                <div>
+                <div class="modal-detail">
                     <span>Phone</span>
                     <strong id="modalUserPhone">—</strong>
                 </div>
 
-                <div>
+                <div class="modal-detail">
                     <span>Referral Code</span>
                     <strong id="modalReferralCode">—</strong>
                 </div>
 
-                <div>
+                <div class="modal-detail">
                     <span>Balance</span>
                     <strong id="modalUserBalance">UGX 0</strong>
                 </div>
 
-                <div>
+                <div class="modal-detail">
                     <span>Status</span>
                     <strong id="modalUserStatus">—</strong>
                 </div>
 
-                <div>
+                <div class="modal-detail">
                     <span>Account Type</span>
                     <strong id="modalAccountType">—</strong>
                 </div>
 
-                <div>
+                <div class="modal-detail">
                     <span>Created</span>
                     <strong id="modalCreatedAt">—</strong>
                 </div>
@@ -1743,22 +1859,24 @@
             </div>
 
 
-            <button
-                type="button"
-                id="manageUserBtn"
-                class="primary-button"
-            >
-                Manage User
-            </button>
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="manageUserBtn"
+                >
+                    Manage User
+                </button>
+
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- =========================================================
-         SCRIPTS
-         ========================================================= -->
+    <!-- SCRIPTS -->
 
     <script src="admin-users.js"></script>
     <script src="admin-user-actions.js"></script>

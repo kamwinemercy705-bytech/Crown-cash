@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -12,1152 +9,117 @@
 
     <title>Crown Cash Admin | Deposits</title>
 
-    <link
-        rel="stylesheet"
-        href="admin.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="admin-deposits.css"
-    >
-
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin-deposits.css">
 </head>
 
 <body>
 
-    <!-- PAGE LOADER -->
+<div class="admin-layout">
 
-    <div
-        class="page-loader"
-        id="pageLoader"
-    >
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
 
-        <div class="loader-icon">
+    <aside class="sidebar" id="sidebar">
 
-            <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-            >
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9"
-                ></circle>
+        <div class="sidebar-brand">
 
-                <path
-                    d="M12 7v5l3 2"
-                ></path>
-            </svg>
-
-        </div>
-
-        <div class="loader-text">
-            Verifying administrator access...
-        </div>
-
-    </div>
-
-
-    <div class="admin-layout">
-
-
-        <!-- SIDEBAR -->
-
-        <aside
-            class="sidebar"
-            id="sidebar"
-        >
-
-            <div class="sidebar-brand">
-
-                <div class="brand-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                    >
-                        <path
-                            d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"
-                        ></path>
-
-                        <path
-                            d="M9 12l2 2 4-5"
-                        ></path>
-
-                    </svg>
-
-                </div>
-
-                <div class="brand-text">
-
-                    <strong>Crown Cash</strong>
-
-                    <span>Administration</span>
-
-                </div>
-
+            <div class="brand-mark">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 18h18"/>
+                    <path d="M5 18V8l4 4 3-7 3 7 4-4v10"/>
+                </svg>
             </div>
 
-
-            <div class="sidebar-admin">
-
-                <div
-                    class="admin-avatar"
-                    id="adminAvatar"
-                >
-                    A
-                </div>
-
-                <div>
-
-                    <strong id="adminName">
-                        Administrator
-                    </strong>
-
-                    <span id="adminAccountType">
-                        Admin Account
-                    </span>
-
-                </div>
-
+            <div class="brand-text">
+                <strong>CROWN CASH</strong>
+                <span>Administration</span>
             </div>
-
-
-            <nav class="admin-nav">
-
-
-                <div class="nav-section">
-
-                    <div class="nav-section-title">
-                        MAIN
-                    </div>
-
-
-                    <a
-                        href="admin.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M3 11l9-8 9 8"></path>
-
-                                <path d="M5 10v10h14V10"></path>
-
-                                <path d="M9 20v-6h6v6"></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Dashboard</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-users.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="9"
-                                    cy="8"
-                                    r="3"
-                                ></circle>
-
-                                <path
-                                    d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
-                                ></path>
-
-                                <path
-                                    d="M16 11c2.8 0 5 2.2 5 5"
-                                ></path>
-
-                                <path
-                                    d="M16 5.5a3 3 0 010 5"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Users</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-deposits.html"
-                        class="nav-link active"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="3"
-                                ></rect>
-
-                                <path
-                                    d="M3 9h18"
-                                ></path>
-
-                                <path
-                                    d="M8 14h4"
-                                ></path>
-
-                                <path
-                                    d="M15 13v4"
-                                ></path>
-
-                                <path
-                                    d="M13 15h4"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Deposits</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-withdrawals.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="3"
-                                ></rect>
-
-                                <path
-                                    d="M3 9h18"
-                                ></path>
-
-                                <path
-                                    d="M12 12v5"
-                                ></path>
-
-                                <path
-                                    d="M9.5 14.5L12 17l2.5-2.5"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Withdrawals</span>
-
-                    </a>
-
-                </div>
-
-
-                <div class="nav-section">
-
-                    <div class="nav-section-title">
-                        FINANCE
-                    </div>
-
-
-                    <a
-                        href="admin-investments.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M4 19V5"></path>
-
-                                <path d="M4 19h16"></path>
-
-                                <path d="M7 15l4-5 3 3 5-7"></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Investments</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-transactions.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path
-                                    d="M7 7h13"
-                                ></path>
-
-                                <path
-                                    d="M17 4l3 3-3 3"
-                                ></path>
-
-                                <path
-                                    d="M17 17H4"
-                                ></path>
-
-                                <path
-                                    d="M7 14l-3 3 3 3"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Transactions</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-referrals.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="9"
-                                    cy="8"
-                                    r="3"
-                                ></circle>
-
-                                <circle
-                                    cx="17"
-                                    cy="10"
-                                    r="2.5"
-                                ></circle>
-
-                                <path
-                                    d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"
-                                ></path>
-
-                                <path
-                                    d="M15 16c2.8.2 5 1.8 5 4"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Referrals</span>
-
-                    </a>
-
-                </div>
-
-
-                <div class="nav-section">
-
-                    <div class="nav-section-title">
-                        MANAGEMENT
-                    </div>
-
-
-                    <a
-                        href="admin-support.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path
-                                    d="M4 5h16v12H8l-4 4V5z"
-                                ></path>
-
-                                <path
-                                    d="M8 9h8"
-                                ></path>
-
-                                <path
-                                    d="M8 13h5"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Support</span>
-
-                    </a>
-
-
-                    <a
-                        href="admin-security.html"
-                        class="nav-link"
-                    >
-
-                        <span class="nav-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path
-                                    d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"
-                                ></path>
-
-                                <path
-                                    d="M9 12l2 2 4-5"
-                                ></path>
-
-                            </svg>
-
-                        </span>
-
-                        <span>Security / Audit</span>
-
-                    </a>
-
-                </div>
-
-            </nav>
-
 
             <button
                 type="button"
-                class="logout-button"
-                id="logoutBtn"
+                class="sidebar-close"
+                id="sidebarClose"
+                aria-label="Close menu"
+            >
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6l12 12"/>
+                    <path d="M18 6L6 18"/>
+                </svg>
+            </button>
+
+        </div>
+
+
+        <!-- ADMIN PROFILE -->
+
+        <div class="sidebar-admin">
+
+            <div class="admin-avatar" id="adminAvatar">
+                A
+            </div>
+
+            <div class="admin-info">
+
+                <strong id="adminName">
+                    Administrator
+                </strong>
+
+                <span id="adminAccountType">
+                    Admin Account
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-section-title">
+                MAIN
+            </div>
+
+            <a href="admin.html" class="nav-link">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 11.5L12 4l9 7.5"/>
+                        <path d="M5 10v10h14V10"/>
+                        <path d="M9 20v-6h6v6"/>
+                    </svg>
+                </span>
+
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <a href="admin-users.html" class="nav-link">
+
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="9" cy="8" r="3"/>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+                        <path d="M16 5.5c1.7.3 3 1.8 3 3.5"/>
+                        <path d="M18 14c2 .7 3 2.4 3 4.5"/>
+                    </svg>
+                </span>
+
+                <span>Users</span>
+
+            </a>
+
+
+            <a
+                href="admin-deposits.html"
+                class="nav-link active"
             >
 
                 <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M10 5H5v14h5"
-                        ></path>
-
-                        <path
-                            d="M14 8l4 4-4 4"
-                        ></path>
-
-                        <path
-                            d="M18 12H9"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Logout</span>
-
-            </button>
-
-        </aside>
-
-
-        <div
-            class="sidebar-overlay"
-            id="sidebarOverlay"
-        ></div>
-
-
-        <!-- MAIN -->
-
-        <main class="admin-main">
-
-
-            <!-- HEADER -->
-
-            <header class="admin-header">
-
-                <button
-                    type="button"
-                    class="menu-button"
-                    id="menuButton"
-                    aria-label="Open menu"
-                >
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M4 6h16"></path>
-                        <path d="M4 12h16"></path>
-                        <path d="M4 18h16"></path>
-
-                    </svg>
-
-                </button>
-
-
-                <div class="header-title">
-
-                    <span>Administrator</span>
-
-                    <strong>Admin Panel</strong>
-
-                </div>
-
-
-                <div class="header-account">
-
-                    <div
-                        class="header-avatar"
-                        id="accountAvatar"
-                    >
-                        A
-                    </div>
-
-                    <div>
-
-                        <strong id="headerUserName">
-                            Administrator
-                        </strong>
-
-                        <span>
-                            Admin Panel
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </header>
-
-
-            <div class="main-content">
-
-
-                <!-- PAGE INTRO -->
-
-                <section class="page-intro">
-
-                    <div class="intro-icon">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <rect
-                                x="3"
-                                y="5"
-                                width="18"
-                                height="14"
-                                rx="3"
-                            ></rect>
-
-                            <path
-                                d="M3 9h18"
-                            ></path>
-
-                            <path
-                                d="M15 13v4"
-                            ></path>
-
-                            <path
-                                d="M13 15h4"
-                            ></path>
-
-                        </svg>
-
-                    </div>
-
-
-                    <div>
-
-                        <span class="eyebrow">
-                            CROWN CASH ADMINISTRATION
-                        </span>
-
-                        <h1>
-                            Deposit Management
-                        </h1>
-
-                        <p>
-                            Review customer deposits and approve or reject pending payment submissions.
-                        </p>
-
-                    </div>
-
-                </section>
-
-
-                <!-- MESSAGE -->
-
-                <div
-                    class="admin-message"
-                    id="depositsMessage"
-                    hidden
-                ></div>
-
-
-                <!-- STATISTICS -->
-
-                <section class="deposit-stats">
-
-
-                    <article class="deposit-stat-card">
-
-                        <div class="stat-icon gold">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="3"
-                                ></rect>
-
-                                <path
-                                    d="M3 9h18"
-                                ></path>
-
-                                <path
-                                    d="M8 14h4"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Total Deposits
-                            </span>
-
-                            <strong id="totalDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </article>
-
-
-                    <article class="deposit-stat-card">
-
-                        <div class="stat-icon pending">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="8"
-                                ></circle>
-
-                                <path
-                                    d="M12 8v5l3 2"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Pending
-                            </span>
-
-                            <strong id="pendingDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </article>
-
-
-                    <article class="deposit-stat-card">
-
-                        <div class="stat-icon approved">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="8"
-                                ></circle>
-
-                                <path
-                                    d="M8.5 12l2.3 2.3 4.7-5"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Approved
-                            </span>
-
-                            <strong id="approvedDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </article>
-
-
-                    <article class="deposit-stat-card">
-
-                        <div class="stat-icon rejected">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="8"
-                                ></circle>
-
-                                <path
-                                    d="M9 9l6 6"
-                                ></path>
-
-                                <path
-                                    d="M15 9l-6 6"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Rejected
-                            </span>
-
-                            <strong id="rejectedDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </article>
-
-                </section>
-
-
-                <!-- FILTER CARD -->
-
-                <section class="filters-card">
-
-
-                    <div class="filter-heading">
-
-                        <div class="filter-heading-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path
-                                    d="M4 6h16"
-                                ></path>
-
-                                <path
-                                    d="M7 12h10"
-                                ></path>
-
-                                <path
-                                    d="M10 18h4"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Deposit Filters
-                            </strong>
-
-                            <span>
-                                Search and filter customer payments
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="filters-grid">
-
-
-                        <div class="search-box">
-
-                            <span class="search-icon">
-
-                                <svg viewBox="0 0 24 24">
-
-                                    <circle
-                                        cx="11"
-                                        cy="11"
-                                        r="6"
-                                    ></circle>
-
-                                    <path
-                                        d="M16 16l5 5"
-                                    ></path>
-
-                                </svg>
-
-                            </span>
-
-                            <input
-                                type="search"
-                                id="searchDeposits"
-                                placeholder="Search customer, phone or reference..."
-                                autocomplete="off"
-                            >
-
-                        </div>
-
-
-                        <select id="statusFilter">
-
-                            <option value="all">
-                                All Statuses
-                            </option>
-
-                            <option value="pending">
-                                Pending
-                            </option>
-
-                            <option value="approved">
-                                Approved
-                            </option>
-
-                            <option value="rejected">
-                                Rejected
-                            </option>
-
-                        </select>
-
-
-                        <select id="methodFilter">
-
-                            <option value="all">
-                                All Methods
-                            </option>
-
-                            <option value="mtn">
-                                MTN Mobile Money
-                            </option>
-
-                            <option value="airtel">
-                                Airtel Money
-                            </option>
-
-                        </select>
-
-
-                        <button
-                            type="button"
-                            class="refresh-button"
-                            id="refreshDepositsBtn"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path
-                                    d="M20 11a8 8 0 00-14-5L4 8"
-                                ></path>
-
-                                <path
-                                    d="M4 4v4h4"
-                                ></path>
-
-                                <path
-                                    d="M4 13a8 8 0 0014 5l2-2"
-                                ></path>
-
-                                <path
-                                    d="M20 20v-4h-4"
-                                ></path>
-
-                            </svg>
-
-                            <span>
-                                Refresh
-                            </span>
-
-                        </button>
-
-                    </div>
-
-                </section>
-
-
-                <!-- DEPOSITS -->
-
-                <section class="deposits-card">
-
-
-                    <div class="card-heading">
-
-                        <div class="card-heading-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="3"
-                                ></rect>
-
-                                <path
-                                    d="M3 9h18"
-                                ></path>
-
-                                <path
-                                    d="M7 14h5"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-
-                        <div>
-
-                            <h2>
-                                Customer Deposits
-                            </h2>
-
-                            <p>
-                                Review submitted payment references before approving deposits.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- LOADING -->
-
-                    <div
-                        class="table-loading"
-                        id="depositsLoading"
-                    >
-
-                        <div class="loading-spinner"></div>
-
-                        <span>
-                            Loading deposits...
-                        </span>
-
-                    </div>
-
-
-                    <!-- EMPTY -->
-
-                    <div
-                        class="empty-state"
-                        id="depositsEmpty"
-                        hidden
-                    >
-
-                        <div class="empty-icon">
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="5"
-                                    width="18"
-                                    height="14"
-                                    rx="3"
-                                ></rect>
-
-                                <path
-                                    d="M3 9h18"
-                                ></path>
-
-                                <path
-                                    d="M9 14h6"
-                                ></path>
-
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            No deposits found
-                        </h3>
-
-                        <p>
-                            There are no deposits matching the selected filters.
-                        </p>
-
-                    </div>
-
-
-                    <!-- TABLE -->
-
-                    <div
-                        class="deposits-table-wrapper"
-                        id="depositsTableWrapper"
-                    >
-
-                        <table class="deposits-table">
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>
-                                        Customer
-                                    </th>
-
-                                    <th>
-                                        Amount
-                                    </th>
-
-                                    <th>
-                                        Method
-                                    </th>
-
-                                    <th>
-                                        Reference
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Actions
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody id="depositsTableBody"></tbody>
-
-                        </table>
-
-                    </div>
-
-
-                    <!-- MOBILE / CARD CONTAINER -->
-
-                    <div
-                        class="mobile-deposits"
-                        id="mobileDeposits"
-                    ></div>
-
-
-                    <!-- PAGINATION -->
-
-                    <div
-                        class="pagination"
-                        id="pagination"
-                    ></div>
-
-                </section>
-
-
-                <footer class="admin-footer">
-
-                    <div>
-
-                        <strong>
-                            Crown Cash Administration Panel
-                        </strong>
-
-                        <span>
-                            Secure Admin Session
-                        </span>
-
-                    </div>
-
-                    <span>
-                        © 2026 Crown Cash. Administration Portal.
-                    </span>
-
-                </footer>
-
-            </div>
-
-        </main>
-
-    </div>
-
-
-    <!-- DEPOSIT REVIEW MODAL -->
-
-    <div
-        class="modal-overlay"
-        id="depositModal"
-        hidden
-    >
-
-        <div
-            class="deposit-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modalDepositTitle"
-        >
-
-            <button
-                type="button"
-                class="modal-close"
-                id="closeDepositModal"
-                aria-label="Close"
-            >
-
-                <svg viewBox="0 0 24 24">
-
-                    <path d="M6 6l12 12"></path>
-                    <path d="M18 6L6 18"></path>
-
-                </svg>
-
-            </button>
-
-
-            <div class="modal-top">
-
-                <div class="modal-icon">
 
                     <svg viewBox="0 0 24 24">
 
@@ -1167,15 +129,313 @@
                             width="18"
                             height="14"
                             rx="3"
-                        ></rect>
+                        />
 
-                        <path
-                            d="M3 9h18"
-                        ></path>
+                        <path d="M3 10h18"/>
 
-                        <path
-                            d="M8 14h4"
-                        ></path>
+                        <path d="M8 15h3"/>
+
+                        <path d="M16 14v4"/>
+
+                        <path d="M14 16h4"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Deposits</span>
+
+            </a>
+
+
+            <a
+                href="admin-withdrawals.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path d="M3 10h18"/>
+
+                        <path d="M16 13l3 3-3 3"/>
+
+                        <path d="M19 16h-7"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Withdrawals</span>
+
+            </a>
+
+
+            <div class="nav-section-title">
+                FINANCE
+            </div>
+
+
+            <a
+                href="admin-investments.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 19V9"/>
+                        <path d="M10 19V5"/>
+                        <path d="M16 19v-7"/>
+                        <path d="M22 19V3"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Investments</span>
+
+            </a>
+
+
+            <a
+                href="admin-transactions.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 7h12"/>
+                        <path d="M13 4l3 3-3 3"/>
+
+                        <path d="M20 17H8"/>
+                        <path d="M11 14l-3 3 3 3"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Transactions</span>
+
+            </a>
+
+
+            <a
+                href="admin-referrals.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <circle cx="8" cy="8" r="3"/>
+                        <circle cx="17" cy="10" r="3"/>
+
+                        <path d="M2.5 20c.5-3.2 2.4-5 5.5-5"/>
+                        <path d="M13 15c4 0 6.5 1.8 7.5 5"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Referrals</span>
+
+            </a>
+
+
+            <div class="nav-section-title">
+                MANAGEMENT
+            </div>
+
+
+            <a
+                href="admin-support.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <path d="M4 5h16v12H8l-4 4V5z"/>
+
+                        <path d="M8 9h8"/>
+                        <path d="M8 13h5"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Support</span>
+
+            </a>
+
+
+            <a
+                href="admin-security.html"
+                class="nav-link"
+            >
+
+                <span class="nav-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="5"
+                            y="10"
+                            width="14"
+                            height="10"
+                            rx="2"
+                        />
+
+                        <path d="M8 10V7a4 4 0 018 0v3"/>
+
+                        <circle cx="12" cy="15" r="1"/>
+
+                    </svg>
+
+                </span>
+
+                <span>Security / Audit</span>
+
+            </a>
+
+        </nav>
+
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutBtn"
+        >
+
+            <span class="nav-icon">
+
+                <svg viewBox="0 0 24 24">
+
+                    <path d="M10 5H5v14h5"/>
+                    <path d="M14 8l4 4-4 4"/>
+                    <path d="M18 12H9"/>
+
+                </svg>
+
+            </span>
+
+            <span>Logout</span>
+
+        </button>
+
+    </aside>
+
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="admin-main">
+
+        <!-- HEADER -->
+
+        <header class="admin-header">
+
+            <button
+                type="button"
+                class="menu-button"
+                id="menuButton"
+                aria-label="Open menu"
+            >
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 6h16"/>
+                    <path d="M4 12h16"/>
+                    <path d="M4 18h16"/>
+                </svg>
+            </button>
+
+
+            <div class="header-title">
+
+                <span>Administrator</span>
+
+                <strong>
+                    Admin Panel
+                </strong>
+
+            </div>
+
+
+            <div class="header-admin">
+
+                <div
+                    class="header-avatar"
+                    id="accountAvatar"
+                >
+                    A
+                </div>
+
+                <div class="header-admin-text">
+
+                    <strong id="headerUserName">
+                        Administrator
+                    </strong>
+
+                    <span>
+                        Admin Panel
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <div class="main-content deposits-content">
+
+
+            <!-- PAGE HEADING -->
+
+            <section class="page-heading">
+
+                <div class="heading-icon">
+
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="3"
+                            y="5"
+                            width="18"
+                            height="14"
+                            rx="3"
+                        />
+
+                        <path d="M3 10h18"/>
+
+                        <path d="M8 15h3"/>
+
+                        <path d="M16 14v4"/>
+
+                        <path d="M14 16h4"/>
 
                     </svg>
 
@@ -1184,190 +444,553 @@
 
                 <div>
 
-                    <span>
-                        Deposit Review
-                    </span>
+                    <div class="eyebrow">
+                        CROWN CASH ADMINISTRATION
+                    </div>
 
-                    <h2 id="modalDepositTitle">
-                        Customer Deposit
-                    </h2>
+                    <h1>
+                        Deposit Management
+                    </h1>
 
-                </div>
-
-            </div>
-
-
-            <div class="deposit-details">
-
-
-                <div class="detail-item">
-
-                    <span>
-                        Customer
-                    </span>
-
-                    <strong id="modalCustomer">
-                        —
-                    </strong>
+                    <p>
+                        Review customer deposits and approve or reject pending payment submissions.
+                    </p>
 
                 </div>
 
-
-                <div class="detail-item">
-
-                    <span>
-                        Phone
-                    </span>
-
-                    <strong id="modalPhone">
-                        —
-                    </strong>
-
-                </div>
+            </section>
 
 
-                <div class="detail-item">
-
-                    <span>
-                        Amount
-                    </span>
-
-                    <strong id="modalAmount">
-                        UGX 0
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        Payment Method
-                    </span>
-
-                    <strong id="modalMethod">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item detail-wide">
-
-                    <span>
-                        Transaction Reference
-                    </span>
-
-                    <strong id="modalReference">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        Submitted
-                    </span>
-
-                    <strong id="modalDate">
-                        —
-                    </strong>
-
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span>
-                        Current Status
-                    </span>
-
-                    <strong id="modalStatus">
-                        —
-                    </strong>
-
-                </div>
-
-            </div>
-
+            <!-- MESSAGE -->
 
             <div
-                class="verification-box"
-                id="verificationBox"
-            >
-
-                <label>
-
-                    <input
-                        type="checkbox"
-                        id="paymentVerified"
-                    >
-
-                    <span class="checkmark"></span>
-
-                    <span>
-                        I have verified that this payment reference and payment amount are genuine.
-                    </span>
-
-                </label>
-
-            </div>
-
-
-            <div
-                class="modal-message"
-                id="modalMessage"
+                id="depositsMessage"
+                class="admin-message"
                 hidden
             ></div>
 
 
-            <div class="modal-actions">
+            <!-- STATISTICS -->
 
-                <button
-                    type="button"
-                    class="modal-button reject"
-                    id="rejectDepositBtn"
+            <section class="deposit-stats">
+
+
+                <article class="deposit-stat-card">
+
+                    <div class="deposit-stat-icon gold">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <rect
+                                x="3"
+                                y="5"
+                                width="18"
+                                height="14"
+                                rx="3"
+                            />
+
+                            <path d="M3 10h18"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Total Deposits
+                        </span>
+
+                        <strong id="totalDeposits">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="deposit-stat-card">
+
+                    <div class="deposit-stat-icon pending">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                            />
+
+                            <path d="M12 8v5l3 2"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Pending
+                        </span>
+
+                        <strong id="pendingDeposits">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="deposit-stat-card">
+
+                    <div class="deposit-stat-icon approved">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                            />
+
+                            <path d="M8 12l2.5 2.5L16 9"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Approved
+                        </span>
+
+                        <strong id="approvedDeposits">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </article>
+
+
+                <article class="deposit-stat-card">
+
+                    <div class="deposit-stat-icon rejected">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                            />
+
+                            <path d="M9 9l6 6"/>
+                            <path d="M15 9l-6 6"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Rejected
+                        </span>
+
+                        <strong id="rejectedDeposits">
+                            UGX 0
+                        </strong>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- FILTER CARD -->
+
+            <section class="filter-card">
+
+                <div class="filter-heading">
+
+                    <div class="filter-heading-icon">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M4 6h16"/>
+                            <path d="M7 12h10"/>
+                            <path d="M10 18h4"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Deposit Filters
+                        </h2>
+
+                        <p>
+                            Search and filter customer payments
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-grid">
+
+                    <div class="filter-field search-field">
+
+                        <label for="searchDeposits">
+                            Search
+                        </label>
+
+                        <div class="input-wrap">
+
+                            <svg viewBox="0 0 24 24">
+
+                                <circle
+                                    cx="11"
+                                    cy="11"
+                                    r="6"
+                                />
+
+                                <path d="M16 16l5 5"/>
+
+                            </svg>
+
+                            <input
+                                type="search"
+                                id="searchDeposits"
+                                placeholder="Name, phone or reference..."
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label for="statusFilter">
+                            Status
+                        </label>
+
+                        <div class="select-wrap">
+
+                            <select id="statusFilter">
+
+                                <option value="all">
+                                    All Statuses
+                                </option>
+
+                                <option value="pending">
+                                    Pending
+                                </option>
+
+                                <option value="approved">
+                                    Approved
+                                </option>
+
+                                <option value="rejected">
+                                    Rejected
+                                </option>
+
+                            </select>
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="filter-field">
+
+                        <label for="methodFilter">
+                            Payment Method
+                        </label>
+
+                        <div class="select-wrap">
+
+                            <select id="methodFilter">
+
+                                <option value="all">
+                                    All Methods
+                                </option>
+
+                                <option value="mtn">
+                                    MTN Mobile Money
+                                </option>
+
+                                <option value="airtel">
+                                    Airtel Money
+                                </option>
+
+                            </select>
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="refreshDepositsBtn"
+                        class="refresh-button"
+                    >
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M20 11a8 8 0 00-14-5"/>
+                            <path d="M6 6H3V3"/>
+
+                            <path d="M4 13a8 8 0 0014 5"/>
+                            <path d="M18 18h3v3"/>
+
+                        </svg>
+
+                        <span>
+                            Refresh
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- DEPOSITS -->
+
+            <section class="deposits-card">
+
+                <div class="card-heading">
+
+                    <div class="card-heading-icon">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M4 5h16v14H4z"/>
+                            <path d="M4 10h16"/>
+                            <path d="M8 15h3"/>
+
+                        </svg>
+
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Customer Deposits
+                        </h2>
+
+                        <p>
+                            Review submitted payment references before approving deposits.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="depositsLoading"
+                    class="loading-state"
                 >
 
-                    <svg viewBox="0 0 24 24">
+                    <div class="loading-spinner"></div>
 
-                        <path d="M6 6l12 12"></path>
-                        <path d="M18 6L6 18"></path>
+                    <span>
+                        Loading deposits...
+                    </span>
 
-                    </svg>
-
-                    Reject
-
-                </button>
+                </div>
 
 
-                <button
-                    type="button"
-                    class="modal-button approve"
-                    id="approveDepositBtn"
+                <div
+                    id="depositsEmpty"
+                    class="empty-state"
+                    hidden
                 >
 
-                    <svg viewBox="0 0 24 24">
+                    <div class="empty-icon">
 
-                        <path d="M5 12l4 4L19 6"></path>
+                        <svg viewBox="0 0 24 24">
 
-                    </svg>
+                            <rect
+                                x="4"
+                                y="5"
+                                width="16"
+                                height="14"
+                                rx="2"
+                            />
 
-                    Approve Deposit
+                            <path d="M8 10h8"/>
+                            <path d="M8 14h5"/>
 
-                </button>
+                        </svg>
 
-            </div>
+                    </div>
+
+                    <h3>
+                        No deposits found
+                    </h3>
+
+                    <p>
+                        There are no deposits matching the selected filters.
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="table-wrapper"
+                    id="depositsTableWrapper"
+                    hidden
+                >
+
+                    <table class="deposits-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Customer
+                                </th>
+
+                                <th>
+                                    Amount
+                                </th>
+
+                                <th>
+                                    Method
+                                </th>
+
+                                <th>
+                                    Reference
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="depositsTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div
+                    class="deposit-mobile-list"
+                    id="depositMobileList"
+                    hidden
+                ></div>
+
+
+                <div
+                    class="pagination"
+                    id="pagination"
+                    hidden
+                ></div>
+
+            </section>
+
+
+            <!-- FOOTER -->
+
+            <footer class="admin-footer">
+
+                <div>
+
+                    <strong>
+                        Crown Cash Administration Panel
+                    </strong>
+
+                    <span>
+                        Secure Admin Session
+                    </span>
+
+                </div>
+
+                <span>
+                    © 2026 Crown Cash. Administration Portal.
+                </span>
+
+            </footer>
 
         </div>
 
+    </main>
+
+</div>
+
+
+<!-- =====================================================
+     PAGE LOADER
+====================================================== -->
+
+<div
+    class="page-loader"
+    id="pageLoader"
+>
+
+    <div class="loader-card">
+
+        <div class="loader-logo">
+
+            <svg viewBox="0 0 24 24">
+
+                <path d="M3 18h18"/>
+                <path d="M5 18V8l4 4 3-7 3 7 4-4v10"/>
+
+            </svg>
+
+        </div>
+
+        <strong>
+            Verifying administrator access...
+        </strong>
+
+        <span>
+            Please wait
+        </span>
+
     </div>
 
+</div>
 
-    <script src="admin-deposits.js"></script>
+
+<script src="admin-deposits.js"></script>
 
 </body>
-
 </html>

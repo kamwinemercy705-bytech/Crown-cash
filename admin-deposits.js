@@ -1,43 +1,35 @@
 /* =========================================================
-   CROWN CASH ADMIN — DEPOSITS
-========================================================= */
-
-"use strict";
-
+   CROWN CASH - ADMIN DEPOSITS
+   Clean administrator deposit management
+   ========================================================= */
 
 const API_BASE =
     "https://crown-cash1.onrender.com";
 
-const ADMIN_AUTH_API =
-    `${API_BASE}/admin-auth.php`;
+const DEPOSITS_API =
+    `${API_BASE}/admin-deposits.php`;
 
 const PROFILE_API =
     `${API_BASE}/profile.php`;
-
-const DEPOSITS_API =
-    `${API_BASE}/admin-deposits.php`;
 
 const LOGOUT_API =
     `${API_BASE}/logout.php`;
 
 
-/* =========================================================
-   STATE
-========================================================= */
+let deposits = [];
 
-const state = {
-    authenticated: false,
-    deposits: [],
-    filteredDeposits: [],
-    currentPage: 1,
-    perPage: 10,
-    processing: false
-};
+let filteredDeposits = [];
+
+let currentPage = 1;
+
+const PER_PAGE = 10;
+
+let administratorVerified = false;
 
 
 /* =========================================================
-   DOM HELPER
-========================================================= */
+   DOM
+   ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
@@ -46,9 +38,9 @@ function $(id) {
 
 /* =========================================================
    HTML ESCAPE
-========================================================= */
+   ========================================================= */
 
-function escapeHtml(value) {
+function escapeHTML(value) {
 
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -60,32 +52,24 @@ function escapeHtml(value) {
 
 
 /* =========================================================
-   MONEY
-========================================================= */
+   CURRENCY
+   ========================================================= */
 
-function formatMoney(value) {
+function formatCurrency(value) {
 
     const number =
         Number(value || 0);
 
-    return new Intl.NumberFormat(
-        "en-UG",
-        {
+    return "UGX " +
+        number.toLocaleString("en-UG", {
             maximumFractionDigits: 0
-        }
-    ).format(number);
-}
-
-
-function formatUGX(value) {
-
-    return `UGX ${formatMoney(value)}`;
+        });
 }
 
 
 /* =========================================================
    DATE
-========================================================= */
+   ========================================================= */
 
 function formatDate(value) {
 
@@ -104,12 +88,14 @@ function formatDate(value) {
         return "—";
     }
 
-    return date.toLocaleDateString(
+    return date.toLocaleString(
         "en-UG",
         {
-            day: "2-digit",
+            year: "numeric",
             month: "short",
-            year: "numeric"
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         }
     );
 }
@@ -117,137 +103,113 @@ function formatDate(value) {
 
 /* =========================================================
    STATUS
-========================================================= */
+   ========================================================= */
 
-function normalizeStatus(value) {
+function normalizeStatus(status) {
 
     return String(
-        value || "pending"
+        status || "pending"
     )
-        .toLowerCase()
-        .trim();
+        .trim()
+        .toLowerCase();
 }
 
 
 /* =========================================================
-   PAYMENT METHOD
-========================================================= */
+   METHOD
+   ========================================================= */
 
-function normalizeMethod(value) {
+function normalizeMethod(method) {
 
-    const method =
-        String(value || "")
-            .toLowerCase()
-            .trim();
+    const value =
+        String(method || "")
+            .trim()
+            .toLowerCase();
 
     if (
-        method.includes("airtel")
+        value.includes("mtn")
     ) {
-        return "airtel";
+        return "MTN Mobile Money";
     }
 
-    return "mtn";
-}
+    if (
+        value.includes("airtel")
+    ) {
+        return "Airtel Money";
+    }
 
-
-function methodLabel(value) {
-
-    return normalizeMethod(value) === "airtel"
-        ? "Airtel Money"
-        : "MTN Mobile Money";
+    return method || "Unknown";
 }
 
 
 /* =========================================================
-   MESSAGE
-========================================================= */
+   STATUS BADGE
+   ========================================================= */
 
-function showMessage(
-    message,
-    type = "info"
-) {
+function statusBadge(status) {
 
-    const element =
-        $("depositsMessage");
+    const value =
+        normalizeStatus(status);
 
-    if (!element) {
-        return;
+    let label = "Pending";
+
+    if (value === "approved") {
+        label = "Approved";
     }
 
-    element.hidden = false;
-
-    element.className =
-        `admin-message ${type}`;
-
-    element.textContent =
-        message;
-}
-
-
-function hideMessage() {
-
-    const element =
-        $("depositsMessage");
-
-    if (!element) {
-        return;
+    if (value === "rejected") {
+        label = "Rejected";
     }
 
-    element.hidden = true;
+    return `
+        <span class="status-badge status-${escapeHTML(value)}">
+            ${escapeHTML(label)}
+        </span>
+    `;
 }
 
 
 /* =========================================================
-   LOADER
-========================================================= */
+   API
+   ========================================================= */
 
-function hideLoader() {
-
-    const loader =
-        $("pageLoader");
-
-    if (!loader) {
-        return;
-    }
-
-    loader.classList.add("hidden");
-}
-
-
-/* =========================================================
-   FETCH JSON
-========================================================= */
-
-async function fetchJson(
+async function apiRequest(
     url,
     options = {}
 ) {
 
     const response =
-        await fetch(
-            url,
-            {
-                credentials: "include",
-                cache: "no-store",
-                ...options,
-                headers: {
-                    Accept:
-                        "application/json",
-                    ...(options.headers || {})
-                }
-            }
-        );
+        await fetch(url, {
 
-    let data = null;
+            ...options,
+
+            credentials: "include",
+
+            cache: "no-store",
+
+            headers: {
+
+                "Accept":
+                    "application/json",
+
+                ...(options.body
+                    ? {
+                        "Content-Type":
+                            "application/json"
+                    }
+                    : {}),
+
+                ...(options.headers || {})
+            }
+        });
+
+    let data = {};
 
     try {
-
         data =
             await response.json();
-
     } catch (error) {
-
-        data = null;
+        data = {};
     }
 
     return {
@@ -258,8 +220,84 @@ async function fetchJson(
 
 
 /* =========================================================
-   ADMIN AUTHENTICATION
-========================================================= */
+   PAGE MESSAGE
+   ========================================================= */
+
+function showMessage(
+    message,
+    type = "error"
+) {
+
+    const box =
+        $("depositsMessage");
+
+    if (!box) {
+        return;
+    }
+
+    box.textContent =
+        message;
+
+    box.className =
+        `admin-message ${type}`;
+
+    box.style.display =
+        "block";
+}
+
+
+function hideMessage() {
+
+    const box =
+        $("depositsMessage");
+
+    if (!box) {
+        return;
+    }
+
+    box.style.display =
+        "none";
+}
+
+
+/* =========================================================
+   LOADER
+   ========================================================= */
+
+function hidePageLoader() {
+
+    const loader =
+        $("pageLoader");
+
+    if (!loader) {
+        return;
+    }
+
+    loader.classList.add("hidden");
+
+    setTimeout(() => {
+
+        loader.style.display =
+            "none";
+
+    }, 250);
+}
+
+
+/* =========================================================
+   ADMINISTRATOR VERIFICATION
+   =========================================================
+
+   IMPORTANT:
+
+   We intentionally do NOT call admin-auth.php here.
+
+   admin-deposits.php performs the administrator
+   authentication itself.
+
+   This prevents the page from failing because two
+   different endpoints disagree about the session.
+   ========================================================= */
 
 async function verifyAdministrator() {
 
@@ -268,38 +306,23 @@ async function verifyAdministrator() {
         const {
             response,
             data
-        } = await fetchJson(
-            ADMIN_AUTH_API,
+        } = await apiRequest(
+            DEPOSITS_API,
             {
                 method: "GET"
             }
         );
 
-
-        if (
-            response.ok &&
-            data &&
-            data.success === true &&
-            data.authenticated === true &&
-            data.authorized === true
-        ) {
-
-            state.authenticated = true;
-
-            return true;
-        }
-
-
-        state.authenticated = false;
-
-
         if (
             response.status === 401
         ) {
 
+            administratorVerified =
+                false;
+
             showMessage(
-                data?.message ||
-                "Your administrator session has expired. Please login again.",
+                data.message ||
+                "Administrator session has expired. Please login again.",
                 "error"
             );
 
@@ -311,9 +334,12 @@ async function verifyAdministrator() {
             response.status === 403
         ) {
 
+            administratorVerified =
+                false;
+
             showMessage(
-                data?.message ||
-                "Administrator access is required.",
+                data.message ||
+                "This account is not authorized to manage deposits.",
                 "error"
             );
 
@@ -321,13 +347,47 @@ async function verifyAdministrator() {
         }
 
 
-        showMessage(
-            data?.message ||
-            "Administrator verification failed.",
-            "error"
+        if (
+            !response.ok ||
+            data.success !== true
+        ) {
+
+            administratorVerified =
+                false;
+
+            showMessage(
+                data.message ||
+                "Administrator verification failed.",
+                "error"
+            );
+
+            return false;
+        }
+
+
+        administratorVerified =
+            true;
+
+        hideMessage();
+
+        /*
+         * Save the already-loaded deposits so we
+         * do not immediately make another request.
+         */
+
+        deposits =
+            Array.isArray(data.deposits)
+                ? data.deposits
+                : [];
+
+
+        updateStatistics(
+            data.statistics || {}
         );
 
-        return false;
+        applyFilters();
+
+        return true;
 
     } catch (error) {
 
@@ -336,8 +396,11 @@ async function verifyAdministrator() {
             error
         );
 
+        administratorVerified =
+            false;
+
         showMessage(
-            "Unable to verify administrator access. Please refresh and try again.",
+            "Unable to connect to the administrator deposit service.",
             "error"
         );
 
@@ -347,8 +410,8 @@ async function verifyAdministrator() {
 
 
 /* =========================================================
-   LOAD ADMIN PROFILE
-========================================================= */
+   PROFILE
+   ========================================================= */
 
 async function loadAdminProfile() {
 
@@ -357,454 +420,217 @@ async function loadAdminProfile() {
         const {
             response,
             data
-        } = await fetchJson(
+        } = await apiRequest(
             PROFILE_API,
             {
                 method: "GET"
             }
         );
 
-
         if (
             !response.ok ||
-            !data ||
-            data.success !== true ||
-            !data.user
+            data.success !== true
         ) {
             return;
         }
 
-
         const user =
-            data.user;
+            data.user || {};
 
-
-        const fullName =
+        const name =
             user.full_name ||
-            [
-                user.first_name,
-                user.last_name
-            ]
-                .filter(Boolean)
-                .join(" ") ||
+            `${user.first_name || ""} ${user.last_name || ""}`
+                .trim() ||
             "Administrator";
 
-
-        const firstLetter =
-            fullName
-                .charAt(0)
-                .toUpperCase();
-
-
         if ($("adminName")) {
-
             $("adminName").textContent =
-                fullName;
+                name;
         }
-
 
         if ($("headerUserName")) {
-
             $("headerUserName").textContent =
-                fullName;
+                name;
         }
-
-
-        if ($("adminAvatar")) {
-
-            $("adminAvatar").textContent =
-                firstLetter;
-        }
-
-
-        if ($("accountAvatar")) {
-
-            $("accountAvatar").textContent =
-                firstLetter;
-        }
-
 
         if ($("adminAccountType")) {
-
             $("adminAccountType").textContent =
                 user.account_type ||
-                user.role ||
                 "Admin Account";
+        }
+
+        const initial =
+            name
+                .charAt(0)
+                .toUpperCase() ||
+            "A";
+
+        if ($("adminAvatar")) {
+            $("adminAvatar").textContent =
+                initial;
+        }
+
+        if ($("accountAvatar")) {
+            $("accountAvatar").textContent =
+                initial;
         }
 
     } catch (error) {
 
         console.warn(
-            "Admin profile could not be loaded:",
+            "Profile loading failed:",
             error
         );
-    }
-}
-
-
-/* =========================================================
-   LOAD DEPOSITS
-========================================================= */
-
-async function loadDeposits() {
-
-    if (!state.authenticated) {
-        return;
-    }
-
-
-    setLoading(true);
-
-    hideMessage();
-
-
-    try {
-
-        const {
-            response,
-            data
-        } = await fetchJson(
-            DEPOSITS_API,
-            {
-                method: "GET"
-            }
-        );
-
-
-        if (
-            response.status === 401
-        ) {
-
-            state.authenticated = false;
-
-            showMessage(
-                data?.message ||
-                "Administrator session expired. Please login again.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            response.status === 403
-        ) {
-
-            showMessage(
-                data?.message ||
-                "Administrator access is required.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            !response.ok ||
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Unable to load deposits."
-            );
-        }
-
-
-        state.deposits =
-            Array.isArray(
-                data.deposits
-            )
-                ? data.deposits
-                : [];
-
-
-        updateStatistics(
-            data.stats || {}
-        );
-
-
-        applyFilters();
-
-    } catch (error) {
-
-        console.error(
-            "Deposit loading error:",
-            error
-        );
-
-        state.deposits = [];
-
-        updateStatistics({});
-
-        renderDeposits();
-
-        showMessage(
-            error.message ||
-            "Unable to load deposits.",
-            "error"
-        );
-
-    } finally {
-
-        setLoading(false);
-    }
-}
-
-
-/* =========================================================
-   LOADING STATE
-========================================================= */
-
-function setLoading(isLoading) {
-
-    const loading =
-        $("depositsLoading");
-
-    const empty =
-        $("depositsEmpty");
-
-    const table =
-        $("depositsTableWrapper");
-
-    const mobile =
-        $("depositMobileList");
-
-
-    if (isLoading) {
-
-        if (loading) {
-            loading.hidden = false;
-        }
-
-        if (empty) {
-            empty.hidden = true;
-        }
-
-        if (table) {
-            table.hidden = true;
-        }
-
-        if (mobile) {
-            mobile.hidden = true;
-        }
-
-    } else {
-
-        if (loading) {
-            loading.hidden = true;
-        }
     }
 }
 
 
 /* =========================================================
    STATISTICS
-========================================================= */
+   ========================================================= */
 
-function updateStatistics(stats) {
+function updateStatistics(
+    statistics
+) {
 
     let total =
         Number(
-            stats.total_deposits_amount ??
-            stats.total_amount ??
-            0
+            statistics.total_amount || 0
         );
-
 
     let pending =
         Number(
-            stats.pending_amount ??
-            stats.pending_deposits_amount ??
-            0
+            statistics.pending_amount || 0
         );
-
 
     let approved =
         Number(
-            stats.approved_amount ??
-            stats.approved_deposits_amount ??
-            0
+            statistics.approved_amount || 0
         );
-
 
     let rejected =
         Number(
-            stats.rejected_amount ??
-            stats.rejected_deposits_amount ??
-            0
+            statistics.rejected_amount || 0
         );
 
 
-    const hasServerTotals =
-        stats.total_deposits_amount !== undefined ||
-        stats.total_amount !== undefined;
+    /*
+     * Safety fallback.
+     */
 
+    if (
+        !statistics ||
+        Object.keys(statistics).length === 0
+    ) {
 
-    if (!hasServerTotals) {
+        total = 0;
+        pending = 0;
+        approved = 0;
+        rejected = 0;
 
-        total =
-            state.deposits.reduce(
-                (sum, deposit) =>
-                    sum +
+        deposits.forEach(
+            deposit => {
+
+                const amount =
                     Number(
                         deposit.amount || 0
-                    ),
-                0
-            );
+                    );
 
+                const status =
+                    normalizeStatus(
+                        deposit.status
+                    );
 
-        pending =
-            state.deposits
-                .filter(
-                    deposit =>
-                        normalizeStatus(
-                            deposit.status
-                        ) === "pending"
-                )
-                .reduce(
-                    (sum, deposit) =>
-                        sum +
-                        Number(
-                            deposit.amount || 0
-                        ),
-                    0
-                );
+                total += amount;
 
+                if (
+                    status === "pending"
+                ) {
+                    pending += amount;
+                }
 
-        approved =
-            state.deposits
-                .filter(
-                    deposit =>
-                        normalizeStatus(
-                            deposit.status
-                        ) === "approved"
-                )
-                .reduce(
-                    (sum, deposit) =>
-                        sum +
-                        Number(
-                            deposit.amount || 0
-                        ),
-                    0
-                );
+                if (
+                    status === "approved"
+                ) {
+                    approved += amount;
+                }
 
-
-        rejected =
-            state.deposits
-                .filter(
-                    deposit =>
-                        normalizeStatus(
-                            deposit.status
-                        ) === "rejected"
-                )
-                .reduce(
-                    (sum, deposit) =>
-                        sum +
-                        Number(
-                            deposit.amount || 0
-                        ),
-                    0
-                );
+                if (
+                    status === "rejected"
+                ) {
+                    rejected += amount;
+                }
+            }
+        );
     }
 
 
     if ($("totalDeposits")) {
-
         $("totalDeposits").textContent =
-            formatUGX(total);
+            formatCurrency(total);
     }
-
 
     if ($("pendingDeposits")) {
-
         $("pendingDeposits").textContent =
-            formatUGX(pending);
+            formatCurrency(pending);
     }
-
 
     if ($("approvedDeposits")) {
-
         $("approvedDeposits").textContent =
-            formatUGX(approved);
+            formatCurrency(approved);
     }
 
-
     if ($("rejectedDeposits")) {
-
         $("rejectedDeposits").textContent =
-            formatUGX(rejected);
+            formatCurrency(rejected);
     }
 }
 
 
 /* =========================================================
-   FILTERS
-========================================================= */
+   FILTER
+   ========================================================= */
 
 function applyFilters() {
 
     const search =
-        String(
-            $("searchDeposits")?.value ||
-            ""
-        )
-            .toLowerCase()
-            .trim();
-
+        ($("searchDeposits")?.value || "")
+            .trim()
+            .toLowerCase();
 
     const status =
-        $("statusFilter")?.value ||
-        "all";
-
+        ($("statusFilter")?.value || "all")
+            .toLowerCase();
 
     const method =
-        $("methodFilter")?.value ||
-        "all";
+        ($("methodFilter")?.value || "all")
+            .toLowerCase();
 
 
-    state.filteredDeposits =
-        state.deposits.filter(
+    filteredDeposits =
+        deposits.filter(
             deposit => {
 
                 const customer =
-                    String(
-                        deposit.full_name ||
-                        deposit.user_name ||
-                        deposit.name ||
-                        ""
-                    )
-                        .toLowerCase();
-
-
-                const phone =
-                    String(
-                        deposit.phone ||
-                        ""
-                    )
-                        .toLowerCase();
-
+                    deposit.customer_name ||
+                    deposit.full_name ||
+                    "Customer";
 
                 const email =
-                    String(
-                        deposit.email ||
-                        ""
-                    )
-                        .toLowerCase();
+                    deposit.email || "";
 
+                const phone =
+                    deposit.phone || "";
 
                 const reference =
-                    String(
-                        deposit.reference ||
-                        deposit.transaction_reference ||
-                        deposit.payment_reference ||
-                        ""
-                    )
-                        .toLowerCase();
+                    deposit.reference ||
+                    deposit.transaction_reference ||
+                    "";
 
+                const paymentMethod =
+                    normalizeMethod(
+                        deposit.payment_method
+                    );
 
                 const depositStatus =
                     normalizeStatus(
@@ -812,78 +638,100 @@ function applyFilters() {
                     );
 
 
-                const depositMethod =
-                    normalizeMethod(
-                        deposit.payment_method ||
-                        deposit.method
+                const searchable =
+                    `
+                    ${customer}
+                    ${email}
+                    ${phone}
+                    ${reference}
+                    ${paymentMethod}
+                    `
+                    .toLowerCase();
+
+
+                const searchMatch =
+                    !search ||
+                    searchable.includes(
+                        search
                     );
 
 
-                const matchesSearch =
-                    !search ||
-                    customer.includes(search) ||
-                    phone.includes(search) ||
-                    email.includes(search) ||
-                    reference.includes(search);
-
-
-                const matchesStatus =
+                const statusMatch =
                     status === "all" ||
                     depositStatus === status;
 
 
-                const matchesMethod =
-                    method === "all" ||
-                    depositMethod === method;
+                let methodMatch = true;
+
+
+                if (
+                    method === "mtn"
+                ) {
+
+                    methodMatch =
+                        paymentMethod
+                            .toLowerCase()
+                            .includes("mtn");
+                }
+
+
+                if (
+                    method === "airtel"
+                ) {
+
+                    methodMatch =
+                        paymentMethod
+                            .toLowerCase()
+                            .includes("airtel");
+                }
 
 
                 return (
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesMethod
+                    searchMatch &&
+                    statusMatch &&
+                    methodMatch
                 );
             }
         );
 
 
-    state.currentPage = 1;
+    currentPage = 1;
 
     renderDeposits();
 }
 
 
 /* =========================================================
-   RENDER DEPOSITS
-========================================================= */
+   RENDER
+   ========================================================= */
 
 function renderDeposits() {
 
-    const list =
-        state.filteredDeposits;
-
+    const body =
+        $("depositsTableBody");
 
     const empty =
         $("depositsEmpty");
 
-    const table =
-        $("depositsTableWrapper");
-
-    const mobile =
-        $("depositMobileList");
+    const loading =
+        $("depositsLoading");
 
 
-    if (!list.length) {
+    if (loading) {
+        loading.style.display =
+            "none";
+    }
+
+
+    if (!filteredDeposits.length) {
+
+        if (body) {
+            body.innerHTML = "";
+        }
 
         if (empty) {
-            empty.hidden = false;
-        }
-
-        if (table) {
-            table.hidden = true;
-        }
-
-        if (mobile) {
-            mobile.hidden = true;
+            empty.style.display =
+                "flex";
         }
 
         renderPagination();
@@ -893,306 +741,754 @@ function renderDeposits() {
 
 
     if (empty) {
-        empty.hidden = true;
+        empty.style.display =
+            "none";
     }
 
 
     const start =
-        (state.currentPage - 1) *
-        state.perPage;
-
+        (currentPage - 1) *
+        PER_PAGE;
 
     const end =
-        start + state.perPage;
+        start + PER_PAGE;
 
 
-    const pageItems =
-        list.slice(
+    const items =
+        filteredDeposits.slice(
             start,
             end
         );
 
 
-    renderDesktopTable(
-        pageItems
-    );
+    if (!body) {
+        return;
+    }
 
 
-    renderMobileCards(
-        pageItems
-    );
+    body.innerHTML =
+        items.map(
+            deposit => {
 
+                const id =
+                    deposit.id ||
+                    deposit.deposit_id ||
+                    deposit._id ||
+                    "";
+
+                const customer =
+                    deposit.customer_name ||
+                    deposit.full_name ||
+                    "Customer";
+
+                const email =
+                    deposit.email ||
+                    deposit.phone ||
+                    "—";
+
+                const amount =
+                    Number(
+                        deposit.amount || 0
+                    );
+
+                const method =
+                    normalizeMethod(
+                        deposit.payment_method
+                    );
+
+                const reference =
+                    deposit.reference ||
+                    deposit.transaction_reference ||
+                    "—";
+
+                const status =
+                    normalizeStatus(
+                        deposit.status
+                    );
+
+
+                return `
+                    <tr>
+
+                        <td>
+
+                            <div class="deposit-customer">
+
+                                <div class="deposit-avatar">
+                                    ${escapeHTML(
+                                        customer
+                                            .charAt(0)
+                                            .toUpperCase()
+                                    )}
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        ${escapeHTML(
+                                            customer
+                                        )}
+                                    </strong>
+
+                                    <small>
+                                        ${escapeHTML(
+                                            email
+                                        )}
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <td>
+                            <strong>
+                                ${formatCurrency(
+                                    amount
+                                )}
+                            </strong>
+                        </td>
+
+
+                        <td>
+                            ${escapeHTML(
+                                method
+                            )}
+                        </td>
+
+
+                        <td>
+
+                            <span class="deposit-reference">
+                                ${escapeHTML(
+                                    reference
+                                )}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            ${statusBadge(
+                                status
+                            )}
+                        </td>
+
+
+                        <td>
+                            ${escapeHTML(
+                                formatDate(
+                                    deposit.created_at
+                                )
+                            )}
+                        </td>
+
+
+                        <td>
+
+                            <div class="deposit-actions">
+
+                                <button
+                                    type="button"
+                                    class="action-button view"
+                                    data-action="view"
+                                    data-id="${escapeHTML(
+                                        id
+                                    )}"
+                                >
+
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"
+                                        />
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="2.5"
+                                        />
+                                    </svg>
+
+                                    View
+
+                                </button>
+
+
+                                ${
+                                    status === "pending"
+                                        ? `
+
+                                            <button
+                                                type="button"
+                                                class="action-button approve"
+                                                data-action="approve"
+                                                data-id="${escapeHTML(
+                                                    id
+                                                )}"
+                                            >
+
+                                                <svg viewBox="0 0 24 24">
+                                                    <path
+                                                        d="m5 12 4 4L19 6"
+                                                    />
+                                                </svg>
+
+                                                Approve
+
+                                            </button>
+
+
+                                            <button
+                                                type="button"
+                                                class="action-button reject"
+                                                data-action="reject"
+                                                data-id="${escapeHTML(
+                                                    id
+                                                )}"
+                                            >
+
+                                                <svg viewBox="0 0 24 24">
+                                                    <path
+                                                        d="m7 7 10 10M17 7 7 17"
+                                                    />
+                                                </svg>
+
+                                                Reject
+
+                                            </button>
+
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+                `;
+            }
+        )
+        .join("");
+
+
+    attachActions();
 
     renderPagination();
 }
 
 
 /* =========================================================
-   DESKTOP TABLE
-========================================================= */
+   ACTIONS
+   ========================================================= */
 
-function renderDesktopTable(items) {
+function attachActions() {
 
-    const wrapper =
-        $("depositsTableWrapper");
+    document
+        .querySelectorAll(
+            "[data-action]"
+        )
+        .forEach(
+            button => {
 
-    const body =
-        $("depositsTableBody");
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const action =
+                            button.dataset.action;
+
+                        const id =
+                            button.dataset.id;
 
 
-    if (!wrapper || !body) {
-        return;
-    }
+                        if (
+                            action === "view"
+                        ) {
+                            viewDeposit(id);
+                        }
 
 
-    wrapper.hidden = false;
+                        if (
+                            action === "approve"
+                        ) {
+                            viewDeposit(
+                                id,
+                                true
+                            );
+                        }
 
 
-    body.innerHTML =
-        items.map(
-            createTableRow
-        ).join("");
+                        if (
+                            action === "reject"
+                        ) {
+                            processDeposit(
+                                id,
+                                "reject"
+                            );
+                        }
+
+                    }
+                );
+            }
+        );
 }
 
 
 /* =========================================================
-   TABLE ROW
-========================================================= */
+   FIND DEPOSIT
+   ========================================================= */
 
-function createTableRow(deposit) {
+function findDeposit(id) {
 
-    const name =
+    return deposits.find(
+        deposit => {
+
+            const depositId =
+                deposit.id ||
+                deposit.deposit_id ||
+                deposit._id ||
+                "";
+
+            return String(
+                depositId
+            ) === String(id);
+        }
+    );
+}
+
+
+/* =========================================================
+   REVIEW
+   ========================================================= */
+
+function viewDeposit(
+    id,
+    directApproval = false
+) {
+
+    const deposit =
+        findDeposit(id);
+
+    if (!deposit) {
+
+        showMessage(
+            "Deposit could not be found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const customer =
+        deposit.customer_name ||
         deposit.full_name ||
-        deposit.user_name ||
-        deposit.name ||
         "Customer";
-
 
     const email =
         deposit.email ||
-        "No email";
+        "—";
 
+    const phone =
+        deposit.phone ||
+        "—";
 
     const amount =
         Number(
             deposit.amount || 0
         );
 
-
     const method =
         normalizeMethod(
-            deposit.payment_method ||
-            deposit.method
+            deposit.payment_method
         );
-
 
     const reference =
         deposit.reference ||
         deposit.transaction_reference ||
-        deposit.payment_reference ||
         "—";
-
 
     const status =
         normalizeStatus(
             deposit.status
         );
 
-
-    const date =
-        deposit.created_at ||
-        deposit.date ||
-        deposit.submitted_at;
+    const verified =
+        deposit.payment_verified === true;
 
 
-    const id =
-        deposit.id ||
-        deposit._id ||
-        "";
+    const oldModal =
+        document.getElementById(
+            "depositReviewModal"
+        );
+
+    oldModal?.remove();
 
 
-    let actions = `
-        <button
-            type="button"
-            class="deposit-action view"
-            data-action="view"
-            data-id="${escapeHtml(id)}"
-            title="View deposit"
-            aria-label="View deposit"
-        >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
-                <circle cx="12" cy="12" r="2.5"/>
-            </svg>
-        </button>
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+    modal.id =
+        "depositReviewModal";
+
+    modal.className =
+        "deposit-review-modal";
+
+
+    modal.innerHTML = `
+
+        <div class="deposit-review-overlay"></div>
+
+
+        <div class="deposit-review-box">
+
+
+            <button
+                type="button"
+                class="deposit-review-close"
+                id="closeDepositReview"
+            >
+
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="m7 7 10 10M17 7 7 17"
+                    />
+                </svg>
+
+            </button>
+
+
+            <div class="deposit-review-icon">
+
+                <svg viewBox="0 0 24 24">
+
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="3"
+                    />
+
+                    <path d="M3 10h18"/>
+
+                    <path d="M7 15h3"/>
+
+                </svg>
+
+            </div>
+
+
+            <h3>
+                Deposit Review
+            </h3>
+
+
+            <p class="deposit-review-subtitle">
+                Review this payment before processing it.
+            </p>
+
+
+            <div class="deposit-review-details">
+
+                <div>
+                    <span>Customer</span>
+                    <strong>
+                        ${escapeHTML(customer)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Amount</span>
+                    <strong>
+                        ${formatCurrency(amount)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Email</span>
+                    <strong>
+                        ${escapeHTML(email)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Phone</span>
+                    <strong>
+                        ${escapeHTML(phone)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Payment Method</span>
+                    <strong>
+                        ${escapeHTML(method)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Reference</span>
+                    <strong>
+                        ${escapeHTML(reference)}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Date</span>
+                    <strong>
+                        ${escapeHTML(
+                            formatDate(
+                                deposit.created_at
+                            )
+                        )}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>Status</span>
+                    <strong>
+                        ${statusBadge(status)}
+                    </strong>
+                </div>
+
+            </div>
+
+
+            ${
+                status === "pending"
+                    ? `
+
+                        <label
+                            class="payment-verification"
+                        >
+
+                            <input
+                                type="checkbox"
+                                id="paymentVerifiedCheck"
+                                ${
+                                    verified
+                                        ? "checked"
+                                        : ""
+                                }
+                            >
+
+                            <span>
+                                I have manually verified this
+                                payment reference in the relevant
+                                mobile-money records.
+                            </span>
+
+                        </label>
+
+
+                        <div class="deposit-review-actions">
+
+                            <button
+                                type="button"
+                                class="action-button reject"
+                                id="modalRejectDeposit"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="m7 7 10 10M17 7 7 17"
+                                    />
+                                </svg>
+
+                                Reject
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="action-button approve"
+                                id="modalApproveDeposit"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="m5 12 4 4L19 6"
+                                    />
+                                </svg>
+
+                                Approve Deposit
+
+                            </button>
+
+                        </div>
+
+                    `
+                    : `
+
+                        <div class="deposit-review-actions">
+
+                            <button
+                                type="button"
+                                class="action-button view"
+                                id="closeDepositReviewBottom"
+                            >
+                                Close
+                            </button>
+
+                        </div>
+
+                    `
+            }
+
+        </div>
     `;
 
 
-    if (status === "pending") {
-
-        actions += `
-
-            <button
-                type="button"
-                class="deposit-action approve"
-                data-action="approve"
-                data-id="${escapeHtml(id)}"
-                title="Approve deposit"
-                aria-label="Approve deposit"
-            >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 12l4 4L19 6"/>
-                </svg>
-            </button>
+    document.body.appendChild(
+        modal
+    );
 
 
-            <button
-                type="button"
-                class="deposit-action reject"
-                data-action="reject"
-                data-id="${escapeHtml(id)}"
-                title="Reject deposit"
-                aria-label="Reject deposit"
-            >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M6 6l12 12"/>
-                    <path d="M18 6L6 18"/>
-                </svg>
-            </button>
-        `;
+    function closeModal() {
+        modal.remove();
     }
 
 
-    return `
-        <tr>
-
-            <td>
-
-                <div class="customer-cell">
-
-                    <div class="customer-avatar">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                        >
-                            <circle
-                                cx="12"
-                                cy="8"
-                                r="3"
-                            />
-                            <path
-                                d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"
-                            />
-                        </svg>
-
-                    </div>
-
-                    <div class="customer-info">
-
-                        <strong>
-                            ${escapeHtml(name)}
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(email)}
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </td>
+    $("closeDepositReview")
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 
 
-            <td>
-
-                <span class="amount-value">
-                    ${formatUGX(amount)}
-                </span>
-
-            </td>
-
-
-            <td>
-
-                <span class="method-badge ${method}">
-
-                    <span class="method-dot"></span>
-
-                    ${methodLabel(method)}
-
-                </span>
-
-            </td>
+    modal
+        .querySelector(
+            ".deposit-review-overlay"
+        )
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 
 
-            <td>
-
-                <span class="reference-value">
-                    ${escapeHtml(reference)}
-                </span>
-
-            </td>
+    $("closeDepositReviewBottom")
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 
 
-            <td>
-                ${formatDate(date)}
-            </td>
+    $("modalRejectDeposit")
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                closeModal();
+
+                await processDeposit(
+                    id,
+                    "reject"
+                );
+            }
+        );
 
 
-            <td>
+    $("modalApproveDeposit")
+        ?.addEventListener(
+            "click",
+            async () => {
 
-                <span class="status-badge ${escapeHtml(status)}">
-                    ${escapeHtml(status)}
-                </span>
-
-            </td>
+                const checked =
+                    $("paymentVerifiedCheck")
+                        ?.checked;
 
 
-            <td>
+                if (!checked) {
 
-                <div class="action-buttons">
-                    ${actions}
-                </div>
+                    showMessage(
+                        "Please confirm payment verification before approving this deposit.",
+                        "error"
+                    );
 
-            </td>
+                    return;
+                }
 
-        </tr>
-    `;
+
+                closeModal();
+
+
+                await processDeposit(
+                    id,
+                    "approve"
+                );
+            }
+        );
+
+
+    if (directApproval) {
+
+        setTimeout(
+            () => {
+
+                $("modalApproveDeposit")
+                    ?.focus();
+
+            },
+            50
+        );
+    }
 }
 
 
 /* =========================================================
-   MOBILE CARDS
-========================================================= */
+   PROCESS
+   ========================================================= */
 
-function renderMobileCards(items) {
+async function processDeposit(
+    id,
+    action
+) {
 
-    const container =
-        $("depositMobileList");
+    const deposit =
+        findDeposit(id);
 
-    if (!container) {
+    if (!deposit) {
+
+        showMessage(
+            "Deposit could not be found.",
+            "error"
+        );
+
         return;
     }
 
 
-    container.hidden = false;
+    if (
+        action === "approve"
+    ) {
+
+        /*
+         * Approval is intentionally only possible
+         * through the review modal where the admin
+         * confirms payment verification.
+         */
+
+        viewDeposit(id);
+
+        return;
+    }
 
 
-    container.innerHTML =
-        items.map(
-            createMobileCard
-        ).join("");
-}
-
-
-function createMobileCard(deposit) {
-
-    const name =
+    const customer =
+        deposit.customer_name ||
         deposit.full_name ||
-        deposit.user_name ||
-        deposit.name ||
         "Customer";
 
 
@@ -1202,201 +1498,327 @@ function createMobileCard(deposit) {
         );
 
 
-    const method =
-        normalizeMethod(
-            deposit.payment_method ||
-            deposit.method
+    const confirmed =
+        window.confirm(
+            `Reject ${formatCurrency(
+                amount
+            )} deposit for ${customer}?`
         );
 
 
-    const reference =
-        deposit.reference ||
-        deposit.transaction_reference ||
-        deposit.payment_reference ||
-        "—";
-
-
-    const status =
-        normalizeStatus(
-            deposit.status
-        );
-
-
-    const date =
-        deposit.created_at ||
-        deposit.date ||
-        deposit.submitted_at;
-
-
-    const id =
-        deposit.id ||
-        deposit._id ||
-        "";
-
-
-    let actions = `
-        <button
-            type="button"
-            class="deposit-action view"
-            data-action="view"
-            data-id="${escapeHtml(id)}"
-            title="View deposit"
-        >
-            <svg viewBox="0 0 24 24">
-                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
-                <circle cx="12" cy="12" r="2.5"/>
-            </svg>
-        </button>
-    `;
-
-
-    if (status === "pending") {
-
-        actions += `
-
-            <button
-                type="button"
-                class="deposit-action approve"
-                data-action="approve"
-                data-id="${escapeHtml(id)}"
-                title="Approve deposit"
-            >
-                <svg viewBox="0 0 24 24">
-                    <path d="M5 12l4 4L19 6"/>
-                </svg>
-            </button>
-
-
-            <button
-                type="button"
-                class="deposit-action reject"
-                data-action="reject"
-                data-id="${escapeHtml(id)}"
-                title="Reject deposit"
-            >
-                <svg viewBox="0 0 24 24">
-                    <path d="M6 6l12 12"/>
-                    <path d="M18 6L6 18"/>
-                </svg>
-            </button>
-        `;
+    if (!confirmed) {
+        return;
     }
 
 
-    return `
-        <article class="deposit-mobile-card">
+    try {
 
-            <div class="mobile-deposit-top">
-
-                <div class="mobile-customer">
-
-                    <div class="customer-avatar">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="12"
-                                cy="8"
-                                r="3"
-                            />
-
-                            <path
-                                d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                    <div class="customer-info">
-
-                        <strong>
-                            ${escapeHtml(name)}
-                        </strong>
-
-                        <span>
-                            ${formatDate(date)}
-                        </span>
-
-                    </div>
-
-                </div>
+        showMessage(
+            "Rejecting deposit...",
+            "info"
+        );
 
 
-                <span class="status-badge ${escapeHtml(status)}">
-                    ${escapeHtml(status)}
-                </span>
+        const {
+            response,
+            data
+        } = await apiRequest(
+            DEPOSITS_API,
+            {
 
-            </div>
+                method: "POST",
 
+                body: JSON.stringify({
 
-            <div class="mobile-deposit-details">
+                    deposit_id:
+                        id,
 
-                <div class="mobile-detail">
+                    action:
+                        "reject"
 
-                    <span>Amount</span>
+                })
 
-                    <strong>
-                        ${formatUGX(amount)}
-                    </strong>
-
-                </div>
-
-
-                <div class="mobile-detail">
-
-                    <span>Method</span>
-
-                    <strong>
-                        ${methodLabel(method)}
-                    </strong>
-
-                </div>
+            }
+        );
 
 
-                <div class="mobile-detail">
+        if (
+            response.status === 401
+        ) {
 
-                    <span>Reference</span>
+            administratorVerified =
+                false;
 
-                    <strong>
-                        ${escapeHtml(reference)}
-                    </strong>
+            showMessage(
+                data.message ||
+                "Administrator session has expired.",
+                "error"
+            );
 
-                </div>
-
-
-                <div class="mobile-detail">
-
-                    <span>Phone</span>
-
-                    <strong>
-                        ${escapeHtml(
-                            deposit.phone || "—"
-                        )}
-                    </strong>
-
-                </div>
-
-            </div>
+            return;
+        }
 
 
-            <div class="mobile-actions">
-                ${actions}
-            </div>
+        if (
+            response.status === 403
+        ) {
 
-        </article>
-    `;
+            showMessage(
+                data.message ||
+                "You are not authorized to reject deposits.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            !response.ok ||
+            data.success !== true
+        ) {
+
+            showMessage(
+                data.message ||
+                "Unable to reject deposit.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        showMessage(
+            data.message ||
+            "Deposit rejected successfully.",
+            "success"
+        );
+
+
+        await reloadDeposits();
+
+
+    } catch (error) {
+
+        console.error(
+            "Deposit rejection error:",
+            error
+        );
+
+        showMessage(
+            "Unable to process the deposit.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   APPROVE FROM MODAL
+   ========================================================= */
+
+async function approveDeposit(
+    id
+) {
+
+    const deposit =
+        findDeposit(id);
+
+    if (!deposit) {
+        return;
+    }
+
+
+    const customer =
+        deposit.customer_name ||
+        deposit.full_name ||
+        "Customer";
+
+
+    const amount =
+        Number(
+            deposit.amount || 0
+        );
+
+
+    try {
+
+        showMessage(
+            "Approving deposit...",
+            "info"
+        );
+
+
+        const {
+            response,
+            data
+        } = await apiRequest(
+            DEPOSITS_API,
+            {
+
+                method: "POST",
+
+                body: JSON.stringify({
+
+                    deposit_id:
+                        id,
+
+                    action:
+                        "approve",
+
+                    payment_verified:
+                        true
+
+                })
+
+            }
+        );
+
+
+        if (
+            response.status === 401
+        ) {
+
+            administratorVerified =
+                false;
+
+            showMessage(
+                data.message ||
+                "Administrator session has expired.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            response.status === 403
+        ) {
+
+            showMessage(
+                data.message ||
+                "You are not authorized to approve deposits.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            !response.ok ||
+            data.success !== true
+        ) {
+
+            showMessage(
+                data.message ||
+                "Unable to approve deposit.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        showMessage(
+            data.message ||
+            `${formatCurrency(
+                amount
+            )} deposit for ${customer} approved successfully.`,
+            "success"
+        );
+
+
+        await reloadDeposits();
+
+
+    } catch (error) {
+
+        console.error(
+            "Deposit approval error:",
+            error
+        );
+
+        showMessage(
+            "Unable to approve the deposit.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   RELOAD
+   ========================================================= */
+
+async function reloadDeposits() {
+
+    try {
+
+        const {
+            response,
+            data
+        } = await apiRequest(
+            DEPOSITS_API,
+            {
+                method: "GET"
+            }
+        );
+
+
+        if (
+            !response.ok ||
+            data.success !== true
+        ) {
+
+            showMessage(
+                data.message ||
+                "Unable to refresh deposits.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        deposits =
+            Array.isArray(data.deposits)
+                ? data.deposits
+                : [];
+
+
+        updateStatistics(
+            data.statistics || {}
+        );
+
+
+        applyFilters();
+
+
+    } catch (error) {
+
+        console.error(
+            "Reload error:",
+            error
+        );
+
+        showMessage(
+            "Unable to refresh deposits.",
+            "error"
+        );
+    }
 }
 
 
 /* =========================================================
    PAGINATION
-========================================================= */
+   ========================================================= */
 
 function renderPagination() {
 
     const container =
-        $("pagination");
+        $("depositsPagination");
 
     if (!container) {
         return;
@@ -1405,8 +1827,8 @@ function renderPagination() {
 
     const totalPages =
         Math.ceil(
-            state.filteredDeposits.length /
-            state.perPage
+            filteredDeposits.length /
+            PER_PAGE
         );
 
 
@@ -1414,15 +1836,11 @@ function renderPagination() {
         totalPages <= 1
     ) {
 
-        container.hidden = true;
-
-        container.innerHTML = "";
+        container.innerHTML =
+            "";
 
         return;
     }
-
-
-    container.hidden = false;
 
 
     let html = "";
@@ -1431,13 +1849,15 @@ function renderPagination() {
     html += `
         <button
             type="button"
-            class="page-button"
-            data-page="${state.currentPage - 1}"
-            ${state.currentPage === 1 ? "disabled" : ""}
+            class="pagination-button"
+            data-page="${currentPage - 1}"
+            ${
+                currentPage === 1
+                    ? "disabled"
+                    : ""
+            }
         >
-            <svg viewBox="0 0 24 24">
-                <path d="M15 18l-6-6 6-6"/>
-            </svg>
+            Previous
         </button>
     `;
 
@@ -1451,8 +1871,8 @@ function renderPagination() {
         html += `
             <button
                 type="button"
-                class="page-button ${
-                    page === state.currentPage
+                class="pagination-button ${
+                    page === currentPage
                         ? "active"
                         : ""
                 }"
@@ -1467,381 +1887,154 @@ function renderPagination() {
     html += `
         <button
             type="button"
-            class="page-button"
-            data-page="${state.currentPage + 1}"
-            ${state.currentPage === totalPages ? "disabled" : ""}
+            class="pagination-button"
+            data-page="${currentPage + 1}"
+            ${
+                currentPage === totalPages
+                    ? "disabled"
+                    : ""
+            }
         >
-            <svg viewBox="0 0 24 24">
-                <path d="M9 18l6-6-6-6"/>
-            </svg>
+            Next
         </button>
     `;
 
 
     container.innerHTML =
         html;
+
+
+    container
+        .querySelectorAll(
+            "[data-page]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const page =
+                            Number(
+                                button.dataset.page
+                            );
+
+
+                        if (
+                            page < 1 ||
+                            page > totalPages
+                        ) {
+                            return;
+                        }
+
+
+                        currentPage =
+                            page;
+
+                        renderDeposits();
+                    }
+                );
+            }
+        );
 }
 
 
 /* =========================================================
-   FIND DEPOSIT
-========================================================= */
+   SIDEBAR
+   ========================================================= */
 
-function findDeposit(id) {
+function setupSidebar() {
 
-    return state.deposits.find(
-        item =>
-            String(
-                item.id ||
-                item._id ||
-                ""
-            ) === String(id)
+    const sidebar =
+        $("sidebar");
+
+    const overlay =
+        $("sidebarOverlay");
+
+    const menu =
+        $("menuButton");
+
+    const close =
+        $("sidebarClose");
+
+
+    function open() {
+
+        sidebar
+            ?.classList
+            .add("active");
+
+        overlay
+            ?.classList
+            .add("active");
+    }
+
+
+    function hide() {
+
+        sidebar
+            ?.classList
+            .remove("active");
+
+        overlay
+            ?.classList
+            .remove("active");
+    }
+
+
+    menu?.addEventListener(
+        "click",
+        open
+    );
+
+    close?.addEventListener(
+        "click",
+        hide
+    );
+
+    overlay?.addEventListener(
+        "click",
+        hide
     );
 }
 
 
 /* =========================================================
-   PROCESS DEPOSIT
-========================================================= */
+   LOGOUT
+   ========================================================= */
 
-async function processDeposit(
-    id,
-    action
-) {
-
-    if (state.processing) {
-        return;
-    }
-
-
-    const deposit =
-        findDeposit(id);
-
-
-    if (!deposit) {
-
-        showMessage(
-            "Deposit could not be found.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    if (
-        normalizeStatus(
-            deposit.status
-        ) !== "pending"
-    ) {
-
-        showMessage(
-            "This deposit has already been processed.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const amount =
-        Number(
-            deposit.amount || 0
-        );
-
-
-    /* -----------------------------------------------------
-       REJECTION
-    ----------------------------------------------------- */
-
-    if (
-        action === "reject"
-    ) {
-
-        const confirmed =
-            window.confirm(
-                `Are you sure you want to reject this deposit of ${formatUGX(amount)}?`
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-    }
-
-
-    /* -----------------------------------------------------
-       APPROVAL
-    ----------------------------------------------------- */
-
-    let paymentVerified = false;
-
-
-    if (
-        action === "approve"
-    ) {
-
-        const firstConfirmation =
-            window.confirm(
-                [
-                    "APPROVE DEPOSIT",
-                    "",
-                    `Customer: ${deposit.full_name || deposit.user_name || "Customer"}`,
-                    `Amount: ${formatUGX(amount)}`,
-                    `Method: ${methodLabel(deposit.payment_method || deposit.method)}`,
-                    `Reference: ${deposit.reference || deposit.payment_reference || "—"}`,
-                    "",
-                    "Only continue if you have manually checked the payment in the appropriate mobile-money system.",
-                    "",
-                    "Click OK to continue."
-                ].join("\n")
-            );
-
-
-        if (!firstConfirmation) {
-            return;
-        }
-
-
-        const verificationConfirmation =
-            window.confirm(
-                [
-                    "PAYMENT VERIFICATION CONFIRMATION",
-                    "",
-                    "Have you manually verified that the payment reference belongs to this deposit and that the money was actually received?",
-                    "",
-                    "OK = Yes, payment verified",
-                    "Cancel = Do not approve"
-                ].join("\n")
-            );
-
-
-        if (!verificationConfirmation) {
-
-            showMessage(
-                "Deposit approval cancelled because payment was not confirmed.",
-                "info"
-            );
-
-            return;
-        }
-
-
-        paymentVerified = true;
-    }
-
-
-    state.processing = true;
-
+async function logout() {
 
     try {
 
-        showMessage(
-            action === "approve"
-                ? "Verifying payment and approving deposit..."
-                : "Rejecting deposit...",
-            "info"
-        );
-
-
-        const {
-            response,
-            data
-        } = await fetchJson(
-            DEPOSITS_API,
+        await fetch(
+            LOGOUT_API,
             {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    deposit_id:
-                        deposit.id ||
-                        deposit._id,
-
-                    action,
-
-                    payment_verified:
-                        paymentVerified
-                })
+                method: "GET",
+                credentials: "include",
+                cache: "no-store"
             }
         );
 
-
-        if (
-            response.status === 401
-        ) {
-
-            state.authenticated = false;
-
-            showMessage(
-                data?.message ||
-                "Administrator session expired. Please login again.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            response.status === 403
-        ) {
-
-            showMessage(
-                data?.message ||
-                "Administrator access is required.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            !response.ok ||
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Unable to process deposit."
-            );
-        }
-
-
-        showMessage(
-            data.message ||
-            (
-                action === "approve"
-                    ? "Deposit approved successfully."
-                    : "Deposit rejected successfully."
-            ),
-            "success"
-        );
-
-
-        await loadDeposits();
-
     } catch (error) {
 
-        console.error(
-            "Deposit processing error:",
+        console.warn(
+            "Logout request error:",
             error
-        );
-
-        showMessage(
-            error.message ||
-            "Unable to process deposit.",
-            "error"
         );
 
     } finally {
 
-        state.processing = false;
+        window.location.href =
+            "login.html";
     }
-}
-
-
-/* =========================================================
-   VIEW DEPOSIT
-========================================================= */
-
-function viewDeposit(id) {
-
-    const deposit =
-        findDeposit(id);
-
-
-    if (!deposit) {
-        return;
-    }
-
-
-    const name =
-        deposit.full_name ||
-        deposit.user_name ||
-        deposit.name ||
-        "Customer";
-
-
-    const amount =
-        Number(
-            deposit.amount || 0
-        );
-
-
-    const method =
-        methodLabel(
-            deposit.payment_method ||
-            deposit.method
-        );
-
-
-    const reference =
-        deposit.reference ||
-        deposit.transaction_reference ||
-        deposit.payment_reference ||
-        "—";
-
-
-    const phone =
-        deposit.phone ||
-        "—";
-
-
-    const email =
-        deposit.email ||
-        "—";
-
-
-    const status =
-        normalizeStatus(
-            deposit.status
-        );
-
-
-    const verified =
-        deposit.payment_verified === true
-            ? "Verified"
-            : "Not verified";
-
-
-    const date =
-        formatDate(
-            deposit.created_at ||
-            deposit.date ||
-            deposit.submitted_at
-        );
-
-
-    window.alert(
-        [
-            "CROWN CASH DEPOSIT",
-            "",
-            `Customer: ${name}`,
-            `Phone: ${phone}`,
-            `Email: ${email}`,
-            `Amount: ${formatUGX(amount)}`,
-            `Method: ${method}`,
-            `Reference: ${reference}`,
-            `Payment verification: ${verified}`,
-            `Status: ${status}`,
-            `Date: ${date}`
-        ].join("\n")
-    );
 }
 
 
 /* =========================================================
    EVENTS
-========================================================= */
+   ========================================================= */
 
 function setupEvents() {
 
@@ -1869,280 +2062,110 @@ function setupEvents() {
     $("refreshDepositsBtn")
         ?.addEventListener(
             "click",
-            loadDeposits
-        );
+            async () => {
 
+                if (!administratorVerified) {
 
-    $("depositsTableBody")
-        ?.addEventListener(
-            "click",
-            handleDepositAction
-        );
+                    const verified =
+                        await verifyAdministrator();
 
+                    if (!verified) {
+                        return;
+                    }
 
-    $("depositMobileList")
-        ?.addEventListener(
-            "click",
-            handleDepositAction
-        );
+                } else {
 
-
-    $("pagination")
-        ?.addEventListener(
-            "click",
-            event => {
-
-                const button =
-                    event.target.closest(
-                        "[data-page]"
-                    );
-
-
-                if (!button) {
-                    return;
+                    await reloadDeposits();
                 }
-
-
-                if (
-                    button.disabled
-                ) {
-                    return;
-                }
-
-
-                const page =
-                    Number(
-                        button.dataset.page
-                    );
-
-
-                if (
-                    page < 1
-                ) {
-                    return;
-                }
-
-
-                state.currentPage =
-                    page;
-
-
-                renderDeposits();
-
-
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
             }
-        );
-
-
-    $("menuButton")
-        ?.addEventListener(
-            "click",
-            openSidebar
-        );
-
-
-    $("sidebarClose")
-        ?.addEventListener(
-            "click",
-            closeSidebar
-        );
-
-
-    $("sidebarOverlay")
-        ?.addEventListener(
-            "click",
-            closeSidebar
         );
 
 
     $("logoutBtn")
         ?.addEventListener(
             "click",
-            logoutAdmin
+            logout
         );
-}
-
-
-/* =========================================================
-   ACTION HANDLER
-========================================================= */
-
-function handleDepositAction(event) {
-
-    const button =
-        event.target.closest(
-            "[data-action]"
-        );
-
-
-    if (!button) {
-        return;
-    }
-
-
-    const action =
-        button.dataset.action;
-
-
-    const id =
-        button.dataset.id;
-
-
-    if (
-        action === "view"
-    ) {
-
-        viewDeposit(id);
-
-        return;
-    }
-
-
-    if (
-        action === "approve" ||
-        action === "reject"
-    ) {
-
-        processDeposit(
-            id,
-            action
-        );
-    }
-}
-
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
-function openSidebar() {
-
-    $("sidebar")
-        ?.classList.add("open");
-
-    $("sidebarOverlay")
-        ?.classList.add("show");
-}
-
-
-function closeSidebar() {
-
-    $("sidebar")
-        ?.classList.remove("open");
-
-    $("sidebarOverlay")
-        ?.classList.remove("show");
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logoutAdmin() {
-
-    const confirmed =
-        window.confirm(
-            "Are you sure you want to logout?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        await fetch(
-            LOGOUT_API,
-            {
-                method: "POST",
-
-                credentials: "include",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                }
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Logout request failed:",
-            error
-        );
-
-    } finally {
-
-        window.location.href =
-            "login.html";
-    }
 }
 
 
 /* =========================================================
    INITIALIZE
-========================================================= */
+   ========================================================= */
 
-async function initializeDepositsPage() {
+async function initialize() {
 
     try {
 
-        const authorized =
+        /*
+         * The actual deposit API verifies the admin.
+         */
+
+        const verified =
             await verifyAdministrator();
 
 
-        if (!authorized) {
-            return;
+        if (verified) {
+
+            await loadAdminProfile();
+
         }
 
+    } catch (error) {
 
-        await loadAdminProfile();
+        console.error(
+            "Initialization error:",
+            error
+        );
 
-        await loadDeposits();
+        showMessage(
+            "Unable to initialize deposit management.",
+            "error"
+        );
 
     } finally {
 
-        setTimeout(
-            hideLoader,
-            100
-        );
+        hidePageLoader();
     }
 }
 
 
 /* =========================================================
-   GLOBAL API
-========================================================= */
-
-window.CrownCashAdminDeposits = {
-
-    loadDeposits,
-
-    applyFilters,
-
-    refresh:
-        loadDeposits
-};
-
-
-/* =========================================================
    START
-========================================================= */
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        setupSidebar();
+
         setupEvents();
 
-        initializeDepositsPage();
+        initialize();
+
     }
 );
+
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+window.CrownCashAdminDeposits = {
+
+    verifyAdministrator,
+
+    loadAdminProfile,
+
+    reloadDeposits,
+
+    applyFilters,
+
+    viewDeposit,
+
+    processDeposit,
+
+    approveDeposit
+
+};

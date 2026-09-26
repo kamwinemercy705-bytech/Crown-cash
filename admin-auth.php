@@ -4,179 +4,57 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| CROWN CASH — ADMIN AUTHENTICATION
-| admin-auth.php
+| Crown Cash - Admin Authentication
 |--------------------------------------------------------------------------
+| Central authentication file for ALL administrator APIs.
 |
-| This file has TWO purposes:
+| Requirements:
+| 1. User must be logged in
+| 2. User must exist in MongoDB
+| 3. Account must be active
+| 4. role OR account_type must be admin
+| 5. User must match ADMIN_USER_ID or ADMIN_EMAIL
 |
-| 1. Direct request from frontend:
-|    /admin-auth.php
-|
-|    Returns JSON:
-|    {
-|        "success": true,
-|        "authenticated": true,
-|        "authorized": true
-|    }
-|
-| 2. Included by protected admin PHP APIs:
-|    require_once __DIR__ . "/admin-auth.php";
-|
-|    In that case, successful authentication simply allows the
-|    protected PHP file to continue executing.
-|
+| This version supports MongoDB _id stored as either:
+| - ObjectId
+| - String
 |--------------------------------------------------------------------------
 */
 
-
-/* =========================================================
-   ERROR CONFIGURATION
-   ========================================================= */
-
-error_reporting(E_ALL);
-
-ini_set(
-    "display_errors",
-    "0"
-);
-
-
-/* =========================================================
-   RESPONSE HEADERS
-   ========================================================= */
-
-header(
-    "Content-Type: application/json; charset=UTF-8"
-);
+header("Content-Type: application/json; charset=utf-8");
 
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
 );
 
-header(
-    "Access-Control-Allow-Credentials: true"
-);
+header("Access-Control-Allow-Credentials: true");
 
 header(
     "Access-Control-Allow-Methods: GET, POST, OPTIONS"
 );
 
 header(
-    "Access-Control-Allow-Headers: Content-Type, Accept"
-);
-
-header(
-    "Cache-Control: no-store, no-cache, must-revalidate, max-age=0"
-);
-
-header(
-    "Pragma: no-cache"
+    "Access-Control-Allow-Headers: Content-Type"
 );
 
 
-/* =========================================================
-   DETECT DIRECT REQUEST
-   =========================================================
-   
-   When JavaScript opens:
-   
-   /admin-auth.php
-   
-   we return JSON.
+/*
+|--------------------------------------------------------------------------
+| CORS PREFLIGHT
+|--------------------------------------------------------------------------
+*/
 
-   When another PHP file includes this file:
-   
-   require_once __DIR__ . "/admin-auth.php";
-   
-   we do NOT output the success JSON because the parent
-   PHP file needs to continue running.
-   
-========================================================= */
-
-$requestPath = parse_url(
-    $_SERVER["REQUEST_URI"] ?? "",
-    PHP_URL_PATH
-);
-
-$requestFile = basename(
-    (string)$requestPath
-);
-
-$isDirectRequest = (
-    strtolower($requestFile) === "admin-auth.php"
-);
-
-
-/* =========================================================
-   JSON RESPONSE FUNCTION
-   ========================================================= */
-
-function adminAuthJson(
-    bool $success,
-    bool $authenticated,
-    bool $authorized,
-    string $message,
-    int $statusCode = 200
-): void {
-
-    http_response_code(
-        $statusCode
-    );
-
-    echo json_encode([
-        "success" => $success,
-        "authenticated" => $authenticated,
-        "authorized" => $authorized,
-        "message" => $message
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   CORS PREFLIGHT
-   ========================================================= */
-
-if (
-    ($_SERVER["REQUEST_METHOD"] ?? "GET") === "OPTIONS"
-) {
-
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
     http_response_code(204);
-
     exit;
 }
 
 
-/* =========================================================
-   ALLOWED REQUEST METHOD
-   ========================================================= */
-
-$requestMethod =
-    strtoupper(
-        $_SERVER["REQUEST_METHOD"] ?? "GET"
-    );
-
-
-if (
-    $isDirectRequest &&
-    $requestMethod !== "GET"
-) {
-
-    adminAuthJson(
-        false,
-        false,
-        false,
-        "Method not allowed.",
-        405
-    );
-}
-
-
-/* =========================================================
-   SECURE CROSS-SITE SESSION
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| SECURE CROSS-SITE SESSION
+|--------------------------------------------------------------------------
+*/
 
 session_set_cookie_params([
     "lifetime" => 0,
@@ -186,39 +64,30 @@ session_set_cookie_params([
     "samesite" => "None"
 ]);
 
-
-if (
-    session_status() !== PHP_SESSION_ACTIVE
-) {
-
+if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
 
-/* =========================================================
-   LOGIN CHECK
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| LOGIN CHECK
+|--------------------------------------------------------------------------
+*/
 
 if (
     !isset($_SESSION["logged_in"]) ||
-    $_SESSION["logged_in"] !== true
+    $_SESSION["logged_in"] !== true ||
+    !isset($_SESSION["user_id"]) ||
+    trim((string)$_SESSION["user_id"]) === ""
 ) {
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            false,
-            false,
-            "Administrator login required.",
-            401
-        );
-    }
 
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
+        "authenticated" => false,
+        "authorized" => false,
         "message" => "Administrator login required."
     ]);
 
@@ -226,118 +95,56 @@ if (
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN SESSION TIMEOUT
+|--------------------------------------------------------------------------
+*/
+
+$adminSessionTimeout = 2 * 60 * 60;
+
 if (
-    !isset($_SESSION["user_id"]) ||
-    trim(
-        (string)$_SESSION["user_id"]
-    ) === ""
+    isset($_SESSION["login_time"]) &&
+    (time() - (int)$_SESSION["login_time"]) > $adminSessionTimeout
 ) {
 
-    if ($isDirectRequest) {
+    $_SESSION = [];
 
-        adminAuthJson(
-            false,
-            false,
-            false,
-            "Administrator session is missing the user ID.",
-            401
+    if (ini_get("session.use_cookies")) {
+
+        $params = session_get_cookie_params();
+
+        setcookie(
+            session_name(),
+            "",
+            time() - 42000,
+            $params["path"],
+            $params["domain"] ?? "",
+            $params["secure"],
+            $params["httponly"]
         );
     }
+
+    session_destroy();
 
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" => "Administrator session is invalid."
+        "authenticated" => false,
+        "authorized" => false,
+        "message" => "Admin session expired. Please login again."
     ]);
 
     exit;
 }
 
 
-/* =========================================================
-   ADMIN SESSION TIMEOUT
-   ========================================================= */
-
-$adminSessionTimeout =
-    2 * 60 * 60;
-
-
 /*
 |--------------------------------------------------------------------------
-| If login_time exists, enforce two-hour timeout.
+| LOAD DATABASE CONFIGURATION
 |--------------------------------------------------------------------------
 */
-
-if (
-    isset($_SESSION["login_time"])
-) {
-
-    $loginTime =
-        (int)$_SESSION["login_time"];
-
-
-    if (
-        $loginTime > 0 &&
-        (
-            time() -
-            $loginTime
-        ) > $adminSessionTimeout
-    ) {
-
-        $_SESSION = [];
-
-
-        if (
-            ini_get("session.use_cookies")
-        ) {
-
-            $params =
-                session_get_cookie_params();
-
-
-            setcookie(
-                session_name(),
-                "",
-                time() - 42000,
-                $params["path"],
-                $params["domain"] ?? "",
-                (bool)$params["secure"],
-                (bool)$params["httponly"]
-            );
-        }
-
-
-        session_destroy();
-
-
-        if ($isDirectRequest) {
-
-            adminAuthJson(
-                false,
-                false,
-                false,
-                "Admin session expired. Please login again.",
-                401
-            );
-        }
-
-
-        http_response_code(401);
-
-        echo json_encode([
-            "success" => false,
-            "message" => "Admin session expired."
-        ]);
-
-        exit;
-    }
-}
-
-
-/* =========================================================
-   LOAD MONGODB CONFIGURATION
-   ========================================================= */
 
 try {
 
@@ -350,95 +157,42 @@ try {
         $e->getMessage()
     );
 
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Unable to connect to the administrator verification service.",
-            500
-        );
-    }
-
-
     http_response_code(500);
 
     echo json_encode([
         "success" => false,
-        "message" => "Administrator verification service error."
+        "authenticated" => false,
+        "authorized" => false,
+        "message" => "Unable to load database configuration."
     ]);
 
     exit;
 }
 
 
-/* =========================================================
-   VERIFY USERS COLLECTION
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ADMIN IDENTITY SETTINGS
+|--------------------------------------------------------------------------
+*/
 
-if (
-    !isset($users)
-) {
+$adminUserId = trim(
+    (string)getenv("ADMIN_USER_ID")
+);
 
-    error_log(
-        "Crown Cash admin authentication error: users collection unavailable."
-    );
-
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Administrator verification service is not configured correctly.",
-            500
-        );
-    }
+$adminEmail = strtolower(
+    trim((string)getenv("ADMIN_EMAIL"))
+);
 
 
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Administrator verification service error."
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   ADMIN ID FROM RENDER
-   ========================================================= */
-
-$adminUserId =
-    trim(
-        (string)(
-            getenv("ADMIN_USER_ID") ?: ""
-        )
-    );
-
-
-/* =========================================================
-   ADMIN EMAIL FROM RENDER
-   ========================================================= */
-
-$adminEmail =
-    strtolower(
-        trim(
-            (string)(
-                getenv("ADMIN_EMAIL") ?: ""
-            )
-        )
-    );
-
-
-/* =========================================================
-   FAIL CLOSED
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| FAIL CLOSED
+|--------------------------------------------------------------------------
+|
+| At least one administrator identity must be configured.
+|--------------------------------------------------------------------------
+*/
 
 if (
     $adminUserId === "" &&
@@ -450,23 +204,12 @@ if (
         "ADMIN_USER_ID and ADMIN_EMAIL are not configured."
     );
 
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Administrator identity is not configured.",
-            500
-        );
-    }
-
-
     http_response_code(500);
 
     echo json_encode([
         "success" => false,
+        "authenticated" => false,
+        "authorized" => false,
         "message" => "Administrator identity is not configured."
     ]);
 
@@ -474,164 +217,135 @@ if (
 }
 
 
-/* =========================================================
-   SESSION USER ID
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| SESSION USER ID
+|--------------------------------------------------------------------------
+*/
 
-$sessionUserId =
-    trim(
-        (string)$_SESSION["user_id"]
-    );
+$sessionUserId = trim(
+    (string)$_SESSION["user_id"]
+);
 
-
-if (
-    $sessionUserId === ""
-) {
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            false,
-            false,
-            "Invalid administrator session.",
-            401
-        );
-    }
-
+if ($sessionUserId === "") {
 
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" => "Invalid administrator session."
+        "authenticated" => false,
+        "authorized" => false,
+        "message" => "Administrator session is invalid."
     ]);
 
     exit;
 }
 
 
-/* =========================================================
-   FIND CURRENT USER
-   ========================================================= */
-
-$adminUser = null;
-
-
 /*
 |--------------------------------------------------------------------------
-| First try ObjectId.
+| FIND USER
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| We support BOTH:
+|
+| MongoDB ObjectId:
+|     ObjectId("...")
+|
+| and string:
+|     "..."
+|
+| This prevents admin authentication from failing when the
+| session stores the ID as a string.
 |--------------------------------------------------------------------------
 */
 
 try {
 
-    if (
-        preg_match(
-            '/^[a-fA-F0-9]{24}$/',
+    $adminUser = null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | First attempt: MongoDB ObjectId
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+
+        $sessionObjectId = new MongoDB\BSON\ObjectId(
             $sessionUserId
-        )
-    ) {
+        );
 
-        $sessionObjectId =
-            new MongoDB\BSON\ObjectId(
-                $sessionUserId
-            );
+        $adminUser = $users->findOne([
+            "_id" => $sessionObjectId
+        ]);
 
+    } catch (Throwable $e) {
 
-        $adminUser =
-            $users->findOne([
-                "_id" => $sessionObjectId
-            ]);
+        /*
+        | Invalid ObjectId.
+        | We will try string ID below.
+        */
+
+        $adminUser = null;
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Second attempt: string ID
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$adminUser) {
+
+        $adminUser = $users->findOne([
+            "_id" => $sessionUserId
+        ]);
+    }
+
 
 } catch (Throwable $e) {
 
     error_log(
-        "Crown Cash admin ObjectId lookup error: " .
+        "Crown Cash admin user lookup failed: " .
         $e->getMessage()
     );
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "authenticated" => true,
+        "authorized" => false,
+        "message" => "Unable to verify administrator account."
+    ]);
+
+    exit;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Fallback to string _id.
+| ADMIN USER NOT FOUND
 |--------------------------------------------------------------------------
 */
 
-if (
-    !$adminUser
-) {
+if (!$adminUser) {
 
-    try {
-
-        $adminUser =
-            $users->findOne([
-                "_id" => $sessionUserId
-            ]);
-
-    } catch (Throwable $e) {
-
-        error_log(
-            "Crown Cash admin string ID lookup error: " .
-            $e->getMessage()
-        );
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Fallback to user_id field.
-|--------------------------------------------------------------------------
-*/
-
-if (
-    !$adminUser
-) {
-
-    try {
-
-        $adminUser =
-            $users->findOne([
-                "user_id" => $sessionUserId
-            ]);
-
-    } catch (Throwable $e) {
-
-        error_log(
-            "Crown Cash admin user_id lookup error: " .
-            $e->getMessage()
-        );
-    }
-}
-
-
-/* =========================================================
-   USER MUST EXIST
-   ========================================================= */
-
-if (
-    !$adminUser
-) {
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Administrator account was not found.",
-            403
-        );
-    }
-
+    error_log(
+        "Crown Cash admin account not found for session user ID: " .
+        $sessionUserId
+    );
 
     http_response_code(403);
 
     echo json_encode([
         "success" => false,
+        "authenticated" => true,
+        "authorized" => false,
         "message" => "Administrator account was not found."
     ]);
 
@@ -639,30 +353,46 @@ if (
 }
 
 
-/* =========================================================
-   ACCOUNT STATUS
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| GET DATABASE USER ID AS STRING
+|--------------------------------------------------------------------------
+*/
 
-$status =
-    strtolower(
-        trim(
-            (string)(
-                $adminUser["status"] ??
-                "active"
-            )
-        )
-    );
+$databaseUserId = "";
 
+if (
+    isset($adminUser["_id"]) &&
+    $adminUser["_id"] instanceof MongoDB\BSON\ObjectId
+) {
+
+    $databaseUserId =
+        (string)$adminUser["_id"];
+
+} else {
+
+    $databaseUserId =
+        trim((string)($adminUser["_id"] ?? ""));
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ACCOUNT STATUS
+|--------------------------------------------------------------------------
+*/
+
+$status = strtolower(
+    trim((string)($adminUser["status"] ?? "active"))
+);
 
 $blockedStatuses = [
     "blocked",
     "suspended",
     "disabled",
     "banned",
-    "inactive",
-    "deactivated"
+    "inactive"
 ];
-
 
 if (
     in_array(
@@ -676,23 +406,12 @@ if (
 
     session_destroy();
 
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Administrator account is not active.",
-            403
-        );
-    }
-
-
     http_response_code(403);
 
     echo json_encode([
         "success" => false,
+        "authenticated" => false,
+        "authorized" => false,
         "message" => "Administrator account is not active."
     ]);
 
@@ -700,70 +419,38 @@ if (
 }
 
 
-/* =========================================================
-   DATABASE ROLE
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| DATABASE ROLE
+|--------------------------------------------------------------------------
+*/
 
-$databaseRole =
-    strtolower(
-        trim(
-            (string)(
-                $adminUser["role"] ??
-                ""
-            )
-        )
-    );
+$databaseRole = strtolower(
+    trim((string)($adminUser["role"] ?? ""))
+);
 
-
-/* =========================================================
-   ACCOUNT TYPE
-   ========================================================= */
-
-$accountType =
-    strtolower(
-        trim(
-            (string)(
-                $adminUser["account_type"] ??
-                $adminUser["accountType"] ??
-                ""
-            )
-        )
-    );
+$accountType = strtolower(
+    trim((string)($adminUser["account_type"] ?? ""))
+);
 
 
-/* =========================================================
-   ADMIN ROLE CHECK
-   ========================================================= */
-
-$isAdmin =
-    (
-        $databaseRole === "admin" ||
-        $databaseRole === "administrator" ||
-        $accountType === "admin" ||
-        $accountType === "administrator"
-    );
-
+/*
+|--------------------------------------------------------------------------
+| REQUIRE ADMIN ROLE
+|--------------------------------------------------------------------------
+*/
 
 if (
-    !$isAdmin
+    $databaseRole !== "admin" &&
+    $accountType !== "admin"
 ) {
-
-    if ($isDirectRequest) {
-
-        adminAuthJson(
-            false,
-            true,
-            false,
-            "Administrator access required.",
-            403
-        );
-    }
-
 
     http_response_code(403);
 
     echo json_encode([
         "success" => false,
+        "authenticated" => true,
+        "authorized" => false,
         "message" => "Administrator access required."
     ]);
 
@@ -771,50 +458,36 @@ if (
 }
 
 
-/* =========================================================
-   EXACT ADMIN USER ID CHECK
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ADMIN USER ID AUTHORIZATION
+|--------------------------------------------------------------------------
+|
+| If ADMIN_USER_ID exists, it is the strongest identity check.
+|
+| We compare the normalized database ID with the configured ID.
+|--------------------------------------------------------------------------
+*/
 
-if (
-    $adminUserId !== ""
-) {
-
-    $databaseUserId =
-        isset($adminUser["_id"])
-            ? (string)$adminUser["_id"]
-            : "";
-
+if ($adminUserId !== "") {
 
     if (
-        strcasecmp(
-            $databaseUserId,
-            $adminUserId
-        ) !== 0
+        $databaseUserId === "" ||
+        $databaseUserId !== $adminUserId
     ) {
 
         error_log(
-            "Crown Cash unauthorized admin access attempt. " .
-            "Session user ID: " .
-            $sessionUserId
+            "Crown Cash unauthorized admin ID attempt. " .
+            "Session ID: " . $sessionUserId .
+            " Database ID: " . $databaseUserId
         );
-
-
-        if ($isDirectRequest) {
-
-            adminAuthJson(
-                false,
-                true,
-                false,
-                "This account is not authorized to access the admin panel.",
-                403
-            );
-        }
-
 
         http_response_code(403);
 
         echo json_encode([
             "success" => false,
+            "authenticated" => true,
+            "authorized" => false,
             "message" => "This account is not authorized to access the admin panel."
         ]);
 
@@ -823,25 +496,23 @@ if (
 }
 
 
-/* =========================================================
-   ADMIN EMAIL CHECK
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ADMIN EMAIL FALLBACK
+|--------------------------------------------------------------------------
+|
+| Only used when ADMIN_USER_ID is not configured.
+|--------------------------------------------------------------------------
+*/
 
 if (
     $adminUserId === "" &&
     $adminEmail !== ""
 ) {
 
-    $databaseEmail =
-        strtolower(
-            trim(
-                (string)(
-                    $adminUser["email"] ??
-                    ""
-                )
-            )
-        );
-
+    $databaseEmail = strtolower(
+        trim((string)($adminUser["email"] ?? ""))
+    );
 
     if (
         $databaseEmail === "" ||
@@ -849,26 +520,16 @@ if (
     ) {
 
         error_log(
-            "Crown Cash unauthorized administrator email attempt."
+            "Crown Cash unauthorized admin email attempt: " .
+            $databaseEmail
         );
-
-
-        if ($isDirectRequest) {
-
-            adminAuthJson(
-                false,
-                true,
-                false,
-                "This account is not authorized to access the admin panel.",
-                403
-            );
-        }
-
 
         http_response_code(403);
 
         echo json_encode([
             "success" => false,
+            "authenticated" => true,
+            "authorized" => false,
             "message" => "This account is not authorized to access the admin panel."
         ]);
 
@@ -877,80 +538,41 @@ if (
 }
 
 
-/* =========================================================
-   REFRESH ADMIN SESSION
-   ========================================================= */
+/*
+|--------------------------------------------------------------------------
+| REFRESH ADMIN SESSION
+|--------------------------------------------------------------------------
+*/
 
-$_SESSION["logged_in"] =
-    true;
+$_SESSION["logged_in"] = true;
 
 $_SESSION["user_id"] =
-    (string)(
-        $adminUser["_id"] ??
-        $sessionUserId
-    );
+    $databaseUserId !== ""
+        ? $databaseUserId
+        : $sessionUserId;
 
 $_SESSION["user_email"] =
-    (string)(
-        $adminUser["email"] ??
-        ""
-    );
+    (string)($adminUser["email"] ?? "");
 
-$_SESSION["role"] =
-    "admin";
+$_SESSION["role"] = "admin";
 
-$_SESSION["account_type"] =
-    "admin";
-
-$_SESSION["admin_verified"] =
-    true;
-
-$_SESSION["admin_verified_at"] =
-    time();
+$_SESSION["account_type"] = "admin";
 
 
 /*
 |--------------------------------------------------------------------------
-| Preserve login time if it already exists.
+| SUCCESS
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| This file is designed to be INCLUDED by protected admin APIs.
+|
+| Therefore we do NOT output JSON success here.
+|
+| The protected PHP file continues executing.
 |--------------------------------------------------------------------------
 */
 
-if (
-    !isset($_SESSION["login_time"])
-) {
-
-    $_SESSION["login_time"] =
-        time();
-}
-
-
-/* =========================================================
-   DIRECT REQUEST SUCCESS RESPONSE
-   ========================================================= */
-
-if (
-    $isDirectRequest
-) {
-
-    adminAuthJson(
-        true,
-        true,
-        true,
-        "Administrator access confirmed.",
-        200
-    );
-}
-
-
-/* =========================================================
-   INCLUDED REQUEST SUCCESS
-   =========================================================
-   
-   If another PHP file included this file, execution simply
-   continues into that protected PHP file.
-|--------------------------------------------------------------------------
-*/
-
-return;
+return true;
 
 ?>

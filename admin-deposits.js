@@ -30,18 +30,23 @@ const state = {
     deposits: [],
     filteredDeposits: [],
     currentPage: 1,
-    perPage: 10
+    perPage: 10,
+    processing: false
 };
 
 
 /* =========================================================
-   HELPERS
+   DOM HELPER
 ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
 
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
 
 function escapeHtml(value) {
 
@@ -54,13 +59,21 @@ function escapeHtml(value) {
 }
 
 
+/* =========================================================
+   MONEY
+========================================================= */
+
 function formatMoney(value) {
 
-    const number = Number(value || 0);
+    const number =
+        Number(value || 0);
 
-    return new Intl.NumberFormat("en-UG", {
-        maximumFractionDigits: 0
-    }).format(number);
+    return new Intl.NumberFormat(
+        "en-UG",
+        {
+            maximumFractionDigits: 0
+        }
+    ).format(number);
 }
 
 
@@ -70,33 +83,55 @@ function formatUGX(value) {
 }
 
 
+/* =========================================================
+   DATE
+========================================================= */
+
 function formatDate(value) {
 
     if (!value) {
         return "—";
     }
 
-    const date = new Date(value);
+    const date =
+        new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
         return "—";
     }
 
-    return date.toLocaleDateString("en-UG", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-    });
+    return date.toLocaleDateString(
+        "en-UG",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
+    );
 }
 
 
+/* =========================================================
+   STATUS
+========================================================= */
+
 function normalizeStatus(value) {
 
-    return String(value || "pending")
+    return String(
+        value || "pending"
+    )
         .toLowerCase()
         .trim();
 }
 
+
+/* =========================================================
+   PAYMENT METHOD
+========================================================= */
 
 function normalizeMethod(value) {
 
@@ -123,31 +158,9 @@ function methodLabel(value) {
 }
 
 
-function getInitials(name) {
-
-    const text =
-        String(name || "User")
-            .trim();
-
-    if (!text) {
-        return "U";
-    }
-
-    const parts =
-        text.split(/\s+/);
-
-    if (parts.length === 1) {
-        return parts[0]
-            .substring(0, 1)
-            .toUpperCase();
-    }
-
-    return (
-        parts[0][0] +
-        parts[1][0]
-    ).toUpperCase();
-}
-
+/* =========================================================
+   MESSAGE
+========================================================= */
 
 function showMessage(
     message,
@@ -184,6 +197,10 @@ function hideMessage() {
 }
 
 
+/* =========================================================
+   LOADER
+========================================================= */
+
 function hideLoader() {
 
     const loader =
@@ -207,27 +224,29 @@ async function fetchJson(
 ) {
 
     const response =
-        await fetch(url, {
-            credentials: "include",
-
-            cache: "no-store",
-
-            ...options,
-
-            headers: {
-                Accept:
-                    "application/json",
-
-                ...(options.headers || {})
+        await fetch(
+            url,
+            {
+                credentials: "include",
+                cache: "no-store",
+                ...options,
+                headers: {
+                    Accept:
+                        "application/json",
+                    ...(options.headers || {})
+                }
             }
-        });
+        );
 
     let data = null;
 
     try {
+
         data =
             await response.json();
+
     } catch (error) {
+
         data = null;
     }
 
@@ -274,7 +293,9 @@ async function verifyAdministrator() {
         state.authenticated = false;
 
 
-        if (response.status === 401) {
+        if (
+            response.status === 401
+        ) {
 
             showMessage(
                 data?.message ||
@@ -286,11 +307,13 @@ async function verifyAdministrator() {
         }
 
 
-        if (response.status === 403) {
+        if (
+            response.status === 403
+        ) {
 
             showMessage(
                 data?.message ||
-                "Administrator access is required to view deposits.",
+                "Administrator access is required.",
                 "error"
             );
 
@@ -300,7 +323,7 @@ async function verifyAdministrator() {
 
         showMessage(
             data?.message ||
-            "Administrator verification failed. Please try again.",
+            "Administrator verification failed.",
             "error"
         );
 
@@ -309,12 +332,12 @@ async function verifyAdministrator() {
     } catch (error) {
 
         console.error(
-            "Admin authentication error:",
+            "Administrator verification error:",
             error
         );
 
         showMessage(
-            "Unable to verify the administrator session. Please refresh and try again.",
+            "Unable to verify administrator access. Please refresh and try again.",
             "error"
         );
 
@@ -374,24 +397,28 @@ async function loadAdminProfile() {
 
 
         if ($("adminName")) {
+
             $("adminName").textContent =
                 fullName;
         }
 
 
         if ($("headerUserName")) {
+
             $("headerUserName").textContent =
                 fullName;
         }
 
 
         if ($("adminAvatar")) {
+
             $("adminAvatar").textContent =
                 firstLetter;
         }
 
 
         if ($("accountAvatar")) {
+
             $("accountAvatar").textContent =
                 firstLetter;
         }
@@ -448,13 +475,13 @@ async function loadDeposits() {
             response.status === 401
         ) {
 
+            state.authenticated = false;
+
             showMessage(
                 data?.message ||
                 "Administrator session expired. Please login again.",
                 "error"
             );
-
-            state.authenticated = false;
 
             return;
         }
@@ -488,7 +515,9 @@ async function loadDeposits() {
 
 
         state.deposits =
-            Array.isArray(data.deposits)
+            Array.isArray(
+                data.deposits
+            )
                 ? data.deposits
                 : [];
 
@@ -585,6 +614,7 @@ function updateStatistics(stats) {
             0
         );
 
+
     let pending =
         Number(
             stats.pending_amount ??
@@ -592,12 +622,14 @@ function updateStatistics(stats) {
             0
         );
 
+
     let approved =
         Number(
             stats.approved_amount ??
             stats.approved_deposits_amount ??
             0
         );
+
 
     let rejected =
         Number(
@@ -607,12 +639,12 @@ function updateStatistics(stats) {
         );
 
 
-    /* fallback calculation */
+    const hasServerTotals =
+        stats.total_deposits_amount !== undefined ||
+        stats.total_amount !== undefined;
 
-    if (
-        !stats.total_deposits_amount &&
-        !stats.total_amount
-    ) {
+
+    if (!hasServerTotals) {
 
         total =
             state.deposits.reduce(
@@ -681,24 +713,28 @@ function updateStatistics(stats) {
 
 
     if ($("totalDeposits")) {
+
         $("totalDeposits").textContent =
             formatUGX(total);
     }
 
 
     if ($("pendingDeposits")) {
+
         $("pendingDeposits").textContent =
             formatUGX(pending);
     }
 
 
     if ($("approvedDeposits")) {
+
         $("approvedDeposits").textContent =
             formatUGX(approved);
     }
 
 
     if ($("rejectedDeposits")) {
+
         $("rejectedDeposits").textContent =
             formatUGX(rejected);
     }
@@ -817,7 +853,7 @@ function applyFilters() {
 
 
 /* =========================================================
-   RENDER
+   RENDER DEPOSITS
 ========================================================= */
 
 function renderDeposits() {
@@ -871,7 +907,10 @@ function renderDeposits() {
 
 
     const pageItems =
-        list.slice(start, end);
+        list.slice(
+            start,
+            end
+        );
 
 
     renderDesktopTable(
@@ -911,11 +950,14 @@ function renderDesktopTable(items) {
 
     body.innerHTML =
         items.map(
-            deposit =>
-                createTableRow(deposit)
+            createTableRow
         ).join("");
 }
 
+
+/* =========================================================
+   TABLE ROW
+========================================================= */
 
 function createTableRow(deposit) {
 
@@ -927,7 +969,8 @@ function createTableRow(deposit) {
 
 
     const email =
-        deposit.email || "";
+        deposit.email ||
+        "No email";
 
 
     const amount =
@@ -968,65 +1011,56 @@ function createTableRow(deposit) {
         "";
 
 
-    const actions =
-        status === "pending"
-            ? `
-                <div class="action-buttons">
+    let actions = `
+        <button
+            type="button"
+            class="deposit-action view"
+            data-action="view"
+            data-id="${escapeHtml(id)}"
+            title="View deposit"
+            aria-label="View deposit"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="2.5"/>
+            </svg>
+        </button>
+    `;
 
-                    <button
-                        type="button"
-                        class="deposit-action view"
-                        data-action="view"
-                        data-id="${escapeHtml(id)}"
-                        title="View deposit"
-                    >
-                        <svg viewBox="0 0 24 24">
-                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
-                            <circle cx="12" cy="12" r="2.5"/>
-                        </svg>
-                    </button>
 
-                    <button
-                        type="button"
-                        class="deposit-action approve"
-                        data-action="approve"
-                        data-id="${escapeHtml(id)}"
-                        title="Approve deposit"
-                    >
-                        <svg viewBox="0 0 24 24">
-                            <path d="M5 12l4 4L19 6"/>
-                        </svg>
-                    </button>
+    if (status === "pending") {
 
-                    <button
-                        type="button"
-                        class="deposit-action reject"
-                        data-action="reject"
-                        data-id="${escapeHtml(id)}"
-                        title="Reject deposit"
-                    >
-                        <svg viewBox="0 0 24 24">
-                            <path d="M6 6l12 12"/>
-                            <path d="M18 6L6 18"/>
-                        </svg>
-                    </button>
+        actions += `
 
-                </div>
-            `
-            : `
-                <button
-                    type="button"
-                    class="deposit-action view"
-                    data-action="view"
-                    data-id="${escapeHtml(id)}"
-                    title="View deposit"
-                >
-                    <svg viewBox="0 0 24 24">
-                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
-                        <circle cx="12" cy="12" r="2.5"/>
-                    </svg>
-                </button>
-            `;
+            <button
+                type="button"
+                class="deposit-action approve"
+                data-action="approve"
+                data-id="${escapeHtml(id)}"
+                title="Approve deposit"
+                aria-label="Approve deposit"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 12l4 4L19 6"/>
+                </svg>
+            </button>
+
+
+            <button
+                type="button"
+                class="deposit-action reject"
+                data-action="reject"
+                data-id="${escapeHtml(id)}"
+                title="Reject deposit"
+                aria-label="Reject deposit"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6l12 12"/>
+                    <path d="M18 6L6 18"/>
+                </svg>
+            </button>
+        `;
+    }
 
 
     return `
@@ -1038,9 +1072,18 @@ function createTableRow(deposit) {
 
                     <div class="customer-avatar">
 
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="8" r="3"/>
-                            <path d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"/>
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="3"
+                            />
+                            <path
+                                d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"
+                            />
                         </svg>
 
                     </div>
@@ -1108,7 +1151,11 @@ function createTableRow(deposit) {
 
 
             <td>
-                ${actions}
+
+                <div class="action-buttons">
+                    ${actions}
+                </div>
+
             </td>
 
         </tr>
@@ -1135,8 +1182,7 @@ function renderMobileCards(items) {
 
     container.innerHTML =
         items.map(
-            deposit =>
-                createMobileCard(deposit)
+            createMobileCard
         ).join("");
 }
 
@@ -1194,6 +1240,7 @@ function createMobileCard(deposit) {
             class="deposit-action view"
             data-action="view"
             data-id="${escapeHtml(id)}"
+            title="View deposit"
         >
             <svg viewBox="0 0 24 24">
                 <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/>
@@ -1206,22 +1253,26 @@ function createMobileCard(deposit) {
     if (status === "pending") {
 
         actions += `
+
             <button
                 type="button"
                 class="deposit-action approve"
                 data-action="approve"
                 data-id="${escapeHtml(id)}"
+                title="Approve deposit"
             >
                 <svg viewBox="0 0 24 24">
                     <path d="M5 12l4 4L19 6"/>
                 </svg>
             </button>
 
+
             <button
                 type="button"
                 class="deposit-action reject"
                 data-action="reject"
                 data-id="${escapeHtml(id)}"
+                title="Reject deposit"
             >
                 <svg viewBox="0 0 24 24">
                     <path d="M6 6l12 12"/>
@@ -1242,8 +1293,17 @@ function createMobileCard(deposit) {
                     <div class="customer-avatar">
 
                         <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="8" r="3"/>
-                            <path d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"/>
+
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="3"
+                            />
+
+                            <path
+                                d="M5 20c.5-3.5 2.8-5.5 7-5.5s6.5 2 7 5.5"
+                            />
+
                         </svg>
 
                     </div>
@@ -1262,6 +1322,7 @@ function createMobileCard(deposit) {
 
                 </div>
 
+
                 <span class="status-badge ${escapeHtml(status)}">
                     ${escapeHtml(status)}
                 </span>
@@ -1273,9 +1334,7 @@ function createMobileCard(deposit) {
 
                 <div class="mobile-detail">
 
-                    <span>
-                        Amount
-                    </span>
+                    <span>Amount</span>
 
                     <strong>
                         ${formatUGX(amount)}
@@ -1286,9 +1345,7 @@ function createMobileCard(deposit) {
 
                 <div class="mobile-detail">
 
-                    <span>
-                        Method
-                    </span>
+                    <span>Method</span>
 
                     <strong>
                         ${methodLabel(method)}
@@ -1299,9 +1356,7 @@ function createMobileCard(deposit) {
 
                 <div class="mobile-detail">
 
-                    <span>
-                        Reference
-                    </span>
+                    <span>Reference</span>
 
                     <strong>
                         ${escapeHtml(reference)}
@@ -1312,9 +1367,7 @@ function createMobileCard(deposit) {
 
                 <div class="mobile-detail">
 
-                    <span>
-                        Phone
-                    </span>
+                    <span>Phone</span>
 
                     <strong>
                         ${escapeHtml(
@@ -1357,7 +1410,9 @@ function renderPagination() {
         );
 
 
-    if (totalPages <= 1) {
+    if (
+        totalPages <= 1
+    ) {
 
         container.hidden = true;
 
@@ -1380,7 +1435,9 @@ function renderPagination() {
             data-page="${state.currentPage - 1}"
             ${state.currentPage === 1 ? "disabled" : ""}
         >
-            ‹
+            <svg viewBox="0 0 24 24">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
         </button>
     `;
 
@@ -1414,17 +1471,37 @@ function renderPagination() {
             data-page="${state.currentPage + 1}"
             ${state.currentPage === totalPages ? "disabled" : ""}
         >
-            ›
+            <svg viewBox="0 0 24 24">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
         </button>
     `;
 
 
-    container.innerHTML = html;
+    container.innerHTML =
+        html;
 }
 
 
 /* =========================================================
-   DEPOSIT ACTIONS
+   FIND DEPOSIT
+========================================================= */
+
+function findDeposit(id) {
+
+    return state.deposits.find(
+        item =>
+            String(
+                item.id ||
+                item._id ||
+                ""
+            ) === String(id)
+    );
+}
+
+
+/* =========================================================
+   PROCESS DEPOSIT
 ========================================================= */
 
 async function processDeposit(
@@ -1432,15 +1509,13 @@ async function processDeposit(
     action
 ) {
 
+    if (state.processing) {
+        return;
+    }
+
+
     const deposit =
-        state.deposits.find(
-            item =>
-                String(
-                    item.id ||
-                    item._id ||
-                    ""
-                ) === String(id)
-        );
+        findDeposit(id);
 
 
     if (!deposit) {
@@ -1454,33 +1529,118 @@ async function processDeposit(
     }
 
 
+    if (
+        normalizeStatus(
+            deposit.status
+        ) !== "pending"
+    ) {
+
+        showMessage(
+            "This deposit has already been processed.",
+            "error"
+        );
+
+        return;
+    }
+
+
     const amount =
         Number(
             deposit.amount || 0
         );
 
 
-    const actionText =
-        action === "approve"
-            ? "approve"
-            : "reject";
+    /* -----------------------------------------------------
+       REJECTION
+    ----------------------------------------------------- */
+
+    if (
+        action === "reject"
+    ) {
+
+        const confirmed =
+            window.confirm(
+                `Are you sure you want to reject this deposit of ${formatUGX(amount)}?`
+            );
 
 
-    const confirmed =
-        window.confirm(
-            `Are you sure you want to ${actionText} this deposit of ${formatUGX(amount)}?`
-        );
+        if (!confirmed) {
+            return;
+        }
 
-
-    if (!confirmed) {
-        return;
     }
+
+
+    /* -----------------------------------------------------
+       APPROVAL
+    ----------------------------------------------------- */
+
+    let paymentVerified = false;
+
+
+    if (
+        action === "approve"
+    ) {
+
+        const firstConfirmation =
+            window.confirm(
+                [
+                    "APPROVE DEPOSIT",
+                    "",
+                    `Customer: ${deposit.full_name || deposit.user_name || "Customer"}`,
+                    `Amount: ${formatUGX(amount)}`,
+                    `Method: ${methodLabel(deposit.payment_method || deposit.method)}`,
+                    `Reference: ${deposit.reference || deposit.payment_reference || "—"}`,
+                    "",
+                    "Only continue if you have manually checked the payment in the appropriate mobile-money system.",
+                    "",
+                    "Click OK to continue."
+                ].join("\n")
+            );
+
+
+        if (!firstConfirmation) {
+            return;
+        }
+
+
+        const verificationConfirmation =
+            window.confirm(
+                [
+                    "PAYMENT VERIFICATION CONFIRMATION",
+                    "",
+                    "Have you manually verified that the payment reference belongs to this deposit and that the money was actually received?",
+                    "",
+                    "OK = Yes, payment verified",
+                    "Cancel = Do not approve"
+                ].join("\n")
+            );
+
+
+        if (!verificationConfirmation) {
+
+            showMessage(
+                "Deposit approval cancelled because payment was not confirmed.",
+                "info"
+            );
+
+            return;
+        }
+
+
+        paymentVerified = true;
+    }
+
+
+    state.processing = true;
 
 
     try {
 
         showMessage(
-            `${action === "approve" ? "Approving" : "Rejecting"} deposit...`,
+            action === "approve"
+                ? "Verifying payment and approving deposit..."
+                : "Rejecting deposit...",
             "info"
         );
 
@@ -1499,11 +1659,15 @@ async function processDeposit(
                 },
 
                 body: JSON.stringify({
+
                     deposit_id:
                         deposit.id ||
                         deposit._id,
 
-                    action
+                    action,
+
+                    payment_verified:
+                        paymentVerified
                 })
             }
         );
@@ -1513,7 +1677,10 @@ async function processDeposit(
             response.status === 401
         ) {
 
+            state.authenticated = false;
+
             showMessage(
+                data?.message ||
                 "Administrator session expired. Please login again.",
                 "error"
             );
@@ -1544,14 +1711,18 @@ async function processDeposit(
 
             throw new Error(
                 data?.message ||
-                `Unable to ${actionText} deposit.`
+                "Unable to process deposit."
             );
         }
 
 
         showMessage(
             data.message ||
-            `Deposit ${action}d successfully.`,
+            (
+                action === "approve"
+                    ? "Deposit approved successfully."
+                    : "Deposit rejected successfully."
+            ),
             "success"
         );
 
@@ -1561,15 +1732,19 @@ async function processDeposit(
     } catch (error) {
 
         console.error(
-            "Deposit action error:",
+            "Deposit processing error:",
             error
         );
 
         showMessage(
             error.message ||
-            "Unable to update deposit.",
+            "Unable to process deposit.",
             "error"
         );
+
+    } finally {
+
+        state.processing = false;
     }
 }
 
@@ -1581,14 +1756,7 @@ async function processDeposit(
 function viewDeposit(id) {
 
     const deposit =
-        state.deposits.find(
-            item =>
-                String(
-                    item.id ||
-                    item._id ||
-                    ""
-                ) === String(id)
-        );
+        findDeposit(id);
 
 
     if (!deposit) {
@@ -1628,10 +1796,21 @@ function viewDeposit(id) {
         "—";
 
 
+    const email =
+        deposit.email ||
+        "—";
+
+
     const status =
         normalizeStatus(
             deposit.status
         );
+
+
+    const verified =
+        deposit.payment_verified === true
+            ? "Verified"
+            : "Not verified";
 
 
     const date =
@@ -1648,9 +1827,11 @@ function viewDeposit(id) {
             "",
             `Customer: ${name}`,
             `Phone: ${phone}`,
+            `Email: ${email}`,
             `Amount: ${formatUGX(amount)}`,
             `Method: ${method}`,
             `Reference: ${reference}`,
+            `Payment verification: ${verified}`,
             `Status: ${status}`,
             `Date: ${date}`
         ].join("\n")
@@ -1663,7 +1844,6 @@ function viewDeposit(id) {
 ========================================================= */
 
 function setupEvents() {
-
 
     $("searchDeposits")
         ?.addEventListener(
@@ -1723,7 +1903,9 @@ function setupEvents() {
                 }
 
 
-                if (button.disabled) {
+                if (
+                    button.disabled
+                ) {
                     return;
                 }
 
@@ -1746,6 +1928,7 @@ function setupEvents() {
 
 
                 renderDeposits();
+
 
                 window.scrollTo({
                     top: 0,
@@ -1784,6 +1967,10 @@ function setupEvents() {
 }
 
 
+/* =========================================================
+   ACTION HANDLER
+========================================================= */
+
 function handleDepositAction(event) {
 
     const button =
@@ -1805,7 +1992,9 @@ function handleDepositAction(event) {
         button.dataset.id;
 
 
-    if (action === "view") {
+    if (
+        action === "view"
+    ) {
 
         viewDeposit(id);
 
@@ -1911,7 +2100,6 @@ async function initializeDepositsPage() {
 
 
         if (!authorized) {
-
             return;
         }
 
@@ -1940,7 +2128,8 @@ window.CrownCashAdminDeposits = {
 
     applyFilters,
 
-    refresh: loadDeposits
+    refresh:
+        loadDeposits
 };
 
 

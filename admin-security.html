@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Crown Cash Administrator Security, Audit and Maintenance"
+    >
+
+    <title>Crown Cash | Security & Audit</title>
+
+    <link
+        rel="stylesheet"
+        href="admin-security.css"
+    >
+</head>
+
+<body>
+
+    <!-- =========================================================
+         PAGE LOADER
+    ========================================================== -->
+
+    <div
+        id="pageLoader"
+        class="page-loader"
+    >
+        <div class="loader-spinner"></div>
+
+        <p id="loaderMessage">
+            Verifying administrator access...
+        </p>
+    </div>
+
+
+    <!-- =========================================================
+         MAIN PAGE
+    ========================================================== -->
+
+    <main
+        id="adminSecurityPage"
+        class="admin-security-page"
+        hidden
+    >
+
+        <!-- =====================================================
+             PAGE HEADER
+        ====================================================== -->
+
+        <header class="page-header">
+
+            <div class="eyebrow">
+                CROWN CASH ADMINISTRATION
+            </div>
+
+            <h1>
+                Security &amp; Audit
+            </h1>
+
+            <p>
+                Monitor platform security, review administrative
+                activity and manage system maintenance controls.
+            </p>
+
+        </header>
+
+
+        <div class="section-divider"></div>
+
+
+        <!-- =====================================================
+             SECURITY ACTIVITY HEADER
+        ====================================================== -->
+
+        <section class="activity-header">
+
+            <div class="activity-heading">
+
+                <div class="section-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3l7 3v5c0 4.8-2.9 8.4-7 10-4.1-1.6-7-5.2-7-10V6l7-3z"></path>
+                        <path d="M9 12l2 2 4-4"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <span class="section-label">
+                        SECURITY MONITORING
+                    </span>
+
+                    <h2>
+                        Security Overview
+                    </h2>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                id="refreshSecurityBtn"
+                class="icon-button"
+                title="Refresh security data"
+                aria-label="Refresh security data"
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M20 11a8 8 0 0 0-14.9-4"></path>
+                    <path d="M4 4v5h5"></path>
+                    <path d="M4 13a8 8 0 0 0 14.9 4"></path>
+                    <path d="M20 20v-5h-5"></path>
+                </svg>
+            </button>
+
+        </section>
+
+
+        <!-- =====================================================
+             MESSAGE
+        ====================================================== -->
+
+        <div
+            id="securityMessage"
+            class="page-message"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+
+        <!-- =====================================================
+             SECURITY STATS
+        ====================================================== -->
+
+        <section class="stats-grid">
+
+            <!-- Security Status -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon security-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3l7 3v5c0 4.8-2.9 8.4-7 10-4.1-1.6-7-5.2-7-10V6l7-3z"></path>
+                        <path d="M9 12l2 2 4-4"></path>
+                    </svg>
+                </div>
+
+                <div class="stat-content">
+
+                    <span class="stat-label">
+                        Security Status
+                    </span>
+
+                    <strong
+                        id="securityStatus"
+                        class="stat-value"
+                    >
+                        Secure
+                    </strong>
+
+                    <span
+                        id="securityStatusText"
+                        class="stat-description"
+                    >
+                        Platform protection active
+                    </span>
+
+                </div>
+
+            </article>
+
+
+            <!-- Admin Sessions -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon session-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <circle
+                            cx="12"
+                            cy="8"
+                            r="3"
+                        ></circle>
+
+                        <path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"></path>
+                    </svg>
+                </div>
+
+                <div class="stat-content">
+
+                    <span class="stat-label">
+                        Admin Sessions
+                    </span>
+
+                    <strong
+                        id="adminSessions"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-description">
+                        Active administrator sessions
+                    </span>
+
+                </div>
+
+            </article>
+
+
+            <!-- Failed Attempts -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon warning-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M12 3l9 17H3L12 3z"></path>
+                        <path d="M12 9v5"></path>
+                        <path d="M12 17h.01"></path>
+                    </svg>
+                </div>
+
+                <div class="stat-content">
+
+                    <span class="stat-label">
+                        Failed Attempts
+                    </span>
+
+                    <strong
+                        id="failedAttempts"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-description">
+                        Recent failed security attempts
+                    </span>
+
+                </div>
+
+            </article>
+
+
+            <!-- Security Events -->
+
+            <article class="stat-card">
+
+                <div class="stat-icon audit-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M6 3h12v18H6z"></path>
+                        <path d="M9 7h6"></path>
+                        <path d="M9 11h6"></path>
+                        <path d="M9 15h4"></path>
+                    </svg>
+                </div>
+
+                <div class="stat-content">
+
+                    <span class="stat-label">
+                        Security Events
+                    </span>
+
+                    <strong
+                        id="securityEvents"
+                        class="stat-value"
+                    >
+                        0
+                    </strong>
+
+                    <span class="stat-description">
+                        Recorded audit events
+                    </span>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+        <!-- =====================================================
+             SECURITY NOTICE
+        ====================================================== -->
+
+        <section class="security-notice">
+
+            <div class="notice-icon">
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M12 3l7 3v5c0 4.8-2.9 8.4-7 10-4.1-1.6-7-5.2-7-10V6l7-3z"></path>
+                    <path d="M12 8v4"></path>
+                    <path d="M12 16h.01"></path>
+                </svg>
+            </div>
+
+            <div class="notice-content">
+
+                <strong>
+                    Secure Administration
+                </strong>
+
+                <p>
+                    Administrative actions are protected by
+                    authenticated administrator sessions and are
+                    recorded in the Crown Cash audit log.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             AUDIT ACTIVITY
+        ====================================================== -->
+
+        <section class="content-section">
+
+            <div class="section-heading-row">
+
+                <div>
+
+                    <span class="section-label">
+                        AUDIT TRAIL
+                    </span>
+
+                    <h2>
+                        Audit Activity
+                    </h2>
+
+                </div>
+
+                <span
+                    id="auditCount"
+                    class="record-count"
+                >
+                    0 events
+                </span>
+
+            </div>
+
+
+            <!-- Audit Filters -->
+
+            <div class="filter-card">
+
+                <div class="filter-group">
+
+                    <label for="auditSearch">
+                        Search
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                cx="11"
+                                cy="11"
+                                r="7"
+                            ></circle>
+
+                            <path d="M16 16l5 5"></path>
+                        </svg>
+
+                        <input
+                            type="search"
+                            id="auditSearch"
+                            placeholder="Search user, action or event..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label for="auditTypeFilter">
+                        Event Type
+                    </label>
+
+                    <div class="select-wrapper">
+
+                        <select id="auditTypeFilter">
+
+                            <option value="">
+                                All Events
+                            </option>
+
+                            <option value="login">
+                                Login
+                            </option>
+
+                            <option value="logout">
+                                Logout
+                            </option>
+
+                            <option value="admin">
+                                Admin Action
+                            </option>
+
+                            <option value="security">
+                                Security
+                            </option>
+
+                            <option value="maintenance">
+                                Maintenance
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label for="auditStatusFilter">
+                        Status
+                    </label>
+
+                    <div class="select-wrapper">
+
+                        <select id="auditStatusFilter">
+
+                            <option value="">
+                                All Statuses
+                            </option>
+
+                            <option value="success">
+                                Success
+                            </option>
+
+                            <option value="failed">
+                                Failed
+                            </option>
+
+                            <option value="warning">
+                                Warning
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Desktop Audit Table -->
+
+            <div class="table-card">
+
+                <div class="table-header">
+
+                    <div>
+                        Audit Records
+                    </div>
+
+                    <span id="auditTableCount">
+                        0 records
+                    </span>
+
+                </div>
+
+
+                <div class="table-scroll">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Event</th>
+                                <th>IP Address</th>
+                                <th>Status</th>
+                                <th>Date &amp; Time</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="auditTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="table-state"
+                                >
+                                    Loading audit activity...
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- Mobile Audit List -->
+
+            <div
+                id="auditMobileList"
+                class="mobile-list"
+            >
+
+                <div class="mobile-list-state">
+                    Loading audit activity...
+                </div>
+
+            </div>
+
+
+            <!-- Pagination -->
+
+            <div
+                id="auditPagination"
+                class="pagination"
+            ></div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SECURITY CONTROLS
+        ====================================================== -->
+
+        <section class="content-section">
+
+            <div class="section-heading-row">
+
+                <div>
+
+                    <span class="section-label">
+                        SECURITY CONTROLS
+                    </span>
+
+                    <h2>
+                        Platform Protection
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="controls-grid">
+
+                <!-- Login Protection -->
+
+                <article class="control-card">
+
+                    <div class="control-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <rect
+                                x="5"
+                                y="10"
+                                width="14"
+                                height="10"
+                                rx="2"
+                            ></rect>
+
+                            <path d="M8 10V7a4 4 0 018 0v3"></path>
+                        </svg>
+
+                    </div>
+
+                    <div class="control-content">
+
+                        <div class="control-title-row">
+
+                            <h3>
+                                Login Protection
+                            </h3>
+
+                            <span
+                                id="loginProtectionStatus"
+                                class="status-pill status-active"
+                            >
+                                Active
+                            </span>
+
+                        </div>
+
+                        <p>
+                            Protect administrator accounts against
+                            repeated unauthorized login attempts.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+                <!-- Session Security -->
+
+                <article class="control-card">
+
+                    <div class="control-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                            ></circle>
+
+                            <path d="M12 8v4l3 2"></path>
+                        </svg>
+
+                    </div>
+
+                    <div class="control-content">
+
+                        <div class="control-title-row">
+
+                            <h3>
+                                Admin Session Security
+                            </h3>
+
+                            <span
+                                id="sessionSecurityStatus"
+                                class="status-pill status-active"
+                            >
+                                2 Hours
+                            </span>
+
+                        </div>
+
+                        <p>
+                            Administrator sessions automatically
+                            expire after the configured security period.
+                        </p>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MAINTENANCE
+        ====================================================== -->
+
+        <section class="content-section">
+
+            <div class="section-heading-row">
+
+                <div>
+
+                    <span class="section-label">
+                        SYSTEM MAINTENANCE
+                    </span>
+
+                    <h2>
+                        Maintenance Mode
+                    </h2>
+
+                    <p class="section-description">
+                        Temporarily restrict customer access while
+                        system maintenance or updates are being performed.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="maintenance-card">
+
+                <div class="maintenance-top">
+
+                    <div class="maintenance-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path d="M14.7 6.3a4 4 0 01-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2.9-2.9 2.2-2.4z"></path>
+                            <path d="M4 4l3 3"></path>
+                        </svg>
+
+                    </div>
+
+                    <div class="maintenance-title">
+
+                        <h3>
+                            Platform Maintenance
+                        </h3>
+
+                        <p id="maintenanceStatusText">
+                            Customer access is currently available.
+                        </p>
+
+                    </div>
+
+
+                    <label
+                        class="toggle-control"
+                        for="maintenanceToggle"
+                    >
+
+                        <input
+                            type="checkbox"
+                            id="maintenanceToggle"
+                        >
+
+                        <span class="toggle-slider"></span>
+
+                    </label>
+
+                </div>
+
+
+                <div class="maintenance-settings">
+
+                    <div class="form-group">
+
+                        <label for="maintenanceMessage">
+                            Maintenance Message
+                        </label>
+
+                        <textarea
+                            id="maintenanceMessage"
+                            rows="3"
+                            maxlength="300"
+                            placeholder="Enter the message customers will see during maintenance..."
+                        ></textarea>
+
+                        <div class="character-count">
+                            <span id="maintenanceMessageCount">
+                                0
+                            </span>
+                            / 300
+                        </div>
+
+                    </div>
+
+
+                    <div class="maintenance-options">
+
+                        <label class="checkbox-control">
+
+                            <input
+                                type="checkbox"
+                                id="allowAdminAccess"
+                                checked
+                            >
+
+                            <span class="checkbox-box"></span>
+
+                            <span>
+                                Allow administrators to access the platform
+                                during maintenance.
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="maintenance-actions">
+
+                        <button
+                            type="button"
+                            id="saveMaintenanceBtn"
+                            class="primary-button"
+                        >
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path d="M5 4h12l2 2v14H5z"></path>
+                                <path d="M8 4v5h8V4"></path>
+                                <path d="M8 15h8"></path>
+                            </svg>
+
+                            <span>
+                                Save Maintenance Settings
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MAINTENANCE SECURITY NOTICE
+        ====================================================== -->
+
+        <section class="security-notice maintenance-notice">
+
+            <div class="notice-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M12 3l7 3v5c0 4.8-2.9 8.4-7 10-4.1-1.6-7-5.2-7-10V6l7-3z"></path>
+                    <path d="M12 8v4"></path>
+                    <path d="M12 16h.01"></path>
+                </svg>
+
+            </div>
+
+            <div class="notice-content">
+
+                <strong>
+                    Maintenance Protection
+                </strong>
+
+                <p>
+                    Maintenance changes are administrative actions
+                    and should only be enabled when the platform
+                    requires planned maintenance or emergency protection.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             FOOTER
+        ====================================================== -->
+
+        <footer class="page-footer">
+
+            <div>
+                Crown Cash Administration
+            </div>
+
+            <span>
+                Security &amp; Audit
+            </span>
+
+        </footer>
+
+    </main>
+
+
+    <!-- =========================================================
+         AUDIT DETAILS MODAL
+    ========================================================== -->
+
+    <div
+        id="auditModal"
+        class="modal"
+        hidden
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal-overlay"
+            id="closeAuditModalOverlay"
+        ></div>
+
+
+        <div
+            class="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auditModalTitle"
+        >
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="section-label">
+                        AUDIT EVENT
+                    </span>
+
+                    <h2 id="auditModalTitle">
+                        Audit Details
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="closeAuditModal"
+                    class="modal-close"
+                    aria-label="Close audit details"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                    >
+                        <path d="M6 6l12 12"></path>
+                        <path d="M18 6L6 18"></path>
+                    </svg>
+                </button>
+
+            </div>
+
+
+            <div
+                id="auditDetails"
+                class="modal-body"
+            >
+                Loading audit details...
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    id="closeAuditDetailsBtn"
+                    class="secondary-button"
+                >
+                    Close
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         SECURITY ACTION CONFIRMATION MODAL
+    ========================================================== -->
+
+    <div
+        id="maintenanceConfirmModal"
+        class="modal"
+        hidden
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal-overlay"
+            id="closeMaintenanceConfirmOverlay"
+        ></div>
+
+
+        <div
+            class="modal-card confirmation-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="maintenanceConfirmTitle"
+        >
+
+            <div class="modal-icon warning-modal-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="M12 3l9 17H3L12 3z"></path>
+                    <path d="M12 9v5"></path>
+                    <path d="M12 17h.01"></path>
+                </svg>
+
+            </div>
+
+            <h2 id="maintenanceConfirmTitle">
+                Confirm Maintenance Mode
+            </h2>
+
+            <p id="maintenanceConfirmText">
+                Are you sure you want to change the maintenance
+                status of the Crown Cash platform?
+            </p>
+
+            <div class="confirmation-actions">
+
+                <button
+                    type="button"
+                    id="cancelMaintenanceBtn"
+                    class="secondary-button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="confirmMaintenanceBtn"
+                    class="primary-button"
+                >
+                    Confirm
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
+
+    <script src="admin-security.js"></script>
+
+</body>
+</html>

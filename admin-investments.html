@@ -1,999 +1,879 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="theme-color"
+        content="#09070d"
+    >
+
     <title>Crown Cash | Admin Investments</title>
 
-    <link rel="stylesheet" href="admin-investments.css">
+    <link
+        rel="stylesheet"
+        href="admin-investments.css?v=4"
+    >
+
 </head>
+
 
 <body>
 
-<div class="admin-layout">
 
-    <!-- =====================================================
-         SIDEBAR
-         ===================================================== -->
+<!-- =====================================================
+     PAGE LOADER
+     ===================================================== -->
 
-    <aside class="sidebar" id="sidebar">
+<div
+    id="pageLoader"
+    class="page-loader"
+>
 
-        <div class="brand">
+    <div class="loader-ring"></div>
 
-            <div class="brand-logo">
-
-                <svg viewBox="0 0 64 64">
-                    <path
-                        d="M10 22L18 38L27 20L32 39L39 20L48 38L55 22"
-                    />
-                    <path
-                        d="M12 44H52"
-                    />
-                </svg>
-
-            </div>
-
-            <div class="brand-text">
-
-                <strong>CROWN CASH</strong>
-
-                <span>ADMIN PANEL</span>
-
-            </div>
-
-        </div>
-
-
-        <!-- Navigation -->
-
-        <nav class="sidebar-nav">
-
-            <a
-                href="admin.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 10.5L12 3l9 7.5"/>
-                        <path d="M5 9.5V21h14V9.5"/>
-                        <path d="M9 21v-7h6v7"/>
-                    </svg>
-
-                </span>
-
-                <span>Dashboard</span>
-
-            </a>
-
-
-            <a
-                href="users.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="9" cy="8" r="3"/>
-                        <circle cx="17" cy="9" r="2.5"/>
-                        <path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/>
-                        <path d="M14 15c3 0 5 1.5 5 4"/>
-                    </svg>
-
-                </span>
-
-                <span>Users</span>
-
-            </a>
-
-
-            <a
-                href="admin-deposits.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3v14"/>
-                        <path d="M7 12l5 5 5-5"/>
-                        <path d="M4 21h16"/>
-                    </svg>
-
-                </span>
-
-                <span>Deposits</span>
-
-            </a>
-
-
-            <a
-                href="admin-withdrawals.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 21V7"/>
-                        <path d="M7 12l5-5 5 5"/>
-                        <path d="M4 3h16"/>
-                    </svg>
-
-                </span>
-
-                <span>Withdrawals</span>
-
-            </a>
-
-
-            <a
-                href="admin-investments.html"
-                class="nav-item active"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <rect
-                            x="4"
-                            y="4"
-                            width="16"
-                            height="16"
-                            rx="3"
-                        />
-                        <path d="M8 15l3-4 3 2 3-5"/>
-                    </svg>
-
-                </span>
-
-                <span>Investments</span>
-
-            </a>
-
-
-            <a
-                href="admin-referrals.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="8" cy="8" r="3"/>
-                        <circle cx="16" cy="8" r="3"/>
-                        <circle cx="12" cy="17" r="3"/>
-                        <path d="M10.5 10l1.5 4"/>
-                        <path d="M13.5 10L12 14"/>
-                    </svg>
-
-                </span>
-
-                <span>Referrals</span>
-
-            </a>
-
-
-            <a
-                href="admin-transactions.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7h16"/>
-                        <path d="M4 12h16"/>
-                        <path d="M4 17h10"/>
-                        <circle cx="18" cy="17" r="2"/>
-                    </svg>
-
-                </span>
-
-                <span>Transactions</span>
-
-            </a>
-
-
-            <a
-                href="security.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"
-                        />
-                        <path d="M9 12l2 2 4-5"/>
-                    </svg>
-
-                </span>
-
-                <span>Security</span>
-
-            </a>
-
-        </nav>
-
-
-        <div class="sidebar-divider"></div>
-
-
-        <div class="sidebar-bottom">
-
-            <a
-                href="dashboard.html"
-                class="nav-item"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 10.5L12 3l9 7.5"/>
-                        <path d="M5 9.5V21h14V9.5"/>
-                    </svg>
-
-                </span>
-
-                <span>User Dashboard</span>
-
-            </a>
-
-
-            <button
-                type="button"
-                class="nav-item logout-button"
-                id="logoutBtn"
-            >
-
-                <span class="nav-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M10 5H5v14h5"/>
-                        <path d="M14 8l4 4-4 4"/>
-                        <path d="M18 12H9"/>
-                    </svg>
-
-                </span>
-
-                <span>Logout</span>
-
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =====================================================
-         MAIN CONTENT
-         ===================================================== -->
-
-    <main class="main-content">
-
-
-        <!-- =================================================
-             TOPBAR
-             ================================================= -->
-
-        <header class="topbar">
-
-            <button
-                type="button"
-                class="mobile-menu"
-                id="menuBtn"
-                aria-label="Open menu"
-            >
-
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 6h16"/>
-                    <path d="M4 12h16"/>
-                    <path d="M4 18h16"/>
-                </svg>
-
-            </button>
-
-
-            <div class="topbar-title">
-
-                <span>Crown Cash</span>
-
-                <small>
-                    Administration
-                </small>
-
-            </div>
-
-
-            <div class="topbar-right">
-
-                <button
-                    type="button"
-                    class="notification-btn"
-                    id="notificationBtn"
-                    aria-label="Notifications"
-                >
-
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
-                        />
-                        <path d="M10 21h4"/>
-                    </svg>
-
-                    <span class="notification-dot"></span>
-
-                </button>
-
-
-                <div class="admin-user">
-
-                    <div
-                        class="admin-avatar"
-                        id="adminAvatar"
-                    >
-                        A
-                    </div>
-
-
-                    <div class="admin-user-info">
-
-                        <strong id="adminName">
-                            Administrator
-                        </strong>
-
-                        <span id="adminEmail">
-                            Admin Account
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </header>
-
-
-        <!-- =================================================
-             PAGE CONTENT
-             ================================================= -->
-
-        <section class="page-content">
-
-
-            <!-- PAGE HEADING -->
-
-            <div class="page-heading">
-
-                <div>
-
-                    <span class="eyebrow">
-                        INVESTMENT MANAGEMENT
-                    </span>
-
-                    <h1>
-                        Investments
-                    </h1>
-
-                    <p>
-                        Monitor customer investment plans,
-                        balances and investment status.
-                    </p>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="refresh-btn"
-                    id="refreshBtn"
-                >
-
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M20 11a8 8 0 00-14.9-3"
-                        />
-                        <path d="M4 4v5h5"/>
-                        <path
-                            d="M4 13a8 8 0 0014.9 3"
-                        />
-                        <path d="M20 20v-5h-5"/>
-                    </svg>
-
-                    <span>
-                        Refresh
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <!-- =================================================
-                 STATISTICS
-                 ================================================= -->
-
-            <div class="stats-grid">
-
-
-                <!-- TOTAL -->
-
-                <div class="stat-card">
-
-                    <div class="stat-icon gold">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <rect
-                                x="4"
-                                y="4"
-                                width="16"
-                                height="16"
-                                rx="3"
-                            />
-
-                            <path
-                                d="M8 15l3-4 3 2 3-5"
-                            />
-
-                        </svg>
-
-                    </div>
-
-
-                    <div class="stat-content">
-
-                        <span>
-                            Total Investments
-                        </span>
-
-                        <strong id="totalInvestments">
-                            0
-                        </strong>
-
-                        <small>
-                            All investment records
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <!-- ACTIVE -->
-
-                <div class="stat-card">
-
-                    <div class="stat-icon green">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-
-                            <path
-                                d="M8 12l2.5 2.5L16 9"
-                            />
-
-                        </svg>
-
-                    </div>
-
-
-                    <div class="stat-content">
-
-                        <span>
-                            Active
-                        </span>
-
-                        <strong id="activeInvestments">
-                            0
-                        </strong>
-
-                        <small>
-                            Currently active
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <!-- PENDING -->
-
-                <div class="stat-card">
-
-                    <div class="stat-icon orange">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-
-                            <path
-                                d="M12 7v5l3 2"
-                            />
-
-                        </svg>
-
-                    </div>
-
-
-                    <div class="stat-content">
-
-                        <span>
-                            Pending
-                        </span>
-
-                        <strong id="pendingInvestments">
-                            0
-                        </strong>
-
-                        <small>
-                            Awaiting processing
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <!-- COMPLETED -->
-
-                <div class="stat-card">
-
-                    <div class="stat-icon purple">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path
-                                d="M5 12l4 4L19 6"
-                            />
-
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-
-                        </svg>
-
-                    </div>
-
-
-                    <div class="stat-content">
-
-                        <span>
-                            Completed
-                        </span>
-
-                        <strong id="completedInvestments">
-                            0
-                        </strong>
-
-                        <small>
-                            Finished investments
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 OVERVIEW CARDS
-                 ================================================= -->
-
-            <div class="overview-grid">
-
-
-                <div class="overview-card">
-
-                    <div class="overview-icon gold">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path
-                                d="M12 3v18"
-                            />
-
-                            <path
-                                d="M7 8l5-5 5 5"
-                            />
-
-                            <path
-                                d="M7 16l5 5 5-5"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Total Invested
-                        </span>
-
-                        <strong id="totalInvestedAmount">
-                            UGX 0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="overview-card">
-
-                    <div class="overview-icon pink">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path
-                                d="M4 19V5"
-                            />
-
-                            <path
-                                d="M4 19h16"
-                            />
-
-                            <path
-                                d="M7 15l4-4 3 2 5-7"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Active Capital
-                        </span>
-
-                        <strong id="activeCapital">
-                            UGX 0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="overview-card">
-
-                    <div class="overview-icon orange">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-
-                            <path
-                                d="M12 7v5l3 2"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Pending Capital
-                        </span>
-
-                        <strong id="pendingCapital">
-                            UGX 0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div class="overview-card">
-
-                    <div class="overview-icon purple">
-
-                        <svg viewBox="0 0 24 24">
-
-                            <path
-                                d="M12 3v18"
-                            />
-
-                            <path
-                                d="M17 7H9.5a2.5 2.5 0 000 5h5a2.5 2.5 0 010 5H7"
-                            />
-
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Total Returns
-                        </span>
-
-                        <strong id="totalReturns">
-                            UGX 0
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 FILTERS
-                 ================================================= -->
-
-            <div class="filter-panel">
-
-
-                <div class="search-box">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="11"
-                            cy="11"
-                            r="7"
-                        />
-
-                        <path
-                            d="M16 16l5 5"
-                        />
-
-                    </svg>
-
-
-                    <input
-                        type="search"
-                        id="searchInput"
-                        placeholder="Search customer, plan or investment ID..."
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div class="filter-group">
-
-                    <label for="statusFilter">
-                        Status
-                    </label>
-
-                    <select id="statusFilter">
-
-                        <option value="all">
-                            All Statuses
-                        </option>
-
-                        <option value="active">
-                            Active
-                        </option>
-
-                        <option value="pending">
-                            Pending
-                        </option>
-
-                        <option value="completed">
-                            Completed
-                        </option>
-
-                        <option value="cancelled">
-                            Cancelled
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="filter-group">
-
-                    <label for="planFilter">
-                        Investment Plan
-                    </label>
-
-                    <select id="planFilter">
-
-                        <option value="all">
-                            All Plans
-                        </option>
-
-                        <option value="starter">
-                            Starter
-                        </option>
-
-                        <option value="standard">
-                            Standard
-                        </option>
-
-                        <option value="advanced">
-                            Advanced
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 INVESTMENT TABLE
-                 ================================================= -->
-
-            <div class="panel">
-
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <h2>
-                            Investment Records
-                        </h2>
-
-                        <p>
-                            View customer investment activity
-                            and plan information.
-                        </p>
-
-                    </div>
-
-
-                    <div class="result-count">
-
-                        <span id="resultCount">
-                            0
-                        </span>
-
-                        investments
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table class="investment-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Customer
-                                </th>
-
-                                <th>
-                                    Plan
-                                </th>
-
-                                <th>
-                                    Amount
-                                </th>
-
-                                <th>
-                                    Duration
-                                </th>
-
-                                <th>
-                                    Start Date
-                                </th>
-
-                                <th>
-                                    End Date
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
-
-                                <th>
-                                    Action
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody id="investmentTableBody">
-
-                            <tr>
-
-                                <td colspan="8">
-
-                                    <div class="loading-state">
-
-                                        <div class="spinner"></div>
-
-                                        <span>
-                                            Loading investments...
-                                        </span>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
+    <p>
+        Verifying administrator access...
+    </p>
 
 </div>
 
 
-<!-- =========================================================
-     INVESTMENT REVIEW MODAL
-     ========================================================= -->
 
-<div
-    class="modal-overlay"
-    id="investmentModal"
->
+<!-- =====================================================
+     MAIN ADMIN PAGE
+     ===================================================== -->
 
-    <div class="modal">
+<main class="admin-page">
 
 
-        <!-- MODAL HEADER -->
+    <!-- =================================================
+         HEADER
+         ================================================= -->
 
-        <div class="modal-header">
+    <header class="top-bar">
 
-            <div class="modal-title">
 
-                <div class="modal-icon">
+        <a
+            href="admin.html"
+            class="brand"
+        >
 
-                    <svg viewBox="0 0 24 24">
+            <div class="brand-icon">
 
-                        <rect
-                            x="4"
-                            y="4"
-                            width="16"
-                            height="16"
-                            rx="3"
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"
+                    />
+
+                    <path
+                        d="M6 16h12"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="brand-text">
+
+                <strong>
+                    Crown Cash
+                </strong>
+
+                <span>
+                    Administration
+                </span>
+
+            </div>
+
+        </a>
+
+
+
+        <div class="admin-identity">
+
+            <div class="admin-avatar">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="3.2"
+                    />
+
+                    <path
+                        d="M5 20c.8-3.5 3.2-5.1 7-5.1s6.2 1.6 7 5.1"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="admin-identity-text">
+
+                <strong id="headerUserName">
+                    Administrator
+                </strong>
+
+                <span>
+                    Admin Panel
+                </span>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         INTRO
+         ================================================= -->
+
+    <section class="page-intro">
+
+        <div class="page-kicker">
+            Crown Cash Administration
+        </div>
+
+        <h1>
+            Investments
+        </h1>
+
+        <p>
+            Monitor and manage customer investment activity.
+        </p>
+
+    </section>
+
+
+    <div class="section-divider"></div>
+
+
+
+    <!-- =================================================
+         MESSAGE
+         ================================================= -->
+
+    <div
+        id="investmentMessage"
+        class="admin-message"
+        role="alert"
+    ></div>
+
+
+
+    <!-- =================================================
+         INVESTMENT ACTIVITY
+         ================================================= -->
+
+    <section class="activity-card">
+
+
+        <div class="activity-header">
+
+
+            <div class="section-heading">
+
+
+                <div class="section-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M4 19V5"
                         />
 
                         <path
-                            d="M8 15l3-4 3 2 3-5"
+                            d="M4 19h16"
+                        />
+
+                        <path
+                            d="m7 15 4-4 3 2 5-6"
+                        />
+
+                        <path
+                            d="M15 7h4v4"
+                        />
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        Investment Activity
+                    </h2>
+
+                    <p>
+                        Customer investment records
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            <button
+                type="button"
+                id="refreshInvestmentsBtn"
+                class="refresh-button"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M20 11a8 8 0 0 0-14-5"
+                    />
+
+                    <path
+                        d="M4 4v5h5"
+                    />
+
+                    <path
+                        d="M4 13a8 8 0 0 0 14 5"
+                    />
+
+                    <path
+                        d="M20 20v-5h-5"
+                    />
+
+                </svg>
+
+                <span>
+                    Refresh
+                </span>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- FILTERS -->
+
+        <div class="filter-grid">
+
+
+            <div class="search-box">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="11"
+                        cy="11"
+                        r="7"
+                    />
+
+                    <path
+                        d="m20 20-4-4"
+                    />
+
+                </svg>
+
+
+                <input
+                    type="search"
+                    id="investmentSearch"
+                    placeholder="Search user, plan or ID..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+
+            <select id="statusFilter">
+
+                <option value="all">
+                    All Statuses
+                </option>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="completed">
+                    Completed
+                </option>
+
+                <option value="cancelled">
+                    Cancelled
+                </option>
+
+            </select>
+
+
+
+            <select id="planFilter">
+
+                <option value="all">
+                    All Plans
+                </option>
+
+                <option value="starter">
+                    Starter
+                </option>
+
+                <option value="standard">
+                    Standard
+                </option>
+
+                <option value="advanced">
+                    Advanced
+                </option>
+
+            </select>
+
+
+
+            <select id="periodFilter">
+
+                <option value="all">
+                    All Periods
+                </option>
+
+                <option value="30">
+                    30 Days
+                </option>
+
+            </select>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STATISTICS
+         ================================================= -->
+
+    <section class="stats-grid">
+
+
+        <!-- TOTAL -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon gold">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <path
+                        d="M4 19V5"
+                    />
+
+                    <path
+                        d="M4 19h16"
+                    />
+
+                    <path
+                        d="M7 15l3-3 3 2 5-6"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Total Investments
+                </span>
+
+                <strong id="totalInvestments">
+                    0
+                </strong>
+
+                <small>
+                    All investment records
+                </small>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- ACTIVE -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon success">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    />
+
+                    <path
+                        d="m8 12 2.7 2.7L16.5 9"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Active Investments
+                </span>
+
+                <strong id="activeInvestments">
+                    0
+                </strong>
+
+                <small>
+                    Currently active
+                </small>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- PENDING -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon pink">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                    />
+
+                    <path
+                        d="M12 8v5l3 2"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Pending
+                </span>
+
+                <strong id="pendingInvestments">
+                    0
+                </strong>
+
+                <small>
+                    Awaiting review
+                </small>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- COMPLETED -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon purple">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+
+                    <rect
+                        x="4"
+                        y="4"
+                        width="16"
+                        height="16"
+                        rx="3"
+                    />
+
+                    <path
+                        d="m8 12 3 3 5-6"
+                    />
+
+                </svg>
+
+            </div>
+
+
+            <div class="stat-content">
+
+                <span>
+                    Completed
+                </span>
+
+                <strong id="completedInvestments">
+                    0
+                </strong>
+
+                <small>
+                    Finished investments
+                </small>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+
+    <!-- =================================================
+         INVESTMENT REQUESTS
+         ================================================= -->
+
+    <section class="requests-section">
+
+
+        <div class="requests-header">
+
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M5 18V6"
+                        />
+
+                        <path
+                            d="M5 18h14"
+                        />
+
+                        <path
+                            d="m8 14 3-3 2 2 4-5"
+                        />
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        Investment Records
+                    </h2>
+
+                    <p>
+                        Review plans, amounts, periods and customer investment status.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="requests-card">
+
+
+            <!-- DESKTOP TABLE -->
+
+            <div class="table-container">
+
+                <table class="investments-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                User
+                            </th>
+
+                            <th>
+                                Plan
+                            </th>
+
+                            <th>
+                                Amount
+                            </th>
+
+                            <th>
+                                Period
+                            </th>
+
+                            <th>
+                                Start Date
+                            </th>
+
+                            <th>
+                                End Date
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="investmentsTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="8"
+                                class="loading-cell"
+                            >
+                                Loading investments...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+
+            <!-- MOBILE LIST -->
+
+            <div
+                id="investmentsMobileList"
+                class="mobile-list"
+            ></div>
+
+
+
+            <!-- PAGINATION -->
+
+            <div
+                id="investmentPagination"
+                class="pagination"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         SECURITY NOTICE
+         ================================================= -->
+
+    <section class="security-notice">
+
+
+        <div class="security-icon">
+
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+
+                <path
+                    d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"
+                />
+
+                <path
+                    d="M9 12l2 2 4-4"
+                />
+
+            </svg>
+
+        </div>
+
+
+        <div>
+
+            <h3>
+                Secure Investment Management
+            </h3>
+
+            <p>
+                Review investment records carefully and use protected server-side controls for administrative actions.
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         FOOTER
+         ================================================= -->
+
+    <footer class="page-footer">
+
+        <p>
+            © 2026
+            <strong>Crown Cash</strong>.
+            Administrator Panel.
+        </p>
+
+        <p>
+            Secure financial management system.
+        </p>
+
+    </footer>
+
+
+</main>
+
+
+
+<!-- =====================================================
+     INVESTMENT DETAILS MODAL
+     ===================================================== -->
+
+<div
+    id="investmentModal"
+    class="modal"
+    hidden
+>
+
+
+    <div class="modal-card">
+
+
+        <div class="modal-header">
+
+
+            <div class="modal-heading">
+
+
+                <div class="modal-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+
+                        <path
+                            d="M4 19V5"
+                        />
+
+                        <path
+                            d="M4 19h16"
+                        />
+
+                        <path
+                            d="m7 15 4-4 3 2 5-6"
                         />
 
                     </svg>
@@ -1008,7 +888,7 @@
                     </h2>
 
                     <p>
-                        Review the selected investment.
+                        Review this investment record.
                     </p>
 
                 </div>
@@ -1016,17 +896,28 @@
             </div>
 
 
+
             <button
                 type="button"
-                class="close-btn"
-                id="closeModal"
-                aria-label="Close"
+                id="closeInvestmentModal"
+                class="modal-close"
             >
 
-                <svg viewBox="0 0 24 24">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                >
 
-                    <path d="M6 6l12 12"/>
-                    <path d="M18 6L6 18"/>
+                    <path
+                        d="M6 6l12 12"
+                    />
+
+                    <path
+                        d="M18 6 6 18"
+                    />
 
                 </svg>
 
@@ -1035,80 +926,25 @@
         </div>
 
 
-        <!-- MODAL BODY -->
 
         <div class="modal-body">
 
 
-            <!-- CUSTOMER -->
-
-            <div class="detail-card">
-
-                <div class="detail-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <circle
-                            cx="12"
-                            cy="8"
-                            r="3"
-                        />
-
-                        <path
-                            d="M5 21c0-4 3-6 7-6s7 2 7 6"
-                        />
-
-                    </svg>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Customer
-                    </span>
-
-                    <strong id="modalCustomer">
-                        —
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- AMOUNT -->
-
-            <div class="amount-card">
-
-                <span>
-                    Investment Amount
-                </span>
-
-                <strong id="modalAmount">
-                    UGX 0
-                </strong>
-
-            </div>
-
-
-            <!-- DETAILS -->
-
-            <div class="details-grid">
+            <div class="detail-grid">
 
 
                 <div class="detail-item">
 
                     <span>
-                        Investment ID
+                        Customer
                     </span>
 
-                    <strong id="modalInvestmentId">
+                    <strong id="investmentUser">
                         —
                     </strong>
 
                 </div>
+
 
 
                 <div class="detail-item">
@@ -1117,37 +953,40 @@
                         Plan
                     </span>
 
-                    <strong id="modalPlan">
+                    <strong id="investmentPlan">
                         —
                     </strong>
 
                 </div>
+
 
 
                 <div class="detail-item">
 
                     <span>
-                        Duration
+                        Investment Amount
                     </span>
 
-                    <strong id="modalDuration">
-                        —
+                    <strong id="investmentAmount">
+                        UGX 0
                     </strong>
 
                 </div>
+
 
 
                 <div class="detail-item">
 
                     <span>
-                        Status
+                        Period
                     </span>
 
-                    <strong id="modalStatus">
+                    <strong id="investmentPeriod">
                         —
                     </strong>
 
                 </div>
+
 
 
                 <div class="detail-item">
@@ -1156,11 +995,12 @@
                         Start Date
                     </span>
 
-                    <strong id="modalStartDate">
+                    <strong id="investmentStartDate">
                         —
                     </strong>
 
                 </div>
+
 
 
                 <div class="detail-item">
@@ -1169,94 +1009,54 @@
                         End Date
                     </span>
 
-                    <strong id="modalEndDate">
+                    <strong id="investmentEndDate">
                         —
                     </strong>
 
                 </div>
 
 
-                <div class="detail-item full">
+
+                <div class="detail-item">
 
                     <span>
-                        Created At
+                        Status
                     </span>
 
-                    <strong id="modalCreatedAt">
+                    <strong id="investmentStatus">
+                        —
+                    </strong>
+
+                </div>
+
+
+
+                <div class="detail-item detail-wide">
+
+                    <span>
+                        Investment ID
+                    </span>
+
+                    <strong id="investmentId">
                         —
                     </strong>
 
                 </div>
 
             </div>
-
-
-            <!-- RETURN INFORMATION -->
-
-            <div class="return-card">
-
-                <div class="return-icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path
-                            d="M4 19V5"
-                        />
-
-                        <path
-                            d="M4 19h16"
-                        />
-
-                        <path
-                            d="M7 15l4-4 3 2 5-7"
-                        />
-
-                    </svg>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Recorded Return
-                    </span>
-
-                    <strong id="modalReturn">
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        This figure is read from the
-                        investment record. No profit is
-                        created by this admin page.
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <div
-                class="modal-message"
-                id="modalMessage"
-            ></div>
 
         </div>
 
 
-        <!-- MODAL FOOTER -->
 
-        <div class="modal-footer">
+        <div class="modal-actions">
 
             <button
                 type="button"
-                class="modal-btn secondary"
-                id="closeDetailsBtn"
+                id="cancelInvestmentReview"
+                class="cancel-button"
             >
-
                 Close
-
             </button>
 
         </div>
@@ -1266,47 +1066,9 @@
 </div>
 
 
-<!-- =========================================================
-     TOAST
-     ========================================================= -->
 
-<div
-    class="toast"
-    id="toast"
->
-
-    <div
-        class="toast-icon"
-        id="toastIcon"
-    >
-
-        <svg viewBox="0 0 24 24">
-
-            <path
-                d="M5 12l4 4L19 6"
-            />
-
-        </svg>
-
-    </div>
-
-
-    <div class="toast-content">
-
-        <strong id="toastTitle">
-            Success
-        </strong>
-
-        <span id="toastMessage">
-            Done.
-        </span>
-
-    </div>
-
-</div>
-
-
-<script src="admin-investments.js"></script>
+<script src="admin-investments.js?v=4"></script>
 
 </body>
+
 </html>

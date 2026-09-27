@@ -57,7 +57,11 @@
 
         let date;
 
-        if (typeof value === "object" && value.$date) {
+        if (
+            typeof value === "object" &&
+            value !== null &&
+            value.$date
+        ) {
             date = new Date(value.$date);
         } else {
             date = new Date(value);
@@ -98,13 +102,23 @@
             .filter(Boolean);
 
         if (parts.length === 1) {
-            return parts[0].substring(0, 2).toUpperCase();
+            return parts[0]
+                .substring(0, 2)
+                .toUpperCase();
         }
 
         return (
             parts[0].charAt(0) +
             parts[parts.length - 1].charAt(0)
         ).toUpperCase();
+    }
+
+    function setText(id, value) {
+        const element = $(id);
+
+        if (element) {
+            element.textContent = value;
+        }
     }
 
     /* =========================================================
@@ -133,17 +147,19 @@
         ).trim();
 
         if (!fullName) {
-            fullName = [firstName, lastName]
+            fullName = [
+                firstName,
+                lastName
+            ]
                 .filter(Boolean)
                 .join(" ")
                 .trim();
         }
 
-        /*
-         * Do not use "User" as the actual name anymore.
-         * This makes missing names clearly identifiable.
-         */
-        if (!fullName) {
+        if (
+            !fullName ||
+            fullName.toLowerCase() === "user"
+        ) {
             fullName = "Unnamed User";
         }
 
@@ -176,6 +192,12 @@
             user.role
         );
 
+        const role = String(
+            user.role || ""
+        )
+            .trim()
+            .toLowerCase();
+
         const id = String(
             user._id?.$oid ||
             user._id ||
@@ -192,15 +214,29 @@
 
         return {
             ...user,
+
             id,
+
             first_name: firstName,
             last_name: lastName,
             full_name: fullName,
+
             email,
             phone,
+
+            referral_code: String(
+                user.referral_code ||
+                ""
+            ).trim(),
+
             balance,
+
             status,
+
+            role,
+
             account_type: accountType,
+
             created_at: createdAt
         };
     }
@@ -209,7 +245,10 @@
        MESSAGE
        ========================================================= */
 
-    function showMessage(message, type = "error") {
+    function showMessage(
+        message,
+        type = "error"
+    ) {
         const box = $("usersMessage");
 
         if (!box) {
@@ -217,7 +256,8 @@
         }
 
         box.textContent = message;
-        box.className = `admin-message ${type}`;
+        box.className =
+            `admin-message ${type}`;
         box.hidden = false;
     }
 
@@ -236,23 +276,35 @@
        API
        ========================================================= */
 
-    async function fetchJSON(url, options = {}) {
-        const response = await fetch(url, {
-            credentials: "include",
-            cache: "no-store",
-            ...options,
-            headers: {
-                "Accept": "application/json",
-                ...(options.headers || {})
-            }
-        });
+    async function fetchJSON(
+        url,
+        options = {}
+    ) {
+        const response = await fetch(
+            url,
+            {
+                credentials: "include",
+                cache: "no-store",
+                ...options,
 
-        const text = await response.text();
+                headers: {
+                    "Accept":
+                        "application/json",
+
+                    ...(options.headers || {})
+                }
+            }
+        );
+
+        const text =
+            await response.text();
 
         let data = {};
 
         try {
-            data = text ? JSON.parse(text) : {};
+            data = text
+                ? JSON.parse(text)
+                : {};
         } catch (error) {
             throw new Error(
                 `Invalid server response (${response.status}).`
@@ -265,7 +317,9 @@
                 `Request failed with status ${response.status}.`
             );
 
-            error.status = response.status;
+            error.status =
+                response.status;
+
             error.data = data;
 
             throw error;
@@ -280,9 +334,10 @@
 
     async function verifyAdmin() {
         try {
-            const data = await fetchJSON(
-                ADMIN_AUTH_API
-            );
+            const data =
+                await fetchJSON(
+                    ADMIN_AUTH_API
+                );
 
             if (
                 data &&
@@ -290,7 +345,9 @@
                 data.authenticated === true &&
                 data.authorized === true
             ) {
-                state.admin = data.admin || null;
+                state.admin =
+                    data.admin || null;
+
                 return true;
             }
 
@@ -312,19 +369,27 @@
 
     async function loadAdminProfile() {
         try {
-            const data = await fetchJSON(
-                PROFILE_API
-            );
+            const data =
+                await fetchJSON(
+                    PROFILE_API
+                );
 
-            if (!data || data.success !== true) {
+            if (
+                !data ||
+                data.success !== true
+            ) {
                 return;
             }
 
-            const user = data.user || {};
+            const user =
+                data.user || {};
 
             const name =
                 user.full_name ||
-                [user.first_name, user.last_name]
+                [
+                    user.first_name,
+                    user.last_name
+                ]
                     .filter(Boolean)
                     .join(" ") ||
                 state.admin?.name ||
@@ -335,16 +400,15 @@
                 state.admin?.email ||
                 "";
 
-            const adminName = $("adminName");
-            const adminEmail = $("adminEmail");
+            setText(
+                "adminName",
+                name
+            );
 
-            if (adminName) {
-                adminName.textContent = name;
-            }
-
-            if (adminEmail) {
-                adminEmail.textContent = email;
-            }
+            setText(
+                "adminEmail",
+                email
+            );
 
         } catch (error) {
             console.warn(
@@ -353,20 +417,17 @@
             );
 
             if (state.admin) {
-                const adminName = $("adminName");
-                const adminEmail = $("adminEmail");
+                setText(
+                    "adminName",
+                    state.admin.name ||
+                    "Administrator"
+                );
 
-                if (adminName) {
-                    adminName.textContent =
-                        state.admin.name ||
-                        "Administrator";
-                }
-
-                if (adminEmail) {
-                    adminEmail.textContent =
-                        state.admin.email ||
-                        "";
-                }
+                setText(
+                    "adminEmail",
+                    state.admin.email ||
+                    ""
+                );
             }
         }
     }
@@ -376,19 +437,22 @@
        ========================================================= */
 
     function setLoading(loading) {
-        const loadingBox = $("usersLoading");
-        const emptyBox = $("usersEmpty");
+        const loadingBox =
+            $("usersLoading");
+
+        const emptyBox =
+            $("usersEmpty");
+
         const tableScroll =
-            document.querySelector(".table-scroll");
+            document.querySelector(
+                ".table-scroll"
+            );
 
         if (loadingBox) {
-            loadingBox.hidden = !loading;
+            loadingBox.hidden =
+                !loading;
         }
 
-        /*
-         * Very important:
-         * Never show "No users found" while loading.
-         */
         if (loading) {
             if (emptyBox) {
                 emptyBox.hidden = true;
@@ -411,10 +475,14 @@
         state.loadError = false;
 
         hideMessage();
+
         setLoading(true);
 
-        const tbody = $("usersTableBody");
-        const emptyBox = $("usersEmpty");
+        const tbody =
+            $("usersTableBody");
+
+        const emptyBox =
+            $("usersEmpty");
 
         if (tbody) {
             tbody.innerHTML = "";
@@ -425,8 +493,14 @@
         }
 
         try {
-            const data = await fetchJSON(
-                USERS_API
+            const data =
+                await fetchJSON(
+                    USERS_API
+                );
+
+            console.log(
+                "Crown Cash users API:",
+                data
             );
 
             if (
@@ -440,50 +514,57 @@
             }
 
             /*
-             * Support the common API response shapes:
+             * Your current API returns:
              *
              * {
-             *   users: []
-             * }
-             *
-             * or
-             *
-             * {
-             *   data: {
-             *      users: []
-             *   }
+             *     success: true,
+             *     stats: {...},
+             *     users: [...]
              * }
              */
+
             let users = [];
 
-            if (Array.isArray(data.users)) {
-                users = data.users;
+            if (
+                Array.isArray(
+                    data.users
+                )
+            ) {
+                users =
+                    data.users;
             } else if (
                 data.data &&
-                Array.isArray(data.data.users)
+                Array.isArray(
+                    data.data.users
+                )
             ) {
-                users = data.data.users;
+                users =
+                    data.data.users;
             } else if (
-                Array.isArray(data.data)
+                Array.isArray(
+                    data.data
+                )
             ) {
-                users = data.data;
+                users =
+                    data.data;
             }
 
-            state.users = users.map(
-                normalizeUser
-            );
+            state.users =
+                users.map(
+                    normalizeUser
+                );
 
             state.loadError = false;
-
-            updateStats();
-
-            /*
-             * Set loading to false BEFORE rendering.
-             * This is the important fix.
-             */
             state.loading = false;
+            state.currentPage = 1;
 
             setLoading(false);
+
+            /*
+             * Use the statistics supplied by
+             * the backend when available.
+             */
+            updateStats(data);
 
             applyFilters();
 
@@ -502,10 +583,6 @@
 
             setLoading(false);
 
-            /*
-             * Never display "No users found" after
-             * a network/API error.
-             */
             if (tbody) {
                 tbody.innerHTML = "";
             }
@@ -522,7 +599,9 @@
                     "Your administrator session has expired. Please login again.",
                     "error"
                 );
-            } else if (status === 403) {
+            } else if (
+                status === 403
+            ) {
                 showMessage(
                     "Administrator access was denied.",
                     "error"
@@ -543,31 +622,62 @@
        STATISTICS
        ========================================================= */
 
-    function updateStats() {
-        const users = state.users;
+    function updateStats(apiData = null) {
+        /*
+         * Prefer backend statistics because they represent
+         * the actual database totals.
+         */
 
-        const totalUsers = users.length;
+        const backendStats =
+            apiData?.stats || {};
 
-        const activeUsers = users.filter(
-            user =>
-                user.status === "active"
-        ).length;
+        const totalUsers =
+            Number(
+                backendStats.total_users ??
+                apiData?.total_users ??
+                state.users.length
+            ) || 0;
 
-        const blockedUsers = users.filter(
-            user =>
-                [
-                    "blocked",
-                    "suspended",
-                    "disabled",
-                    "banned"
-                ].includes(user.status)
-        ).length;
+        const activeUsers =
+            Number(
+                backendStats.active_users ??
+                apiData?.active_users ??
+                state.users.filter(
+                    user =>
+                        user.status ===
+                        "active"
+                ).length
+            ) || 0;
 
-        const adminUsers = users.filter(
-            user =>
-                user.account_type === "admin" ||
-                user.role === "admin"
-        ).length;
+        const blockedUsers =
+            Number(
+                backendStats.blocked_users ??
+                apiData?.blocked_users ??
+                state.users.filter(
+                    user =>
+                        [
+                            "blocked",
+                            "suspended",
+                            "disabled",
+                            "banned"
+                        ].includes(
+                            user.status
+                        )
+                ).length
+            ) || 0;
+
+        const adminUsers =
+            Number(
+                backendStats.admin_users ??
+                apiData?.admin_users ??
+                state.users.filter(
+                    user =>
+                        user.account_type ===
+                            "admin" ||
+                        user.role ===
+                            "admin"
+                ).length
+            ) || 0;
 
         setText(
             "totalUsers",
@@ -590,23 +700,14 @@
         );
     }
 
-    function setText(id, value) {
-        const element = $(id);
-
-        if (element) {
-            element.textContent = value;
-        }
-    }
-
     /* =========================================================
        FILTERS
        ========================================================= */
 
     function getSearchValue() {
-        const input = $("userSearch");
-
         return String(
-            input?.value || ""
+            $("userSearch")?.value ||
+            ""
         )
             .trim()
             .toLowerCase();
@@ -649,49 +750,60 @@
             getAccountFilter();
 
         state.filteredUsers =
-            state.users.filter(user => {
+            state.users.filter(
+                user => {
 
-                const searchable = [
-                    user.full_name,
-                    user.email,
-                    user.phone,
-                    user.referral_code,
-                    user.id
-                ]
-                    .join(" ")
-                    .toLowerCase();
+                    const searchable = [
+                        user.full_name,
+                        user.email,
+                        user.phone,
+                        user.referral_code,
+                        user.id
+                    ]
+                        .join(" ")
+                        .toLowerCase();
 
-                const matchesSearch =
-                    !search ||
-                    searchable.includes(search);
+                    const matchesSearch =
+                        !search ||
+                        searchable.includes(
+                            search
+                        );
 
-                const matchesStatus =
-                    status === "all" ||
-                    user.status === status;
+                    const matchesStatus =
+                        status === "all" ||
+                        user.status ===
+                            status;
 
-                const userIsAdmin =
-                    user.account_type === "admin" ||
-                    user.role === "admin";
+                    const userIsAdmin =
+                        user.account_type ===
+                            "admin" ||
+                        user.role ===
+                            "admin";
 
-                let matchesAccount =
-                    true;
+                    let matchesAccount =
+                        true;
 
-                if (accountType === "admin") {
-                    matchesAccount =
-                        userIsAdmin;
-                } else if (
-                    accountType === "user"
-                ) {
-                    matchesAccount =
-                        !userIsAdmin;
+                    if (
+                        accountType ===
+                        "admin"
+                    ) {
+                        matchesAccount =
+                            userIsAdmin;
+                    } else if (
+                        accountType ===
+                        "user"
+                    ) {
+                        matchesAccount =
+                            !userIsAdmin;
+                    }
+
+                    return (
+                        matchesSearch &&
+                        matchesStatus &&
+                        matchesAccount
+                    );
                 }
-
-                return (
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesAccount
-                );
-            });
+            );
 
         state.currentPage = 1;
 
@@ -710,15 +822,14 @@
             $("usersEmpty");
 
         const tableScroll =
-            document.querySelector(".table-scroll");
+            document.querySelector(
+                ".table-scroll"
+            );
 
         if (!tbody) {
             return;
         }
 
-        /*
-         * Do not render an empty state while loading.
-         */
         if (state.loading) {
             tbody.innerHTML = "";
 
@@ -735,9 +846,6 @@
             return;
         }
 
-        /*
-         * Do not render an empty state after an API error.
-         */
         if (state.loadError) {
             tbody.innerHTML = "";
 
@@ -756,9 +864,6 @@
 
         tbody.innerHTML = "";
 
-        const total =
-            state.filteredUsers.length;
-
         const start =
             (state.currentPage - 1) *
             PAGE_SIZE;
@@ -773,10 +878,13 @@
             );
 
         /*
-         * Only NOW can "No users found"
-         * legitimately appear.
+         * Only display "No users found"
+         * after a successful API request.
          */
-        if (!pageUsers.length) {
+        if (
+            state.users.length === 0 ||
+            pageUsers.length === 0
+        ) {
             if (empty) {
                 empty.hidden = false;
             }
@@ -788,6 +896,7 @@
             }
 
             renderPagination();
+
             return;
         }
 
@@ -801,127 +910,152 @@
             );
         }
 
-        pageUsers.forEach(user => {
-            const row =
-                document.createElement("tr");
+        pageUsers.forEach(
+            user => {
 
-            const isAdmin =
-                user.account_type === "admin" ||
-                user.role === "admin";
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
 
-            const statusClass =
-                normalizeStatus(
-                    user.status
-                ).replace(
-                    /[^a-z0-9_-]/g,
-                    ""
-                );
+                const isAdmin =
+                    user.account_type ===
+                        "admin" ||
+                    user.role ===
+                        "admin";
 
-            const initials =
-                getInitials(
-                    user.full_name
-                );
+                const statusClass =
+                    normalizeStatus(
+                        user.status
+                    ).replace(
+                        /[^a-z0-9_-]/g,
+                        ""
+                    );
 
-            row.innerHTML = `
-                <td>
-                    <div class="user-cell">
-                        <div class="user-avatar">
-                            ${escapeHTML(initials)}
-                        </div>
+                const initials =
+                    getInitials(
+                        user.full_name
+                    );
 
-                        <div class="user-details">
-                            <strong>
+                row.innerHTML = `
+                    <td>
+                        <div class="user-cell">
+
+                            <div class="user-avatar">
                                 ${escapeHTML(
-                                    user.full_name
+                                    initials
                                 )}
-                            </strong>
+                            </div>
+
+                            <div class="user-details">
+                                <strong>
+                                    ${escapeHTML(
+                                        user.full_name
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHTML(
+                                        user.email ||
+                                        "No email"
+                                    )}
+                                </span>
+                            </div>
+
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="phone-number">
+                            ${escapeHTML(
+                                user.phone ||
+                                "—"
+                            )}
+                        </span>
+                    </td>
+
+                    <td>
+                        <strong class="balance-value">
+                            ${formatCurrency(
+                                user.balance
+                            )}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <span class="
+                            status-badge
+                            ${escapeHTML(
+                                statusClass
+                            )}
+                        ">
+                            ${escapeHTML(
+                                user.status
+                            )}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="
+                            account-badge
+                            ${isAdmin
+                                ? "admin"
+                                : "user"}
+                        ">
+                            ${
+                                isAdmin
+                                    ? "Admin"
+                                    : "User"
+                            }
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="joined-date">
+                            ${formatDate(
+                                user.created_at
+                            )}
+                        </span>
+                    </td>
+
+                    <td>
+                        <button
+                            type="button"
+                            class="view-user-button"
+                            data-user-id="${escapeHTML(
+                                user.id
+                            )}"
+                            title="View user"
+                        >
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="2.8"
+                                />
+                            </svg>
 
                             <span>
-                                ${escapeHTML(
-                                    user.email ||
-                                    "No email"
-                                )}
+                                View
                             </span>
-                        </div>
-                    </div>
-                </td>
 
-                <td>
-                    <span class="phone-number">
-                        ${escapeHTML(
-                            user.phone ||
-                            "—"
-                        )}
-                    </span>
-                </td>
+                        </button>
+                    </td>
+                `;
 
-                <td>
-                    <strong class="balance-value">
-                        ${formatCurrency(
-                            user.balance
-                        )}
-                    </strong>
-                </td>
-
-                <td>
-                    <span class="
-                        status-badge
-                        ${escapeHTML(
-                            statusClass
-                        )}
-                    ">
-                        ${escapeHTML(
-                            user.status
-                        )}
-                    </span>
-                </td>
-
-                <td>
-                    <span class="
-                        account-badge
-                        ${isAdmin ? "admin" : "user"}
-                    ">
-                        ${isAdmin ? "Admin" : "User"}
-                    </span>
-                </td>
-
-                <td>
-                    <span class="joined-date">
-                        ${formatDate(
-                            user.created_at
-                        )}
-                    </span>
-                </td>
-
-                <td>
-                    <button
-                        type="button"
-                        class="view-user-button"
-                        data-user-id="${escapeHTML(
-                            user.id
-                        )}"
-                        title="View user"
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/>
-                            <circle cx="12" cy="12" r="2.8"/>
-                        </svg>
-
-                        <span>View</span>
-                    </button>
-                </td>
-            `;
-
-            tbody.appendChild(row);
-        });
+                tbody.appendChild(row);
+            }
+        );
 
         renderPagination();
     }
@@ -957,23 +1091,32 @@
         }
 
         const previous =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
 
         previous.type = "button";
+
         previous.className =
             "pagination-button";
-        previous.textContent = "Previous";
+
+        previous.textContent =
+            "Previous";
+
         previous.disabled =
             state.currentPage === 1;
 
         previous.addEventListener(
             "click",
             () => {
+
                 if (
                     state.currentPage > 1
                 ) {
                     state.currentPage--;
+
                     renderUsers();
+
                     scrollToUsers();
                 }
             }
@@ -988,8 +1131,11 @@
             page <= pageCount;
             page++
         ) {
+
             const button =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
             button.type = "button";
 
@@ -1011,10 +1157,12 @@
             button.addEventListener(
                 "click",
                 () => {
+
                     state.currentPage =
                         page;
 
                     renderUsers();
+
                     scrollToUsers();
                 }
             );
@@ -1025,12 +1173,17 @@
         }
 
         const next =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
 
         next.type = "button";
+
         next.className =
             "pagination-button";
-        next.textContent = "Next";
+
+        next.textContent =
+            "Next";
 
         next.disabled =
             state.currentPage >=
@@ -1039,12 +1192,15 @@
         next.addEventListener(
             "click",
             () => {
+
                 if (
                     state.currentPage <
                     pageCount
                 ) {
                     state.currentPage++;
+
                     renderUsers();
+
                     scrollToUsers();
                 }
             }
@@ -1076,7 +1232,8 @@
        ========================================================= */
 
     function openUserModal(user) {
-        state.selectedUser = user;
+        state.selectedUser =
+            user;
 
         const modal =
             $("userModal");
@@ -1116,7 +1273,8 @@
 
         setText(
             "modalUserAccountType",
-            user.account_type === "admin"
+            user.account_type ===
+                "admin"
                 ? "Admin"
                 : "User"
         );
@@ -1147,7 +1305,8 @@
             "modal-open"
         );
 
-        state.selectedUser = null;
+        state.selectedUser =
+            null;
     }
 
     function viewUserById(id) {
@@ -1203,7 +1362,9 @@
 
         if (
             message &&
-            !window.confirm(message)
+            !window.confirm(
+                message
+            )
         ) {
             return;
         }
@@ -1214,10 +1375,12 @@
                     `${API_BASE}/admin-user-actions.php`,
                     {
                         method: "POST",
+
                         headers: {
                             "Content-Type":
                                 "application/json"
                         },
+
                         body: JSON.stringify({
                             user_id:
                                 user.id,
@@ -1272,9 +1435,7 @@
         if (search) {
             search.addEventListener(
                 "input",
-                () => {
-                    applyFilters();
-                }
+                applyFilters
             );
         }
 
@@ -1284,9 +1445,7 @@
         if (status) {
             status.addEventListener(
                 "change",
-                () => {
-                    applyFilters();
-                }
+                applyFilters
             );
         }
 
@@ -1296,9 +1455,7 @@
         if (accountType) {
             accountType.addEventListener(
                 "change",
-                () => {
-                    applyFilters();
-                }
+                applyFilters
             );
         }
 
@@ -1309,17 +1466,21 @@
             refresh.addEventListener(
                 "click",
                 async () => {
+
                     refresh.classList.add(
                         "spinning"
                     );
 
                     await loadUsers();
 
-                    setTimeout(() => {
-                        refresh.classList.remove(
-                            "spinning"
-                        );
-                    }, 500);
+                    setTimeout(
+                        () => {
+                            refresh.classList.remove(
+                                "spinning"
+                            );
+                        },
+                        500
+                    );
                 }
             );
         }
@@ -1331,6 +1492,7 @@
             tbody.addEventListener(
                 "click",
                 event => {
+
                     const button =
                         event.target.closest(
                             "[data-user-id]"
@@ -1374,6 +1536,7 @@
             modal.addEventListener(
                 "click",
                 event => {
+
                     if (
                         event.target ===
                         modal
@@ -1387,6 +1550,7 @@
         document.addEventListener(
             "keydown",
             event => {
+
                 if (
                     event.key ===
                     "Escape"
@@ -1530,11 +1694,10 @@
                 ".sidebar a"
             )
             .forEach(link => {
+
                 link.addEventListener(
                     "click",
-                    () => {
-                        closeSidebar();
-                    }
+                    closeSidebar
                 );
             });
     }
@@ -1549,7 +1712,8 @@
                 LOGOUT_API,
                 {
                     method: "GET",
-                    credentials: "include",
+                    credentials:
+                        "include",
                     cache: "no-store"
                 }
             );
@@ -1569,12 +1733,18 @@
        ========================================================= */
 
     async function init() {
+
+        console.log(
+            "Crown Cash Admin Users: initializing..."
+        );
+
         bindEvents();
 
         const authorized =
             await verifyAdmin();
 
         if (!authorized) {
+
             showMessage(
                 "Administrator verification failed. Please login again.",
                 "error"
@@ -1584,11 +1754,14 @@
                 $("pageLoader");
 
             if (loader) {
-                setTimeout(() => {
-                    loader.classList.add(
-                        "hidden"
-                    );
-                }, 300);
+                setTimeout(
+                    () => {
+                        loader.classList.add(
+                            "hidden"
+                        );
+                    },
+                    300
+                );
             }
 
             return;
@@ -1612,12 +1785,19 @@
             $("pageLoader");
 
         if (loader) {
-            setTimeout(() => {
-                loader.classList.add(
-                    "hidden"
-                );
-            }, 250);
+            setTimeout(
+                () => {
+                    loader.classList.add(
+                        "hidden"
+                    );
+                },
+                250
+            );
         }
+
+        console.log(
+            "Crown Cash Admin Users: ready."
+        );
     }
 
     /* =========================================================
@@ -1625,24 +1805,43 @@
        ========================================================= */
 
     window.CrownCashAdminUsers = {
+
         reload: loadUsers,
+
         refresh: loadUsers,
+
         getUsers: () => [
             ...state.users
         ],
+
         getSelectedUser: () =>
             state.selectedUser,
+
         openUserModal,
+
         closeUserModal,
+
         applyFilters
     };
+
+    /* =========================================================
+       START APPLICATION
+       ========================================================= */
 
     if (
         document.readyState ===
         "loading"
     ) {
+
         document.addEventListener(
             "DOMContentLoaded",
             init
         );
+
     } else {
+
+        init();
+
+    }
+
+})();

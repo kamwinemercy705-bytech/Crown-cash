@@ -31,7 +31,7 @@ const state = {
 
 
 /* =========================================================
-   DOM HELPERS
+   DOM HELPER
 ========================================================= */
 
 function $(id) {
@@ -39,72 +39,37 @@ function $(id) {
 }
 
 
-function showElement(element) {
-    if (element) {
-        element.style.display = "";
-    }
-}
-
-
-function hideElement(element) {
-    if (element) {
-        element.style.display = "none";
-    }
-}
-
-
 /* =========================================================
-   MESSAGE
+   PAGE VISIBILITY
 ========================================================= */
 
-function showMessage(message, type = "error") {
+function showSecurityPage() {
 
-    const box = $("securityMessage");
+    const page = $("adminSecurityPage");
 
-    if (!box) {
+    if (!page) {
         return;
     }
 
-    box.textContent = message;
+    page.style.display = "block";
+    page.style.visibility = "visible";
+    page.style.opacity = "1";
+    page.style.pointerEvents = "auto";
 
-    box.className =
-        `security-message ${type}`;
-
-    box.style.display = "block";
-}
-
-
-function hideMessage() {
-
-    const box = $("securityMessage");
-
-    if (!box) {
-        return;
-    }
-
-    box.style.display = "none";
-}
-
-
-/* =========================================================
-   LOADER
-========================================================= */
-
-function setLoaderMessage(message) {
-
-    const loaderMessage =
-        $("loaderMessage");
-
-    if (loaderMessage) {
-        loaderMessage.textContent = message;
-    }
+    page.classList.add("page-ready");
 }
 
 
 function hideLoader() {
 
-    const loader =
-        $("pageLoader");
+    const loader = $("pageLoader");
+
+    /*
+     * IMPORTANT:
+     * Always reveal the actual page when
+     * administrator verification finishes.
+     */
+    showSecurityPage();
 
     if (!loader) {
         return;
@@ -113,27 +78,82 @@ function hideLoader() {
     loader.classList.add("hidden");
 
     setTimeout(() => {
+
         loader.style.display = "none";
+
     }, 300);
 }
 
 
-function showLoader(message = "Verifying administrator access...") {
+function showLoader(
+    message = "Verifying administrator access..."
+) {
 
-    const loader =
-        $("pageLoader");
+    const loader = $("pageLoader");
 
     if (!loader) {
         return;
     }
 
     loader.style.display = "flex";
+    loader.style.visibility = "visible";
+    loader.style.opacity = "1";
 
-    requestAnimationFrame(() => {
-        loader.classList.remove("hidden");
-    });
+    loader.classList.remove("hidden");
 
     setLoaderMessage(message);
+}
+
+
+function setLoaderMessage(message) {
+
+    const element =
+        $("loaderMessage");
+
+    if (element) {
+        element.textContent = message;
+    }
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(
+    message,
+    type = "error"
+) {
+
+    const box =
+        $("securityMessage");
+
+    if (!box) {
+        return;
+    }
+
+    box.textContent =
+        message;
+
+    box.className =
+        `security-message ${type}`;
+
+    box.style.display =
+        "block";
+}
+
+
+function hideMessage() {
+
+    const box =
+        $("securityMessage");
+
+    if (!box) {
+        return;
+    }
+
+    box.style.display =
+        "none";
 }
 
 
@@ -156,6 +176,7 @@ async function fetchJson(
             timeout
         );
 
+
     try {
 
         const response =
@@ -164,9 +185,11 @@ async function fetchJson(
                 {
                     ...options,
 
-                    credentials: "include",
+                    credentials:
+                        "include",
 
-                    cache: "no-store",
+                    cache:
+                        "no-store",
 
                     signal:
                         controller.signal,
@@ -187,11 +210,14 @@ async function fetchJson(
 
         let data = null;
 
+
         try {
+
             data =
                 text
                     ? JSON.parse(text)
                     : null;
+
         } catch (error) {
 
             throw new Error(
@@ -223,6 +249,7 @@ async function fetchJson(
 
         return data;
 
+
     } catch (error) {
 
         if (
@@ -235,7 +262,9 @@ async function fetchJson(
             );
         }
 
+
         throw error;
+
 
     } finally {
 
@@ -245,7 +274,7 @@ async function fetchJson(
 
 
 /* =========================================================
-   VERIFY ADMINISTRATOR
+   ADMINISTRATOR VERIFICATION
 ========================================================= */
 
 async function verifyAdministrator() {
@@ -253,6 +282,7 @@ async function verifyAdministrator() {
     setLoaderMessage(
         "Verifying administrator access..."
     );
+
 
     try {
 
@@ -278,9 +308,8 @@ async function verifyAdministrator() {
 
 
         /*
-         * Accept the different successful
-         * response formats used by the
-         * existing Crown Cash admin APIs.
+         * Support the response used by
+         * Crown Cash admin-auth.php.
          */
 
         if (
@@ -295,21 +324,30 @@ async function verifyAdministrator() {
         }
 
 
-        state.authenticated = true;
+        state.authenticated =
+            true;
+
 
         return true;
 
+
     } catch (error) {
 
-        state.authenticated = false;
+        state.authenticated =
+            false;
+
+
+        showSecurityPage();
 
         hideLoader();
+
 
         showMessage(
             error.message ||
             "Administrator verification failed.",
             "error"
         );
+
 
         return false;
     }
@@ -350,6 +388,10 @@ async function loadSecurityData() {
         }
 
 
+        /*
+         * Update every section.
+         */
+
         updateSecurityOverview(
             data
         );
@@ -365,6 +407,13 @@ async function loadSecurityData() {
         );
 
 
+        /*
+         * IMPORTANT:
+         * Reveal page after data loads.
+         */
+
+        showSecurityPage();
+
         hideLoader();
 
         hideMessage();
@@ -372,15 +421,24 @@ async function loadSecurityData() {
 
         return true;
 
+
     } catch (error) {
 
+        /*
+         * Do not leave a blank page.
+         */
+
+        showSecurityPage();
+
         hideLoader();
+
 
         showMessage(
             error.message ||
             "Unable to load security information.",
             "error"
         );
+
 
         return false;
     }
@@ -406,6 +464,7 @@ function updateSecurityOverview(data) {
 
     const statusElement =
         $("securityStatus");
+
 
     const statusText =
         $("securityStatusText");
@@ -450,21 +509,27 @@ function updateSecurityOverview(data) {
     if ($("adminSessions")) {
 
         $("adminSessions").textContent =
-            formatNumber(adminSessions);
+            formatNumber(
+                adminSessions
+            );
     }
 
 
     if ($("failedAttempts")) {
 
         $("failedAttempts").textContent =
-            formatNumber(failedAttempts);
+            formatNumber(
+                failedAttempts
+            );
     }
 
 
     if ($("securityEvents")) {
 
         $("securityEvents").textContent =
-            formatNumber(securityEvents);
+            formatNumber(
+                securityEvents
+            );
     }
 
 
@@ -513,6 +578,7 @@ function loadAuditRecords(data) {
 
 
     if (!Array.isArray(records)) {
+
         records = [];
     }
 
@@ -524,10 +590,13 @@ function loadAuditRecords(data) {
 
 
     state.filteredAuditRecords =
-        [...state.auditRecords];
+        [
+            ...state.auditRecords
+        ];
 
 
-    state.currentPage = 1;
+    state.currentPage =
+        1;
 
 
     renderAuditRecords();
@@ -540,22 +609,30 @@ function loadAuditRecords(data) {
 
 function normalizeAuditRecord(record) {
 
-    if (!record || typeof record !== "object") {
+    if (
+        !record ||
+        typeof record !== "object"
+    ) {
 
         return {
+
             id: "",
+
             user: "System",
+
             action: "System Event",
+
             event: "Security Event",
+
             ip: "—",
+
             status: "info",
-            date: ""
+
+            date: "",
+
+            details: {}
         };
     }
-
-
-    const details =
-        record.details || {};
 
 
     return {
@@ -565,6 +642,7 @@ function normalizeAuditRecord(record) {
             record._id ||
             "",
 
+
         user:
             record.admin_email ||
             record.user_email ||
@@ -573,11 +651,13 @@ function normalizeAuditRecord(record) {
             record.full_name ||
             "System",
 
+
         action:
             record.action ||
             record.event ||
             record.type ||
             "System Event",
+
 
         event:
             record.event ||
@@ -585,11 +665,13 @@ function normalizeAuditRecord(record) {
             record.type ||
             "Security Event",
 
+
         ip:
             record.ip_address ||
             record.ip ||
             record.ipAddress ||
             "—",
+
 
         status:
             record.status ||
@@ -597,20 +679,23 @@ function normalizeAuditRecord(record) {
             record.outcome ||
             "info",
 
+
         date:
             record.created_at ||
             record.timestamp ||
             record.date ||
             "",
 
+
         details:
-            details
+            record.details ||
+            {}
     };
 }
 
 
 /* =========================================================
-   RENDER AUDIT RECORDS
+   FILTER AUDIT RECORDS
 ========================================================= */
 
 function renderAuditRecords() {
@@ -657,30 +742,33 @@ function renderAuditRecords() {
                     );
 
 
+                const normalizedType =
+                    normalizeFilterValue(
+                        type
+                    );
+
+
                 const matchesType =
-                    type === "all" ||
+                    normalizedType === "all" ||
                     normalizeFilterValue(
                         record.action
-                    ) ===
-                    normalizeFilterValue(
-                        type
-                    ) ||
+                    ) === normalizedType ||
                     normalizeFilterValue(
                         record.event
-                    ) ===
+                    ) === normalizedType;
+
+
+                const normalizedStatus =
                     normalizeFilterValue(
-                        type
+                        status
                     );
 
 
                 const matchesStatus =
-                    status === "all" ||
+                    normalizedStatus === "all" ||
                     normalizeFilterValue(
                         record.status
-                    ) ===
-                    normalizeFilterValue(
-                        status
-                    );
+                    ) === normalizedStatus;
 
 
                 return (
@@ -692,7 +780,8 @@ function renderAuditRecords() {
         );
 
 
-    state.currentPage = 1;
+    state.currentPage =
+        1;
 
 
     const total =
@@ -722,19 +811,22 @@ function renderAuditRecords() {
 
 
     renderAuditTable();
+
     renderAuditMobile();
+
     renderAuditPagination();
 }
 
 
 /* =========================================================
-   AUDIT DESKTOP TABLE
+   DESKTOP AUDIT TABLE
 ========================================================= */
 
 function renderAuditTable() {
 
     const tbody =
         $("auditTableBody");
+
 
     if (!tbody) {
         return;
@@ -747,23 +839,26 @@ function renderAuditTable() {
         ) * ITEMS_PER_PAGE;
 
 
-    const pageRecords =
+    const records =
         state.filteredAuditRecords.slice(
             start,
             start + ITEMS_PER_PAGE
         );
 
 
-    if (!pageRecords.length) {
+    if (!records.length) {
 
         tbody.innerHTML = `
+
             <tr>
+
                 <td
                     colspan="7"
                     class="empty-state"
                 >
                     No audit activity found.
                 </td>
+
             </tr>
         `;
 
@@ -772,9 +867,10 @@ function renderAuditTable() {
 
 
     tbody.innerHTML =
-        pageRecords
+        records
             .map(
                 record => `
+
                     <tr>
 
                         <td>
@@ -782,6 +878,7 @@ function renderAuditTable() {
                                 record.user
                             )}
                         </td>
+
 
                         <td>
                             ${escapeHtml(
@@ -791,6 +888,7 @@ function renderAuditTable() {
                             )}
                         </td>
 
+
                         <td>
                             ${escapeHtml(
                                 formatLabel(
@@ -799,13 +897,16 @@ function renderAuditTable() {
                             )}
                         </td>
 
+
                         <td>
                             ${escapeHtml(
                                 record.ip
                             )}
                         </td>
 
+
                         <td>
+
                             <span
                                 class="status-pill ${statusClass(
                                     record.status
@@ -817,7 +918,9 @@ function renderAuditTable() {
                                     )
                                 )}
                             </span>
+
                         </td>
+
 
                         <td>
                             ${escapeHtml(
@@ -827,7 +930,9 @@ function renderAuditTable() {
                             )}
                         </td>
 
+
                         <td>
+
                             <button
                                 class="view-button"
                                 type="button"
@@ -837,6 +942,7 @@ function renderAuditTable() {
                             >
                                 View
                             </button>
+
                         </td>
 
                     </tr>
@@ -847,13 +953,14 @@ function renderAuditTable() {
 
 
 /* =========================================================
-   AUDIT MOBILE CARDS
+   MOBILE AUDIT CARDS
 ========================================================= */
 
 function renderAuditMobile() {
 
     const container =
         $("auditMobileList");
+
 
     if (!container) {
         return;
@@ -866,19 +973,21 @@ function renderAuditMobile() {
         ) * ITEMS_PER_PAGE;
 
 
-    const pageRecords =
+    const records =
         state.filteredAuditRecords.slice(
             start,
             start + ITEMS_PER_PAGE
         );
 
 
-    if (!pageRecords.length) {
+    if (!records.length) {
 
         container.innerHTML = `
+
             <div class="empty-state">
                 No audit activity found.
             </div>
+
         `;
 
         return;
@@ -886,9 +995,10 @@ function renderAuditMobile() {
 
 
     container.innerHTML =
-        pageRecords
+        records
             .map(
                 record => `
+
                     <article
                         class="mobile-audit-card"
                     >
@@ -914,6 +1024,7 @@ function renderAuditMobile() {
                                 </span>
 
                             </div>
+
 
                             <span
                                 class="status-pill ${statusClass(
@@ -942,11 +1053,13 @@ function renderAuditMobile() {
                                 )}
                             </span>
 
+
                             <span>
                                 ${escapeHtml(
                                     record.ip
                                 )}
                             </span>
+
 
                             <span>
                                 ${escapeHtml(
@@ -970,6 +1083,7 @@ function renderAuditMobile() {
                         </button>
 
                     </article>
+
                 `
             )
             .join("");
@@ -977,13 +1091,14 @@ function renderAuditMobile() {
 
 
 /* =========================================================
-   PAGINATION
+   AUDIT PAGINATION
 ========================================================= */
 
 function renderAuditPagination() {
 
     const container =
         $("auditPagination");
+
 
     if (!container) {
         return;
@@ -999,7 +1114,8 @@ function renderAuditPagination() {
 
     if (totalPages <= 1) {
 
-        container.innerHTML = "";
+        container.innerHTML =
+            "";
 
         return;
     }
@@ -1011,12 +1127,14 @@ function renderAuditPagination() {
     if (state.currentPage > 1) {
 
         html += `
+
             <button
                 type="button"
                 data-page="${state.currentPage - 1}"
             >
                 Previous
             </button>
+
         `;
     }
 
@@ -1031,11 +1149,13 @@ function renderAuditPagination() {
             page === 1 ||
             page === totalPages ||
             Math.abs(
-                page - state.currentPage
+                page -
+                state.currentPage
             ) <= 1
         ) {
 
             html += `
+
                 <button
                     type="button"
                     class="${
@@ -1047,6 +1167,7 @@ function renderAuditPagination() {
                 >
                     ${page}
                 </button>
+
             `;
         }
     }
@@ -1058,17 +1179,20 @@ function renderAuditPagination() {
     ) {
 
         html += `
+
             <button
                 type="button"
                 data-page="${state.currentPage + 1}"
             >
                 Next
             </button>
+
         `;
     }
 
 
-    container.innerHTML = html;
+    container.innerHTML =
+        html;
 }
 
 
@@ -1134,6 +1258,7 @@ function updateMaintenanceDisplay() {
     const status =
         $("maintenanceStatusText");
 
+
     if (!status) {
         return;
     }
@@ -1161,7 +1286,7 @@ function updateMaintenanceDisplay() {
 
 
 /* =========================================================
-   MAINTENANCE CONFIRMATION
+   OPEN MAINTENANCE CONFIRMATION
 ========================================================= */
 
 function openMaintenanceConfirmation(
@@ -1174,6 +1299,7 @@ function openMaintenanceConfirmation(
 
     const modal =
         $("maintenanceConfirmModal");
+
 
     if (!modal) {
         return;
@@ -1213,7 +1339,7 @@ function openMaintenanceConfirmation(
 
 
 /* =========================================================
-   CLOSE MAINTENANCE MODAL
+   CLOSE MAINTENANCE CONFIRMATION
 ========================================================= */
 
 function closeMaintenanceConfirmation(
@@ -1222,6 +1348,7 @@ function closeMaintenanceConfirmation(
 
     const modal =
         $("maintenanceConfirmModal");
+
 
     if (modal) {
 
@@ -1281,7 +1408,8 @@ async function saveMaintenanceSettings() {
 
     if (button) {
 
-        button.disabled = true;
+        button.disabled =
+            true;
 
         button.textContent =
             "Saving...";
@@ -1301,19 +1429,20 @@ async function saveMaintenanceSettings() {
                             "application/json"
                     },
 
-                    body: JSON.stringify({
-                        action:
-                            "maintenance",
+                    body:
+                        JSON.stringify({
+                            action:
+                                "maintenance",
 
-                        enabled:
-                            enabled,
+                            enabled:
+                                enabled,
 
-                        message:
-                            message,
+                            message:
+                                message,
 
-                        allow_admin_access:
-                            allowAdminAccess
-                    })
+                            allow_admin_access:
+                                allowAdminAccess
+                        })
                 }
             );
 
@@ -1372,6 +1501,7 @@ async function saveMaintenanceSettings() {
 
 
         updateMaintenanceDisplay();
+
         updateMessageCount();
 
 
@@ -1395,15 +1525,18 @@ async function saveMaintenanceSettings() {
             "error"
         );
 
+
         closeMaintenanceConfirmation(
             true
         );
+
 
     } finally {
 
         if (button) {
 
-            button.disabled = false;
+            button.disabled =
+                false;
 
             button.textContent =
                 "Confirm";
@@ -1413,7 +1546,7 @@ async function saveMaintenanceSettings() {
 
 
 /* =========================================================
-   AUDIT MODAL
+   AUDIT DETAILS MODAL
 ========================================================= */
 
 function openAuditDetails(id) {
@@ -1434,72 +1567,100 @@ function openAuditDetails(id) {
     const details =
         $("auditDetails");
 
+
     if (!details) {
         return;
     }
 
 
-    const extraDetails =
+    let extraHtml =
+        "";
+
+
+    if (
         record.details &&
-        typeof record.details === "object"
-            ? Object.entries(
+        typeof record.details ===
+        "object" &&
+        !Array.isArray(
+            record.details
+        )
+    ) {
+
+        const entries =
+            Object.entries(
                 record.details
-            )
-            : [];
+            );
 
 
-    let extraHtml = "";
+        if (entries.length) {
 
+            extraHtml = `
 
-    if (extraDetails.length) {
+                <div
+                    class="audit-extra-details"
+                >
 
-        extraHtml = `
-            <div class="audit-extra-details">
+                    ${entries
+                        .map(
+                            ([key, value]) => `
 
-                ${extraDetails
-                    .map(
-                        ([key, value]) => `
-                            <div>
-                                <span>
-                                    ${escapeHtml(
-                                        formatLabel(
-                                            key
-                                        )
-                                    )}
-                                </span>
+                                <div>
 
-                                <strong>
-                                    ${escapeHtml(
-                                        formatValue(
-                                            value
-                                        )
-                                    )}
-                                </strong>
-                            </div>
-                        `
-                    )
-                    .join("")}
+                                    <span>
+                                        ${escapeHtml(
+                                            formatLabel(
+                                                key
+                                            )
+                                        )}
+                                    </span>
 
-            </div>
-        `;
+                                    <strong>
+                                        ${escapeHtml(
+                                            formatValue(
+                                                value
+                                            )
+                                        )}
+                                    </strong>
+
+                                </div>
+
+                            `
+                        )
+                        .join("")}
+
+                </div>
+            `;
+        }
     }
 
 
     details.innerHTML = `
 
-        <div class="audit-detail-grid">
+        <div
+            class="audit-detail-grid"
+        >
 
             <div>
-                <span>User</span>
+
+                <span>
+                    User
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         record.user
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>Action</span>
+
+                <span>
+                    Action
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         formatLabel(
@@ -1507,10 +1668,16 @@ function openAuditDetails(id) {
                         )
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>Event</span>
+
+                <span>
+                    Event
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         formatLabel(
@@ -1518,10 +1685,16 @@ function openAuditDetails(id) {
                         )
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>Status</span>
+
+                <span>
+                    Status
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         formatLabel(
@@ -1529,19 +1702,31 @@ function openAuditDetails(id) {
                         )
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>IP Address</span>
+
+                <span>
+                    IP Address
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         record.ip
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>Date & Time</span>
+
+                <span>
+                    Date & Time
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         formatDate(
@@ -1549,16 +1734,23 @@ function openAuditDetails(id) {
                         )
                     )}
                 </strong>
+
             </div>
 
+
             <div>
-                <span>Audit ID</span>
+
+                <span>
+                    Audit ID
+                </span>
+
                 <strong>
                     ${escapeHtml(
                         record.id ||
                         "—"
                     )}
                 </strong>
+
             </div>
 
         </div>
@@ -1570,6 +1762,7 @@ function openAuditDetails(id) {
     const modal =
         $("auditModal");
 
+
     if (modal) {
 
         modal.classList.add(
@@ -1579,10 +1772,15 @@ function openAuditDetails(id) {
 }
 
 
+/* =========================================================
+   CLOSE AUDIT MODAL
+========================================================= */
+
 function closeAuditModal() {
 
     const modal =
         $("auditModal");
+
 
     if (modal) {
 
@@ -1602,11 +1800,15 @@ function updateMessageCount() {
     const textarea =
         $("maintenanceMessage");
 
+
     const counter =
         $("maintenanceMessageCount");
 
 
-    if (!textarea || !counter) {
+    if (
+        !textarea ||
+        !counter
+    ) {
         return;
     }
 
@@ -1625,6 +1827,7 @@ function formatNumber(value) {
     const number =
         Number(value) || 0;
 
+
     return number.toLocaleString();
 }
 
@@ -1634,12 +1837,19 @@ function formatLabel(value) {
     return String(
         value || ""
     )
-        .replace(/[_-]+/g, " ")
-        .replace(/\s+/g, " ")
+        .replace(
+            /[_-]+/g,
+            " "
+        )
+        .replace(
+            /\s+/g,
+            " "
+        )
         .trim()
         .replace(
             /\b\w/g,
-            char => char.toUpperCase()
+            char =>
+                char.toUpperCase()
         );
 }
 
@@ -1651,7 +1861,10 @@ function normalizeFilterValue(value) {
     )
         .trim()
         .toLowerCase()
-        .replace(/[_-]+/g, " ");
+        .replace(
+            /[_-]+/g,
+            " "
+        );
 }
 
 
@@ -1667,14 +1880,18 @@ function formatValue(value) {
 
 
     if (
-        typeof value === "object"
+        typeof value ===
+        "object"
     ) {
 
         try {
+
             return JSON.stringify(
                 value
             );
+
         } catch (error) {
+
             return String(value);
         }
     }
@@ -1708,11 +1925,20 @@ function formatDate(value) {
     return date.toLocaleString(
         undefined,
         {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
+            year:
+                "numeric",
+
+            month:
+                "short",
+
+            day:
+                "numeric",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
         }
     );
 }
@@ -1847,7 +2073,7 @@ function setupEvents() {
 
 
     /*
-     * Audit Filters
+     * Audit Type Filter
      */
 
     $("auditTypeFilter")
@@ -1856,6 +2082,10 @@ function setupEvents() {
             renderAuditRecords
         );
 
+
+    /*
+     * Audit Status Filter
+     */
 
     $("auditStatusFilter")
         ?.addEventListener(
@@ -1917,8 +2147,11 @@ function setupEvents() {
 
 
                 if (
-                    !Number.isInteger(page)
+                    !Number.isInteger(
+                        page
+                    )
                 ) {
+
                     return;
                 }
 
@@ -1928,8 +2161,11 @@ function setupEvents() {
 
 
                 renderAuditTable();
+
                 renderAuditMobile();
+
                 renderAuditPagination();
+
 
                 window.scrollTo({
                     top: 0,
@@ -1971,6 +2207,7 @@ function setupEvents() {
                         $("maintenanceToggle")
                             ?.checked
                     );
+
 
                 openMaintenanceConfirmation(
                     enabled
@@ -2070,11 +2307,13 @@ function setupEvents() {
                 event.key !==
                 "Escape"
             ) {
+
                 return;
             }
 
 
             closeAuditModal();
+
 
             closeMaintenanceConfirmation(
                 true
@@ -2085,49 +2324,86 @@ function setupEvents() {
 
 
 /* =========================================================
-   INITIALIZE
+   INITIALIZE SECURITY PAGE
 ========================================================= */
 
 async function initializeSecurityPage() {
+
+    /*
+     * Make the actual page available
+     * immediately. The loader will sit
+     * over it while verification occurs.
+     */
+
+    showSecurityPage();
+
 
     showLoader(
         "Verifying administrator access..."
     );
 
 
+    /*
+     * Verify administrator.
+     */
+
     const verified =
         await verifyAdministrator();
 
 
     if (!verified) {
+
         return;
     }
 
+
+    /*
+     * Load security information.
+     */
 
     const loaded =
         await loadSecurityData();
 
 
     if (!loaded) {
+
         return;
     }
+
+
+    /*
+     * Final visibility guarantee.
+     */
+
+    showSecurityPage();
+
+    hideLoader();
 }
 
 
 /* =========================================================
-   START
+   START PAGE
 ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        /*
+         * Make sure the page itself
+         * is visible before JavaScript
+         * begins API communication.
+         */
+
+        showSecurityPage();
+
+
         setupEvents();
 
+
         /*
-         * Give the page a moment to finish
-         * rendering before starting the
-         * administrator request.
+         * Small delay allows the DOM/CSS
+         * to finish rendering first.
          */
 
         setTimeout(
@@ -2139,19 +2415,25 @@ document.addEventListener(
 
 
 /* =========================================================
-   GLOBAL DEBUG HELPERS
+   GLOBAL CROWN CASH ADMIN SECURITY API
 ========================================================= */
 
 window.CrownCashAdminSecurity = {
 
-    refresh: initializeSecurityPage,
+    refresh:
+        initializeSecurityPage,
 
     loadSecurity:
         loadSecurityData,
 
-    verifyAdministrator,
+    verifyAdministrator:
+        verifyAdministrator,
 
-    getState: () => ({
-        ...state
-    })
+    showPage:
+        showSecurityPage,
+
+    getState:
+        () => ({
+            ...state
+        })
 };

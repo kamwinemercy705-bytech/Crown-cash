@@ -2476,4 +2476,25 @@ tbody tr:hover {
         width: 100%;
     }
 
+} 
+
+#adminSecurityPage {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    width: 100%;
+    min-height: 100vh;
+}
+
+#adminSecurityPage.page-ready {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#pageLoader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }

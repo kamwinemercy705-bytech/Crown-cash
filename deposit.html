@@ -37,7 +37,6 @@
     ====================================================== -->
     <aside class="sidebar" id="sidebar">
 
-        <!-- Logo -->
         <div class="logo-section">
             <div class="logo-mark">C</div>
 
@@ -46,8 +45,6 @@
             </div>
         </div>
 
-
-        <!-- Navigation -->
         <nav class="sidebar-nav">
 
             <a href="dashboard.html" class="nav-item">
@@ -92,8 +89,6 @@
 
         </nav>
 
-
-        <!-- Logout -->
         <div class="sidebar-bottom">
 
             <button
@@ -110,9 +105,7 @@
     </aside>
 
 
-    <!-- =====================================================
-         MOBILE OVERLAY
-    ====================================================== -->
+    <!-- MOBILE OVERLAY -->
     <div
         class="sidebar-overlay"
         id="sidebarOverlay"
@@ -124,10 +117,7 @@
     ====================================================== -->
     <main class="main-content">
 
-
-        <!-- =================================================
-             TOP BAR
-        ================================================== -->
+        <!-- TOP BAR -->
         <header class="topbar">
 
             <button
@@ -138,7 +128,6 @@
             >
                 <i class="fa-solid fa-bars"></i>
             </button>
-
 
             <div class="page-title">
 
@@ -154,7 +143,6 @@
 
             </div>
 
-
             <div class="topbar-icon">
                 <i class="fa-solid fa-wallet"></i>
             </div>
@@ -162,15 +150,12 @@
         </header>
 
 
-        <!-- =================================================
+        <!-- =====================================================
              PAGE CONTENT
-        ================================================== -->
+        ====================================================== -->
         <section class="deposit-page">
 
-
-            <!-- =================================================
-                 BALANCE CARD
-            ================================================== -->
+            <!-- BALANCE CARD -->
             <div class="balance-card">
 
                 <div class="balance-icon">
@@ -202,9 +187,9 @@
             <div class="deposit-grid">
 
 
-                <!-- =============================================
+                <!-- =================================================
                      DEPOSIT FORM
-                ============================================== -->
+                ================================================== -->
                 <section class="card deposit-card">
 
                     <div class="card-header">
@@ -226,7 +211,7 @@
                     </div>
 
 
-                    <!-- Form Message -->
+                    <!-- FORM MESSAGE -->
                     <div
                         id="formMessage"
                         class="form-message"
@@ -241,7 +226,9 @@
                     >
 
 
-                        <!-- Amount -->
+                        <!-- =================================================
+                             AMOUNT
+                        ================================================== -->
                         <div class="form-group">
 
                             <label for="amount">
@@ -275,7 +262,9 @@
                         </div>
 
 
-                        <!-- Payment Method -->
+                        <!-- =================================================
+                             PAYMENT METHOD
+                        ================================================== -->
                         <div class="form-group">
 
                             <label>
@@ -287,7 +276,9 @@
                             <div class="payment-methods">
 
 
-                                <!-- MTN -->
+                                <!-- =================================================
+                                     MTN
+                                ================================================== -->
                                 <label
                                     class="payment-option"
                                     for="mtn"
@@ -324,7 +315,9 @@
                                 </label>
 
 
-                                <!-- Airtel -->
+                                <!-- =================================================
+                                     AIRTEL
+                                ================================================== -->
                                 <label
                                     class="payment-option"
                                     for="airtel"
@@ -361,10 +354,99 @@
 
                             </div>
 
+
+                            <!-- =================================================
+                                 PAYMENT DETAILS
+                            ================================================== -->
+                            <div
+                                class="merchant-payment-box"
+                                id="merchantPaymentBox"
+                                aria-live="polite"
+                            >
+
+                                <div class="merchant-header">
+
+                                    <div class="merchant-network-icon">
+                                        <i
+                                            class="fa-solid fa-building-columns"
+                                            id="merchantNetworkIcon"
+                                        ></i>
+                                    </div>
+
+                                    <div>
+                                        <span class="merchant-label">
+                                            Crown Cash Payment Account
+                                        </span>
+
+                                        <h3 id="merchantNetworkName">
+                                            Select a payment method
+                                        </h3>
+                                    </div>
+
+                                </div>
+
+
+                                <div class="merchant-code-row">
+
+                                    <div class="merchant-code-info">
+
+                                        <span>
+                                            Merchant Code
+                                        </span>
+
+                                        <strong
+                                            id="merchantCode"
+                                        >
+                                            —
+                                        </strong>
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        class="copy-code-button"
+                                        id="copyMerchantCodeBtn"
+                                        disabled
+                                    >
+
+                                        <i class="fa-regular fa-copy"></i>
+
+                                        <span>
+                                            Copy
+                                        </span>
+
+                                    </button>
+
+                                </div>
+
+
+                                <div
+                                    class="copy-message"
+                                    id="copyMessage"
+                                ></div>
+
+
+                                <div class="merchant-instruction">
+
+                                    <i class="fa-solid fa-circle-info"></i>
+
+                                    <p id="merchantInstruction">
+                                        Select MTN Mobile Money or
+                                        Airtel Money above to view
+                                        the payment details.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
                         </div>
 
 
-                        <!-- Transaction Reference -->
+                        <!-- =================================================
+                             TRANSACTION REFERENCE
+                        ================================================== -->
                         <div class="form-group">
 
                             <label for="transactionReference">
@@ -394,13 +476,16 @@
                             </div>
 
                             <small>
-                                Enter the transaction ID you received after making the payment.
+                                Enter the transaction ID you received
+                                after making the payment.
                             </small>
 
                         </div>
 
 
-                        <!-- Submit -->
+                        <!-- =================================================
+                             SUBMIT
+                        ================================================== -->
                         <button
                             type="submit"
                             class="deposit-button"
@@ -420,9 +505,9 @@
                 </section>
 
 
-                <!-- =============================================
+                <!-- =================================================
                      PAYMENT INSTRUCTIONS
-                ============================================== -->
+                ================================================== -->
                 <section class="card instructions-card">
 
                     <div class="card-header">
@@ -446,7 +531,7 @@
                     </div>
 
 
-                    <!-- Step 1 -->
+                    <!-- STEP 1 -->
                     <div class="instruction-step">
 
                         <div class="step-number">
@@ -469,7 +554,7 @@
                     </div>
 
 
-                    <!-- Step 2 -->
+                    <!-- STEP 2 -->
                     <div class="instruction-step">
 
                         <div class="step-number">
@@ -479,12 +564,12 @@
                         <div class="step-content">
 
                             <h3>
-                                Make your payment
+                                Check the merchant code
                             </h3>
 
                             <p>
-                                Send your deposit through the
-                                official Crown Cash payment channel.
+                                Use the Crown Cash merchant code
+                                displayed for your selected network.
                             </p>
 
                         </div>
@@ -492,11 +577,34 @@
                     </div>
 
 
-                    <!-- Step 3 -->
+                    <!-- STEP 3 -->
                     <div class="instruction-step">
 
                         <div class="step-number">
                             3
+                        </div>
+
+                        <div class="step-content">
+
+                            <h3>
+                                Make your payment
+                            </h3>
+
+                            <p>
+                                Send your deposit through the selected
+                                Mobile Money merchant account.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- STEP 4 -->
+                    <div class="instruction-step">
+
+                        <div class="step-number">
+                            4
                         </div>
 
                         <div class="step-content">
@@ -516,11 +624,11 @@
                     </div>
 
 
-                    <!-- Step 4 -->
+                    <!-- STEP 5 -->
                     <div class="instruction-step">
 
                         <div class="step-number">
-                            4
+                            5
                         </div>
 
                         <div class="step-content">
@@ -532,6 +640,8 @@
                             <p>
                                 Enter the amount and transaction
                                 reference, then submit the request.
+                                Your deposit will remain pending
+                                until verified.
                             </p>
 
                         </div>
@@ -539,7 +649,7 @@
                     </div>
 
 
-                    <!-- Security Notice -->
+                    <!-- SECURITY NOTICE -->
                     <div class="security-notice">
 
                         <div class="security-icon">
@@ -593,7 +703,6 @@
                 </div>
 
 
-                <!-- Deposit History -->
                 <div
                     id="depositHistory"
                     class="deposit-history"

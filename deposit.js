@@ -1,43 +1,50 @@
-/* =========================================================
-   CROWN CASH - DEPOSIT JAVASCRIPT
-   ========================================================= */
+/* ============================================================
+   CROWN CASH
+   DEPOSIT PAGE JAVASCRIPT
+   ============================================================ */
 
 "use strict";
 
-/* =========================================================
-   CONFIGURATION
-   ========================================================= */
+/* ============================================================
+   API CONFIGURATION
+   ============================================================ */
 
 const API_BASE = "https://crown-cash1.onrender.com";
+
 const DEPOSIT_API = `${API_BASE}/deposit.php`;
 
-/*
- * Crown Cash merchant accounts
- */
+
+/* ============================================================
+   MERCHANT CODES
+   ============================================================ */
+
 const MERCHANT_CODES = {
     mtn: "80257065",
     airtel: "7229487"
 };
 
 
-/* =========================================================
+/* ============================================================
    DOM ELEMENTS
-   ========================================================= */
+   ============================================================ */
 
 const depositForm = document.getElementById("depositForm");
+
 const amountInput = document.getElementById("amount");
+
 const transactionReferenceInput =
     document.getElementById("transactionReference");
 
-const depositButton = document.getElementById("depositButton");
+const depositButton =
+    document.getElementById("depositButton");
 
-const availableBalance =
-    document.getElementById("availableBalance");
+const formMessage =
+    document.getElementById("formMessage");
 
 const merchantCode =
     document.getElementById("merchantCode");
 
-const copyMerchantCodeButton =
+const copyMerchantCode =
     document.getElementById("copyMerchantCode");
 
 const paymentDetailsTitle =
@@ -46,68 +53,33 @@ const paymentDetailsTitle =
 const paymentDetailsText =
     document.getElementById("paymentDetailsText");
 
+const availableBalance =
+    document.getElementById("availableBalance");
+
 const depositHistory =
     document.getElementById("depositHistory");
 
-const formMessage =
-    document.getElementById("formMessage") ||
-    document.getElementById("depositMessage") ||
-    document.getElementById("message");
+const mtnRadio =
+    document.getElementById("mtn");
+
+const airtelRadio =
+    document.getElementById("airtel");
 
 
-/* =========================================================
-   PAYMENT METHOD ELEMENTS
-   ========================================================= */
+/* ============================================================
+   UTILITY FUNCTIONS
+   ============================================================ */
 
-const paymentMethodInputs =
-    document.querySelectorAll(
-        'input[name="paymentMethod"], input[name="payment_method"], input[type="radio"][value="mtn"], input[type="radio"][value="airtel"]'
-    );
+/**
+ * Safely escape HTML before inserting user/backend data.
+ */
+function escapeHTML(value) {
 
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-function showMessage(message, type = "info") {
-    if (!formMessage) return;
-
-    formMessage.textContent = message;
-
-    formMessage.className = "admin-message";
-
-    if (type === "success") {
-        formMessage.classList.add("success");
-    } else if (type === "error") {
-        formMessage.classList.add("error");
-    } else {
-        formMessage.classList.add("info");
+    if (value === null || value === undefined) {
+        return "";
     }
 
-    formMessage.style.display = "block";
-}
-
-
-function clearMessage() {
-    if (!formMessage) return;
-
-    formMessage.textContent = "";
-    formMessage.style.display = "none";
-}
-
-
-function formatCurrency(amount) {
-    const number = Number(amount || 0);
-
-    return new Intl.NumberFormat("en-UG", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(number);
-}
-
-
-function escapeHTML(value) {
-    return String(value ?? "")
+    return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -116,505 +88,399 @@ function escapeHTML(value) {
 }
 
 
-/* =========================================================
-   GET SELECTED PAYMENT METHOD
-   ========================================================= */
+/**
+ * Format UGX.
+ */
+function formatUGX(amount) {
 
-function getSelectedPaymentMethod() {
-    const selected = document.querySelector(
-        'input[name="paymentMethod"]:checked, input[name="payment_method"]:checked'
+    const number = Number(amount);
+
+    if (!Number.isFinite(number)) {
+        return "UGX 0";
+    }
+
+    return (
+        "UGX " +
+        number.toLocaleString("en-UG", {
+            maximumFractionDigits: 0
+        })
     );
+}
 
-    if (selected) {
-        return String(selected.value).toLowerCase();
+
+/**
+ * Show a message to the user.
+ */
+function showMessage(message, type = "error") {
+
+    if (!formMessage) {
+        return;
+    }
+
+    formMessage.textContent = message;
+
+    formMessage.classList.add("show");
+
+    formMessage.style.display = "block";
+
+    if (type === "success") {
+
+        formMessage.style.color = "#b8f3d1";
+
+        formMessage.style.background =
+            "rgba(53, 208, 127, 0.10)";
+
+        formMessage.style.border =
+            "1px solid rgba(53, 208, 127, 0.20)";
+
+    } else if (type === "warning") {
+
+        formMessage.style.color = "#ffe5a3";
+
+        formMessage.style.background =
+            "rgba(245, 185, 66, 0.10)";
+
+        formMessage.style.border =
+            "1px solid rgba(245, 185, 66, 0.20)";
+
+    } else {
+
+        formMessage.style.color = "#ffd1d8";
+
+        formMessage.style.background =
+            "rgba(255, 91, 112, 0.10)";
+
+        formMessage.style.border =
+            "1px solid rgba(255, 91, 112, 0.20)";
+    }
+}
+
+
+/**
+ * Hide form message.
+ */
+function hideMessage() {
+
+    if (!formMessage) {
+        return;
+    }
+
+    formMessage.textContent = "";
+
+    formMessage.classList.remove("show");
+
+    formMessage.style.display = "none";
+}
+
+
+/**
+ * Get selected payment method.
+ */
+function getSelectedPaymentMethod() {
+
+    if (mtnRadio && mtnRadio.checked) {
+        return "mtn";
+    }
+
+    if (airtelRadio && airtelRadio.checked) {
+        return "airtel";
     }
 
     return "";
 }
 
 
-/* =========================================================
-   UPDATE MERCHANT CODE
-   ========================================================= */
+/* ============================================================
+   PAYMENT METHOD DISPLAY
+   ============================================================ */
 
-function updateMerchantCode() {
+function updatePaymentDetails(method) {
 
-    const method = getSelectedPaymentMethod();
-
-    if (!merchantCode) {
-        return;
-    }
-
-    /*
-     * Nothing selected
-     */
     if (!method) {
-
-        merchantCode.textContent = "—";
-
-        if (paymentDetailsTitle) {
-            paymentDetailsTitle.textContent =
-                "Select a payment method";
-        }
-
-        if (paymentDetailsText) {
-            paymentDetailsText.textContent =
-                "Select MTN Mobile Money or Airtel Money above to view the payment details.";
-        }
-
-        if (copyMerchantCodeButton) {
-            copyMerchantCodeButton.disabled = true;
-            copyMerchantCodeButton.style.opacity = "0.5";
-            copyMerchantCodeButton.style.pointerEvents = "none";
-        }
-
-        return;
-    }
-
-
-    /*
-     * MTN
-     */
-    if (method === "mtn") {
-
-        merchantCode.textContent =
-            MERCHANT_CODES.mtn;
-
-        if (paymentDetailsTitle) {
-            paymentDetailsTitle.textContent =
-                "MTN Mobile Money Payment";
-        }
-
-        if (paymentDetailsText) {
-            paymentDetailsText.textContent =
-                "Send your deposit to the Crown Cash MTN Mobile Money merchant account using the merchant code below.";
-        }
-
-        if (copyMerchantCodeButton) {
-            copyMerchantCodeButton.disabled = false;
-            copyMerchantCodeButton.style.opacity = "1";
-            copyMerchantCodeButton.style.pointerEvents = "auto";
-        }
-
-        return;
-    }
-
-
-    /*
-     * Airtel
-     */
-    if (method === "airtel") {
-
-        merchantCode.textContent =
-            MERCHANT_CODES.airtel;
-
-        if (paymentDetailsTitle) {
-            paymentDetailsTitle.textContent =
-                "Airtel Money Payment";
-        }
-
-        if (paymentDetailsText) {
-            paymentDetailsText.textContent =
-                "Send your deposit to the Crown Cash Airtel Money merchant account using the merchant code below.";
-        }
-
-        if (copyMerchantCodeButton) {
-            copyMerchantCodeButton.disabled = false;
-            copyMerchantCodeButton.style.opacity = "1";
-            copyMerchantCodeButton.style.pointerEvents = "auto";
-        }
-
-        return;
-    }
-
-
-    /*
-     * Unknown method
-     */
-    merchantCode.textContent = "—";
-
-    if (copyMerchantCodeButton) {
-        copyMerchantCodeButton.disabled = true;
-    }
-}
-
-
-/* =========================================================
-   COPY MERCHANT CODE
-   ========================================================= */
-
-async function copyMerchantCode() {
-
-    const method = getSelectedPaymentMethod();
-
-    if (!method || !MERCHANT_CODES[method]) {
-        showMessage(
-            "Please select MTN Mobile Money or Airtel Money first.",
-            "error"
-        );
-        return;
+        method = "mtn";
     }
 
     const code = MERCHANT_CODES[method];
 
-    try {
-
-        await navigator.clipboard.writeText(code);
-
-        showMessage(
-            `Merchant code ${code} copied successfully.`,
-            "success"
-        );
-
-        /*
-         * Change button text temporarily
-         */
-        if (copyMerchantCodeButton) {
-
-            const originalText =
-                copyMerchantCodeButton.innerHTML;
-
-            copyMerchantCodeButton.innerHTML =
-                "Copied";
-
-            setTimeout(() => {
-
-                copyMerchantCodeButton.innerHTML =
-                    originalText;
-
-            }, 2000);
-        }
-
-    } catch (error) {
-
-        /*
-         * Fallback for browsers where clipboard API
-         * is unavailable.
-         */
-        const temporaryInput =
-            document.createElement("input");
-
-        temporaryInput.value = code;
-
-        document.body.appendChild(
-            temporaryInput
-        );
-
-        temporaryInput.select();
-
-        try {
-            document.execCommand("copy");
-
-            showMessage(
-                `Merchant code ${code} copied successfully.`,
-                "success"
-            );
-
-        } catch (copyError) {
-
-            showMessage(
-                `Merchant code: ${code}`,
-                "info"
-            );
-        }
-
-        document.body.removeChild(
-            temporaryInput
-        );
-    }
-}
-
-
-/* =========================================================
-   LOAD BALANCE
-   ========================================================= */
-
-async function loadBalance() {
-
-    /*
-     * If your existing dashboard/auth system already
-     * displays the balance, this function safely does
-     * nothing when no balance API is available.
-     */
-
-    try {
-
-        const response = await fetch(
-            `${DEPOSIT_API}`,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
-
-        if (!response.ok) {
-            return;
-        }
-
-        const data = await response.json();
-
-        /*
-         * Support several possible response formats.
-         */
-        const balance =
-            data.balance ??
-            data.available_balance ??
-            data.availableBalance ??
-            data.user?.balance ??
-            data.user?.available_balance ??
-            null;
-
-        if (
-            balance !== null &&
-            availableBalance
-        ) {
-
-            availableBalance.textContent =
-                `UGX ${formatCurrency(balance)}`;
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Could not load balance:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   LOAD RECENT DEPOSITS
-   ========================================================= */
-
-async function loadDeposits() {
-
-    if (!depositHistory) {
+    if (!code) {
         return;
     }
 
-    depositHistory.innerHTML = `
-        <div class="deposit-loading">
-            Loading deposits...
-        </div>
-    `;
+
+    /* --------------------------------------------------------
+       Merchant code
+       -------------------------------------------------------- */
+
+    if (merchantCode) {
+        merchantCode.textContent = code;
+    }
+
+
+    /* --------------------------------------------------------
+       MTN
+       -------------------------------------------------------- */
+
+    if (method === "mtn") {
+
+        if (paymentDetailsTitle) {
+
+            paymentDetailsTitle.textContent =
+                "MTN MOBILE MONEY PAYMENT";
+        }
+
+
+        if (paymentDetailsText) {
+
+            paymentDetailsText.innerHTML =
+                'Send your deposit to the Crown Cash MTN Mobile Money ' +
+                'merchant account using the merchant code below. ' +
+                'Dial <strong class="ussd">*165*3#</strong> on your MTN line, ' +
+                'select the merchant payment option, enter merchant code ' +
+                '<strong>80257065</strong>, enter the amount and confirm.';
+        }
+
+        return;
+    }
+
+
+    /* --------------------------------------------------------
+       AIRTEL
+       -------------------------------------------------------- */
+
+    if (method === "airtel") {
+
+        if (paymentDetailsTitle) {
+
+            paymentDetailsTitle.textContent =
+                "AIRTEL MONEY PAYMENT";
+        }
+
+
+        if (paymentDetailsText) {
+
+            paymentDetailsText.innerHTML =
+                'Send your deposit to the Crown Cash Airtel Money ' +
+                'merchant account using the merchant code below. ' +
+                'Open Airtel Money, select the merchant/business payment ' +
+                'option, enter merchant code <strong>7229487</strong>, ' +
+                'enter the amount and confirm the payment.';
+        }
+    }
+}
+
+
+/* ============================================================
+   COPY MERCHANT CODE
+   ============================================================ */
+
+async function copyMerchantCodeToClipboard() {
+
+    const method = getSelectedPaymentMethod();
+
+    const code = MERCHANT_CODES[method];
+
+    if (!code) {
+        return;
+    }
+
 
     try {
 
-        const response = await fetch(
-            DEPOSIT_API,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
+        if (
+            navigator.clipboard &&
+            typeof navigator.clipboard.writeText === "function"
+        ) {
 
-        const data = await response.json();
+            await navigator.clipboard.writeText(code);
 
-        if (!response.ok) {
+        } else {
 
-            throw new Error(
-                data.message ||
-                "Unable to load deposits."
-            );
+            const temporaryInput =
+                document.createElement("input");
+
+            temporaryInput.value = code;
+
+            temporaryInput.style.position = "fixed";
+            temporaryInput.style.opacity = "0";
+
+            document.body.appendChild(temporaryInput);
+
+            temporaryInput.focus();
+            temporaryInput.select();
+
+            document.execCommand("copy");
+
+            document.body.removeChild(temporaryInput);
         }
 
-        const deposits =
-            Array.isArray(data.deposits)
-                ? data.deposits
-                : [];
 
-        renderDeposits(deposits);
+        if (copyMerchantCode) {
+
+            const originalHTML =
+                copyMerchantCode.innerHTML;
+
+            copyMerchantCode.innerHTML = `
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <path d="M5 12l4 4L19 6"></path>
+                </svg>
+                <span>Copied</span>
+            `;
+
+            setTimeout(() => {
+
+                copyMerchantCode.innerHTML =
+                    originalHTML;
+
+            }, 1600);
+        }
 
     } catch (error) {
 
         console.error(
-            "Deposit loading error:",
+            "Merchant code copy failed:",
             error
         );
-
-        depositHistory.innerHTML = `
-            <div class="deposit-empty">
-                Unable to load deposit history.
-            </div>
-        `;
     }
 }
 
 
-/* =========================================================
-   RENDER DEPOSITS
-   ========================================================= */
+/* ============================================================
+   BACKEND RESPONSE HANDLING
+   ============================================================ */
 
-function renderDeposits(deposits) {
+/**
+ * Read backend response safely.
+ *
+ * This is important because the previous version crashed with:
+ *
+ * Failed to execute 'json' on 'Response':
+ * Unexpected end of JSON input
+ *
+ * We first read the response as text, then try JSON.parse().
+ */
+async function readAPIResponse(response) {
 
-    if (!depositHistory) {
-        return;
+    const rawText = await response.text();
+
+    const cleanedText = rawText.trim();
+
+
+    /* --------------------------------------------------------
+       Empty response
+       -------------------------------------------------------- */
+
+    if (!cleanedText) {
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data: null,
+            raw: "",
+            error:
+                `The server returned an empty response ` +
+                `(HTTP ${response.status}).`
+        };
     }
 
-    if (!deposits.length) {
 
-        depositHistory.innerHTML = `
-            <div class="deposit-empty">
-                No deposits found yet.
-            </div>
-        `;
+    /* --------------------------------------------------------
+       JSON response
+       -------------------------------------------------------- */
 
-        return;
+    try {
+
+        const data =
+            JSON.parse(cleanedText);
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data,
+            raw: cleanedText,
+            error: null
+        };
+
+    } catch (error) {
+
+        console.error(
+            "Backend returned non-JSON response:",
+            cleanedText
+        );
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data: null,
+            raw: cleanedText,
+            error:
+                `Server returned an invalid response ` +
+                `(HTTP ${response.status}).`
+        };
     }
-
-
-    depositHistory.innerHTML =
-        deposits.map(deposit => {
-
-            const amount =
-                Number(deposit.amount || 0);
-
-            const method =
-                String(
-                    deposit.payment_method ||
-                    deposit.paymentMethod ||
-                    ""
-                ).toLowerCase();
-
-            const reference =
-                deposit.transaction_reference ||
-                deposit.transactionReference ||
-                "—";
-
-            const status =
-                String(
-                    deposit.status || "pending"
-                ).toLowerCase();
-
-            const date =
-                deposit.created_at ||
-                deposit.createdAt ||
-                "";
-
-
-            let formattedDate = "—";
-
-            if (date) {
-
-                const parsedDate =
-                    new Date(date);
-
-                if (!isNaN(parsedDate.getTime())) {
-
-                    formattedDate =
-                        parsedDate.toLocaleString(
-                            "en-UG",
-                            {
-                                dateStyle: "medium",
-                                timeStyle: "short"
-                            }
-                        );
-                }
-            }
-
-
-            const network =
-                method === "mtn"
-                    ? "MTN Mobile Money"
-                    : method === "airtel"
-                        ? "Airtel Money"
-                        : "Mobile Money";
-
-
-            const statusClass =
-                status === "approved"
-                    ? "approved"
-                    : status === "rejected"
-                        ? "rejected"
-                        : "pending";
-
-
-            return `
-                <div class="deposit-history-item">
-
-                    <div class="deposit-history-main">
-
-                        <div class="deposit-network">
-                            ${escapeHTML(network)}
-                        </div>
-
-                        <div class="deposit-reference">
-                            Ref:
-                            ${escapeHTML(reference)}
-                        </div>
-
-                        <div class="deposit-date">
-                            ${escapeHTML(formattedDate)}
-                        </div>
-
-                    </div>
-
-                    <div class="deposit-history-side">
-
-                        <div class="deposit-history-amount">
-                            UGX ${formatCurrency(amount)}
-                        </div>
-
-                        <span class="deposit-status ${statusClass}">
-                            ${escapeHTML(
-                                status.charAt(0).toUpperCase() +
-                                status.slice(1)
-                            )}
-                        </span>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
 }
 
 
-/* =========================================================
-   SUBMIT DEPOSIT
-   ========================================================= */
+/* ============================================================
+   SEND DEPOSIT REQUEST
+   ============================================================ */
 
 async function submitDeposit(event) {
 
     event.preventDefault();
 
-    clearMessage();
+    hideMessage();
 
+
+    /* --------------------------------------------------------
+       Get values
+       -------------------------------------------------------- */
 
     const amount =
         Number(
-            amountInput?.value || 0
+            amountInput
+                ? amountInput.value
+                : 0
         );
 
-    const method =
+    const paymentMethod =
         getSelectedPaymentMethod();
 
-    const reference =
-        String(
-            transactionReferenceInput?.value || ""
-        ).trim();
+    const transactionReference =
+        transactionReferenceInput
+            ? transactionReferenceInput.value.trim()
+            : "";
 
 
-    /* ---------------------------------------------
+    /* --------------------------------------------------------
        Validate amount
-       --------------------------------------------- */
+       -------------------------------------------------------- */
 
-    if (!amount || amount < 10000) {
+    if (!Number.isFinite(amount)) {
 
         showMessage(
-            "Minimum deposit amount is UGX 10,000.",
-            "error"
+            "Please enter a valid deposit amount."
         );
 
-        amountInput?.focus();
+        if (amountInput) {
+            amountInput.focus();
+        }
+
+        return;
+    }
+
+
+    if (amount < 10000) {
+
+        showMessage(
+            "Minimum deposit is UGX 10,000."
+        );
+
+        if (amountInput) {
+            amountInput.focus();
+        }
 
         return;
     }
@@ -623,76 +489,147 @@ async function submitDeposit(event) {
     if (amount % 1000 !== 0) {
 
         showMessage(
-            "Deposit amount must be in multiples of UGX 1,000.",
-            "error"
+            "Deposit amounts must be in multiples of UGX 1,000."
         );
 
-        amountInput?.focus();
+        if (amountInput) {
+            amountInput.focus();
+        }
 
         return;
     }
 
 
-    /* ---------------------------------------------
+    /* --------------------------------------------------------
        Validate payment method
-       --------------------------------------------- */
+       -------------------------------------------------------- */
 
     if (
-        method !== "mtn" &&
-        method !== "airtel"
+        paymentMethod !== "mtn" &&
+        paymentMethod !== "airtel"
     ) {
 
         showMessage(
-            "Please select MTN Mobile Money or Airtel Money.",
-            "error"
+            "Please choose MTN Mobile Money or Airtel Money."
         );
 
         return;
     }
 
 
-    /* ---------------------------------------------
-       Validate reference
-       --------------------------------------------- */
+    /* --------------------------------------------------------
+       Validate transaction reference
+       -------------------------------------------------------- */
 
-    if (!reference) {
+    if (!transactionReference) {
 
         showMessage(
-            "Please enter the transaction reference from your Mobile Money confirmation message.",
-            "error"
+            "Please enter the transaction reference you received after payment."
         );
 
-        transactionReferenceInput?.focus();
+        if (transactionReferenceInput) {
+            transactionReferenceInput.focus();
+        }
 
         return;
     }
 
 
-    /* ---------------------------------------------
-       Disable button
-       --------------------------------------------- */
+    if (transactionReference.length < 4) {
 
-    const originalButtonText =
-        depositButton?.innerHTML ||
-        "Submit Deposit";
+        showMessage(
+            "Please enter the complete transaction reference."
+        );
+
+        if (transactionReferenceInput) {
+            transactionReferenceInput.focus();
+        }
+
+        return;
+    }
+
+
+    /* --------------------------------------------------------
+       Merchant code
+       -------------------------------------------------------- */
+
+    const merchantCodeValue =
+        MERCHANT_CODES[paymentMethod];
+
+
+    /* --------------------------------------------------------
+       Loading state
+       -------------------------------------------------------- */
+
+    const originalButtonHTML =
+        depositButton
+            ? depositButton.innerHTML
+            : "";
 
 
     if (depositButton) {
 
         depositButton.disabled = true;
 
-        depositButton.innerHTML =
-            "Submitting...";
+        depositButton.innerHTML = `
+            <span
+                style="
+                    width:17px;
+                    height:17px;
+                    border:2px solid rgba(255,255,255,.35);
+                    border-top-color:#ffffff;
+                    border-radius:50%;
+                    display:inline-block;
+                    animation:ccDepositSpin .8s linear infinite;
+                "
+            ></span>
+            Processing Deposit...
+        `;
     }
 
 
     try {
+
+        /* ----------------------------------------------------
+           Request payload
+           ---------------------------------------------------- */
+
+        const payload = {
+
+            amount: amount,
+
+            currency: "UGX",
+
+            payment_method: paymentMethod,
+
+            paymentMethod: paymentMethod,
+
+            merchant_code: merchantCodeValue,
+
+            transaction_reference:
+                transactionReference,
+
+            transactionReference:
+                transactionReference
+        };
+
+
+        console.log(
+            "Sending Crown Cash deposit request:",
+            payload
+        );
+
+
+        /* ----------------------------------------------------
+           POST TO BACKEND
+           ---------------------------------------------------- */
 
         const response =
             await fetch(
                 DEPOSIT_API,
                 {
                     method: "POST",
+
                     credentials: "include",
 
                     headers: {
@@ -703,80 +640,145 @@ async function submitDeposit(event) {
                             "application/json"
                     },
 
-                    body: JSON.stringify({
-
-                        amount: amount,
-
-                        payment_method:
-                            method,
-
-                        transaction_reference:
-                            reference
-
-                    })
+                    body:
+                        JSON.stringify(payload)
                 }
             );
 
 
-        const data =
-            await response.json();
+        /* ----------------------------------------------------
+           Safely read response
+           ---------------------------------------------------- */
+
+        const result =
+            await readAPIResponse(response);
 
 
-        if (!response.ok) {
+        console.log(
+            "Crown Cash deposit response:",
+            result
+        );
+
+
+        /* ----------------------------------------------------
+           HTTP error
+           ---------------------------------------------------- */
+
+        if (!result.ok) {
+
+            let serverMessage =
+                result.error ||
+                `Deposit request failed (HTTP ${result.status}).`;
+
+
+            if (
+                result.data &&
+                typeof result.data === "object"
+            ) {
+
+                serverMessage =
+                    result.data.message ||
+                    result.data.error ||
+                    serverMessage;
+            }
+
+
+            throw new Error(serverMessage);
+        }
+
+
+        /* ----------------------------------------------------
+           Missing JSON response
+           ---------------------------------------------------- */
+
+        if (!result.data) {
 
             throw new Error(
-                data.message ||
-                "Deposit submission failed."
+                result.error ||
+                "The deposit server did not return a valid response."
             );
         }
 
 
-        /* -----------------------------------------
+        /* ----------------------------------------------------
+           Backend says failure
+           ---------------------------------------------------- */
+
+        if (
+            result.data.success === false ||
+            result.data.status === "error"
+        ) {
+
+            throw new Error(
+                result.data.message ||
+                result.data.error ||
+                "The deposit request was rejected."
+            );
+        }
+
+
+        /* ----------------------------------------------------
            Success
-           ----------------------------------------- */
+           ---------------------------------------------------- */
 
         showMessage(
-            data.message ||
-            "Deposit submitted successfully. Your deposit is pending verification.",
+            result.data.message ||
+            "Deposit request submitted successfully. It is now pending admin verification.",
             "success"
         );
 
 
-        /*
-         * Reset only the form fields.
-         */
-        if (depositForm) {
-            depositForm.reset();
+        /* ----------------------------------------------------
+           Clear transaction reference
+           ---------------------------------------------------- */
+
+        if (transactionReferenceInput) {
+            transactionReferenceInput.value = "";
         }
 
 
-        /*
-         * Reset merchant display.
-         */
-        updateMerchantCode();
+        /* ----------------------------------------------------
+           Reset amount
+           ---------------------------------------------------- */
+
+        if (amountInput) {
+            amountInput.value = "";
+        }
 
 
-        /*
-         * Refresh history.
-         */
-        await loadDeposits();
+        /* ----------------------------------------------------
+           Refresh deposit history
+           ---------------------------------------------------- */
 
-        await loadBalance();
+        await loadDepositHistory();
+
+
+        /* ----------------------------------------------------
+           Notify other Crown Cash scripts
+           ---------------------------------------------------- */
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "crowncash:depositSubmitted",
+                {
+                    detail: result.data
+                }
+            )
+        );
 
 
     } catch (error) {
 
         console.error(
-            "Deposit submission error:",
+            "Crown Cash deposit error:",
             error
         );
 
+
         showMessage(
             error.message ||
-            "Unable to submit your deposit. Please try again.",
-            "error"
+            "Unable to submit your deposit request. Please try again."
         );
-
 
     } finally {
 
@@ -785,85 +787,371 @@ async function submitDeposit(event) {
             depositButton.disabled = false;
 
             depositButton.innerHTML =
-                originalButtonText;
+                originalButtonHTML ||
+                `
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path d="M12 3v14"></path>
+                        <path d="M7 12l5 5 5-5"></path>
+                        <path d="M4 21h16"></path>
+                    </svg>
+                    Submit Deposit
+                `;
         }
     }
 }
 
 
-/* =========================================================
-   PAYMENT METHOD EVENTS
-   ========================================================= */
+/* ============================================================
+   LOAD RECENT DEPOSITS
+   ============================================================ */
 
-function setupPaymentMethods() {
+async function loadDepositHistory() {
 
-    /*
-     * Find all MTN/Airtel radio buttons.
-     */
-    const inputs =
-        document.querySelectorAll(
-            'input[type="radio"]'
+    if (!depositHistory) {
+        return;
+    }
+
+
+    depositHistory.innerHTML = `
+        <div class="empty-history">
+            Loading your deposits...
+        </div>
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                DEPOSIT_API,
+                {
+                    method: "GET",
+
+                    credentials: "include",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        const result =
+            await readAPIResponse(response);
+
+
+        console.log(
+            "Deposit history response:",
+            result
         );
 
 
-    inputs.forEach(input => {
+        if (!result.ok) {
 
-        const value =
-            String(input.value || "")
-                .toLowerCase();
-
-
-        if (
-            value === "mtn" ||
-            value === "airtel"
-        ) {
-
-            input.addEventListener(
-                "change",
-                updateMerchantCode
+            throw new Error(
+                result.data?.message ||
+                result.data?.error ||
+                result.error ||
+                "Unable to load deposits."
             );
         }
 
-    });
+
+        if (!result.data) {
+
+            throw new Error(
+                "Deposit history server returned no data."
+            );
+        }
 
 
-    /*
-     * Run once when page opens.
-     */
-    updateMerchantCode();
-}
+        const deposits =
+            Array.isArray(result.data.deposits)
+                ? result.data.deposits
+                : Array.isArray(result.data.data)
+                    ? result.data.data
+                    : [];
 
 
-/* =========================================================
-   COPY BUTTON EVENT
-   ========================================================= */
+        /* ----------------------------------------------------
+           Update balance if backend sends it
+           ---------------------------------------------------- */
 
-function setupCopyButton() {
+        if (
+            availableBalance &&
+            result.data.balance !== undefined
+        ) {
 
-    if (!copyMerchantCodeButton) {
-        return;
-    }
-
-    copyMerchantCodeButton.addEventListener(
-        "click",
-        copyMerchantCode
-    );
-}
+            availableBalance.textContent =
+                formatUGX(
+                    result.data.balance
+                );
+        }
 
 
-/* =========================================================
-   FORM EVENT
-   ========================================================= */
+        /* ----------------------------------------------------
+           Empty state
+           ---------------------------------------------------- */
 
-function setupForm() {
+        if (deposits.length === 0) {
 
-    if (!depositForm) {
-        console.warn(
-            "Deposit form #depositForm was not found."
+            depositHistory.innerHTML = `
+                <div class="empty-history">
+                    No deposits found yet.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        /* ----------------------------------------------------
+           Render deposits
+           ---------------------------------------------------- */
+
+        depositHistory.innerHTML =
+            deposits
+                .map(renderDeposit)
+                .join("");
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load deposit history:",
+            error
         );
 
-        return;
+
+        depositHistory.innerHTML = `
+            <div class="empty-history">
+                Unable to load deposit history.
+            </div>
+        `;
     }
+}
+
+
+/* ============================================================
+   RENDER ONE DEPOSIT
+   ============================================================ */
+
+function renderDeposit(deposit) {
+
+    const amount =
+        Number(
+            deposit.amount ||
+            deposit.deposit_amount ||
+            0
+        );
+
+
+    const method =
+        String(
+            deposit.payment_method ||
+            deposit.paymentMethod ||
+            ""
+        ).toLowerCase();
+
+
+    const reference =
+        deposit.transaction_reference ||
+        deposit.transactionReference ||
+        "—";
+
+
+    const status =
+        String(
+            deposit.status ||
+            "pending"
+        ).toLowerCase();
+
+
+    const createdAt =
+        deposit.created_at ||
+        deposit.createdAt ||
+        deposit.date ||
+        "";
+
+
+    let dateText = "—";
+
+
+    if (createdAt) {
+
+        const date =
+            new Date(createdAt);
+
+        if (!Number.isNaN(date.getTime())) {
+
+            dateText =
+                date.toLocaleString(
+                    "en-UG",
+                    {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    }
+                );
+        }
+    }
+
+
+    let statusClass =
+        "status-pending";
+
+    let statusLabel =
+        "Pending";
+
+
+    if (
+        status === "approved" ||
+        status === "completed" ||
+        status === "success"
+    ) {
+
+        statusClass =
+            "status-approved";
+
+        statusLabel =
+            "Approved";
+
+    } else if (
+        status === "rejected" ||
+        status === "declined" ||
+        status === "cancelled"
+    ) {
+
+        statusClass =
+            "status-rejected";
+
+        statusLabel =
+            "Rejected";
+    }
+
+
+    const network =
+        method === "airtel"
+            ? "Airtel Money"
+            : "MTN Mobile Money";
+
+
+    return `
+        <div
+            class="deposit-history-item"
+            style="
+                display:grid;
+                grid-template-columns:auto 1fr auto;
+                gap:13px;
+                align-items:center;
+                padding:13px 4px;
+                border-bottom:1px solid rgba(255,255,255,.06);
+            "
+        >
+
+            <div
+                style="
+                    width:38px;
+                    height:38px;
+                    border-radius:11px;
+                    display:grid;
+                    place-items:center;
+                    color:#f4c542;
+                    background:rgba(244,197,66,.08);
+                    border:1px solid rgba(244,197,66,.12);
+                "
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                >
+                    <path d="M12 3v14"></path>
+                    <path d="M7 12l5 5 5-5"></path>
+                    <path d="M4 21h16"></path>
+                </svg>
+            </div>
+
+            <div>
+
+                <div
+                    style="
+                        color:#f7eff2;
+                        font-size:12px;
+                        font-weight:800;
+                    "
+                >
+                    ${escapeHTML(network)}
+                </div>
+
+                <div
+                    style="
+                        margin-top:4px;
+                        color:#85747c;
+                        font-size:9px;
+                    "
+                >
+                    Ref:
+                    ${escapeHTML(reference)}
+                </div>
+
+                <div
+                    style="
+                        margin-top:3px;
+                        color:#706169;
+                        font-size:9px;
+                    "
+                >
+                    ${escapeHTML(dateText)}
+                </div>
+
+            </div>
+
+            <div style="text-align:right;">
+
+                <div
+                    style="
+                        color:#f4c542;
+                        font-size:13px;
+                        font-weight:850;
+                    "
+                >
+                    ${escapeHTML(formatUGX(amount))}
+                </div>
+
+                <div
+                    class="${statusClass}"
+                    style="
+                        display:inline-block;
+                        margin-top:5px;
+                        padding:4px 8px;
+                        border-radius:999px;
+                        font-size:8px;
+                        font-weight:850;
+                        text-transform:uppercase;
+                    "
+                >
+                    ${escapeHTML(statusLabel)}
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* ============================================================
+   FORM SUBMISSION
+   ============================================================ */
+
+if (depositForm) {
 
     depositForm.addEventListener(
         "submit",
@@ -872,87 +1160,164 @@ function setupForm() {
 }
 
 
-/* =========================================================
-   AMOUNT VALIDATION
-   ========================================================= */
+/* ============================================================
+   PAYMENT RADIO BUTTONS
+   ============================================================ */
 
-function setupAmountInput() {
+if (mtnRadio) {
 
-    if (!amountInput) {
-        return;
-    }
+    mtnRadio.addEventListener(
+        "change",
+        function () {
 
-    amountInput.addEventListener(
-        "input",
-        () => {
+            if (this.checked) {
 
-            const value =
-                Number(
-                    amountInput.value || 0
-                );
+                updatePaymentDetails("mtn");
 
-            if (
-                value > 0 &&
-                value < 10000
-            ) {
-
-                amountInput.setCustomValidity(
-                    "Minimum deposit is UGX 10,000."
-                );
-
-            } else {
-
-                amountInput.setCustomValidity(
-                    ""
-                );
+                hideMessage();
             }
         }
     );
 }
 
 
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
+if (airtelRadio) {
+
+    airtelRadio.addEventListener(
+        "change",
+        function () {
+
+            if (this.checked) {
+
+                updatePaymentDetails("airtel");
+
+                hideMessage();
+            }
+        }
+    );
+}
+
+
+/* ============================================================
+   COPY BUTTON
+   ============================================================ */
+
+if (copyMerchantCode) {
+
+    copyMerchantCode.addEventListener(
+        "click",
+        copyMerchantCodeToClipboard
+    );
+}
+
+
+/* ============================================================
+   INITIAL PAYMENT DETAILS
+   ============================================================ */
+
+const initialMethod =
+    getSelectedPaymentMethod() ||
+    "mtn";
+
+updatePaymentDetails(initialMethod);
+
+
+/* ============================================================
+   LOAD INITIAL DEPOSIT HISTORY
+   ============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
-    async () => {
+    function () {
 
-        console.log(
-            "Crown Cash Deposit page initialized."
-        );
-
-        setupPaymentMethods();
-
-        setupCopyButton();
-
-        setupForm();
-
-        setupAmountInput();
-
-        await loadDeposits();
-
-        await loadBalance();
+        loadDepositHistory();
 
     }
 );
 
 
-/* =========================================================
-   GLOBAL API
-   ========================================================= */
+/* ============================================================
+   CUSTOM EVENT
+   ============================================================ */
 
-window.CrownCashDeposit = {
+window.addEventListener(
+    "crowncash:depositSubmitted",
+    function () {
 
-    updateMerchantCode,
+        setTimeout(
+            loadDepositHistory,
+            700
+        );
 
-    copyMerchantCode,
+    }
+);
 
-    loadDeposits,
 
-    loadBalance,
+/* ============================================================
+   LOADING ANIMATION
+   ============================================================ */
 
-    submitDeposit
+if (!document.getElementById("ccDepositAnimation")) {
 
-};
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "ccDepositAnimation";
+
+    style.textContent = `
+        @keyframes ccDepositSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-pending {
+            color:#ffe5a3;
+            background:rgba(245,185,66,.10);
+            border:1px solid rgba(245,185,66,.16);
+        }
+
+        .status-approved {
+            color:#b8f3d1;
+            background:rgba(53,208,127,.10);
+            border:1px solid rgba(53,208,127,.16);
+        }
+
+        .status-rejected {
+            color:#ffd1d8;
+            background:rgba(255,91,112,.10);
+            border:1px solid rgba(255,91,112,.16);
+        }
+
+        .deposit-history-item:last-child {
+            border-bottom:none !important;
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/* ============================================================
+   DEBUG INFORMATION
+   ============================================================ */
+
+console.log(
+    "Crown Cash Deposit System initialized."
+);
+
+console.log(
+    "Deposit API:",
+    DEPOSIT_API
+);
+
+console.log(
+    "MTN Merchant Code:",
+    MERCHANT_CODES.mtn
+);
+
+console.log(
+    "Airtel Merchant Code:",
+    MERCHANT_CODES.airtel
+);

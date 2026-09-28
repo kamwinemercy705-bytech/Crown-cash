@@ -1,23 +1,7 @@
 <?php
 
 /* =========================================================
-   CROWN CASH
-   ADMIN INVESTMENTS API
-
-   GET:
-   Returns investment records for administrators.
-
-   IMPORTANT:
-   - Admin access is required.
-   - This endpoint is READ-ONLY.
-   - It does not create profits.
-   - It does not change balances.
-   - It does not approve investments.
-   ========================================================= */
-
-
-/* =========================================================
-   SESSION COOKIE
+   CROWN CASH — ADMIN INVESTMENTS API
    ========================================================= */
 
 session_set_cookie_params([
@@ -30,48 +14,32 @@ session_set_cookie_params([
 
 session_start();
 
-
 /* =========================================================
    HEADERS / CORS
    ========================================================= */
 
 header("Content-Type: application/json; charset=UTF-8");
-
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
 );
-
-header(
-    "Access-Control-Allow-Credentials: true"
-);
-
-header(
-    "Access-Control-Allow-Methods: GET, OPTIONS"
-);
-
-header(
-    "Access-Control-Allow-Headers: Content-Type"
-);
-
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
 /* =========================================================
-   OPTIONS REQUEST
+   OPTIONS
    ========================================================= */
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-
     http_response_code(204);
-
     exit;
 }
 
-
 /* =========================================================
-   ONLY GET ALLOWED
+   ONLY GET
    ========================================================= */
 
 if ($_SERVER["REQUEST_METHOD"] !== "GET") {
-
     http_response_code(405);
 
     echo json_encode([
@@ -82,7 +50,6 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
     exit;
 }
 
-
 /* =========================================================
    ADMIN AUTHENTICATION
    ========================================================= */
@@ -91,7 +58,6 @@ if (
     !isset($_SESSION["logged_in"]) ||
     $_SESSION["logged_in"] !== true
 ) {
-
     http_response_code(401);
 
     echo json_encode([
@@ -102,26 +68,24 @@ if (
     exit;
 }
 
-
 /* =========================================================
-   ADMIN ROLE CHECK
+   ADMIN ROLE
    ========================================================= */
 
-$sessionRole =
-    strtolower(
-        trim(
-            (string)(
-                $_SESSION["role"] ?? ""
-            )
+$sessionRole = strtolower(
+    trim(
+        (string)(
+            $_SESSION["role"] ??
+            $_SESSION["account_type"] ??
+            ""
         )
-    );
-
+    )
+);
 
 if (
     $sessionRole !== "admin" &&
     $sessionRole !== "administrator"
 ) {
-
     http_response_code(403);
 
     echo json_encode([
@@ -132,156 +96,107 @@ if (
     exit;
 }
 
-
 /* =========================================================
    DATABASE
    ========================================================= */
 
 require_once __DIR__ . "/config.php";
 
-
 /* =========================================================
-   HELPER FUNCTIONS
+   HELPERS
    ========================================================= */
 
 function jsonSafeValue($value)
 {
-    if (
-        $value instanceof MongoDB\BSON\ObjectId
-    ) {
-
+    if ($value instanceof MongoDB\BSON\ObjectId) {
         return (string)$value;
     }
 
-
-    if (
-        $value instanceof MongoDB\BSON\UTCDateTime
-    ) {
-
+    if ($value instanceof MongoDB\BSON\UTCDateTime) {
         return $value
             ->toDateTime()
             ->format(DATE_ATOM);
     }
 
-
-    if (
-        $value instanceof MongoDB\BSON\Decimal128
-    ) {
-
+    if ($value instanceof MongoDB\BSON\Decimal128) {
         return (float)$value->__toString();
     }
 
-
-    if (
-        $value instanceof MongoDB\BSON\Int64
-    ) {
-
+    if ($value instanceof MongoDB\BSON\Int64) {
         return (int)$value;
     }
 
-
-    if (
-        is_array($value)
-    ) {
-
+    if (is_array($value)) {
         $result = [];
 
         foreach ($value as $key => $item) {
-
-            $result[$key] =
-                jsonSafeValue($item);
+            $result[$key] = jsonSafeValue($item);
         }
 
         return $result;
     }
 
-
-    if (
-        is_object($value)
-    ) {
-
+    if (is_object($value)) {
         $result = [];
 
-        foreach (
-            get_object_vars($value)
-            as $key => $item
-        ) {
-
-            $result[$key] =
-                jsonSafeValue($item);
+        foreach (get_object_vars($value) as $key => $item) {
+            $result[$key] = jsonSafeValue($item);
         }
 
         return $result;
     }
-
 
     return $value;
 }
 
-
-function getField($document, $field, $default = null)
-{
-    if (
-        isset($document[$field])
-    ) {
-
-        return $document[$field];
-    }
-
-    return $default;
-}
-
-
-function getCollectionSafely(
-    $database,
-    $possibleVariable,
-    $collectionName
-) {
-
-    if (
-        isset($GLOBALS[$possibleVariable])
-    ) {
-
-        return $GLOBALS[$possibleVariable];
-    }
-
-    return $database
-        ->selectCollection($collectionName);
-}
-
+/* =========================================================
+   DATE FORMATTER
+   ========================================================= */
 
 function formatDateValue($value)
 {
     if (
         $value instanceof MongoDB\BSON\UTCDateTime
     ) {
-
         return $value
             ->toDateTime()
             ->format(DATE_ATOM);
     }
 
-
-    if (
-        $value instanceof MongoDB\BSON\ObjectId
-    ) {
-
-        return null;
-    }
-
-
     if (
         is_string($value) &&
         trim($value) !== ""
     ) {
-
         return $value;
     }
-
 
     return null;
 }
 
+/* =========================================================
+   MONEY FORMATTER
+   ========================================================= */
+
+function numericValue($value)
+{
+    if (
+        $value instanceof MongoDB\BSON\Decimal128
+    ) {
+        return (float)$value->__toString();
+    }
+
+    if (
+        $value instanceof MongoDB\BSON\Int64
+    ) {
+        return (float)$value;
+    }
+
+    if (is_numeric($value)) {
+        return (float)$value;
+    }
+
+    return 0;
+}
 
 /* =========================================================
    MAIN
@@ -289,38 +204,26 @@ function formatDateValue($value)
 
 try {
 
-    /*
-     * config.php should normally expose:
-     *
-     * $database
-     * $users
-     * $investments
-     *
-     * We support both direct collection variables
-     * and database->selectCollection().
-     */
+    /* =====================================================
+       CHECK DATABASE CONFIGURATION
+       ===================================================== */
 
     if (
         !isset($database) &&
         !isset($investments)
     ) {
-
         throw new Exception(
             "Database configuration is unavailable."
         );
     }
 
-
     /* =====================================================
        INVESTMENTS COLLECTION
        ===================================================== */
 
-    if (
-        isset($investments)
-    ) {
+    if (isset($investments)) {
 
-        $investmentCollection =
-            $investments;
+        $investmentCollection = $investments;
 
     } else {
 
@@ -330,21 +233,15 @@ try {
             );
     }
 
-
     /* =====================================================
        USERS COLLECTION
        ===================================================== */
 
-    if (
-        isset($users)
-    ) {
+    if (isset($users)) {
 
-        $userCollection =
-            $users;
+        $userCollection = $users;
 
-    } elseif (
-        isset($database)
-    ) {
+    } elseif (isset($database)) {
 
         $userCollection =
             $database->selectCollection(
@@ -356,38 +253,31 @@ try {
         $userCollection = null;
     }
 
-
     /* =====================================================
        READ INVESTMENTS
        ===================================================== */
 
-    $cursor =
-        $investmentCollection->find(
-            [],
-            [
-                "sort" => [
-                    "created_at" => -1,
-                    "_id" => -1
-                ],
-                "limit" => 500
-            ]
-        );
-
+    $cursor = $investmentCollection->find(
+        [],
+        [
+            "sort" => [
+                "created_at" => -1,
+                "_id" => -1
+            ],
+            "limit" => 500
+        ]
+    );
 
     $investmentRecords = [];
 
+    /* =====================================================
+       PROCESS INVESTMENTS
+       ===================================================== */
 
-    foreach ($cursor as $investment) {
-
-        /*
-         * Convert BSON document to array.
-         */
+    foreach ($cursor as $investmentDocument) {
 
         $investment =
-            jsonSafeValue(
-                $investment
-            );
-
+            jsonSafeValue($investmentDocument);
 
         /* =================================================
            INVESTMENT ID
@@ -395,9 +285,9 @@ try {
 
         $investmentId =
             (string)(
-                $investment["_id"] ?? ""
+                $investment["_id"] ??
+                ""
             );
-
 
         /* =================================================
            USER ID
@@ -408,25 +298,18 @@ try {
             $investment["userId"] ??
             null;
 
-
         if (
             is_array($userId) &&
             isset($userId["$oid"])
         ) {
-
             $userId =
                 $userId["$oid"];
         }
 
-
-        if (
-            $userId !== null
-        ) {
-
+        if ($userId !== null) {
             $userId =
                 (string)$userId;
         }
-
 
         /* =================================================
            CUSTOMER INFORMATION
@@ -440,21 +323,17 @@ try {
             $investment["name"] ??
             "";
 
-
         $email =
             $investment["email"] ??
             "";
-
 
         $phone =
             $investment["phone"] ??
             "";
 
-
-        /*
-         * If investment does not contain customer
-         * information, look it up in users collection.
-         */
+        /* =================================================
+           LOOK UP USER
+           ================================================= */
 
         if (
             $userCollection !== null &&
@@ -463,78 +342,83 @@ try {
 
             try {
 
-                $userObjectId =
-                    new MongoDB\BSON\ObjectId(
+                if (
+                    preg_match(
+                        '/^[a-f0-9]{24}$/i',
                         $userId
-                    );
+                    )
+                ) {
 
-
-                $user =
-                    $userCollection->findOne([
-                        "_id" => $userObjectId
-                    ]);
-
-
-                if ($user) {
-
-                    $user =
-                        jsonSafeValue(
-                            $user
+                    $userObjectId =
+                        new MongoDB\BSON\ObjectId(
+                            $userId
                         );
 
+                    $user =
+                        $userCollection->findOne([
+                            "_id" => $userObjectId
+                        ]);
 
-                    if (
-                        $fullName === ""
-                    ) {
+                    if ($user) {
 
-                        $fullName =
-                            $user["full_name"] ??
-                            $user["fullName"] ??
-                            $user["name"] ??
-                            "";
-                    }
+                        $user =
+                            jsonSafeValue($user);
 
+                        if (
+                            trim(
+                                (string)$fullName
+                            ) === ""
+                        ) {
 
-                    if (
-                        $email === ""
-                    ) {
+                            $fullName =
+                                $user["full_name"] ??
+                                $user["fullName"] ??
+                                $user["name"] ??
+                                "";
+                        }
 
-                        $email =
-                            $user["email"] ??
-                            "";
-                    }
+                        if (
+                            trim(
+                                (string)$email
+                            ) === ""
+                        ) {
 
+                            $email =
+                                $user["email"] ??
+                                "";
+                        }
 
-                    if (
-                        $phone === ""
-                    ) {
+                        if (
+                            trim(
+                                (string)$phone
+                            ) === ""
+                        ) {
 
-                        $phone =
-                            $user["phone"] ??
-                            "";
+                            $phone =
+                                $user["phone"] ??
+                                $user["phone_number"] ??
+                                $user["mobile"] ??
+                                "";
+                        }
                     }
                 }
 
-            } catch (
-                MongoDB\Driver\Exception\Exception $userError
-            ) {
+            } catch (Throwable $userError) {
 
                 /*
-                 * Do not fail the entire investment list
-                 * if one user's ObjectId cannot be resolved.
+                 * Do not fail the entire list
+                 * if one user cannot be resolved.
                  */
             }
         }
 
-
         if (
-            trim((string)$fullName) === ""
+            trim(
+                (string)$fullName
+            ) === ""
         ) {
-
-            $fullName =
-                "Unknown User";
+            $fullName = "Unknown User";
         }
-
 
         /* =================================================
            PLAN
@@ -545,16 +429,12 @@ try {
             $investment["plan_name"] ??
             $investment["planName"] ??
             $investment["package"] ??
-            "";
-
+            "Investment";
 
         $plan =
-            strtolower(
-                trim(
-                    (string)$plan
-                )
+            trim(
+                (string)$plan
             );
-
 
         /* =================================================
            AMOUNT
@@ -564,22 +444,11 @@ try {
             $investment["amount"] ??
             $investment["investment_amount"] ??
             $investment["investmentAmount"] ??
+            $investment["invested_amount"] ??
             0;
 
-
-        if (
-            $amount instanceof MongoDB\BSON\Decimal128
-        ) {
-
-            $amount =
-                (float)$amount->__toString();
-
-        } else {
-
-            $amount =
-                (float)$amount;
-        }
-
+        $amount =
+            numericValue($amount);
 
         /* =================================================
            STATUS
@@ -589,7 +458,6 @@ try {
             $investment["status"] ??
             "pending";
 
-
         $status =
             strtolower(
                 trim(
@@ -597,41 +465,31 @@ try {
                 )
             );
 
-
-        /*
-         * Normalize a few common backend statuses.
-         */
-
         if (
             $status === "approved" ||
             $status === "running"
         ) {
 
-            $displayStatus =
-                "active";
+            $displayStatus = "active";
 
         } elseif (
             $status === "complete" ||
             $status === "finished"
         ) {
 
-            $displayStatus =
-                "completed";
+            $displayStatus = "completed";
 
         } elseif (
             $status === "rejected" ||
             $status === "declined"
         ) {
 
-            $displayStatus =
-                "cancelled";
+            $displayStatus = "cancelled";
 
         } else {
 
-            $displayStatus =
-                $status;
+            $displayStatus = $status;
         }
-
 
         /* =================================================
            DURATION
@@ -641,23 +499,25 @@ try {
             $investment["duration"] ??
             $investment["duration_days"] ??
             $investment["durationDays"] ??
+            $investment["period"] ??
             30;
 
+        if (is_numeric($duration)) {
 
-        $duration =
-            (int)$duration;
+            $duration =
+                (int)$duration;
 
-
-        if (
-            $duration <= 0
-        ) {
+        } else {
 
             $duration = 30;
         }
 
+        if ($duration <= 0) {
+            $duration = 30;
+        }
 
         /* =================================================
-           DATES
+           START DATE
            ================================================= */
 
         $startDate =
@@ -667,6 +527,9 @@ try {
             $investment["startedAt"] ??
             null;
 
+        /* =================================================
+           END DATE
+           ================================================= */
 
         $endDate =
             $investment["end_date"] ??
@@ -675,33 +538,32 @@ try {
             $investment["maturityDate"] ??
             null;
 
+        /* =================================================
+           CREATED DATE
+           ================================================= */
 
         $createdAt =
             $investment["created_at"] ??
             $investment["createdAt"] ??
             null;
 
-
         $startDate =
             formatDateValue(
                 $startDate
             );
-
 
         $endDate =
             formatDateValue(
                 $endDate
             );
 
-
         $createdAt =
             formatDateValue(
                 $createdAt
             );
 
-
         /* =================================================
-           RECORDED RETURN
+           RETURN / EARNINGS
            ================================================= */
 
         $recordedReturn =
@@ -713,24 +575,13 @@ try {
             $investment["totalReturn"] ??
             0;
 
-
-        if (
-            $recordedReturn instanceof
-            MongoDB\BSON\Decimal128
-        ) {
-
-            $recordedReturn =
-                (float)$recordedReturn->__toString();
-
-        } else {
-
-            $recordedReturn =
-                (float)$recordedReturn;
-        }
-
+        $recordedReturn =
+            numericValue(
+                $recordedReturn
+            );
 
         /* =================================================
-           BUILD RESPONSE RECORD
+           RESPONSE RECORD
            ================================================= */
 
         $investmentRecords[] = [
@@ -777,6 +628,9 @@ try {
             "duration_days" =>
                 $duration,
 
+            "period" =>
+                $duration . " days",
+
             "status" =>
                 $displayStatus,
 
@@ -803,13 +657,11 @@ try {
         ];
     }
 
-
     /* =====================================================
        ADMIN INFORMATION
        ===================================================== */
 
     $admin = [
-
         "name" =>
             "Administrator",
 
@@ -818,15 +670,10 @@ try {
 
         "email" =>
             (string)(
-                $_SESSION["user_email"] ?? ""
+                $_SESSION["user_email"] ??
+                ""
             )
     ];
-
-
-    /*
-     * If an admin user exists, retrieve the actual
-     * name/email from the database.
-     */
 
     if (
         isset($users) &&
@@ -835,62 +682,91 @@ try {
 
         try {
 
-            $adminObjectId =
-                new MongoDB\BSON\ObjectId(
-                    $_SESSION["user_id"]
-                );
+            if (
+                preg_match(
+                    '/^[a-f0-9]{24}$/i',
+                    (string)$_SESSION["user_id"]
+                )
+            ) {
 
-
-            $adminUser =
-                $users->findOne([
-                    "_id" =>
-                        $adminObjectId
-                ]);
-
-
-            if ($adminUser) {
-
-                $adminUser =
-                    jsonSafeValue(
-                        $adminUser
+                $adminObjectId =
+                    new MongoDB\BSON\ObjectId(
+                        $_SESSION["user_id"]
                     );
 
+                $adminUser =
+                    $users->findOne([
+                        "_id" =>
+                            $adminObjectId
+                    ]);
 
-                $adminName =
-                    $adminUser["full_name"] ??
-                    $adminUser["fullName"] ??
-                    $adminUser["name"] ??
-                    "Administrator";
+                if ($adminUser) {
 
+                    $adminUser =
+                        jsonSafeValue(
+                            $adminUser
+                        );
 
-                $adminEmail =
-                    $adminUser["email"] ??
-                    ($_SESSION["user_email"] ?? "");
+                    $adminName =
+                        $adminUser["full_name"] ??
+                        $adminUser["fullName"] ??
+                        $adminUser["name"] ??
+                        "Administrator";
 
+                    $adminEmail =
+                        $adminUser["email"] ??
+                        (
+                            $_SESSION["user_email"] ??
+                            ""
+                        );
 
-                $admin = [
+                    $admin = [
 
-                    "name" =>
-                        (string)$adminName,
+                        "name" =>
+                            (string)$adminName,
 
-                    "full_name" =>
-                        (string)$adminName,
+                        "full_name" =>
+                            (string)$adminName,
 
-                    "email" =>
-                        (string)$adminEmail
-                ];
+                        "email" =>
+                            (string)$adminEmail
+                    ];
+                }
             }
 
-        } catch (
-            MongoDB\Driver\Exception\Exception $adminError
-        ) {
+        } catch (Throwable $adminError) {
 
             /*
-             * Keep default Administrator information.
+             * Keep default administrator information.
              */
         }
     }
 
+    /* =====================================================
+       STATISTICS
+       ===================================================== */
+
+    $totalInvestments =
+        count($investmentRecords);
+
+    $activeInvestments = 0;
+    $pendingInvestments = 0;
+    $completedInvestments = 0;
+
+    foreach ($investmentRecords as $record) {
+
+        if ($record["status"] === "active") {
+            $activeInvestments++;
+        }
+
+        if ($record["status"] === "pending") {
+            $pendingInvestments++;
+        }
+
+        if ($record["status"] === "completed") {
+            $completedInvestments++;
+        }
+    }
 
     /* =====================================================
        RESPONSE
@@ -907,14 +783,40 @@ try {
                 $admin,
 
             "count" =>
-                count($investmentRecords),
+                $totalInvestments,
+
+            "stats" => [
+
+                "total_investments" =>
+                    $totalInvestments,
+
+                "active_investments" =>
+                    $activeInvestments,
+
+                "pending_investments" =>
+                    $pendingInvestments,
+
+                "completed_investments" =>
+                    $completedInvestments
+            ],
+
+            "total_investments" =>
+                $totalInvestments,
+
+            "active_investments" =>
+                $activeInvestments,
+
+            "pending_investments" =>
+                $pendingInvestments,
+
+            "completed_investments" =>
+                $completedInvestments,
 
             "investments" =>
                 $investmentRecords
         ],
         JSON_UNESCAPED_SLASHES
     );
-
 
 } catch (
     MongoDB\Driver\Exception\Exception $e
@@ -925,7 +827,6 @@ try {
         $e->getMessage()
     );
 
-
     http_response_code(500);
 
     echo json_encode([
@@ -934,16 +835,12 @@ try {
             "Database error while loading investments."
     ]);
 
-
-} catch (
-    Throwable $e
-) {
+} catch (Throwable $e) {
 
     error_log(
         "admin-investments.php error: " .
         $e->getMessage()
     );
-
 
     http_response_code(500);
 

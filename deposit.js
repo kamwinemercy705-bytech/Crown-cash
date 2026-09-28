@@ -1,263 +1,241 @@
 /* =========================================================
-   CROWN CASH — DEPOSIT JAVASCRIPT
+   CROWN CASH - DEPOSIT JAVASCRIPT
    ========================================================= */
 
 "use strict";
 
 /* =========================================================
-   API CONFIGURATION
+   CONFIGURATION
    ========================================================= */
 
 const API_BASE = "https://crown-cash1.onrender.com";
-
 const DEPOSIT_API = `${API_BASE}/deposit.php`;
-const BALANCE_API = `${API_BASE}/balance.php`;
-const LOGOUT_API = `${API_BASE}/logout.php`;
 
-
-/* =========================================================
-   CROWN CASH MERCHANT CODES
-   ========================================================= */
-
+/*
+ * Crown Cash merchant accounts
+ */
 const MERCHANT_CODES = {
-    mtn: {
-        name: "MTN Mobile Money",
-        code: "80257065",
-        instruction:
-            "Send your deposit to the Crown Cash MTN Mobile Money merchant code shown above, then enter the transaction reference you receive.",
-        icon: "fa-mobile-screen-button"
-    },
-
-    airtel: {
-        name: "Airtel Money",
-        code: "7229487",
-        instruction:
-            "Send your deposit to the Crown Cash Airtel Money merchant code shown above, then enter the transaction reference you receive.",
-        icon: "fa-mobile-screen-button"
-    }
+    mtn: "80257065",
+    airtel: "7229487"
 };
 
 
 /* =========================================================
-   GLOBAL STATE
+   DOM ELEMENTS
    ========================================================= */
 
-let selectedPaymentMethod = null;
-let isSubmitting = false;
+const depositForm = document.getElementById("depositForm");
+const amountInput = document.getElementById("amount");
+const transactionReferenceInput =
+    document.getElementById("transactionReference");
+
+const depositButton = document.getElementById("depositButton");
+
+const availableBalance =
+    document.getElementById("availableBalance");
+
+const merchantCode =
+    document.getElementById("merchantCode");
+
+const copyMerchantCodeButton =
+    document.getElementById("copyMerchantCode");
+
+const paymentDetailsTitle =
+    document.getElementById("paymentDetailsTitle");
+
+const paymentDetailsText =
+    document.getElementById("paymentDetailsText");
+
+const depositHistory =
+    document.getElementById("depositHistory");
+
+const formMessage =
+    document.getElementById("formMessage") ||
+    document.getElementById("depositMessage") ||
+    document.getElementById("message");
 
 
 /* =========================================================
-   DOM HELPERS
+   PAYMENT METHOD ELEMENTS
    ========================================================= */
 
-function getElement(id) {
-    return document.getElementById(id);
-}
+const paymentMethodInputs =
+    document.querySelectorAll(
+        'input[name="paymentMethod"], input[name="payment_method"], input[type="radio"][value="mtn"], input[type="radio"][value="airtel"]'
+    );
 
 
 /* =========================================================
-   MESSAGE HELPERS
+   HELPERS
    ========================================================= */
 
 function showMessage(message, type = "info") {
+    if (!formMessage) return;
 
-    const messageBox = getElement("formMessage");
+    formMessage.textContent = message;
 
-    if (!messageBox) {
-        return;
+    formMessage.className = "admin-message";
+
+    if (type === "success") {
+        formMessage.classList.add("success");
+    } else if (type === "error") {
+        formMessage.classList.add("error");
+    } else {
+        formMessage.classList.add("info");
     }
 
-    messageBox.textContent = message;
-
-    messageBox.className = `form-message ${type}`;
-
-    messageBox.style.display = "block";
-
-    messageBox.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
-    });
+    formMessage.style.display = "block";
 }
 
 
 function clearMessage() {
+    if (!formMessage) return;
 
-    const messageBox = getElement("formMessage");
+    formMessage.textContent = "";
+    formMessage.style.display = "none";
+}
 
-    if (!messageBox) {
-        return;
-    }
 
-    messageBox.textContent = "";
+function formatCurrency(amount) {
+    const number = Number(amount || 0);
 
-    messageBox.className = "form-message";
+    return new Intl.NumberFormat("en-UG", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(number);
+}
 
-    messageBox.style.display = "none";
+
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
 /* =========================================================
-   FORMAT CURRENCY
+   GET SELECTED PAYMENT METHOD
    ========================================================= */
 
-function formatCurrency(value) {
+function getSelectedPaymentMethod() {
+    const selected = document.querySelector(
+        'input[name="paymentMethod"]:checked, input[name="payment_method"]:checked'
+    );
 
-    const amount = Number(value);
-
-    if (!Number.isFinite(amount)) {
-        return "UGX 0";
+    if (selected) {
+        return String(selected.value).toLowerCase();
     }
 
-    return `UGX ${amount.toLocaleString("en-UG")}`;
+    return "";
 }
 
 
 /* =========================================================
-   SELECT PAYMENT METHOD
+   UPDATE MERCHANT CODE
    ========================================================= */
 
-function updateMerchantDetails(method) {
+function updateMerchantCode() {
 
-    const merchantBox = getElement("merchantPaymentBox");
-    const merchantName = getElement("merchantNetworkName");
-    const merchantCode = getElement("merchantCode");
-    const merchantInstruction = getElement("merchantInstruction");
-    const copyButton = getElement("copyMerchantCodeBtn");
-    const merchantIcon = getElement("merchantNetworkIcon");
+    const method = getSelectedPaymentMethod();
 
-    if (!merchantName || !merchantCode || !merchantInstruction) {
+    if (!merchantCode) {
         return;
     }
 
-    const payment = MERCHANT_CODES[method];
+    /*
+     * Nothing selected
+     */
+    if (!method) {
 
-    if (!payment) {
-
-        selectedPaymentMethod = null;
-
-        merchantName.textContent = "Select a payment method";
         merchantCode.textContent = "—";
 
-        merchantInstruction.textContent =
-            "Select MTN Mobile Money or Airtel Money above to view the payment details.";
+        if (paymentDetailsTitle) {
+            paymentDetailsTitle.textContent =
+                "Select a payment method";
+        }
 
-        if (copyButton) {
-            copyButton.disabled = true;
+        if (paymentDetailsText) {
+            paymentDetailsText.textContent =
+                "Select MTN Mobile Money or Airtel Money above to view the payment details.";
+        }
+
+        if (copyMerchantCodeButton) {
+            copyMerchantCodeButton.disabled = true;
+            copyMerchantCodeButton.style.opacity = "0.5";
+            copyMerchantCodeButton.style.pointerEvents = "none";
         }
 
         return;
     }
 
 
-    selectedPaymentMethod = method;
+    /*
+     * MTN
+     */
+    if (method === "mtn") {
 
+        merchantCode.textContent =
+            MERCHANT_CODES.mtn;
 
-    /* Network name */
+        if (paymentDetailsTitle) {
+            paymentDetailsTitle.textContent =
+                "MTN Mobile Money Payment";
+        }
 
-    merchantName.textContent = payment.name;
+        if (paymentDetailsText) {
+            paymentDetailsText.textContent =
+                "Send your deposit to the Crown Cash MTN Mobile Money merchant account using the merchant code below.";
+        }
 
+        if (copyMerchantCodeButton) {
+            copyMerchantCodeButton.disabled = false;
+            copyMerchantCodeButton.style.opacity = "1";
+            copyMerchantCodeButton.style.pointerEvents = "auto";
+        }
 
-    /* Merchant code */
-
-    merchantCode.textContent = payment.code;
-
-
-    /* Instruction */
-
-    merchantInstruction.textContent = payment.instruction;
-
-
-    /* Enable copy button */
-
-    if (copyButton) {
-        copyButton.disabled = false;
-    }
-
-
-    /* Icon */
-
-    if (merchantIcon) {
-
-        merchantIcon.className =
-            `fa-solid ${payment.icon}`;
-
-    }
-
-
-    /* Add network class */
-
-    if (merchantBox) {
-
-        merchantBox.classList.remove(
-            "merchant-mtn",
-            "merchant-airtel"
-        );
-
-        merchantBox.classList.add(
-            `merchant-${method}`
-        );
-
-    }
-
-
-    /* Reset copy message */
-
-    const copyMessage = getElement("copyMessage");
-
-    if (copyMessage) {
-        copyMessage.textContent = "";
-        copyMessage.className = "copy-message";
-    }
-
-}
-
-
-/* =========================================================
-   PAYMENT METHOD EVENTS
-   ========================================================= */
-
-function setupPaymentMethods() {
-
-    const paymentInputs = document.querySelectorAll(
-        'input[name="payment_method"]'
-    );
-
-    if (!paymentInputs.length) {
         return;
     }
 
 
-    paymentInputs.forEach(input => {
+    /*
+     * Airtel
+     */
+    if (method === "airtel") {
 
-        input.addEventListener("change", function () {
+        merchantCode.textContent =
+            MERCHANT_CODES.airtel;
 
-            if (this.checked) {
+        if (paymentDetailsTitle) {
+            paymentDetailsTitle.textContent =
+                "Airtel Money Payment";
+        }
 
-                updateMerchantDetails(
-                    this.value
-                );
+        if (paymentDetailsText) {
+            paymentDetailsText.textContent =
+                "Send your deposit to the Crown Cash Airtel Money merchant account using the merchant code below.";
+        }
 
-            }
+        if (copyMerchantCodeButton) {
+            copyMerchantCodeButton.disabled = false;
+            copyMerchantCodeButton.style.opacity = "1";
+            copyMerchantCodeButton.style.pointerEvents = "auto";
+        }
 
-        });
-
-    });
-
-
-    /* Restore selected method if already checked */
-
-    const checkedInput = document.querySelector(
-        'input[name="payment_method"]:checked'
-    );
-
-    if (checkedInput) {
-
-        updateMerchantDetails(
-            checkedInput.value
-        );
-
+        return;
     }
 
+
+    /*
+     * Unknown method
+     */
+    merchantCode.textContent = "—";
+
+    if (copyMerchantCodeButton) {
+        copyMerchantCodeButton.disabled = true;
+    }
 }
 
 
@@ -267,176 +245,83 @@ function setupPaymentMethods() {
 
 async function copyMerchantCode() {
 
-    const merchantCodeElement = getElement("merchantCode");
-    const copyButton = getElement("copyMerchantCodeBtn");
-    const copyMessage = getElement("copyMessage");
+    const method = getSelectedPaymentMethod();
 
-    if (!merchantCodeElement) {
+    if (!method || !MERCHANT_CODES[method]) {
+        showMessage(
+            "Please select MTN Mobile Money or Airtel Money first.",
+            "error"
+        );
         return;
     }
 
-    const code = merchantCodeElement.textContent.trim();
-
-    if (!code || code === "—") {
-
-        if (copyMessage) {
-            copyMessage.textContent =
-                "Please select a payment method first.";
-            copyMessage.className =
-                "copy-message error";
-        }
-
-        return;
-    }
-
+    const code = MERCHANT_CODES[method];
 
     try {
 
         await navigator.clipboard.writeText(code);
 
-        if (copyMessage) {
+        showMessage(
+            `Merchant code ${code} copied successfully.`,
+            "success"
+        );
 
-            copyMessage.textContent =
-                "Merchant code copied successfully.";
+        /*
+         * Change button text temporarily
+         */
+        if (copyMerchantCodeButton) {
 
-            copyMessage.className =
-                "copy-message success";
+            const originalText =
+                copyMerchantCodeButton.innerHTML;
 
-        }
-
-
-        if (copyButton) {
-
-            const originalHTML =
-                copyButton.innerHTML;
-
-            copyButton.innerHTML =
-                '<i class="fa-solid fa-check"></i><span>Copied</span>';
+            copyMerchantCodeButton.innerHTML =
+                "Copied";
 
             setTimeout(() => {
 
-                copyButton.innerHTML =
-                    originalHTML;
+                copyMerchantCodeButton.innerHTML =
+                    originalText;
 
             }, 2000);
-
         }
 
     } catch (error) {
 
-        /* Fallback for browsers where clipboard API is unavailable */
+        /*
+         * Fallback for browsers where clipboard API
+         * is unavailable.
+         */
+        const temporaryInput =
+            document.createElement("input");
+
+        temporaryInput.value = code;
+
+        document.body.appendChild(
+            temporaryInput
+        );
+
+        temporaryInput.select();
 
         try {
-
-            const temporaryInput =
-                document.createElement("input");
-
-            temporaryInput.value = code;
-
-            document.body.appendChild(
-                temporaryInput
-            );
-
-            temporaryInput.select();
-
             document.execCommand("copy");
 
-            temporaryInput.remove();
+            showMessage(
+                `Merchant code ${code} copied successfully.`,
+                "success"
+            );
 
+        } catch (copyError) {
 
-            if (copyMessage) {
-
-                copyMessage.textContent =
-                    "Merchant code copied successfully.";
-
-                copyMessage.className =
-                    "copy-message success";
-
-            }
-
-        } catch (fallbackError) {
-
-            if (copyMessage) {
-
-                copyMessage.textContent =
-                    `Merchant Code: ${code}`;
-
-                copyMessage.className =
-                    "copy-message error";
-
-            }
-
+            showMessage(
+                `Merchant code: ${code}`,
+                "info"
+            );
         }
 
+        document.body.removeChild(
+            temporaryInput
+        );
     }
-
-}
-
-
-/* =========================================================
-   COPY BUTTON EVENT
-   ========================================================= */
-
-function setupCopyButton() {
-
-    const button =
-        getElement("copyMerchantCodeBtn");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        copyMerchantCode
-    );
-
-}
-
-
-/* =========================================================
-   GET LOGGED-IN USER
-   ========================================================= */
-
-function getStoredUser() {
-
-    const possibleKeys = [
-        "crownCashUser",
-        "crown_cash_user",
-        "user",
-        "currentUser",
-        "loggedInUser"
-    ];
-
-
-    for (const key of possibleKeys) {
-
-        try {
-
-            const stored =
-                localStorage.getItem(key);
-
-            if (!stored) {
-                continue;
-            }
-
-            const parsed =
-                JSON.parse(stored);
-
-            if (parsed) {
-                return parsed;
-            }
-
-        } catch (error) {
-
-            /* Ignore invalid local storage */
-
-        }
-
-    }
-
-
-    return null;
 }
 
 
@@ -446,240 +331,250 @@ function getStoredUser() {
 
 async function loadBalance() {
 
-    const balanceElement =
-        getElement("availableBalance");
-
-    if (!balanceElement) {
-        return;
-    }
-
+    /*
+     * If your existing dashboard/auth system already
+     * displays the balance, this function safely does
+     * nothing when no balance API is available.
+     */
 
     try {
 
-        const response =
-            await fetch(BALANCE_API, {
+        const response = await fetch(
+            `${DEPOSIT_API}`,
+            {
                 method: "GET",
                 credentials: "include",
                 headers: {
                     "Accept": "application/json"
                 }
-            });
-
+            }
+        );
 
         if (!response.ok) {
-            throw new Error(
-                `Balance request failed: ${response.status}`
-            );
+            return;
         }
 
+        const data = await response.json();
 
-        const data =
-            await response.json();
+        /*
+         * Support several possible response formats.
+         */
+        const balance =
+            data.balance ??
+            data.available_balance ??
+            data.availableBalance ??
+            data.user?.balance ??
+            data.user?.available_balance ??
+            null;
 
-
-        let balance = 0;
-
-
-        if (typeof data.balance === "number") {
-
-            balance = data.balance;
-
-        } else if (
-            data.balance &&
-            typeof data.balance.amount === "number"
+        if (
+            balance !== null &&
+            availableBalance
         ) {
 
-            balance = data.balance.amount;
-
-        } else if (
-            data.user &&
-            typeof data.user.balance === "number"
-        ) {
-
-            balance = data.user.balance;
-
-        } else if (
-            data.data &&
-            typeof data.data.balance === "number"
-        ) {
-
-            balance = data.data.balance;
-
+            availableBalance.textContent =
+                `UGX ${formatCurrency(balance)}`;
         }
-
-
-        balanceElement.textContent =
-            formatCurrency(balance);
-
 
     } catch (error) {
 
         console.warn(
-            "Unable to load balance:",
+            "Could not load balance:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   LOAD RECENT DEPOSITS
+   ========================================================= */
+
+async function loadDeposits() {
+
+    if (!depositHistory) {
+        return;
+    }
+
+    depositHistory.innerHTML = `
+        <div class="deposit-loading">
+            Loading deposits...
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(
+            DEPOSIT_API,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/json"
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load deposits."
+            );
+        }
+
+        const deposits =
+            Array.isArray(data.deposits)
+                ? data.deposits
+                : [];
+
+        renderDeposits(deposits);
+
+    } catch (error) {
+
+        console.error(
+            "Deposit loading error:",
             error
         );
 
-        /*
-         * Do not show a frightening error to the user.
-         * Keep the default balance visible.
-         */
-
-        if (!balanceElement.textContent.trim()) {
-            balanceElement.textContent =
-                "UGX 0";
-        }
-
+        depositHistory.innerHTML = `
+            <div class="deposit-empty">
+                Unable to load deposit history.
+            </div>
+        `;
     }
-
 }
 
 
 /* =========================================================
-   VALIDATE DEPOSIT FORM
+   RENDER DEPOSITS
    ========================================================= */
 
-function validateDepositForm() {
+function renderDeposits(deposits) {
 
-    const amountInput =
-        getElement("amount");
-
-    const transactionInput =
-        getElement("transactionReference");
-
-
-    if (!amountInput) {
-
-        return {
-            valid: false,
-            message: "Deposit amount field is missing."
-        };
-
+    if (!depositHistory) {
+        return;
     }
 
+    if (!deposits.length) {
 
-    if (!selectedPaymentMethod) {
+        depositHistory.innerHTML = `
+            <div class="deposit-empty">
+                No deposits found yet.
+            </div>
+        `;
 
-        return {
-            valid: false,
-            message:
-                "Please select MTN Mobile Money or Airtel Money."
-        };
-
-    }
-
-
-    const amount =
-        Number(amountInput.value);
-
-
-    if (
-        !Number.isFinite(amount) ||
-        amount < 10000
-    ) {
-
-        return {
-            valid: false,
-            message:
-                "The minimum deposit amount is UGX 10,000."
-        };
-
-    }
-
-
-    if (amount % 1000 !== 0) {
-
-        return {
-            valid: false,
-            message:
-                "Deposit amounts must be in multiples of UGX 1,000."
-        };
-
-    }
-
-
-    if (!transactionInput) {
-
-        return {
-            valid: false,
-            message:
-                "Transaction reference field is missing."
-        };
-
-    }
-
-
-    const reference =
-        transactionInput.value.trim();
-
-
-    if (!reference) {
-
-        return {
-            valid: false,
-            message:
-                "Please enter your Mobile Money transaction reference."
-        };
-
-    }
-
-
-    if (reference.length < 3) {
-
-        return {
-            valid: false,
-            message:
-                "Please enter a valid transaction reference."
-        };
-
-    }
-
-
-    return {
-        valid: true,
-        amount,
-        paymentMethod: selectedPaymentMethod,
-        transactionReference: reference
-    };
-
-}
-
-
-/* =========================================================
-   SET SUBMIT BUTTON STATE
-   ========================================================= */
-
-function setSubmitLoading(loading) {
-
-    const button =
-        getElement("depositButton");
-
-    if (!button) {
         return;
     }
 
 
-    if (loading) {
+    depositHistory.innerHTML =
+        deposits.map(deposit => {
 
-        button.disabled = true;
+            const amount =
+                Number(deposit.amount || 0);
 
-        button.innerHTML =
-            `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Submitting Deposit...</span>
+            const method =
+                String(
+                    deposit.payment_method ||
+                    deposit.paymentMethod ||
+                    ""
+                ).toLowerCase();
+
+            const reference =
+                deposit.transaction_reference ||
+                deposit.transactionReference ||
+                "—";
+
+            const status =
+                String(
+                    deposit.status || "pending"
+                ).toLowerCase();
+
+            const date =
+                deposit.created_at ||
+                deposit.createdAt ||
+                "";
+
+
+            let formattedDate = "—";
+
+            if (date) {
+
+                const parsedDate =
+                    new Date(date);
+
+                if (!isNaN(parsedDate.getTime())) {
+
+                    formattedDate =
+                        parsedDate.toLocaleString(
+                            "en-UG",
+                            {
+                                dateStyle: "medium",
+                                timeStyle: "short"
+                            }
+                        );
+                }
+            }
+
+
+            const network =
+                method === "mtn"
+                    ? "MTN Mobile Money"
+                    : method === "airtel"
+                        ? "Airtel Money"
+                        : "Mobile Money";
+
+
+            const statusClass =
+                status === "approved"
+                    ? "approved"
+                    : status === "rejected"
+                        ? "rejected"
+                        : "pending";
+
+
+            return `
+                <div class="deposit-history-item">
+
+                    <div class="deposit-history-main">
+
+                        <div class="deposit-network">
+                            ${escapeHTML(network)}
+                        </div>
+
+                        <div class="deposit-reference">
+                            Ref:
+                            ${escapeHTML(reference)}
+                        </div>
+
+                        <div class="deposit-date">
+                            ${escapeHTML(formattedDate)}
+                        </div>
+
+                    </div>
+
+                    <div class="deposit-history-side">
+
+                        <div class="deposit-history-amount">
+                            UGX ${formatCurrency(amount)}
+                        </div>
+
+                        <span class="deposit-status ${statusClass}">
+                            ${escapeHTML(
+                                status.charAt(0).toUpperCase() +
+                                status.slice(1)
+                            )}
+                        </span>
+
+                    </div>
+
+                </div>
             `;
 
-    } else {
-
-        button.disabled = false;
-
-        button.innerHTML =
-            `
-            <i class="fa-solid fa-wallet"></i>
-            <span>Submit Deposit</span>
-            `;
-
-    }
-
+        }).join("");
 }
 
 
@@ -691,23 +586,64 @@ async function submitDeposit(event) {
 
     event.preventDefault();
 
+    clearMessage();
 
-    if (isSubmitting) {
+
+    const amount =
+        Number(
+            amountInput?.value || 0
+        );
+
+    const method =
+        getSelectedPaymentMethod();
+
+    const reference =
+        String(
+            transactionReferenceInput?.value || ""
+        ).trim();
+
+
+    /* ---------------------------------------------
+       Validate amount
+       --------------------------------------------- */
+
+    if (!amount || amount < 10000) {
+
+        showMessage(
+            "Minimum deposit amount is UGX 10,000.",
+            "error"
+        );
+
+        amountInput?.focus();
+
         return;
     }
 
 
-    clearMessage();
-
-
-    const validation =
-        validateDepositForm();
-
-
-    if (!validation.valid) {
+    if (amount % 1000 !== 0) {
 
         showMessage(
-            validation.message,
+            "Deposit amount must be in multiples of UGX 1,000.",
+            "error"
+        );
+
+        amountInput?.focus();
+
+        return;
+    }
+
+
+    /* ---------------------------------------------
+       Validate payment method
+       --------------------------------------------- */
+
+    if (
+        method !== "mtn" &&
+        method !== "airtel"
+    ) {
+
+        showMessage(
+            "Please select MTN Mobile Money or Airtel Money.",
             "error"
         );
 
@@ -715,138 +651,118 @@ async function submitDeposit(event) {
     }
 
 
-    isSubmitting = true;
+    /* ---------------------------------------------
+       Validate reference
+       --------------------------------------------- */
 
-    setSubmitLoading(true);
+    if (!reference) {
+
+        showMessage(
+            "Please enter the transaction reference from your Mobile Money confirmation message.",
+            "error"
+        );
+
+        transactionReferenceInput?.focus();
+
+        return;
+    }
 
 
-    const depositData = {
+    /* ---------------------------------------------
+       Disable button
+       --------------------------------------------- */
 
-        amount: validation.amount,
+    const originalButtonText =
+        depositButton?.innerHTML ||
+        "Submit Deposit";
 
-        payment_method:
-            validation.paymentMethod,
 
-        paymentMethod:
-            validation.paymentMethod,
+    if (depositButton) {
 
-        transaction_reference:
-            validation.transactionReference,
+        depositButton.disabled = true;
 
-        transactionReference:
-            validation.transactionReference,
-
-        merchant_code:
-            MERCHANT_CODES[
-                validation.paymentMethod
-            ].code,
-
-        merchantCode:
-            MERCHANT_CODES[
-                validation.paymentMethod
-            ].code
-
-    };
+        depositButton.innerHTML =
+            "Submitting...";
+    }
 
 
     try {
 
         const response =
-            await fetch(DEPOSIT_API, {
+            await fetch(
+                DEPOSIT_API,
+                {
+                    method: "POST",
+                    credentials: "include",
 
-                method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json",
 
-                credentials: "include",
+                        "Accept":
+                            "application/json"
+                    },
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
+                    body: JSON.stringify({
 
-                    "Accept":
-                        "application/json"
-                },
+                        amount: amount,
 
-                body:
-                    JSON.stringify(depositData)
+                        payment_method:
+                            method,
 
-            });
+                        transaction_reference:
+                            reference
+
+                    })
+                }
+            );
 
 
-        let data = {};
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch (jsonError) {
-
-            data = {};
-
-        }
+        const data =
+            await response.json();
 
 
         if (!response.ok) {
 
             throw new Error(
                 data.message ||
-                data.error ||
-                `Deposit request failed (${response.status}).`
+                "Deposit submission failed."
             );
-
         }
 
 
-        if (
-            data.success === false
-        ) {
-
-            throw new Error(
-                data.message ||
-                data.error ||
-                "The deposit could not be submitted."
-            );
-
-        }
-
-
-        /* Successful deposit */
+        /* -----------------------------------------
+           Success
+           ----------------------------------------- */
 
         showMessage(
             data.message ||
-            "Deposit submitted successfully. Your payment will be verified before your balance is updated.",
+            "Deposit submitted successfully. Your deposit is pending verification.",
             "success"
         );
 
 
-        /* Reset form */
-
-        const form =
-            getElement("depositForm");
-
-        if (form) {
-            form.reset();
+        /*
+         * Reset only the form fields.
+         */
+        if (depositForm) {
+            depositForm.reset();
         }
 
 
-        /* Reset merchant display */
-
-        updateMerchantDetails(null);
-
-
-        /* Refresh history */
-
-        await loadDepositHistory();
-
-
-        /* Refresh balance */
-
-        await loadBalance();
+        /*
+         * Reset merchant display.
+         */
+        updateMerchantCode();
 
 
         /*
-         * Keep the success message visible.
+         * Refresh history.
          */
+        await loadDeposits();
+
+        await loadBalance();
+
 
     } catch (error) {
 
@@ -855,717 +771,83 @@ async function submitDeposit(event) {
             error
         );
 
-
         showMessage(
             error.message ||
             "Unable to submit your deposit. Please try again.",
             "error"
         );
 
+
     } finally {
 
-        isSubmitting = false;
+        if (depositButton) {
 
-        setSubmitLoading(false);
+            depositButton.disabled = false;
 
+            depositButton.innerHTML =
+                originalButtonText;
+        }
     }
-
 }
 
 
 /* =========================================================
-   LOAD DEPOSIT HISTORY
+   PAYMENT METHOD EVENTS
    ========================================================= */
 
-async function loadDepositHistory() {
-
-    const history =
-        getElement("depositHistory");
-
-    if (!history) {
-        return;
-    }
-
-
-    history.innerHTML =
-        `
-        <div class="history-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Loading deposits...</span>
-        </div>
-        `;
-
-
-    try {
-
-        /*
-         * We use the deposit endpoint for history.
-         * If your backend has a separate history endpoint,
-         * it can be changed here later.
-         */
-
-        const response =
-            await fetch(DEPOSIT_API, {
-
-                method: "GET",
-
-                credentials: "include",
-
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-
-            });
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `History request failed: ${response.status}`
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        let deposits = [];
-
-
-        if (Array.isArray(data.deposits)) {
-
-            deposits =
-                data.deposits;
-
-        } else if (
-            data.data &&
-            Array.isArray(data.data.deposits)
-        ) {
-
-            deposits =
-                data.data.deposits;
-
-        } else if (
-            Array.isArray(data.data)
-        ) {
-
-            deposits =
-                data.data;
-
-        } else if (
-            Array.isArray(data.results)
-        ) {
-
-            deposits =
-                data.results;
-
-        }
-
-
-        renderDepositHistory(deposits);
-
-
-    } catch (error) {
-
-        console.warn(
-            "Unable to load deposit history:",
-            error
-        );
-
-
-        /*
-         * Do not make the whole deposit page unusable
-         * if the history endpoint is unavailable.
-         */
-
-        history.innerHTML =
-            `
-            <div class="history-empty">
-                <div class="history-empty-icon">
-                    <i class="fa-solid fa-receipt"></i>
-                </div>
-
-                <h3>No recent deposits</h3>
-
-                <p>
-                    Your deposit requests will appear here.
-                </p>
-            </div>
-            `;
-
-    }
-
-}
-
-
-/* =========================================================
-   NORMALIZE DEPOSIT STATUS
-   ========================================================= */
-
-function normalizeDepositStatus(status) {
-
-    const value =
-        String(status || "")
-            .trim()
-            .toLowerCase();
-
-
-    if (
-        value === "approved" ||
-        value === "success" ||
-        value === "successful" ||
-        value === "completed"
-    ) {
-
-        return {
-            label: "Approved",
-            className: "status-approved"
-        };
-
-    }
-
-
-    if (
-        value === "rejected" ||
-        value === "declined" ||
-        value === "cancelled" ||
-        value === "canceled"
-    ) {
-
-        return {
-            label: "Rejected",
-            className: "status-rejected"
-        };
-
-    }
-
-
-    return {
-        label: "Pending",
-        className: "status-pending"
-    };
-
-}
-
-
-/* =========================================================
-   GET DEPOSIT DATE
-   ========================================================= */
-
-function getDepositDate(deposit) {
-
-    const possibleDates = [
-        deposit.created_at,
-        deposit.createdAt,
-        deposit.date,
-        deposit.created,
-        deposit.timestamp
-    ];
-
-
-    for (const value of possibleDates) {
-
-        if (!value) {
-            continue;
-        }
-
-
-        const date =
-            new Date(value);
-
-
-        if (!Number.isNaN(date.getTime())) {
-
-            return date.toLocaleDateString(
-                "en-UG",
-                {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric"
-                }
-            );
-
-        }
-
-    }
-
-
-    return "—";
-
-}
-
-
-/* =========================================================
-   RENDER DEPOSIT HISTORY
-   ========================================================= */
-
-function renderDepositHistory(deposits) {
-
-    const history =
-        getElement("depositHistory");
-
-    if (!history) {
-        return;
-    }
-
-
-    if (
-        !Array.isArray(deposits) ||
-        deposits.length === 0
-    ) {
-
-        history.innerHTML =
-            `
-            <div class="history-empty">
-
-                <div class="history-empty-icon">
-                    <i class="fa-solid fa-receipt"></i>
-                </div>
-
-                <h3>No recent deposits</h3>
-
-                <p>
-                    Your deposit requests will appear here.
-                </p>
-
-            </div>
-            `;
-
-        return;
-
-    }
-
+function setupPaymentMethods() {
 
     /*
-     * Display newest deposits first.
+     * Find all MTN/Airtel radio buttons.
      */
-
-    const sorted =
-        [...deposits].sort(
-            (a, b) => {
-
-                const dateA =
-                    new Date(
-                        a.created_at ||
-                        a.createdAt ||
-                        a.date ||
-                        0
-                    ).getTime();
-
-                const dateB =
-                    new Date(
-                        b.created_at ||
-                        b.createdAt ||
-                        b.date ||
-                        0
-                    ).getTime();
-
-                return dateB - dateA;
-
-            }
+    const inputs =
+        document.querySelectorAll(
+            'input[type="radio"]'
         );
 
 
-    /*
-     * Limit the page to recent deposits.
-     */
+    inputs.forEach(input => {
 
-    const recent =
-        sorted.slice(0, 10);
-
-
-    history.innerHTML =
-        recent.map(deposit => {
-
-            const amount =
-                deposit.amount ??
-                deposit.deposit_amount ??
-                deposit.depositAmount ??
-                0;
+        const value =
+            String(input.value || "")
+                .toLowerCase();
 
 
-            const method =
-                deposit.payment_method ||
-                deposit.paymentMethod ||
-                "mobile money";
+        if (
+            value === "mtn" ||
+            value === "airtel"
+        ) {
 
-
-            const methodLabel =
-                String(method)
-                    .toLowerCase()
-                    .includes("airtel")
-                    ? "Airtel Money"
-                    : "MTN Mobile Money";
-
-
-            const reference =
-                deposit.transaction_reference ||
-                deposit.transactionReference ||
-                deposit.reference ||
-                deposit.transaction_id ||
-                deposit.transactionId ||
-                "—";
-
-
-            const status =
-                normalizeDepositStatus(
-                    deposit.status
-                );
-
-
-            const date =
-                getDepositDate(deposit);
-
-
-            return `
-                <div class="deposit-history-item">
-
-                    <div class="history-method-icon">
-                        <i class="fa-solid fa-mobile-screen-button"></i>
-                    </div>
-
-                    <div class="history-main">
-
-                        <strong>
-                            ${escapeHTML(methodLabel)}
-                        </strong>
-
-                        <span>
-                            Ref:
-                            ${escapeHTML(
-                                String(reference)
-                            )}
-                        </span>
-
-                    </div>
-
-                    <div class="history-amount">
-
-                        <strong>
-                            ${formatCurrency(amount)}
-                        </strong>
-
-                        <span>
-                            ${escapeHTML(date)}
-                        </span>
-
-                    </div>
-
-                    <div class="history-status">
-
-                        <span class="status-pill ${status.className}">
-                            ${status.label}
-                        </span>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================================
-   MOBILE SIDEBAR
-   ========================================================= */
-
-function setupMobileMenu() {
-
-    const menuToggle =
-        getElement("menuToggle");
-
-    const sidebar =
-        getElement("sidebar");
-
-    const overlay =
-        getElement("sidebarOverlay");
-
-
-    if (!menuToggle || !sidebar) {
-        return;
-    }
-
-
-    menuToggle.addEventListener(
-        "click",
-        () => {
-
-            sidebar.classList.toggle(
-                "open"
+            input.addEventListener(
+                "change",
+                updateMerchantCode
             );
-
-            if (overlay) {
-
-                overlay.classList.toggle(
-                    "active"
-                );
-
-            }
-
-            document.body.classList.toggle(
-                "sidebar-open"
-            );
-
         }
-    );
-
-
-    if (overlay) {
-
-        overlay.addEventListener(
-            "click",
-            closeMobileMenu
-        );
-
-    }
-
-
-    const navItems =
-        sidebar.querySelectorAll(
-            ".nav-item"
-        );
-
-
-    navItems.forEach(item => {
-
-        item.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    window.innerWidth <= 900
-                ) {
-
-                    closeMobileMenu();
-
-                }
-
-            }
-        );
 
     });
 
-}
 
-
-function closeMobileMenu() {
-
-    const sidebar =
-        getElement("sidebar");
-
-    const overlay =
-        getElement("sidebarOverlay");
-
-
-    if (sidebar) {
-
-        sidebar.classList.remove(
-            "open"
-        );
-
-    }
-
-
-    if (overlay) {
-
-        overlay.classList.remove(
-            "active"
-        );
-
-    }
-
-
-    document.body.classList.remove(
-        "sidebar-open"
-    );
-
+    /*
+     * Run once when page opens.
+     */
+    updateMerchantCode();
 }
 
 
 /* =========================================================
-   LOGOUT
+   COPY BUTTON EVENT
    ========================================================= */
 
-async function logout() {
+function setupCopyButton() {
 
-    const logoutButton =
-        getElement("logoutBtn");
-
-
-    if (logoutButton) {
-
-        logoutButton.disabled = true;
-
-        logoutButton.innerHTML =
-            `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Logging out...</span>
-            `;
-
-    }
-
-
-    try {
-
-        await fetch(
-            LOGOUT_API,
-            {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Accept":
-                        "application/json"
-                }
-            }
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Logout API request failed:",
-            error
-        );
-
-    } finally {
-
-        /*
-         * Clear locally stored authentication data.
-         */
-
-        const keysToRemove = [
-            "crownCashUser",
-            "crown_cash_user",
-            "user",
-            "currentUser",
-            "loggedInUser",
-            "authUser",
-            "token",
-            "authToken"
-        ];
-
-
-        keysToRemove.forEach(key => {
-
-            try {
-                localStorage.removeItem(key);
-                sessionStorage.removeItem(key);
-            } catch (error) {
-                /* Ignore storage errors */
-            }
-
-        });
-
-
-        window.location.href =
-            "login.html";
-
-    }
-
-}
-
-
-/* =========================================================
-   LOGOUT EVENT
-   ========================================================= */
-
-function setupLogout() {
-
-    const logoutButton =
-        getElement("logoutBtn");
-
-    if (!logoutButton) {
+    if (!copyMerchantCodeButton) {
         return;
     }
 
-    logoutButton.addEventListener(
+    copyMerchantCodeButton.addEventListener(
         "click",
-        logout
+        copyMerchantCode
     );
-
-}
-
-
-/* =========================================================
-   AMOUNT INPUT FORMATTING
-   ========================================================= */
-
-function setupAmountInput() {
-
-    const amountInput =
-        getElement("amount");
-
-    if (!amountInput) {
-        return;
-    }
-
-
-    amountInput.addEventListener(
-        "input",
-        () => {
-
-            /*
-             * Prevent negative numbers.
-             */
-
-            if (
-                Number(amountInput.value) < 0
-            ) {
-
-                amountInput.value = "";
-
-            }
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   TRANSACTION REFERENCE CLEANUP
-   ========================================================= */
-
-function setupTransactionReference() {
-
-    const input =
-        getElement("transactionReference");
-
-    if (!input) {
-        return;
-    }
-
-
-    input.addEventListener(
-        "input",
-        () => {
-
-            input.value =
-                input.value.trimStart();
-
-        }
-    );
-
 }
 
 
@@ -1573,69 +855,104 @@ function setupTransactionReference() {
    FORM EVENT
    ========================================================= */
 
-function setupDepositForm() {
+function setupForm() {
 
-    const form =
-        getElement("depositForm");
+    if (!depositForm) {
+        console.warn(
+            "Deposit form #depositForm was not found."
+        );
 
-    if (!form) {
         return;
     }
 
-
-    form.addEventListener(
+    depositForm.addEventListener(
         "submit",
         submitDeposit
     );
-
 }
 
 
 /* =========================================================
-   PREVENT DOUBLE SUBMISSION
+   AMOUNT VALIDATION
    ========================================================= */
 
-function preventDuplicateSubmission() {
+function setupAmountInput() {
 
-    const form =
-        getElement("depositForm");
-
-    if (!form) {
+    if (!amountInput) {
         return;
     }
 
+    amountInput.addEventListener(
+        "input",
+        () => {
 
-    form.addEventListener(
-        "keydown",
-        event => {
+            const value =
+                Number(
+                    amountInput.value || 0
+                );
 
             if (
-                event.key === "Enter" &&
-                isSubmitting
+                value > 0 &&
+                value < 10000
             ) {
 
-                event.preventDefault();
+                amountInput.setCustomValidity(
+                    "Minimum deposit is UGX 10,000."
+                );
 
+            } else {
+
+                amountInput.setCustomValidity(
+                    ""
+                );
             }
-
         }
     );
-
 }
 
 
 /* =========================================================
-   INITIALIZATION
+   INITIALIZE
    ========================================================= */
 
-async function initializeDepositPage() {
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
 
-    setupPaymentMethods();
+        console.log(
+            "Crown Cash Deposit page initialized."
+        );
 
-    setupCopyButton();
+        setupPaymentMethods();
 
-    setupDepositForm();
+        setupCopyButton();
 
-    setupMobileMenu();
+        setupForm();
 
-    setupLogout
+        setupAmountInput();
+
+        await loadDeposits();
+
+        await loadBalance();
+
+    }
+);
+
+
+/* =========================================================
+   GLOBAL API
+   ========================================================= */
+
+window.CrownCashDeposit = {
+
+    updateMerchantCode,
+
+    copyMerchantCode,
+
+    loadDeposits,
+
+    loadBalance,
+
+    submitDeposit
+
+};

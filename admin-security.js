@@ -1,28 +1,19 @@
-/* =========================================================
-   CROWN CASH ADMIN
-   SECURITY & AUDIT MANAGEMENT
-   ========================================================= */
-
 "use strict";
 
 /* =========================================================
-   API CONFIGURATION
+   CROWN CASH — ADMIN SECURITY & AUDIT
    ========================================================= */
 
 const API_BASE = "https://crown-cash1.onrender.com";
 
-const ADMIN_AUTH_API =
-    `${API_BASE}/admin-auth.php`;
-
-const SECURITY_API =
-    `${API_BASE}/admin-security.php`;
+const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
+const SECURITY_API = `${API_BASE}/admin-security.php`;
 
 const REQUEST_TIMEOUT = 12000;
 const ITEMS_PER_PAGE = 10;
 
-
 /* =========================================================
-   PAGE STATE
+   STATE
    ========================================================= */
 
 const state = {
@@ -37,33 +28,26 @@ const state = {
     maintenanceMessage: "",
     allowAdminAccess: true,
 
-    pendingMaintenanceState: null,
-
-    securityLoaded: false
+    pendingMaintenanceState: null
 };
 
-
 /* =========================================================
-   DOM HELPER
+   HELPERS
    ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
 
-
 /* =========================================================
    PAGE VISIBILITY
    ========================================================= */
 
 function showSecurityPage() {
-
     const page = $("adminSecurityPage");
 
     if (!page) {
-        console.error(
-            "Crown Cash: #adminSecurityPage was not found."
-        );
+        console.error("Crown Cash: #adminSecurityPage was not found.");
         return;
     }
 
@@ -79,9 +63,25 @@ function showSecurityPage() {
     page.classList.add("page-ready");
 }
 
+function showLoader(message = "Verifying administrator access...") {
+    const loader = $("pageLoader");
+    const loaderMessage = $("loaderMessage");
+
+    if (loaderMessage) {
+        loaderMessage.textContent = message;
+    }
+
+    if (loader) {
+        loader.classList.remove("hidden");
+
+        loader.style.display = "flex";
+        loader.style.visibility = "visible";
+        loader.style.opacity = "1";
+        loader.style.pointerEvents = "auto";
+    }
+}
 
 function hideLoader() {
-
     const loader = $("pageLoader");
 
     if (!loader) {
@@ -95,135 +95,76 @@ function hideLoader() {
     loader.style.pointerEvents = "none";
 
     setTimeout(() => {
-
         loader.style.display = "none";
-
     }, 300);
 }
 
-
-function showLoader(message = "Verifying administrator access...") {
-
-    const loader = $("pageLoader");
-    const loaderMessage = $("loaderMessage");
-
-    if (loaderMessage) {
-        loaderMessage.textContent = message;
-    }
-
-    if (loader) {
-
-        loader.style.display = "flex";
-        loader.style.visibility = "visible";
-        loader.style.opacity = "1";
-        loader.style.pointerEvents = "auto";
-
-        loader.classList.remove("hidden");
-    }
-}
-
-
 /* =========================================================
-   MESSAGE SYSTEM
+   MESSAGE
    ========================================================= */
 
-function showMessage(message, type = "error") {
+function showMessage(message, type = "info") {
+    const element = $("securityMessage");
 
-    const box = $("securityMessage");
-
-    if (!box) {
-        console.warn(message);
+    if (!element) {
         return;
     }
 
-    box.textContent = message;
+    element.textContent = message;
+    element.className = `security-message ${type}`;
 
-    box.className = "security-message";
+    element.style.display = "block";
 
-    if (type === "success") {
-        box.classList.add("success");
-    } else if (type === "warning") {
-        box.classList.add("warning");
-    } else {
-        box.classList.add("error");
-    }
+    clearTimeout(showMessage.timer);
 
-    box.style.display = "block";
+    showMessage.timer = setTimeout(() => {
+        element.style.display = "none";
+    }, 5000);
 }
-
-
-function hideMessage() {
-
-    const box = $("securityMessage");
-
-    if (!box) {
-        return;
-    }
-
-    box.style.display = "none";
-    box.textContent = "";
-}
-
 
 /* =========================================================
    FETCH WITH TIMEOUT
    ========================================================= */
 
-async function fetchJson(
-    url,
-    options = {},
-    timeout = REQUEST_TIMEOUT
-) {
+async function fetchJson(url, options = {}) {
 
     const controller = new AbortController();
 
-    const timeoutId = setTimeout(() => {
+    const timeout = setTimeout(() => {
         controller.abort();
-    }, timeout);
+    }, REQUEST_TIMEOUT);
 
     try {
 
         const response = await fetch(url, {
-            ...options,
-
             credentials: "include",
-
             cache: "no-store",
-
+            ...options,
             signal: controller.signal,
-
             headers: {
                 "Accept": "application/json",
-
-                ...(options.body
-                    ? {
-                        "Content-Type":
-                            "application/json"
-                    }
-                    : {}),
-
                 ...(options.headers || {})
             }
         });
 
         const text = await response.text();
 
-        let data = null;
+        let data = {};
 
         try {
-            data = text ? JSON.parse(text) : null;
+            data = text ? JSON.parse(text) : {};
         } catch (error) {
-
             throw new Error(
-                `Server returned invalid JSON. HTTP ${response.status}`
+                `Invalid server response (${response.status}).`
             );
         }
 
         if (!response.ok) {
 
             throw new Error(
-                data?.message ||
-                `Request failed with HTTP ${response.status}`
+                data.message ||
+                data.error ||
+                `Request failed with status ${response.status}.`
             );
         }
 
@@ -232,9 +173,8 @@ async function fetchJson(
     } catch (error) {
 
         if (error.name === "AbortError") {
-
             throw new Error(
-                "The server took too long to respond."
+                "The server took too long to respond. Please try again."
             );
         }
 
@@ -242,10 +182,9 @@ async function fetchJson(
 
     } finally {
 
-        clearTimeout(timeoutId);
+        clearTimeout(timeout);
     }
 }
-
 
 /* =========================================================
    ADMIN VERIFICATION
@@ -253,22 +192,17 @@ async function fetchJson(
 
 async function verifyAdministrator() {
 
-    const data = await fetchJson(
-        ADMIN_AUTH_API,
-        {
-            method: "GET"
-        }
-    );
+    const data = await fetchJson(ADMIN_AUTH_API, {
+        method: "GET"
+    });
 
     if (
-        !data ||
         data.success !== true ||
         data.authorized !== true
     ) {
-
         throw new Error(
-            data?.message ||
-            "Administrator access was not confirmed."
+            data.message ||
+            "Administrator access could not be verified."
         );
     }
 
@@ -277,21 +211,13 @@ async function verifyAdministrator() {
     return data;
 }
 
-
 /* =========================================================
-   HTML ESCAPING
+   ESCAPE HTML
    ========================================================= */
 
 function escapeHtml(value) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -299,9 +225,23 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
+/* =========================================================
+   NUMBER FORMAT
+   ========================================================= */
+
+function formatNumber(value) {
+
+    const number = Number(value || 0);
+
+    if (!Number.isFinite(number)) {
+        return "0";
+    }
+
+    return number.toLocaleString("en-US");
+}
 
 /* =========================================================
-   DATE FORMATTER
+   DATE FORMAT
    ========================================================= */
 
 function formatDate(value) {
@@ -316,164 +256,197 @@ function formatDate(value) {
         return String(value);
     }
 
-    return date.toLocaleString(
-        "en-UG",
-        {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
+    return date.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
-
 
 /* =========================================================
-   NUMBER FORMATTER
+   BOOLEAN STATUS
    ========================================================= */
 
-function formatNumber(value) {
+function formatBooleanStatus(value) {
 
-    const number = Number(value || 0);
+    const active =
+        value === true ||
+        value === "true" ||
+        value === 1 ||
+        value === "1";
 
-    if (!Number.isFinite(number)) {
-        return "0";
-    }
-
-    return number.toLocaleString("en-UG");
+    return active
+        ? `<span class="status-pill active">ACTIVE</span>`
+        : `<span class="status-pill inactive">INACTIVE</span>`;
 }
-
 
 /* =========================================================
-   GENERIC VALUE PICKER
+   AUDIT STATUS
    ========================================================= */
 
-function firstValue(object, fields, fallback = "") {
+function normalizeStatus(value) {
 
-    for (const field of fields) {
+    const status = String(value || "")
+        .trim()
+        .toLowerCase();
 
-        if (
-            object &&
-            object[field] !== undefined &&
-            object[field] !== null &&
-            object[field] !== ""
-        ) {
-            return object[field];
-        }
+    if (
+        status === "success" ||
+        status === "successful" ||
+        status === "completed" ||
+        status === "approved"
+    ) {
+        return "success";
     }
 
-    return fallback;
+    if (
+        status === "pending" ||
+        status === "processing"
+    ) {
+        return "pending";
+    }
+
+    if (
+        status === "failed" ||
+        status === "error" ||
+        status === "rejected"
+    ) {
+        return "failed";
+    }
+
+    return "info";
 }
 
+function statusLabel(status) {
+
+    const normalized = normalizeStatus(status);
+
+    const labels = {
+        success: "Success",
+        pending: "Pending",
+        failed: "Failed",
+        info: "Info"
+    };
+
+    return labels[normalized] || "Info";
+}
+
+/* =========================================================
+   AUDIT EVENT NAME
+   ========================================================= */
+
+function cleanEventName(value) {
+
+    let name = String(value || "")
+        .trim();
+
+    if (!name) {
+        return "Security Event";
+    }
+
+    /*
+     * Prevent duplicated names such as:
+     *
+     * deposit_approved deposit_approved
+     */
+
+    const parts = name.split(/\s+/);
+
+    if (
+        parts.length === 2 &&
+        parts[0].toLowerCase() === parts[1].toLowerCase()
+    ) {
+        name = parts[0];
+    }
+
+    return name;
+}
+
+/* =========================================================
+   AUDIT EVENT DISPLAY LABEL
+   ========================================================= */
+
+function eventLabel(value) {
+
+    const event = cleanEventName(value);
+
+    return event
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
 
 /* =========================================================
    NORMALIZE AUDIT RECORD
    ========================================================= */
 
-function normalizeAuditRecord(record = {}) {
+function normalizeAuditRecord(record) {
+
+    const item = record || {};
+
+    const event =
+        item.event ||
+        item.event_type ||
+        item.type ||
+        item.action ||
+        item.activity ||
+        "security_event";
+
+    const status =
+        item.status ||
+        item.result ||
+        item.outcome ||
+        item.state ||
+        "info";
+
+    const description =
+        item.description ||
+        item.message ||
+        item.details ||
+        item.note ||
+        "Security event recorded.";
+
+    const actor =
+        item.actor ||
+        item.actor_name ||
+        item.performed_by ||
+        item.admin_name ||
+        item.username ||
+        "System";
+
+    const createdAt =
+        item.created_at ||
+        item.createdAt ||
+        item.timestamp ||
+        item.date ||
+        item.time ||
+        "";
+
+    const id =
+        item._id ||
+        item.id ||
+        item.audit_id ||
+        "";
 
     return {
+        id: String(id),
 
-        id: firstValue(
-            record,
-            [
-                "id",
-                "_id",
-                "audit_id",
-                "event_id"
-            ],
-            ""
-        ),
+        event: cleanEventName(event),
 
-        type: firstValue(
-            record,
-            [
-                "event_type",
-                "type",
-                "action",
-                "event"
-            ],
-            "system"
-        ),
+        eventLabel: eventLabel(event),
 
-        action: firstValue(
-            record,
-            [
-                "action",
-                "event_action",
-                "type",
-                "event_type"
-            ],
-            "System Event"
-        ),
+        status: normalizeStatus(status),
 
-        description: firstValue(
-            record,
-            [
-                "description",
-                "message",
-                "details",
-                "reason"
-            ],
-            "Security event recorded."
-        ),
+        description: String(description),
 
-        status: firstValue(
-            record,
-            [
-                "status",
-                "result",
-                "outcome"
-            ],
-            "info"
-        ),
+        actor: String(actor),
 
-        user: firstValue(
-            record,
-            [
-                "user_name",
-                "full_name",
-                "username",
-                "email"
-            ],
-            "System"
-        ),
+        createdAt: createdAt,
 
-        email: firstValue(
-            record,
-            [
-                "email",
-                "user_email"
-            ],
-            ""
-        ),
-
-        ip: firstValue(
-            record,
-            [
-                "ip",
-                "ip_address",
-                "client_ip"
-            ],
-            "—"
-        ),
-
-        createdAt: firstValue(
-            record,
-            [
-                "created_at",
-                "timestamp",
-                "date",
-                "createdAt"
-            ],
-            ""
-        ),
-
-        raw: record
+        raw: item
     };
 }
-
 
 /* =========================================================
    LOAD SECURITY DATA
@@ -481,217 +454,98 @@ function normalizeAuditRecord(record = {}) {
 
 async function loadSecurityData() {
 
-    showSecurityPage();
+    const data = await fetchJson(SECURITY_API, {
+        method: "GET"
+    });
 
-    showLoader(
-        "Loading security information..."
-    );
+    if (data.success !== true) {
 
-    try {
-
-        const data = await fetchJson(
-            SECURITY_API,
-            {
-                method: "GET"
-            }
-        );
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Unable to load security information."
-            );
-        }
-
-        state.securityLoaded = true;
-
-        showSecurityPage();
-
-        hideLoader();
-
-        hideMessage();
-
-        updateSecurityOverview(data);
-
-        updateSecurityControls(data);
-
-        updateMaintenanceSettings(data);
-
-        loadAuditRecords(data);
-
-    } catch (error) {
-
-        console.error(
-            "Crown Cash Security Error:",
-            error
-        );
-
-        /*
-         * IMPORTANT:
-         * The page is deliberately revealed even
-         * when the API request fails.
-         */
-        showSecurityPage();
-
-        hideLoader();
-
-        showMessage(
-            error.message ||
-            "Unable to load security information.",
-            "error"
-        );
-
-        renderAuditError(
-            error.message
+        throw new Error(
+            data.message ||
+            "Unable to load security information."
         );
     }
-}
 
+    return data;
+}
 
 /* =========================================================
    SECURITY OVERVIEW
    ========================================================= */
 
-function updateSecurityOverview(data) {
+function renderSecurityOverview(data) {
 
-    const stats =
-        data.stats ||
-        data.security ||
-        data.overview ||
-        {};
+    const security = data.security || {};
+    const stats = data.stats || {};
 
     const securityStatus =
-        firstValue(
-            stats,
-            [
-                "security_status",
-                "status"
-            ],
-            "Secure"
-        );
+        security.status ||
+        data.security_status ||
+        "Secure";
 
-    const adminSessions = Number(
-        firstValue(
-            stats,
-            [
-                "admin_sessions",
-                "active_admin_sessions",
-                "sessions"
-            ],
-            0
-        )
-    );
+    const adminSessions =
+        stats.admin_sessions ??
+        data.admin_sessions ??
+        0;
 
-    const failedAttempts = Number(
-        firstValue(
-            stats,
-            [
-                "failed_attempts",
-                "failed_logins",
-                "failed"
-            ],
-            0
-        )
-    );
+    const failedAttempts =
+        stats.failed_attempts ??
+        data.failed_attempts ??
+        0;
 
-    const securityEvents = Number(
-        firstValue(
-            stats,
-            [
-                "security_events",
-                "events",
-                "audit_events",
-                "total_events"
-            ],
-            0
-        )
-    );
+    const securityEvents =
+        stats.security_events ??
+        stats.total_events ??
+        data.security_events ??
+        data.total_events ??
+        0;
 
-
-    const statusElement =
-        $("securityStatus");
-
-    const statusTextElement =
-        $("securityStatusText");
-
-    const sessionsElement =
-        $("adminSessions");
-
-    const failedElement =
-        $("failedAttempts");
-
-    const eventsElement =
-        $("securityEvents");
-
+    const statusElement = $("securityStatus");
 
     if (statusElement) {
 
+        const safeStatus =
+            String(securityStatus);
+
         statusElement.textContent =
-            securityStatus;
+            safeStatus;
+    }
 
-        statusElement.classList.remove(
-            "secure",
-            "warning",
-            "danger"
-        );
+    const statusText = $("securityStatusText");
 
-        const normalized =
-            String(
-                securityStatus
-            ).toLowerCase();
+    if (statusText) {
 
         if (
-            normalized.includes("secure") ||
-            normalized.includes("active") ||
-            normalized.includes("good")
+            String(securityStatus)
+                .toLowerCase()
+                === "secure"
         ) {
 
-            statusElement.classList.add(
-                "secure"
-            );
-
-        } else if (
-            normalized.includes("review") ||
-            normalized.includes("warning")
-        ) {
-
-            statusElement.classList.add(
-                "warning"
-            );
+            statusText.textContent =
+                "Platform protection active";
 
         } else {
 
-            statusElement.classList.add(
-                "danger"
-            );
+            statusText.textContent =
+                "Security review recommended";
         }
     }
 
-
-    if (statusTextElement) {
-
-        statusTextElement.textContent =
-            securityStatus === "Secure"
-                ? "Platform protection active"
-                : "Review security activity";
-    }
-
+    const sessionsElement = $("adminSessions");
 
     if (sessionsElement) {
         sessionsElement.textContent =
             formatNumber(adminSessions);
     }
 
+    const failedElement = $("failedAttempts");
 
     if (failedElement) {
         failedElement.textContent =
             formatNumber(failedAttempts);
     }
 
+    const eventsElement = $("securityEvents");
 
     if (eventsElement) {
         eventsElement.textContent =
@@ -699,12 +553,11 @@ function updateSecurityOverview(data) {
     }
 }
 
-
 /* =========================================================
    SECURITY CONTROLS
    ========================================================= */
 
-function updateSecurityControls(data) {
+function renderSecurityControls(data) {
 
     const controls =
         data.controls ||
@@ -712,117 +565,624 @@ function updateSecurityControls(data) {
         {};
 
     const loginProtection =
-        firstValue(
-            controls,
-            [
-                "login_protection",
-                "login_protection_status"
-            ],
-            "Active"
-        );
+        controls.login_protection ??
+        controls.loginProtection ??
+        true;
 
     const sessionSecurity =
-        firstValue(
-            controls,
-            [
-                "session_security",
-                "session_security_status"
-            ],
-            "2 Hours"
-        );
-
+        controls.session_security ??
+        controls.sessionSecurity ??
+        true;
 
     const loginElement =
         $("loginProtectionStatus");
 
+    if (loginElement) {
+
+        loginElement.innerHTML =
+            formatBooleanStatus(loginProtection);
+    }
+
     const sessionElement =
         $("sessionSecurityStatus");
 
-
-    if (loginElement) {
-
-        loginElement.textContent =
-            loginProtection;
-
-        loginElement.classList.add(
-            "active"
-        );
-    }
-
-
     if (sessionElement) {
 
-        sessionElement.textContent =
-            sessionSecurity;
-
-        sessionElement.classList.add(
-            "active"
-        );
+        sessionElement.innerHTML =
+            formatBooleanStatus(sessionSecurity);
     }
 }
 
+/* =========================================================
+   AUDIT DATA
+   ========================================================= */
+
+function getAuditRecords(data) {
+
+    let records = [];
+
+    if (Array.isArray(data.audit)) {
+        records = data.audit;
+    } else if (Array.isArray(data.audit_logs)) {
+        records = data.audit_logs;
+    } else if (Array.isArray(data.auditRecords)) {
+        records = data.auditRecords;
+    } else if (Array.isArray(data.records)) {
+        records = data.records;
+    } else if (Array.isArray(data.events)) {
+        records = data.events;
+    }
+
+    return records.map(normalizeAuditRecord);
+}
+
+/* =========================================================
+   RENDER AUDIT COUNT
+   ========================================================= */
+
+function renderAuditCount() {
+
+    const count =
+        state.filteredAuditRecords.length;
+
+    const auditCount = $("auditCount");
+
+    if (auditCount) {
+
+        auditCount.textContent =
+            `${formatNumber(count)} event${count === 1 ? "" : "s"}`;
+    }
+
+    const tableCount =
+        $("auditTableCount");
+
+    if (tableCount) {
+
+        tableCount.textContent =
+            `${formatNumber(count)} record${count === 1 ? "" : "s"}`;
+    }
+}
+
+/* =========================================================
+   AUDIT FILTERS
+   ========================================================= */
+
+function applyAuditFilters() {
+
+    const search =
+        String(
+            $("auditSearch")?.value || ""
+        )
+            .trim()
+            .toLowerCase();
+
+    const type =
+        String(
+            $("auditTypeFilter")?.value || ""
+        )
+            .trim()
+            .toLowerCase();
+
+    const status =
+        String(
+            $("auditStatusFilter")?.value || ""
+        )
+            .trim()
+            .toLowerCase();
+
+    state.filteredAuditRecords =
+        state.auditRecords.filter(record => {
+
+            const searchableText = [
+                record.event,
+                record.eventLabel,
+                record.description,
+                record.actor,
+                record.status,
+                record.createdAt
+            ]
+                .join(" ")
+                .toLowerCase();
+
+            const matchesSearch =
+                !search ||
+                searchableText.includes(search);
+
+            const matchesType =
+                !type ||
+                type === "all" ||
+                record.event.toLowerCase() === type ||
+                record.eventLabel.toLowerCase() === type;
+
+            const matchesStatus =
+                !status ||
+                status === "all" ||
+                record.status === status;
+
+            return (
+                matchesSearch &&
+                matchesType &&
+                matchesStatus
+            );
+        });
+
+    state.currentPage = 1;
+
+    renderAuditRecords();
+}
+
+/* =========================================================
+   AUDIT TABLE
+   ========================================================= */
+
+function renderAuditRecords() {
+
+    renderAuditCount();
+
+    const tableBody =
+        $("auditTableBody");
+
+    const mobileList =
+        $("auditMobileList");
+
+    const records =
+        state.filteredAuditRecords;
+
+    if (!records.length) {
+
+        if (tableBody) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        No security events found.
+                    </td>
+                </tr>
+            `;
+        }
+
+        if (mobileList) {
+
+            mobileList.innerHTML = `
+                <div class="empty-state">
+                    No security events found.
+                </div>
+            `;
+        }
+
+        renderAuditPagination();
+
+        return;
+    }
+
+    const start =
+        (state.currentPage - 1) *
+        ITEMS_PER_PAGE;
+
+    const end =
+        start + ITEMS_PER_PAGE;
+
+    const pageRecords =
+        records.slice(start, end);
+
+    if (tableBody) {
+
+        tableBody.innerHTML =
+            pageRecords.map(record => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            <div class="audit-event-name">
+                                ${escapeHtml(record.eventLabel)}
+                            </div>
+
+                            <div class="audit-event-code">
+                                ${escapeHtml(record.event)}
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="status-pill ${escapeHtml(record.status)}">
+                                ${escapeHtml(statusLabel(record.status))}
+                            </span>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(record.description)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(record.actor)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(formatDate(record.createdAt))}
+                        </td>
+
+                        <td>
+                            <button
+                                type="button"
+                                class="view-button"
+                                data-audit-id="${escapeHtml(record.id)}"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                                    ></path>
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="2.5"
+                                    ></circle>
+                                </svg>
+
+                                View Event
+                            </button>
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+    }
+
+    if (mobileList) {
+
+        mobileList.innerHTML =
+            pageRecords.map(record => {
+
+                return `
+                    <article class="mobile-audit-card">
+
+                        <div class="mobile-audit-top">
+
+                            <div>
+                                <strong>
+                                    ${escapeHtml(record.eventLabel)}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(record.event)}
+                                </small>
+                            </div>
+
+                            <span class="status-pill ${escapeHtml(record.status)}">
+                                ${escapeHtml(statusLabel(record.status))}
+                            </span>
+
+                        </div>
+
+                        <p>
+                            ${escapeHtml(record.description)}
+                        </p>
+
+                        <div class="mobile-audit-meta">
+
+                            <span>
+                                ${escapeHtml(record.actor)}
+                            </span>
+
+                            <span>
+                                ${escapeHtml(formatDate(record.createdAt))}
+                            </span>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="view-button"
+                            data-audit-id="${escapeHtml(record.id)}"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                                ></path>
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="2.5"
+                                ></circle>
+                            </svg>
+
+                            View Event
+                        </button>
+
+                    </article>
+                `;
+
+            }).join("");
+    }
+
+    attachAuditViewButtons();
+
+    renderAuditPagination();
+}
+
+/* =========================================================
+   AUDIT PAGINATION
+   ========================================================= */
+
+function renderAuditPagination() {
+
+    const pagination =
+        $("auditPagination");
+
+    if (!pagination) {
+        return;
+    }
+
+    const total =
+        state.filteredAuditRecords.length;
+
+    const pages =
+        Math.max(
+            1,
+            Math.ceil(total / ITEMS_PER_PAGE)
+        );
+
+    if (pages <= 1) {
+
+        pagination.innerHTML = "";
+
+        return;
+    }
+
+    let html = "";
+
+    html += `
+        <button
+            type="button"
+            class="pagination-button"
+            data-page="${state.currentPage - 1}"
+            ${state.currentPage <= 1 ? "disabled" : ""}
+        >
+            Previous
+        </button>
+    `;
+
+    for (let page = 1; page <= pages; page++) {
+
+        if (
+            page === 1 ||
+            page === pages ||
+            Math.abs(page - state.currentPage) <= 1
+        ) {
+
+            html += `
+                <button
+                    type="button"
+                    class="pagination-button ${page === state.currentPage ? "active" : ""}"
+                    data-page="${page}"
+                >
+                    ${page}
+                </button>
+            `;
+        }
+    }
+
+    html += `
+        <button
+            type="button"
+            class="pagination-button"
+            data-page="${state.currentPage + 1}"
+            ${state.currentPage >= pages ? "disabled" : ""}
+        >
+            Next
+        </button>
+    `;
+
+    pagination.innerHTML = html;
+
+    pagination
+        .querySelectorAll("[data-page]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const page =
+                        Number(
+                            this.dataset.page
+                        );
+
+                    if (
+                        !Number.isFinite(page) ||
+                        page < 1 ||
+                        page > pages
+                    ) {
+                        return;
+                    }
+
+                    state.currentPage = page;
+
+                    renderAuditRecords();
+                }
+            );
+        });
+}
+
+/* =========================================================
+   AUDIT VIEW BUTTONS
+   ========================================================= */
+
+function attachAuditViewButtons() {
+
+    document
+        .querySelectorAll("[data-audit-id]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const id =
+                        this.dataset.auditId;
+
+                    openAuditModal(id);
+                }
+            );
+        });
+}
+
+/* =========================================================
+   AUDIT MODAL
+   ========================================================= */
+
+function openAuditModal(id) {
+
+    const record =
+        state.auditRecords.find(
+            item => item.id === id
+        );
+
+    if (!record) {
+        return;
+    }
+
+    const modal =
+        $("auditModal");
+
+    const details =
+        $("auditDetails");
+
+    if (!modal || !details) {
+        return;
+    }
+
+    details.innerHTML = `
+        <div class="detail-row">
+            <span>Event</span>
+            <strong>
+                ${escapeHtml(record.eventLabel)}
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Event Code</span>
+            <strong>
+                ${escapeHtml(record.event)}
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Status</span>
+            <strong>
+                <span class="status-pill ${escapeHtml(record.status)}">
+                    ${escapeHtml(statusLabel(record.status))}
+                </span>
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Description</span>
+            <strong>
+                ${escapeHtml(record.description)}
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Performed By</span>
+            <strong>
+                ${escapeHtml(record.actor)}
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Date</span>
+            <strong>
+                ${escapeHtml(formatDate(record.createdAt))}
+            </strong>
+        </div>
+
+        <div class="detail-row">
+            <span>Event ID</span>
+            <strong>
+                ${escapeHtml(record.id || "—")}
+            </strong>
+        </div>
+    `;
+
+    modal.classList.add("open");
+
+    modal.style.display = "flex";
+    modal.style.visibility = "visible";
+    modal.style.opacity = "1";
+}
+
+/* =========================================================
+   CLOSE AUDIT MODAL
+   ========================================================= */
+
+function closeAuditModal() {
+
+    const modal =
+        $("auditModal");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove("open");
+
+    modal.style.opacity = "0";
+    modal.style.visibility = "hidden";
+
+    setTimeout(() => {
+
+        if (!modal.classList.contains("open")) {
+            modal.style.display = "none";
+        }
+
+    }, 200);
+}
 
 /* =========================================================
    MAINTENANCE SETTINGS
    ========================================================= */
 
-function updateMaintenanceSettings(data) {
+function renderMaintenance(data) {
 
     const maintenance =
         data.maintenance ||
-        data.maintenance_settings ||
+        data.system_maintenance ||
+        data.settings?.maintenance ||
         {};
 
+    const enabled =
+        maintenance.enabled ??
+        maintenance.maintenance_enabled ??
+        false;
+
+    const message =
+        maintenance.message ||
+        "Crown Cash is temporarily unavailable while maintenance is being performed.";
+
+    const allowAdmin =
+        maintenance.allow_admin_access ??
+        maintenance.allowAdminAccess ??
+        true;
+
     state.maintenanceEnabled =
-        Boolean(
-            firstValue(
-                maintenance,
-                [
-                    "enabled",
-                    "maintenance_enabled"
-                ],
-                false
-            )
-        );
+        Boolean(enabled);
 
     state.maintenanceMessage =
-        firstValue(
-            maintenance,
-            [
-                "message",
-                "maintenance_message"
-            ],
-            "Crown Cash is currently undergoing scheduled maintenance."
-        );
+        String(message);
 
     state.allowAdminAccess =
-        Boolean(
-            firstValue(
-                maintenance,
-                [
-                    "allow_admin_access",
-                    "admin_access"
-                ],
-                true
-            )
-        );
-
+        Boolean(allowAdmin);
 
     const toggle =
         $("maintenanceToggle");
-
-    const message =
-        $("maintenanceMessage");
-
-    const counter =
-        $("maintenanceMessageCount");
-
-    const allowAdmin =
-        $("allowAdminAccess");
-
-    const statusText =
-        $("maintenanceStatusText");
-
 
     if (toggle) {
 
@@ -830,42 +1190,37 @@ function updateMaintenanceSettings(data) {
             state.maintenanceEnabled;
     }
 
+    const messageInput =
+        $("maintenanceMessage");
 
-    if (message) {
+    if (messageInput) {
 
-        message.value =
+        messageInput.value =
             state.maintenanceMessage;
 
         updateMaintenanceCounter();
     }
 
+    const adminAccess =
+        $("allowAdminAccess");
 
-    if (allowAdmin) {
+    if (adminAccess) {
 
-        allowAdmin.checked =
+        adminAccess.checked =
             state.allowAdminAccess;
     }
 
+    const statusText =
+        $("maintenanceStatusText");
 
     if (statusText) {
 
         statusText.textContent =
             state.maintenanceEnabled
-                ? "Maintenance mode enabled"
+                ? "Maintenance mode active"
                 : "Customer access available";
-
-        statusText.classList.toggle(
-            "active",
-            state.maintenanceEnabled
-        );
-    }
-
-
-    if (counter) {
-        updateMaintenanceCounter();
     }
 }
-
 
 /* =========================================================
    MAINTENANCE COUNTER
@@ -883,1022 +1238,28 @@ function updateMaintenanceCounter() {
         return;
     }
 
+    const length =
+        input.value.length;
+
     counter.textContent =
-        `${input.value.length}/300`;
+        `${length} / 300`;
 }
-
-
-/* =========================================================
-   LOAD AUDIT RECORDS
-   ========================================================= */
-
-function loadAuditRecords(data) {
-
-    let records =
-        data.audit_logs ||
-        data.auditRecords ||
-        data.audit ||
-        data.records ||
-        data.events ||
-        [];
-
-
-    if (!Array.isArray(records)) {
-        records = [];
-    }
-
-
-    state.auditRecords =
-        records.map(
-            normalizeAuditRecord
-        );
-
-
-    const auditCount =
-        $("auditCount");
-
-    if (auditCount) {
-
-        auditCount.textContent =
-            `${state.auditRecords.length} ${
-                state.auditRecords.length === 1
-                    ? "event"
-                    : "events"
-            }`;
-    }
-
-
-    applyAuditFilters();
-}
-
-
-/* =========================================================
-   AUDIT FILTERS
-   ========================================================= */
-
-function applyAuditFilters() {
-
-    const search =
-        (
-            $("auditSearch")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    const type =
-        (
-            $("auditTypeFilter")?.value ||
-            "all"
-        )
-        .toLowerCase();
-
-
-    const status =
-        (
-            $("auditStatusFilter")?.value ||
-            "all"
-        )
-        .toLowerCase();
-
-
-    state.filteredAuditRecords =
-        state.auditRecords.filter(
-            record => {
-
-                const searchText = [
-                    record.type,
-                    record.action,
-                    record.description,
-                    record.user,
-                    record.email,
-                    record.ip
-                ]
-                    .join(" ")
-                    .toLowerCase();
-
-
-                const matchesSearch =
-                    !search ||
-                    searchText.includes(search);
-
-
-                const matchesType =
-                    type === "all" ||
-                    record.type
-                        .toLowerCase()
-                        .includes(type) ||
-                    record.action
-                        .toLowerCase()
-                        .includes(type);
-
-
-                const matchesStatus =
-                    status === "all" ||
-                    record.status
-                        .toLowerCase()
-                        .includes(status);
-
-
-                return (
-                    matchesSearch &&
-                    matchesType &&
-                    matchesStatus
-                );
-            }
-        );
-
-
-    state.currentPage = 1;
-
-    renderAuditRecords();
-}
-
-
-/* =========================================================
-   AUDIT STATUS CLASS
-   ========================================================= */
-
-function getStatusClass(status) {
-
-    const value =
-        String(status || "")
-            .toLowerCase();
-
-
-    if (
-        value.includes("success") ||
-        value.includes("approved") ||
-        value.includes("active") ||
-        value.includes("secure")
-    ) {
-        return "success";
-    }
-
-
-    if (
-        value.includes("fail") ||
-        value.includes("danger") ||
-        value.includes("blocked") ||
-        value.includes("rejected")
-    ) {
-        return "danger";
-    }
-
-
-    if (
-        value.includes("warning") ||
-        value.includes("review") ||
-        value.includes("pending")
-    ) {
-        return "warning";
-    }
-
-
-    return "info";
-}
-
-
-/* =========================================================
-   RENDER AUDIT RECORDS
-   ========================================================= */
-
-function renderAuditRecords() {
-
-    const tableBody =
-        $("auditTableBody");
-
-    const mobileList =
-        $("auditMobileList");
-
-    const tableCount =
-        $("auditTableCount");
-
-
-    const total =
-        state.filteredAuditRecords.length;
-
-
-    if (tableCount) {
-
-        tableCount.textContent =
-            `${total} ${
-                total === 1
-                    ? "record"
-                    : "records"
-            }`;
-    }
-
-
-    if (total === 0) {
-
-        if (tableBody) {
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td
-                        colspan="7"
-                        class="empty-state"
-                    >
-                        <div class="empty-icon">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="9"
-                                />
-                                <path
-                                    d="M9 12h6"
-                                />
-                            </svg>
-                        </div>
-
-                        <strong>
-                            No audit records
-                        </strong>
-
-                        <span>
-                            Security activity will appear here.
-                        </span>
-                    </td>
-                </tr>
-            `;
-        }
-
-
-        if (mobileList) {
-
-            mobileList.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-                            <path
-                                d="M9 12h6"
-                            />
-                        </svg>
-                    </div>
-
-                    <strong>
-                        No audit records
-                    </strong>
-
-                    <span>
-                        Security activity will appear here.
-                    </span>
-                </div>
-            `;
-        }
-
-
-        renderPagination();
-
-        return;
-    }
-
-
-    const start =
-        (
-            state.currentPage - 1
-        ) *
-        ITEMS_PER_PAGE;
-
-
-    const end =
-        start +
-        ITEMS_PER_PAGE;
-
-
-    const pageRecords =
-        state.filteredAuditRecords.slice(
-            start,
-            end
-        );
-
-
-    if (tableBody) {
-
-        tableBody.innerHTML =
-            pageRecords
-                .map(
-                    record => `
-                        <tr>
-
-                            <td>
-                                <div class="audit-event-cell">
-
-                                    <span class="audit-event-icon">
-
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                        >
-                                            <path
-                                                d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"
-                                            />
-
-                                            <path
-                                                d="M9 12l2 2 4-4"
-                                            />
-                                        </svg>
-
-                                    </span>
-
-                                    <div>
-                                        <strong>
-                                            ${escapeHtml(record.action)}
-                                        </strong>
-
-                                        <small>
-                                            ${escapeHtml(record.type)}
-                                        </small>
-                                    </div>
-
-                                </div>
-                            </td>
-
-
-                            <td>
-                                ${escapeHtml(record.description)}
-                            </td>
-
-
-                            <td>
-                                ${escapeHtml(record.user)}
-                            </td>
-
-
-                            <td>
-                                ${escapeHtml(record.ip)}
-                            </td>
-
-
-                            <td>
-                                <span
-                                    class="status-pill ${getStatusClass(record.status)}"
-                                >
-                                    ${escapeHtml(record.status)}
-                                </span>
-                            </td>
-
-
-                            <td>
-                                ${escapeHtml(
-                                    formatDate(
-                                        record.createdAt
-                                    )
-                                )}
-                            </td>
-
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="view-button"
-                                    data-audit-id="${escapeHtml(record.id)}"
-                                >
-
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                    >
-                                        <path
-                                            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
-                                        />
-
-                                        <circle
-                                            cx="12"
-                                            cy="12"
-                                            r="2.5"
-                                        />
-                                    </svg>
-
-                                    View
-
-                                </button>
-
-                            </td>
-
-                        </tr>
-                    `
-                )
-                .join("");
-
-
-        tableBody
-            .querySelectorAll(
-                "[data-audit-id]"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        openAuditModal(
-                            button.dataset.auditId
-                        );
-                    }
-                );
-            });
-    }
-
-
-    if (mobileList) {
-
-        mobileList.innerHTML =
-            pageRecords
-                .map(
-                    record => `
-                        <div class="mobile-audit-card">
-
-                            <div class="mobile-audit-top">
-
-                                <div class="audit-event-cell">
-
-                                    <span class="audit-event-icon">
-
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                        >
-                                            <path
-                                                d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"
-                                            />
-
-                                            <path
-                                                d="M9 12l2 2 4-4"
-                                            />
-                                        </svg>
-
-                                    </span>
-
-                                    <div>
-
-                                        <strong>
-                                            ${escapeHtml(record.action)}
-                                        </strong>
-
-                                        <small>
-                                            ${escapeHtml(record.type)}
-                                        </small>
-
-                                    </div>
-
-                                </div>
-
-
-                                <span
-                                    class="status-pill ${getStatusClass(record.status)}"
-                                >
-                                    ${escapeHtml(record.status)}
-                                </span>
-
-                            </div>
-
-
-                            <p class="mobile-audit-description">
-                                ${escapeHtml(record.description)}
-                            </p>
-
-
-                            <div class="mobile-audit-meta">
-
-                                <span>
-                                    ${escapeHtml(record.user)}
-                                </span>
-
-                                <span>
-                                    ${escapeHtml(record.ip)}
-                                </span>
-
-                                <span>
-                                    ${escapeHtml(
-                                        formatDate(
-                                            record.createdAt
-                                        )
-                                    )}
-                                </span>
-
-                            </div>
-
-
-                            <button
-                                type="button"
-                                class="view-button"
-                                data-audit-id="${escapeHtml(record.id)}"
-                            >
-
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
-                                >
-                                    <path
-                                        d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
-                                    />
-
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="2.5"
-                                    />
-                                </svg>
-
-                                View Event
-
-                            </button>
-
-                        </div>
-                    `
-                )
-                .join("");
-
-
-        mobileList
-            .querySelectorAll(
-                "[data-audit-id]"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        openAuditModal(
-                            button.dataset.auditId
-                        );
-                    }
-                );
-            });
-    }
-
-
-    renderPagination();
-}
-
-
-/* =========================================================
-   AUDIT ERROR
-   ========================================================= */
-
-function renderAuditError(message) {
-
-    const tableBody =
-        $("auditTableBody");
-
-    const mobileList =
-        $("auditMobileList");
-
-
-    const safeMessage =
-        escapeHtml(
-            message ||
-            "Unable to load audit records."
-        );
-
-
-    if (tableBody) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td
-                    colspan="7"
-                    class="empty-state error-state"
-                >
-
-                    <div class="empty-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                            />
-
-                            <path
-                                d="M12 8v5"
-                            />
-
-                            <path
-                                d="M12 16h.01"
-                            />
-                        </svg>
-
-                    </div>
-
-                    <strong>
-                        Security information could not be loaded
-                    </strong>
-
-                    <span>
-                        ${safeMessage}
-                    </span>
-
-                </td>
-            </tr>
-        `;
-    }
-
-
-    if (mobileList) {
-
-        mobileList.innerHTML = `
-            <div class="empty-state error-state">
-
-                <div class="empty-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                        />
-
-                        <path
-                            d="M12 8v5"
-                        />
-
-                        <path
-                            d="M12 16h.01"
-                        />
-                    </svg>
-
-                </div>
-
-                <strong>
-                    Security information could not be loaded
-                </strong>
-
-                <span>
-                    ${safeMessage}
-                </span>
-
-            </div>
-        `;
-    }
-}
-
-
-/* =========================================================
-   PAGINATION
-   ========================================================= */
-
-function renderPagination() {
-
-    const container =
-        $("auditPagination");
-
-    if (!container) {
-        return;
-    }
-
-
-    const totalPages =
-        Math.ceil(
-            state.filteredAuditRecords.length /
-            ITEMS_PER_PAGE
-        );
-
-
-    if (totalPages <= 1) {
-
-        container.innerHTML = "";
-
-        return;
-    }
-
-
-    let html = "";
-
-
-    html += `
-        <button
-            type="button"
-            class="pagination-button"
-            data-page-action="prev"
-            ${state.currentPage <= 1 ? "disabled" : ""}
-        >
-            Previous
-        </button>
-    `;
-
-
-    for (
-        let page = 1;
-        page <= totalPages;
-        page++
-    ) {
-
-        if (
-            page === 1 ||
-            page === totalPages ||
-            Math.abs(
-                page - state.currentPage
-            ) <= 1
-        ) {
-
-            html += `
-                <button
-                    type="button"
-                    class="pagination-button ${
-                        page === state.currentPage
-                            ? "active"
-                            : ""
-                    }"
-                    data-page="${page}"
-                >
-                    ${page}
-                </button>
-            `;
-        }
-    }
-
-
-    html += `
-        <button
-            type="button"
-            class="pagination-button"
-            data-page-action="next"
-            ${
-                state.currentPage >= totalPages
-                    ? "disabled"
-                    : ""
-            }
-        >
-            Next
-        </button>
-    `;
-
-
-    container.innerHTML = html;
-
-
-    container
-        .querySelectorAll(
-            "[data-page]"
-        )
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    state.currentPage =
-                        Number(
-                            button.dataset.page
-                        );
-
-                    renderAuditRecords();
-                }
-            );
-        });
-
-
-    const previous =
-        container.querySelector(
-            '[data-page-action="prev"]'
-        );
-
-    const next =
-        container.querySelector(
-            '[data-page-action="next"]'
-        );
-
-
-    if (previous) {
-
-        previous.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    state.currentPage > 1
-                ) {
-
-                    state.currentPage--;
-
-                    renderAuditRecords();
-                }
-            }
-        );
-    }
-
-
-    if (next) {
-
-        next.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    state.currentPage <
-                    totalPages
-                ) {
-
-                    state.currentPage++;
-
-                    renderAuditRecords();
-                }
-            }
-        );
-    }
-}
-
-
-/* =========================================================
-   AUDIT MODAL
-   ========================================================= */
-
-function openAuditModal(id) {
-
-    const record =
-        state.auditRecords.find(
-            item =>
-                String(item.id) ===
-                String(id)
-        );
-
-
-    if (!record) {
-        return;
-    }
-
-
-    const modal =
-        $("auditModal");
-
-    const details =
-        $("auditDetails");
-
-
-    if (!modal || !details) {
-        return;
-    }
-
-
-    details.innerHTML = `
-
-        <div class="detail-grid">
-
-            <div class="detail-item">
-                <span>Event</span>
-                <strong>
-                    ${escapeHtml(record.action)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>Type</span>
-                <strong>
-                    ${escapeHtml(record.type)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>Status</span>
-                <strong>
-                    ${escapeHtml(record.status)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>User</span>
-                <strong>
-                    ${escapeHtml(record.user)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>Email</span>
-                <strong>
-                    ${escapeHtml(record.email || "—")}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>IP Address</span>
-                <strong>
-                    ${escapeHtml(record.ip)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item">
-                <span>Date</span>
-                <strong>
-                    ${escapeHtml(
-                        formatDate(
-                            record.createdAt
-                        )
-                    )}
-                </strong>
-            </div>
-
-
-            <div class="detail-item detail-full">
-                <span>Description</span>
-                <strong>
-                    ${escapeHtml(record.description)}
-                </strong>
-            </div>
-
-
-            <div class="detail-item detail-full">
-                <span>Event ID</span>
-                <strong>
-                    ${escapeHtml(
-                        record.id || "—"
-                    )}
-                </strong>
-            </div>
-
-        </div>
-    `;
-
-
-    modal.classList.add("show");
-
-    modal.style.display = "flex";
-    modal.style.visibility = "visible";
-    modal.style.opacity = "1";
-}
-
-
-function closeAuditModal() {
-
-    const modal =
-        $("auditModal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("show");
-
-    modal.style.opacity = "0";
-    modal.style.visibility = "hidden";
-
-    setTimeout(() => {
-
-        modal.style.display = "none";
-
-    }, 200);
-}
-
 
 /* =========================================================
    MAINTENANCE CONFIRMATION
    ========================================================= */
 
-function openMaintenanceConfirmation(
-    enabled
-) {
-
-    state.pendingMaintenanceState =
-        enabled;
-
+function openMaintenanceConfirmation(enabled) {
 
     const modal =
         $("maintenanceConfirmModal");
+
+    if (!modal) {
+        return;
+    }
+
+    state.pendingMaintenanceState =
+        Boolean(enabled);
 
     const title =
         $("maintenanceConfirmTitle");
@@ -1906,239 +1267,171 @@ function openMaintenanceConfirmation(
     const text =
         $("maintenanceConfirmText");
 
-
-    if (!modal) {
-        return;
-    }
-
-
     if (title) {
 
         title.textContent =
             enabled
-                ? "Enable Maintenance Mode"
-                : "Disable Maintenance Mode";
+                ? "Enable Maintenance Mode?"
+                : "Disable Maintenance Mode?";
     }
-
 
     if (text) {
 
         text.textContent =
             enabled
-
-                ? "Customers will see the maintenance message and normal customer access may be restricted."
-
-                : "Customer access will be restored and the maintenance message will no longer be active.";
+                ? "Customer access will be restricted while maintenance mode is active."
+                : "Customer access will become available again.";
     }
 
-
-    modal.classList.add("show");
+    modal.classList.add("open");
 
     modal.style.display = "flex";
     modal.style.visibility = "visible";
     modal.style.opacity = "1";
 }
 
+/* =========================================================
+   CLOSE MAINTENANCE CONFIRMATION
+   ========================================================= */
 
-function closeMaintenanceConfirmation(
-    restoreToggle = true
-) {
+function closeMaintenanceConfirmation() {
 
     const modal =
         $("maintenanceConfirmModal");
-
-
-    if (restoreToggle) {
-
-        const toggle =
-            $("maintenanceToggle");
-
-        if (toggle) {
-
-            toggle.checked =
-                state.maintenanceEnabled;
-        }
-    }
-
-
-    state.pendingMaintenanceState =
-        null;
-
 
     if (!modal) {
         return;
     }
 
-
-    modal.classList.remove("show");
+    modal.classList.remove("open");
 
     modal.style.opacity = "0";
     modal.style.visibility = "hidden";
 
-
     setTimeout(() => {
 
-        modal.style.display = "none";
+        if (!modal.classList.contains("open")) {
+            modal.style.display = "none";
+        }
 
     }, 200);
-}
 
-
-/* =========================================================
-   SAVE MAINTENANCE SETTINGS
-   ========================================================= */
-
-async function saveMaintenanceSettings() {
-
-    if (!state.authenticated) {
-
-        showMessage(
-            "Administrator authentication is required.",
-            "error"
-        );
-
-        return;
-    }
-
+    state.pendingMaintenanceState =
+        null;
 
     const toggle =
         $("maintenanceToggle");
 
-    const message =
-        $("maintenanceMessage");
+    if (toggle) {
 
-    const allowAdmin =
-        $("allowAdminAccess");
+        toggle.checked =
+            state.maintenanceEnabled;
+    }
+}
 
+/* =========================================================
+   SAVE MAINTENANCE
+   ========================================================= */
+
+async function saveMaintenanceSettings() {
 
     const enabled =
-        Boolean(
-            toggle?.checked
-        );
+        state.pendingMaintenanceState;
 
+    if (enabled === null) {
+        return;
+    }
 
-    const maintenanceMessage =
-        (
-            message?.value ||
-            ""
+    const message =
+        String(
+            $("maintenanceMessage")?.value || ""
         ).trim();
 
-
-    const allowAdminAccess =
+    const allowAdmin =
         Boolean(
-            allowAdmin?.checked
+            $("allowAdminAccess")?.checked
         );
 
-
-    if (
-        maintenanceMessage.length >
-        300
-    ) {
+    if (message.length > 300) {
 
         showMessage(
-            "Maintenance message must not exceed 300 characters.",
+            "Maintenance message cannot exceed 300 characters.",
             "error"
         );
 
         return;
     }
 
-
     const button =
-        $("saveMaintenanceBtn");
-
+        $("confirmMaintenanceBtn");
 
     if (button) {
 
         button.disabled = true;
-
-        button.dataset.originalText =
-            button.textContent;
-
-        button.textContent =
-            "Saving...";
+        button.textContent = "Saving...";
     }
-
 
     try {
 
         const data =
-            await fetchJson(
-                SECURITY_API,
-                {
-                    method: "POST",
+            await fetchJson(SECURITY_API, {
 
-                    body: JSON.stringify({
-                        action: "maintenance",
+                method: "POST",
 
-                        enabled,
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-                        message:
-                            maintenanceMessage,
+                body: JSON.stringify({
+                    action: "maintenance",
+                    enabled: Boolean(enabled),
+                    message: message,
+                    allow_admin_access:
+                        allowAdmin
+                })
+            });
 
-                        allow_admin_access:
-                            allowAdminAccess
-                    })
-                }
-            );
-
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
+        if (data.success !== true) {
 
             throw new Error(
-                data?.message ||
+                data.message ||
                 "Unable to save maintenance settings."
             );
         }
 
-
         state.maintenanceEnabled =
-            enabled;
+            Boolean(enabled);
 
         state.maintenanceMessage =
-            maintenanceMessage;
+            message;
 
         state.allowAdminAccess =
-            allowAdminAccess;
+            allowAdmin;
 
+        closeMaintenanceConfirmation();
 
-        const statusText =
-            $("maintenanceStatusText");
+        renderMaintenance({
+            maintenance: {
+                enabled:
+                    state.maintenanceEnabled,
 
+                message:
+                    state.maintenanceMessage,
 
-        if (statusText) {
-
-            statusText.textContent =
-                enabled
-                    ? "Maintenance mode enabled"
-                    : "Customer access available";
-        }
-
+                allow_admin_access:
+                    state.allowAdminAccess
+            }
+        });
 
         showMessage(
-            data.message ||
             "Maintenance settings saved successfully.",
             "success"
         );
 
-
-        closeMaintenanceConfirmation(
-            false
-        );
-
-
-        updateMaintenanceCounter();
+        await loadSecurityPageData();
 
     } catch (error) {
-
-        console.error(
-            "Maintenance update error:",
-            error
-        );
-
 
         showMessage(
             error.message ||
@@ -2146,9 +1439,104 @@ async function saveMaintenanceSettings() {
             "error"
         );
 
+    } finally {
 
-        closeMaintenanceConfirmation(
-            true
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Confirm Changes";
+        }
+    }
+}
+
+/* =========================================================
+   LOAD EVERYTHING
+   ========================================================= */
+
+async function loadSecurityPageData() {
+
+    showSecurityPage();
+
+    try {
+
+        const data =
+            await loadSecurityData();
+
+        renderSecurityOverview(data);
+
+        renderSecurityControls(data);
+
+        state.auditRecords =
+            getAuditRecords(data);
+
+        state.filteredAuditRecords =
+            [...state.auditRecords];
+
+        state.currentPage = 1;
+
+        renderAuditRecords();
+
+        renderMaintenance(data);
+
+        showSecurityPage();
+
+    } catch (error) {
+
+        console.error(
+            "Crown Cash Security:",
+            error
+        );
+
+        showSecurityPage();
+
+        showMessage(
+            error.message ||
+            "Unable to load security information.",
+            "error"
+        );
+
+        /*
+         * Keep the page visible even if
+         * the backend temporarily fails.
+         */
+
+        state.auditRecords = [];
+        state.filteredAuditRecords = [];
+
+        renderAuditRecords();
+
+    } finally {
+
+        hideLoader();
+    }
+}
+
+/* =========================================================
+   REFRESH
+   ========================================================= */
+
+async function refreshSecurityPage() {
+
+    const button =
+        $("refreshSecurityBtn");
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "is-loading"
+        );
+    }
+
+    try {
+
+        await loadSecurityPageData();
+
+        showMessage(
+            "Security information refreshed.",
+            "success"
         );
 
     } finally {
@@ -2157,35 +1545,23 @@ async function saveMaintenanceSettings() {
 
             button.disabled = false;
 
-            button.textContent =
-                button.dataset.originalText ||
-                "Save Maintenance Settings";
+            button.classList.remove(
+                "is-loading"
+            );
         }
     }
 }
 
-
 /* =========================================================
-   REFRESH
+   EVENTS
    ========================================================= */
 
-async function refreshSecurityPage() {
+function attachEvents() {
 
-    hideMessage();
-
-    await loadSecurityData();
-}
-
-
-/* =========================================================
-   EVENT LISTENERS
-   ========================================================= */
-
-function setupEventListeners() {
+    /* Refresh */
 
     const refreshButton =
         $("refreshSecurityBtn");
-
 
     if (refreshButton) {
 
@@ -2195,62 +1571,62 @@ function setupEventListeners() {
         );
     }
 
+    /* Audit Search */
 
-    const search =
+    const auditSearch =
         $("auditSearch");
 
+    if (auditSearch) {
 
-    if (search) {
-
-        search.addEventListener(
+        auditSearch.addEventListener(
             "input",
             applyAuditFilters
         );
     }
 
+    /* Audit Type */
 
-    const typeFilter =
+    const auditType =
         $("auditTypeFilter");
 
+    if (auditType) {
 
-    if (typeFilter) {
-
-        typeFilter.addEventListener(
+        auditType.addEventListener(
             "change",
             applyAuditFilters
         );
     }
 
+    /* Audit Status */
 
-    const statusFilter =
+    const auditStatus =
         $("auditStatusFilter");
 
+    if (auditStatus) {
 
-    if (statusFilter) {
-
-        statusFilter.addEventListener(
+        auditStatus.addEventListener(
             "change",
             applyAuditFilters
         );
     }
 
+    /* Maintenance message counter */
 
-    const message =
+    const maintenanceMessage =
         $("maintenanceMessage");
 
+    if (maintenanceMessage) {
 
-    if (message) {
-
-        message.addEventListener(
+        maintenanceMessage.addEventListener(
             "input",
             updateMaintenanceCounter
         );
     }
 
+    /* Maintenance toggle */
 
     const maintenanceToggle =
         $("maintenanceToggle");
-
 
     if (maintenanceToggle) {
 
@@ -2265,10 +1641,10 @@ function setupEventListeners() {
         );
     }
 
+    /* Save maintenance */
 
     const saveMaintenance =
         $("saveMaintenanceBtn");
-
 
     if (saveMaintenance) {
 
@@ -2276,30 +1652,33 @@ function setupEventListeners() {
             "click",
             function () {
 
-                const toggle =
-                    $("maintenanceToggle");
+                const enabled =
+                    Boolean(
+                        $("maintenanceToggle")?.checked
+                    );
 
                 openMaintenanceConfirmation(
-                    Boolean(
-                        toggle?.checked
-                    )
+                    enabled
                 );
             }
         );
     }
 
+    /* Audit modal close */
+
+    const closeAudit =
+        $("closeAuditModal");
+
+    if (closeAudit) {
+
+        closeAudit.addEventListener(
+            "click",
+            closeAuditModal
+        );
+    }
 
     const closeAuditOverlay =
         $("closeAuditModalOverlay");
-
-
-    const closeAuditButton =
-        $("closeAuditModal");
-
-
-    const closeAuditDetailsButton =
-        $("closeAuditDetailsBtn");
-
 
     if (closeAuditOverlay) {
 
@@ -2309,60 +1688,45 @@ function setupEventListeners() {
         );
     }
 
+    const closeAuditDetails =
+        $("closeAuditDetailsBtn");
 
-    if (closeAuditButton) {
+    if (closeAuditDetails) {
 
-        closeAuditButton.addEventListener(
+        closeAuditDetails.addEventListener(
             "click",
             closeAuditModal
         );
     }
 
+    /* Maintenance confirmation close */
 
-    if (closeAuditDetailsButton) {
-
-        closeAuditDetailsButton.addEventListener(
-            "click",
-            closeAuditModal
-        );
-    }
-
-
-    const closeMaintenanceOverlay =
+    const closeMaintenance =
         $("closeMaintenanceConfirmOverlay");
 
+    if (closeMaintenance) {
+
+        closeMaintenance.addEventListener(
+            "click",
+            closeMaintenanceConfirmation
+        );
+    }
 
     const cancelMaintenance =
         $("cancelMaintenanceBtn");
-
-
-    const confirmMaintenance =
-        $("confirmMaintenanceBtn");
-
-
-    if (closeMaintenanceOverlay) {
-
-        closeMaintenanceOverlay.addEventListener(
-            "click",
-            () =>
-                closeMaintenanceConfirmation(
-                    true
-                )
-        );
-    }
-
 
     if (cancelMaintenance) {
 
         cancelMaintenance.addEventListener(
             "click",
-            () =>
-                closeMaintenanceConfirmation(
-                    true
-                )
+            closeMaintenanceConfirmation
         );
     }
 
+    /* Confirm maintenance */
+
+    const confirmMaintenance =
+        $("confirmMaintenanceBtn");
 
     if (confirmMaintenance) {
 
@@ -2372,6 +1736,7 @@ function setupEventListeners() {
         );
     }
 
+    /* Escape key */
 
     document.addEventListener(
         "keydown",
@@ -2381,54 +1746,48 @@ function setupEventListeners() {
                 return;
             }
 
-
             closeAuditModal();
 
-            closeMaintenanceConfirmation(
-                true
-            );
+            closeMaintenanceConfirmation();
         }
     );
 }
 
-
 /* =========================================================
-   INITIALIZE PAGE
+   INITIALIZATION
    ========================================================= */
 
 async function initializeSecurityPage() {
-
-    /*
-     * CRITICAL FIX:
-     * Make the actual page visible BEFORE
-     * administrator verification begins.
-     */
-    showSecurityPage();
 
     showLoader(
         "Verifying administrator access..."
     );
 
+    /*
+     * Always make the page available.
+     * This prevents a blank screen if the API
+     * is slow or temporarily unavailable.
+     */
+
+    showSecurityPage();
 
     try {
 
         await verifyAdministrator();
 
-        showSecurityPage();
+        showLoader(
+            "Loading security information..."
+        );
 
-        await loadSecurityData();
+        await loadSecurityPageData();
 
     } catch (error) {
 
         console.error(
-            "Administrator verification failed:",
+            "Crown Cash administrator verification:",
             error
         );
 
-
-        /*
-         * Do NOT leave a completely blank page.
-         */
         showSecurityPage();
 
         hideLoader();
@@ -2439,17 +1798,42 @@ async function initializeSecurityPage() {
             "error"
         );
 
+        /*
+         * Do not leave a blank page.
+         */
 
-        renderAuditError(
-            error.message ||
-            "Administrator verification failed."
-        );
+        const auditTableBody =
+            $("auditTableBody");
+
+        if (auditTableBody) {
+
+            auditTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        Unable to load security information.
+                        Please refresh and try again.
+                    </td>
+                </tr>
+            `;
+        }
+
+        const mobileList =
+            $("auditMobileList");
+
+        if (mobileList) {
+
+            mobileList.innerHTML = `
+                <div class="empty-state">
+                    Unable to load security information.
+                    Please refresh and try again.
+                </div>
+            `;
+        }
     }
 }
 
-
 /* =========================================================
-   GLOBAL HELPERS
+   GLOBAL API
    ========================================================= */
 
 window.CrownCashAdminSecurity = {
@@ -2458,10 +1842,7 @@ window.CrownCashAdminSecurity = {
         refreshSecurityPage,
 
     load:
-        loadSecurityData,
-
-    verify:
-        verifyAdministrator,
+        loadSecurityPageData,
 
     openAudit:
         openAuditModal,
@@ -2469,28 +1850,35 @@ window.CrownCashAdminSecurity = {
     closeAudit:
         closeAuditModal,
 
-    saveMaintenance:
-        saveMaintenanceSettings
-};
+    openMaintenance:
+        openMaintenanceConfirmation,
 
+    closeMaintenance:
+        closeMaintenanceConfirmation
+};
 
 /* =========================================================
    START
    ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+if (
+    document.readyState ===
+    "loading"
+) {
 
-        /*
-         * Reveal page immediately.
-         * This prevents the completely blank
-         * dark screen problem.
-         */
-        showSecurityPage();
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
-        setupEventListeners();
+            attachEvents();
 
-        initializeSecurityPage();
-    }
-);
+            initializeSecurityPage();
+        }
+    );
+
+} else {
+
+    attachEvents();
+
+    initializeSecurityPage();
+}

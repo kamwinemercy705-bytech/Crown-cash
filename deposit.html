@@ -2,1287 +2,2608 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <title>Crown Cash | Deposit Funds</title>
 
-    <meta name="theme-color"
-          content="#5a0f24">
-
-    <title>Crown Cash | Make a Deposit</title>
+    <meta
+        name="description"
+        content="Securely fund your Crown Cash wallet using MTN Mobile Money or Airtel Money."
+    >
 
     <link rel="stylesheet" href="deposit.css">
 
     <style>
-        /* =====================================================
-           DEPOSIT PROCEDURES
-        ===================================================== */
+        /* =========================================================
+           CROWN CASH DEPOSIT PAGE
+           ========================================================= */
 
-        .deposit-instructions {
-            margin-top: 30px;
+        :root {
+            --maroon: #8b1538;
+            --maroon-dark: #570d25;
+            --maroon-deep: #2a0714;
+            --purple: #4b164f;
+            --gold: #f4c542;
+            --gold-light: #ffe28a;
+            --pink: #e83e75;
+            --white: #ffffff;
+            --text: #f8f4f6;
+            --muted: #bcaeb4;
+            --card: rgba(255, 255, 255, 0.055);
+            --card-border: rgba(255, 255, 255, 0.10);
+            --success: #35d07f;
+            --warning: #f5b942;
+            --danger: #ff5b70;
+            --shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+            --radius: 22px;
         }
 
-        .section-heading {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .section-heading-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(
+                    circle at 15% 10%,
+                    rgba(139, 21, 56, 0.32),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 90% 30%,
+                    rgba(232, 62, 117, 0.13),
+                    transparent 28%
+                ),
+                linear-gradient(
+                    135deg,
+                    #17040b 0%,
+                    #2b0715 45%,
+                    #17040b 100%
+                );
+            overflow-x: hidden;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* =========================================================
+           PAGE LOADER
+           ========================================================= */
+
+        #pageLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(
-                135deg,
-                rgba(128, 20, 54, .35),
-                rgba(255, 193, 7, .15)
-            );
-            border: 1px solid rgba(255, 193, 7, .25);
-            color: #ffd45c;
+            background: #18050c;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
         }
 
-        .section-heading-icon svg {
-            width: 23px;
-            height: 23px;
+        #pageLoader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
         }
 
-        .section-heading h2 {
-            margin: 0 0 5px;
-            color: #ffffff;
-            font-size: 20px;
+        .loader-box {
+            text-align: center;
         }
 
-        .section-heading p {
-            margin: 0;
-            color: #aeb4c0;
+        .loader-spinner {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 15px;
+            border: 3px solid rgba(255, 255, 255, 0.13);
+            border-top-color: var(--gold);
+            border-right-color: var(--pink);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        .loader-text {
+            color: var(--muted);
             font-size: 14px;
         }
 
-        /* DEFAULT */
-
-        .procedure-default {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            border-radius: 16px;
-            background: rgba(255,255,255,.035);
-            border: 1px solid rgba(255,255,255,.08);
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        .procedure-default-icon {
+        /* =========================================================
+           APP LAYOUT
+           ========================================================= */
+
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            width: 245px;
+            padding: 22px 15px;
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(40, 6, 20, 0.98),
+                    rgba(24, 4, 12, 0.98)
+                );
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 15px 0 45px rgba(0, 0, 0, 0.22);
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 4px 8px 25px;
+        }
+
+        .brand-logo {
+            width: 43px;
+            height: 43px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border-radius: 14px;
+            color: var(--gold);
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(244, 197, 66, 0.18),
+                    rgba(139, 21, 56, 0.55)
+                );
+            border: 1px solid rgba(244, 197, 66, 0.32);
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.22),
+                inset 0 0 20px rgba(244, 197, 66, 0.05);
+        }
+
+        .brand-logo svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 850;
+            letter-spacing: 0.4px;
+        }
+
+        .brand-tagline {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.7px;
+        }
+
+        .nav-title {
+            padding: 10px 11px 8px;
+            color: #806d75;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 45px;
+            padding: 10px 12px;
+            border-radius: 13px;
+            color: #c8b9bf;
+            font-size: 13px;
+            font-weight: 650;
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .nav-link svg {
+            width: 19px;
+            height: 19px;
+            flex-shrink: 0;
+        }
+
+        .nav-link:hover {
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.055);
+            transform: translateX(2px);
+        }
+
+        .nav-link.active {
+            color: var(--white);
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(139, 21, 56, 0.62),
+                    rgba(232, 62, 117, 0.15)
+                );
+            border: 1px solid rgba(232, 62, 117, 0.18);
+            box-shadow: inset 3px 0 0 var(--gold);
+        }
+
+        .logout-link {
+            margin-top: 14px;
+            color: #e6aeb9;
+        }
+
+        /* =========================================================
+           MAIN
+           ========================================================= */
+
+        .main-content {
+            width: calc(100% - 245px);
+            margin-left: 245px;
+            min-width: 0;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            min-height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 15px 32px;
+            background: rgba(24, 4, 12, 0.76);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .topbar-title {
+            font-size: 21px;
+            font-weight: 800;
+        }
+
+        .topbar-subtitle {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            color: #d8f8e5;
+            background: rgba(53, 208, 127, 0.09);
+            border: 1px solid rgba(53, 208, 127, 0.20);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+        }
+
+        .secure-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 12px rgba(53, 208, 127, 0.75);
+        }
+
+        /* =========================================================
+           CONTENT
+           ========================================================= */
+
+        .page-container {
+            width: min(1120px, calc(100% - 48px));
+            margin: 0 auto;
+            padding: 38px 0 55px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: end;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 9px;
+            color: var(--gold);
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+        }
+
+        .eyebrow-line {
+            width: 27px;
+            height: 2px;
+            border-radius: 20px;
+            background: linear-gradient(
+                90deg,
+                var(--gold),
+                var(--pink)
+            );
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 4vw, 44px);
+            line-height: 1.08;
+            letter-spacing: -1.2px;
+            font-weight: 850;
+        }
+
+        .hero p {
+            max-width: 650px;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .security-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #d8cbd0;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .security-icon {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            color: var(--gold);
+            background: rgba(244, 197, 66, 0.10);
+        }
+
+        .security-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* =========================================================
+           BALANCE CARD
+           ========================================================= */
+
+        .balance-card {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 19px 22px;
+            margin-bottom: 22px;
+            border-radius: 20px;
+            background:
+                linear-gradient(
+                    110deg,
+                    rgba(139, 21, 56, 0.52),
+                    rgba(81, 17, 62, 0.32)
+                );
+            border: 1px solid rgba(232, 62, 117, 0.18);
+            box-shadow: var(--shadow);
+        }
+
+        .balance-card::after {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            right: -70px;
+            top: -90px;
+            border-radius: 50%;
+            border: 1px solid rgba(244, 197, 66, 0.15);
+        }
+
+        .balance-label {
+            color: #d2bec6;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .balance-value {
+            margin-top: 5px;
+            font-size: 24px;
+            font-weight: 850;
+        }
+
+        .balance-note {
+            color: #d8c9ce;
+            font-size: 11px;
+        }
+
+        /* =========================================================
+           FORM CARD
+           ========================================================= */
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .deposit-card {
+            overflow: hidden;
+        }
+
+        .card-heading {
+            padding: 23px 25px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .heading-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .heading-icon {
             width: 42px;
             height: 42px;
-            flex: 0 0 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,193,7,.1);
-            color: #ffd45c;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            color: var(--gold);
+            background: rgba(244, 197, 66, 0.09);
+            border: 1px solid rgba(244, 197, 66, 0.15);
         }
 
-        .procedure-default-icon svg {
+        .heading-icon svg {
             width: 22px;
             height: 22px;
         }
 
-        .procedure-default h3 {
-            margin: 0 0 5px;
-            color: #fff;
-            font-size: 16px;
+        .card-heading h2 {
+            font-size: 18px;
+            font-weight: 800;
         }
 
-        .procedure-default p {
-            margin: 0;
-            color: #aeb4c0;
-            line-height: 1.6;
-            font-size: 14px;
+        .card-heading p {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
         }
 
-        /* NETWORK PROCEDURE */
-
-        .network-procedure {
-            display: none;
-            margin-top: 20px;
-            padding: 22px;
-            border-radius: 18px;
-            background: rgba(255,255,255,.035);
-            border: 1px solid rgba(255,255,255,.08);
-            animation: procedureFade .3s ease;
+        .deposit-form {
+            padding: 25px;
         }
 
-        .network-procedure.active {
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
             display: block;
+            margin-bottom: 9px;
+            color: #e9dfe3;
+            font-size: 12px;
+            font-weight: 750;
         }
 
-        @keyframes procedureFade {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .input-wrap {
+            position: relative;
         }
 
-        .procedure-network-header {
+        .currency {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 12px;
+            font-weight: 850;
+            pointer-events: none;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 52px;
+            padding: 0 16px 0 59px;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 14px;
+            outline: none;
+            color: var(--white);
+            background: rgba(0, 0, 0, 0.18);
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .form-input::placeholder {
+            color: #776971;
+        }
+
+        .form-input:focus {
+            border-color: rgba(244, 197, 66, 0.55);
+            box-shadow: 0 0 0 4px rgba(244, 197, 66, 0.07);
+        }
+
+        .input-help {
+            margin-top: 7px;
+            color: #897980;
+            font-size: 10px;
+        }
+
+        /* =========================================================
+           PAYMENT METHODS
+           ========================================================= */
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .payment-option {
+            position: relative;
+        }
+
+        .payment-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .payment-label {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 20px;
+            gap: 12px;
+            min-height: 68px;
+            padding: 13px 15px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.14);
+            transition:
+                border-color 0.2s ease,
+                background 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .payment-label:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.045);
+        }
+
+        .payment-option input:checked + .payment-label {
+            border-color: rgba(244, 197, 66, 0.55);
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(139, 21, 56, 0.34),
+                    rgba(244, 197, 66, 0.06)
+                );
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.16);
         }
 
         .network-logo {
-            min-width: 58px;
-            height: 45px;
-            padding: 0 12px;
+            width: 39px;
+            height: 39px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
             border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 14px;
-            color: #fff;
+            color: white;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: -0.2px;
         }
 
-        .mtn-header .network-logo {
-            background: #f5c400;
-            color: #111;
+        .mtn-logo {
+            background: #f7c800;
+            color: #191000;
         }
 
-        .airtel-header .network-logo {
-            background: #e51b23;
-            color: #fff;
+        .airtel-logo {
+            background: #df2638;
         }
 
-        .procedure-network-header h3 {
-            margin: 0 0 4px;
-            color: #fff;
-            font-size: 18px;
-        }
-
-        .procedure-network-header p {
-            margin: 0;
-            color: #aeb4c0;
-            font-size: 13px;
-        }
-
-        /* CODE */
-
-        .procedure-code-box {
-            padding: 18px;
-            margin-bottom: 24px;
-            border-radius: 14px;
-            background: linear-gradient(
-                135deg,
-                rgba(128,20,54,.22),
-                rgba(255,193,7,.08)
-            );
-            border: 1px solid rgba(255,193,7,.22);
-        }
-
-        .code-label {
-            color: #b8bec9;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
-        .code-value {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .code-value span {
-            color: #ffd45c;
-            font-size: 27px;
-            font-weight: 800;
-            letter-spacing: 2px;
-        }
-
-        /* STEPS */
-
-        .procedure-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .procedure-step {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            padding: 15px;
-            border-radius: 13px;
-            background: rgba(255,255,255,.025);
-            border: 1px solid rgba(255,255,255,.055);
-        }
-
-        .step-number {
-            width: 34px;
-            height: 34px;
-            flex: 0 0 34px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(
-                135deg,
-                #7c1737,
-                #b91f50
-            );
-            color: #fff;
-            font-weight: 800;
-            font-size: 14px;
-        }
-
-        .step-content {
+        .payment-copy {
             flex: 1;
         }
 
-        .step-content h4 {
-            margin: 0 0 5px;
-            color: #fff;
-            font-size: 15px;
+        .payment-copy strong {
+            display: block;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 800;
         }
 
-        .step-content p {
-            margin: 0;
-            color: #aeb4c0;
-            font-size: 13px;
-            line-height: 1.6;
+        .payment-copy span {
+            display: block;
+            margin-top: 3px;
+            color: #8f8087;
+            font-size: 10px;
         }
 
-        .procedure-highlight {
-            display: inline-block;
-            margin-top: 8px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: rgba(255,193,7,.1);
-            border: 1px solid rgba(255,193,7,.22);
-            color: #ffd45c;
-            letter-spacing: 1.5px;
-        }
-
-        /* WARNING */
-
-        .procedure-warning {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 13px;
-            background: rgba(255,193,7,.055);
-            border: 1px solid rgba(255,193,7,.15);
-        }
-
-        .procedure-warning svg {
-            width: 21px;
-            height: 21px;
-            flex: 0 0 21px;
-            color: #ffd45c;
-        }
-
-        .procedure-warning p {
-            margin: 0;
-            color: #c4c8d0;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .procedure-warning strong {
-            color: #ffd45c;
-        }
-
-        /* VERIFICATION */
-
-        .payment-verification {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            margin-top: 20px;
-            padding: 18px;
-            border-radius: 15px;
-            background: rgba(72, 187, 120, .055);
-            border: 1px solid rgba(72, 187, 120, .16);
-        }
-
-        .verification-icon {
-            width: 42px;
-            height: 42px;
-            flex: 0 0 42px;
+        .radio-dot {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            border: 1px solid #65535b;
             border-radius: 50%;
+            position: relative;
+        }
+
+        .payment-option input:checked + .payment-label .radio-dot {
+            border-color: var(--gold);
+        }
+
+        .payment-option input:checked + .payment-label .radio-dot::after {
+            content: "";
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            left: 4px;
+            top: 4px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+
+        /* =========================================================
+           PAYMENT DETAILS
+           ========================================================= */
+
+        .payment-details {
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+            border-radius: 17px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(139, 21, 56, 0.25),
+                    rgba(244, 197, 66, 0.045)
+                );
+            border: 1px solid rgba(244, 197, 66, 0.14);
+        }
+
+        .payment-details::before {
+            content: "";
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            right: -55px;
+            top: -55px;
+            border-radius: 50%;
+            border: 1px solid rgba(244, 197, 66, 0.12);
+        }
+
+        .details-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .details-title {
+            color: var(--gold-light);
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .ready-badge {
+            padding: 5px 9px;
+            border-radius: 999px;
+            color: #b8f3d1;
+            background: rgba(53, 208, 127, 0.09);
+            border: 1px solid rgba(53, 208, 127, 0.16);
+            font-size: 8px;
+            font-weight: 850;
+            letter-spacing: 0.8px;
+        }
+
+        .merchant-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .merchant-label {
+            color: #a9989f;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .merchant-code {
+            margin-top: 5px;
+            color: var(--white);
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-width: 84px;
+            height: 39px;
+            padding: 0 12px;
+            border: 1px solid rgba(244, 197, 66, 0.20);
+            border-radius: 11px;
+            color: var(--gold-light);
+            background: rgba(244, 197, 66, 0.07);
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 800;
+            transition: 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(244, 197, 66, 0.13);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .payment-instruction {
+            margin-top: 13px;
+            padding-top: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            color: #bbaeb4;
+            font-size: 11px;
+            line-height: 1.65;
+        }
+
+        .payment-instruction strong {
+            color: var(--white);
+        }
+
+        .ussd {
+            color: var(--gold-light);
+            font-weight: 850;
+        }
+
+        /* =========================================================
+           SUBMIT BUTTON
+           ========================================================= */
+
+        .submit-area {
+            padding-top: 3px;
+        }
+
+        .submit-button {
+            width: 100%;
+            height: 54px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            border: 0;
+            border-radius: 15px;
+            color: #fff;
+            background:
+                linear-gradient(
+                    110deg,
+                    #8b1538,
+                    #b52054,
+                    #d43a70
+                );
+            box-shadow:
+                0 12px 28px rgba(139, 21, 56, 0.27),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 850;
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                opacity 0.2s ease;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 16px 32px rgba(139, 21, 56, 0.34),
+                inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-button svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        /* =========================================================
+           MESSAGE
+           ========================================================= */
+
+        .admin-message,
+        #formMessage {
+            display: none;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .admin-message.show,
+        #formMessage.show {
+            display: block;
+        }
+
+        /* =========================================================
+           HOW DEPOSITS WORK
+           ========================================================= */
+
+        .how-section {
+            margin-top: 25px;
+        }
+
+        .section-header {
+            margin-bottom: 15px;
+        }
+
+        .section-header .eyebrow {
+            margin-bottom: 7px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+            font-weight: 850;
+        }
+
+        .section-header p {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 13px;
+        }
+
+        .step-card {
+            position: relative;
+            padding: 19px;
+            min-height: 170px;
+            overflow: hidden;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.042);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(244, 197, 66, 0.20);
+        }
+
+        .step-number {
+            color: rgba(244, 197, 66, 0.50);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .step-icon {
+            width: 37px;
+            height: 37px;
+            display: grid;
+            place-items: center;
+            margin-top: 13px;
+            border-radius: 11px;
+            color: var(--gold);
+            background: rgba(244, 197, 66, 0.08);
+        }
+
+        .step-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .step-card h3 {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .step-card p {
+            margin-top: 6px;
+            color: #9e8e96;
+            font-size: 10px;
+            line-height: 1.55;
+        }
+
+        /* =========================================================
+           PAYMENT PROCEDURES
+           ========================================================= */
+
+        .procedure-section {
+            margin-top: 25px;
+        }
+
+        .procedure-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .procedure-card {
+            padding: 20px;
+            border-radius: 19px;
+            background: rgba(255, 255, 255, 0.042);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .procedure-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 17px;
+        }
+
+        .procedure-network {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .procedure-network-logo {
+            width: 37px;
+            height: 37px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            font-size: 9px;
+            font-weight: 900;
+        }
+
+        .procedure-header h3 {
+            font-size: 14px;
+            font-weight: 850;
+        }
+
+        .procedure-code {
+            padding: 7px 10px;
+            border-radius: 9px;
+            color: var(--gold-light);
+            background: rgba(244, 197, 66, 0.07);
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+        }
+
+        .procedure-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .procedure-list li {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 9px;
+            color: #b6a8ae;
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .procedure-list li span:first-child {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            border-radius: 7px;
+            color: var(--gold);
+            background: rgba(244, 197, 66, 0.07);
+            font-size: 9px;
+            font-weight: 900;
+        }
+
+        .procedure-list strong {
+            color: #eee6e9;
+        }
+
+        /* =========================================================
+           RECENT DEPOSITS
+           ========================================================= */
+
+        .history-section {
+            margin-top: 25px;
+        }
+
+        .history-card {
+            overflow: hidden;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 20px 22px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .history-header h2 {
+            font-size: 16px;
+            font-weight: 850;
+        }
+
+        .history-header span {
+            color: #85747c;
+            font-size: 10px;
+        }
+
+        #depositHistory {
+            min-height: 70px;
+            padding: 15px 20px;
+        }
+
+        .empty-history {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(72,187,120,.1);
-            color: #69d995;
+            min-height: 60px;
+            color: #85747c;
+            font-size: 11px;
+            text-align: center;
         }
 
-        .verification-icon svg {
-            width: 21px;
-            height: 21px;
+        /* =========================================================
+           FOOTER
+           ========================================================= */
+
+        .footer {
+            padding: 30px 0 10px;
+            color: #76666d;
+            font-size: 10px;
+            text-align: center;
         }
 
-        .payment-verification h3 {
-            margin: 0 0 6px;
-            color: #fff;
-            font-size: 15px;
-        }
-
-        .payment-verification p {
-            margin: 0 0 6px;
-            color: #aeb4c0;
+        .footer-brand {
+            color: #cbbac1;
             font-size: 13px;
-            line-height: 1.6;
+            font-weight: 850;
+            letter-spacing: 0.5px;
         }
 
-        .payment-verification p:last-child {
-            margin-bottom: 0;
+        .footer-tagline {
+            margin-top: 4px;
+            color: #695961;
+            font-size: 8px;
+            letter-spacing: 1.5px;
+            font-weight: 800;
         }
 
-        /* MOBILE */
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 13px;
+        }
 
-        @media (max-width: 600px) {
+        .footer-links a:hover {
+            color: var(--gold);
+        }
 
-            .network-procedure {
+        /* =========================================================
+           MOBILE MENU BUTTON
+           ========================================================= */
+
+        .mobile-menu {
+            display: none;
+            width: 40px;
+            height: 40px;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 11px;
+            color: white;
+            background: rgba(255, 255, 255, 0.045);
+            cursor: pointer;
+        }
+
+        .mobile-menu svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+        }
+
+        /* =========================================================
+           RESPONSIVE
+           ========================================================= */
+
+        @media (max-width: 1050px) {
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 850px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 900;
+                background: rgba(0, 0, 0, 0.58);
+                backdrop-filter: blur(3px);
+            }
+
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .mobile-menu {
+                display: grid;
+            }
+
+            .topbar {
+                padding: 14px 20px;
+            }
+
+            .page-container {
+                width: min(100% - 32px, 720px);
+                padding-top: 28px;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .security-card {
+                width: fit-content;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+
+            .procedure-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 580px) {
+            .topbar-title {
+                font-size: 17px;
+            }
+
+            .topbar-subtitle {
+                display: none;
+            }
+
+            .secure-badge {
+                padding: 8px 10px;
+                font-size: 8px;
+            }
+
+            .page-container {
+                width: calc(100% - 22px);
+                padding-top: 22px;
+            }
+
+            .hero h1 {
+                font-size: 31px;
+            }
+
+            .hero p {
+                font-size: 12px;
+            }
+
+            .balance-card {
+                align-items: flex-start;
+                flex-direction: column;
                 padding: 17px;
             }
 
-            .section-heading h2 {
-                font-size: 18px;
+            .deposit-form,
+            .card-heading {
+                padding: 18px;
             }
 
-            .code-value span {
-                font-size: 23px;
+            .payment-methods {
+                grid-template-columns: 1fr;
             }
 
-            .procedure-step {
-                padding: 13px;
+            .payment-details {
+                padding: 16px;
             }
 
-            .procedure-network-header {
+            .merchant-row {
                 align-items: flex-start;
+                flex-direction: column;
             }
 
-            .procedure-default {
-                align-items: flex-start;
+            .copy-btn {
+                width: 100%;
+            }
+
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step-card {
+                min-height: auto;
+            }
+
+            .procedure-card {
+                padding: 17px;
+            }
+
+            .footer {
+                padding-bottom: 25px;
             }
         }
     </style>
 </head>
 
-
 <body>
 
-<div class="app-container">
+    <!-- =========================================================
+         PAGE LOADER
+         ========================================================= -->
 
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
-
-    <aside class="sidebar">
-
-        <div class="sidebar-logo">
-            <div class="logo-icon">
-                C
-            </div>
-
-            <div class="logo-text">
-                <strong>Crown</strong>
-                <span>Cash</span>
-            </div>
+    <div id="pageLoader">
+        <div class="loader-box">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Loading Crown Cash...</div>
         </div>
+    </div>
 
+    <!-- =========================================================
+         MOBILE SIDEBAR OVERLAY
+         ========================================================= -->
 
-        <nav class="sidebar-nav">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-            <a href="dashboard.html">
-                <span>Dashboard</span>
-            </a>
+    <div class="app-shell">
 
-            <a href="profile.html">
-                <span>Profile</span>
-            </a>
+        <!-- =====================================================
+             SIDEBAR
+             ===================================================== -->
 
-            <a href="investments.html">
-                <span>Investments</span>
-            </a>
+        <aside class="sidebar" id="sidebar">
 
-            <a href="deposit.html" class="active">
-                <span>Deposits</span>
-            </a>
+            <div class="brand">
 
-            <a href="withdraw.html">
-                <span>Withdrawals</span>
-            </a>
-
-            <a href="team.html">
-                <span>Referral Team</span>
-            </a>
-
-            <a href="transactions.html">
-                <span>Transactions</span>
-            </a>
-
-            <a href="support.html">
-                <span>Support</span>
-            </a>
-
-        </nav>
-
-
-        <div class="sidebar-bottom">
-
-            <button type="button" id="logoutButton">
-                Logout
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <main class="main-content">
-
-
-        <!-- TOPBAR -->
-
-        <header class="topbar">
-
-            <div>
-                <h1>Make a Deposit</h1>
-                <p>
-                    Add funds to your Crown Cash account.
-                </p>
-            </div>
-
-        </header>
-
-
-        <!-- =================================================
-             BALANCE
-        ================================================== -->
-
-        <section class="balance-card">
-
-            <div>
-                <span>Available Balance</span>
-
-                <h2 id="availableBalance">
-                    UGX 0
-                </h2>
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             DEPOSIT FORM
-        ================================================== -->
-
-        <section class="deposit-card">
-
-            <div class="card-header">
-
-                <h2>Deposit Funds</h2>
-
-                <p>
-                    Add money to your Crown Cash account.
-                </p>
-
-            </div>
-
-
-            <div id="formMessage"
-                 class="admin-message"
-                 style="display:none;">
-            </div>
-
-
-            <form id="depositForm">
-
-
-                <!-- AMOUNT -->
-
-                <div class="form-group">
-
-                    <label for="amount">
-                        Deposit Amount
-                    </label>
-
-                    <div class="amount-input">
-
-                        <span>UGX</span>
-
-                        <input
-                            type="number"
-                            id="amount"
-                            name="amount"
-                            min="10000"
-                            step="1000"
-                            placeholder="Enter amount"
-                            required
-                        >
-
-                    </div>
-
-                    <small>
-                        Minimum deposit: UGX 10,000
-                    </small>
-
+                <div class="brand-logo">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M3 9l3-5h12l3 5"></path>
+                        <path d="M4 9h16"></path>
+                        <path d="M5 9v10h14V9"></path>
+                        <path d="M9 19v-6h6v6"></path>
+                        <path d="M8 4l2 5 2-5 2 5 2-5"></path>
+                    </svg>
                 </div>
 
+                <div>
+                    <div class="brand-name">Crown Cash</div>
+                    <div class="brand-tagline">INVEST • GROW • EARN</div>
+                </div>
 
-                <!-- PAYMENT METHOD -->
+            </div>
 
-                <div class="form-group">
+            <div class="nav-title">Main Menu</div>
 
-                    <label>
-                        Payment Method
-                    </label>
+            <nav class="sidebar-nav">
 
+                <a class="nav-link" href="dashboard.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    Dashboard
+                </a>
 
-                    <div class="payment-methods">
+                <a class="nav-link" href="profile.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="8" r="4"></circle>
+                        <path d="M4 21c.7-4 3.4-6 8-6s7.3 2 8 6"></path>
+                    </svg>
+                    Profile
+                </a>
 
+                <a class="nav-link" href="investments.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="M7 15l4-4 3 2 5-7"></path>
+                    </svg>
+                    Investments
+                </a>
 
-                        <!-- MTN -->
+                <a class="nav-link" href="my-investments.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <rect x="3" y="5" width="18" height="15" rx="2"></rect>
+                        <path d="M7 9h10"></path>
+                        <path d="M7 13h5"></path>
+                    </svg>
+                    My Investments
+                </a>
 
-                        <label class="payment-option">
+                <a class="nav-link active" href="deposit.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 7v10"></path>
+                        <path d="M8.5 10.5c.5-1.2 1.7-1.8 3.5-1.8 1.8 0 3 .7 3 2 0 1.4-1.2 1.8-3 2.1-1.8.3-3.5.8-3.5 2.3 0 1.3 1.2 2.2 3.2 2.2 1.8 0 3.1-.7 3.6-2"></path>
+                    </svg>
+                    Deposits
+                </a>
 
-                            <input
-                                type="radio"
-                                id="mtn"
-                                name="paymentMethod"
-                                value="mtn"
-                            >
+                <a class="nav-link" href="withdraw.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M12 3v14"></path>
+                        <path d="M7 12l5 5 5-5"></path>
+                        <path d="M4 21h16"></path>
+                    </svg>
+                    Withdrawals
+                </a>
 
-                            <span class="payment-option-content">
+                <a class="nav-link" href="team.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <circle cx="17" cy="10" r="2.5"></circle>
+                        <path d="M3 20c.5-4 2.5-6 6-6s5.5 2 6 6"></path>
+                        <path d="M15 15c3 0 4.7 1.6 5 4"></path>
+                    </svg>
+                    Referral Team
+                </a>
 
-                                <span class="payment-icon mtn-icon">
-                                    MTN
-                                </span>
+                <a class="nav-link" href="transactions.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M7 7h13"></path>
+                        <path d="M17 4l3 3-3 3"></path>
+                        <path d="M17 17H4"></path>
+                        <path d="M7 14l-3 3 3 3"></path>
+                    </svg>
+                    Transactions
+                </a>
 
-                                <span>
-                                    <strong>
-                                        MTN Mobile Money
-                                    </strong>
+                <a class="nav-link" href="support.html">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.8-2.5 2-2.5 3.5"></path>
+                        <circle cx="12" cy="16.5" r=".7" fill="currentColor"></circle>
+                    </svg>
+                    Support
+                </a>
 
-                                    <small>
-                                        Pay using MTN MoMo
-                                    </small>
-                                </span>
+                <a class="nav-link logout-link" href="#" id="logoutLink">
+                    <svg viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8">
+                        <path d="M10 5H5v14h5"></path>
+                        <path d="M14 8l4 4-4 4"></path>
+                        <path d="M18 12H9"></path>
+                    </svg>
+                    Logout
+                </a>
 
-                            </span>
+            </nav>
 
-                        </label>
+        </aside>
 
+        <!-- =====================================================
+             MAIN CONTENT
+             ===================================================== -->
 
-                        <!-- AIRTEL -->
+        <main class="main-content">
 
-                        <label class="payment-option">
+            <!-- TOP BAR -->
+            <header class="topbar">
 
-                            <input
-                                type="radio"
-                                id="airtel"
-                                name="paymentMethod"
-                                value="airtel"
-                            >
+                <div style="display:flex;align-items:center;gap:12px;">
 
-                            <span class="payment-option-content">
+                    <button
+                        type="button"
+                        class="mobile-menu"
+                        id="mobileMenuButton"
+                        aria-label="Open menu"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2">
+                            <path d="M4 6h16"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 18h16"></path>
+                        </svg>
+                    </button>
 
-                                <span class="payment-icon airtel-icon">
-                                    Airtel
-                                </span>
-
-                                <span>
-                                    <strong>
-                                        Airtel Money
-                                    </strong>
-
-                                    <small>
-                                        Pay using Airtel Money
-                                    </small>
-                                </span>
-
-                            </span>
-
-                        </label>
-
-
+                    <div>
+                        <div class="topbar-title">Make a Deposit</div>
+                        <div class="topbar-subtitle">
+                            Securely fund your Crown Cash wallet
+                        </div>
                     </div>
 
                 </div>
+
+                <div class="secure-badge">
+                    <span class="secure-dot"></span>
+                    SECURE TRANSACTION
+                </div>
+
+            </header>
+
+
+            <!-- PAGE CONTENT -->
+            <div class="page-container">
+
+                <!-- =================================================
+                     HERO
+                     ================================================= -->
+
+                <section class="hero">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            <span class="eyebrow-line"></span>
+                            SECURE WALLET FUNDING
+                        </div>
+
+                        <h1>Deposit Funds</h1>
+
+                        <p>
+                            Fund your Crown Cash wallet securely with
+                            Mobile Money and continue growing your
+                            investment balance.
+                        </p>
+
+                    </div>
+
+                    <div class="security-card">
+
+                        <div class="security-icon">
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8">
+                                <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"></path>
+                                <path d="M9 12l2 2 4-4"></path>
+                            </svg>
+                        </div>
+
+                        Secure Funding
+
+                    </div>
+
+                </section>
 
 
                 <!-- =================================================
-                     PAYMENT ACCOUNT
-                ================================================== -->
+                     BALANCE
+                     ================================================= -->
 
-                <div class="payment-account">
+                <section class="balance-card">
 
-                    <h3>
-                        Crown Cash Payment Account
-                    </h3>
+                    <div>
+                        <div class="balance-label">
+                            Available Wallet Balance
+                        </div>
 
-                    <div class="payment-details"
-                         id="paymentDetails">
+                        <div
+                            class="balance-value"
+                            id="availableBalance"
+                        >
+                            UGX 0
+                        </div>
+                    </div>
 
-                        <h4 id="paymentDetailsTitle">
-                            Select a payment method
-                        </h4>
+                    <div class="balance-note">
+                        Deposits are reviewed before your wallet is credited.
+                    </div>
 
-                        <p id="paymentDetailsText">
-                            Select MTN Mobile Money or Airtel
-                            Money above to view the payment
-                            details.
-                        </p>
+                </section>
 
 
-                        <div class="merchant-code">
+                <!-- =================================================
+                     DEPOSIT FORM
+                     ================================================= -->
+
+                <section class="section-card deposit-card">
+
+                    <div class="card-heading">
+
+                        <div class="heading-row">
+
+                            <div class="heading-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+                                    <path d="M12 3v18"></path>
+                                    <path d="M7 8l5-5 5 5"></path>
+                                    <path d="M5 21h14"></path>
+                                </svg>
+                            </div>
 
                             <div>
+                                <h2>Fund Your Wallet</h2>
+                                <p>
+                                    Enter your amount and choose your
+                                    Mobile Money payment method.
+                                </p>
+                            </div>
 
-                                <span>
-                                    Merchant Code
-                                </span>
+                        </div>
 
-                                <strong id="merchantCode">
-                                    —
-                                </strong>
+                    </div>
+
+
+                    <form
+                        id="depositForm"
+                        class="deposit-form"
+                        autocomplete="off"
+                    >
+
+                        <div class="form-grid">
+
+                            <!-- AMOUNT -->
+                            <div class="full-width">
+
+                                <label
+                                    class="form-label"
+                                    for="amount"
+                                >
+                                    Deposit Amount
+                                </label>
+
+                                <div class="input-wrap">
+
+                                    <span class="currency">UGX</span>
+
+                                    <input
+                                        type="number"
+                                        id="amount"
+                                        name="amount"
+                                        class="form-input"
+                                        min="10000"
+                                        step="1000"
+                                        placeholder="Enter amount"
+                                        required
+                                    >
+
+                                </div>
+
+                                <div class="input-help">
+                                    Minimum deposit is UGX 10,000.
+                                </div>
 
                             </div>
 
 
-                            <button
-                                type="button"
-                                id="copyMerchantCode"
-                                disabled
-                            >
-                                Copy
-                            </button>
+                            <!-- PAYMENT METHOD -->
+                            <div class="full-width">
+
+                                <label class="form-label">
+                                    Choose Payment Method
+                                </label>
+
+                                <div class="payment-methods">
+
+                                    <!-- MTN -->
+                                    <div class="payment-option">
+
+                                        <input
+                                            type="radio"
+                                            id="mtn"
+                                            name="paymentMethod"
+                                            value="mtn"
+                                            checked
+                                        >
+
+                                        <label
+                                            class="payment-label"
+                                            for="mtn"
+                                        >
+
+                                            <div class="network-logo mtn-logo">
+                                                MTN
+                                            </div>
+
+                                            <div class="payment-copy">
+                                                <strong>
+                                                    MTN Mobile Money
+                                                </strong>
+                                                <span>
+                                                    MTN Uganda
+                                                </span>
+                                            </div>
+
+                                            <span class="radio-dot"></span>
+
+                                        </label>
+
+                                    </div>
+
+
+                                    <!-- AIRTEL -->
+                                    <div class="payment-option">
+
+                                        <input
+                                            type="radio"
+                                            id="airtel"
+                                            name="paymentMethod"
+                                            value="airtel"
+                                        >
+
+                                        <label
+                                            class="payment-label"
+                                            for="airtel"
+                                        >
+
+                                            <div class="network-logo airtel-logo">
+                                                AIRTEL
+                                            </div>
+
+                                            <div class="payment-copy">
+                                                <strong>
+                                                    Airtel Money
+                                                </strong>
+                                                <span>
+                                                    Airtel Uganda
+                                                </span>
+                                            </div>
+
+                                            <span class="radio-dot"></span>
+
+                                        </label>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- PAYMENT DETAILS -->
+                            <div class="full-width">
+
+                                <div
+                                    class="payment-details"
+                                    id="paymentDetails"
+                                >
+
+                                    <div class="details-header">
+
+                                        <div
+                                            class="details-title"
+                                            id="paymentDetailsTitle"
+                                        >
+                                            MTN MOBILE MONEY
+                                        </div>
+
+                                        <div class="ready-badge">
+                                            READY
+                                        </div>
+
+                                    </div>
+
+                                    <div class="merchant-row">
+
+                                        <div>
+
+                                            <div class="merchant-label">
+                                                MTN Merchant Code
+                                            </div>
+
+                                            <div
+                                                class="merchant-code"
+                                                id="merchantCode"
+                                            >
+                                                80257065
+                                            </div>
+
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            class="copy-btn"
+                                            id="copyMerchantCode"
+                                        >
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8">
+                                                <rect
+                                                    x="9"
+                                                    y="9"
+                                                    width="11"
+                                                    height="11"
+                                                    rx="2">
+                                                </rect>
+                                                <path
+                                                    d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1">
+                                                </path>
+                                            </svg>
+
+                                            <span>Copy</span>
+
+                                        </button>
+
+                                    </div>
+
+                                    <div
+                                        class="payment-instruction"
+                                        id="paymentDetailsText"
+                                    >
+                                        Dial
+                                        <strong class="ussd">
+                                            *165*3#
+                                        </strong>
+                                        on your MTN line, select the
+                                        merchant payment option, enter
+                                        merchant code
+                                        <strong>80257065</strong>,
+                                        enter the amount and confirm
+                                        the payment.
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- TRANSACTION REFERENCE -->
+                            <div class="full-width">
+
+                                <label
+                                    class="form-label"
+                                    for="transactionReference"
+                                >
+                                    Transaction Reference
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="transactionReference"
+                                    name="transactionReference"
+                                    class="form-input"
+                                    style="padding-left:16px;"
+                                    placeholder="Enter your Mobile Money transaction reference"
+                                    maxlength="100"
+                                    required
+                                >
+
+                                <div class="input-help">
+                                    Enter the exact transaction reference
+                                    received after making your payment.
+                                </div>
+
+                            </div>
+
+
+                            <!-- MESSAGE -->
+                            <div class="full-width">
+
+                                <div
+                                    id="formMessage"
+                                    class="admin-message"
+                                    role="alert"
+                                ></div>
+
+                            </div>
+
+
+                            <!-- SUBMIT -->
+                            <div class="full-width submit-area">
+
+                                <button
+                                    type="submit"
+                                    class="submit-button"
+                                    id="depositButton"
+                                >
+
+                                    <svg viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2">
+                                        <path d="M12 3v14"></path>
+                                        <path d="M7 12l5 5 5-5"></path>
+                                        <path d="M4 21h16"></path>
+                                    </svg>
+
+                                    Submit Deposit
+
+                                </button>
+
+                            </div>
 
                         </div>
 
-                    </div>
+                    </form>
 
-                </div>
+                </section>
 
 
                 <!-- =================================================
-                     TRANSACTION REFERENCE
-                ================================================== -->
+                     HOW DEPOSITS WORK
+                     ================================================= -->
 
-                <div class="form-group">
+                <section class="how-section">
 
-                    <label for="transactionReference">
-                        Transaction Reference
-                    </label>
+                    <div class="section-header">
 
-                    <input
-                        type="text"
-                        id="transactionReference"
-                        name="transaction_reference"
-                        placeholder="Enter transaction reference"
-                        autocomplete="off"
-                        required
-                    >
+                        <div class="eyebrow">
+                            <span class="eyebrow-line"></span>
+                            SIMPLE & SECURE
+                        </div>
 
-                    <small>
-                        Enter the transaction ID you received
-                        after making the payment.
-                    </small>
-
-                </div>
-
-
-                <!-- SUBMIT -->
-
-                <button
-                    type="submit"
-                    id="depositButton"
-                    class="primary-button"
-                >
-                    Submit Deposit
-                </button>
-
-
-            </form>
-
-        </section>
-
-
-        <!-- =====================================================
-             DEPOSIT PROCEDURES
-        ====================================================== -->
-
-        <section class="deposit-instructions"
-                 id="depositInstructions">
-
-
-            <div class="section-heading">
-
-                <div class="section-heading-icon">
-
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-
-                        <path d="M12 20h9"></path>
-
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-
-                    </svg>
-
-                </div>
-
-
-                <div>
-
-                    <h2>
-                        How to Make a Deposit
-                    </h2>
-
-                    <p>
-                        Follow the procedure for your selected
-                        Mobile Money network.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <!-- DEFAULT -->
-
-            <div class="procedure-default"
-                 id="procedureDefault">
-
-                <div class="procedure-default-icon">
-
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-
-                        <circle cx="12" cy="12" r="9"></circle>
-
-                        <line x1="12"
-                              y1="8"
-                              x2="12"
-                              y2="12"></line>
-
-                        <line x1="12"
-                              y1="16"
-                              x2="12.01"
-                              y2="16"></line>
-
-                    </svg>
-
-                </div>
-
-
-                <div>
-
-                    <h3>
-                        Select Your Payment Network
-                    </h3>
-
-                    <p>
-                        Select <strong>MTN Mobile Money</strong>
-                        or <strong>Airtel Money</strong> above
-                        to see the correct merchant code and
-                        step-by-step deposit procedure.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 MTN PROCEDURE
-            ================================================== -->
-
-            <div class="network-procedure"
-                 id="mtnProcedure">
-
-
-                <div class="procedure-network-header mtn-header">
-
-                    <div class="network-logo">
-                        MTN
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            MTN Mobile Money
-                        </h3>
+                        <h2>How Deposits Work</h2>
 
                         <p>
-                            Follow these steps to make your
-                            deposit.
+                            Follow these four simple steps to fund your
+                            Crown Cash wallet.
                         </p>
 
                     </div>
 
-                </div>
 
+                    <div class="steps-grid">
 
-                <div class="procedure-code-box">
+                        <!-- STEP 01 -->
+                        <article class="step-card">
 
-                    <div class="code-label">
-                        Crown Cash MTN Merchant Code
-                    </div>
+                            <div class="step-number">01</div>
 
-                    <div class="code-value">
+                            <div class="step-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+                                    <path d="M6 4h12v16H6z"></path>
+                                    <path d="M9 8h6"></path>
+                                    <path d="M9 12h6"></path>
+                                    <path d="M10 16h4"></path>
+                                </svg>
+                            </div>
 
-                        <span>
-                            80257065
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="procedure-steps">
-
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            1
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Open MTN Mobile Money
-                            </h4>
+                            <h3>Enter Amount</h3>
 
                             <p>
-                                Open your MTN Mobile Money
-                                menu on your phone.
+                                Choose how much you want to add to your
+                                Crown Cash wallet.
                             </p>
 
-                        </div>
-
-                    </div>
+                        </article>
 
 
-                    <div class="procedure-step">
+                        <!-- STEP 02 -->
+                        <article class="step-card">
 
-                        <div class="step-number">
-                            2
-                        </div>
+                            <div class="step-number">02</div>
 
-                        <div class="step-content">
+                            <div class="step-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+                                    <rect
+                                        x="5"
+                                        y="3"
+                                        width="14"
+                                        height="18"
+                                        rx="2">
+                                    </rect>
+                                    <path d="M8 7h8"></path>
+                                    <path d="M8 11h8"></path>
+                                    <circle
+                                        cx="12"
+                                        cy="17"
+                                        r="1">
+                                    </circle>
+                                </svg>
+                            </div>
 
-                            <h4>
-                                Choose merchant payment
-                            </h4>
+                            <h3>Make Payment</h3>
 
                             <p>
-                                Select the option for making a
-                                merchant or business payment.
+                                Use MTN Mobile Money or Airtel Money
+                                with the merchant details shown above.
                             </p>
 
-                        </div>
-
-                    </div>
+                        </article>
 
 
-                    <div class="procedure-step">
+                        <!-- STEP 03 -->
+                        <article class="step-card">
 
-                        <div class="step-number">
-                            3
-                        </div>
+                            <div class="step-number">03</div>
 
-                        <div class="step-content">
+                            <div class="step-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+                                    <path d="M4 5h16v14H4z"></path>
+                                    <path d="M7 9h10"></path>
+                                    <path d="M7 13h6"></path>
+                                    <path d="M7 17h4"></path>
+                                </svg>
+                            </div>
 
-                            <h4>
-                                Enter the merchant code
-                            </h4>
+                            <h3>Submit Reference</h3>
 
                             <p>
-                                Enter the Crown Cash MTN
-                                merchant code:
+                                Enter the Mobile Money transaction
+                                reference you received after payment.
                             </p>
 
-                            <strong class="procedure-highlight">
-                                80257065
-                            </strong>
-
-                        </div>
-
-                    </div>
+                        </article>
 
 
-                    <div class="procedure-step">
+                        <!-- STEP 04 -->
+                        <article class="step-card">
 
-                        <div class="step-number">
-                            4
-                        </div>
+                            <div class="step-number">04</div>
 
-                        <div class="step-content">
+                            <div class="step-icon">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <path d="M8 12l2.5 2.5L16 9"></path>
+                                </svg>
+                            </div>
 
-                            <h4>
-                                Enter the deposit amount
-                            </h4>
+                            <h3>Wallet Updated</h3>
 
                             <p>
-                                Enter the amount you want to
-                                deposit. The minimum deposit is
-                                <strong>UGX 10,000</strong>.
+                                Once your payment is confirmed and
+                                approved, your wallet balance is updated.
                             </p>
 
-                        </div>
+                        </article>
 
                     </div>
 
+                </section>
 
-                    <div class="procedure-step">
 
-                        <div class="step-number">
-                            5
+                <!-- =================================================
+                     MTN + AIRTEL PAYMENT PROCEDURES
+                     ================================================= -->
+
+                <section class="procedure-section">
+
+                    <div class="section-header">
+
+                        <div class="eyebrow">
+                            <span class="eyebrow-line"></span>
+                            PAYMENT INSTRUCTIONS
                         </div>
 
-                        <div class="step-content">
-
-                            <h4>
-                                Confirm your payment
-                            </h4>
-
-                            <p>
-                                Check the merchant code and
-                                amount carefully, then confirm
-                                the payment using your Mobile
-                                Money PIN.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            6
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Wait for confirmation
-                            </h4>
-
-                            <p>
-                                Wait for the MTN confirmation
-                                SMS after completing the
-                                payment.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            7
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Copy your transaction reference
-                            </h4>
-
-                            <p>
-                                Find the transaction ID or
-                                reference in your MTN confirmation
-                                message and copy it.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            8
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Submit your deposit
-                            </h4>
-
-                            <p>
-                                Enter the transaction reference
-                                in the field above and click
-                                <strong>Submit Deposit</strong>.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="procedure-warning">
-
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
-
-                        <path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"></path>
-
-                        <line x1="12"
-                              y1="9"
-                              x2="12"
-                              y2="13"></line>
-
-                        <line x1="12"
-                              y1="17"
-                              x2="12.01"
-                              y2="17"></line>
-
-                    </svg>
-
-                    <p>
-                        <strong>Important:</strong>
-                        Verify that the merchant code and
-                        amount are correct before confirming
-                        your payment.
-                    </p>
-
-                </div>
-
-
-            </div>
-
-
-            <!-- =================================================
-                 AIRTEL PROCEDURE
-            ================================================== -->
-
-            <div class="network-procedure"
-                 id="airtelProcedure">
-
-
-                <div class="procedure-network-header airtel-header">
-
-                    <div class="network-logo">
-                        Airtel
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            Airtel Money
-                        </h3>
+                        <h2>How to Make Your Payment</h2>
 
                         <p>
-                            Follow these steps to make your
-                            deposit.
+                            Follow the instructions for the Mobile Money
+                            network you selected.
                         </p>
 
                     </div>
 
-                </div>
+
+                    <div class="procedure-grid">
+
+                        <!-- MTN PROCEDURE -->
+                        <article class="procedure-card">
+
+                            <div class="procedure-header">
+
+                                <div class="procedure-network">
+
+                                    <div class="procedure-network-logo mtn-logo">
+                                        MTN
+                                    </div>
+
+                                    <h3>MTN Mobile Money</h3>
+
+                                </div>
+
+                                <div class="procedure-code">
+                                    80257065
+                                </div>
+
+                            </div>
 
 
-                <div class="procedure-code-box">
+                            <ol class="procedure-list">
 
-                    <div class="code-label">
-                        Crown Cash Airtel Merchant Code
+                                <li>
+                                    <span>1</span>
+                                    <div>
+                                        Dial
+                                        <strong>*165*3#</strong>
+                                        on your MTN line.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>2</span>
+                                    <div>
+                                        Select the
+                                        <strong>merchant/business payment</strong>
+                                        option.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>3</span>
+                                    <div>
+                                        Enter Crown Cash merchant code
+                                        <strong>80257065</strong>.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>4</span>
+                                    <div>
+                                        Enter the amount you want to
+                                        deposit. Minimum is
+                                        <strong>UGX 10,000</strong>.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>5</span>
+                                    <div>
+                                        Check the payment details and
+                                        confirm using your Mobile Money PIN.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>6</span>
+                                    <div>
+                                        Wait for the MTN confirmation SMS.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>7</span>
+                                    <div>
+                                        Copy the
+                                        <strong>transaction ID/reference</strong>
+                                        from your confirmation message.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>8</span>
+                                    <div>
+                                        Enter the reference above and
+                                        click <strong>Submit Deposit</strong>.
+                                    </div>
+                                </li>
+
+                            </ol>
+
+                        </article>
+
+
+                        <!-- AIRTEL PROCEDURE -->
+                        <article class="procedure-card">
+
+                            <div class="procedure-header">
+
+                                <div class="procedure-network">
+
+                                    <div class="procedure-network-logo airtel-logo">
+                                        AIRTEL
+                                    </div>
+
+                                    <h3>Airtel Money</h3>
+
+                                </div>
+
+                                <div class="procedure-code">
+                                    7229487
+                                </div>
+
+                            </div>
+
+
+                            <ol class="procedure-list">
+
+                                <li>
+                                    <span>1</span>
+                                    <div>
+                                        Open your Airtel Money menu
+                                        or use the available merchant
+                                        payment option.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>2</span>
+                                    <div>
+                                        Select the
+                                        <strong>merchant/business payment</strong>
+                                        option.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>3</span>
+                                    <div>
+                                        Enter Crown Cash merchant code
+                                        <strong>7229487</strong>.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>4</span>
+                                    <div>
+                                        Enter the amount you want to
+                                        deposit. Minimum is
+                                        <strong>UGX 10,000</strong>.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>5</span>
+                                    <div>
+                                        Check the payment details and
+                                        confirm using your Mobile Money PIN.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>6</span>
+                                    <div>
+                                        Wait for the Airtel confirmation SMS.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>7</span>
+                                    <div>
+                                        Copy the
+                                        <strong>transaction ID/reference</strong>
+                                        from your confirmation message.
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <span>8</span>
+                                    <div>
+                                        Enter the reference above and
+                                        click <strong>Submit Deposit</strong>.
+                                    </div>
+                                </li>
+
+                            </ol>
+
+                        </article>
+
                     </div>
 
-                    <div class="code-value">
-
-                        <span>
-                            7229487
-                        </span>
-
-                    </div>
-
-                </div>
+                </section>
 
 
-                <div class="procedure-steps">
+                <!-- =================================================
+                     RECENT DEPOSITS
+                     ================================================= -->
 
+                <section class="history-section">
 
-                    <div class="procedure-step">
+                    <div class="section-card history-card">
 
-                        <div class="step-number">
-                            1
-                        </div>
+                        <div class="history-header">
 
-                        <div class="step-content">
+                            <div>
+                                <h2>Recent Deposits</h2>
+                            </div>
 
-                            <h4>
-                                Open Airtel Money
-                            </h4>
-
-                            <p>
-                                Open your Airtel Money menu
-                                on your phone.
-                            </p>
+                            <span>
+                                Your latest wallet funding activity
+                            </span>
 
                         </div>
 
-                    </div>
+                        <div id="depositHistory">
 
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            2
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Choose merchant payment
-                            </h4>
-
-                            <p>
-                                Select the option for making a
-                                merchant or business payment.
-                            </p>
+                            <div class="empty-history">
+                                No recent deposits to display.
+                            </div>
 
                         </div>
 
                     </div>
 
+                </section>
 
-                    <div class="procedure-step">
 
-                        <div class="step-number">
-                            3
-                        </div>
+                <!-- =================================================
+                     FOOTER
+                     ================================================= -->
 
-                        <div class="step-content">
+                <footer class="footer">
 
-                            <h4>
-                                Enter the merchant code
-                            </h4>
-
-                            <p>
-                                Enter the Crown Cash Airtel
-                                merchant code:
-                            </p>
-
-                            <strong class="procedure-highlight">
-                                7229487
-                            </strong>
-
-                        </div>
-
+                    <div class="footer-brand">
+                        Crown Cash
                     </div>
 
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            4
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Enter the deposit amount
-                            </h4>
-
-                            <p>
-                                Enter the amount you want to
-                                deposit. The minimum deposit is
-                                <strong>UGX 10,000</strong>.
-                            </p>
-
-                        </div>
-
+                    <div class="footer-tagline">
+                        INVEST • GROW • EARN
                     </div>
 
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            5
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Confirm your payment
-                            </h4>
-
-                            <p>
-                                Check the merchant code and
-                                amount carefully, then confirm
-                                the payment using your Mobile
-                                Money PIN.
-                            </p>
-
-                        </div>
-
+                    <div style="margin-top:8px;">
+                        Secure Mobile Money Funding
                     </div>
 
-
-                    <div class="procedure-step">
-
-                        <div class="step-number">
-                            6
-                        </div>
-
-                        <div class="step-content">
-
-                            <h4>
-                                Wait for confirmation
-                            </h4>
-
-                            <p>
-                                Wait for the Airtel confirmation
-                                SMS after completing the
-                                payment.
-                            </p>
-
-                        </div>
-
+                    <div class="footer-links">
+                        <a href="dashboard.html">Dashboard</a>
+                        <a href="terms.html">Terms</a>
+                        <a href="privacy.html">Privacy</a>
+                        <a href="support.html">Support</a>
                     </div>
 
+                    <div style="margin-top:14px;">
+                        © 2026 Crown Cash. All rights reserved.
+                    </div>
 
-                    <div class="procedure-step">
+                </footer>
 
-                        <
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================================
+         PAGE SCRIPT
+         ========================================================= -->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* -----------------------------------------------------
+               Mobile sidebar
+               ----------------------------------------------------- */
+
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("sidebarOverlay");
+            const menuButton = document.getElementById("mobileMenuButton");
+
+            function openSidebar() {
+                if (sidebar) sidebar.classList.add("mobile-open");
+                if (overlay) overlay.classList.add("active");
+                document.body.style.overflow = "hidden";
+            }
+
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove("mobile-open");
+                if (overlay) overlay.classList.remove("active");
+                document.body.style.overflow = "";
+            }
+
+            if (menuButton) {
+                menuButton.addEventListener("click", openSidebar);
+            }
+
+            if (overlay) {
+                overlay.addEventListener("click", closeSidebar);
+            }
+
+            document.querySelectorAll(".nav-link").forEach(function (link) {
+                link.addEventListener("click", function () {
+                    if (window.innerWidth <= 850) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+
+            /* -----------------------------------------------------
+               Merchant codes
+               ----------------------------------------------------- */
+
+            const merchantCodes = {
+                mtn: "80257065",
+                airtel: "7229487"
+            };
+
+            const merchantCode = document.getElementById("merchantCode");
+            const copyButton = document.getElementById("copyMerchantCode");
+            const detailsTitle =
+                document.getElementById("paymentDetailsTitle");
+            const detailsText =
+                document.getElementById("paymentDetailsText");
+
+            const mtnRadio = document.getElementById("mtn");
+            const airtelRadio = document.getElementById("airtel");
+
+
+            function updatePaymentDetails(network) {
+
+                if (!merchantCode) return;
+
+                const code = merchantCodes[network];
+
+                merchantCode.textContent = code || "—";
+
+                if (network === "airtel") {
+
+                    if (detailsTitle) {
+                        detailsTitle.textContent = "AIRTEL MONEY";
+                    }
+
+                    if (detailsText) {
+                        detailsText.innerHTML =
+                            'Open your Airtel Money menu, select the ' +
+                            '<strong>merchant/business payment</strong> ' +
+                            'option, enter merchant code ' +
+                            '<strong>7229487</strong>, enter the amount ' +
+                            'and confirm the payment.';
+                    }
+
+                } else {
+
+                    if (detailsTitle) {
+                        detailsTitle.textContent = "MTN MOBILE MONEY";
+                    }
+
+                    if (detailsText) {
+                        detailsText.innerHTML =
+                            'Dial <strong class="ussd">*165*3#</strong> ' +
+                            'on your MTN line, select the merchant payment ' +
+                            'option, enter merchant code ' +
+                            '<strong>80257065</strong>, enter the amount ' +
+                            'and confirm the payment.';
+                    }
+                }
+            }
+
+
+            if (mtnRadio) {
+                mtnRadio.addEventListener("change", function () {
+                    if (this.checked) {
+                        updatePaymentDetails("mtn");
+                    }
+                });
+            }
+
+            if (airtelRadio) {
+                airtelRadio.addEventListener("change", function () {
+                    if (this.checked) {
+                        updatePaymentDetails("airtel");
+                    }
+                });
+            }
+
+
+            /* -----------------------------------------------------
+               Copy merchant code
+               ----------------------------------------------------- */
+
+            if (copyButton) {
+
+                copyButton.addEventListener("click", async function () {
+
+                    const code =
+                        merchantCode
+                            ? merchantCode.textContent.trim()
+                            : "";
+
+                    if (!code || code === "—") {
+                        return;
+                    }
+
+                    try {
+
+                        await navigator.clipboard.writeText(code);
+
+                        const original =
+                            copyButton.innerHTML;
+
+                        copyButton.innerHTML =
+                            '<svg viewBox="0 0 24 24" fill="none" ' +
+                            'stroke="currentColor" stroke-width="1.8">' +
+                            '<path d="M5 12l4 4L19 6"></path>' +
+                            '</svg><span>Copied</span>';
+
+                        setTimeout(function () {
+                            copyButton.innerHTML = original;
+                        }, 1600);
+
+                    } catch (error) {
+
+                        const textarea =
+                            document.createElement("textarea");
+
+                        textarea.value = code;
+                        textarea.style.position = "fixed";
+                        textarea.style.opacity = "0";
+
+                        document.body.appendChild(textarea);
+                        textarea.select();
+
+                        try {
+                            document.execCommand("copy");
+                        } catch (e) {}
+
+                        document.body.removeChild(textarea);
+
+                    }
+
+                });
+
+            }
+
+
+            /* -----------------------------------------------------
+               Initial payment selection
+               ----------------------------------------------------- */
+
+            if (airtelRadio && airtelRadio.checked) {
+                updatePaymentDetails("airtel");
+            } else {
+                updatePaymentDetails("mtn");
+            }
+
+
+            /* -----------------------------------------------------
+               Hide loader
+               ----------------------------------------------------- */
+
+            const loader = document.getElementById("pageLoader");
+
+            setTimeout(function () {
+
+                if (loader) {
+                    loader.classList.add("hidden");
+                }
+
+            }, 450);
+
+
+            /* -----------------------------------------------------
+               Logout
+               ----------------------------------------------------- */
+
+            const logoutLink =
+                document.getElementById("logoutLink");
+
+            if (logoutLink) {
+
+                logoutLink.addEventListener("click", function (event) {
+
+                    event.preventDefault();
+
+                    try {
+                        sessionStorage.clear();
+                    } catch (error) {}
+
+                    try {
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("authToken");
+                    } catch (error) {}
+
+                    window.location.href = "login.html";
+
+                });
+
+            }
+
+        });
+    </script>
+
+
+    <!-- Your existing deposit functionality -->
+    <script src="deposit.js"></script>
+
+</body>
+</html>

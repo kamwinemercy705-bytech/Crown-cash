@@ -4,8 +4,13 @@
    CROWN CASH — ADMIN INVESTMENTS API
    ========================================================= */
 
+declare(strict_types=1);
+
+/* =========================================================
+   SESSION / COOKIE
+   ========================================================= */
+
 session_set_cookie_params([
-    "lifetime" => 0,
     "path" => "/",
     "secure" => true,
     "httponly" => true,
@@ -19,15 +24,25 @@ session_start();
    ========================================================= */
 
 header("Content-Type: application/json; charset=UTF-8");
+
 header(
     "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
 );
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+
+header(
+    "Access-Control-Allow-Credentials: true"
+);
+
+header(
+    "Access-Control-Allow-Methods: GET, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type, Accept"
+);
 
 /* =========================================================
-   OPTIONS
+   OPTIONS REQUEST
    ========================================================= */
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
@@ -36,10 +51,11 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 }
 
 /* =========================================================
-   ONLY GET
+   ONLY GET ALLOWED
    ========================================================= */
 
 if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+
     http_response_code(405);
 
     echo json_encode([
@@ -58,6 +74,7 @@ if (
     !isset($_SESSION["logged_in"]) ||
     $_SESSION["logged_in"] !== true
 ) {
+
     http_response_code(401);
 
     echo json_encode([
@@ -69,16 +86,12 @@ if (
 }
 
 /* =========================================================
-   ADMIN ROLE
+   ADMIN ROLE CHECK
    ========================================================= */
 
 $sessionRole = strtolower(
     trim(
-        (string)(
-            $_SESSION["role"] ??
-            $_SESSION["account_type"] ??
-            ""
-        )
+        (string)($_SESSION["role"] ?? "")
     )
 );
 
@@ -86,6 +99,7 @@ if (
     $sessionRole !== "admin" &&
     $sessionRole !== "administrator"
 ) {
+
     http_response_code(403);
 
     echo json_encode([
@@ -103,7 +117,7 @@ if (
 require_once __DIR__ . "/config.php";
 
 /* =========================================================
-   HELPERS
+   HELPER — CONVERT MONGODB VALUES
    ========================================================= */
 
 function jsonSafeValue($value)
@@ -126,7 +140,28 @@ function jsonSafeValue($value)
         return (int)$value;
     }
 
+    if ($value instanceof MongoDB\Model\BSONDocument) {
+        $result = [];
+
+        foreach ($value as $key => $item) {
+            $result[$key] = jsonSafeValue($item);
+        }
+
+        return $result;
+    }
+
+    if ($value instanceof MongoDB\Model\BSONArray) {
+        $result = [];
+
+        foreach ($value as $key => $item) {
+            $result[$key] = jsonSafeValue($item);
+        }
+
+        return $result;
+    }
+
     if (is_array($value)) {
+
         $result = [];
 
         foreach ($value as $key => $item) {
@@ -137,6 +172,7 @@ function jsonSafeValue($value)
     }
 
     if (is_object($value)) {
+
         $result = [];
 
         foreach (get_object_vars($value) as $key => $item) {
@@ -150,52 +186,263 @@ function jsonSafeValue($value)
 }
 
 /* =========================================================
-   DATE FORMATTER
+   GET FIRST AVAILABLE FIELD
+   ========================================================= */
+
+function firstValue(array $document, array $fields, $default = null)
+{
+    foreach ($fields as $field) {
+
+        if (
+            array_key_exists($field, $document) &&
+            $document[$field] !== null &&
+            $document[$field] !== ""
+        ) {
+            return $document[$field];
+        }
+    }
+
+    return $default;
+}
+
+/* =========================================================
+   FORMAT DATE
    ========================================================= */
 
 function formatDateValue($value)
 {
-    if (
-        $value instanceof MongoDB\BSON\UTCDateTime
-    ) {
+    if ($value instanceof MongoDB\BSON\UTCDateTime) {
+
         return $value
             ->toDateTime()
             ->format(DATE_ATOM);
     }
 
-    if (
-        is_string($value) &&
-        trim($value) !== ""
-    ) {
+    if ($value instanceof MongoDB\BSON\ObjectId) {
+        return null;
+    }
+
+    if (is_string($value) && trim($value) !== "") {
         return $value;
+    }
+
+    if (is_numeric($value)) {
+
+        try {
+
+            $date = new DateTime(
+                "@" . ((int)$value / 1000)
+            );
+
+            $date->setTimezone(
+                new DateTimeZone("UTC")
+            );
+
+            return $date->format(DATE_ATOM);
+
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 
     return null;
 }
 
 /* =========================================================
-   MONEY FORMATTER
+   CONVERT VALUE TO OBJECT ID
    ========================================================= */
 
-function numericValue($value)
+function makeObjectId($value)
 {
-    if (
-        $value instanceof MongoDB\BSON\Decimal128
-    ) {
-        return (float)$value->__toString();
+    if ($value instanceof MongoDB\BSON\ObjectId) {
+        return $value;
     }
 
-    if (
-        $value instanceof MongoDB\BSON\Int64
-    ) {
-        return (float)$value;
+    if (is_string($value)) {
+
+        $value = trim($value);
+
+        if (
+            preg_match(
+                '/^[a-f0-9]{24}$/i',
+                $value
+            )
+        ) {
+
+            try {
+                return new MongoDB\BSON\ObjectId($value);
+            } catch (Throwable $e) {
+                return null;
+            }
+        }
     }
 
-    if (is_numeric($value)) {
-        return (float)$value;
+    if (is_array($value)) {
+
+        if (isset($value["$oid"])) {
+            return makeObjectId($value["$oid"]);
+        }
+
+        if (isset($value["oid"])) {
+            return makeObjectId($value["oid"]);
+        }
     }
 
-    return 0;
+    return null;
+}
+
+/* =========================================================
+   FIND USER
+   ========================================================= */
+
+function findUserForInvestment(
+    $userCollection,
+    array $investment
+) {
+
+    if ($userCollection === null) {
+        return null;
+    }
+
+    /*
+     * Possible names used by different versions
+     * of the Crown Cash investment system.
+     */
+
+    $possibleUserFields = [
+        "user_id",
+        "userId",
+        "customer_id",
+        "customerId",
+        "member_id",
+        "memberId",
+        "account_id",
+        "accountId"
+    ];
+
+    foreach ($possibleUserFields as $field) {
+
+        if (
+            !array_key_exists(
+                $field,
+                $investment
+            )
+        ) {
+            continue;
+        }
+
+        $rawUserId = $investment[$field];
+
+        $objectId = makeObjectId($rawUserId);
+
+        if ($objectId === null) {
+            continue;
+        }
+
+        try {
+
+            $user = $userCollection->findOne([
+                "_id" => $objectId
+            ]);
+
+            if ($user) {
+                return $user;
+            }
+
+        } catch (Throwable $e) {
+            continue;
+        }
+    }
+
+    return null;
+}
+
+/* =========================================================
+   FIND CUSTOMER DIRECTLY
+   ========================================================= */
+
+function findCustomerByPossibleId(
+    $userCollection,
+    array $investment
+) {
+
+    if ($userCollection === null) {
+        return null;
+    }
+
+    /*
+     * First try explicit user fields.
+     */
+
+    $user = findUserForInvestment(
+        $userCollection,
+        $investment
+    );
+
+    if ($user) {
+        return $user;
+    }
+
+    /*
+     * Some older investment records may contain
+     * a reference under another field.
+     */
+
+    $possibleFields = [
+        "customer",
+        "customer_id",
+        "customerId",
+        "user",
+        "user_id",
+        "userId"
+    ];
+
+    foreach ($possibleFields as $field) {
+
+        if (
+            !isset($investment[$field])
+        ) {
+            continue;
+        }
+
+        $value = $investment[$field];
+
+        if (is_array($value)) {
+
+            $nestedId =
+                $value["_id"] ??
+                $value["id"] ??
+                $value["$oid"] ??
+                $value["oid"] ??
+                null;
+
+            if ($nestedId !== null) {
+
+                $objectId =
+                    makeObjectId($nestedId);
+
+                if ($objectId !== null) {
+
+                    try {
+
+                        $user =
+                            $userCollection->findOne([
+                                "_id" => $objectId
+                            ]);
+
+                        if ($user) {
+                            return $user;
+                        }
+
+                    } catch (Throwable $e) {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
 }
 
 /* =========================================================
@@ -205,13 +452,14 @@ function numericValue($value)
 try {
 
     /* =====================================================
-       CHECK DATABASE CONFIGURATION
+       VERIFY DATABASE VARIABLES
        ===================================================== */
 
     if (
         !isset($database) &&
         !isset($investments)
     ) {
+
         throw new Exception(
             "Database configuration is unavailable."
         );
@@ -223,14 +471,21 @@ try {
 
     if (isset($investments)) {
 
-        $investmentCollection = $investments;
+        $investmentCollection =
+            $investments;
 
-    } else {
+    } elseif (isset($database)) {
 
         $investmentCollection =
             $database->selectCollection(
                 "investments"
             );
+
+    } else {
+
+        throw new Exception(
+            "Investments collection is unavailable."
+        );
     }
 
     /* =====================================================
@@ -257,27 +512,36 @@ try {
        READ INVESTMENTS
        ===================================================== */
 
-    $cursor = $investmentCollection->find(
-        [],
-        [
-            "sort" => [
-                "created_at" => -1,
-                "_id" => -1
-            ],
-            "limit" => 500
-        ]
-    );
+    $cursor =
+        $investmentCollection->find(
+            [],
+            [
+                "sort" => [
+                    "created_at" => -1,
+                    "createdAt" => -1,
+                    "_id" => -1
+                ],
+                "limit" => 500
+            ]
+        );
 
     $investmentRecords = [];
 
     /* =====================================================
-       PROCESS INVESTMENTS
+       PROCESS EACH INVESTMENT
        ===================================================== */
 
     foreach ($cursor as $investmentDocument) {
 
+        /*
+         * Convert MongoDB document into
+         * normal PHP array.
+         */
+
         $investment =
-            jsonSafeValue($investmentDocument);
+            jsonSafeValue(
+                $investmentDocument
+            );
 
         /* =================================================
            INVESTMENT ID
@@ -285,178 +549,313 @@ try {
 
         $investmentId =
             (string)(
-                $investment["_id"] ??
-                ""
+                $investment["_id"] ?? ""
             );
 
         /* =================================================
            USER ID
            ================================================= */
 
-        $userId =
-            $investment["user_id"] ??
-            $investment["userId"] ??
-            null;
+        $userId = firstValue(
+            $investment,
+            [
+                "user_id",
+                "userId",
+                "customer_id",
+                "customerId",
+                "member_id",
+                "memberId",
+                "account_id",
+                "accountId"
+            ],
+            null
+        );
 
-        if (
-            is_array($userId) &&
-            isset($userId["$oid"])
-        ) {
+        if (is_array($userId)) {
+
             $userId =
-                $userId["$oid"];
+                $userId["$oid"] ??
+                $userId["oid"] ??
+                $userId["id"] ??
+                null;
         }
 
         if ($userId !== null) {
-            $userId =
-                (string)$userId;
+            $userId = (string)$userId;
         }
 
         /* =================================================
-           CUSTOMER INFORMATION
+           CUSTOMER DATA FROM INVESTMENT
            ================================================= */
 
-        $fullName =
-            $investment["full_name"] ??
-            $investment["fullName"] ??
-            $investment["customer_name"] ??
-            $investment["customerName"] ??
-            $investment["name"] ??
-            "";
+        $fullName = firstValue(
+            $investment,
+            [
+                "full_name",
+                "fullName",
+                "customer_name",
+                "customerName",
+                "user_name",
+                "userName",
+                "name",
+                "customer"
+            ],
+            ""
+        );
 
-        $email =
-            $investment["email"] ??
-            "";
+        /*
+         * If customer is an embedded object,
+         * extract the name.
+         */
 
-        $phone =
-            $investment["phone"] ??
-            "";
+        if (is_array($fullName)) {
+
+            $fullName =
+                $fullName["full_name"] ??
+                $fullName["fullName"] ??
+                $fullName["name"] ??
+                "";
+        }
+
+        $email = firstValue(
+            $investment,
+            [
+                "email",
+                "customer_email",
+                "customerEmail",
+                "user_email",
+                "userEmail"
+            ],
+            ""
+        );
+
+        $phone = firstValue(
+            $investment,
+            [
+                "phone",
+                "phone_number",
+                "phoneNumber",
+                "customer_phone",
+                "customerPhone",
+                "user_phone",
+                "userPhone"
+            ],
+            ""
+        );
 
         /* =================================================
-           LOOK UP USER
+           LOOK UP USER IN USERS COLLECTION
            ================================================= */
 
-        if (
-            $userCollection !== null &&
-            $userId !== null
-        ) {
+        $userDocument =
+            findCustomerByPossibleId(
+                $userCollection,
+                $investment
+            );
 
-            try {
+        if ($userDocument) {
 
-                if (
-                    preg_match(
-                        '/^[a-f0-9]{24}$/i',
-                        $userId
-                    )
-                ) {
+            $user =
+                jsonSafeValue(
+                    $userDocument
+                );
 
-                    $userObjectId =
-                        new MongoDB\BSON\ObjectId(
-                            $userId
-                        );
+            if (
+                trim((string)$fullName) === ""
+            ) {
 
-                    $user =
-                        $userCollection->findOne([
-                            "_id" => $userObjectId
-                        ]);
+                $firstName =
+                    $user["first_name"] ??
+                    $user["firstName"] ??
+                    "";
 
-                    if ($user) {
+                $lastName =
+                    $user["last_name"] ??
+                    $user["lastName"] ??
+                    "";
 
-                        $user =
-                            jsonSafeValue($user);
+                $combinedName =
+                    trim(
+                        $firstName .
+                        " " .
+                        $lastName
+                    );
 
-                        if (
-                            trim(
-                                (string)$fullName
-                            ) === ""
-                        ) {
+                $fullName =
+                    $user["full_name"] ??
+                    $user["fullName"] ??
+                    $user["name"] ??
+                    $combinedName;
+            }
 
-                            $fullName =
-                                $user["full_name"] ??
-                                $user["fullName"] ??
-                                $user["name"] ??
-                                "";
-                        }
+            if (
+                trim((string)$email) === ""
+            ) {
 
-                        if (
-                            trim(
-                                (string)$email
-                            ) === ""
-                        ) {
+                $email =
+                    $user["email"] ??
+                    "";
+            }
 
-                            $email =
-                                $user["email"] ??
-                                "";
-                        }
+            if (
+                trim((string)$phone) === ""
+            ) {
 
-                        if (
-                            trim(
-                                (string)$phone
-                            ) === ""
-                        ) {
+                $phone =
+                    $user["phone"] ??
+                    $user["phone_number"] ??
+                    $user["phoneNumber"] ??
+                    "";
+            }
 
-                            $phone =
-                                $user["phone"] ??
-                                $user["phone_number"] ??
-                                $user["mobile"] ??
-                                "";
-                        }
-                    }
-                }
+            /*
+             * If the investment didn't contain a user_id,
+             * use the actual user document ID.
+             */
 
-            } catch (Throwable $userError) {
+            if (
+                $userId === null ||
+                $userId === ""
+            ) {
 
-                /*
-                 * Do not fail the entire list
-                 * if one user cannot be resolved.
-                 */
+                $userId =
+                    isset($user["_id"])
+                        ? (string)$user["_id"]
+                        : null;
             }
         }
 
+        /* =================================================
+           CUSTOMER FALLBACK
+           ================================================= */
+
         if (
-            trim(
-                (string)$fullName
-            ) === ""
+            trim((string)$fullName) === ""
         ) {
-            $fullName = "Unknown User";
+
+            /*
+             * Keep Unknown User only when there is
+             * genuinely no customer information.
+             */
+
+            $fullName =
+                "Unknown User";
         }
 
         /* =================================================
            PLAN
            ================================================= */
 
-        $plan =
-            $investment["plan"] ??
-            $investment["plan_name"] ??
-            $investment["planName"] ??
-            $investment["package"] ??
-            "Investment";
+        $plan = firstValue(
+            $investment,
+            [
+                "plan",
+                "plan_name",
+                "planName",
+                "investment_plan",
+                "investmentPlan",
+                "package",
+                "package_name",
+                "packageName"
+            ],
+            "Investment"
+        );
 
         $plan =
-            trim(
-                (string)$plan
-            );
+            trim((string)$plan);
+
+        if ($plan === "") {
+            $plan = "Investment";
+        }
 
         /* =================================================
            AMOUNT
            ================================================= */
 
-        $amount =
-            $investment["amount"] ??
-            $investment["investment_amount"] ??
-            $investment["investmentAmount"] ??
-            $investment["invested_amount"] ??
-            0;
+        $amount = firstValue(
+            $investment,
+            [
+                "amount",
+                "investment_amount",
+                "investmentAmount",
+                "invested_amount",
+                "investedAmount",
+                "amount_invested",
+                "amountInvested"
+            ],
+            0
+        );
 
-        $amount =
-            numericValue($amount);
+        if (
+            $amount instanceof MongoDB\BSON\Decimal128
+        ) {
+
+            $amount =
+                (float)$amount->__toString();
+
+        } elseif (
+            is_string($amount)
+        ) {
+
+            /*
+             * Remove commas/currency symbols
+             * while preserving numeric value.
+             */
+
+            $cleanAmount =
+                preg_replace(
+                    '/[^0-9.\-]/',
+                    "",
+                    $amount
+                );
+
+            $amount =
+                (float)$cleanAmount;
+
+        } else {
+
+            $amount =
+                (float)$amount;
+        }
+
+        /* =================================================
+           CURRENCY
+           ================================================= */
+
+        $currency = firstValue(
+            $investment,
+            [
+                "currency",
+                "currency_code",
+                "currencyCode"
+            ],
+            "UGX"
+        );
+
+        $currency =
+            strtoupper(
+                trim(
+                    (string)$currency
+                )
+            );
+
+        if ($currency === "") {
+            $currency = "UGX";
+        }
 
         /* =================================================
            STATUS
            ================================================= */
 
-        $status =
-            $investment["status"] ??
-            "pending";
+        $status = firstValue(
+            $investment,
+            [
+                "status",
+                "investment_status",
+                "investmentStatus"
+            ],
+            "pending"
+        );
 
         $status =
             strtolower(
@@ -465,51 +864,81 @@ try {
                 )
             );
 
+        /*
+         * Normalize backend status for frontend.
+         */
+
         if (
             $status === "approved" ||
             $status === "running"
         ) {
 
-            $displayStatus = "active";
+            $displayStatus =
+                "active";
 
         } elseif (
             $status === "complete" ||
             $status === "finished"
         ) {
 
-            $displayStatus = "completed";
+            $displayStatus =
+                "completed";
 
         } elseif (
             $status === "rejected" ||
             $status === "declined"
         ) {
 
-            $displayStatus = "cancelled";
+            $displayStatus =
+                "cancelled";
 
         } else {
 
-            $displayStatus = $status;
+            $displayStatus =
+                $status;
         }
 
         /* =================================================
            DURATION
            ================================================= */
 
-        $duration =
-            $investment["duration"] ??
-            $investment["duration_days"] ??
-            $investment["durationDays"] ??
-            $investment["period"] ??
-            30;
+        $duration = firstValue(
+            $investment,
+            [
+                "duration",
+                "duration_days",
+                "durationDays",
+                "period",
+                "period_days",
+                "periodDays",
+                "term"
+            ],
+            30
+        );
 
-        if (is_numeric($duration)) {
+        /*
+         * Handle values such as "30 days".
+         */
+
+        if (
+            is_string($duration)
+        ) {
+
+            preg_match(
+                '/\d+/',
+                $duration,
+                $matches
+            );
 
             $duration =
-                (int)$duration;
+                isset($matches[0])
+                    ? (int)$matches[0]
+                    : 30;
 
         } else {
 
-            $duration = 30;
+            $duration =
+                (int)$duration;
         }
 
         if ($duration <= 0) {
@@ -520,41 +949,118 @@ try {
            START DATE
            ================================================= */
 
-        $startDate =
-            $investment["start_date"] ??
-            $investment["startDate"] ??
-            $investment["started_at"] ??
-            $investment["startedAt"] ??
-            null;
+        $startDate = firstValue(
+            $investment,
+            [
+                "start_date",
+                "startDate",
+                "started_at",
+                "startedAt",
+                "investment_date",
+                "investmentDate"
+            ],
+            null
+        );
 
-        /* =================================================
-           END DATE
-           ================================================= */
+        /*
+         * If no explicit start date exists,
+         * use created date.
+         */
 
-        $endDate =
-            $investment["end_date"] ??
-            $investment["endDate"] ??
-            $investment["maturity_date"] ??
-            $investment["maturityDate"] ??
-            null;
+        if (
+            $startDate === null ||
+            $startDate === ""
+        ) {
 
-        /* =================================================
-           CREATED DATE
-           ================================================= */
-
-        $createdAt =
-            $investment["created_at"] ??
-            $investment["createdAt"] ??
-            null;
+            $startDate =
+                firstValue(
+                    $investment,
+                    [
+                        "created_at",
+                        "createdAt",
+                        "date_created",
+                        "dateCreated"
+                    ],
+                    null
+                );
+        }
 
         $startDate =
             formatDateValue(
                 $startDate
             );
 
-        $endDate =
-            formatDateValue(
-                $endDate
+        /* =================================================
+           END DATE
+           ================================================= */
+
+        $endDate = firstValue(
+            $investment,
+            [
+                "end_date",
+                "endDate",
+                "maturity_date",
+                "maturityDate",
+                "completed_at",
+                "completedAt"
+            ],
+            null
+        );
+
+        /*
+         * If no end date exists, calculate it from
+         * the start date and duration.
+         */
+
+        if (
+            (
+                $endDate === null ||
+                $endDate === ""
+            ) &&
+            $startDate !== null
+        ) {
+
+            try {
+
+                $startDateObject =
+                    new DateTime(
+                        $startDate
+                    );
+
+                $startDateObject->modify(
+                    "+" . $duration . " days"
+                );
+
+                $endDate =
+                    $startDateObject
+                        ->format(DATE_ATOM);
+
+            } catch (Throwable $e) {
+
+                $endDate = null;
+            }
+        } else {
+
+            $endDate =
+                formatDateValue(
+                    $endDate
+                );
+        }
+
+        /* =================================================
+           CREATED DATE
+           ================================================= */
+
+        $createdAt =
+            firstValue(
+                $investment,
+                [
+                    "created_at",
+                    "createdAt",
+                    "date_created",
+                    "dateCreated"
+                ],
+                null
             );
 
         $createdAt =
@@ -563,25 +1069,53 @@ try {
             );
 
         /* =================================================
-           RETURN / EARNINGS
+           RETURN / PROFIT
            ================================================= */
 
         $recordedReturn =
-            $investment["return_amount"] ??
-            $investment["returnAmount"] ??
-            $investment["earnings"] ??
-            $investment["profit"] ??
-            $investment["total_return"] ??
-            $investment["totalReturn"] ??
-            0;
-
-        $recordedReturn =
-            numericValue(
-                $recordedReturn
+            firstValue(
+                $investment,
+                [
+                    "return_amount",
+                    "returnAmount",
+                    "earnings",
+                    "profit",
+                    "total_return",
+                    "totalReturn"
+                ],
+                0
             );
 
+        if (
+            $recordedReturn
+            instanceof
+            MongoDB\BSON\Decimal128
+        ) {
+
+            $recordedReturn =
+                (float)
+                $recordedReturn->__toString();
+
+        } elseif (
+            is_string($recordedReturn)
+        ) {
+
+            $recordedReturn =
+                (float)
+                preg_replace(
+                    '/[^0-9.\-]/',
+                    "",
+                    $recordedReturn
+                );
+
+        } else {
+
+            $recordedReturn =
+                (float)$recordedReturn;
+        }
+
         /* =================================================
-           RESPONSE RECORD
+           BUILD RECORD
            ================================================= */
 
         $investmentRecords[] = [
@@ -592,7 +1126,13 @@ try {
             "investment_id" =>
                 $investmentId,
 
+            "investmentId" =>
+                $investmentId,
+
             "user_id" =>
+                $userId,
+
+            "userId" =>
                 $userId,
 
             "full_name" =>
@@ -602,6 +1142,12 @@ try {
                 (string)$fullName,
 
             "customer_name" =>
+                (string)$fullName,
+
+            "customerName" =>
+                (string)$fullName,
+
+            "name" =>
                 (string)$fullName,
 
             "email" =>
@@ -616,11 +1162,20 @@ try {
             "plan_name" =>
                 $plan,
 
+            "planName" =>
+                $plan,
+
             "amount" =>
                 $amount,
 
             "investment_amount" =>
                 $amount,
+
+            "investmentAmount" =>
+                $amount,
+
+            "currency" =>
+                $currency,
 
             "duration" =>
                 $duration,
@@ -631,6 +1186,9 @@ try {
             "period" =>
                 $duration . " days",
 
+            "period_days" =>
+                $duration,
+
             "status" =>
                 $displayStatus,
 
@@ -640,13 +1198,25 @@ try {
             "start_date" =>
                 $startDate,
 
+            "startDate" =>
+                $startDate,
+
             "end_date" =>
+                $endDate,
+
+            "endDate" =>
                 $endDate,
 
             "created_at" =>
                 $createdAt,
 
+            "createdAt" =>
+                $createdAt,
+
             "return_amount" =>
+                $recordedReturn,
+
+            "returnAmount" =>
                 $recordedReturn,
 
             "earnings" =>
@@ -662,6 +1232,7 @@ try {
        ===================================================== */
 
     $admin = [
+
         "name" =>
             "Administrator",
 
@@ -670,32 +1241,30 @@ try {
 
         "email" =>
             (string)(
-                $_SESSION["user_email"] ??
-                ""
+                $_SESSION["user_email"] ?? ""
             )
     ];
 
+    /* =====================================================
+       LOAD ACTUAL ADMIN USER
+       ===================================================== */
+
     if (
-        isset($users) &&
+        $userCollection !== null &&
         isset($_SESSION["user_id"])
     ) {
 
         try {
 
-            if (
-                preg_match(
-                    '/^[a-f0-9]{24}$/i',
-                    (string)$_SESSION["user_id"]
-                )
-            ) {
+            $adminObjectId =
+                makeObjectId(
+                    $_SESSION["user_id"]
+                );
 
-                $adminObjectId =
-                    new MongoDB\BSON\ObjectId(
-                        $_SESSION["user_id"]
-                    );
+            if ($adminObjectId !== null) {
 
                 $adminUser =
-                    $users->findOne([
+                    $userCollection->findOne([
                         "_id" =>
                             $adminObjectId
                     ]);
@@ -715,10 +1284,7 @@ try {
 
                     $adminEmail =
                         $adminUser["email"] ??
-                        (
-                            $_SESSION["user_email"] ??
-                            ""
-                        );
+                        ($_SESSION["user_email"] ?? "");
 
                     $admin = [
 
@@ -734,7 +1300,7 @@ try {
                 }
             }
 
-        } catch (Throwable $adminError) {
+        } catch (Throwable $e) {
 
             /*
              * Keep default administrator information.
@@ -743,28 +1309,55 @@ try {
     }
 
     /* =====================================================
-       STATISTICS
+       CALCULATE SUMMARY
        ===================================================== */
 
     $totalInvestments =
         count($investmentRecords);
 
     $activeInvestments = 0;
+
     $pendingInvestments = 0;
+
     $completedInvestments = 0;
+
+    $cancelledInvestments = 0;
+
+    $totalAmount = 0;
 
     foreach ($investmentRecords as $record) {
 
-        if ($record["status"] === "active") {
-            $activeInvestments++;
-        }
+        $totalAmount +=
+            (float)(
+                $record["amount"] ?? 0
+            );
 
-        if ($record["status"] === "pending") {
-            $pendingInvestments++;
-        }
+        switch (
+            $record["status"] ?? "pending"
+        ) {
 
-        if ($record["status"] === "completed") {
-            $completedInvestments++;
+            case "active":
+            case "approved":
+
+                $activeInvestments++;
+                break;
+
+            case "pending":
+
+                $pendingInvestments++;
+                break;
+
+            case "completed":
+
+                $completedInvestments++;
+                break;
+
+            case "cancelled":
+            case "canceled":
+            case "rejected":
+
+                $cancelledInvestments++;
+                break;
         }
     }
 
@@ -774,7 +1367,9 @@ try {
 
     echo json_encode(
         [
-            "success" => true,
+
+            "success" =>
+                true,
 
             "message" =>
                 "Investment records loaded successfully.",
@@ -784,21 +1379,6 @@ try {
 
             "count" =>
                 $totalInvestments,
-
-            "stats" => [
-
-                "total_investments" =>
-                    $totalInvestments,
-
-                "active_investments" =>
-                    $activeInvestments,
-
-                "pending_investments" =>
-                    $pendingInvestments,
-
-                "completed_investments" =>
-                    $completedInvestments
-            ],
 
             "total_investments" =>
                 $totalInvestments,
@@ -812,9 +1392,37 @@ try {
             "completed_investments" =>
                 $completedInvestments,
 
+            "cancelled_investments" =>
+                $cancelledInvestments,
+
+            "total_amount" =>
+                $totalAmount,
+
+            "summary" => [
+
+                "total_investments" =>
+                    $totalInvestments,
+
+                "active_investments" =>
+                    $activeInvestments,
+
+                "pending_investments" =>
+                    $pendingInvestments,
+
+                "completed_investments" =>
+                    $completedInvestments,
+
+                "cancelled_investments" =>
+                    $cancelledInvestments,
+
+                "total_amount" =>
+                    $totalAmount
+            ],
+
             "investments" =>
                 $investmentRecords
         ],
+
         JSON_UNESCAPED_SLASHES
     );
 
@@ -829,11 +1437,15 @@ try {
 
     http_response_code(500);
 
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Database error while loading investments."
-    ]);
+    echo json_encode(
+        [
+            "success" =>
+                false,
+
+            "message" =>
+                "Database error while loading investments."
+        ]
+    );
 
 } catch (Throwable $e) {
 
@@ -844,11 +1456,15 @@ try {
 
     http_response_code(500);
 
-    echo json_encode([
-        "success" => false,
-        "message" =>
-            "Unable to load investment records."
-    ]);
+    echo json_encode(
+        [
+            "success" =>
+                false,
+
+            "message" =>
+                "Unable to load investment records."
+        ]
+    );
 }
 
 ?>

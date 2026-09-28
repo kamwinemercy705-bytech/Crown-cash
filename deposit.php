@@ -1,675 +1,1419 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash - Deposit API
-|--------------------------------------------------------------------------
-| Handles deposit requests from the Vercel frontend.
-|
-| IMPORTANT:
-| - Deposits are created as "pending".
-| - User balance is NOT increased automatically.
-| - A deposit should only be credited after payment verification/admin approval.
-|--------------------------------------------------------------------------
-*/
+declare(strict_types=1);
 
+/* =========================================================
+   CROWN CASH — DEPOSIT API
+   ========================================================= */
 
 /*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
-
-header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Content-Type: application/json; charset=UTF-8");
+ * IMPORTANT:
+ * This API records deposit requests as PENDING.
+ *
+ * It does NOT automatically add money to the user's balance.
+ * An administrator should verify the Mobile Money payment
+ * before approving the deposit.
+ */
 
 
-/*
-|--------------------------------------------------------------------------
-| Handle CORS preflight
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   ERROR HANDLING
+   ========================================================= */
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(204);
-    exit;
-}
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
 
 
-/*
-|--------------------------------------------------------------------------
-| Only POST requests are allowed
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SESSION CONFIGURATION
+   ========================================================= */
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    http_response_code(405);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Session cookie configuration
-|--------------------------------------------------------------------------
-*/
+$secureCookie = (
+    isset($_SERVER['HTTPS']) &&
+    $_SERVER['HTTPS'] !== 'off'
+);
 
 session_set_cookie_params([
-    "lifetime" => 0,
-    "path" => "/",
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => $secureCookie,
+    'httponly' => true,
+    'samesite' => 'None'
 ]);
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 
-/*
-|--------------------------------------------------------------------------
-| Check login
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CORS
+   ========================================================= */
 
-if (
-    empty($_SESSION["logged_in"]) ||
-    empty($_SESSION["user_id"])
-) {
-    http_response_code(401);
+$allowedOrigin = 'https://crown-cash.vercel.app';
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Please login to make a deposit."
-    ]);
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if ($origin === $allowedOrigin) {
+
+    header(
+        "Access-Control-Allow-Origin: {$allowedOrigin}"
+    );
+
+    header(
+        'Access-Control-Allow-Credentials: true'
+    );
+
+    header(
+        'Access-Control-Allow-Headers: Content-Type, Accept'
+    );
+
+    header(
+        'Access-Control-Allow-Methods: POST, GET, OPTIONS'
+    );
+}
+
+
+header('Content-Type: application/json; charset=utf-8');
+
+
+/* =========================================================
+   OPTIONS / PREFLIGHT
+   ========================================================= */
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+
+    http_response_code(204);
 
     exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Load MongoDB configuration
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   RESPONSE HELPER
+   ========================================================= */
+
+function sendJson(
+    bool $success,
+    string $message,
+    array $extra = [],
+    int $statusCode = 200
+): never {
+
+    http_response_code($statusCode);
+
+    echo json_encode(
+        array_merge(
+            [
+                'success' => $success,
+                'message' => $message
+            ],
+            $extra
+        ),
+        JSON_UNESCAPED_SLASHES
+    );
+
+    exit;
+}
+
+
+/* =========================================================
+   REQUEST METHOD
+   ========================================================= */
+
+if (
+    $_SERVER['REQUEST_METHOD'] !== 'POST' &&
+    $_SERVER['REQUEST_METHOD'] !== 'GET'
+) {
+
+    sendJson(
+        false,
+        'Method not allowed.',
+        [],
+        405
+    );
+
+}
+
+
+/* =========================================================
+   DATABASE
+   ========================================================= */
 
 try {
 
-    require_once __DIR__ . "/config.php";
+    require_once __DIR__ . '/config.php';
 
 } catch (Throwable $e) {
 
-    error_log("CROWN CASH CONFIG ERROR: " . $e->getMessage());
+    error_log(
+        'Crown Cash deposit config error: ' .
+        $e->getMessage()
+    );
 
-    http_response_code(500);
+    sendJson(
+        false,
+        'Database configuration error.',
+        [],
+        500
+    );
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Database configuration could not be loaded."
-    ]);
-
-    exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Make sure deposits collection exists
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   FIND MONGODB COLLECTIONS
+   ========================================================= */
 
-if (!isset($deposits)) {
+try {
 
-    http_response_code(500);
+    /*
+     * The existing Crown Cash config.php is expected to expose
+     * the MongoDB database connection.
+     *
+     * The code below supports the common variable names used
+     * in the project.
+     */
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Deposits collection is not configured."
-    ]);
+    $database = null;
 
-    exit;
+
+    if (
+        isset($db) &&
+        $db instanceof MongoDB\Database
+    ) {
+
+        $database = $db;
+
+    } elseif (
+        isset($database) &&
+        $database instanceof MongoDB\Database
+    ) {
+
+        /*
+         * Keep existing database variable.
+         */
+
+    } elseif (
+        isset($mongoDatabase) &&
+        $mongoDatabase instanceof MongoDB\Database
+    ) {
+
+        $database = $mongoDatabase;
+
+    }
+
+
+    /*
+     * If config.php exposes $database, use it.
+     */
+
+    if (
+        $database === null &&
+        isset($database) &&
+        $database instanceof MongoDB\Database
+    ) {
+
+        $database = $database;
+
+    }
+
+
+    /*
+     * Crown Cash's config.php normally uses $db.
+     */
+
+    if (
+        $database === null &&
+        isset($db) &&
+        $db instanceof MongoDB\Database
+    ) {
+
+        $database = $db;
+
+    }
+
+
+    /*
+     * If no database variable was exposed, attempt to use
+     * the configured MongoDB URI directly.
+     */
+
+    if ($database === null) {
+
+        $mongodbUri =
+            getenv('MONGODB_URI');
+
+        if (
+            !$mongodbUri &&
+            isset($_ENV['MONGODB_URI'])
+        ) {
+
+            $mongodbUri =
+                $_ENV['MONGODB_URI'];
+
+        }
+
+
+        if (!$mongodbUri) {
+
+            throw new RuntimeException(
+                'MONGODB_URI is not configured.'
+            );
+
+        }
+
+
+        $mongoClient =
+            new MongoDB\Client(
+                $mongodbUri
+            );
+
+
+        $database =
+            $mongoClient->selectDatabase(
+                'crowncash'
+            );
+
+    }
+
+
+    $depositsCollection =
+        $database->selectCollection(
+            'deposits'
+        );
+
+
+    $usersCollection =
+        $database->selectCollection(
+            'users'
+        );
+
+
+} catch (Throwable $e) {
+
+    error_log(
+        'Crown Cash deposit database error: ' .
+        $e->getMessage()
+    );
+
+    sendJson(
+        false,
+        'Unable to connect to the database.',
+        [],
+        500
+    );
+
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Read request body
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   GET — DEPOSIT HISTORY
+   ========================================================= */
 
-$rawInput = file_get_contents("php://input");
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-$data = json_decode($rawInput, true);
+    /*
+     * Require a logged-in user.
+     */
 
-if (!is_array($data)) {
-    $data = $_POST;
+    if (
+        empty($_SESSION['logged_in'])
+    ) {
+
+        sendJson(
+            false,
+            'You must be logged in to view deposits.',
+            [],
+            401
+        );
+
+    }
+
+
+    $sessionUserId =
+        $_SESSION['user_id'] ??
+        $_SESSION['userId'] ??
+        $_SESSION['id'] ??
+        null;
+
+
+    $sessionEmail =
+        $_SESSION['email'] ??
+        null;
+
+
+    if (
+        !$sessionUserId &&
+        !$sessionEmail
+    ) {
+
+        sendJson(
+            false,
+            'Your login session could not be identified.',
+            [],
+            401
+        );
+
+    }
+
+
+    try {
+
+        $query = [];
+
+
+        /*
+         * Prefer user ID.
+         */
+
+        if ($sessionUserId) {
+
+            $query['user_id'] =
+                (string) $sessionUserId;
+
+        } elseif ($sessionEmail) {
+
+            $query['email'] =
+                strtolower(
+                    trim(
+                        (string) $sessionEmail
+                    )
+                );
+
+        }
+
+
+        $cursor =
+            $depositsCollection->find(
+                $query,
+                [
+                    'sort' => [
+                        'created_at' => -1
+                    ],
+                    'limit' => 20
+                ]
+            );
+
+
+        $deposits = [];
+
+
+        foreach ($cursor as $deposit) {
+
+            $deposits[] =
+                convertMongoDocument(
+                    $deposit
+                );
+
+        }
+
+
+        sendJson(
+            true,
+            'Deposit history loaded.',
+            [
+                'deposits' => $deposits
+            ]
+        );
+
+
+    } catch (Throwable $e) {
+
+        error_log(
+            'Crown Cash deposit history error: ' .
+            $e->getMessage()
+        );
+
+        sendJson(
+            false,
+            'Unable to load deposit history.',
+            [],
+            500
+        );
+
+    }
+
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Get submitted values
-|--------------------------------------------------------------------------
-*/
-
-$amountInput = $data["amount"] ?? null;
-
-$paymentMethod = strtolower(
-    trim((string)($data["payment_method"] ?? ""))
-);
-
-$transactionReference = strtoupper(
-    trim((string)($data["transaction_reference"] ?? ""))
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate amount
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CHECK LOGIN
+   ========================================================= */
 
 if (
-    $amountInput === null ||
-    $amountInput === "" ||
-    !is_numeric($amountInput)
+    empty($_SESSION['logged_in'])
 ) {
 
-    http_response_code(400);
+    sendJson(
+        false,
+        'Please log in before making a deposit.',
+        [],
+        401
+    );
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Please enter a valid deposit amount."
-    ]);
-
-    exit;
 }
 
 
-$amount = (float)$amountInput;
+/* =========================================================
+   IDENTIFY USER
+   ========================================================= */
+
+$sessionUserId =
+    $_SESSION['user_id'] ??
+    $_SESSION['userId'] ??
+    $_SESSION['id'] ??
+    null;
 
 
-/*
-|--------------------------------------------------------------------------
-| Deposit minimum
-|--------------------------------------------------------------------------
-*/
-
-if ($amount < 10000) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Minimum deposit is UGX 10,000."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Whole-number validation
-|--------------------------------------------------------------------------
-*/
-
-if (floor($amount) != $amount) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Deposit amount must be a whole Uganda Shilling amount."
-    ]);
-
-    exit;
-}
-
-
-$amount = (int)$amount;
-
-
-/*
-|--------------------------------------------------------------------------
-| Deposit amount must be in multiples of 1,000
-|--------------------------------------------------------------------------
-*/
-
-if ($amount % 1000 !== 0) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Deposit amount must be in multiples of UGX 1,000."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate payment method
-|--------------------------------------------------------------------------
-*/
-
-$allowedMethods = [
-    "mtn",
-    "airtel"
-];
-
-if (!in_array($paymentMethod, $allowedMethods, true)) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please select MTN or Airtel Money."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Validate transaction reference
-|--------------------------------------------------------------------------
-*/
-
-if ($transactionReference === "") {
-
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please enter your transaction reference."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Clean transaction reference
-|--------------------------------------------------------------------------
-| Allows letters, numbers, hyphens and underscores.
-|--------------------------------------------------------------------------
-*/
-
-$transactionReference = preg_replace(
-    "/[^A-Z0-9_-]/",
-    "",
-    $transactionReference
-);
+$sessionEmail =
+    $_SESSION['email'] ??
+    null;
 
 
 if (
-    strlen($transactionReference) < 4 ||
+    !$sessionUserId &&
+    !$sessionEmail
+) {
+
+    sendJson(
+        false,
+        'Your login session could not be identified.',
+        [],
+        401
+    );
+
+}
+
+
+/* =========================================================
+   READ REQUEST BODY
+   ========================================================= */
+
+$rawInput =
+    file_get_contents('php://input');
+
+
+if (!$rawInput) {
+
+    sendJson(
+        false,
+        'No deposit information was received.',
+        [],
+        400
+    );
+
+}
+
+
+$data =
+    json_decode(
+        $rawInput,
+        true
+    );
+
+
+if (
+    !is_array($data)
+) {
+
+    sendJson(
+        false,
+        'Invalid deposit request.',
+        [],
+        400
+    );
+
+}
+
+
+/* =========================================================
+   READ AMOUNT
+   ========================================================= */
+
+$amountValue =
+    $data['amount'] ??
+    $data['deposit_amount'] ??
+    $data['depositAmount'] ??
+    null;
+
+
+if (
+    $amountValue === null ||
+    $amountValue === ''
+) {
+
+    sendJson(
+        false,
+        'Please enter a deposit amount.',
+        [],
+        400
+    );
+
+}
+
+
+if (
+    !is_numeric($amountValue)
+) {
+
+    sendJson(
+        false,
+        'Deposit amount must be a valid number.',
+        [],
+        400
+    );
+
+}
+
+
+$amount =
+    (float) $amountValue;
+
+
+if (!is_finite($amount)) {
+
+    sendJson(
+        false,
+        'Invalid deposit amount.',
+        [],
+        400
+    );
+
+}
+
+
+/* =========================================================
+   MINIMUM DEPOSIT
+   ========================================================= */
+
+$minimumDeposit =
+    10000;
+
+
+if ($amount < $minimumDeposit) {
+
+    sendJson(
+        false,
+        'The minimum deposit amount is UGX 10,000.',
+        [],
+        400
+    );
+
+}
+
+
+/* =========================================================
+   WHOLE THOUSAND VALIDATION
+   ========================================================= */
+
+if (
+    fmod($amount, 1000) !== 0.0
+) {
+
+    sendJson(
+        false,
+        'Deposit amounts must be in multiples of UGX 1,000.',
+        [],
+        400
+    );
+
+}
+
+
+/* =========================================================
+   PAYMENT METHOD
+   ========================================================= */
+
+$paymentMethod =
+    $data['payment_method'] ??
+    $data['paymentMethod'] ??
+    null;
+
+
+$paymentMethod =
+    strtolower(
+        trim(
+            (string) $paymentMethod
+        )
+    );
+
+
+if (
+    !in_array(
+        $paymentMethod,
+        ['mtn', 'airtel'],
+        true
+    )
+) {
+
+    sendJson(
+        false,
+        'Please select MTN Mobile Money or Airtel Money.',
+        [],
+        400
+    );
+
+}
+
+
+/* =========================================================
+   MERCHANT CODES
+   ========================================================= */
+
+$merchantCodes = [
+
+    'mtn' => '80257065',
+
+    'airtel' => '7229487'
+
+];
+
+
+$expectedMerchantCode =
+    $merchantCodes[
+        $paymentMethod
+    ];
+
+
+/* =========================================================
+   TRANSACTION REFERENCE
+   ========================================================= */
+
+$transactionReference =
+    $data['transaction_reference'] ??
+    $data['transactionReference'] ??
+    $data['reference'] ??
+    $data['transaction_id'] ??
+    $data['transactionId'] ??
+    null;
+
+
+$transactionReference =
+    trim(
+        (string) $transactionReference
+    );
+
+
+if (!$transactionReference) {
+
+    sendJson(
+        false,
+        'Please enter your Mobile Money transaction reference.',
+        [],
+        400
+    );
+
+}
+
+
+if (
+    strlen($transactionReference) < 3
+) {
+
+    sendJson(
+        false,
+        'Please enter a valid transaction reference.',
+        [],
+        400
+    );
+
+}
+
+
+if (
     strlen($transactionReference) > 100
 ) {
 
-    http_response_code(400);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Please enter a valid transaction reference."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Convert session user ID to MongoDB ObjectId
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    $userId = new MongoDB\BSON\ObjectId(
-        (string)$_SESSION["user_id"]
+    sendJson(
+        false,
+        'Transaction reference is too long.',
+        [],
+        400
     );
 
-} catch (Throwable $e) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Your login session is invalid. Please login again."
-    ]);
-
-    exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Find user
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   OPTIONAL CLIENT MERCHANT CODE
+   ========================================================= */
+
+$clientMerchantCode =
+    $data['merchant_code'] ??
+    $data['merchantCode'] ??
+    null;
+
+
+if ($clientMerchantCode !== null) {
+
+    $clientMerchantCode =
+        trim(
+            (string) $clientMerchantCode
+        );
+
+
+    /*
+     * Do not trust the frontend.
+     *
+     * Compare the submitted value with the server-side
+     * merchant code.
+     */
+
+    if (
+        $clientMerchantCode !==
+        $expectedMerchantCode
+    ) {
+
+        sendJson(
+            false,
+            'Invalid merchant payment information.',
+            [],
+            400
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FIND USER
+   ========================================================= */
 
 try {
 
-    $user = $users->findOne([
-        "_id" => $userId
-    ]);
+    $user = null;
+
+
+    if ($sessionUserId) {
+
+        $userIdString =
+            (string) $sessionUserId;
+
+
+        $user = findUserByPossibleId(
+            $usersCollection,
+            $userIdString
+        );
+
+    }
+
+
+    /*
+     * Fall back to email if user ID did not find a user.
+     */
+
+    if (
+        $user === null &&
+        $sessionEmail
+    ) {
+
+        $email =
+            strtolower(
+                trim(
+                    (string) $sessionEmail
+                )
+            );
+
+
+        $user =
+            $usersCollection->findOne(
+                [
+                    'email' => $email
+                ]
+            );
+
+    }
+
+
+    if ($user === null) {
+
+        sendJson(
+            false,
+            'Your Crown Cash account could not be found.',
+            [],
+            404
+        );
+
+    }
+
 
 } catch (Throwable $e) {
 
-    error_log("CROWN CASH USER LOOKUP ERROR: " . $e->getMessage());
+    error_log(
+        'Crown Cash user lookup error: ' .
+        $e->getMessage()
+    );
 
-    http_response_code(500);
+    sendJson(
+        false,
+        'Unable to identify your account.',
+        [],
+        500
+    );
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Unable to verify your account."
-    ]);
-
-    exit;
 }
 
 
-if (!$user) {
+/* =========================================================
+   USER INFORMATION
+   ========================================================= */
 
-    http_response_code(404);
+$userArray =
+    convertMongoDocument(
+        $user
+    );
 
-    echo json_encode([
-        "success" => false,
-        "message" => "User account could not be found."
-    ]);
 
-    exit;
+$userId =
+    extractUserId(
+        $userArray
+    );
+
+
+if (!$userId) {
+
+    sendJson(
+        false,
+        'Your account ID could not be determined.',
+        [],
+        500
+    );
+
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Check account status
-|--------------------------------------------------------------------------
-*/
+$userEmail =
+    $userArray['email'] ??
+    $sessionEmail ??
+    '';
 
-$userStatus = strtolower(
-    (string)($user["status"] ?? "active")
-);
 
-$blockedStatuses = [
-    "blocked",
-    "suspended",
-    "disabled"
-];
+$firstName =
+    $userArray['first_name'] ??
+    $userArray['firstName'] ??
+    $userArray['firstname'] ??
+    '';
 
-if (in_array($userStatus, $blockedStatuses, true)) {
 
-    http_response_code(403);
+$lastName =
+    $userArray['last_name'] ??
+    $userArray['lastName'] ??
+    $userArray['lastname'] ??
+    '';
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Your account is currently restricted. Please contact support."
-    ]);
 
-    exit;
+$userName =
+    trim(
+        $firstName .
+        ' ' .
+        $lastName
+    );
+
+
+if (!$userName) {
+
+    $userName =
+        $userArray['name'] ??
+        $userArray['full_name'] ??
+        $userArray['fullName'] ??
+        'Crown Cash User';
+
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Check for duplicate transaction reference
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CHECK DUPLICATE TRANSACTION REFERENCE
+   ========================================================= */
 
 try {
 
-    $existingDeposit = $deposits->findOne([
-        "transaction_reference" => $transactionReference
-    ]);
+    $existingDeposit =
+        $depositsCollection->findOne(
+            [
+                'transaction_reference' =>
+                    $transactionReference
+            ]
+        );
 
-    if ($existingDeposit) {
 
-        http_response_code(409);
+    if ($existingDeposit !== null) {
 
-        echo json_encode([
-            "success" => false,
-            "message" => "This transaction reference has already been submitted."
-        ]);
+        sendJson(
+            false,
+            'This transaction reference has already been submitted.',
+            [],
+            409
+        );
 
-        exit;
     }
 
 } catch (Throwable $e) {
 
     error_log(
-        "CROWN CASH DUPLICATE REFERENCE CHECK ERROR: "
-        . $e->getMessage()
+        'Crown Cash duplicate reference check error: ' .
+        $e->getMessage()
     );
 
-    http_response_code(500);
+    sendJson(
+        false,
+        'Unable to verify the transaction reference.',
+        [],
+        500
+    );
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Unable to verify transaction reference."
-    ]);
-
-    exit;
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Create deposit
-|--------------------------------------------------------------------------
-*/
-
-$now = new MongoDB\BSON\UTCDateTime(
-    (int)(microtime(true) * 1000)
-);
-
-
-$depositDocument = [
-
-    "user_id" => $userId,
-
-    "amount" => $amount,
-
-    "payment_method" => $paymentMethod,
-
-    "method" => $paymentMethod,
-
-    "transaction_reference" => $transactionReference,
-
-    "reference" => $transactionReference,
-
-    "status" => "pending",
-
-    "verification_status" => "pending",
-
-    "created_at" => $now,
-
-    "updated_at" => $now
-];
-
-
-/*
-|--------------------------------------------------------------------------
-| Insert deposit
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CREATE DEPOSIT DOCUMENT
+   ========================================================= */
 
 try {
 
-    $depositResult = $deposits->insertOne(
-        $depositDocument
-    );
-
-} catch (MongoDB\Driver\Exception\BulkWriteException $e) {
-
-    error_log(
-        "CROWN CASH DEPOSIT INSERT ERROR: "
-        . $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Deposit could not be submitted. Please try again."
-    ]);
-
-    exit;
-
-} catch (Throwable $e) {
-
-    error_log(
-        "CROWN CASH DEPOSIT ERROR: "
-        . $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Deposit could not be submitted."
-    ]);
-
-    exit;
-}
+    $now =
+        new MongoDB\BSON\UTCDateTime();
 
 
-/*
-|--------------------------------------------------------------------------
-| Create transaction record
-|--------------------------------------------------------------------------
-*/
-
-if (isset($transactions)) {
-
-    try {
-
-        $transactions->insertOne([
-
-            "user_id" => $userId,
-
-            "type" => "deposit",
-
-            "amount" => $amount,
-
-            "method" => $paymentMethod,
-
-            "payment_method" => $paymentMethod,
-
-            "reference" => $transactionReference,
-
-            "transaction_reference" => $transactionReference,
-
-            "status" => "pending",
-
-            "created_at" => $now,
-
-            "updated_at" => $now
-
-        ]);
-
-    } catch (Throwable $e) {
+    $depositDocument = [
 
         /*
-        |--------------------------------------------------------------------------
-        | The deposit itself was already created.
-        | Log the transaction error instead of telling the user
-        | that the entire deposit failed.
-        |--------------------------------------------------------------------------
-        */
+         * User
+         */
 
-        error_log(
-            "CROWN CASH TRANSACTION INSERT ERROR: "
-            . $e->getMessage()
+        'user_id' =>
+            $userId,
+
+        'userId' =>
+            $userId,
+
+        'email' =>
+            strtolower(
+                trim(
+                    (string) $userEmail
+                )
+            ),
+
+        'customer_name' =>
+            $userName,
+
+
+        /*
+         * Deposit amount
+         */
+
+        'amount' =>
+            $amount,
+
+        'currency' =>
+            'UGX',
+
+
+        /*
+         * Payment information
+         */
+
+        'payment_method' =>
+            $paymentMethod,
+
+        'paymentMethod' =>
+            $paymentMethod,
+
+        'merchant_code' =>
+            $expectedMerchantCode,
+
+        'transaction_reference' =>
+            $transactionReference,
+
+        'transactionReference' =>
+            $transactionReference,
+
+
+        /*
+         * Deposit status
+         *
+         * ALWAYS pending when first created.
+         */
+
+        'status' =>
+            'pending',
+
+
+        /*
+         * Verification
+         */
+
+        'verified' =>
+            false,
+
+        'approved' =>
+            false,
+
+
+        /*
+         * Admin approval information
+         */
+
+        'approved_by' =>
+            null,
+
+        'approved_at' =>
+            null,
+
+        'rejection_reason' =>
+            null,
+
+
+        /*
+         * Timestamps
+         */
+
+        'created_at' =>
+            $now,
+
+        'updated_at' =>
+            $now
+
+    ];
+
+
+    $insertResult =
+        $depositsCollection->insertOne(
+            $depositDocument
         );
+
+
+    if (
+        !$insertResult->isAcknowledged()
+    ) {
+
+        throw new RuntimeException(
+            'MongoDB did not acknowledge the deposit.'
+        );
+
     }
+
+
+    $depositId =
+        (string)
+        $insertResult->getInsertedId();
+
+
+} catch (Throwable $e) {
+
+    error_log(
+        'Crown Cash deposit insert error: ' .
+        $e->getMessage()
+    );
+
+    sendJson(
+        false,
+        'Unable to save your deposit request. Please try again.',
+        [],
+        500
+    );
+
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| Optional audit log
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SUCCESS RESPONSE
+   ========================================================= */
 
-if (isset($audit_logs)) {
+sendJson(
+    true,
+    'Deposit submitted successfully. Your payment will be verified before your balance is updated.',
+    [
+        'deposit' => [
+            'id' =>
+                $depositId,
 
-    try {
+            'amount' =>
+                $amount,
 
-        $audit_logs->insertOne([
+            'currency' =>
+                'UGX',
 
-            "user_id" => $userId,
+            'payment_method' =>
+                $paymentMethod,
 
-            "action" => "deposit_submitted",
+            'merchant_code' =>
+                $expectedMerchantCode,
 
-            "type" => "deposit",
+            'transaction_reference' =>
+                $transactionReference,
 
-            "amount" => $amount,
+            'status' =>
+                'pending',
 
-            "payment_method" => $paymentMethod,
-
-            "reference" => $transactionReference,
-
-            "status" => "pending",
-
-            "created_at" => $now
-
-        ]);
-
-    } catch (Throwable $e) {
-
-        error_log(
-            "CROWN CASH AUDIT LOG ERROR: "
-            . $e->getMessage()
-        );
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Success response
-|--------------------------------------------------------------------------
-*/
-
-http_response_code(201);
-
-echo json_encode([
-
-    "success" => true,
-
-    "message" =>
-        "Deposit submitted successfully. Your request is pending verification.",
-
-    "deposit" => [
-
-        "id" => (string)$depositResult->getInsertedId(),
-
-        "amount" => $amount,
-
-        "payment_method" => $paymentMethod,
-
-        "transaction_reference" => $transactionReference,
-
-        "status" => "pending"
-
+            'created_at' =>
+                gmdate(
+                    'c'
+                )
+        ]
     ]
+);
 
-]);
 
-exit;
-?>
+/* =========================================================
+   HELPER FUNCTIONS
+   ========================================================= */
+
+
+/**
+ * Convert MongoDB values into JSON-safe PHP values.
+ */
+function jsonSafeValue(
+    mixed $value
+): mixed {
+
+    if (
+        $value instanceof MongoDB\BSON\ObjectId
+    ) {
+
+        return (string) $value;
+
+    }
+
+
+    if (
+        $value instanceof MongoDB\BSON\UTCDateTime
+    ) {
+
+        return $value
+            ->toDateTime()
+            ->format('c');
+
+    }
+
+
+    if (
+        $value instanceof MongoDB\Model\BSONDocument ||
+        $value instanceof MongoDB\Model\BSONArray
+    ) {
+
+        return json_decode(
+            $value->toJSON(),
+            true
+        );
+
+    }
+
+
+    if (is_array($value)) {
+
+        $result = [];
+
+        foreach ($value as $key => $item) {
+
+            $result[$key] =
+                jsonSafeValue(
+                    $item
+                );
+
+        }
+
+        return $result;
+
+    }
+
+
+    return $value;
+
+}
+
+
+/**
+ * Convert a MongoDB document to a normal PHP array.
+ */
+function convertMongoDocument(
+    mixed $document
+): array {
+
+    $safe =
+        jsonSafeValue(
+            $document
+        );
+
+
+    if (is_array($safe)) {
+        return $safe;
+    }
+
+
+    return [];
+
+}
+
+
+/**
+ * Extract a user ID from possible user ID fields.
+ */
+function extractUserId(
+    array $user
+): ?string {
+
+    $possibleFields = [
+
+        '_id',
+
+        'id',
+
+        'user_id',
+
+        'userId',
+
+        'customer_id',
+
+        'customerId',
+
+        'member_id',
+
+        'memberId',
+
+        'account_id',
+
+        'accountId'
+
+    ];
+
+
+    foreach (
+        $possibleFields as $field
+    ) {
+
+        if (
+            isset($user[$field]) &&
+            $user[$field] !== ''
+        ) {
+
+            return (string)
+                $user[$field];
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/**
+ * Find a user using common Crown Cash ID formats.
+ */
+function findUserByPossibleId(
+    MongoDB\Collection $collection,
+    string $userId
+): ?MongoDB\Model\BSONDocument {
+
+    /*
+     * First try ObjectId when appropriate.
+     */
+
+    if (
+        preg_match(
+            '/^[a-f0-9]{24}$/i',
+            $userId
+        )
+    ) {
+
+        try {
+
+            $objectId =
+                new MongoDB\BSON\ObjectId(
+                    $userId
+                );
+
+
+            $user =
+                $collection->findOne(
+                    [
+                        '_id' => $objectId
+                    ]
+                );
+
+
+            if ($user !== null) {
+                return $user;
+            }
+
+        } catch (Throwable $e) {
+
+            /*
+             * Continue with string lookup.
+             */
+
+        }
+
+    }
+
+
+    /*
+     * Try common string ID fields.
+     */
+
+    $possibleQueries = [
+
+        [
+            'id' => $userId
+        ],
+
+        [
+            'user_id' => $userId
+        ],
+
+        [
+            'userId' => $userId
+        ],
+
+        [
+            'customer_id' => $userId
+        ],
+
+        [
+            'customerId' => $userId
+        ],
+
+        [
+            'member_id' => $userId
+        ],
+
+        [
+            'memberId' => $userId
+        ],
+
+        [
+            'account_id' => $userId
+        ],
+
+        [
+            'accountId' => $userId
+        ]
+
+    ];
+
+
+    foreach (
+        $possibleQueries as $query
+    ) {
+
+        $user =
+            $collection->findOne(
+                $query
+            );
+
+
+        if ($user !== null) {
+            return $user;
+        }
+
+    }
+
+
+    return null;
+
+}

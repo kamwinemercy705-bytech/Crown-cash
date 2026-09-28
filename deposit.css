@@ -1,37 +1,40 @@
 /* =========================================================
-   CROWN CASH - DEPOSIT PAGE
+   CROWN CASH — DEPOSIT PAGE
    ========================================================= */
 
 :root {
-    --bg: #07111f;
-    --bg-light: #0b1728;
-    --card: #0d1b2e;
-    --card-light: #12243a;
+    --bg-main: #07111f;
+    --bg-secondary: #0b1628;
+    --bg-card: rgba(18, 27, 45, 0.94);
+    --bg-card-light: rgba(25, 36, 57, 0.9);
 
-    --text: #ffffff;
-    --text-soft: #aab6c7;
-    --text-muted: #718096;
+    --maroon: #8f1748;
+    --maroon-dark: #5e1033;
+    --purple: #7414a8;
 
-    --purple: #b800ff;
-    --pink: #ff00d4;
+    --gold: #f5c542;
+    --gold-light: #ffe27a;
 
-    --border: rgba(255, 255, 255, 0.08);
+    --pink: #e83e8c;
+    --pink-light: #ff71b0;
 
-    --success: #21e6a5;
-    --warning: #ffbf3f;
-    --danger: #ff4d67;
+    --white: #ffffff;
+    --text-main: #f7f8fc;
+    --text-secondary: #aeb8ca;
+    --text-muted: #77839a;
+
+    --border: rgba(255, 255, 255, 0.09);
+    --border-light: rgba(255, 255, 255, 0.14);
+
+    --success: #2ed573;
+    --danger: #ff4757;
+    --warning: #ffa502;
+    --info: #4da6ff;
+
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
 
     --sidebar-width: 255px;
-
-    --gradient:
-        linear-gradient(
-            135deg,
-            #b800ff,
-            #ff00d4
-        );
-
-    --shadow:
-        0 15px 40px rgba(0, 0, 0, 0.25);
+    --radius: 18px;
 
     --transition: 0.25s ease;
 }
@@ -56,23 +59,41 @@ html {
 body {
     min-height: 100vh;
 
+    background:
+        radial-gradient(
+            circle at 15% 15%,
+            rgba(116, 20, 168, 0.17),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(143, 23, 72, 0.16),
+            transparent 32%
+        ),
+        var(--bg-main);
+
+    color: var(--text-main);
+
     font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
         Arial,
-        Helvetica,
         sans-serif;
-
-    background: var(--bg);
-
-    color: var(--text);
 
     overflow-x: hidden;
 }
 
 
+body.sidebar-open {
+    overflow: hidden;
+}
+
+
 button,
-input,
-select,
-textarea {
+input {
     font: inherit;
 }
 
@@ -83,18 +104,18 @@ button {
 
 
 a {
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
 }
 
 
 /* =========================================================
-   MAIN CONTAINER
+   MAIN DASHBOARD CONTAINER
    ========================================================= */
 
 .dashboard-container {
     min-height: 100vh;
-    display: flex;
+    width: 100%;
 }
 
 
@@ -107,27 +128,43 @@ a {
 
     top: 0;
     left: 0;
+    bottom: 0;
 
     width: var(--sidebar-width);
-    height: 100vh;
-
-    background:
-        linear-gradient(
-            180deg,
-            #091625 0%,
-            #07111f 100%
-        );
-
-    border-right:
-        1px solid var(--border);
 
     display: flex;
     flex-direction: column;
 
+    padding: 24px 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(20, 12, 31, 0.98),
+            rgba(8, 15, 28, 0.99)
+        );
+
+    border-right: 1px solid var(--border);
+
+    box-shadow:
+        15px 0 45px rgba(0, 0, 0, 0.18);
+
     z-index: 1000;
 
-    transition:
-        transform var(--transition);
+    overflow-y: auto;
+
+    scrollbar-width: thin;
+}
+
+
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
 }
 
 
@@ -136,17 +173,12 @@ a {
    ========================================================= */
 
 .logo-section {
-    height: 85px;
-
-    padding: 20px;
-
     display: flex;
     align-items: center;
 
-    gap: 12px;
+    gap: 11px;
 
-    border-bottom:
-        1px solid var(--border);
+    padding: 5px 9px 25px;
 }
 
 
@@ -154,33 +186,38 @@ a {
     width: 43px;
     height: 43px;
 
-    border-radius: 13px;
-
-    background: var(--gradient);
-
     display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 23px;
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold),
+            #c89418
+        );
+
+    color: #17110a;
+
+    font-size: 22px;
     font-weight: 900;
 
     box-shadow:
-        0 8px 25px
-        rgba(184, 0, 255, 0.25);
+        0 8px 22px rgba(245, 197, 66, 0.2);
 }
 
 
 .logo-text {
     font-size: 20px;
-    font-weight: 800;
-
-    letter-spacing: 0.2px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
 }
 
 
 .logo-text span {
-    color: var(--purple);
+    color: var(--gold);
 }
 
 
@@ -189,35 +226,33 @@ a {
    ========================================================= */
 
 .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+
     flex: 1;
-
-    padding: 20px 13px;
-
-    overflow-y: auto;
 }
 
 
 .nav-item {
     width: 100%;
 
-    min-height: 49px;
-
-    padding: 12px 15px;
-
-    margin-bottom: 7px;
+    min-height: 46px;
 
     display: flex;
     align-items: center;
 
-    gap: 14px;
+    gap: 13px;
 
-    border: 0;
+    padding: 0 14px;
 
+    border: 1px solid transparent;
     border-radius: 12px;
 
     background: transparent;
 
-    color: var(--text-soft);
+    color: var(--text-secondary);
 
     font-size: 14px;
     font-weight: 600;
@@ -225,80 +260,82 @@ a {
     transition:
         background var(--transition),
         color var(--transition),
+        border var(--transition),
         transform var(--transition);
 }
 
 
 .nav-item i {
-    width: 22px;
+    width: 20px;
 
     text-align: center;
 
-    font-size: 17px;
+    font-size: 16px;
 }
 
 
 .nav-item:hover {
-    color: #ffffff;
+    color: var(--white);
 
     background:
-        rgba(184, 0, 255, 0.10);
+        rgba(255, 255, 255, 0.055);
+
+    border-color:
+        rgba(255, 255, 255, 0.06);
 
     transform: translateX(2px);
 }
 
 
 .nav-item.active {
-    color: #ffffff;
+    color: var(--white);
 
     background:
         linear-gradient(
-            90deg,
-            rgba(184, 0, 255, 0.20),
-            rgba(255, 0, 212, 0.10)
+            135deg,
+            rgba(143, 23, 72, 0.65),
+            rgba(116, 20, 168, 0.48)
         );
 
-    border:
-        1px solid
-        rgba(184, 0, 255, 0.20);
+    border-color:
+        rgba(245, 197, 66, 0.14);
 
     box-shadow:
-        inset 3px 0 0 var(--purple);
+        0 8px 25px rgba(80, 10, 60, 0.2);
 }
 
 
 .nav-item.active i {
-    color: #d100ff;
+    color: var(--gold);
 }
 
 
 /* =========================================================
-   SIDEBAR BOTTOM
+   LOGOUT
    ========================================================= */
 
 .sidebar-bottom {
-    padding: 13px;
+    padding-top: 18px;
 
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 }
 
 
 .logout-btn {
-    color: #ff7185;
+    color: #ff8d9a;
 }
 
 
 .logout-btn:hover {
-    color: #ffffff;
+    color: var(--danger);
 
     background:
-        rgba(255, 77, 103, 0.10);
+        rgba(255, 71, 87, 0.08);
 }
 
 
 /* =========================================================
-   SIDEBAR OVERLAY
+   MOBILE OVERLAY
    ========================================================= */
 
 .sidebar-overlay {
@@ -309,9 +346,16 @@ a {
     inset: 0;
 
     background:
-        rgba(0, 0, 0, 0.65);
+        rgba(0, 0, 0, 0.62);
 
-    z-index: 900;
+    backdrop-filter: blur(3px);
+
+    z-index: 999;
+}
+
+
+.sidebar-overlay.active {
+    display: block;
 }
 
 
@@ -320,11 +364,13 @@ a {
    ========================================================= */
 
 .main-content {
-    width: calc(100% - var(--sidebar-width));
+    min-height: 100vh;
 
     margin-left: var(--sidebar-width);
 
-    min-height: 100vh;
+    width: calc(100% - var(--sidebar-width));
+
+    position: relative;
 }
 
 
@@ -333,29 +379,26 @@ a {
    ========================================================= */
 
 .topbar {
-    min-height: 85px;
-
-    padding:
-        16px 30px;
+    min-height: 88px;
 
     display: flex;
     align-items: center;
 
-    justify-content: space-between;
+    gap: 18px;
+
+    padding: 18px 34px;
+
+    border-bottom: 1px solid var(--border);
 
     background:
-        rgba(7, 17, 31, 0.92);
+        rgba(7, 17, 31, 0.72);
 
-    border-bottom:
-        1px solid var(--border);
+    backdrop-filter: blur(18px);
 
     position: sticky;
-
     top: 0;
 
     z-index: 500;
-
-    backdrop-filter: blur(14px);
 }
 
 
@@ -365,15 +408,17 @@ a {
     width: 43px;
     height: 43px;
 
+    align-items: center;
+    justify-content: center;
+
     border: 1px solid var(--border);
 
-    border-radius: 11px;
+    border-radius: 12px;
 
-    background: var(--card);
+    background:
+        rgba(255, 255, 255, 0.05);
 
-    color: #ffffff;
-
-    font-size: 18px;
+    color: var(--white);
 }
 
 
@@ -387,58 +432,62 @@ a {
 
     margin-bottom: 3px;
 
-    color: var(--purple);
+    color: var(--gold);
 
     font-size: 11px;
+    font-weight: 700;
 
-    font-weight: 800;
+    letter-spacing: 1.4px;
 
     text-transform: uppercase;
-
-    letter-spacing: 1.5px;
 }
 
 
 .page-title h1 {
-    font-size: 24px;
+    font-size: 25px;
+    line-height: 1.2;
 
-    font-weight: 800;
+    font-weight: 750;
 }
 
 
 .topbar-icon {
-    width: 43px;
-    height: 43px;
-
-    border-radius: 12px;
-
-    background:
-        rgba(184, 0, 255, 0.10);
-
-    border:
-        1px solid
-        rgba(184, 0, 255, 0.18);
-
-    color: var(--purple);
+    width: 44px;
+    height: 44px;
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(143, 23, 72, 0.5),
+            rgba(116, 20, 168, 0.4)
+        );
+
+    border: 1px solid var(--border-light);
+
+    color: var(--gold);
 
     font-size: 18px;
 }
 
 
 /* =========================================================
-   PAGE
+   PAGE CONTENT
    ========================================================= */
 
 .deposit-page {
-    padding: 30px;
+    width: 100%;
 
-    max-width: 1450px;
+    max-width: 1500px;
 
     margin: 0 auto;
+
+    padding: 28px 34px 40px;
 }
 
 
@@ -447,34 +496,36 @@ a {
    ========================================================= */
 
 .balance-card {
-    position: relative;
-
-    overflow: hidden;
-
     min-height: 145px;
 
-    padding: 28px;
-
-    margin-bottom: 25px;
-
-    border-radius: 20px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #5c00c9 0%,
-            #b800ff 45%,
-            #ff00d4 100%
-        );
+    position: relative;
 
     display: flex;
     align-items: center;
 
     gap: 18px;
 
-    box-shadow:
-        0 20px 45px
-        rgba(184, 0, 255, 0.18);
+    padding: 26px 28px;
+
+    margin-bottom: 25px;
+
+    overflow: hidden;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(100, 13, 50, 0.92),
+            rgba(63, 16, 87, 0.88)
+        );
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.12);
+
+    box-shadow: var(--shadow);
+
+    animation: fadeUp 0.5s ease both;
 }
 
 
@@ -486,51 +537,37 @@ a {
     width: 220px;
     height: 220px;
 
-    right: -90px;
-    top: -110px;
+    right: -80px;
+    top: -100px;
 
     border-radius: 50%;
 
-    background:
-        rgba(255, 255, 255, 0.08);
-}
-
-
-.balance-card::after {
-    content: "";
-
-    position: absolute;
-
-    width: 150px;
-    height: 150px;
-
-    right: 80px;
-    bottom: -100px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255, 255, 255, 0.06);
+    border: 1px solid
+        rgba(245, 197, 66, 0.1);
 }
 
 
 .balance-icon {
-    width: 62px;
-    height: 62px;
-
-    border-radius: 18px;
-
-    background:
-        rgba(255, 255, 255, 0.15);
+    width: 60px;
+    height: 60px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 27px;
+    flex-shrink: 0;
 
-    position: relative;
-    z-index: 2;
+    border-radius: 17px;
+
+    background:
+        rgba(245, 197, 66, 0.12);
+
+    color: var(--gold);
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.15);
+
+    font-size: 23px;
 }
 
 
@@ -545,124 +582,147 @@ a {
 
     margin-bottom: 5px;
 
-    color:
-        rgba(255, 255, 255, 0.78);
+    color: rgba(255, 255, 255, 0.68);
 
     font-size: 13px;
+    font-weight: 600;
 }
 
 
 .balance-info h2 {
-    font-size: 30px;
+    font-size: 31px;
 
-    font-weight: 900;
+    font-weight: 800;
+
+    letter-spacing: -0.8px;
 }
 
 
 .balance-decoration {
     position: absolute;
 
-    right: 40px;
-
-    font-size: 100px;
+    right: 42px;
 
     color:
-        rgba(255, 255, 255, 0.08);
+        rgba(245, 197, 66, 0.12);
 
-    transform: rotate(-15deg);
+    font-size: 80px;
+
+    transform: rotate(-12deg);
 }
 
 
 /* =========================================================
-   DEPOSIT GRID
+   MAIN GRID
    ========================================================= */
 
 .deposit-grid {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1.35fr)
-        minmax(320px, 0.65fr);
+        minmax(0, 1.1fr)
+        minmax(350px, 0.9fr);
 
-    gap: 25px;
+    gap: 24px;
 
-    margin-bottom: 25px;
+    align-items: start;
 }
 
 
 /* =========================================================
-   CARDS
+   CARD
    ========================================================= */
 
 .card {
-    background: var(--card);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18, 27, 45, 0.96),
+            rgba(11, 20, 35, 0.96)
+        );
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
-    border-radius: 18px;
+    border-radius: var(--radius);
 
-    box-shadow: var(--shadow);
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.18);
+
+    overflow: hidden;
 }
 
 
 .deposit-card,
-.instructions-card {
-    padding: 26px;
+.instructions-card,
+.history-card {
+    animation: fadeUp 0.55s ease both;
 }
 
 
+.instructions-card {
+    animation-delay: 0.08s;
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
 .card-header {
     display: flex;
-
     align-items: center;
 
     gap: 14px;
 
-    margin-bottom: 25px;
+    padding: 24px 25px;
+
+    border-bottom: 1px solid var(--border);
 }
 
 
 .header-icon {
-    flex-shrink: 0;
-
-    width: 48px;
-    height: 48px;
-
-    border-radius: 14px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(184, 0, 255, 0.18),
-            rgba(255, 0, 212, 0.12)
-        );
-
-    border:
-        1px solid
-        rgba(184, 0, 255, 0.20);
+    width: 46px;
+    height: 46px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    color: var(--purple);
+    flex-shrink: 0;
 
-    font-size: 20px;
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(143, 23, 72, 0.45),
+            rgba(116, 20, 168, 0.35)
+        );
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.08);
+
+    color: var(--gold);
+
+    font-size: 18px;
 }
 
 
 .card-header h2 {
-    font-size: 19px;
+    font-size: 18px;
 
     margin-bottom: 4px;
+
+    font-weight: 750;
 }
 
 
 .card-header p {
     color: var(--text-muted);
 
-    font-size: 13px;
+    font-size: 12.5px;
+
+    line-height: 1.5;
 }
 
 
@@ -673,11 +733,11 @@ a {
 .form-message {
     display: none;
 
-    padding: 12px 14px;
+    margin: 18px 25px 0;
 
-    margin-bottom: 20px;
+    padding: 13px 15px;
 
-    border-radius: 10px;
+    border-radius: 11px;
 
     font-size: 13px;
 
@@ -688,28 +748,39 @@ a {
 .form-message.success {
     display: block;
 
-    color: var(--success);
+    color: #8ff5b4;
 
     background:
-        rgba(33, 230, 165, 0.08);
+        rgba(46, 213, 115, 0.09);
 
-    border:
-        1px solid
-        rgba(33, 230, 165, 0.20);
+    border: 1px solid
+        rgba(46, 213, 115, 0.2);
 }
 
 
 .form-message.error {
     display: block;
 
-    color: var(--danger);
+    color: #ff9da6;
 
     background:
-        rgba(255, 77, 103, 0.08);
+        rgba(255, 71, 87, 0.09);
 
-    border:
-        1px solid
-        rgba(255, 77, 103, 0.20);
+    border: 1px solid
+        rgba(255, 71, 87, 0.2);
+}
+
+
+.form-message.info {
+    display: block;
+
+    color: #9bcaff;
+
+    background:
+        rgba(77, 166, 255, 0.08);
+
+    border: 1px solid
+        rgba(77, 166, 255, 0.2);
 }
 
 
@@ -717,28 +788,35 @@ a {
    FORM
    ========================================================= */
 
+#depositForm {
+    padding: 25px;
+}
+
+
 .form-group {
     margin-bottom: 23px;
 }
 
 
 .form-group > label {
-    display: block;
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
 
     margin-bottom: 9px;
 
-    color: #e7edf5;
+    color: var(--text-main);
 
     font-size: 13px;
-
     font-weight: 700;
 }
 
 
 .form-group > label i {
-    margin-right: 6px;
+    color: var(--gold);
 
-    color: var(--purple);
+    font-size: 13px;
 }
 
 
@@ -756,7 +834,7 @@ a {
 
 
 /* =========================================================
-   INPUT WRAPPER
+   INPUT
    ========================================================= */
 
 .input-wrapper {
@@ -767,79 +845,79 @@ a {
 }
 
 
-.input-wrapper input {
-    width: 100%;
-
-    height: 53px;
-
-    padding:
-        0 15px 0 72px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 12px;
-
-    outline: none;
-
-    background:
-        var(--bg-light);
-
-    color: #ffffff;
-
-    font-size: 14px;
-
-    transition:
-        border var(--transition),
-        box-shadow var(--transition);
-}
-
-
-.input-wrapper input::placeholder {
-    color: #58677a;
-}
-
-
-.input-wrapper input:focus {
-    border-color:
-        rgba(184, 0, 255, 0.65);
-
-    box-shadow:
-        0 0 0 3px
-        rgba(184, 0, 255, 0.08);
-}
-
-
 .input-prefix {
     position: absolute;
 
-    left: 16px;
+    left: 15px;
 
-    z-index: 2;
+    color: var(--gold);
 
-    color: var(--purple);
-
-    font-size: 13px;
-
+    font-size: 12px;
     font-weight: 800;
 
-    border-right:
-        1px solid var(--border);
-
-    padding-right: 13px;
+    pointer-events: none;
 }
 
 
 .input-icon {
     position: absolute;
 
-    left: 16px;
+    left: 15px;
 
-    z-index: 2;
+    color: var(--text-muted);
 
-    color: var(--purple);
+    pointer-events: none;
+}
+
+
+.input-wrapper input {
+    width: 100%;
+
+    min-height: 50px;
+
+    padding:
+        0 15px 0 53px;
+
+    border: 1px solid var(--border-light);
+
+    border-radius: 12px;
+
+    outline: none;
+
+    background:
+        rgba(255, 255, 255, 0.035);
+
+    color: var(--white);
 
     font-size: 14px;
+
+    transition:
+        border var(--transition),
+        box-shadow var(--transition),
+        background var(--transition);
+}
+
+
+.input-wrapper input::placeholder {
+    color: #657187;
+}
+
+
+.input-wrapper input:focus {
+    border-color:
+        rgba(245, 197, 66, 0.55);
+
+    background:
+        rgba(255, 255, 255, 0.05);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(245, 197, 66, 0.08);
+}
+
+
+.input-wrapper input[type="number"] {
+    padding-left: 52px;
 }
 
 
@@ -860,29 +938,27 @@ a {
 .payment-option {
     position: relative;
 
-    min-height: 86px;
-
-    padding: 14px;
-
     display: flex;
     align-items: center;
 
-    gap: 12px;
+    min-height: 76px;
 
-    border:
-        1px solid var(--border);
+    padding: 12px 14px;
+
+    border: 1px solid var(--border-light);
 
     border-radius: 13px;
 
     background:
-        var(--bg-light);
+        rgba(255, 255, 255, 0.025);
 
     cursor: pointer;
 
     transition:
         border var(--transition),
         background var(--transition),
-        transform var(--transition);
+        transform var(--transition),
+        box-shadow var(--transition);
 }
 
 
@@ -890,7 +966,10 @@ a {
     transform: translateY(-2px);
 
     border-color:
-        rgba(184, 0, 255, 0.30);
+        rgba(255, 255, 255, 0.17);
+
+    background:
+        rgba(255, 255, 255, 0.045);
 }
 
 
@@ -903,26 +982,8 @@ a {
 }
 
 
-.payment-option:has(input:checked) {
-    border-color:
-        var(--purple);
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(184, 0, 255, 0.12),
-            rgba(255, 0, 212, 0.05)
-        );
-
-    box-shadow:
-        0 8px 25px
-        rgba(184, 0, 255, 0.08);
-}
-
-
 .payment-content {
     display: flex;
-
     align-items: center;
 
     gap: 11px;
@@ -932,34 +993,40 @@ a {
 
 
 .payment-icon {
-    flex-shrink: 0;
-
-    width: 40px;
-    height: 40px;
-
-    border-radius: 11px;
+    width: 42px;
+    height: 42px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 16px;
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    font-size: 17px;
 }
 
 
 .mtn-icon {
     background:
-        rgba(255, 204, 0, 0.13);
+        rgba(255, 193, 7, 0.12);
 
-    color: #ffd21c;
+    color: #ffd43b;
+
+    border: 1px solid
+        rgba(255, 193, 7, 0.18);
 }
 
 
 .airtel-icon {
     background:
-        rgba(255, 50, 70, 0.12);
+        rgba(239, 65, 54, 0.12);
 
-    color: #ff5265;
+    color: #ff6961;
+
+    border: 1px solid
+        rgba(239, 65, 54, 0.18);
 }
 
 
@@ -968,9 +1035,9 @@ a {
 
     margin-bottom: 3px;
 
-    color: #ffffff;
+    color: var(--white);
 
-    font-size: 13px;
+    font-size: 12.5px;
 }
 
 
@@ -979,26 +1046,316 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10.5px;
 }
 
 
 .selected-icon {
     position: absolute;
 
-    top: 10px;
-    right: 10px;
+    right: 11px;
+    top: 11px;
 
-    display: none;
+    color: transparent;
 
-    color: var(--purple);
+    font-size: 15px;
 
-    font-size: 14px;
+    transition: color var(--transition);
 }
 
 
-.payment-option:has(input:checked) .selected-icon {
+.payment-option:has(input:checked) {
+    border-color:
+        rgba(245, 197, 66, 0.48);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(143, 23, 72, 0.2),
+            rgba(116, 20, 168, 0.16)
+        );
+
+    box-shadow:
+        0 8px 25px
+        rgba(0, 0, 0, 0.15);
+}
+
+
+.payment-option:has(input:checked)
+.selected-icon {
+    color: var(--gold);
+}
+
+
+/* =========================================================
+   MERCHANT PAYMENT BOX
+   ========================================================= */
+
+.merchant-payment-box {
+    margin-top: 15px;
+
+    padding: 18px;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(116, 20, 168, 0.12),
+            rgba(143, 23, 72, 0.12)
+        );
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.14);
+
+    transition:
+        border var(--transition),
+        background var(--transition),
+        transform var(--transition);
+
+    animation: merchantAppear 0.3s ease both;
+}
+
+
+.merchant-payment-box.merchant-mtn {
+    border-color:
+        rgba(255, 203, 7, 0.25);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 203, 7, 0.075),
+            rgba(116, 20, 168, 0.1)
+        );
+}
+
+
+.merchant-payment-box.merchant-airtel {
+    border-color:
+        rgba(239, 65, 54, 0.25);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(239, 65, 54, 0.075),
+            rgba(143, 23, 72, 0.1)
+        );
+}
+
+
+/* =========================================================
+   MERCHANT HEADER
+   ========================================================= */
+
+.merchant-header {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 16px;
+}
+
+
+.merchant-network-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background:
+        rgba(245, 197, 66, 0.1);
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.14);
+
+    color: var(--gold);
+}
+
+
+.merchant-label {
     display: block;
+
+    margin-bottom: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.8px;
+}
+
+
+.merchant-header h3 {
+    font-size: 14px;
+
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   MERCHANT CODE ROW
+   ========================================================= */
+
+.merchant-code-row {
+    display: flex;
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 13px 14px;
+
+    border-radius: 12px;
+
+    background:
+        rgba(0, 0, 0, 0.22);
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.06);
+}
+
+
+.merchant-code-info span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.7px;
+}
+
+
+.merchant-code-info strong {
+    color: var(--gold-light);
+
+    font-size: 22px;
+
+    font-weight: 850;
+
+    letter-spacing: 1.4px;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =========================================================
+   COPY BUTTON
+   ========================================================= */
+
+.copy-code-button {
+    min-height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 13px;
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.2);
+
+    border-radius: 10px;
+
+    background:
+        rgba(245, 197, 66, 0.08);
+
+    color: var(--gold-light);
+
+    font-size: 11px;
+    font-weight: 750;
+
+    transition:
+        background var(--transition),
+        border var(--transition),
+        transform var(--transition);
+}
+
+
+.copy-code-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+
+    background:
+        rgba(245, 197, 66, 0.15);
+
+    border-color:
+        rgba(245, 197, 66, 0.35);
+}
+
+
+.copy-code-button:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
+}
+
+
+.copy-message {
+    min-height: 16px;
+
+    margin-top: 7px;
+
+    font-size: 10.5px;
+
+    text-align: right;
+}
+
+
+.copy-message.success {
+    color: var(--success);
+}
+
+
+.copy-message.error {
+    color: #ff8d9a;
+}
+
+
+/* =========================================================
+   MERCHANT INSTRUCTION
+   ========================================================= */
+
+.merchant-instruction {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+
+.merchant-instruction i {
+    margin-top: 2px;
+
+    color: var(--gold);
+
+    font-size: 11px;
+}
+
+
+.merchant-instruction p {
+    color: var(--text-muted);
+
+    font-size: 10.5px;
+
+    line-height: 1.55;
 }
 
 
@@ -1009,21 +1366,7 @@ a {
 .deposit-button {
     width: 100%;
 
-    min-height: 54px;
-
-    margin-top: 5px;
-
-    border: 0;
-
-    border-radius: 13px;
-
-    background: var(--gradient);
-
-    color: #ffffff;
-
-    font-size: 14px;
-
-    font-weight: 800;
+    min-height: 53px;
 
     display: flex;
     align-items: center;
@@ -1031,9 +1374,25 @@ a {
 
     gap: 9px;
 
+    border: 0;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--maroon),
+            var(--purple)
+        );
+
+    color: var(--white);
+
+    font-size: 14px;
+    font-weight: 750;
+
     box-shadow:
-        0 12px 28px
-        rgba(184, 0, 255, 0.18);
+        0 10px 30px
+        rgba(116, 20, 168, 0.2);
 
     transition:
         transform var(--transition),
@@ -1042,16 +1401,16 @@ a {
 }
 
 
-.deposit-button:hover {
+.deposit-button:hover:not(:disabled) {
     transform: translateY(-2px);
 
     box-shadow:
-        0 16px 35px
-        rgba(184, 0, 255, 0.28);
+        0 14px 35px
+        rgba(116, 20, 168, 0.3);
 }
 
 
-.deposit-button:active {
+.deposit-button:active:not(:disabled) {
     transform: translateY(0);
 }
 
@@ -1060,8 +1419,6 @@ a {
     opacity: 0.65;
 
     cursor: not-allowed;
-
-    transform: none;
 }
 
 
@@ -1069,54 +1426,56 @@ a {
    INSTRUCTIONS
    ========================================================= */
 
-.instruction-step {
-    display: flex;
-
-    gap: 13px;
-
-    padding-bottom: 20px;
-
-    margin-bottom: 20px;
-
-    border-bottom:
-        1px solid var(--border);
+.instructions-card {
+    padding-bottom: 8px;
 }
 
 
-.instruction-step:last-of-type {
-    margin-bottom: 0;
+.instruction-step {
+    display: flex;
 
-    padding-bottom: 0;
+    gap: 14px;
 
-    border-bottom: 0;
+    padding: 18px 24px;
+
+    border-bottom: 1px solid
+        rgba(255, 255, 255, 0.045);
 }
 
 
 .step-number {
-    flex-shrink: 0;
-
-    width: 34px;
-    height: 34px;
-
-    border-radius: 10px;
-
-    background:
-        rgba(184, 0, 255, 0.12);
-
-    color: var(--purple);
+    width: 31px;
+    height: 31px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 13px;
+    flex-shrink: 0;
 
-    font-weight: 900;
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245, 197, 66, 0.18),
+            rgba(143, 23, 72, 0.22)
+        );
+
+    border: 1px solid
+        rgba(245, 197, 66, 0.18);
+
+    color: var(--gold);
+
+    font-size: 12px;
+    font-weight: 800;
 }
 
 
 .step-content h3 {
     margin-bottom: 5px;
+
+    color: var(--white);
 
     font-size: 13px;
 }
@@ -1125,9 +1484,9 @@ a {
 .step-content p {
     color: var(--text-muted);
 
-    font-size: 12px;
+    font-size: 11.5px;
 
-    line-height: 1.6;
+    line-height: 1.55;
 }
 
 
@@ -1137,40 +1496,42 @@ a {
 
 .security-notice {
     display: flex;
+    align-items: flex-start;
 
     gap: 12px;
 
-    margin-top: 25px;
+    margin: 19px 24px;
 
     padding: 15px;
 
     border-radius: 13px;
 
     background:
-        rgba(33, 230, 165, 0.06);
+        rgba(46, 213, 115, 0.055);
 
-    border:
-        1px solid
-        rgba(33, 230, 165, 0.15);
+    border: 1px solid
+        rgba(46, 213, 115, 0.14);
 }
 
 
 .security-icon {
-    flex-shrink: 0;
-
-    width: 36px;
-    height: 36px;
-
-    border-radius: 10px;
-
-    background:
-        rgba(33, 230, 165, 0.10);
-
-    color: var(--success);
+    width: 35px;
+    height: 35px;
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background:
+        rgba(46, 213, 115, 0.09);
+
+    color: var(--success);
+
+    font-size: 14px;
 }
 
 
@@ -1179,7 +1540,7 @@ a {
 
     margin-bottom: 4px;
 
-    color: #ffffff;
+    color: #b5f7ca;
 
     font-size: 12px;
 }
@@ -1188,9 +1549,9 @@ a {
 .security-notice p {
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10.5px;
 
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 
@@ -1199,281 +1560,242 @@ a {
    ========================================================= */
 
 .history-card {
-    padding: 26px;
-
-    margin-bottom: 30px;
+    margin-top: 24px;
 }
 
 
 .history-header {
-    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
 }
 
 
-/* =========================================================
-   HISTORY LOADING
-   ========================================================= */
+.deposit-history {
+    width: 100%;
+}
 
-.history-loading {
-    min-height: 100px;
+
+.history-loading,
+.history-empty {
+    min-height: 150px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 30px;
+
+    color: var(--text-muted);
+
+    text-align: center;
+}
+
+
+.history-loading i {
+    color: var(--gold);
+
+    font-size: 19px;
+}
+
+
+.history-loading span {
+    font-size: 12px;
+}
+
+
+.history-empty-icon {
+    width: 48px;
+    height: 48px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    gap: 10px;
+    margin-bottom: 3px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(255, 255, 255, 0.04);
 
     color: var(--text-muted);
 
-    font-size: 13px;
+    font-size: 18px;
 }
 
 
-.history-loading i {
-    color: var(--purple);
+.history-empty h3 {
+    color: var(--text-main);
+
+    font-size: 14px;
+}
+
+
+.history-empty p {
+    color: var(--text-muted);
+
+    font-size: 11px;
 }
 
 
 /* =========================================================
-   DEPOSIT HISTORY
+   HISTORY ITEM
    ========================================================= */
 
-.deposit-history {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 10px;
-}
-
-
 .deposit-history-item {
-    padding: 16px;
-
     display: grid;
 
     grid-template-columns:
-        1fr
+        45px
+        minmax(150px, 1fr)
         auto
         auto;
 
     align-items: center;
 
-    gap: 18px;
+    gap: 15px;
 
-    background:
-        var(--bg-light);
+    padding: 16px 24px;
 
-    border:
-        1px solid var(--border);
-
-    border-radius: 13px;
+    border-bottom: 1px solid
+        rgba(255, 255, 255, 0.045);
 
     transition:
-        border var(--transition),
-        transform var(--transition);
+        background var(--transition);
 }
 
 
 .deposit-history-item:hover {
-    transform: translateY(-1px);
-
-    border-color:
-        rgba(184, 0, 255, 0.22);
+    background:
+        rgba(255, 255, 255, 0.025);
 }
 
 
-.deposit-main {
-    display: flex;
-
-    align-items: center;
-
-    gap: 12px;
+.deposit-history-item:last-child {
+    border-bottom: 0;
 }
 
 
-.deposit-history-icon {
+.history-method-icon {
     width: 42px;
     height: 42px;
-
-    flex-shrink: 0;
-
-    border-radius: 12px;
-
-    background:
-        rgba(184, 0, 255, 0.10);
-
-    color: var(--purple);
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        rgba(116, 20, 168, 0.1);
+
+    border: 1px solid
+        rgba(116, 20, 168, 0.15);
+
+    color: var(--pink);
+
+    font-size: 15px;
 }
 
 
-.deposit-details strong {
+.history-main strong {
     display: block;
 
     margin-bottom: 4px;
 
-    font-size: 13px;
+    color: var(--white);
+
+    font-size: 12.5px;
 }
 
 
-.deposit-details span {
-    display: block;
-
+.history-main span,
+.history-amount span {
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10.5px;
 }
 
 
-.deposit-amount {
-    font-size: 14px;
+.history-amount {
+    text-align: right;
+}
 
-    font-weight: 800;
+
+.history-amount strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--gold-light);
+
+    font-size: 12.5px;
+}
+
+
+.history-status {
+    min-width: 75px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   STATUS PILLS
+   ========================================================= */
+
+.status-pill {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 26px;
+
+    padding: 0 9px;
+
+    border-radius: 999px;
+
+    font-size: 9.5px;
+    font-weight: 750;
 
     white-space: nowrap;
 }
 
 
-.deposit-status {
-    min-width: 78px;
-
-    padding: 6px 9px;
-
-    border-radius: 20px;
-
-    text-align: center;
-
-    font-size: 10px;
-
-    font-weight: 800;
-
-    text-transform: capitalize;
-}
-
-
-.deposit-status.pending {
-    color: var(--warning);
+.status-approved {
+    color: #8ff5b4;
 
     background:
-        rgba(255, 191, 63, 0.10);
+        rgba(46, 213, 115, 0.09);
+
+    border: 1px solid
+        rgba(46, 213, 115, 0.16);
 }
 
 
-.deposit-status.approved,
-.deposit-status.completed,
-.deposit-status.success {
-    color: var(--success);
+.status-pending {
+    color: #ffd477;
 
     background:
-        rgba(33, 230, 165, 0.10);
+        rgba(255, 165, 2, 0.09);
+
+    border: 1px solid
+        rgba(255, 165, 2, 0.16);
 }
 
 
-.deposit-status.rejected,
-.deposit-status.failed {
-    color: var(--danger);
+.status-rejected {
+    color: #ff9da6;
 
     background:
-        rgba(255, 77, 103, 0.10);
-}
+        rgba(255, 71, 87, 0.09);
 
-
-/* =========================================================
-   EMPTY HISTORY
-   ========================================================= */
-
-.empty-history {
-    min-height: 120px;
-
-    padding: 25px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
-
-    color: var(--text-muted);
-
-    border:
-        1px dashed
-        rgba(255, 255, 255, 0.10);
-
-    border-radius: 13px;
-}
-
-
-.empty-history i {
-    margin-bottom: 10px;
-
-    color: var(--purple);
-
-    font-size: 27px;
-}
-
-
-.empty-history strong {
-    margin-bottom: 4px;
-
-    color: #ffffff;
-
-    font-size: 13px;
-}
-
-
-.empty-history p {
-    font-size: 11px;
-}
-
-
-/* =========================================================
-   ERROR HISTORY
-   ========================================================= */
-
-.history-error {
-    min-height: 100px;
-
-    padding: 25px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
-
-    border:
-        1px solid
-        rgba(255, 77, 103, 0.12);
-
-    background:
-        rgba(255, 77, 103, 0.04);
-
-    border-radius: 13px;
-
-    color: var(--text-muted);
-
-    font-size: 12px;
-}
-
-
-.history-error i {
-    margin-bottom: 9px;
-
-    color: var(--danger);
-
-    font-size: 22px;
+    border: 1px solid
+        rgba(255, 71, 87, 0.16);
 }
 
 
@@ -1482,84 +1804,127 @@ a {
    ========================================================= */
 
 .page-footer {
-    padding:
-        5px 0 20px;
-
     display: flex;
-
     align-items: center;
 
     justify-content: space-between;
 
-    gap: 15px;
+    gap: 20px;
+
+    padding: 25px 3px 5px;
 
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 10.5px;
 }
 
 
 .footer-links {
     display: flex;
+    gap: 17px;
+}
 
-    gap: 18px;
+
+.footer-links a {
+    transition:
+        color var(--transition);
 }
 
 
 .footer-links a:hover {
-    color: var(--purple);
+    color: var(--gold);
 }
 
 
 /* =========================================================
-   SCROLLBAR
+   FOCUS ACCESSIBILITY
    ========================================================= */
 
-::-webkit-scrollbar {
-    width: 7px;
-}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+label:focus-visible {
+    outline: 2px solid var(--gold);
 
-
-::-webkit-scrollbar-track {
-    background: var(--bg);
-}
-
-
-::-webkit-scrollbar-thumb {
-    background:
-        rgba(184, 0, 255, 0.35);
-
-    border-radius: 20px;
-}
-
-
-::-webkit-scrollbar-thumb:hover {
-    background:
-        rgba(184, 0, 255, 0.60);
+    outline-offset: 3px;
 }
 
 
 /* =========================================================
-   TABLET
+   ANIMATIONS
    ========================================================= */
 
-@media (max-width: 1100px) {
+@keyframes fadeUp {
 
-    .deposit-grid {
-        grid-template-columns: 1fr;
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+@keyframes merchantAppear {
+
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 
 }
 
 
 /* =========================================================
-   MOBILE SIDEBAR
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1150px) {
+
+    .deposit-grid {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(300px, 0.85fr);
+    }
+
+
+    .deposit-page {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+
+    .topbar {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE NAV
    ========================================================= */
 
 @media (max-width: 900px) {
 
     .sidebar {
-        transform: translateX(-100%);
+        transform: translateX(-105%);
+
+        transition:
+            transform 0.3s ease;
+
+        box-shadow:
+            20px 0 50px rgba(0, 0, 0, 0.4);
     }
 
 
@@ -1568,29 +1933,21 @@ a {
     }
 
 
-    .sidebar-overlay.active {
-        display: block;
-    }
-
-
     .main-content {
-        width: 100%;
-
         margin-left: 0;
+
+        width: 100%;
     }
 
 
     .menu-toggle {
         display: flex;
-
-        align-items: center;
-        justify-content: center;
-
-        margin-right: 14px;
     }
 
 
     .topbar {
+        min-height: 76px;
+
         padding:
             14px 18px;
     }
@@ -1602,36 +1959,140 @@ a {
 
 
     .deposit-page {
-        padding: 20px;
+        padding:
+            20px 18px 32px;
+    }
+
+
+    .deposit-grid {
+        grid-template-columns: 1fr;
     }
 
 }
 
 
 /* =========================================================
-   SMALL MOBILE
+   RESPONSIVE — SMALL TABLET / PHONE
    ========================================================= */
 
-@media (max-width: 600px) {
+@media (max-width: 650px) {
 
-    .deposit-page {
+    .balance-card {
+        min-height: 125px;
+
+        padding: 20px;
+
+        border-radius: 17px;
+    }
+
+
+    .balance-icon {
+        width: 50px;
+        height: 50px;
+
+        border-radius: 14px;
+    }
+
+
+    .balance-info h2 {
+        font-size: 25px;
+    }
+
+
+    .balance-decoration {
+        right: 18px;
+
+        font-size: 55px;
+    }
+
+
+    .card-header {
+        padding: 20px;
+    }
+
+
+    #depositForm {
+        padding: 20px;
+    }
+
+
+    .payment-methods {
+        grid-template-columns: 1fr;
+    }
+
+
+    .merchant-payment-box {
         padding: 15px;
     }
 
 
-    .topbar {
-        min-height: 72px;
+    .merchant-code-row {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .copy-code-button {
+        width: 100%;
+    }
+
+
+    .copy-message {
+        text-align: left;
+    }
+
+
+    .instruction-step {
+        padding:
+            16px 20px;
+    }
+
+
+    .security-notice {
+        margin:
+            16px 20px;
+    }
+
+
+    .deposit-history-item {
+        grid-template-columns:
+            42px
+            1fr
+            auto;
+
+        gap: 11px;
 
         padding:
-            12px 15px;
+            14px 18px;
     }
 
 
-    .menu-toggle {
-        width: 40px;
-        height: 40px;
+    .history-status {
+        grid-column: 2 / 4;
+
+        text-align: left;
+
+        margin-top: -3px;
     }
 
+
+    .page-footer {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding-top: 22px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL PHONE
+   ========================================================= */
+
+@media (max-width: 420px) {
 
     .topbar-icon {
         width: 40px;
@@ -1645,67 +2106,50 @@ a {
 
 
     .page-title h1 {
-        font-size: 17px;
+        font-size: 18px;
+    }
+
+
+    .deposit-page {
+        padding:
+            16px 13px 28px;
     }
 
 
     .balance-card {
-        min-height: 125px;
+        gap: 12px;
 
-        padding: 21px;
-
-        border-radius: 16px;
+        padding: 17px;
     }
 
 
-    .balance-icon {
-        width: 52px;
-        height: 52px;
-
-        border-radius: 15px;
-
-        font-size: 22px;
+    .balance-info span {
+        font-size: 11px;
     }
 
 
     .balance-info h2 {
-        font-size: 24px;
-    }
-
-
-    .balance-decoration {
-        right: 15px;
-
-        font-size: 65px;
-    }
-
-
-    .deposit-card,
-    .instructions-card,
-    .history-card {
-        padding: 19px;
-
-        border-radius: 15px;
+        font-size: 22px;
     }
 
 
     .card-header {
-        margin-bottom: 20px;
+        gap: 10px;
+
+        padding: 17px;
     }
 
 
     .header-icon {
-        width: 42px;
-        height: 42px;
+        width: 40px;
+        height: 40px;
 
-        border-radius: 12px;
-
-        font-size: 17px;
+        border-radius: 11px;
     }
 
 
     .card-header h2 {
-        font-size: 17px;
+        font-size: 16px;
     }
 
 
@@ -1714,81 +2158,43 @@ a {
     }
 
 
-    .payment-methods {
-        grid-template-columns: 1fr;
+    #depositForm {
+        padding: 17px;
     }
 
 
-    .payment-option {
-        min-height: 76px;
+    .merchant-code-info strong {
+        font-size: 20px;
+    }
+
+
+    .instruction-step {
+        gap: 10px;
+
+        padding:
+            14px 17px;
+    }
+
+
+    .security-notice {
+        margin:
+            14px 17px;
     }
 
 
     .deposit-history-item {
-        grid-template-columns: 1fr auto;
-
-        gap: 10px;
-    }
-
-
-    .deposit-status {
-        grid-column: 2;
-
-        grid-row: 1;
-    }
-
-
-    .deposit-amount {
-        grid-column: 1;
-
-        grid-row: 2;
-    }
-
-
-    .page-footer {
-        flex-direction: column;
-
-        align-items: flex-start;
-
-        padding-bottom: 15px;
+        padding:
+            13px 15px;
     }
 
 }
 
 
 /* =========================================================
-   VERY SMALL PHONES
+   REDUCED MOTION
    ========================================================= */
 
-@media (max-width: 400px) {
+@media (prefers-reduced-motion: reduce) {
 
-    .deposit-page {
-        padding: 11px;
-    }
-
-
-    .balance-card {
-        padding: 17px;
-    }
-
-
-    .balance-info h2 {
-        font-size: 21px;
-    }
-
-
-    .logo-section {
-        padding: 18px;
-    }
-
-
-    .deposit-button {
-        min-height: 51px;
-    }
-
-
-    .payment-content strong {
-        font-size: 12px;
-    }
-
-}
+    html {
+        scroll-behavior: auto;

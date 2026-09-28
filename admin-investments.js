@@ -1,18 +1,32 @@
+"use strict";
+
 /* =========================================================
    CROWN CASH — ADMIN INVESTMENTS
    ========================================================= */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_BASE =
+    "https://crown-cash1.onrender.com";
 
-const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
-const INVESTMENTS_API = `${API_BASE}/admin-investments.php`;
+const ADMIN_AUTH_API =
+    `${API_BASE}/admin-auth.php`;
+
+const INVESTMENTS_API =
+    `${API_BASE}/admin-investments.php`;
+
+const REQUEST_TIMEOUT = 12000;
 
 const state = {
+
     investments: [],
+
     filteredInvestments: [],
+
     currentPage: 1,
+
     perPage: 10,
+
     currentInvestment: null,
+
     loading: false
 };
 
@@ -100,27 +114,61 @@ const ICONS = {
    ========================================================= */
 
 function $(selector) {
+
     return document.querySelector(selector);
 }
 
+
 function $all(selector) {
-    return Array.from(document.querySelectorAll(selector));
+
+    return Array.from(
+        document.querySelectorAll(selector)
+    );
 }
 
 
 /* =========================================================
-   PAGE LOADER
+   PAGE VISIBILITY
    ========================================================= */
 
-function showLoader(message = "Verifying administrator access...") {
+function showAdminPage() {
 
-    const loader = $("#pageLoader");
+    const page =
+        $("#adminInvestmentsPage") ||
+        $(".admin-investments-page") ||
+        $(".main-content");
+
+    if (!page) {
+        return;
+    }
+
+    page.hidden = false;
+
+    page.style.display = "block";
+    page.style.visibility = "visible";
+    page.style.opacity = "1";
+    page.style.pointerEvents = "auto";
+
+    page.classList.add("page-ready");
+}
+
+
+function showLoader(
+    message = "Verifying administrator access..."
+) {
+
+    const loader =
+        $("#pageLoader");
 
     if (!loader) {
         return;
     }
 
+    loader.classList.remove("hidden");
+
     loader.style.display = "flex";
+    loader.style.visibility = "visible";
+    loader.style.opacity = "1";
 
     const text =
         loader.querySelector(".loader-text") ||
@@ -136,14 +184,24 @@ function showLoader(message = "Verifying administrator access...") {
 
 function hideLoader() {
 
-    const loader = $("#pageLoader");
+    const loader =
+        $("#pageLoader");
 
     if (!loader) {
         return;
     }
 
     loader.classList.add("hidden");
-    loader.style.display = "none";
+
+    loader.style.opacity = "0";
+    loader.style.visibility = "hidden";
+    loader.style.pointerEvents = "none";
+
+    setTimeout(() => {
+
+        loader.style.display = "none";
+
+    }, 250);
 }
 
 
@@ -151,7 +209,10 @@ function hideLoader() {
    MESSAGE
    ========================================================= */
 
-function showMessage(message, type = "error") {
+function showMessage(
+    message,
+    type = "error"
+) {
 
     const messageBox =
         $("#investmentMessage") ||
@@ -159,13 +220,20 @@ function showMessage(message, type = "error") {
         $("#pageMessage");
 
     if (!messageBox) {
+
         console.error(message);
+
         return;
     }
 
-    messageBox.textContent = message;
-    messageBox.className = `admin-message ${type}`;
-    messageBox.style.display = "block";
+    messageBox.textContent =
+        message;
+
+    messageBox.className =
+        `admin-message ${type}`;
+
+    messageBox.style.display =
+        "block";
 }
 
 
@@ -180,50 +248,88 @@ function clearMessage() {
         return;
     }
 
-    messageBox.textContent = "";
-    messageBox.style.display = "none";
+    messageBox.textContent =
+        "";
+
+    messageBox.style.display =
+        "none";
 }
 
 
 /* =========================================================
-   SAFE FETCH WITH TIMEOUT
+   FETCH WITH TIMEOUT
    ========================================================= */
 
-async function fetchJson(url, options = {}, timeout = 12000) {
+async function fetchJson(
+    url,
+    options = {},
+    timeout = REQUEST_TIMEOUT
+) {
 
-    const controller = new AbortController();
+    const controller =
+        new AbortController();
 
-    const timer = setTimeout(() => {
-        controller.abort();
-    }, timeout);
+    const timer =
+        setTimeout(
+            () => controller.abort(),
+            timeout
+        );
 
     try {
 
-        const response = await fetch(url, {
-            ...options,
-            credentials: "include",
-            cache: "no-store",
-            signal: controller.signal,
-            headers: {
-                "Accept": "application/json",
-                ...(options.headers || {})
-            }
-        });
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+
+                    credentials:
+                        "include",
+
+                    cache:
+                        "no-store",
+
+                    signal:
+                        controller.signal,
+
+                    headers: {
+
+                        "Accept":
+                            "application/json",
+
+                        ...(options.headers || {})
+                    }
+                }
+            );
 
         const contentType =
-            response.headers.get("content-type") || "";
+            response.headers.get(
+                "content-type"
+            ) || "";
 
-        let data = null;
+        let data;
 
-        if (contentType.includes("application/json")) {
-            data = await response.json();
+        if (
+            contentType.includes(
+                "application/json"
+            )
+        ) {
+
+            data =
+                await response.json();
+
         } else {
 
-            const text = await response.text();
+            const text =
+                await response.text();
 
             try {
-                data = JSON.parse(text);
+
+                data =
+                    JSON.parse(text);
+
             } catch {
+
                 throw new Error(
                     `Server returned an invalid response (${response.status}).`
                 );
@@ -232,13 +338,15 @@ async function fetchJson(url, options = {}, timeout = 12000) {
 
         if (!response.ok) {
 
-            const error = new Error(
-                data?.message ||
-                data?.error ||
-                `Request failed (${response.status}).`
-            );
+            const error =
+                new Error(
+                    data?.message ||
+                    data?.error ||
+                    `Request failed (${response.status}).`
+                );
 
-            error.status = response.status;
+            error.status =
+                response.status;
 
             throw error;
         }
@@ -247,7 +355,11 @@ async function fetchJson(url, options = {}, timeout = 12000) {
 
     } catch (error) {
 
-        if (error.name === "AbortError") {
+        if (
+            error.name ===
+            "AbortError"
+        ) {
+
             throw new Error(
                 "The server took too long to respond. Please try again."
             );
@@ -263,33 +375,36 @@ async function fetchJson(url, options = {}, timeout = 12000) {
 
 
 /* =========================================================
-   ADMINISTRATOR VERIFICATION
+   VERIFY ADMIN
    ========================================================= */
 
 async function verifyAdministrator() {
 
     try {
 
-        const data = await fetchJson(
-            ADMIN_AUTH_API,
-            {
-                method: "GET"
-            },
-            12000
-        );
+        const data =
+            await fetchJson(
+                ADMIN_AUTH_API,
+                {
+                    method: "GET"
+                },
+                12000
+            );
 
         if (
             data &&
-            (
-                data.authorized === true ||
-                data.authenticated === true && data.authorized === true ||
-                data.success === true && data.authorized === true
-            )
+            data.success === true &&
+            data.authorized === true
         ) {
+
             return true;
         }
 
-        if (data && data.success === true && data.authenticated === true) {
+        if (
+            data &&
+            data.authorized === true
+        ) {
+
             return true;
         }
 
@@ -307,19 +422,26 @@ async function verifyAdministrator() {
 
         hideLoader();
 
-        const status = error.status;
+        if (
+            error.status === 401
+        ) {
 
-        if (status === 401) {
             showMessage(
                 "Your administrator session has expired. Please log in again.",
                 "error"
             );
-        } else if (status === 403) {
+
+        } else if (
+            error.status === 403
+        ) {
+
             showMessage(
                 "Administrator access is required to view this page.",
                 "error"
             );
+
         } else {
+
             showMessage(
                 error.message ||
                 "Unable to verify administrator access.",
@@ -340,35 +462,45 @@ async function loadAdminProfile() {
 
     try {
 
-        const data = await fetchJson(
-            `${API_BASE}/profile.php`,
-            {
-                method: "GET"
-            },
-            10000
-        );
+        const data =
+            await fetchJson(
+                `${API_BASE}/profile.php`,
+                {
+                    method: "GET"
+                },
+                10000
+            );
 
-        const user = data?.user || {};
+        const user =
+            data?.user || {};
 
         const name =
             user.full_name ||
             [
                 user.first_name,
                 user.last_name
-            ].filter(Boolean).join(" ") ||
+            ]
+                .filter(Boolean)
+                .join(" ") ||
             "Administrator";
 
         $all(
             "#adminName, #headerAdminName, #adminProfileName, #adminUserName"
-        ).forEach(element => {
-            element.textContent = name;
-        });
+        )
+            .forEach(element => {
+
+                element.textContent =
+                    name;
+            });
 
         $all(
             "#adminRole, #adminProfileRole"
-        ).forEach(element => {
-            element.textContent = "Administrator";
-        });
+        )
+            .forEach(element => {
+
+                element.textContent =
+                    "Administrator";
+            });
 
     } catch (error) {
 
@@ -390,11 +522,18 @@ function getId(item) {
         return "";
     }
 
-    if (typeof item._id === "string") {
+    if (
+        typeof item._id ===
+        "string"
+    ) {
+
         return item._id;
     }
 
-    if (item._id?.$oid) {
+    if (
+        item._id?.$oid
+    ) {
+
         return item._id.$oid;
     }
 
@@ -411,12 +550,14 @@ function getUserName(item) {
 
     return (
         item.full_name ||
+        item.fullName ||
         item.user_name ||
         item.name ||
         item.customer_name ||
+        item.customerName ||
         item.user?.full_name ||
-        item.user?.name ||
         item.user?.fullName ||
+        item.user?.name ||
         item.email ||
         "Customer"
     );
@@ -430,6 +571,7 @@ function getPlan(item) {
         item.plan_name ||
         item.planName ||
         item.investment_plan ||
+        item.package ||
         "Investment"
     );
 }
@@ -440,23 +582,46 @@ function getAmount(item) {
     const value =
         item.amount ??
         item.investment_amount ??
+        item.investmentAmount ??
         item.invested_amount ??
         item.amount_invested ??
         0;
 
-    return Number(value) || 0;
+    return (
+        Number(value) || 0
+    );
 }
 
 
 function getPeriod(item) {
 
-    return (
-        item.period ||
-        item.duration ||
-        item.term ||
-        item.period_days ||
-        "30 days"
-    );
+    const value =
+        item.period ??
+        item.duration ??
+        item.duration_days ??
+        item.durationDays ??
+        item.term ??
+        30;
+
+    if (
+        typeof value ===
+        "number"
+    ) {
+
+        return `${value} days`;
+    }
+
+    const text =
+        String(value);
+
+    if (
+        /^\d+$/.test(text)
+    ) {
+
+        return `${text} days`;
+    }
+
+    return text;
 }
 
 
@@ -466,7 +631,9 @@ function getStatus(item) {
         item.status ||
         item.investment_status ||
         "pending"
-    ).toLowerCase();
+    )
+        .toLowerCase()
+        .trim();
 }
 
 
@@ -476,6 +643,7 @@ function getStartDate(item) {
         item.start_date ||
         item.startDate ||
         item.started_at ||
+        item.startedAt ||
         item.created_at ||
         item.createdAt ||
         ""
@@ -488,7 +656,10 @@ function getEndDate(item) {
     return (
         item.end_date ||
         item.endDate ||
+        item.maturity_date ||
+        item.maturityDate ||
         item.completed_at ||
+        item.completedAt ||
         ""
     );
 }
@@ -500,9 +671,12 @@ function getEndDate(item) {
 
 function formatMoney(value) {
 
-    const number = Number(value) || 0;
+    const number =
+        Number(value) || 0;
 
-    return `UGX ${number.toLocaleString("en-UG")}`;
+    return `UGX ${number.toLocaleString(
+        "en-UG"
+    )}`;
 }
 
 
@@ -518,12 +692,22 @@ function formatDate(value) {
         typeof value === "object" &&
         value.$date
     ) {
-        date = new Date(value.$date);
+
+        date =
+            new Date(value.$date);
+
     } else {
-        date = new Date(value);
+
+        date =
+            new Date(value);
     }
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
         return String(value);
     }
 
@@ -540,31 +724,74 @@ function formatDate(value) {
 
 function escapeHtml(value) {
 
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
 
 function statusLabel(status) {
 
     const labels = {
-        pending: "Pending",
-        active: "Active",
-        approved: "Approved",
-        completed: "Completed",
-        rejected: "Rejected",
-        cancelled: "Cancelled",
-        canceled: "Cancelled"
+
+        pending:
+            "Pending",
+
+        active:
+            "Active",
+
+        approved:
+            "Approved",
+
+        completed:
+            "Completed",
+
+        rejected:
+            "Rejected",
+
+        cancelled:
+            "Cancelled",
+
+        canceled:
+            "Cancelled"
     };
 
-    return labels[status] ||
-        String(status || "Pending")
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, letter => letter.toUpperCase());
+    return (
+        labels[status] ||
+        String(
+            status ||
+            "Pending"
+        )
+            .replace(
+                /_/g,
+                " "
+            )
+            .replace(
+                /\b\w/g,
+                letter =>
+                    letter.toUpperCase()
+            )
+    );
 }
 
 
@@ -601,7 +828,8 @@ function statusClass(status) {
 
 async function loadInvestments() {
 
-    state.loading = true;
+    state.loading =
+        true;
 
     clearMessage();
 
@@ -609,27 +837,39 @@ async function loadInvestments() {
         $("#investmentsTableBody") ||
         $("#investmentTableBody");
 
+    const mobileList =
+        $("#investmentsMobileList") ||
+        $("#investmentMobileList");
+
     if (tableBody) {
 
         tableBody.innerHTML = `
             <tr>
                 <td colspan="8" class="loading-cell">
                     <div class="inline-loader"></div>
-                    <span>Loading investment records...</span>
+                    <span>
+                        Loading investment records...
+                    </span>
                 </td>
             </tr>
         `;
     }
 
+    if (mobileList) {
+
+        mobileList.innerHTML = "";
+    }
+
     try {
 
-        const data = await fetchJson(
-            INVESTMENTS_API,
-            {
-                method: "GET"
-            },
-            15000
-        );
+        const data =
+            await fetchJson(
+                INVESTMENTS_API,
+                {
+                    method: "GET"
+                },
+                15000
+            );
 
         const records =
             data?.investments ||
@@ -643,9 +883,12 @@ async function loadInvestments() {
                 ? records
                 : [];
 
-        state.currentPage = 1;
+        state.currentPage =
+            1;
 
-        updateStats(data);
+        updateStats(
+            data
+        );
 
         applyFilters();
 
@@ -656,14 +899,24 @@ async function loadInvestments() {
             error
         );
 
-        state.investments = [];
-        state.filteredInvestments = [];
+        state.investments =
+            [];
+
+        state.filteredInvestments =
+            [];
 
         updateStats({
-            total_investments: 0,
-            active_investments: 0,
-            pending_investments: 0,
-            completed_investments: 0
+            total_investments:
+                0,
+
+            active_investments:
+                0,
+
+            pending_investments:
+                0,
+
+            completed_investments:
+                0
         });
 
         showMessage(
@@ -678,7 +931,8 @@ async function loadInvestments() {
 
     } finally {
 
-        state.loading = false;
+        state.loading =
+            false;
     }
 }
 
@@ -687,47 +941,72 @@ async function loadInvestments() {
    STATISTICS
    ========================================================= */
 
-function updateStats(data = {}) {
+function updateStats(
+    data = {}
+) {
 
-    const records = state.investments;
+    const records =
+        state.investments;
 
     const total =
         Number(
             data.total_investments ??
             data.stats?.total_investments ??
             data.summary?.total_investments
-        ) ||
-        records.length;
+        );
 
     const active =
         Number(
             data.active_investments ??
             data.stats?.active_investments ??
             data.summary?.active_investments
-        ) ||
-        records.filter(
-            item => getStatus(item) === "active"
-        ).length;
+        );
 
     const pending =
         Number(
             data.pending_investments ??
             data.stats?.pending_investments ??
             data.summary?.pending_investments
-        ) ||
-        records.filter(
-            item => getStatus(item) === "pending"
-        ).length;
+        );
 
     const completed =
         Number(
             data.completed_investments ??
             data.stats?.completed_investments ??
             data.summary?.completed_investments
-        ) ||
-        records.filter(
-            item => getStatus(item) === "completed"
-        ).length;
+        );
+
+    const calculatedTotal =
+        Number.isFinite(total)
+            ? total
+            : records.length;
+
+    const calculatedActive =
+        Number.isFinite(active)
+            ? active
+            : records.filter(
+                item =>
+                    getStatus(item) ===
+                    "active"
+            ).length;
+
+    const calculatedPending =
+        Number.isFinite(pending)
+            ? pending
+            : records.filter(
+                item =>
+                    getStatus(item) ===
+                    "pending"
+            ).length;
+
+    const calculatedCompleted =
+        Number.isFinite(completed)
+            ? completed
+            : records.filter(
+                item =>
+                    getStatus(item) ===
+                    "completed"
+            ).length;
 
     setText(
         [
@@ -735,7 +1014,7 @@ function updateStats(data = {}) {
             "#totalInvestment",
             "[data-stat='total-investments']"
         ],
-        total
+        calculatedTotal
     );
 
     setText(
@@ -744,7 +1023,7 @@ function updateStats(data = {}) {
             "#activeInvestment",
             "[data-stat='active-investments']"
         ],
-        active
+        calculatedActive
     );
 
     setText(
@@ -753,7 +1032,7 @@ function updateStats(data = {}) {
             "#pendingInvestment",
             "[data-stat='pending-investments']"
         ],
-        pending
+        calculatedPending
     );
 
     setText(
@@ -762,20 +1041,27 @@ function updateStats(data = {}) {
             "#completedInvestment",
             "[data-stat='completed-investments']"
         ],
-        completed
+        calculatedCompleted
     );
 }
 
 
-function setText(selectors, value) {
+function setText(
+    selectors,
+    value
+) {
 
-    selectors.forEach(selector => {
+    selectors.forEach(
+        selector => {
 
-        $all(selector).forEach(element => {
-            element.textContent = value;
-        });
+            $all(selector)
+                .forEach(element => {
 
-    });
+                    element.textContent =
+                        value;
+                });
+        }
+    );
 }
 
 
@@ -794,7 +1080,9 @@ function getSearchValue() {
         );
 
     return input
-        ? input.value.trim().toLowerCase()
+        ? input.value
+            .trim()
+            .toLowerCase()
         : "";
 }
 
@@ -806,7 +1094,8 @@ function getStatusFilter() {
         $("#investmentStatusFilter");
 
     return select
-        ? select.value.toLowerCase()
+        ? select.value
+            .toLowerCase()
         : "all";
 }
 
@@ -818,7 +1107,8 @@ function getPlanFilter() {
         $("#investmentPlanFilter");
 
     return select
-        ? select.value.toLowerCase()
+        ? select.value
+            .toLowerCase()
         : "all";
 }
 
@@ -830,66 +1120,90 @@ function getPeriodFilter() {
         $("#investmentPeriodFilter");
 
     return select
-        ? select.value.toLowerCase()
+        ? select.value
+            .toLowerCase()
         : "all";
 }
 
 
 function applyFilters() {
 
-    const search = getSearchValue();
-    const status = getStatusFilter();
-    const plan = getPlanFilter();
-    const period = getPeriodFilter();
+    const search =
+        getSearchValue();
+
+    const status =
+        getStatusFilter();
+
+    const plan =
+        getPlanFilter();
+
+    const period =
+        getPeriodFilter();
 
     state.filteredInvestments =
-        state.investments.filter(item => {
+        state.investments.filter(
+            item => {
 
-            const id = getId(item).toLowerCase();
-            const user = getUserName(item).toLowerCase();
-            const planName = getPlan(item).toLowerCase();
-            const itemStatus = getStatus(item);
-            const itemPeriod = String(
-                getPeriod(item)
-            ).toLowerCase();
+                const id =
+                    getId(item)
+                        .toLowerCase();
 
-            const matchesSearch =
-                !search ||
-                user.includes(search) ||
-                planName.includes(search) ||
-                id.includes(search);
+                const user =
+                    getUserName(item)
+                        .toLowerCase();
 
-            const matchesStatus =
-                status === "all" ||
-                status === "" ||
-                itemStatus === status;
+                const planName =
+                    getPlan(item)
+                        .toLowerCase();
 
-            const matchesPlan =
-                plan === "all" ||
-                plan === "" ||
-                planName === plan;
+                const itemStatus =
+                    getStatus(item);
 
-            const matchesPeriod =
-                period === "all" ||
-                period === "" ||
-                itemPeriod.includes(period);
+                const itemPeriod =
+                    getPeriod(item)
+                        .toLowerCase();
 
-            return (
-                matchesSearch &&
-                matchesStatus &&
-                matchesPlan &&
-                matchesPeriod
-            );
-        });
+                const matchesSearch =
+                    !search ||
+                    user.includes(search) ||
+                    planName.includes(search) ||
+                    id.includes(search);
 
-    state.currentPage = 1;
+                const matchesStatus =
+                    status === "all" ||
+                    status === "" ||
+                    itemStatus === status;
+
+                const matchesPlan =
+                    plan === "all" ||
+                    plan === "" ||
+                    planName === plan;
+
+                const matchesPeriod =
+                    period === "all" ||
+                    period === "" ||
+                    itemPeriod.includes(
+                        period
+                    );
+
+                return (
+                    matchesSearch &&
+                    matchesStatus &&
+                    matchesPlan &&
+                    matchesPeriod
+                );
+            }
+        );
+
+    state.currentPage =
+        1;
 
     renderInvestments();
 }
 
 
 /* =========================================================
-   RENDER TABLE
+   RENDER INVESTMENTS
    ========================================================= */
 
 function renderInvestments() {
@@ -903,7 +1217,8 @@ function renderInvestments() {
         $("#investmentMobileList");
 
     if (
-        state.filteredInvestments.length === 0
+        state.filteredInvestments
+            .length === 0
     ) {
 
         renderEmptyState(
@@ -911,16 +1226,27 @@ function renderInvestments() {
         );
 
         if (mobileList) {
+
             mobileList.innerHTML = `
                 <div class="empty-state">
+
                     <div class="empty-icon">
                         ${ICONS.investment}
                     </div>
-                    <h3>No investment records</h3>
-                    <p>No investments match your current filters.</p>
+
+                    <h3>
+                        No investment records
+                    </h3>
+
+                    <p>
+                        No investments match your current filters.
+                    </p>
+
                 </div>
             `;
         }
+
+        renderPagination();
 
         return;
     }
@@ -938,13 +1264,17 @@ function renderInvestments() {
     if (tableBody) {
 
         tableBody.innerHTML =
-            pageItems.map(renderTableRow).join("");
+            pageItems
+                .map(renderTableRow)
+                .join("");
     }
 
     if (mobileList) {
 
         mobileList.innerHTML =
-            pageItems.map(renderMobileCard).join("");
+            pageItems
+                .map(renderMobileCard)
+                .join("");
     }
 
     renderPagination();
@@ -957,46 +1287,74 @@ function renderInvestments() {
 
 function renderTableRow(item) {
 
-    const id = getId(item);
-    const user = getUserName(item);
-    const plan = getPlan(item);
-    const amount = getAmount(item);
-    const period = getPeriod(item);
-    const startDate = getStartDate(item);
-    const endDate = getEndDate(item);
-    const status = getStatus(item);
+    const id =
+        getId(item);
+
+    const user =
+        getUserName(item);
+
+    const plan =
+        getPlan(item);
+
+    const amount =
+        getAmount(item);
+
+    const period =
+        getPeriod(item);
+
+    const startDate =
+        getStartDate(item);
+
+    const endDate =
+        getEndDate(item);
+
+    const status =
+        getStatus(item);
 
     return `
         <tr>
 
             <td>
+
                 <div class="user-cell">
+
                     <div class="record-icon">
                         ${ICONS.users}
                     </div>
 
                     <div>
+
                         <strong>
                             ${escapeHtml(user)}
                         </strong>
 
                         <small>
-                            ${escapeHtml(id || "Investment record")}
+                            ${escapeHtml(
+                                id ||
+                                "Investment record"
+                            )}
                         </small>
+
                     </div>
+
                 </div>
+
             </td>
 
             <td>
+
                 <span class="plan-name">
                     ${escapeHtml(plan)}
                 </span>
+
             </td>
 
             <td>
+
                 <strong class="amount-value">
                     ${formatMoney(amount)}
                 </strong>
+
             </td>
 
             <td>
@@ -1012,12 +1370,19 @@ function renderTableRow(item) {
             </td>
 
             <td>
-                <span class="status-pill ${statusClass(status)}">
-                    ${escapeHtml(statusLabel(status))}
+
+                <span
+                    class="status-pill ${statusClass(status)}"
+                >
+                    ${escapeHtml(
+                        statusLabel(status)
+                    )}
                 </span>
+
             </td>
 
             <td>
+
                 <button
                     type="button"
                     class="view-button"
@@ -1025,9 +1390,15 @@ function renderTableRow(item) {
                     data-id="${escapeHtml(id)}"
                     title="View investment"
                 >
+
                     ${ICONS.eye}
-                    <span>View</span>
+
+                    <span>
+                        View
+                    </span>
+
                 </button>
+
             </td>
 
         </tr>
@@ -1041,17 +1412,34 @@ function renderTableRow(item) {
 
 function renderMobileCard(item) {
 
-    const id = getId(item);
-    const user = getUserName(item);
-    const plan = getPlan(item);
-    const amount = getAmount(item);
-    const period = getPeriod(item);
-    const startDate = getStartDate(item);
-    const endDate = getEndDate(item);
-    const status = getStatus(item);
+    const id =
+        getId(item);
+
+    const user =
+        getUserName(item);
+
+    const plan =
+        getPlan(item);
+
+    const amount =
+        getAmount(item);
+
+    const period =
+        getPeriod(item);
+
+    const startDate =
+        getStartDate(item);
+
+    const endDate =
+        getEndDate(item);
+
+    const status =
+        getStatus(item);
 
     return `
-        <article class="investment-mobile-card">
+        <article
+            class="investment-mobile-card"
+        >
 
             <div class="mobile-card-header">
 
@@ -1062,58 +1450,92 @@ function renderMobileCard(item) {
                     </div>
 
                     <div>
+
                         <strong>
                             ${escapeHtml(user)}
                         </strong>
 
                         <small>
-                            ${escapeHtml(id || "Investment")}
+                            ${escapeHtml(
+                                id ||
+                                "Investment"
+                            )}
                         </small>
+
                     </div>
 
                 </div>
 
-                <span class="status-pill ${statusClass(status)}">
-                    ${escapeHtml(statusLabel(status))}
+                <span
+                    class="status-pill ${statusClass(status)}"
+                >
+                    ${escapeHtml(
+                        statusLabel(status)
+                    )}
                 </span>
 
             </div>
 
             <div class="mobile-card-amount">
-                <span>Investment Amount</span>
+
+                <span>
+                    Investment Amount
+                </span>
+
                 <strong>
                     ${formatMoney(amount)}
                 </strong>
+
             </div>
 
             <div class="mobile-info-grid">
 
                 <div>
-                    <span>Plan</span>
+
+                    <span>
+                        Plan
+                    </span>
+
                     <strong>
                         ${escapeHtml(plan)}
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>Period</span>
+
+                    <span>
+                        Period
+                    </span>
+
                     <strong>
                         ${escapeHtml(period)}
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>Start Date</span>
+
+                    <span>
+                        Start Date
+                    </span>
+
                     <strong>
                         ${formatDate(startDate)}
                     </strong>
+
                 </div>
 
                 <div>
-                    <span>End Date</span>
+
+                    <span>
+                        End Date
+                    </span>
+
                     <strong>
                         ${formatDate(endDate)}
                     </strong>
+
                 </div>
 
             </div>
@@ -1124,8 +1546,13 @@ function renderMobileCard(item) {
                 data-action="view"
                 data-id="${escapeHtml(id)}"
             >
+
                 ${ICONS.eye}
-                View Investment
+
+                <span>
+                    View Investment
+                </span>
+
             </button>
 
         </article>
@@ -1137,7 +1564,9 @@ function renderMobileCard(item) {
    EMPTY STATE
    ========================================================= */
 
-function renderEmptyState(message) {
+function renderEmptyState(
+    message
+) {
 
     const tableBody =
         $("#investmentsTableBody") ||
@@ -1149,8 +1578,11 @@ function renderEmptyState(message) {
 
     tableBody.innerHTML = `
         <tr>
+
             <td colspan="8">
+
                 <div class="empty-state">
+
                     <div class="empty-icon">
                         ${ICONS.investment}
                     </div>
@@ -1162,8 +1594,11 @@ function renderEmptyState(message) {
                     <p>
                         Investment records will appear here once customers create investments.
                     </p>
+
                 </div>
+
             </td>
+
         </tr>
     `;
 }
@@ -1189,23 +1624,38 @@ function renderPagination() {
     const pages =
         Math.max(
             1,
-            Math.ceil(total / state.perPage)
+            Math.ceil(
+                total /
+                state.perPage
+            )
         );
 
     if (pages <= 1) {
 
-        container.innerHTML = "";
+        container.innerHTML =
+            "";
+
         return;
     }
 
-    let html = "";
+    let html =
+        "";
 
-    for (let page = 1; page <= pages; page++) {
+    for (
+        let page = 1;
+        page <= pages;
+        page++
+    ) {
 
         html += `
             <button
                 type="button"
-                class="${page === state.currentPage ? "active" : ""}"
+                class="${
+                    page ===
+                    state.currentPage
+                        ? "active"
+                        : ""
+                }"
                 data-page="${page}"
             >
                 ${page}
@@ -1213,7 +1663,8 @@ function renderPagination() {
         `;
     }
 
-    container.innerHTML = html;
+    container.innerHTML =
+        html;
 }
 
 
@@ -1221,18 +1672,23 @@ function renderPagination() {
    INVESTMENT MODAL
    ========================================================= */
 
-function openInvestmentModal(id) {
+function openInvestmentModal(
+    id
+) {
 
     const investment =
         state.investments.find(
-            item => getId(item) === id
+            item =>
+                getId(item) ===
+                id
         );
 
     if (!investment) {
         return;
     }
 
-    state.currentInvestment = investment;
+    state.currentInvestment =
+        investment;
 
     const modal =
         $("#investmentModal");
@@ -1241,11 +1697,30 @@ function openInvestmentModal(id) {
         return;
     }
 
-    const user = getUserName(investment);
-    const plan = getPlan(investment);
-    const amount = getAmount(investment);
-    const period = getPeriod(investment);
-    const status = getStatus(investment);
+    const user =
+        getUserName(
+            investment
+        );
+
+    const plan =
+        getPlan(
+            investment
+        );
+
+    const amount =
+        getAmount(
+            investment
+        );
+
+    const period =
+        getPeriod(
+            investment
+        );
+
+    const status =
+        getStatus(
+            investment
+        );
 
     setModalText(
         [
@@ -1286,7 +1761,11 @@ function openInvestmentModal(id) {
             "#investmentStartDate",
             "#modalStartDate"
         ],
-        formatDate(getStartDate(investment))
+        formatDate(
+            getStartDate(
+                investment
+            )
+        )
     );
 
     setModalText(
@@ -1294,7 +1773,11 @@ function openInvestmentModal(id) {
             "#investmentEndDate",
             "#modalEndDate"
         ],
-        formatDate(getEndDate(investment))
+        formatDate(
+            getEndDate(
+                investment
+            )
+        )
     );
 
     setModalText(
@@ -1310,24 +1793,38 @@ function openInvestmentModal(id) {
             "#investmentId",
             "#modalInvestmentId"
         ],
-        getId(investment) || "—"
+        id || "—"
     );
 
-    modal.classList.add("open");
-    modal.style.display = "flex";
-    document.body.classList.add("modal-open");
+    modal.classList.add(
+        "open"
+    );
+
+    modal.style.display =
+        "flex";
+
+    document.body.classList.add(
+        "modal-open"
+    );
 }
 
 
-function setModalText(selectors, value) {
+function setModalText(
+    selectors,
+    value
+) {
 
-    selectors.forEach(selector => {
+    selectors.forEach(
+        selector => {
 
-        $all(selector).forEach(element => {
-            element.textContent = value;
-        });
+            $all(selector)
+                .forEach(element => {
 
-    });
+                    element.textContent =
+                        value;
+                });
+        }
+    );
 }
 
 
@@ -1340,10 +1837,16 @@ function closeInvestmentModal() {
         return;
     }
 
-    modal.classList.remove("open");
-    modal.style.display = "none";
+    modal.classList.remove(
+        "open"
+    );
 
-    document.body.classList.remove("modal-open");
+    modal.style.display =
+        "none";
+
+    document.body.classList.remove(
+        "modal-open"
+    );
 }
 
 
@@ -1369,29 +1872,36 @@ function setupEvents() {
         );
     }
 
-
     const filterIds = [
+
         "#statusFilter",
+
         "#investmentStatusFilter",
+
         "#planFilter",
+
         "#investmentPlanFilter",
+
         "#periodFilter",
+
         "#investmentPeriodFilter"
     ];
 
-    filterIds.forEach(selector => {
+    filterIds.forEach(
+        selector => {
 
-        const element = $(selector);
+            const element =
+                $(selector);
 
-        if (element) {
+            if (element) {
 
-            element.addEventListener(
-                "change",
-                applyFilters
-            );
+                element.addEventListener(
+                    "change",
+                    applyFilters
+                );
+            }
         }
-    });
-
+    );
 
     const refresh =
         $("#refreshInvestmentsBtn") ||
@@ -1404,36 +1914,39 @@ function setupEvents() {
             "click",
             async () => {
 
-                refresh.disabled = true;
+                refresh.disabled =
+                    true;
 
                 try {
+
                     await loadInvestments();
+
                 } finally {
-                    refresh.disabled = false;
+
+                    refresh.disabled =
+                        false;
                 }
             }
         );
     }
 
-
     document.addEventListener(
         "click",
         event => {
 
-            const button =
+            const viewButton =
                 event.target.closest(
                     "[data-action='view']"
                 );
 
-            if (button) {
+            if (viewButton) {
 
                 openInvestmentModal(
-                    button.dataset.id
+                    viewButton.dataset.id
                 );
 
                 return;
             }
-
 
             const pageButton =
                 event.target.closest(
@@ -1462,26 +1975,30 @@ function setupEvents() {
         }
     );
 
-
     const closeButtons = [
+
         "#closeInvestmentModal",
+
         "#closeInvestmentDetails",
+
         "#cancelInvestmentReview"
     ];
 
-    closeButtons.forEach(selector => {
+    closeButtons.forEach(
+        selector => {
 
-        const button = $(selector);
+            const button =
+                $(selector);
 
-        if (button) {
+            if (button) {
 
-            button.addEventListener(
-                "click",
-                closeInvestmentModal
-            );
+                button.addEventListener(
+                    "click",
+                    closeInvestmentModal
+                );
+            }
         }
-    });
-
+    );
 
     const modal =
         $("#investmentModal");
@@ -1493,27 +2010,29 @@ function setupEvents() {
             event => {
 
                 if (
-                    event.target === modal
+                    event.target ===
+                    modal
                 ) {
+
                     closeInvestmentModal();
                 }
             }
         );
     }
 
-
     document.addEventListener(
         "keydown",
         event => {
 
             if (
-                event.key === "Escape"
+                event.key ===
+                "Escape"
             ) {
+
                 closeInvestmentModal();
             }
         }
     );
-
 
     const retry =
         $("#retryInvestmentsBtn") ||
@@ -1526,6 +2045,7 @@ function setupEvents() {
             async () => {
 
                 clearMessage();
+
                 await loadInvestments();
             }
         );
@@ -1539,12 +2059,7 @@ function setupEvents() {
 
 async function initializeAdminInvestments() {
 
-    /*
-       IMPORTANT:
-       Never leave the user trapped on the verification
-       screen. Verification has its own timeout and always
-       hides the loader on failure.
-    */
+    showAdminPage();
 
     showLoader(
         "Verifying administrator access..."
@@ -1554,8 +2069,13 @@ async function initializeAdminInvestments() {
         await verifyAdministrator();
 
     if (!authorized) {
+
+        showAdminPage();
+
         return;
     }
+
+    showAdminPage();
 
     await loadAdminProfile();
 
@@ -1573,6 +2093,8 @@ document.addEventListener(
     "DOMContentLoaded",
     () => {
 
+        showAdminPage();
+
         setupEvents();
 
         initializeAdminInvestments()
@@ -1582,6 +2104,8 @@ document.addEventListener(
                     "Admin Investments initialization error:",
                     error
                 );
+
+                showAdminPage();
 
                 hideLoader();
 
@@ -1600,9 +2124,14 @@ document.addEventListener(
    ========================================================= */
 
 window.CrownCashAdminInvestments = {
+
     loadInvestments,
+
     verifyAdministrator,
+
     openInvestmentModal,
+
     closeInvestmentModal,
+
     applyFilters
 };

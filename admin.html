@@ -2,84 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-    >
+    <title>Crown Cash Administration</title>
 
-    <title>Crown Cash | Admin Dashboard</title>
+    <meta name="description" content="Crown Cash Administration Dashboard">
+    <meta name="theme-color" content="#240914">
 
     <link rel="stylesheet" href="admin.css">
 
     <style>
         /* =========================================================
-           CROWN CASH ADMIN DASHBOARD
-           FINAL RESPONSIVE OVERRIDE
+           CROWN CASH ADMIN - SAFE LOADER FIX
            ========================================================= */
 
-        :root {
-            --admin-bg: #08050b;
-            --admin-surface: #110a14;
-            --admin-surface-2: #160c19;
-            --admin-border: rgba(255,255,255,0.08);
-
-            --admin-gold: #ffd34d;
-            --admin-pink: #ff4fd8;
-            --admin-purple: #a52cff;
-
-            --admin-text: #ffffff;
-            --admin-muted: #a99eae;
-
-            --sidebar-width: 270px;
-            --header-height: 76px;
-
-            --radius: 22px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            width: 100%;
+        html,
+        body {
             min-height: 100%;
-            overflow-x: hidden;
-            background: var(--admin-bg);
         }
 
         body {
             margin: 0;
-            width: 100%;
-            min-height: 100vh;
-            overflow-x: hidden;
-
             background:
-                radial-gradient(
-                    circle at 75% 5%,
-                    rgba(255, 79, 216, 0.10),
-                    transparent 28%
-                ),
-                radial-gradient(
-                    circle at 20% 30%,
-                    rgba(165, 44, 255, 0.08),
-                    transparent 30%
-                ),
-                #08050b;
-
-            color: var(--admin-text);
-        }
-
-        a {
-            text-decoration: none;
-        }
-
-        button {
-            font-family: inherit;
+                radial-gradient(circle at 15% 15%, rgba(164, 45, 105, 0.16), transparent 30%),
+                radial-gradient(circle at 85% 10%, rgba(255, 193, 7, 0.08), transparent 28%),
+                linear-gradient(135deg, #12060e 0%, #210912 45%, #12060e 100%);
+            color: #ffffff;
         }
 
         /* =========================================================
-           LOADING SCREEN
+           PAGE LOADER
            ========================================================= */
 
         .page-loader {
@@ -92,12 +44,13 @@
             justify-content: center;
 
             background:
-                radial-gradient(
-                    circle at center,
-                    rgba(255, 79, 216, 0.13),
-                    transparent 38%
-                ),
-                #08050b;
+                radial-gradient(circle at center,
+                    rgba(95, 20, 63, 0.96),
+                    rgba(15, 4, 12, 0.99));
+
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
 
             transition:
                 opacity 0.35s ease,
@@ -111,14 +64,29 @@
         }
 
         .loader-content {
-            width: min(90%, 360px);
+            width: min(90%, 380px);
+            padding: 34px 25px;
             text-align: center;
+
+            border: 1px solid rgba(255, 193, 7, 0.20);
+            border-radius: 24px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(72, 14, 45, 0.92),
+                    rgba(28, 7, 20, 0.94)
+                );
+
+            box-shadow:
+                0 25px 70px rgba(0, 0, 0, 0.55),
+                0 0 35px rgba(255, 193, 7, 0.07);
         }
 
         .loader-icon {
-            width: 82px;
-            height: 82px;
-            margin: 0 auto 24px;
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 18px;
 
             display: flex;
             align-items: center;
@@ -128,248 +96,84 @@
 
             background:
                 radial-gradient(
-                    circle at 30% 25%,
-                    #ffe99a,
-                    #ffd34d 40%,
-                    #ff8c96 72%,
-                    #ff4fd8
+                    circle,
+                    rgba(255, 193, 7, 0.20),
+                    rgba(224, 61, 142, 0.10)
                 );
 
+            border: 1px solid rgba(255, 193, 7, 0.35);
+
             box-shadow:
-                0 0 35px rgba(255, 211, 77, 0.22),
-                0 0 55px rgba(255, 79, 216, 0.12);
+                0 0 28px rgba(255, 193, 7, 0.14),
+                inset 0 0 20px rgba(224, 61, 142, 0.08);
         }
 
         .loader-icon svg {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             fill: none;
-            stroke: #130914;
-            stroke-width: 2;
+            stroke: #ffd45a;
+            stroke-width: 1.6;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
         .loader-title {
             margin: 0 0 8px;
-            font-size: 25px;
-            font-weight: 800;
+            color: #ffffff;
+            font-size: 21px;
+            font-weight: 700;
         }
 
         .loader-text {
             margin: 0;
-            color: var(--admin-muted);
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.68);
+            font-size: 13px;
+            line-height: 1.6;
         }
 
         .loader-spinner {
-            width: 42px;
-            height: 42px;
-
-            margin: 25px auto 0;
-
-            border: 4px solid rgba(255,255,255,0.08);
-            border-top-color: var(--admin-gold);
-            border-right-color: var(--admin-pink);
+            width: 28px;
+            height: 28px;
+            margin: 22px auto 0;
 
             border-radius: 50%;
 
-            animation: adminSpin 0.8s linear infinite;
+            border: 3px solid rgba(255, 255, 255, 0.10);
+            border-top-color: #ffd45a;
+            border-right-color: #e03d8e;
+
+            animation: crownSpin 0.85s linear infinite;
         }
 
-        @keyframes adminSpin {
+        @keyframes crownSpin {
             to {
                 transform: rotate(360deg);
             }
         }
 
         /* =========================================================
-           MAIN LAYOUT
+           GENERAL ADMIN OVERRIDES
            ========================================================= */
 
-        .admin-layout {
-            width: 100%;
-            min-height: 100vh;
-
-            display: block !important;
-
+        .admin-layout,
+        .dashboard-container,
+        .main-content,
+        main {
             position: relative;
+            z-index: 1;
         }
 
-        /* =========================================================
-           SIDEBAR
-           ========================================================= */
-
-        .sidebar {
-            position: fixed !important;
-            left: 0;
-            top: 0;
-            bottom: 0;
-
-            width: var(--sidebar-width) !important;
-            min-width: var(--sidebar-width) !important;
-
-            z-index: 5000;
-
-            overflow-y: auto;
-            overflow-x: hidden;
-
-            background:
-                linear-gradient(
-                    180deg,
-                    rgba(20, 8, 24, 0.98),
-                    rgba(8, 5, 11, 0.98)
-                );
-
-            border-right: 1px solid var(--admin-border);
-
-            scrollbar-width: thin;
+        button,
+        a {
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .sidebar::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.12);
-            border-radius: 20px;
-        }
-
-        /* =========================================================
-           MAIN CONTENT
-           ========================================================= */
-
-        .admin-main {
-            width: calc(100% - var(--sidebar-width)) !important;
-            min-width: 0 !important;
-
-            margin-left: var(--sidebar-width) !important;
-
-            padding: 0 !important;
-
-            overflow-x: hidden;
-        }
-
-        .main-content {
-            width: 100%;
-            max-width: 1500px;
-
-            margin: 0 auto;
-
-            padding:
-                30px
-                34px
-                60px;
-        }
-
-        /* =========================================================
-           HEADER
-           ========================================================= */
-
-        .admin-header {
-            position: sticky;
-            top: 0;
-
-            z-index: 1000;
-
-            min-height: var(--header-height);
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-
-            padding: 16px 30px;
-
-            background: rgba(8,5,11,0.90);
-
-            border-bottom: 1px solid var(--admin-border);
-
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            min-width: 0;
-        }
-
-        .menu-button {
-            display: none;
-
+        .admin-icon-circle {
             width: 46px;
             height: 46px;
 
-            align-items: center;
-            justify-content: center;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 14px;
-
-            background: rgba(255,255,255,0.04);
-
-            color: #fff;
-
-            cursor: pointer;
-        }
-
-        .menu-button svg {
-            width: 23px;
-            height: 23px;
-        }
-
-        .header-title {
-            min-width: 0;
-        }
-
-        .header-title small {
-            display: block;
-
-            color: var(--admin-pink);
-
-            font-size: 11px;
-            font-weight: 800;
-
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-
-        .header-title strong {
-            display: block;
-
-            margin-top: 3px;
-
-            font-size: 18px;
-            font-weight: 800;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            padding: 7px 10px;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 15px;
-
-            background: rgba(255,255,255,0.03);
-        }
-
-        .account-avatar,
-        .admin-avatar {
-            width: 42px;
-            height: 42px;
-
-            flex: 0 0 42px;
+            flex: 0 0 46px;
 
             display: flex;
             align-items: center;
@@ -379,1236 +183,70 @@
 
             background:
                 radial-gradient(
-                    circle at 30% 25%,
-                    #ffe899,
-                    #ffd34d 42%,
-                    #ff7c9d 75%,
-                    #ff4fd8
+                    circle,
+                    rgba(255, 193, 7, 0.16),
+                    rgba(224, 61, 142, 0.08)
                 );
 
-            color: #160914;
-            font-weight: 900;
+            border: 1px solid rgba(255, 193, 7, 0.20);
 
             box-shadow:
-                0 0 22px rgba(255, 79, 216, 0.12);
+                0 0 20px rgba(255, 193, 7, 0.06),
+                inset 0 0 16px rgba(224, 61, 142, 0.04);
         }
 
-        /* =========================================================
-           DASHBOARD INTRO
-           ========================================================= */
-
-        .dashboard-heading {
-            margin: 0 0 22px;
-        }
-
-        .dashboard-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            color: var(--admin-pink);
-
-            font-size: 12px;
-            font-weight: 900;
-
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-
-        .dashboard-eyebrow::before {
-            content: "";
-
-            width: 7px;
-            height: 7px;
-
-            border-radius: 50%;
-
-            background: var(--admin-gold);
-
-            box-shadow:
-                0 0 12px rgba(255,211,77,0.7);
-        }
-
-        .dashboard-heading h1 {
-            margin: 8px 0 8px;
-
-            font-size: clamp(30px, 4vw, 48px);
-            line-height: 1.05;
-            letter-spacing: -0.035em;
-        }
-
-        .dashboard-heading p {
-            max-width: 780px;
-
-            margin: 0;
-
-            color: var(--admin-muted);
-
-            font-size: 15px;
-            line-height: 1.65;
-        }
-
-        /* =========================================================
-           WELCOME CARD
-           ========================================================= */
-
-        .welcome-panel {
-            position: relative;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 28px;
-
-            padding: 28px;
-
-            margin-bottom: 28px;
-
-            overflow: hidden;
-
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-
-            background:
-                radial-gradient(
-                    circle at 85% 25%,
-                    rgba(255,79,216,0.15),
-                    transparent 32%
-                ),
-                radial-gradient(
-                    circle at 15% 80%,
-                    rgba(255,211,77,0.08),
-                    transparent 28%
-                ),
-                linear-gradient(
-                    135deg,
-                    rgba(255,255,255,0.055),
-                    rgba(255,255,255,0.015)
-                );
-
-            box-shadow:
-                0 20px 60px rgba(0,0,0,0.20);
-        }
-
-        .welcome-copy {
-            min-width: 0;
-        }
-
-        .welcome-copy h2 {
-            margin: 0 0 10px;
-
-            font-size: clamp(24px, 3vw, 36px);
-            line-height: 1.15;
-        }
-
-        .welcome-copy h2 span {
-            color: var(--admin-gold);
-        }
-
-        .welcome-copy p {
-            max-width: 700px;
-
-            margin: 0;
-
-            color: var(--admin-muted);
-
-            font-size: 14px;
-            line-height: 1.65;
-        }
-
-        .welcome-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-
-            flex: 0 0 auto;
-        }
-
-        .admin-button {
-            min-height: 46px;
-
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-
-            padding: 0 17px;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 13px;
-
-            color: #fff;
-
-            background: rgba(255,255,255,0.045);
-
-            font-size: 13px;
-            font-weight: 800;
-
-            transition:
-                transform .2s ease,
-                border-color .2s ease,
-                background .2s ease;
-        }
-
-        .admin-button:hover {
-            transform: translateY(-2px);
-
-            border-color: rgba(255,79,216,0.35);
-
-            background: rgba(255,79,216,0.08);
-        }
-
-        .admin-button.primary {
-            color: #160914;
-
-            border: none;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ffd34d,
-                    #ff9d78,
-                    #ff4fd8
-                );
-        }
-
-        .admin-button svg {
-            width: 18px;
-            height: 18px;
+        .admin-icon-circle svg {
+            width: 22px;
+            height: 22px;
 
             fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* =========================================================
-           SECTION HEADERS
-           ========================================================= */
-
-        .section-heading {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-
-            gap: 15px;
-
-            margin: 0 0 15px;
-        }
-
-        .section-heading h2 {
-            margin: 0;
-
-            font-size: 20px;
-            line-height: 1.2;
-        }
-
-        .section-heading p {
-            margin: 5px 0 0;
-
-            color: var(--admin-muted);
-
-            font-size: 12px;
-        }
-
-        .section-label {
-            margin-bottom: 7px;
-
-            color: var(--admin-pink);
-
-            font-size: 10px;
-            font-weight: 900;
-
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-
-        /* =========================================================
-           STATISTICS GRID
-           ========================================================= */
-
-        .stats-grid {
-            width: 100%;
-
-            display: grid;
-
-            grid-template-columns:
-                repeat(4, minmax(0, 1fr));
-
-            gap: 14px;
-
-            margin-bottom: 26px;
-        }
-
-        .stat-card {
-            position: relative;
-
-            min-width: 0;
-
-            padding: 18px;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 19px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.055),
-                    rgba(255,255,255,0.018)
-                );
-
-            overflow: hidden;
-
-            transition:
-                transform .2s ease,
-                border-color .2s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-
-            border-color: rgba(255,79,216,0.22);
-        }
-
-        .stat-card::after {
-            content: "";
-
-            position: absolute;
-
-            width: 90px;
-            height: 90px;
-
-            right: -45px;
-            top: -45px;
-
-            border-radius: 50%;
-
-            background: rgba(255,79,216,0.08);
-
-            filter: blur(4px);
-        }
-
-        .stat-icon {
-            width: 42px;
-            height: 42px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            margin-bottom: 14px;
-
-            border-radius: 13px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(255,211,77,0.14),
-                    rgba(255,79,216,0.12)
-                );
-
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .stat-icon svg {
-            width: 21px;
-            height: 21px;
-
-            fill: none;
-            stroke: #ffd34d;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .stat-label {
-            display: block;
-
-            color: var(--admin-muted);
-
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .stat-value {
-            display: block;
-
-            margin-top: 5px;
-
-            color: #fff;
-
-            font-size: clamp(18px, 2.3vw, 25px);
-            font-weight: 900;
-
-            line-height: 1.1;
-
-            overflow-wrap: anywhere;
-        }
-
-        .stat-description {
-            display: block;
-
-            margin-top: 7px;
-
-            color: #756a78;
-
-            font-size: 10px;
-        }
-
-        /* =========================================================
-           PENDING ACTIVITY
-           ========================================================= */
-
-        .pending-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
-
-            gap: 14px;
-
-            margin-bottom: 28px;
-        }
-
-        .pending-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 15px;
-
-            min-width: 0;
-
-            padding: 18px;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 18px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.045),
-                    rgba(255,255,255,0.015)
-                );
-        }
-
-        .pending-left {
-            min-width: 0;
-        }
-
-        .pending-icon {
-            width: 40px;
-            height: 40px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            margin-bottom: 11px;
-
-            border-radius: 12px;
-
-            background: rgba(255,79,216,0.08);
-
-            border: 1px solid rgba(255,79,216,0.15);
-        }
-
-        .pending-icon svg {
-            width: 20px;
-            height: 20px;
-
-            fill: none;
-            stroke: var(--admin-pink);
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .pending-card h3 {
-            margin: 0;
-
-            font-size: 13px;
-        }
-
-        .pending-card strong {
-            display: block;
-
-            margin-top: 5px;
-
-            font-size: 22px;
-        }
-
-        .pending-card span {
-            display: block;
-
-            margin-top: 3px;
-
-            color: var(--admin-muted);
-
-            font-size: 10px;
-        }
-
-        .pending-arrow {
-            width: 38px;
-            height: 38px;
-
-            flex: 0 0 38px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 12px;
-
-            color: #fff;
-
-            background: rgba(255,255,255,0.025);
-        }
-
-        .pending-arrow svg {
-            width: 18px;
-            height: 18px;
-
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* =========================================================
-           CONTENT TWO COLUMN
-           ========================================================= */
-
-        .dashboard-columns {
-            display: grid;
-
-            grid-template-columns:
-                minmax(0, 1.25fr)
-                minmax(0, 0.75fr);
-
-            gap: 18px;
-
-            margin-bottom: 28px;
-        }
-
-        .admin-card {
-            min-width: 0;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 21px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.045),
-                    rgba(255,255,255,0.012)
-                );
-
-            overflow: hidden;
-        }
-
-        .card-header {
-            min-height: 68px;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 15px;
-
-            padding: 17px 20px;
-
-            border-bottom: 1px solid var(--admin-border);
-        }
-
-        .card-header h3 {
-            margin: 0;
-
-            font-size: 15px;
-        }
-
-        .card-header p {
-            margin: 4px 0 0;
-
-            color: var(--admin-muted);
-
-            font-size: 10px;
-        }
-
-        .view-all {
-            color: var(--admin-pink);
-
-            font-size: 11px;
-            font-weight: 800;
-
-            white-space: nowrap;
-        }
-
-        .card-body {
-            min-width: 0;
-        }
-
-        /* =========================================================
-           RECENT ITEMS
-           ========================================================= */
-
-        .transaction-row,
-        .user-row {
-            min-width: 0;
-
-            display: flex;
-            align-items: center;
-
-            gap: 12px;
-
-            padding: 14px 18px;
-
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .transaction-row:last-child,
-        .user-row:last-child {
-            border-bottom: none;
-        }
-
-        .transaction-icon,
-        .user-icon {
-            width: 38px;
-            height: 38px;
-
-            flex: 0 0 38px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 12px;
-
-            background: rgba(255,255,255,0.035);
-
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .transaction-icon svg,
-        .user-icon svg {
-            width: 18px;
-            height: 18px;
-
-            fill: none;
-            stroke: #ffd34d;
+            stroke: #ffd45a;
             stroke-width: 1.7;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
-        .transaction-info,
-        .user-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .transaction-info strong,
-        .user-info strong {
-            display: block;
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            font-size: 12px;
-        }
-
-        .transaction-info span,
-        .user-info span {
-            display: block;
-
-            margin-top: 3px;
-
-            color: var(--admin-muted);
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            font-size: 10px;
-        }
-
-        .transaction-amount {
-            flex: 0 0 auto;
-
-            font-size: 11px;
-            font-weight: 800;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            min-height: 25px;
-
-            padding: 0 9px;
-
-            border-radius: 999px;
-
-            font-size: 9px;
-            font-weight: 800;
-
-            white-space: nowrap;
-        }
-
         /* =========================================================
-           QUICK ACTIONS
+           RESPONSIVE SIDEBAR SAFETY
            ========================================================= */
 
-        .quick-actions {
-            display: grid;
+        @media (max-width: 900px) {
+            .sidebar {
+                z-index: 1000;
+            }
 
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
-
-            gap: 12px;
-
-            margin-bottom: 28px;
-        }
-
-        .quick-action {
-            position: relative;
-
-            min-width: 0;
-
-            display: flex;
-            align-items: center;
-
-            gap: 12px;
-
-            padding: 15px;
-
-            border: 1px solid var(--admin-border);
-            border-radius: 17px;
-
-            color: #fff;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,0.045),
-                    rgba(255,255,255,0.012)
-                );
-
-            transition:
-                transform .2s ease,
-                border-color .2s ease;
-        }
-
-        .quick-action:hover {
-            transform: translateY(-2px);
-
-            border-color: rgba(255,79,216,0.3);
-        }
-
-        .quick-action-icon {
-            width: 40px;
-            height: 40px;
-
-            flex: 0 0 40px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 12px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(255,211,77,0.12),
-                    rgba(255,79,216,0.12)
-                );
-        }
-
-        .quick-action-icon svg {
-            width: 20px;
-            height: 20px;
-
-            fill: none;
-            stroke: #ffd34d;
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .quick-action-copy {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .quick-action-copy strong {
-            display: block;
-
-            font-size: 12px;
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .quick-action-copy span {
-            display: block;
-
-            margin-top: 3px;
-
-            color: var(--admin-muted);
-
-            font-size: 10px;
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .quick-action-arrow {
-            color: var(--admin-pink);
-            font-size: 18px;
-        }
-
-        /* =========================================================
-           FOOTER
-           ========================================================= */
-
-        .admin-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            gap: 15px;
-
-            padding: 20px 0 5px;
-
-            border-top: 1px solid var(--admin-border);
-
-            color: #756a78;
-
-            font-size: 10px;
-        }
-
-        /* =========================================================
-           SIDEBAR MOBILE OVERLAY
-           ========================================================= */
-
-        .sidebar-overlay {
-            display: none;
-
-            position: fixed;
-            inset: 0;
-
-            z-index: 4500;
-
-            background: rgba(0,0,0,0.65);
-
-            backdrop-filter: blur(4px);
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* =========================================================
-           TABLET
-           ========================================================= */
-
-        @media (max-width: 1100px) {
-
-            :root {
-                --sidebar-width: 235px;
+            .sidebar-overlay {
+                z-index: 999;
             }
 
             .main-content {
-                padding: 24px 22px 50px;
-            }
-
-            .stats-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-            .dashboard-columns {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-actions {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+                width: 100%;
             }
         }
 
         /* =========================================================
            MOBILE
-           THIS IS THE IMPORTANT FIX
            ========================================================= */
 
-        @media (max-width: 900px) {
-
-            html,
-            body {
-                width: 100%;
-                max-width: 100%;
-                overflow-x: hidden;
+        @media (max-width: 600px) {
+            .loader-content {
+                width: calc(100% - 36px);
+                padding: 30px 20px;
+                border-radius: 20px;
             }
 
-            .admin-layout {
-                display: block !important;
-                width: 100% !important;
-                min-width: 0 !important;
+            .loader-icon {
+                width: 66px;
+                height: 66px;
             }
 
-            /*
-             * SIDEBAR IS COMPLETELY REMOVED FROM THE MOBILE
-             * DOCUMENT FLOW.
-             */
-            .sidebar {
-                position: fixed !important;
-
-                top: 0;
-                bottom: 0;
-                left: 0;
-
-                width: min(290px, 86vw) !important;
-                min-width: 0 !important;
-
-                transform: translateX(-105%);
-
-                transition: transform .28s ease;
-
-                z-index: 6000;
+            .loader-icon svg {
+                width: 33px;
+                height: 33px;
             }
 
-            .sidebar.open,
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            /*
-             * MAIN CONTENT GETS THE WHOLE PHONE.
-             */
-            .admin-main {
-                display: block !important;
-
-                width: 100% !important;
-                min-width: 0 !important;
-
-                margin-left: 0 !important;
-
-                padding: 0 !important;
-            }
-
-            .admin-header {
-                min-height: 70px;
-
-                padding:
-                    12px 15px;
-
-                position: sticky;
-                top: 0;
-            }
-
-            .menu-button {
-                display: flex;
-            }
-
-            .header-user {
-                padding: 4px;
-                border: none;
-                background: transparent;
-            }
-
-            .header-user-text {
-                display: none;
-            }
-
-            .account-avatar {
-                width: 40px;
-                height: 40px;
-            }
-
-            .main-content {
-                width: 100% !important;
-                max-width: 100% !important;
-
-                padding:
-                    20px 15px 40px !important;
-
-                margin: 0 !important;
-            }
-
-            .dashboard-heading {
-                margin-bottom: 17px;
-            }
-
-            .dashboard-heading h1 {
-                font-size: 32px;
-            }
-
-            .dashboard-heading p {
-                font-size: 13px;
-                line-height: 1.55;
-            }
-
-            .welcome-panel {
-                display: block;
-
-                padding: 20px;
-
-                margin-bottom: 20px;
-            }
-
-            .welcome-copy h2 {
-                font-size: 24px;
-            }
-
-            .welcome-copy p {
-                font-size: 12px;
-            }
-
-            .welcome-actions {
-                width: 100%;
-
-                margin-top: 17px;
-
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .admin-button {
-                width: 100%;
-                padding: 0 10px;
-                font-size: 11px;
-            }
-
-            .section-heading {
-                align-items: flex-start;
-            }
-
-            .section-heading h2 {
-                font-size: 18px;
-            }
-
-            .stats-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-
-                gap: 10px;
-
-                margin-bottom: 20px;
-            }
-
-            .stat-card {
-                padding: 14px;
-
-                border-radius: 16px;
-            }
-
-            .stat-icon {
-                width: 37px;
-                height: 37px;
-
-                margin-bottom: 10px;
-            }
-
-            .stat-icon svg {
-                width: 18px;
-                height: 18px;
-            }
-
-            .stat-value {
-                font-size: 17px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-
-            .stat-description {
-                font-size: 9px;
-            }
-
-            .pending-grid {
-                grid-template-columns: 1fr;
-
-                gap: 10px;
-
-                margin-bottom: 20px;
-            }
-
-            .pending-card {
-                padding: 15px;
-            }
-
-            .pending-card strong {
-                font-size: 20px;
-            }
-
-            .dashboard-columns {
-                grid-template-columns: 1fr;
-
-                gap: 14px;
-
-                margin-bottom: 20px;
-            }
-
-            .admin-card {
-                border-radius: 18px;
-            }
-
-            .card-header {
-                min-height: 58px;
-
-                padding:
-                    13px 15px;
-            }
-
-            .card-header h3 {
-                font-size: 13px;
-            }
-
-            .transaction-row,
-            .user-row {
-                padding:
-                    12px 14px;
-            }
-
-            .transaction-icon,
-            .user-icon {
-                width: 35px;
-                height: 35px;
-
-                flex-basis: 35px;
-            }
-
-            .transaction-info strong,
-            .user-info strong {
-                font-size: 11px;
-            }
-
-            .transaction-info span,
-            .user-info span {
-                font-size: 9px;
-            }
-
-            .quick-actions {
-                grid-template-columns: 1fr;
-
-                gap: 9px;
-            }
-
-            .quick-action {
-                padding: 13px;
-            }
-
-            .quick-action-icon {
-                width: 37px;
-                height: 37px;
-
-                flex-basis: 37px;
-            }
-
-            .admin-footer {
-                display: block;
-
-                text-align: center;
-
-                line-height: 1.7;
-            }
-        }
-
-        /* =========================================================
-           SMALL PHONES
-           ========================================================= */
-
-        @media (max-width: 430px) {
-
-            .main-content {
-                padding:
-                    17px 12px 35px !important;
-            }
-
-            .admin-header {
-                padding:
-                    10px 12px;
-            }
-
-            .header-title strong {
-                font-size: 15px;
-            }
-
-            .header-title small {
-                font-size: 9px;
-            }
-
-            .menu-button {
-                width: 42px;
-                height: 42px;
-            }
-
-            .account-avatar {
-                width: 38px;
-                height: 38px;
-            }
-
-            .dashboard-heading h1 {
-                font-size: 29px;
-            }
-
-            .welcome-panel {
-                padding: 17px;
-            }
-
-            .welcome-copy h2 {
-                font-size: 22px;
-            }
-
-            .stats-grid {
-                gap: 8px;
-            }
-
-            .stat-card {
-                padding: 12px;
-            }
-
-            .stat-value {
-                font-size: 15px;
-            }
-
-            .stat-description {
-                display: none;
-            }
-
-            .welcome-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .pending-card {
-                padding: 13px;
-            }
-        }
-
-        /* =========================================================
-           ACCESSIBILITY
-           ========================================================= */
-
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                scroll-behavior: auto !important;
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+            .loader-title {
+                font-size: 19px;
             }
         }
     </style>
@@ -1616,305 +254,327 @@
 
 <body>
 
-<!-- =========================================================
-     LOADING
-     ========================================================= -->
+    <!-- =========================================================
+         PAGE LOADER
+         ========================================================= -->
 
-<div class="page-loader" id="pageLoader">
+    <div class="page-loader" id="pageLoader">
 
-    <div class="loader-content">
+        <div class="loader-content">
 
-        <div class="loader-icon">
+            <div class="loader-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14l4.8-.69L12 3z"></path>
+                    <path d="M5 20h14"></path>
+                </svg>
+            </div>
 
-            <svg viewBox="0 0 24 24">
-                <path d="M12 3v3"></path>
-                <path d="M12 18v3"></path>
-                <path d="M3 12h3"></path>
-                <path d="M18 12h3"></path>
-                <path d="M5.6 5.6l2.1 2.1"></path>
-                <path d="M16.3 16.3l2.1 2.1"></path>
-                <path d="M18.4 5.6l-2.1 2.1"></path>
-                <path d="M7.7 16.3l-2.1 2.1"></path>
-                <circle cx="12" cy="12" r="4"></circle>
-            </svg>
+            <h2 class="loader-title">
+                Loading Administration
+            </h2>
+
+            <p class="loader-text" id="loaderText">
+                Securing your administrator session...
+            </p>
+
+            <div class="loader-spinner"></div>
 
         </div>
-
-        <h2 class="loader-title">
-            Loading Administration
-        </h2>
-
-        <p class="loader-text">
-            Securing your administrator session...
-        </p>
-
-        <div class="loader-spinner"></div>
 
     </div>
 
-</div>
+
+    <!-- =========================================================
+         ADMIN LAYOUT
+         ========================================================= -->
+
+    <div class="admin-layout">
 
 
-<!-- =========================================================
-     LAYOUT
-     ========================================================= -->
+        <!-- =====================================================
+             SIDEBAR
+             ===================================================== -->
 
-<div class="admin-layout">
+        <aside class="sidebar" id="sidebar">
 
+            <div class="sidebar-header">
 
-    <!-- =====================================================
-         SIDEBAR
-         ===================================================== -->
+                <a href="admin.html" class="admin-logo">
 
-    <aside class="sidebar" id="sidebar">
+                    <div class="logo-mark">
 
-        <div class="sidebar-header">
-
-            <a href="admin.html" class="admin-brand">
-
-                <div class="brand-icon">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3l2.1 4.2 4.6.7-3.3 3.2.8 4.6-4.2-2.2-4.2 2.2.8-4.6-3.3-3.2 4.6-.7L12 3z"></path>
-                    </svg>
-
-                </div>
-
-                <div class="brand-text">
-                    <strong>CROWN</strong>
-                    <span>CASH</span>
-                    <small>ADMIN</small>
-                </div>
-
-            </a>
-
-            <button
-                type="button"
-                class="sidebar-close"
-                id="sidebarClose"
-                aria-label="Close menu"
-            >
-                <svg viewBox="0 0 24 24">
-                    <path d="M6 6l12 12"></path>
-                    <path d="M18 6L6 18"></path>
-                </svg>
-            </button>
-
-        </div>
-
-
-        <!-- ADMIN PROFILE -->
-
-        <div class="admin-profile">
-
-            <div
-                class="admin-avatar"
-                id="adminAvatar"
-            >
-                A
-            </div>
-
-            <div class="admin-profile-info">
-
-                <strong id="adminName">
-                    Administrator
-                </strong>
-
-                <span id="adminAccountType">
-                    Admin Account
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <!-- NAVIGATION -->
-
-        <nav class="admin-navigation">
-
-            <div class="nav-section">
-
-                <span class="nav-section-title">
-                    MAIN
-                </span>
-
-                <a
-                    href="admin.html"
-                    class="nav-link active"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 10.5L12 3l9 7.5"></path>
-                            <path d="M5 9.5V21h14V9.5"></path>
-                            <path d="M9 21v-6h6v6"></path>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14l4.8-.69L12 3z">
+                            </path>
+                            <path d="M7 20h10"></path>
                         </svg>
-                    </span>
 
-                    <span>Dashboard</span>
+                    </div>
+
+                    <div class="logo-text">
+                        <strong>Crown Cash</strong>
+                        <span>Administration</span>
+                    </div>
+
                 </a>
 
-                <a
-                    href="admin-users.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M16 5.5a3 3 0 010 5"></path>
-                            <path d="M18 14c2 .6 3 2.4 3 4.5"></path>
-                        </svg>
-                    </span>
-
-                    <span>Users</span>
-                </a>
-
-                <a
-                    href="admin-deposits.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="4" y="5" width="16" height="14" rx="3"></rect>
-                            <path d="M8 9h8"></path>
-                            <path d="M8 13h5"></path>
-                            <path d="M8 16h3"></path>
-                        </svg>
-                    </span>
-
-                    <span>Deposits</span>
-                </a>
-
-                <a
-                    href="admin-withdrawals.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3v13"></path>
-                            <path d="M7 11l5 5 5-5"></path>
-                            <path d="M4 20h16"></path>
-                        </svg>
-                    </span>
-
-                    <span>Withdrawals</span>
-                </a>
-
-            </div>
-
-
-            <div class="nav-section">
-
-                <span class="nav-section-title">
-                    FINANCE
-                </span>
-
-                <a
-                    href="admin-investments.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 17l6-6 4 3 6-7"></path>
-                            <path d="M16 7h4v4"></path>
-                        </svg>
-                    </span>
-
-                    <span>Investments</span>
-                </a>
-
-                <a
-                    href="admin-transactions.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 7h12"></path>
-                            <path d="M13 4l3 3-3 3"></path>
-                            <path d="M20 17H8"></path>
-                            <path d="M11 14l-3 3 3 3"></path>
-                        </svg>
-                    </span>
-
-                    <span>Transactions</span>
-                </a>
-
-                <a
-                    href="admin-referrals.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <circle cx="17" cy="9" r="2.5"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M15 15c2.8.4 5 2.4 5 5"></path>
-                        </svg>
-                    </span>
-
-                    <span>Referrals</span>
-                </a>
-
-            </div>
-
-
-            <div class="nav-section">
-
-                <span class="nav-section-title">
-                    MANAGEMENT
-                </span>
-
-                <a
-                    href="admin-support.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 13a8 8 0 0116 0"></path>
-                            <path d="M4 13v4a2 2 0 002 2h2v-6H6a2 2 0 00-2 2"></path>
-                            <path d="M20 13v4a2 2 0 01-2 2h-2v-6h2a2 2 0 012 2"></path>
-                            <path d="M14 19c0 1-1 2-2 2"></path>
-                        </svg>
-                    </span>
-
-                    <span>Support</span>
-                </a>
-
-                <a
-                    href="admin-security.html"
-                    class="nav-link"
-                >
-                    <span class="nav-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3l8 3v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"></path>
-                            <path d="M9 12l2 2 4-4"></path>
-                        </svg>
-                    </span>
-
-                    <span>Security &amp; Audit</span>
-                </a>
-
-            </div>
-
-
-            <div class="nav-section nav-logout-section">
 
                 <button
                     type="button"
-                    class="nav-link logout-link"
-                    id="logoutBtn"
-                >
+                    class="sidebar-close"
+                    id="sidebarClose"
+                    aria-label="Close menu">
 
-                    <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 6l12 12"></path>
+                        <path d="M18 6L6 18"></path>
+                    </svg>
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M10 5H5v14h5"></path>
-                            <path d="M14 8l4 4-4 4"></path>
-                            <path d="M18 12H9"></path>
-                        </svg>
+                </button>
 
-                    </span>
+            </div>
+
+
+            <!-- SIDEBAR NAVIGATION -->
+
+            <nav class="sidebar-nav">
+
+                <div class="nav-section">
+
+                    <div class="nav-section-title">
+                        Overview
+                    </div>
+
+                    <a href="admin.html" class="nav-link active">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            </svg>
+
+                        </span>
+
+                        <span>Dashboard</span>
+
+                    </a>
+
+                </div>
+
+
+                <div class="nav-section">
+
+                    <div class="nav-section-title">
+                        Management
+                    </div>
+
+
+                    <a href="admin-users.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Users</span>
+
+                    </a>
+
+
+                    <a href="admin-deposits.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3v13"></path>
+                                <path d="M7 11l5 5 5-5"></path>
+                                <path d="M5 21h14"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Deposits</span>
+
+                        <span class="nav-badge" id="navPendingDeposits">
+                            0
+                        </span>
+
+                    </a>
+
+
+                    <a href="admin-withdrawals.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21V8"></path>
+                                <path d="M7 13l5-5 5 5"></path>
+                                <path d="M5 3h14"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Withdrawals</span>
+
+                        <span class="nav-badge" id="navPendingWithdrawals">
+                            0
+                        </span>
+
+                    </a>
+
+
+                    <a href="admin-investments.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19h16"></path>
+                                <path d="M7 15l4-4 3 2 5-6"></path>
+                                <path d="M15 7h4v4"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Investments</span>
+
+                    </a>
+
+
+                    <a href="admin-transactions.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 7h16"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M4 17h16"></path>
+                                <circle cx="8" cy="7" r="1"></circle>
+                                <circle cx="8" cy="12" r="1"></circle>
+                                <circle cx="8" cy="17" r="1"></circle>
+                            </svg>
+
+                        </span>
+
+                        <span>Transactions</span>
+
+                    </a>
+
+
+                    <a href="admin-referrals.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="9" cy="7" r="3"></circle>
+                                <circle cx="17" cy="9" r="2.5"></circle>
+                                <path d="M3 20a6 6 0 0 1 12 0"></path>
+                                <path d="M14 19a5 5 0 0 1 7 0"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Referrals</span>
+
+                    </a>
+
+                </div>
+
+
+                <div class="nav-section">
+
+                    <div class="nav-section-title">
+                        Support & Security
+                    </div>
+
+
+                    <a href="admin-support.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 5h16v11H8l-4 4V5z"></path>
+                                <path d="M8 9h8"></path>
+                                <path d="M8 13h5"></path>
+                            </svg>
+
+                        </span>
+
+                        <span>Support</span>
+
+                        <span class="nav-badge" id="navOpenTickets">
+                            0
+                        </span>
+
+                    </a>
+
+
+                    <a href="admin-security.html" class="nav-link">
+
+                        <span class="nav-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+                                <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                                <circle cx="12" cy="15" r="1"></circle>
+                            </svg>
+
+                        </span>
+
+                        <span>Security</span>
+
+                    </a>
+
+                </div>
+
+            </nav>
+
+
+            <!-- SIDEBAR FOOTER -->
+
+            <div class="sidebar-footer">
+
+                <div class="admin-profile-mini">
+
+                    <div class="admin-avatar-small" id="adminAvatar">
+                        A
+                    </div>
+
+                    <div class="admin-profile-info">
+
+                        <strong id="adminName">
+                            Administrator
+                        </strong>
+
+                        <span id="adminAccountType">
+                            Admin Account
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="logout-button"
+                    id="logoutBtn">
+
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 17l5-5-5-5"></path>
+                        <path d="M15 12H3"></path>
+                        <path d="M21 3v18"></path>
+                    </svg>
 
                     <span>Logout</span>
 
@@ -1922,170 +582,129 @@
 
             </div>
 
-        </nav>
-
-    </aside>
+        </aside>
 
 
-    <!-- MOBILE OVERLAY -->
+        <!-- MOBILE OVERLAY -->
 
-    <div
-        class="sidebar-overlay"
-        id="sidebarOverlay"
-    ></div>
-
-
-    <!-- =====================================================
-         MAIN
-         ===================================================== -->
-
-    <main class="admin-main">
+        <div
+            class="sidebar-overlay"
+            id="sidebarOverlay">
+        </div>
 
 
-        <!-- TOP HEADER -->
+        <!-- =====================================================
+             MAIN CONTENT
+             ===================================================== -->
 
-        <header class="admin-header">
-
-            <div class="header-left">
-
-                <button
-                    type="button"
-                    class="menu-button"
-                    id="menuButton"
-                    aria-label="Open admin menu"
-                >
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 6h16"></path>
-                        <path d="M4 12h16"></path>
-                        <path d="M4 18h16"></path>
-                    </svg>
-                </button>
-
-                <div class="header-title">
-
-                    <small>
-                        CROWN CASH ADMIN
-                    </small>
-
-                    <strong>
-                        Control Center
-                    </strong>
-
-                </div>
-
-            </div>
+        <main class="main-content">
 
 
-            <div class="header-right">
+            <!-- TOP HEADER -->
 
-                <div class="header-user">
+            <header class="top-header">
 
-                    <div class="header-user-text">
+                <div class="header-left">
 
-                        <strong id="headerUserName">
-                            Administrator
-                        </strong>
+                    <button
+                        type="button"
+                        class="menu-button"
+                        id="menuButton"
+                        aria-label="Open menu">
 
-                    </div>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 6h16"></path>
+                            <path d="M4 12h16"></path>
+                            <path d="M4 18h16"></path>
+                        </svg>
 
-                    <div
-                        class="account-avatar"
-                        id="accountAvatar"
-                    >
-                        A
-                    </div>
-
-                </div>
-
-            </div>
-
-        </header>
+                    </button>
 
 
-        <!-- =================================================
-             CONTENT
-             ================================================= -->
+                    <div class="page-heading">
 
-        <div class="main-content">
-
-
-            <!-- DASHBOARD HEADING -->
-
-            <div class="dashboard-heading">
-
-                <span class="dashboard-eyebrow">
-                    ADMINISTRATION
-                </span>
-
-                <h1>
-                    Dashboard
-                </h1>
-
-                <p>
-                    Monitor users, deposits, withdrawals,
-                    investments, referrals and platform
-                    activity from one powerful control center.
-                </p>
-
-            </div>
-
-
-            <!-- WELCOME -->
-
-            <section class="welcome-panel">
-
-                <div class="welcome-copy">
-
-                    <div class="section-label">
-                        CROWN CASH ADMINISTRATION
-                    </div>
-
-                    <h2>
-                        Welcome back,
-                        <span id="adminFirstName">
-                            Administrator
+                        <span class="heading-eyebrow">
+                            Crown Cash Administration
                         </span>
-                    </h2>
 
-                    <p>
-                        Review the current state of your
-                        platform, monitor financial activity,
-                        manage customer accounts and respond
-                        to items requiring administrator action.
-                    </p>
+                        <h1>
+                            Dashboard
+                        </h1>
+
+                    </div>
 
                 </div>
 
 
-                <div class="welcome-actions">
+                <div class="header-right">
 
-                    <a
-                        href="admin-users.html"
-                        class="admin-button primary"
-                    >
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M16 11h5"></path>
-                            <path d="M18.5 8.5v5"></path>
+                    <div class="header-admin">
+
+                        <div
+                            class="header-admin-avatar"
+                            id="accountAvatar">
+
+                            A
+
+                        </div>
+
+                        <div class="header-admin-details">
+
+                            <strong id="headerUserName">
+                                Administrator
+                            </strong>
+
+                            <span>
+                                Secure Admin Panel
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================================
+                 WELCOME CARD
+                 ================================================= -->
+
+            <section class="welcome-card">
+
+                <div class="welcome-content">
+
+                    <div>
+
+                        <span class="welcome-label">
+                            Administration Center
+                        </span>
+
+                        <h2>
+                            Welcome back,
+                            <span id="adminFirstName">
+                                Administrator
+                            </span>
+                        </h2>
+
+                        <p>
+                            Manage Crown Cash users, deposits,
+                            withdrawals, investments and platform
+                            activity from one secure dashboard.
+                        </p>
+
+                    </div>
+
+
+                    <div class="welcome-icon">
+
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14 9.8 7.45 12 3z"></path>
+                            <path d="M6 20h12"></path>
                         </svg>
 
-                        Manage Users
-                    </a>
-
-
-                    <a
-                        href="admin-deposits.html"
-                        class="admin-button"
-                    >
-                        <svg viewBox="0 0 24 24">
-                            <rect x="4" y="5" width="16" height="14" rx="3"></rect>
-                            <path d="M8 9h8"></path>
-                            <path d="M8 13h5"></path>
-                        </svg>
-
-                        View Deposits
-                    </a>
+                    </div>
 
                 </div>
 
@@ -2093,837 +712,755 @@
 
 
             <!-- =================================================
-                 PLATFORM OVERVIEW
+                 STATISTICS
                  ================================================= -->
-
-            <div class="section-heading">
-
-                <div>
-                    <div class="section-label">
-                        PLATFORM OVERVIEW
-                    </div>
-
-                    <h2>
-                        Quick Overview
-                    </h2>
-                </div>
-
-            </div>
-
 
             <section class="stats-grid">
 
 
-                <!-- USERS -->
+                <!-- TOTAL USERS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M16 5.5a3 3 0 010 5"></path>
-                            <path d="M18 14c2 .6 3 2.4 3 4.5"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Total Users
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Total Users
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="totalUsers"
-                    >
+                    <div class="stat-value" id="totalUsers">
                         0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
+                    <div class="stat-footer">
                         Registered accounts
-                    </span>
+                    </div>
 
-                </article>
+                </div>
 
 
                 <!-- ACTIVE USERS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="8"></circle>
-                            <path d="M8 12l2.5 2.5L16 9"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M8 12l2.5 2.5L16 9"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Active Users
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Active Users
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="activeUsers"
-                    >
+                    <div class="stat-value" id="activeUsers">
                         0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
+                    <div class="stat-footer">
                         Currently active
-                    </span>
+                    </div>
 
-                </article>
+                </div>
 
 
-                <!-- DEPOSITS -->
+                <!-- TOTAL DEPOSITS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <rect x="4" y="5" width="16" height="14" rx="3"></rect>
-                            <path d="M8 9h8"></path>
-                            <path d="M8 13h5"></path>
-                            <path d="M16 16h.01"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3v13"></path>
+                                <path d="M7 11l5 5 5-5"></path>
+                                <path d="M5 21h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Total Deposits
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Total Deposits
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="totalDeposits"
-                    >
+                    <div class="stat-value currency" id="totalDeposits">
                         UGX 0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
+                    <div class="stat-footer">
                         Platform deposits
-                    </span>
+                    </div>
 
-                </article>
+                </div>
 
 
-                <!-- WITHDRAWALS -->
+                <!-- TOTAL WITHDRAWALS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3v13"></path>
-                            <path d="M7 11l5 5 5-5"></path>
-                            <path d="M4 20h16"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21V8"></path>
+                                <path d="M7 13l5-5 5 5"></path>
+                                <path d="M5 3h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Total Withdrawals
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Withdrawals
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="totalWithdrawals"
-                    >
+                    <div class="stat-value currency" id="totalWithdrawals">
                         UGX 0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
+                    <div class="stat-footer">
                         Withdrawal requests
-                    </span>
+                    </div>
 
-                </article>
+                </div>
 
 
                 <!-- INVESTMENTS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 17l6-6 4 3 6-7"></path>
-                            <path d="M16 7h4v4"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 19V5"></path>
+                                <path d="M4 19h16"></path>
+                                <path d="M7 15l4-4 3 2 5-6"></path>
+                                <path d="M15 7h4v4"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Investments
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Investments
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="totalInvestments"
-                    >
+                    <div class="stat-value currency" id="totalInvestments">
                         UGX 0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
+                    <div class="stat-footer">
                         Total invested
-                    </span>
+                    </div>
 
-                </article>
+                </div>
 
 
                 <!-- REFERRALS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <circle cx="17" cy="9" r="2.5"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M15 15c2.8.4 5 2.4 5 5"></path>
-                        </svg>
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="9" cy="7" r="3"></circle>
+                                <circle cx="17" cy="9" r="2.5"></circle>
+                                <path d="M3 20a6 6 0 0 1 12 0"></path>
+                                <path d="M14 19a5 5 0 0 1 7 0"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Referrals
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Referrals
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="totalReferrals"
-                    >
+                    <div class="stat-value" id="totalReferrals">
                         0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
-                        Referral network
-                    </span>
+                    <div class="stat-footer">
+                        Referral activity
+                    </div>
 
-                </article>
+                </div>
 
 
                 <!-- TRANSACTIONS -->
 
-                <article class="stat-card">
+                <div class="stat-card">
 
-                    <div class="stat-icon">
+                    <div class="stat-card-top">
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 7h12"></path>
-                            <path d="M13 4l3 3-3 3"></path>
-                            <path d="M20 17H8"></path>
-                            <path d="M11 14l-3 3 3 3"></path>
-                        </svg>
+                        <div class="stat-icon">
 
-                    </div>
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 7h16"></path>
+                                <path d="M4 12h16"></path>
+                                <path d="M4 17h16"></path>
+                                <circle cx="8" cy="7" r="1"></circle>
+                                <circle cx="8" cy="12" r="1"></circle>
+                                <circle cx="8" cy="17" r="1"></circle>
+                            </svg>
 
-                    <span class="stat-label">
-                        Transactions
-                    </span>
+                        </div>
 
-                    <strong
-                        class="stat-value"
-                        id="totalTransactions"
-                    >
-                        0
-                    </strong>
-
-                    <span class="stat-description">
-                        Platform activity
-                    </span>
-
-                </article>
-
-
-                <!-- SUPPORT -->
-
-                <article class="stat-card">
-
-                    <div class="stat-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 13a8 8 0 0116 0"></path>
-                            <path d="M4 13v4a2 2 0 002 2h2v-6H6a2 2 0 00-2 2"></path>
-                            <path d="M20 13v4a2 2 0 01-2 2h-2v-6h2a2 2 0 012 2"></path>
-                        </svg>
+                        <span class="stat-label">
+                            Transactions
+                        </span>
 
                     </div>
 
-                    <span class="stat-label">
-                        Open Support
-                    </span>
-
-                    <strong
-                        class="stat-value"
-                        id="openTickets"
-                    >
+                    <div class="stat-value" id="totalTransactions">
                         0
-                    </strong>
+                    </div>
 
-                    <span class="stat-description">
-                        Tickets needing attention
-                    </span>
+                    <div class="stat-footer">
+                        Platform transactions
+                    </div>
 
-                </article>
+                </div>
+
+
+                <!-- OPEN SUPPORT -->
+
+                <div class="stat-card">
+
+                    <div class="stat-card-top">
+
+                        <div class="stat-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 5h16v11H8l-4 4V5z"></path>
+                                <path d="M8 9h8"></path>
+                                <path d="M8 13h5"></path>
+                            </svg>
+
+                        </div>
+
+                        <span class="stat-label">
+                            Open Tickets
+                        </span>
+
+                    </div>
+
+                    <div class="stat-value" id="openTickets">
+                        0
+                    </div>
+
+                    <div class="stat-footer">
+                        Support requests
+                    </div>
+
+                </div>
 
             </section>
 
 
             <!-- =================================================
-                 PENDING ACTIVITY
+                 PENDING ACTIONS
                  ================================================= -->
 
-            <div class="section-heading">
+            <section class="section-block">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            Requires attention
+                        </span>
+
+                        <h2>
+                            Pending Actions
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="action-grid">
+
+
+                    <!-- PENDING DEPOSITS -->
+
+                    <a href="admin-deposits.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 3v13"></path>
+                                <path d="M7 11l5 5 5-5"></path>
+                                <path d="M5 21h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <div class="action-info">
+
+                            <span>
+                                Pending Deposits
+                            </span>
+
+                            <strong id="pendingDeposits">
+                                0
+                            </strong>
+
+                        </div>
+
+                        <svg
+                            class="action-arrow"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true">
+
+                            <path d="M5 12h14"></path>
+                            <path d="M13 6l6 6-6 6"></path>
+
+                        </svg>
+
+                    </a>
+
+
+                    <!-- PENDING WITHDRAWALS -->
+
+                    <a href="admin-withdrawals.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21V8"></path>
+                                <path d="M7 13l5-5 5 5"></path>
+                                <path d="M5 3h14"></path>
+                            </svg>
+
+                        </div>
+
+                        <div class="action-info">
+
+                            <span>
+                                Pending Withdrawals
+                            </span>
+
+                            <strong id="pendingWithdrawals">
+                                0
+                            </strong>
+
+                        </div>
+
+                        <svg
+                            class="action-arrow"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true">
+
+                            <path d="M5 12h14"></path>
+                            <path d="M13 6l6 6-6 6"></path>
+
+                        </svg>
+
+                    </a>
+
+
+                    <!-- NEW ACCOUNTS -->
+
+                    <a href="admin-users.html" class="action-card">
+
+                        <div class="action-icon">
+
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="9" cy="8" r="4"></circle>
+                                <path d="M3 21a6 6 0 0 1 12 0"></path>
+                                <path d="M19 8v6"></path>
+                                <path d="M16 11h6"></path>
+                            </svg>
+
+                        </div>
+
+                        <div class="action-info">
+
+                            <span>
+                                New Accounts
+                            </span>
+
+                            <strong id="newAccounts">
+                                0
+                            </strong>
+
+                        </div>
+
+                        <svg
+                            class="action-arrow"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true">
+
+                            <path d="M5 12h14"></path>
+                            <path d="M13 6l6 6-6 6"></path>
+
+                        </svg>
+
+                    </a>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 LOWER DASHBOARD
+                 ================================================= -->
+
+            <div class="dashboard-columns">
+
+
+                <!-- RECENT TRANSACTIONS -->
+
+                <section class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                Latest activity
+                            </span>
+
+                            <h2>
+                                Recent Transactions
+                            </h2>
+
+                        </div>
+
+                        <a href="admin-transactions.html">
+                            View all
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        class="recent-list"
+                        id="recentTransactions">
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 7h16"></path>
+                                    <path d="M4 12h16"></path>
+                                    <path d="M4 17h16"></path>
+                                </svg>
+
+                            </div>
+
+                            <p>
+                                Loading transactions...
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- RECENT USERS -->
+
+                <section class="dashboard-card">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <span class="section-eyebrow">
+                                Latest registrations
+                            </span>
+
+                            <h2>
+                                Recent Users
+                            </h2>
+
+                        </div>
+
+                        <a href="admin-users.html">
+                            View all
+                        </a>
+
+                    </div>
+
+
+                    <div
+                        class="recent-list"
+                        id="recentUsers">
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="12" cy="8" r="4"></circle>
+                                    <path d="M4 21a8 8 0 0 1 16 0"></path>
+                                </svg>
+
+                            </div>
+
+                            <p>
+                                Loading users...
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 SECURITY NOTE
+                 ================================================= -->
+
+            <section class="security-notice">
+
+                <div class="security-notice-icon">
+
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+                        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                        <circle cx="12" cy="15" r="1"></circle>
+                    </svg>
+
+                </div>
+
 
                 <div>
 
-                    <div class="section-label">
-                        ACTION REQUIRED
-                    </div>
-
-                    <h2>
-                        Pending Activity
-                    </h2>
+                    <strong>
+                        Administrator Security
+                    </strong>
 
                     <p>
-                        Items currently waiting for administrator review.
+                        Keep your administrator account secure.
+                        Never share your administrator credentials
+                        with other users.
                     </p>
 
                 </div>
 
-            </div>
-
-
-            <section class="pending-grid">
-
-
-                <a
-                    href="admin-deposits.html"
-                    class="pending-card"
-                >
-
-                    <div class="pending-left">
-
-                        <div class="pending-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 16V4"></path>
-                                <path d="M8 8l4-4 4 4"></path>
-                                <path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            Pending Deposits
-                        </h3>
-
-                        <strong id="pendingDeposits">
-                            UGX 0
-                        </strong>
-
-                        <span>
-                            Awaiting approval
-                        </span>
-
-                    </div>
-
-                    <div class="pending-arrow">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-                        </svg>
-
-                    </div>
-
-                </a>
-
-
-                <a
-                    href="admin-withdrawals.html"
-                    class="pending-card"
-                >
-
-                    <div class="pending-left">
-
-                        <div class="pending-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 8v12"></path>
-                                <path d="M8 16l4 4 4-4"></path>
-                                <path d="M5 4h14"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            Pending Withdrawals
-                        </h3>
-
-                        <strong id="pendingWithdrawals">
-                            UGX 0
-                        </strong>
-
-                        <span>
-                            Awaiting review
-                        </span>
-
-                    </div>
-
-                    <div class="pending-arrow">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-                        </svg>
-
-                    </div>
-
-                </a>
-
-
-                <a
-                    href="admin-users.html"
-                    class="pending-card"
-                >
-
-                    <div class="pending-left">
-
-                        <div class="pending-icon">
-
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="9" cy="8" r="3"></circle>
-                                <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                                <path d="M17 11v5"></path>
-                                <path d="M14.5 13.5h5"></path>
-                            </svg>
-
-                        </div>
-
-                        <h3>
-                            New Accounts
-                        </h3>
-
-                        <strong id="newAccounts">
-                            0
-                        </strong>
-
-                        <span>
-                            View registered users
-                        </span>
-
-                    </div>
-
-                    <div class="pending-arrow">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-                        </svg>
-
-                    </div>
-
-                </a>
-
             </section>
 
 
-            <!-- =================================================
-                 RECENT ACTIVITY
-                 ================================================= -->
-
-            <section class="dashboard-columns">
-
-
-                <!-- TRANSACTIONS -->
-
-                <article class="admin-card">
-
-                    <div class="card-header">
-
-                        <div>
-
-                            <h3>
-                                Recent Transactions
-                            </h3>
-
-                            <p>
-                                Latest platform financial activity
-                            </p>
-
-                        </div>
-
-                        <a
-                            href="admin-transactions.html"
-                            class="view-all"
-                        >
-                            View All
-                        </a>
-
-                    </div>
-
-                    <div
-                        class="card-body"
-                        id="recentTransactions"
-                    >
-
-                        <div class="transaction-row">
-
-                            <div class="transaction-icon">
-
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 5v14"></path>
-                                    <path d="M7 10l5-5 5 5"></path>
-                                </svg>
-
-                            </div>
-
-                            <div class="transaction-info">
-
-                                <strong>
-                                    Loading transactions...
-                                </strong>
-
-                                <span>
-                                    Please wait
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </article>
-
-
-                <!-- USERS -->
-
-                <article class="admin-card">
-
-                    <div class="card-header">
-
-                        <div>
-
-                            <h3>
-                                Recent Users
-                            </h3>
-
-                            <p>
-                                Latest registered accounts
-                            </p>
-
-                        </div>
-
-                        <a
-                            href="admin-users.html"
-                            class="view-all"
-                        >
-                            View All
-                        </a>
-
-                    </div>
-
-                    <div
-                        class="card-body"
-                        id="recentUsers"
-                    >
-
-                        <div class="user-row">
-
-                            <div class="user-icon">
-
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="8" r="3"></circle>
-                                    <path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"></path>
-                                </svg>
-
-                            </div>
-
-                            <div class="user-info">
-
-                                <strong>
-                                    Loading users...
-                                </strong>
-
-                                <span>
-                                    Please wait
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </article>
-
-            </section>
-
-
-            <!-- =================================================
-                 QUICK ACTIONS
-                 ================================================= -->
-
-            <div class="section-heading">
-
-                <div>
-
-                    <div class="section-label">
-                        ADMIN TOOLS
-                    </div>
-
-                    <h2>
-                        Quick Actions
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <section class="quick-actions">
-
-
-                <a
-                    href="admin-users.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3"></circle>
-                            <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                            <path d="M16 11h5"></path>
-                            <path d="M18.5 8.5v5"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Manage Users
-                        </strong>
-
-                        <span>
-                            Accounts &amp; status
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-
-                <a
-                    href="admin-deposits.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 16V4"></path>
-                            <path d="M8 8l4-4 4 4"></path>
-                            <path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Review Deposits
-                        </strong>
-
-                        <span>
-                            Approve payments
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-
-                <a
-                    href="admin-withdrawals.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 8v12"></path>
-                            <path d="M8 16l4 4 4-4"></path>
-                            <path d="M5 4h14"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Review Withdrawals
-                        </strong>
-
-                        <span>
-                            Approvals &amp; payouts
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-
-                <a
-                    href="admin-investments.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 17l6-6 4 3 6-7"></path>
-                            <path d="M16 7h4v4"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Investments
-                        </strong>
-
-                        <span>
-                            Monitor investments
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-
-                <a
-                    href="admin-support.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 13a8 8 0 0116 0"></path>
-                            <path d="M4 13v4a2 2 0 002 2h2v-6H6a2 2 0 00-2 2"></path>
-                            <path d="M20 13v4a2 2 0 01-2 2h-2v-6h2a2 2 0 012 2"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Support
-                        </strong>
-
-                        <span>
-                            Customer tickets
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-
-                <a
-                    href="admin-security.html"
-                    class="quick-action"
-                >
-
-                    <div class="quick-action-icon">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3l8 3v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"></path>
-                            <path d="M9 12l2 2 4-4"></path>
-                        </svg>
-
-                    </div>
-
-                    <div class="quick-action-copy">
-
-                        <strong>
-                            Security &amp; Audit
-                        </strong>
-
-                        <span>
-                            Monitor system activity
-                        </span>
-
-                    </div>
-
-                    <span class="quick-action-arrow">
-                        →
-                    </span>
-
-                </a>
-
-            </section>
-
-
-            <!-- =================================================
-                 FOOTER
-                 ================================================= -->
+            <!-- FOOTER -->
 
             <footer class="admin-footer">
 
                 <span>
-                    © 2026 Crown Cash. Administration Portal.
+                    © 2026 Crown Cash
                 </span>
 
                 <span>
-                    Secure Admin Session
+                    Administration Panel
                 </span>
 
             </footer>
 
-        </div>
+        </main>
 
-    </main>
-
-</div>
+    </div>
 
 
-<!-- =========================================================
-     JAVASCRIPT
-     ========================================================= -->
+    <!-- =========================================================
+         LOADER CONTROLLER
+         =========================================================
 
-<script src="admin.js"></script>
+         This controller prevents the page from being permanently
+         blocked when admin.js takes too long or encounters an
+         unexpected JavaScript/API problem.
+
+         admin.js can also call:
+             window.hideAdminLoader();
+
+         Backend administrator authorization must still be
+         enforced server-side.
+         ========================================================= -->
+
+    <script>
+        (function () {
+
+            const loader = document.getElementById('pageLoader');
+            const loaderText = document.getElementById('loaderText');
+
+            if (!loader) {
+                return;
+            }
+
+            let loaderHidden = false;
+
+
+            function hideAdminLoader() {
+
+                if (loaderHidden) {
+                    return;
+                }
+
+                loaderHidden = true;
+
+                loader.classList.add('hidden');
+
+                document.body.classList.add('admin-ready');
+
+                setTimeout(function () {
+
+                    if (loader) {
+                        loader.style.display = 'none';
+                    }
+
+                }, 450);
+
+            }
+
+
+            function showAdminLoader(message) {
+
+                if (loaderHidden) {
+                    return;
+                }
+
+                if (loaderText && message) {
+                    loaderText.textContent = message;
+                }
+
+                loader.classList.remove('hidden');
+                loader.style.display = 'flex';
+
+            }
+
+
+            /*
+             * Make the functions available to admin.js.
+             */
+
+            window.hideAdminLoader = hideAdminLoader;
+            window.showAdminLoader = showAdminLoader;
+
+
+            /*
+             * Give admin.js a short opportunity to perform its
+             * administrator/session checks.
+             *
+             * If admin.js fails to hide the loader, this prevents
+             * the dashboard from being permanently blocked.
+             */
+
+            document.addEventListener('DOMContentLoaded', function () {
+
+                setTimeout(function () {
+
+                    hideAdminLoader();
+
+                }, 2500);
+
+            });
+
+
+            /*
+             * If all page resources finish loading, remove the
+             * loader shortly afterwards.
+             */
+
+            window.addEventListener('load', function () {
+
+                setTimeout(function () {
+
+                    hideAdminLoader();
+
+                }, 400);
+
+            });
+
+
+            /*
+             * Absolute fail-safe.
+             */
+
+            setTimeout(function () {
+
+                hideAdminLoader();
+
+            }, 5000);
+
+
+        })();
+    </script>
+
+
+    <!-- =========================================================
+         EXISTING ADMIN JAVASCRIPT
+         ========================================================= -->
+
+    <script src="admin.js"></script>
+
+
+    <!-- =========================================================
+         FINAL LOADER FAIL-SAFE
+         ========================================================= -->
+
+    <script>
+        window.addEventListener('error', function () {
+
+            if (typeof window.hideAdminLoader === 'function') {
+                window.hideAdminLoader();
+            }
+
+        });
+
+
+        /*
+         * If admin.js is unavailable or stops execution, the page
+         * will still become visible.
+         */
+
+        setTimeout(function () {
+
+            if (typeof window.hideAdminLoader === 'function') {
+                window.hideAdminLoader();
+            }
+
+        }, 5200);
+    </script>
 
 </body>
 </html>

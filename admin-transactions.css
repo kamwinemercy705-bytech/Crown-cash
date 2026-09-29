@@ -2230,4 +2230,12 @@ a:focus-visible {
     }
 }
 
-This CSS is now ready to connect to the "admin-transactions.html" file. The next file is "admin-transactions.js", which will connect the page to "admin_transactions.php", load the MongoDB transactions, handle search/filtering/pagination, statistics, modal details, mobile sidebar, logout, and loading/error states.
+.transaction-detail-badge {
+    display: inline-flex;
+    width: fit-content;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: rgba(245, 197, 66, 0.08);
+    border: 1px solid rgba(245, 197, 66, 0.16);
+    color: var(--gold-light);
+}

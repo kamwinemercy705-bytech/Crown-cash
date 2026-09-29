@@ -1,2061 +1,2102 @@
-/* =========================================================
-   CROWN CASH - ADMIN WITHDRAWALS
-   ========================================================= */
+/* ============================================================
+   CROWN CASH — ADMIN WITHDRAWALS
+   Complete frontend controller
+   ============================================================ */
 
-"use strict";
+(() => {
+    "use strict";
 
-const API_BASE = "https://crown-cash1.onrender.com";
+    /* ------------------------------------------------------------
+       API
+    ------------------------------------------------------------ */
 
-const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
-const WITHDRAWALS_API = `${API_BASE}/admin-withdrawals.php`;
-const PROFILE_API = `${API_BASE}/profile.php`;
+    const API_URL =
+        "https://crown-cash1.onrender.com/admin-withdrawals.php";
 
-let withdrawals = [];
-let filteredWithdrawals = [];
-let currentPage = 1;
-const ITEMS_PER_PAGE = 10;
+    /* ------------------------------------------------------------
+       State
+    ------------------------------------------------------------ */
 
-let selectedWithdrawal = null;
+    let withdrawals = [];
+    let currentStatus = "";
+    let currentMethod = "";
+    let currentPayoutStatus = "";
 
+    /* ------------------------------------------------------------
+       DOM helpers
+    ------------------------------------------------------------ */
 
-/* =========================================================
-   DOM HELPERS
-   ========================================================= */
+    const $ = (selector, parent = document) =>
+        parent.querySelector(selector);
 
-function $(id) {
-    return document.getElementById(id);
-}
+    const $$ = (selector, parent = document) =>
+        Array.from(parent.querySelectorAll(selector));
 
-function showElement(element) {
-    if (!element) return;
-
-    element.hidden = false;
-    element.style.display = "";
-}
-
-function hideElement(element) {
-    if (!element) return;
-
-    element.hidden = true;
-    element.style.display = "none";
-}
-
-
-/* =========================================================
-   PAGE LOADER
-   ========================================================= */
-
-function showLoader(message = "Verifying administrator access...") {
-
-    const loader = $("pageLoader");
-
-    if (!loader) {
-        return;
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
-    showElement(loader);
+    function money(value) {
+        const number = Number(value || 0);
 
-    const text =
-        loader.querySelector(".loader-text") ||
-        loader.querySelector("[data-loader-text]") ||
-        loader.querySelector("p") ||
-        loader.querySelector("span");
-
-    if (text) {
-        text.textContent = message;
-    }
-}
-
-
-function hideLoader() {
-
-    const loader = $("pageLoader");
-
-    if (!loader) {
-        return;
+        return "UGX " + number.toLocaleString("en-US", {
+            maximumFractionDigits: 0
+        });
     }
 
-    hideElement(loader);
-}
-
-
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
-function showMessage(message, type = "error") {
-
-    const messageBox =
-        $("withdrawalMessage") ||
-        $("withdrawMessage") ||
-        $("adminMessage");
-
-    if (!messageBox) {
-        console.error(message);
-        return;
-    }
-
-    messageBox.textContent = message;
-
-    messageBox.className =
-        `admin-message ${type}`;
-
-    messageBox.style.display = "block";
-
-    setTimeout(() => {
-
-        if (messageBox) {
-            messageBox.style.display = "none";
-        }
-
-    }, 7000);
-}
-
-
-/* =========================================================
-   FETCH WITH TIMEOUT
-   ========================================================= */
-
-async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = 10000
-) {
-
-    const controller = new AbortController();
-
-    const timer = setTimeout(() => {
-        controller.abort();
-    }, timeout);
-
-    try {
-
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-                "Accept": "application/json",
-                ...(options.headers || {})
+    function getValue(obj, ...keys) {
+        for (const key of keys) {
+            if (
+                obj &&
+                obj[key] !== undefined &&
+                obj[key] !== null &&
+                obj[key] !== ""
+            ) {
+                return obj[key];
             }
-        });
-
-        return response;
-
-    } catch (error) {
-
-        if (error.name === "AbortError") {
-            throw new Error(
-                "The server took too long to respond. Please try again."
-            );
         }
 
-        throw error;
-
-    } finally {
-
-        clearTimeout(timer);
-
-    }
-}
-
-
-/* =========================================================
-   JSON RESPONSE
-   ========================================================= */
-
-async function readJson(response) {
-
-    const text = await response.text();
-
-    if (!text) {
-        throw new Error(
-            `Server returned an empty response (${response.status}).`
-        );
-    }
-
-    try {
-
-        return JSON.parse(text);
-
-    } catch (error) {
-
-        console.error("Invalid JSON response:", text);
-
-        throw new Error(
-            `Server returned an invalid response (${response.status}).`
-        );
-    }
-}
-
-
-/* =========================================================
-   ADMIN AUTHENTICATION
-   ========================================================= */
-
-async function verifyAdministrator() {
-
-    console.log(
-        "[Crown Cash] Checking administrator authentication..."
-    );
-
-    try {
-
-        const response = await fetchWithTimeout(
-            ADMIN_AUTH_API,
-            {
-                method: "GET"
-            },
-            10000
-        );
-
-        console.log(
-            "[Crown Cash] Admin auth HTTP status:",
-            response.status
-        );
-
-        const data = await readJson(response);
-
-        console.log(
-            "[Crown Cash] Admin auth response:",
-            data
-        );
-
-        if (
-            response.status === 401 ||
-            response.status === 403
-        ) {
-
-            throw new Error(
-                data.message ||
-                "Administrator access was denied. Please login as an administrator."
-            );
-        }
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message ||
-                `Administrator verification failed (${response.status}).`
-            );
-        }
-
-        if (
-            data.success !== true ||
-            data.authorized !== true
-        ) {
-
-            throw new Error(
-                data.message ||
-                "Administrator authorization was not confirmed."
-            );
-        }
-
-        console.log(
-            "[Crown Cash] Administrator access confirmed."
-        );
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "[Crown Cash] Administrator verification error:",
-            error
-        );
-
-        throw error;
-    }
-}
-
-
-/* =========================================================
-   LOAD ADMIN PROFILE
-   ========================================================= */
-
-async function loadAdminProfile() {
-
-    try {
-
-        const response = await fetchWithTimeout(
-            PROFILE_API,
-            {
-                method: "GET"
-            },
-            10000
-        );
-
-        if (!response.ok) {
-            return;
-        }
-
-        const data = await readJson(response);
-
-        if (!data.success || !data.user) {
-            return;
-        }
-
-        const user = data.user;
-
-        const fullName =
-            user.full_name ||
-            `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-            "Administrator";
-
-        const adminName = $("adminName");
-
-        if (adminName) {
-            adminName.textContent = fullName;
-        }
-
-        const adminEmail = $("adminEmail");
-
-        if (adminEmail) {
-            adminEmail.textContent =
-                user.email || "";
-        }
-
-        const headerUserName = $("headerUserName");
-
-        if (headerUserName) {
-            headerUserName.textContent = fullName;
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "[Crown Cash] Could not load admin profile:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   FORMAT MONEY
-   ========================================================= */
-
-function formatMoney(value) {
-
-    const number = Number(value) || 0;
-
-    return new Intl.NumberFormat("en-UG", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(number);
-}
-
-
-function formatUGX(value) {
-
-    return `UGX ${formatMoney(value)}`;
-}
-
-
-/* =========================================================
-   FORMAT DATE
-   ========================================================= */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    try {
-
-        let date;
-
-        if (
-            typeof value === "object" &&
-            value.$date
-        ) {
-
-            date = new Date(value.$date);
-
-        } else {
-
-            date = new Date(value);
-        }
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleString("en-UG", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-
-    } catch (error) {
-
-        return "—";
-    }
-}
-
-
-/* =========================================================
-   GET WITHDRAWAL ID
-   ========================================================= */
-
-function getWithdrawalId(item) {
-
-    if (!item) {
         return "";
     }
 
-    if (typeof item._id === "string") {
-        return item._id;
-    }
+    /* ------------------------------------------------------------
+       Toast notification
+    ------------------------------------------------------------ */
 
-    if (
-        item._id &&
-        typeof item._id === "object"
-    ) {
+    function showToast(message, type = "success") {
+        let toast = document.getElementById("cc-admin-toast");
 
-        if (item._id.$oid) {
-            return item._id.$oid;
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "cc-admin-toast";
+
+            toast.style.position = "fixed";
+            toast.style.right = "20px";
+            toast.style.bottom = "20px";
+            toast.style.zIndex = "99999";
+            toast.style.maxWidth = "360px";
+            toast.style.padding = "14px 18px";
+            toast.style.borderRadius = "14px";
+            toast.style.fontSize = "14px";
+            toast.style.fontWeight = "700";
+            toast.style.lineHeight = "1.45";
+            toast.style.backdropFilter = "blur(18px)";
+            toast.style.webkitBackdropFilter = "blur(18px)";
+            toast.style.boxShadow =
+                "0 12px 35px rgba(0,0,0,.35)";
+
+            document.body.appendChild(toast);
         }
 
-        if (item._id.oid) {
-            return item._id.oid;
+        toast.textContent = message;
+
+        if (type === "error") {
+            toast.style.background =
+                "rgba(120, 20, 55, .95)";
+            toast.style.border =
+                "1px solid rgba(255, 100, 130, .45)";
+            toast.style.color = "#ffd7df";
+        } else {
+            toast.style.background =
+                "rgba(45, 30, 75, .96)";
+            toast.style.border =
+                "1px solid rgba(255, 210, 80, .45)";
+            toast.style.color = "#ffe89a";
         }
 
-        if (item._id.toString) {
-            return item._id.toString();
+        toast.style.opacity = "1";
+
+        clearTimeout(window.__ccToastTimer);
+
+        window.__ccToastTimer = setTimeout(() => {
+            toast.style.opacity = "0";
+        }, 3500);
+    }
+
+    /* ------------------------------------------------------------
+       Authentication / fetch
+    ------------------------------------------------------------ */
+
+    async function apiRequest(options = {}) {
+        const method = options.method || "GET";
+        const body = options.body || null;
+
+        const fetchOptions = {
+            method,
+            credentials: "include",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        if (body) {
+            fetchOptions.headers["Content-Type"] =
+                "application/json";
+
+            fetchOptions.body = JSON.stringify(body);
         }
-    }
 
-    return (
-        item.withdrawal_id ||
-        item.id ||
-        item.withdrawalId ||
-        ""
-    );
-}
+        const response = await fetch(API_URL, fetchOptions);
 
+        const rawText = await response.text();
 
-/* =========================================================
-   NORMALIZE WITHDRAWAL
-   ========================================================= */
+        let data = {};
 
-function normalizeWithdrawal(item) {
-
-    const requestedAmount =
-        Number(
-            item.requested_amount ??
-            item.amount ??
-            item.requested ??
-            0
-        );
-
-    const fee =
-        Number(
-            item.fee ??
-            item.withdrawal_fee ??
-            0
-        );
-
-    const payoutAmount =
-        Number(
-            item.payout_amount ??
-            item.payout ??
-            item.net_amount ??
-            Math.max(0, requestedAmount - fee)
-        );
-
-    const user =
-        item.user ||
-        {};
-
-    const name =
-        item.full_name ||
-        item.user_name ||
-        item.name ||
-        user.full_name ||
-        user.name ||
-        "Customer";
-
-    const email =
-        item.email ||
-        user.email ||
-        "";
-
-    const phone =
-        item.phone ||
-        item.registered_phone ||
-        item.mobile ||
-        user.phone ||
-        "";
-
-    const method =
-        item.payment_method ||
-        item.method ||
-        "";
-
-    const status =
-        String(
-            item.status ||
-            "pending"
-        ).toLowerCase();
-
-    const payoutStatus =
-        String(
-            item.payout_status ||
-            "not_required"
-        ).toLowerCase();
-
-    const date =
-        item.created_at ||
-        item.requested_at ||
-        item.date ||
-        item.createdAt ||
-        "";
-
-    return {
-        raw: item,
-        id: getWithdrawalId(item),
-        name,
-        email,
-        phone,
-        method,
-        status,
-        payoutStatus,
-        requestedAmount,
-        fee,
-        payoutAmount,
-        date,
-        adminNote:
-            item.admin_note ||
-            item.note ||
-            ""
-    };
-}
-
-
-/* =========================================================
-   LOAD WITHDRAWALS
-   ========================================================= */
-
-async function loadWithdrawals() {
-
-    const tableBody = $("withdrawalsTableBody");
-
-    if (tableBody) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="10" class="loading-cell">
-                    Loading withdrawal requests...
-                </td>
-            </tr>
-        `;
-    }
-
-    try {
-
-        console.log(
-            "[Crown Cash] Loading admin withdrawals..."
-        );
-
-        const response = await fetchWithTimeout(
-            WITHDRAWALS_API,
-            {
-                method: "GET"
-            },
-            15000
-        );
-
-        console.log(
-            "[Crown Cash] Withdrawals HTTP status:",
-            response.status
-        );
-
-        const data = await readJson(response);
-
-        console.log(
-            "[Crown Cash] Withdrawals response:",
-            data
-        );
-
-        if (
-            response.status === 401 ||
-            response.status === 403
-        ) {
-
+        try {
+            data = rawText ? JSON.parse(rawText) : {};
+        } catch (error) {
             throw new Error(
-                data.message ||
-                "Administrator authorization is required."
+                rawText ||
+                `Server returned HTTP ${response.status}`
             );
         }
 
         if (!response.ok) {
-
             throw new Error(
                 data.message ||
-                `Unable to load withdrawals (${response.status}).`
+                data.error ||
+                `Request failed with HTTP ${response.status}`
             );
         }
 
-        if (data.success === false) {
-
+        if (
+            data.success === false &&
+            data.ok === false
+        ) {
             throw new Error(
                 data.message ||
-                "Unable to load withdrawal requests."
+                data.error ||
+                "The request was not successful."
             );
         }
 
-        const rawWithdrawals =
-            data.withdrawals ||
-            data.items ||
-            data.records ||
-            data.data ||
-            [];
+        return data;
+    }
 
-        if (!Array.isArray(rawWithdrawals)) {
+    /* ------------------------------------------------------------
+       Find main withdrawal container
+    ------------------------------------------------------------ */
 
-            console.warn(
-                "[Crown Cash] Unexpected withdrawal response:",
-                data
-            );
+    function findWithdrawalContainer() {
+        const possibleSelectors = [
+            "#withdrawalRequests",
+            "#withdrawal-requests",
+            "#withdrawalsList",
+            "#withdrawals-list",
+            "#withdrawalList",
+            "#withdrawal-list",
+            ".withdrawal-requests",
+            ".withdrawals-list",
+            ".withdrawal-list",
+            "[data-withdrawals]",
+            "[data-withdrawal-list]"
+        ];
 
-            withdrawals = [];
+        for (const selector of possibleSelectors) {
+            const element = $(selector);
 
-        } else {
-
-            withdrawals =
-                rawWithdrawals.map(
-                    normalizeWithdrawal
-                );
+            if (element) {
+                return element;
+            }
         }
 
-        filteredWithdrawals =
-            [...withdrawals];
-
-        currentPage = 1;
-
-        updateStatistics(data);
-
-        applyFilters();
-
-        console.log(
-            `[Crown Cash] Loaded ${withdrawals.length} withdrawals.`
+        /*
+         * Fallback:
+         * Find an element containing the existing empty-state
+         * or withdrawal request heading.
+         */
+        const candidates = $$(
+            "main section, main div, section, .card, .panel"
         );
 
-    } catch (error) {
+        for (const element of candidates) {
+            const text = element.textContent || "";
 
-        console.error(
-            "[Crown Cash] Withdrawal loading error:",
-            error
-        );
-
-        withdrawals = [];
-        filteredWithdrawals = [];
-
-        updateStatistics({});
-
-        renderWithdrawals();
-
-        showMessage(
-            error.message ||
-            "Unable to load withdrawal requests.",
-            "error"
-        );
-
-    }
-}
-
-
-/* =========================================================
-   STATISTICS
-   ========================================================= */
-
-function updateStatistics(data) {
-
-    let total = 0;
-    let pending = 0;
-    let approved = 0;
-    let rejected = 0;
-
-    withdrawals.forEach(item => {
-
-        total += item.requestedAmount;
-
-        if (item.status === "pending") {
-            pending += item.requestedAmount;
+            if (
+                text.includes("No withdrawal requests") ||
+                text.includes("Withdrawal Requests")
+            ) {
+                return element;
+            }
         }
 
-        if (item.status === "approved") {
-            approved += item.requestedAmount;
-        }
-
-        if (item.status === "rejected") {
-            rejected += item.requestedAmount;
-        }
-    });
-
-    const serverStats =
-        data.stats ||
-        data.summary ||
-        {};
-
-    if (
-        serverStats.total !== undefined ||
-        serverStats.total_withdrawals !== undefined
-    ) {
-
-        total =
-            Number(
-                serverStats.total ??
-                serverStats.total_withdrawals
-            ) || total;
+        return null;
     }
 
-    if (
-        serverStats.pending !== undefined ||
-        serverStats.pending_withdrawals !== undefined
-    ) {
-
-        pending =
-            Number(
-                serverStats.pending ??
-                serverStats.pending_withdrawals
-            ) || pending;
-    }
-
-    if (
-        serverStats.approved !== undefined ||
-        serverStats.approved_withdrawals !== undefined
-    ) {
-
-        approved =
-            Number(
-                serverStats.approved ??
-                serverStats.approved_withdrawals
-            ) || approved;
-    }
-
-    if (
-        serverStats.rejected !== undefined ||
-        serverStats.rejected_withdrawals !== undefined
-    ) {
-
-        rejected =
-            Number(
-                serverStats.rejected ??
-                serverStats.rejected_withdrawals
-            ) || rejected;
-    }
-
-    setText(
-        "totalWithdrawals",
-        formatUGX(total)
-    );
-
-    setText(
-        "pendingWithdrawals",
-        formatUGX(pending)
-    );
-
-    setText(
-        "approvedWithdrawals",
-        formatUGX(approved)
-    );
-
-    setText(
-        "rejectedWithdrawals",
-        formatUGX(rejected)
-    );
-}
-
-
-function setText(id, value) {
-
-    const element = $(id);
-
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-
-/* =========================================================
-   FILTERS
-   ========================================================= */
-
-function applyFilters() {
-
-    const statusFilter =
-        $("statusFilter")?.value || "all";
-
-    const methodFilter =
-        $("methodFilter")?.value || "all";
-
-    const payoutFilter =
-        $("payoutStatusFilter")?.value || "all";
-
-    const search =
-        (
-            $("withdrawalSearch")?.value ||
-            $("searchWithdrawals")?.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-    filteredWithdrawals =
-        withdrawals.filter(item => {
-
-            const statusMatches =
-                statusFilter === "all" ||
-                item.status === statusFilter;
-
-            const methodMatches =
-                methodFilter === "all" ||
-                normalizeMethod(item.method) ===
-                normalizeMethod(methodFilter);
-
-            const payoutMatches =
-                payoutFilter === "all" ||
-                item.payoutStatus === payoutFilter;
-
-            const searchMatches =
-                !search ||
-                item.name.toLowerCase().includes(search) ||
-                item.email.toLowerCase().includes(search) ||
-                item.phone.toLowerCase().includes(search) ||
-                item.id.toLowerCase().includes(search);
-
-            return (
-                statusMatches &&
-                methodMatches &&
-                payoutMatches &&
-                searchMatches
-            );
-        });
-
-    currentPage = 1;
-
-    renderWithdrawals();
-}
-
-
-function normalizeMethod(value) {
-
-    return String(value || "")
-        .toLowerCase()
-        .replace(/[\s_-]+/g, "");
-}
-
-
-/* =========================================================
-   RENDER WITHDRAWALS
-   ========================================================= */
-
-function renderWithdrawals() {
-
-    const tableBody =
-        $("withdrawalsTableBody");
-
-    const mobileList =
-        $("withdrawalsMobileList");
-
-    if (!filteredWithdrawals.length) {
-
-        if (tableBody) {
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="empty-cell">
-                        No withdrawal requests found.
-                    </td>
-                </tr>
-            `;
-        }
-
-        if (mobileList) {
-
-            mobileList.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        ${emptyIcon()}
-                    </div>
-                    <h3>No withdrawal requests</h3>
-                    <p>
-                        There are no withdrawal requests matching your filters.
-                    </p>
-                </div>
-            `;
-        }
-
-        renderPagination();
-
-        return;
-    }
-
-    const start =
-        (currentPage - 1) *
-        ITEMS_PER_PAGE;
-
-    const pageItems =
-        filteredWithdrawals.slice(
-            start,
-            start + ITEMS_PER_PAGE
-        );
-
-    if (tableBody) {
-
-        tableBody.innerHTML =
-            pageItems.map(
-                renderTableRow
-            ).join("");
-    }
-
-    if (mobileList) {
-
-        mobileList.innerHTML =
-            pageItems.map(
-                renderMobileCard
-            ).join("");
-    }
-
-    renderPagination();
-}
-
-
-/* =========================================================
-   TABLE ROW
-   ========================================================= */
-
-function renderTableRow(item) {
-
-    return `
-        <tr>
-
-            <td>
-                <div class="user-cell">
-                    <div class="user-icon">
-                        ${userIcon()}
-                    </div>
-
-                    <div>
-                        <strong>
-                            ${escapeHtml(item.name)}
-                        </strong>
-
-                        ${
-                            item.email
-                                ? `<small>${escapeHtml(item.email)}</small>`
-                                : ""
-                        }
-                    </div>
-                </div>
-            </td>
-
-            <td>
-                <strong>
-                    ${formatUGX(item.requestedAmount)}
-                </strong>
-            </td>
-
-            <td>
-                ${formatUGX(item.fee)}
-            </td>
-
-            <td>
-                <strong>
-                    ${formatUGX(item.payoutAmount)}
-                </strong>
-            </td>
-
-            <td>
-                ${escapeHtml(formatMethod(item.method))}
-            </td>
-
-            <td>
-                ${escapeHtml(item.phone || "—")}
-            </td>
-
-            <td>
-                ${statusBadge(item.status)}
-            </td>
-
-            <td>
-                ${payoutStatusBadge(item.payoutStatus)}
-            </td>
-
-            <td>
-                ${formatDate(item.date)}
-            </td>
-
-            <td>
-                <button
-                    type="button"
-                    class="table-action-button"
-                    data-action="view"
-                    data-id="${escapeHtml(item.id)}"
-                >
-                    ${eyeIcon()}
-                    <span>View</span>
-                </button>
-            </td>
-
-        </tr>
-    `;
-}
-
-
-/* =========================================================
-   MOBILE CARD
-   ========================================================= */
-
-function renderMobileCard(item) {
-
-    return `
-        <article class="withdrawal-mobile-card">
-
-            <div class="mobile-card-header">
-
-                <div class="user-cell">
-
-                    <div class="user-icon">
-                        ${userIcon()}
-                    </div>
-
-                    <div>
-                        <strong>
-                            ${escapeHtml(item.name)}
-                        </strong>
-
-                        <small>
-                            ${escapeHtml(item.phone || "—")}
-                        </small>
-                    </div>
-
-                </div>
-
-                ${statusBadge(item.status)}
-
-            </div>
-
-            <div class="mobile-card-grid">
-
-                <div>
-                    <span>Requested</span>
-                    <strong>
-                        ${formatUGX(item.requestedAmount)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span>Fee</span>
-                    <strong>
-                        ${formatUGX(item.fee)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span>Payout</span>
-                    <strong>
-                        ${formatUGX(item.payoutAmount)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span>Method</span>
-                    <strong>
-                        ${escapeHtml(formatMethod(item.method))}
-                    </strong>
-                </div>
-
-            </div>
-
-            <div class="mobile-card-footer">
-
-                ${payoutStatusBadge(item.payoutStatus)}
-
-                <button
-                    type="button"
-                    class="table-action-button"
-                    data-action="view"
-                    data-id="${escapeHtml(item.id)}"
-                >
-                    ${eyeIcon()}
-                    View Details
-                </button>
-
-            </div>
-
-        </article>
-    `;
-}
-
-
-/* =========================================================
-   STATUS BADGES
-   ========================================================= */
-
-function statusBadge(status) {
-
-    const clean =
-        String(status || "pending")
-            .toLowerCase();
-
-    let label =
-        clean.charAt(0).toUpperCase() +
-        clean.slice(1);
-
-    return `
-        <span class="status-badge status-${escapeHtml(clean)}">
-            ${escapeHtml(label)}
-        </span>
-    `;
-}
-
-
-function payoutStatusBadge(status) {
-
-    const clean =
-        String(status || "not_required")
-            .toLowerCase();
-
-    const labels = {
-        not_required: "Not Required",
-        awaiting_payout: "Awaiting Payout",
-        paid: "Paid",
-        payout_failed: "Payout Failed"
-    };
-
-    return `
-        <span class="payout-status-badge payout-${escapeHtml(clean)}">
-            ${escapeHtml(
-                labels[clean] ||
-                clean.replace(/_/g, " ")
-            )}
-        </span>
-    `;
-}
-
-
-/* =========================================================
-   METHOD
-   ========================================================= */
-
-function formatMethod(method) {
-
-    const value =
-        String(method || "")
-            .toLowerCase();
-
-    if (value.includes("mtn")) {
-        return "MTN Mobile Money";
-    }
-
-    if (value.includes("airtel")) {
-        return "Airtel Money";
-    }
-
-    return method || "—";
-}
-
-
-/* =========================================================
-   PAGINATION
-   ========================================================= */
-
-function renderPagination() {
-
-    const pagination =
-        $("withdrawalPagination");
-
-    if (!pagination) {
-        return;
-    }
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                filteredWithdrawals.length /
-                ITEMS_PER_PAGE
+    /* ------------------------------------------------------------
+       Normalize withdrawal
+    ------------------------------------------------------------ */
+
+    function normalizeWithdrawal(item) {
+        return {
+            id: getValue(
+                item,
+                "_id",
+                "id",
+                "withdrawal_id",
+                "withdrawalId"
+            ),
+
+            reference: getValue(
+                item,
+                "reference",
+                "withdrawal_reference",
+                "withdrawalReference"
+            ),
+
+            userId: getValue(
+                item,
+                "user_id",
+                "userId",
+                "member_id",
+                "memberId"
+            ),
+
+            name: getValue(
+                item,
+                "name",
+                "full_name",
+                "fullName",
+                "user_name",
+                "userName",
+                "customer_name",
+                "customerName"
+            ) || "Unknown Customer",
+
+            phone: getValue(
+                item,
+                "phone",
+                "mobile",
+                "mobile_number",
+                "mobileNumber",
+                "withdrawal_number",
+                "withdrawalNumber",
+                "registered_phone"
+            ) || "Not available",
+
+            email: getValue(
+                item,
+                "email",
+                "user_email",
+                "userEmail"
+            ),
+
+            accountName: getValue(
+                item,
+                "account_name",
+                "accountName",
+                "name",
+                "full_name"
+            ),
+
+            amount: Number(
+                getValue(
+                    item,
+                    "amount",
+                    "requested_amount",
+                    "requestedAmount"
+                ) || 0
+            ),
+
+            fee: Number(
+                getValue(
+                    item,
+                    "fee",
+                    "withdrawal_fee",
+                    "withdrawalFee"
+                ) || 0
+            ),
+
+            net: Number(
+                getValue(
+                    item,
+                    "net",
+                    "net_amount",
+                    "netAmount",
+                    "payout",
+                    "payout_amount",
+                    "payoutAmount"
+                ) || 0
+            ),
+
+            method: getValue(
+                item,
+                "method",
+                "network",
+                "payment_method",
+                "paymentMethod"
+            ) || "unknown",
+
+            status: String(
+                getValue(
+                    item,
+                    "status",
+                    "withdrawal_status",
+                    "withdrawalStatus"
+                ) || "pending"
+            ).toLowerCase(),
+
+            payoutStatus: String(
+                getValue(
+                    item,
+                    "payout_status",
+                    "payoutStatus"
+                ) || "not_required"
+            ).toLowerCase(),
+
+            rejectionReason: getValue(
+                item,
+                "rejection_reason",
+                "rejectionReason"
+            ),
+
+            createdAt: getValue(
+                item,
+                "created_at",
+                "createdAt",
+                "date",
+                "created"
+            ),
+
+            approvedAt: getValue(
+                item,
+                "approved_at",
+                "approvedAt"
+            ),
+
+            rejectedAt: getValue(
+                item,
+                "rejected_at",
+                "rejectedAt"
             )
-        );
-
-    if (totalPages <= 1) {
-
-        pagination.innerHTML = "";
-        return;
+        };
     }
 
-    let html = "";
+    /* ------------------------------------------------------------
+       Format dates
+    ------------------------------------------------------------ */
 
-    html += `
-        <button
-            type="button"
-            class="pagination-button"
-            data-page="${currentPage - 1}"
-            ${currentPage === 1 ? "disabled" : ""}
-        >
-            ${chevronLeftIcon()}
-        </button>
-    `;
+    function formatDate(value) {
+        if (!value) {
+            return "Date unavailable";
+        }
 
-    for (
-        let page = 1;
-        page <= totalPages;
-        page++
-    ) {
+        try {
+            const date = new Date(value);
 
-        html += `
-            <button
-                type="button"
-                class="pagination-button ${
-                    page === currentPage
-                        ? "active"
-                        : ""
-                }"
-                data-page="${page}"
-            >
-                ${page}
-            </button>
+            if (Number.isNaN(date.getTime())) {
+                return String(value);
+            }
+
+            return date.toLocaleString("en-UG", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        } catch (error) {
+            return String(value);
+        }
+    }
+
+    /* ------------------------------------------------------------
+       Method label
+    ------------------------------------------------------------ */
+
+    function methodLabel(method) {
+        const value = String(method || "")
+            .toLowerCase()
+            .trim();
+
+        if (value === "mtn") {
+            return "MTN Mobile Money";
+        }
+
+        if (value === "airtel") {
+            return "Airtel Money";
+        }
+
+        if (
+            value === "mtn mobile money" ||
+            value === "mtn_mobile_money"
+        ) {
+            return "MTN Mobile Money";
+        }
+
+        if (
+            value === "airtel money" ||
+            value === "airtel_money"
+        ) {
+            return "Airtel Money";
+        }
+
+        return "Method unknown";
+    }
+
+    /* ------------------------------------------------------------
+       Payout label
+    ------------------------------------------------------------ */
+
+    function payoutLabel(status) {
+        const value = String(status || "")
+            .toLowerCase()
+            .trim();
+
+        switch (value) {
+            case "awaiting_payout":
+                return "Awaiting Payout";
+
+            case "paid":
+                return "Paid";
+
+            case "payout_failed":
+                return "Payout Failed";
+
+            case "not_required":
+            default:
+                return "Not Required";
+        }
+    }
+
+    /* ------------------------------------------------------------
+       Status badge
+    ------------------------------------------------------------ */
+
+    function statusBadge(status) {
+        const value = String(status || "pending")
+            .toLowerCase()
+            .trim();
+
+        let label = "Pending";
+        let className = "pending";
+
+        if (value === "approved") {
+            label = "Approved";
+            className = "approved";
+        } else if (value === "rejected") {
+            label = "Rejected";
+            className = "rejected";
+        } else if (value === "cancelled") {
+            label = "Cancelled";
+            className = "cancelled";
+        } else if (
+            value === "processing" ||
+            value === "awaiting_approval"
+        ) {
+            label = "Processing";
+            className = "processing";
+        }
+
+        return `
+            <span class="cc-status-badge ${className}">
+                <span class="cc-status-dot"></span>
+                ${escapeHTML(label)}
+            </span>
         `;
     }
 
-    html += `
-        <button
-            type="button"
-            class="pagination-button"
-            data-page="${currentPage + 1}"
-            ${currentPage === totalPages ? "disabled" : ""}
-        >
-            ${chevronRightIcon()}
-        </button>
-    `;
+    /* ------------------------------------------------------------
+       Action buttons
+    ------------------------------------------------------------ */
 
-    pagination.innerHTML = html;
-}
+    function actionButtons(withdrawal) {
+        const status = String(
+            withdrawal.status || ""
+        ).toLowerCase();
 
-
-/* =========================================================
-   MODAL
-   ========================================================= */
-
-function openWithdrawalModal(item) {
-
-    selectedWithdrawal = item;
-
-    const modal =
-        $("withdrawalModal");
-
-    if (!modal) {
-        return;
-    }
-
-    setText(
-        "withdrawalRequestedAmount",
-        formatUGX(item.requestedAmount)
-    );
-
-    setText(
-        "withdrawalFee",
-        formatUGX(item.fee)
-    );
-
-    setText(
-        "withdrawalPayoutAmount",
-        formatUGX(item.payoutAmount)
-    );
-
-    setText(
-        "withdrawalPaymentMethod",
-        formatMethod(item.method)
-    );
-
-    setText(
-        "withdrawalRegisteredPhone",
-        item.phone || "—"
-    );
-
-    setText(
-        "withdrawalStatus",
-        formatStatusText(item.status)
-    );
-
-    setText(
-        "withdrawalPayoutStatus",
-        formatStatusText(item.payoutStatus)
-    );
-
-    setText(
-        "withdrawalRequestedDate",
-        formatDate(item.date)
-    );
-
-    setText(
-        "withdrawalId",
-        item.id || "—"
-    );
-
-    const adminNote =
-        $("withdrawalAdminNote");
-
-    if (adminNote) {
-        adminNote.value =
-            item.adminNote || "";
-    }
-
-    showElement(modal);
-
-    modal.classList.add("open");
-    document.body.classList.add("modal-open");
-}
-
-
-function closeWithdrawalModal() {
-
-    const modal =
-        $("withdrawalModal");
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("open");
-
-    hideElement(modal);
-
-    document.body.classList.remove(
-        "modal-open"
-    );
-
-    selectedWithdrawal = null;
-}
-
-
-function formatStatusText(status) {
-
-    return String(status || "")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, char =>
-            char.toUpperCase()
-        );
-}
-
-
-/* =========================================================
-   PROCESS WITHDRAWAL
-   ========================================================= */
-
-async function processWithdrawal(action) {
-
-    if (!selectedWithdrawal) {
-        return;
-    }
-
-    if (
-        !selectedWithdrawal.id
-    ) {
-
-        showMessage(
-            "This withdrawal does not have a valid ID.",
-            "error"
-        );
-
-        return;
-    }
-
-    const adminNote =
-        $("withdrawalAdminNote")?.value.trim() ||
-        "";
-
-    let confirmation;
-
-    if (action === "approve") {
-
-        confirmation =
-            `Approve this withdrawal?\n\n` +
-            `Requested: ${formatUGX(
-                selectedWithdrawal.requestedAmount
-            )}\n` +
-            `Payout: ${formatUGX(
-                selectedWithdrawal.payoutAmount
-            )}\n` +
-            `Phone: ${selectedWithdrawal.phone}`;
-    } else {
-
-        confirmation =
-            `Reject this withdrawal request?\n\n` +
-            `Amount: ${formatUGX(
-                selectedWithdrawal.requestedAmount
-            )}`;
-    }
-
-    if (!window.confirm(confirmation)) {
-        return;
-    }
-
-    try {
-
-        const button =
-            action === "approve"
-                ? $("approveWithdrawalButton")
-                : $("rejectWithdrawalButton");
-
-        if (button) {
-            button.disabled = true;
+        /*
+         * Only pending/open requests can be approved or rejected.
+         */
+        if (
+            status !== "pending" &&
+            status !== "awaiting_approval" &&
+            status !== "processing"
+        ) {
+            return `
+                <div class="cc-action-state">
+                    ${statusBadge(status)}
+                </div>
+            `;
         }
 
-        const response =
-            await fetchWithTimeout(
-                WITHDRAWALS_API,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body: JSON.stringify({
-                        withdrawal_id:
-                            selectedWithdrawal.id,
+        return `
+            <div class="cc-withdrawal-actions">
 
-                        action,
+                <button
+                    type="button"
+                    class="cc-withdraw-action cc-approve-btn"
+                    data-withdrawal-id="${escapeHTML(withdrawal.id)}"
+                    data-action="approve"
+                >
+                    <span class="cc-btn-icon">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                    </span>
 
-                        admin_note:
-                            adminNote
-                    })
-                },
-                15000
-            );
+                    <span>Approve</span>
+                </button>
 
-        const data =
-            await readJson(response);
+                <button
+                    type="button"
+                    class="cc-withdraw-action cc-reject-btn"
+                    data-withdrawal-id="${escapeHTML(withdrawal.id)}"
+                    data-action="reject"
+                >
+                    <span class="cc-btn-icon">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M18 6 6 18"></path>
+                            <path d="M6 6l12 12"></path>
+                        </svg>
+                    </span>
 
-        if (!response.ok || data.success === false) {
+                    <span>Reject</span>
+                </button>
 
-            throw new Error(
-                data.message ||
-                `Unable to ${action} withdrawal.`
-            );
-        }
-
-        showMessage(
-            data.message ||
-            `Withdrawal ${action}d successfully.`,
-            "success"
-        );
-
-        closeWithdrawalModal();
-
-        await loadWithdrawals();
-
-    } catch (error) {
-
-        console.error(
-            "[Crown Cash] Withdrawal action error:",
-            error
-        );
-
-        showMessage(
-            error.message ||
-            "Unable to process withdrawal.",
-            "error"
-        );
-
-    } finally {
-
-        const approveButton =
-            $("approveWithdrawalButton");
-
-        const rejectButton =
-            $("rejectWithdrawalButton");
-
-        if (approveButton) {
-            approveButton.disabled = false;
-        }
-
-        if (rejectButton) {
-            rejectButton.disabled = false;
-        }
-    }
-}
-
-
-/* =========================================================
-   EVENTS
-   ========================================================= */
-
-function setupEvents() {
-
-    const refreshButton =
-        $("refreshWithdrawalsBtn");
-
-    if (refreshButton) {
-
-        refreshButton.addEventListener(
-            "click",
-            async () => {
-
-                refreshButton.disabled = true;
-
-                try {
-                    await loadWithdrawals();
-                } finally {
-                    refreshButton.disabled = false;
-                }
-            }
-        );
+            </div>
+        `;
     }
 
-
-    const statusFilter =
-        $("statusFilter");
-
-    if (statusFilter) {
-
-        statusFilter.addEventListener(
-            "change",
-            applyFilters
-        );
-    }
-
-
-    const methodFilter =
-        $("methodFilter");
-
-    if (methodFilter) {
-
-        methodFilter.addEventListener(
-            "change",
-            applyFilters
-        );
-    }
-
-
-    const payoutFilter =
-        $("payoutStatusFilter");
-
-    if (payoutFilter) {
-
-        payoutFilter.addEventListener(
-            "change",
-            applyFilters
-        );
-    }
-
-
-    const search =
-        $("withdrawalSearch") ||
-        $("searchWithdrawals");
-
-    if (search) {
-
-        search.addEventListener(
-            "input",
-            applyFilters
-        );
-    }
-
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            const viewButton =
-                event.target.closest(
-                    '[data-action="view"]'
-                );
-
-            if (viewButton) {
-
-                const id =
-                    viewButton.dataset.id;
-
-                const item =
-                    withdrawals.find(
-                        withdrawal =>
-                            withdrawal.id === id
-                    );
-
-                if (item) {
-                    openWithdrawalModal(item);
-                }
-
-                return;
-            }
-
-
-            const pageButton =
-                event.target.closest(
-                    "[data-page]"
-                );
-
-            if (
-                pageButton &&
-                !pageButton.disabled
-            ) {
-
-                const page =
-                    Number(
-                        pageButton.dataset.page
-                    );
-
-                if (page >= 1) {
-
-                    const totalPages =
-                        Math.ceil(
-                            filteredWithdrawals.length /
-                            ITEMS_PER_PAGE
-                        );
-
-                    if (
-                        page <= totalPages
-                    ) {
-
-                        currentPage = page;
-
-                        renderWithdrawals();
-                    }
-                }
-
-                return;
-            }
-        }
-    );
-
-
-    const closeButton =
-        $("closeWithdrawalModal");
-
-    if (closeButton) {
-
-        closeButton.addEventListener(
-            "click",
-            closeWithdrawalModal
-        );
-    }
-
-
-    const cancelButton =
-        $("cancelWithdrawalReview");
-
-    if (cancelButton) {
-
-        cancelButton.addEventListener(
-            "click",
-            closeWithdrawalModal
-        );
-    }
-
-
-    const approveButton =
-        $("approveWithdrawalButton");
-
-    if (approveButton) {
-
-        approveButton.addEventListener(
-            "click",
-            () => processWithdrawal("approve")
-        );
-    }
-
-
-    const rejectButton =
-        $("rejectWithdrawalButton");
-
-    if (rejectButton) {
-
-        rejectButton.addEventListener(
-            "click",
-            () => processWithdrawal("reject")
-        );
-    }
-
-
-    const modal =
-        $("withdrawalModal");
-
-    if (modal) {
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    closeWithdrawalModal();
-                }
-            }
-        );
-    }
-
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (event.key === "Escape") {
-
-                closeWithdrawalModal();
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-function setupLogout() {
-
-    const logoutButtons =
-        document.querySelectorAll(
-            '[data-action="logout"], #logoutBtn, #logoutButton'
-        );
-
-    logoutButtons.forEach(button => {
-
-        button.addEventListener(
-            "click",
-            async event => {
-
-                event.preventDefault();
-
-                try {
-
-                    await fetch(
-                        `${API_BASE}/logout.php`,
-                        {
-                            method: "GET",
-                            credentials: "include",
-                            cache: "no-store"
-                        }
-                    );
-
-                } catch (error) {
-
-                    console.warn(
-                        "Logout request failed:",
-                        error
-                    );
-                }
-
-                window.location.href =
-                    "login.html";
-            }
-        );
-    });
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* =========================================================
-   SVG ICONS
-   ========================================================= */
-
-function userIcon() {
-
-    return `
-        <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <circle cx="12" cy="8" r="3.5"></circle>
-            <path d="M5 20c.8-3.4 3.2-5 7-5s6.2 1.6 7 5"></path>
-        </svg>
-    `;
-}
-
-
-function eyeIcon() {
-
-    return `
-        <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
-            <circle cx="12" cy="12" r="2.5"></circle>
-        </svg>
-    `;
-}
-
-
-function chevronLeftIcon() {
-
-    return `
-        <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="m15 18-6-6 6-6"></path>
-        </svg>
-    `;
-}
-
-
-function chevronRightIcon() {
-
-    return `
-        <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <path d="m9 18 6-6-6-6"></path>
-        </svg>
-    `;
-}
-
-
-function emptyIcon() {
-
-    return `
-        <svg
-            viewBox="0 0 24 24"
-            width="24"
-            height="24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <rect
-                x="3"
-                y="5"
-                width="18"
-                height="14"
-                rx="2"
-            ></rect>
-            <path d="M7 9h10"></path>
-            <path d="M7 13h6"></path>
-        </svg>
-    `;
-}
-
-
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
-
-async function initializeAdminWithdrawals() {
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "CROWN CASH ADMIN WITHDRAWALS"
-    );
-
-    console.log(
-        "Initializing..."
-    );
-
-    console.log(
-        "Admin Auth API:",
-        ADMIN_AUTH_API
-    );
-
-    console.log(
-        "Withdrawals API:",
-        WITHDRAWALS_API
-    );
-
-    console.log(
-        "========================================"
-    );
-
-    showLoader(
-        "Verifying administrator access..."
-    );
-
-    /*
-     * IMPORTANT:
-     * If anything goes wrong, we ALWAYS hide
-     * the loader. This prevents the page from
-     * being permanently stuck.
-     */
-
-    try {
-
-        await verifyAdministrator();
-
-        hideLoader();
-
-        console.log(
-            "[Crown Cash] Loader hidden."
-        );
-
-        await loadAdminProfile();
-
-        await loadWithdrawals();
-
-    } catch (error) {
-
-        console.error(
-            "[Crown Cash] Admin withdrawals initialization failed:",
-            error
-        );
-
-        hideLoader();
-
-        showMessage(
-            error.message ||
-            "Unable to verify administrator access.",
-            "error"
-        );
-
-        const tableBody =
-            $("withdrawalsTableBody");
-
-        if (tableBody) {
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td
-                        colspan="10"
-                        class="error-cell"
-                    >
-                        <strong>
-                            Unable to load withdrawal management.
-                        </strong>
-
-                        <br>
-
-                        <span>
-                            ${escapeHtml(
-                                error.message ||
-                                "Administrator verification failed."
-                            )}
+    /* ------------------------------------------------------------
+       Withdrawal card
+    ------------------------------------------------------------ */
+
+    function withdrawalCard(withdrawal) {
+        const safeId = escapeHTML(withdrawal.id);
+
+        return `
+            <article
+                class="cc-withdrawal-card"
+                data-withdrawal-card="${safeId}"
+                data-withdrawal-id="${safeId}"
+            >
+
+                <div class="cc-withdrawal-top">
+
+                    <div class="cc-customer">
+
+                        <div class="cc-customer-icon">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="22"
+                                height="22"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="8"
+                                    r="3"
+                                ></circle>
+
+                                <path
+                                    d="M5 20c.7-3.3 3.1-5 7-5s6.3 1.7 7 5"
+                                ></path>
+                            </svg>
+                        </div>
+
+                        <div>
+                            <h3>
+                                ${escapeHTML(withdrawal.name)}
+                            </h3>
+
+                            <p>
+                                ${escapeHTML(withdrawal.phone)}
+                            </p>
+
+                            ${
+                                withdrawal.email
+                                    ? `
+                                    <small>
+                                        ${escapeHTML(
+                                            withdrawal.email
+                                        )}
+                                    </small>
+                                    `
+                                    : ""
+                            }
+                        </div>
+
+                    </div>
+
+                    <div class="cc-status-area">
+                        ${statusBadge(withdrawal.status)}
+                    </div>
+
+                </div>
+
+
+                <div class="cc-withdrawal-details">
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Requested
                         </span>
 
-                        <br><br>
+                        <strong>
+                            ${money(withdrawal.amount)}
+                        </strong>
 
-                        <button
-                            type="button"
-                            class="retry-button"
-                            id="retryAdminWithdrawals"
+                    </div>
+
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Fee
+                        </span>
+
+                        <strong>
+                            ${money(withdrawal.fee)}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Payout
+                        </span>
+
+                        <strong>
+                            ${money(withdrawal.net)}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Method
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                methodLabel(
+                                    withdrawal.method
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Payout Status
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                payoutLabel(
+                                    withdrawal.payoutStatus
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="cc-detail-box">
+
+                        <span class="cc-detail-label">
+                            Requested
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                formatDate(
+                                    withdrawal.createdAt
+                                )
+                            )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                ${
+                    withdrawal.reference
+                        ? `
+                        <div class="cc-reference">
+                            <span>Reference:</span>
+                            <strong>
+                                ${escapeHTML(
+                                    withdrawal.reference
+                                )}
+                            </strong>
+                        </div>
+                        `
+                        : ""
+                }
+
+
+                ${
+                    withdrawal.rejectionReason
+                        ? `
+                        <div class="cc-rejection-reason">
+                            <strong>
+                                Rejection reason
+                            </strong>
+
+                            <span>
+                                ${escapeHTML(
+                                    withdrawal.rejectionReason
+                                )}
+                            </span>
+                        </div>
+                        `
+                        : ""
+                }
+
+
+                <div class="cc-withdrawal-footer">
+
+                    <div class="cc-account-info">
+
+                        <span>
+                            Registered account:
+                        </span>
+
+                        <strong>
+                            ${escapeHTML(
+                                withdrawal.accountName ||
+                                withdrawal.name
+                            )}
+                        </strong>
+
+                    </div>
+
+                    ${actionButtons(withdrawal)}
+
+                </div>
+
+            </article>
+        `;
+    }
+
+    /* ------------------------------------------------------------
+       Render withdrawals
+    ------------------------------------------------------------ */
+
+    function renderWithdrawals(list) {
+        const container = findWithdrawalContainer();
+
+        if (!container) {
+            console.warn(
+                "Crown Cash: withdrawal container not found."
+            );
+
+            return;
+        }
+
+        if (!list.length) {
+            container.innerHTML = `
+                <div class="cc-empty-withdrawals">
+
+                    <div class="cc-empty-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="30"
+                            height="30"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
                         >
-                            Try Again
-                        </button>
-                    </td>
-                </tr>
+                            <path
+                                d="M12 3v12"
+                            ></path>
+
+                            <path
+                                d="m7 10 5 5 5-5"
+                            ></path>
+
+                            <path
+                                d="M5 21h14"
+                            ></path>
+                        </svg>
+
+                    </div>
+
+                    <h3>
+                        No withdrawal requests
+                    </h3>
+
+                    <p>
+                        There are no withdrawal requests
+                        matching your filters.
+                    </p>
+
+                </div>
             `;
 
-            const retry =
-                $("retryAdminWithdrawals");
+            return;
+        }
 
-            if (retry) {
+        container.innerHTML = `
+            <div class="cc-withdrawals-grid">
+                ${list.map(withdrawalCard).join("")}
+            </div>
+        `;
+    }
 
-                retry.addEventListener(
-                    "click",
+    /* ------------------------------------------------------------
+       Stats
+    ------------------------------------------------------------ */
+
+    function updateStats(data) {
+        const stats =
+            data?.stats ||
+            data?.statistics ||
+            {};
+
+        /*
+         * Backend stats may use several naming conventions.
+         */
+        const total = Number(
+            getValue(
+                stats,
+                "total",
+                "total_withdrawals",
+                "totalWithdrawals",
+                "total_amount"
+            ) || 0
+        );
+
+        const pending = Number(
+            getValue(
+                stats,
+                "pending",
+                "pending_requests",
+                "pendingRequests",
+                "pending_amount"
+            ) || 0
+        );
+
+        const approved = Number(
+            getValue(
+                stats,
+                "approved",
+                "approved_withdrawals",
+                "approvedWithdrawals",
+                "approved_amount"
+            ) || 0
+        );
+
+        const rejected = Number(
+            getValue(
+                stats,
+                "rejected",
+                "rejected_withdrawals",
+                "rejectedWithdrawals",
+                "rejected_amount"
+            ) || 0
+        );
+
+        /*
+         * First try data attributes.
+         */
+        const statElements = $$(
+            "[data-withdrawal-stat]"
+        );
+
+        statElements.forEach((element) => {
+            const type =
+                element
+                    .getAttribute("data-withdrawal-stat")
+                    ?.toLowerCase();
+
+            if (type === "total") {
+                element.textContent = money(total);
+            }
+
+            if (type === "pending") {
+                element.textContent = money(pending);
+            }
+
+            if (type === "approved") {
+                element.textContent = money(approved);
+            }
+
+            if (type === "rejected") {
+                element.textContent = money(rejected);
+            }
+        });
+
+        /*
+         * Also support common IDs.
+         */
+        const possible = {
+            total: [
+                "#totalWithdrawals",
+                "#total-withdrawals",
+                "#totalWithdrawalAmount"
+            ],
+
+            pending: [
+                "#pendingWithdrawals",
+                "#pending-withdrawals",
+                "#pendingRequests"
+            ],
+
+            approved: [
+                "#approvedWithdrawals",
+                "#approved-withdrawals"
+            ],
+
+            rejected: [
+                "#rejectedWithdrawals",
+                "#rejected-withdrawals"
+            ]
+        };
+
+        Object.entries(possible).forEach(
+            ([type, selectors]) => {
+                for (const selector of selectors) {
+                    const element = $(selector);
+
+                    if (!element) {
+                        continue;
+                    }
+
+                    const value =
+                        type === "total"
+                            ? total
+                            : type === "pending"
+                            ? pending
+                            : type === "approved"
+                            ? approved
+                            : rejected;
+
+                    element.textContent = money(value);
+                    break;
+                }
+            }
+        );
+    }
+
+    /* ------------------------------------------------------------
+       Add CSS automatically
+    ------------------------------------------------------------ */
+
+    function injectStyles() {
+        if (
+            document.getElementById(
+                "cc-admin-withdrawal-styles"
+            )
+        ) {
+            return;
+        }
+
+        const style = document.createElement("style");
+
+        style.id =
+            "cc-admin-withdrawal-styles";
+
+        style.textContent = `
+            .cc-withdrawals-grid {
+                display: grid;
+                grid-template-columns:
+                    repeat(auto-fit, minmax(320px, 1fr));
+                gap: 16px;
+                width: 100%;
+            }
+
+            .cc-withdrawal-card {
+                position: relative;
+                padding: 18px;
+                border-radius: 18px;
+                background:
+                    linear-gradient(
+                        145deg,
+                        rgba(52, 18, 55, .72),
+                        rgba(20, 12, 30, .88)
+                    );
+                border:
+                    1px solid rgba(255, 210, 80, .16);
+                box-shadow:
+                    0 12px 35px rgba(0,0,0,.18);
+                overflow: hidden;
+            }
+
+            .cc-withdrawal-card::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                    radial-gradient(
+                        circle at top right,
+                        rgba(255, 193, 73, .08),
+                        transparent 35%
+                    );
+            }
+
+            .cc-withdrawal-top {
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 14px;
+                margin-bottom: 18px;
+            }
+
+            .cc-customer {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            .cc-customer-icon {
+                width: 46px;
+                height: 46px;
+                min-width: 46px;
+                display: grid;
+                place-items: center;
+                border-radius: 50%;
+                color: #ffd66d;
+                background:
+                    radial-gradient(
+                        circle,
+                        rgba(255, 210, 80, .17),
+                        rgba(142, 42, 115, .18)
+                    );
+                border:
+                    1px solid rgba(255, 210, 80, .28);
+                box-shadow:
+                    0 0 18px rgba(255, 79, 155, .12);
+            }
+
+            .cc-customer h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #fff;
+                font-weight: 800;
+            }
+
+            .cc-customer p {
+                margin: 4px 0 0;
+                color: rgba(255,255,255,.68);
+                font-size: 13px;
+            }
+
+            .cc-customer small {
+                display: block;
+                margin-top: 3px;
+                color: rgba(255,255,255,.45);
+                font-size: 11px;
+                word-break: break-word;
+            }
+
+            .cc-status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 7px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+                border: 1px solid rgba(255,255,255,.1);
+            }
+
+            .cc-status-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: currentColor;
+                box-shadow:
+                    0 0 9px currentColor;
+            }
+
+            .cc-status-badge.pending {
+                color: #ffd86b;
+                background: rgba(255,193,7,.09);
+                border-color: rgba(255,193,7,.2);
+            }
+
+            .cc-status-badge.approved {
+                color: #7df2ae;
+                background: rgba(65,210,125,.09);
+                border-color: rgba(65,210,125,.2);
+            }
+
+            .cc-status-badge.rejected {
+                color: #ff7f9d;
+                background: rgba(255,65,105,.09);
+                border-color: rgba(255,65,105,.2);
+            }
+
+            .cc-status-badge.cancelled {
+                color: #bdb7c8;
+                background: rgba(255,255,255,.06);
+            }
+
+            .cc-status-badge.processing {
+                color: #bd9cff;
+                background: rgba(148,93,255,.09);
+                border-color: rgba(148,93,255,.2);
+            }
+
+            .cc-withdrawal-details {
+                position: relative;
+                display: grid;
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 9px;
+            }
+
+            .cc-detail-box {
+                padding: 11px;
+                border-radius: 12px;
+                background: rgba(255,255,255,.035);
+                border:
+                    1px solid rgba(255,255,255,.065);
+                min-width: 0;
+            }
+
+            .cc-detail-label {
+                display: block;
+                margin-bottom: 5px;
+                color: rgba(255,255,255,.45);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: .07em;
+                font-weight: 700;
+            }
+
+            .cc-detail-box strong {
+                display: block;
+                color: #f8edf9;
+                font-size: 13px;
+                line-height: 1.35;
+                overflow-wrap: anywhere;
+            }
+
+            .cc-reference {
+                margin-top: 12px;
+                padding: 9px 11px;
+                border-radius: 10px;
+                background: rgba(255,210,80,.045);
+                border:
+                    1px solid rgba(255,210,80,.09);
+                color: rgba(255,255,255,.55);
+                font-size: 11px;
+            }
+
+            .cc-reference strong {
+                color: #ffe18b;
+                margin-left: 4px;
+            }
+
+            .cc-rejection-reason {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                margin-top: 12px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                color: #ffb8c7;
+                background: rgba(255,55,100,.055);
+                border:
+                    1px solid rgba(255,55,100,.12);
+                font-size: 12px;
+            }
+
+            .cc-rejection-reason span {
+                color: rgba(255,255,255,.68);
+            }
+
+            .cc-withdrawal-footer {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-top: 16px;
+                padding-top: 14px;
+                border-top:
+                    1px solid rgba(255,255,255,.07);
+            }
+
+            .cc-account-info {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                min-width: 0;
+            }
+
+            .cc-account-info span {
+                color: rgba(255,255,255,.4);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+            }
+
+            .cc-account-info strong {
+                color: rgba(255,255,255,.78);
+                font-size: 12px;
+                overflow-wrap: anywhere;
+            }
+
+            .cc-withdrawal-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .cc-withdraw-action {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                min-height: 39px;
+                padding: 9px 13px;
+                border-radius: 11px;
+                border: 1px solid transparent;
+                cursor: pointer;
+                font: inherit;
+                font-size: 12px;
+                font-weight: 800;
+                transition:
+                    transform .18s ease,
+                    box-shadow .18s ease,
+                    background .18s ease;
+            }
+
+            .cc-withdraw-action:hover {
+                transform: translateY(-1px);
+            }
+
+            .cc-withdraw-action:active {
+                transform: translateY(0);
+            }
+
+            .cc-approve-btn {
+                color: #fff4c6;
+                background:
+                    linear-gradient(
+                        135deg,
+                        rgba(126, 88, 10, .95),
+                        rgba(169, 67, 104, .9)
+                    );
+                border-color:
+                    rgba(255,210,80,.28);
+                box-shadow:
+                    0 7px 20px rgba(255,170,60,.11);
+            }
+
+            .cc-approve-btn:hover {
+                box-shadow:
+                    0 9px 25px rgba(255,170,60,.2);
+            }
+
+            .cc-reject-btn {
+                color: #ffd9e2;
+                background:
+                    rgba(125, 24, 62, .4);
+                border-color:
+                    rgba(255,92,130,.22);
+            }
+
+            .cc-reject-btn:hover {
+                background:
+                    rgba(160, 30, 72, .55);
+                box-shadow:
+                    0 9px 25px rgba(255,50,100,.1);
+            }
+
+            .cc-btn-icon {
+                display: grid;
+                place-items: center;
+            }
+
+            .cc-withdraw-action.is-loading {
+                pointer-events: none;
+                opacity: .65;
+            }
+
+            .cc-withdraw-action.is-loading
+            .cc-btn-icon {
+                animation:
+                    cc-spin .8s linear infinite;
+            }
+
+            @keyframes cc-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .cc-action-state {
+                display: flex;
+                align-items: center;
+            }
+
+            .cc-empty-withdrawals {
+                width: 100%;
+                padding: 45px 20px;
+                text-align: center;
+                border-radius: 16px;
+                border:
+                    1px dashed rgba(255,255,255,.12);
+                background:
+                    rgba(255,255,255,.025);
+            }
+
+            .cc-empty-icon {
+                width: 58px;
+                height: 58px;
+                margin: 0 auto 13px;
+                display: grid;
+                place-items: center;
+                border-radius: 50%;
+                color: #ffd86b;
+                background:
+                    rgba(255,210,80,.07);
+                border:
+                    1px solid rgba(255,210,80,.16);
+            }
+
+            .cc-empty-withdrawals h3 {
+                margin: 0 0 6px;
+                color: rgba(255,255,255,.82);
+                font-size: 16px;
+            }
+
+            .cc-empty-withdrawals p {
+                margin: 0;
+                color: rgba(255,255,255,.45);
+                font-size: 13px;
+            }
+
+            @media (max-width: 700px) {
+                .cc-withdrawals-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .cc-withdrawal-top {
+                    flex-direction: column;
+                }
+
+                .cc-status-area {
+                    align-self: flex-start;
+                }
+
+                .cc-withdrawal-footer {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .cc-withdrawal-actions {
+                    width: 100%;
+                }
+
+                .cc-withdraw-action {
+                    flex: 1;
+                }
+            }
+
+            @media (max-width: 420px) {
+                .cc-withdrawal-card {
+                    padding: 14px;
+                }
+
+                .cc-withdrawal-details {
+                    grid-template-columns: 1fr;
+                }
+
+                .cc-withdrawal-actions {
+                    flex-direction: column;
+                }
+
+                .cc-withdraw-action {
+                    width: 100%;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    /* ------------------------------------------------------------
+       Filters
+    ------------------------------------------------------------ */
+
+    function getFilterValues() {
+        const status =
+            $(
+                "#statusFilter, " +
+                "#withdrawalStatusFilter, " +
+                "[name='status']"
+            )?.value || "";
+
+        const method =
+            $(
+                "#methodFilter, " +
+                "#withdrawalMethodFilter, " +
+                "[name='method']"
+            )?.value || "";
+
+        const payout =
+            $(
+                "#payoutStatusFilter, " +
+                "#withdrawalPayoutFilter, " +
+                "[name='payout_status']"
+            )?.value || "";
+
+        return {
+            status,
+            method,
+            payout
+        };
+    }
+
+    function applyLocalFilters(list) {
+        const filters = getFilterValues();
+
+        return list.filter((item) => {
+            const statusMatch =
+                !filters.status ||
+                filters.status === "all" ||
+                String(item.status).toLowerCase() ===
+                    String(filters.status).toLowerCase();
+
+            const methodValue =
+                String(item.method || "")
+                    .toLowerCase();
+
+            const methodFilter =
+                String(filters.method || "")
+                    .toLowerCase();
+
+            const methodMatch =
+                !methodFilter ||
+                methodFilter === "all" ||
+                methodValue === methodFilter;
+
+            const payoutMatch =
+                !filters.payout ||
+                filters.payout === "all" ||
+                String(item.payoutStatus).toLowerCase() ===
+                    String(filters.payout).toLowerCase();
+
+            return (
+                statusMatch &&
+                methodMatch &&
+                payoutMatch
+            );
+        });
+    }
+
+    function bindFilters() {
+        const selectors = [
+            "#statusFilter",
+            "#withdrawalStatusFilter",
+            "#methodFilter",
+            "#withdrawalMethodFilter",
+            "#payoutStatusFilter",
+            "#withdrawalPayoutFilter"
+        ];
+
+        selectors.forEach((selector) => {
+            $$(selector).forEach((element) => {
+                element.addEventListener(
+                    "change",
                     () => {
-                        initializeAdminWithdrawals();
+                        currentStatus =
+                            getFilterValues().status;
+
+                        currentMethod =
+                            getFilterValues().method;
+
+                        currentPayoutStatus =
+                            getFilterValues().payout;
+
+                        loadWithdrawals();
                     }
                 );
+            });
+        });
+    }
+
+    /* ------------------------------------------------------------
+       Load withdrawals
+    ------------------------------------------------------------ */
+
+    async function loadWithdrawals() {
+        try {
+            const filters = getFilterValues();
+
+            const params = new URLSearchParams();
+
+            if (filters.status) {
+                params.set(
+                    "status",
+                    filters.status
+                );
+            }
+
+            if (filters.method) {
+                params.set(
+                    "method",
+                    filters.method
+                );
+            }
+
+            if (filters.payout) {
+                params.set(
+                    "payout_status",
+                    filters.payout
+                );
+            }
+
+            const url =
+                params.toString()
+                    ? `${API_URL}?${params.toString()}`
+                    : API_URL;
+
+            const response = await fetch(url, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    Accept: "application/json"
+                }
+            });
+
+            const rawText =
+                await response.text();
+
+            let data = {};
+
+            try {
+                data = rawText
+                    ? JSON.parse(rawText)
+                    : {};
+            } catch (error) {
+                throw new Error(
+                    rawText ||
+                    `Invalid server response (${response.status})`
+                );
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    `Unable to load withdrawals (${response.status})`
+                );
+            }
+
+            const rawList =
+                data.withdrawals ||
+                data.requests ||
+                data.data ||
+                [];
+
+            withdrawals = Array.isArray(rawList)
+                ? rawList.map(normalizeWithdrawal)
+                : [];
+
+            updateStats(data);
+
+            /*
+             * Render using backend-filtered records.
+             * Local filtering is also applied as a safety net.
+             */
+            renderWithdrawals(
+                applyLocalFilters(withdrawals)
+            );
+
+        } catch (error) {
+            console.error(
+                "Crown Cash withdrawal loading error:",
+                error
+            );
+
+            const container =
+                findWithdrawalContainer();
+
+            if (container) {
+                container.innerHTML = `
+                    <div class="cc-empty-withdrawals">
+
+                        <div class="cc-empty-icon">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="30"
+                                height="30"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
+
+                                <path
+                                    d="M12 8v5"
+                                ></path>
+
+                                <path
+                                    d="M12 16h.01"
+                                ></path>
+                            </svg>
+                        </div>
+
+                        <h3>
+                            Unable to load withdrawal requests
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(
+                                error.message ||
+                                "Please refresh and try again."
+                            )}
+                        </p>
+
+                    </div>
+                `;
             }
         }
     }
-}
 
+    /* ------------------------------------------------------------
+       Find withdrawal
+    ------------------------------------------------------------ */
 
-/* =========================================================
-   EMERGENCY LOADER FAIL-SAFE
-   ========================================================= */
-
-setTimeout(() => {
-
-    const loader =
-        $("pageLoader");
-
-    if (
-        loader &&
-        !loader.hidden
-    ) {
-
-        console.warn(
-            "[Crown Cash] Emergency loader timeout."
-        );
-
-        hideLoader();
-
-        showMessage(
-            "Administrator verification is taking too long. Please refresh the page and try again.",
-            "error"
+    function findWithdrawal(id) {
+        return withdrawals.find(
+            (item) =>
+                String(item.id) === String(id)
         );
     }
 
-}, 12000);
+    /* ------------------------------------------------------------
+       Approve withdrawal
+    ------------------------------------------------------------ */
 
+    async function approveWithdrawal(id, button) {
+        const withdrawal =
+            findWithdrawal(id);
 
-/* =========================================================
-   DOM READY
-   ========================================================= */
-
-if (
-    document.readyState === "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
-
-            setupEvents();
-            setupLogout();
-
-            initializeAdminWithdrawals();
+        if (!withdrawal) {
+            showToast(
+                "Withdrawal request could not be found.",
+                "error"
+            );
+            return;
         }
-    );
 
-} else {
+        if (
+            withdrawal.status !== "pending" &&
+            withdrawal.status !== "awaiting_approval" &&
+            withdrawal.status !== "processing"
+        ) {
+            showToast(
+                "This withdrawal has already been processed.",
+                "error"
+            );
+            return;
+        }
 
-    setupEvents();
-    setupLogout();
+        const confirmed = window.confirm(
+            `Approve this withdrawal request?\n\n` +
+            `Customer: ${withdrawal.name}\n` +
+            `Phone: ${withdrawal.phone}\n` +
+            `Requested: ${money(withdrawal.amount)}\n` +
+            `Fee: ${money(withdrawal.fee)}\n` +
+            `Payout: ${money(withdrawal.net)}\n\n` +
+            `Approval will mark the request as approved and ` +
+            `awaiting payout. It will NOT mark the money as paid.`
+        );
 
-    initializeAdminWithdrawals();
-}
+        if (!confirmed) {
+            return;
+        }
+
+        setButtonLoading(button, true);
+
+        try {
+            const data = await apiRequest({
+                method: "POST",
+                body: {
+                    action: "approve",
+                    withdrawal_id: id,
+                    id: id
+                }
+            });
+
+            showToast(
+                data.message ||
+                "Withdrawal approved successfully."
+            );
+
+            await loadWithdrawals();
+
+        } catch (error) {
+            console.error(
+                "Approval error:",
+                error
+            );
+
+            showToast(
+                error.message ||
+                "Unable to approve withdrawal.",
+                "error"
+            );
+
+        } finally {
+            setButtonLoading(button, false);
+        }
+    }
+
+    /* ------------------------------------------------------------
+       Reject withdrawal
+    ------------------------------------------------------------ */
+
+    async function rejectWithdrawal(id, button) {
+        const withdrawal =
+            findWithdrawal(id);
+
+        if (!withdrawal) {
+            showToast(
+                "Withdrawal request could not be found.",
+                "error"
+            );
+            return;
+        }
+
+        if (
+            withdrawal.status !== "pending" &&
+            withdrawal.status !== "awaiting_approval" &&
+            withdrawal.status !== "processing"
+        ) {
+            showToast(
+                "This withdrawal has already been processed.",
+                "error"
+            );
+            return;
+        }
+
+        const reason = window.prompt(
+            "Enter the reason for rejecting this withdrawal request:"
+        );
+
+        if (reason === null) {
+            return;
+        }
+
+        const trimmedReason =
+            reason.trim();
+
+        if (!trimmedReason) {
+            showToast(
+                "A rejection reason is required.",
+                "error"
+            );
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Reject this withdrawal request?\n\n` +
+            `Customer: ${withdrawal.name}\n` +
+            `Requested: ${money(withdrawal.amount)}\n\n` +
+            `Reason:\n${trimmedReason}`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setButtonLoading(button, true);
+
+        try {
+            const data = await apiRequest({
+                method: "POST",
+                body: {
+                    action: "reject",
+                    withdrawal_id: id,
+                    id: id,
+                    reason: trimmedReason,
+                    rejection_reason: trimmedReason
+                }
+            });
+
+            showToast(
+                data.message ||
+                "Withdrawal rejected successfully."
+            );
+
+            await loadWithdrawals();
+
+        } catch (error) {
+            console.error(
+                "Rejection error:",
+                error
+            );
+
+            showToast(
+                error.message ||
+                "Unable to reject withdrawal.",
+                "error"
+            );
+
+        } finally {
+            setButtonLoading(button, false);
+        }
+    }
+
+    /* ------------------------------------------------------------
+       Button loading state
+    ------------------------------------------------------------ */
+
+    function setButtonLoading(button, loading) {
+        if (!button) {
+            return;
+        }
+
+        if (loading) {
+            button.classList.add(
+                "is-loading"
+            );
+
+            button.disabled = true;
+
+            const original =
+                button.innerHTML;
+
+            button.dataset.originalHTML =
+                original;
+
+            const text =
+                button.textContent
+                    .trim()
+                    .toLowerCase();
+
+            const label =
+                text.includes("reject")
+                    ? "Rejecting..."
+                    : "Approving...";
+
+            button.innerHTML = `
+                <span class="cc-btn-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="18"
+                        height="18"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                        ></circle>
+
+                        <path
+                            d="M12 7v5"
+                        ></path>
+
+                        <path
+                            d="M12 16h.01"
+                        ></path>
+                    </svg>
+                </span>
+
+                <span>
+                    ${label}
+                </span>
+            `;
+
+        } else {
+            button.classList.remove(
+                "is-loading"
+            );
+
+            button.disabled = false;
+        }
+    }
+
+    /* ------------------------------------------------------------
+       Event delegation
+    ------------------------------------------------------------ */
+
+    function bindActionButtons() {
+        document.addEventListener(
+            "click",
+            async (event) => {
+
+                const approveButton =
+                    event.target.closest(
+                        ".cc-approve-btn"
+                    );
+
+                if (approveButton) {
+                    event.preventDefault();
+
+                    const id =
+                        approveButton.dataset
+                            .withdrawalId;
+
+                    await approveWithdrawal(
+                        id,
+                        approveButton
+                    );
+
+                    return;
+                }
+
+                const rejectButton =
+                    event.target.closest(
+                        ".cc-reject-btn"
+                    );
+
+                if (rejectButton) {
+                    event.preventDefault();
+
+                    const id =
+                        rejectButton.dataset
+                            .withdrawalId;
+
+                    await rejectWithdrawal(
+                        id,
+                        rejectButton
+                    );
+                }
+            }
+        );
+    }
+
+    /* ------------------------------------------------------------
+       Refresh button support
+    ------------------------------------------------------------ */
+
+    function bindRefreshButtons() {
+        const selectors = [
+            "#refreshWithdrawals",
+            "#refresh-withdrawals",
+            "[data-refresh-withdrawals]"
+        ];
+
+        selectors.forEach((selector) => {
+            $$(selector).forEach((button) => {
+                button.addEventListener(
+                    "click",
+                    async (event) => {
+                        event.preventDefault();
+
+                        button.disabled = true;
+
+                        try {
+                            await loadWithdrawals();
+                        } finally {
+                            button.disabled = false;
+                        }
+                    }
+                );
+            });
+        });
+    }
+
+    /* ------------------------------------------------------------
+       Initialization
+    ------------------------------------------------------------ */
+
+    async function init() {
+        injectStyles();
+
+        bindFilters();
+
+        bindActionButtons();
+
+        bindRefreshButtons();
+
+        await loadWithdrawals();
+
+        /*
+         * Keep the page reasonably fresh while open.
+         * This does not approve/reject anything automatically.
+         */
+        setInterval(
+            () => {
+                loadWithdrawals();
+            },
+            30000
+        );
+    }
+
+    /* ------------------------------------------------------------
+       Start
+    ------------------------------------------------------------ */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
+    } else {
+        init();
+    }
+
+    /* ------------------------------------------------------------
+       Optional global functions
+       Useful if existing HTML calls them directly.
+    ------------------------------------------------------------ */
+
+    window.CrownCashWithdrawals = {
+        load: loadWithdrawals,
+        approve: approveWithdrawal,
+        reject: rejectWithdrawal
+    };
+
+})();

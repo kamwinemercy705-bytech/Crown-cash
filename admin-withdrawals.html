@@ -1,667 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="theme-color"
-        content="#09070d"
-    >
-
-    <title>Crown Cash | Admin Withdrawals</title>
-
-    <link
-        rel="stylesheet"
-        href="admin-withdrawals.css?v=3"
-    >
-</head>
-
-<body>
-
-    <!-- =====================================================
-         PAGE LOADER
-         ===================================================== -->
-
-    <div
-        id="pageLoader"
-        class="page-loader"
-    >
-
-        <div class="loader-ring"></div>
-
-        <p class="loader-text">
-            Verifying administrator access...
-        </p>
-
-    </div>
-
-
-    <!-- =====================================================
-         PAGE
-         ===================================================== -->
-
-    <main class="admin-page">
-
-        <!-- =================================================
-             TOP BAR
-             ================================================= -->
-
-        <header class="top-bar">
-
-            <a
-                href="admin.html"
-                class="brand"
-                aria-label="Crown Cash Administration"
-            >
-
-                <div class="brand-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.7"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"></path>
-                        <path d="M6 16h12"></path>
-                    </svg>
-
-                </div>
-
-                <div class="brand-text">
-
-                    <strong>Crown Cash</strong>
-
-                    <span>
-                        Administration
-                    </span>
-
-                </div>
-
-            </a>
-
-
-            <div class="admin-identity">
-
-                <div class="admin-avatar">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.7"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle
-                            cx="12"
-                            cy="8"
-                            r="3.2"
-                        ></circle>
-
-                        <path
-                            d="M5 20c.8-3.5 3.2-5.1 7-5.1s6.2 1.6 7 5.1"
-                        ></path>
-                    </svg>
-
-                </div>
-
-                <div class="admin-identity-text">
-
-                    <strong id="headerUserName">
-                        Administrator
-                    </strong>
-
-                    <span>
-                        Admin Panel
-                    </span>
-
-                </div>
-
-            </div>
-
-        </header>
-
-
-        <!-- =================================================
-             INTRO
-             ================================================= -->
-
-        <section class="page-intro">
-
-            <div class="page-kicker">
-                Crown Cash Administration
-            </div>
-
-            <h1>
-                Withdrawals
-            </h1>
-
-            <p>
-                Review and manage customer withdrawal requests.
-            </p>
-
-        </section>
-
-
-        <div class="section-divider"></div>
-
-
-        <!-- =================================================
-             MESSAGE
-             ================================================= -->
-
-        <div
-            id="withdrawalMessage"
-            class="admin-message"
-            role="alert"
-        ></div>
-
-
-        <!-- =================================================
-             PAYMENT ACTIVITY / FILTERS
-             ================================================= -->
-
-        <section class="activity-card">
-
-            <div class="activity-header">
-
-                <div class="section-heading">
-
-                    <div class="section-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M4 7h16"></path>
-                            <path d="M4 12h16"></path>
-                            <path d="M4 17h10"></path>
-                            <circle
-                                cx="18"
-                                cy="17"
-                                r="2.5"
-                            ></circle>
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            Withdrawal Activity
-                        </h2>
-
-                        <p>
-                            Withdrawal Requests
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="refreshWithdrawalsBtn"
-                    class="refresh-button"
-                >
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path
-                            d="M20 11a8 8 0 0 0-14-5"
-                        ></path>
-
-                        <path
-                            d="M4 4v5h5"
-                        ></path>
-
-                        <path
-                            d="M4 13a8 8 0 0 0 14 5"
-                        ></path>
-
-                        <path
-                            d="M20 20v-5h-5"
-                        ></path>
-                    </svg>
-
-                    <span>
-                        Refresh
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <!-- =============================================
-                 FILTERS
-                 ============================================= -->
-
-            <div class="filter-grid">
-
-                <div class="search-box">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle
-                            cx="11"
-                            cy="11"
-                            r="7"
-                        ></circle>
-
-                        <path
-                            d="m20 20-4-4"
-                        ></path>
-                    </svg>
-
-                    <input
-                        type="search"
-                        id="withdrawalSearch"
-                        placeholder="Search user, phone or ID..."
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <select id="statusFilter">
-
-                    <option value="all">
-                        All Statuses
-                    </option>
-
-                    <option value="pending">
-                        Pending
-                    </option>
-
-                    <option value="approved">
-                        Approved
-                    </option>
-
-                    <option value="rejected">
-                        Rejected
-                    </option>
-
-                    <option value="cancelled">
-                        Cancelled
-                    </option>
-
-                </select>
-
-
-                <select id="methodFilter">
-
-                    <option value="all">
-                        All Methods
-                    </option>
-
-                    <option value="MTN">
-                        MTN Mobile Money
-                    </option>
-
-                    <option value="Airtel">
-                        Airtel Money
-                    </option>
-
-                </select>
-
-
-                <select id="payoutStatusFilter">
-
-                    <option value="all">
-                        All Payout Statuses
-                    </option>
-
-                    <option value="not_required">
-                        Not Required
-                    </option>
-
-                    <option value="awaiting_payout">
-                        Awaiting Payout
-                    </option>
-
-                    <option value="paid">
-                        Paid
-                    </option>
-
-                    <option value="payout_failed">
-                        Payout Failed
-                    </option>
-
-                </select>
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             STATS
-             ================================================= -->
-
-        <section class="stats-grid">
-
-            <!-- Total -->
-
-            <article class="stat-card">
-
-                <div class="stat-icon gold">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path d="M12 3v18"></path>
-                        <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
-                    </svg>
-
-                </div>
-
-                <div class="stat-content">
-
-                    <span class="stat-label">
-                        Total Withdrawals
-                    </span>
-
-                    <strong id="totalWithdrawals">
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        All withdrawal requests
-                    </small>
-
-                </div>
-
-            </article>
-
-
-            <!-- Pending -->
-
-            <article class="stat-card">
-
-                <div class="stat-icon pink">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="8"
-                        ></circle>
-
-                        <path d="M12 8v5l3 2"></path>
-                    </svg>
-
-                </div>
-
-                <div class="stat-content">
-
-                    <span class="stat-label">
-                        Pending Requests
-                    </span>
-
-                    <strong id="pendingWithdrawals">
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Awaiting admin review
-                    </small>
-
-                </div>
-
-            </article>
-
-
-            <!-- Approved -->
-
-            <article class="stat-card">
-
-                <div class="stat-icon success">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                        ></circle>
-
-                        <path
-                            d="m8 12 2.7 2.7L16.5 9"
-                        ></path>
-                    </svg>
-
-                </div>
-
-                <div class="stat-content">
-
-                    <span class="stat-label">
-                        Approved
-                    </span>
-
-                    <strong id="approvedWithdrawals">
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Approved withdrawal requests
-                    </small>
-
-                </div>
-
-            </article>
-
-
-            <!-- Rejected -->
-
-            <article class="stat-card">
-
-                <div class="stat-icon danger">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                        ></circle>
-
-                        <path d="m9 9 6 6"></path>
-                        <path d="m15 9-6 6"></path>
-                    </svg>
-
-                </div>
-
-                <div class="stat-content">
-
-                    <span class="stat-label">
-                        Rejected
-                    </span>
-
-                    <strong id="rejectedWithdrawals">
-                        UGX 0
-                    </strong>
-
-                    <small>
-                        Rejected withdrawal requests
-                    </small>
-
-                </div>
-
-            </article>
-
-        </section>
-
-
-        <!-- =================================================
-             WITHDRAWAL REQUESTS
-             ================================================= -->
-
-        <section class="requests-section">
-
-            <div class="requests-header">
-
-                <div class="section-heading">
-
-                    <div class="section-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M5 7h14"></path>
-                            <path d="M5 12h14"></path>
-                            <path d="M5 17h9"></path>
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            Withdrawal Requests
-                        </h2>
-
-                        <p>
-                            Review requested amounts, fees, payout values and customer payment details.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="requests-card">
-
-                <!-- Desktop table -->
-
-                <div class="table-container">
-
-                    <table class="withdrawals-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>User</th>
-                                <th>Requested</th>
-                                <th>Fee</th>
-                                <th>Payout</th>
-                                <th>Method</th>
-                                <th>Phone</th>
-                                <th>Status</th>
-                                <th>Payout Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody id="withdrawalsTableBody">
-
-                            <tr>
-
-                                <td
-                                    colspan="10"
-                                    class="loading-cell"
-                                >
-                                    Loading withdrawals...
-                                </td>
-
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-                <!-- Mobile cards -->
-
-                <div
-                    id="withdrawalsMobileList"
-                    class="mobile-list"
-                >
-                </div>
-
-
-                <!-- Pagination -->
-
-                <div
-                    id="withdrawalPagination"
-                    class="pagination"
-                ></div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             SECURITY NOTICE
-             ================================================= -->
-
-        <section class="security-notice">
-
-            <div class="security-icon">
+    <meta charset="UTF-8"><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+    name="theme-color"
+    content="#09070d"
+>
+
+<title>Crown Cash | Admin Withdrawals</title>
+
+<link
+    rel="stylesheet"
+    href="admin-withdrawals.css?v=3"
+>
+
+<style>
+    /*
+     * Crown Cash Withdrawal Page
+     * Loader safety fix
+     *
+     * This does NOT change the withdrawal design,
+     * withdrawal API, buttons, filters or administrator
+     * authorization handled by the backend.
+     */
+
+    .page-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+            opacity 0.35s ease,
+            visibility 0.35s ease;
+    }
+
+    .page-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .page-loader.force-hidden {
+        display: none !important;
+    }
+</style>
+
+</head><body><!-- =====================================================
+     PAGE LOADER
+     ===================================================== -->
+
+<div
+    id="pageLoader"
+    class="page-loader"
+>
+
+    <div class="loader-ring"></div>
+
+    <p class="loader-text">
+        Verifying administrator access...
+    </p>
+
+</div>
+
+
+<!-- =====================================================
+     PAGE
+     ===================================================== -->
+
+<main class="admin-page">
+
+    <!-- =================================================
+         TOP BAR
+         ================================================= -->
+
+    <header class="top-bar">
+
+        <a
+            href="admin.html"
+            class="brand"
+            aria-label="Crown Cash Administration"
+        >
+
+            <div class="brand-icon">
 
                 <svg
                     viewBox="0 0 24 24"
@@ -671,245 +96,965 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                 >
-                    <path
-                        d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"
-                    ></path>
-
-                    <path
-                        d="M9 12l2 2 4-4"
-                    ></path>
-
+                    <path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"></path>
+                    <path d="M6 16h12"></path>
                 </svg>
 
             </div>
 
+            <div class="brand-text">
 
-            <div>
+                <strong>Crown Cash</strong>
 
-                <h3>
-                    Secure Withdrawal Management
-                </h3>
-
-                <p>
-                    Verify every withdrawal request carefully before approving it. Approved requests should only be paid through the authorized Crown Cash payment process.
-                </p>
+                <span>
+                    Administration
+                </span>
 
             </div>
 
-        </section>
+        </a>
 
 
-        <!-- =================================================
-             FOOTER
-             ================================================= -->
+        <div class="admin-identity">
 
-        <footer class="page-footer">
+            <div class="admin-avatar">
 
-            <p>
-                © 2026
-                <strong>Crown Cash</strong>.
-                Administrator Panel.
-            </p>
-
-            <p>
-                Secure financial management system.
-            </p>
-
-        </footer>
-
-    </main>
-
-
-    <!-- =====================================================
-         WITHDRAWAL MODAL
-         ===================================================== -->
-
-    <div
-        id="withdrawalModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-card">
-
-            <div class="modal-header">
-
-                <div class="modal-heading">
-
-                    <div class="modal-icon">
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path d="M12 3v18"></path>
-                            <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            Withdrawal Details
-                        </h2>
-
-                        <p>
-                            Review this withdrawal request.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="closeWithdrawalModal"
-                    class="modal-close"
-                    aria-label="Close"
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                 >
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="3.2"
+                    ></circle>
 
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                    >
-                        <path d="M6 6l12 12"></path>
-                        <path d="M18 6 6 18"></path>
-                    </svg>
-
-                </button>
+                    <path
+                        d="M5 20c.8-3.5 3.2-5.1 7-5.1s6.2 1.6 7 5.1"
+                    ></path>
+                </svg>
 
             </div>
 
+            <div class="admin-identity-text">
 
-            <div class="modal-body">
+                <strong id="headerUserName">
+                    Administrator
+                </strong>
 
-                <div class="detail-grid">
-
-                    <div class="detail-item">
-                        <span>Requested Amount</span>
-                        <strong id="withdrawalRequestedAmount">
-                            UGX 0
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Withdrawal Fee</span>
-                        <strong id="withdrawalFee">
-                            UGX 0
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Payout Amount</span>
-                        <strong id="withdrawalPayoutAmount">
-                            UGX 0
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Payment Method</span>
-                        <strong id="withdrawalPaymentMethod">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Registered Phone</span>
-                        <strong id="withdrawalRegisteredPhone">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Withdrawal Status</span>
-                        <strong id="withdrawalStatus">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Payout Status</span>
-                        <strong id="withdrawalPayoutStatus">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="detail-item">
-                        <span>Requested Date</span>
-                        <strong id="withdrawalRequestedDate">
-                            —
-                        </strong>
-                    </div>
-
-                    <div class="detail-item detail-wide">
-                        <span>Withdrawal ID</span>
-                        <strong id="withdrawalId">
-                            —
-                        </strong>
-                    </div>
-
-                </div>
-
-
-                <div class="note-section">
-
-                    <label for="withdrawalAdminNote">
-                        Admin Note
-                    </label>
-
-                    <textarea
-                        id="withdrawalAdminNote"
-                        placeholder="Add an optional administration note..."
-                    ></textarea>
-
-                </div>
-
-            </div>
-
-
-            <div class="modal-actions">
-
-                <button
-                    type="button"
-                    id="rejectWithdrawalButton"
-                    class="reject-button"
-                >
-                    Reject
-                </button>
-
-                <button
-                    type="button"
-                    id="cancelWithdrawalReview"
-                    class="cancel-button"
-                >
-                    Close
-                </button>
-
-                <button
-                    type="button"
-                    id="approveWithdrawalButton"
-                    class="approve-button"
-                >
-                    Approve Withdrawal
-                </button>
+                <span>
+                    Admin Panel
+                </span>
 
             </div>
 
         </div>
 
+    </header>
+
+
+    <!-- =================================================
+         INTRO
+         ================================================= -->
+
+    <section class="page-intro">
+
+        <div class="page-kicker">
+            Crown Cash Administration
+        </div>
+
+        <h1>
+            Withdrawals
+        </h1>
+
+        <p>
+            Review and manage customer withdrawal requests.
+        </p>
+
+    </section>
+
+
+    <div class="section-divider"></div>
+
+
+    <!-- =================================================
+         MESSAGE
+         ================================================= -->
+
+    <div
+        id="withdrawalMessage"
+        class="admin-message"
+        role="alert"
+    ></div>
+
+
+    <!-- =================================================
+         PAYMENT ACTIVITY / FILTERS
+         ================================================= -->
+
+    <section class="activity-card">
+
+        <div class="activity-header">
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M4 7h16"></path>
+                        <path d="M4 12h16"></path>
+                        <path d="M4 17h10"></path>
+                        <circle
+                            cx="18"
+                            cy="17"
+                            r="2.5"
+                        ></circle>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Withdrawal Activity
+                    </h2>
+
+                    <p>
+                        Withdrawal Requests
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="refreshWithdrawalsBtn"
+                class="refresh-button"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path
+                        d="M20 11a8 8 0 0 0-14-5"
+                    ></path>
+
+                    <path
+                        d="M4 4v5h5"
+                    ></path>
+
+                    <path
+                        d="M4 13a8 8 0 0 0 14 5"
+                    ></path>
+
+                    <path
+                        d="M20 20v-5h-5"
+                    ></path>
+                </svg>
+
+                <span>
+                    Refresh
+                </span>
+
+            </button>
+
+        </div>
+
+
+        <!-- =============================================
+             FILTERS
+             ============================================= -->
+
+        <div class="filter-grid">
+
+            <div class="search-box">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="11"
+                        cy="11"
+                        r="7"
+                    ></circle>
+
+                    <path
+                        d="m20 20-4-4"
+                    ></path>
+                </svg>
+
+                <input
+                    type="search"
+                    id="withdrawalSearch"
+                    placeholder="Search user, phone or ID..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <select id="statusFilter">
+
+                <option value="all">
+                    All Statuses
+                </option>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+                <option value="approved">
+                    Approved
+                </option>
+
+                <option value="rejected">
+                    Rejected
+                </option>
+
+                <option value="cancelled">
+                    Cancelled
+                </option>
+
+            </select>
+
+
+            <select id="methodFilter">
+
+                <option value="all">
+                    All Methods
+                </option>
+
+                <option value="MTN">
+                    MTN Mobile Money
+                </option>
+
+                <option value="Airtel">
+                    Airtel Money
+                </option>
+
+            </select>
+
+
+            <select id="payoutStatusFilter">
+
+                <option value="all">
+                    All Payout Statuses
+                </option>
+
+                <option value="not_required">
+                    Not Required
+                </option>
+
+                <option value="awaiting_payout">
+                    Awaiting Payout
+                </option>
+
+                <option value="paid">
+                    Paid
+                </option>
+
+                <option value="payout_failed">
+                    Payout Failed
+                </option>
+
+            </select>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         STATS
+         ================================================= -->
+
+    <section class="stats-grid">
+
+        <!-- Total -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon gold">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M12 3v18"></path>
+                    <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+
+            </div>
+
+            <div class="stat-content">
+
+                <span class="stat-label">
+                    Total Withdrawals
+                </span>
+
+                <strong id="totalWithdrawals">
+                    UGX 0
+                </strong>
+
+                <small>
+                    All withdrawal requests
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <!-- Pending -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon pink">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                    ></circle>
+
+                    <path d="M12 8v5l3 2"></path>
+                </svg>
+
+            </div>
+
+            <div class="stat-content">
+
+                <span class="stat-label">
+                    Pending Requests
+                </span>
+
+                <strong id="pendingWithdrawals">
+                    UGX 0
+                </strong>
+
+                <small>
+                    Awaiting admin review
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <!-- Approved -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon success">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    ></circle>
+
+                    <path
+                        d="m8 12 2.7 2.7L16.5 9"
+                    ></path>
+                </svg>
+
+            </div>
+
+            <div class="stat-content">
+
+                <span class="stat-label">
+                    Approved
+                </span>
+
+                <strong id="approvedWithdrawals">
+                    UGX 0
+                </strong>
+
+                <small>
+                    Approved withdrawal requests
+                </small>
+
+            </div>
+
+        </article>
+
+
+        <!-- Rejected -->
+
+        <article class="stat-card">
+
+            <div class="stat-icon danger">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                    ></circle>
+
+                    <path d="m9 9 6 6"></path>
+                    <path d="m15 9-6 6"></path>
+                </svg>
+
+            </div>
+
+            <div class="stat-content">
+
+                <span class="stat-label">
+                    Rejected
+                </span>
+
+                <strong id="rejectedWithdrawals">
+                    UGX 0
+                </strong>
+
+                <small>
+                    Rejected withdrawal requests
+                </small>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <!-- =================================================
+         WITHDRAWAL REQUESTS
+         ================================================= -->
+
+    <section class="requests-section">
+
+        <div class="requests-header">
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M5 7h14"></path>
+                        <path d="M5 12h14"></path>
+                        <path d="M5 17h9"></path>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Withdrawal Requests
+                    </h2>
+
+                    <p>
+                        Review requested amounts, fees, payout values and customer payment details.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="requests-card">
+
+            <!-- Desktop table -->
+
+            <div class="table-container">
+
+                <table class="withdrawals-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>User</th>
+                            <th>Requested</th>
+                            <th>Fee</th>
+                            <th>Payout</th>
+                            <th>Method</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Payout Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="withdrawalsTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="10"
+                                class="loading-cell"
+                            >
+                                Loading withdrawals...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- Mobile cards -->
+
+            <div
+                id="withdrawalsMobileList"
+                class="mobile-list"
+            >
+            </div>
+
+
+            <!-- Pagination -->
+
+            <div
+                id="withdrawalPagination"
+                class="pagination"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         SECURITY NOTICE
+         ================================================= -->
+
+    <section class="security-notice">
+
+        <div class="security-icon">
+
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path
+                    d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6l8-3z"
+                ></path>
+
+                <path
+                    d="M9 12l2 2 4-4"
+                ></path>
+
+            </svg>
+
+        </div>
+
+
+        <div>
+
+            <h3>
+                Secure Withdrawal Management
+            </h3>
+
+            <p>
+                Verify every withdrawal request carefully before approving it. Approved requests should only be paid through the authorized Crown Cash payment process.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         FOOTER
+         ================================================= -->
+
+    <footer class="page-footer">
+
+        <p>
+            © 2026
+            <strong>Crown Cash</strong>.
+            Administrator Panel.
+        </p>
+
+        <p>
+            Secure financial management system.
+        </p>
+
+    </footer>
+
+</main>
+
+
+<!-- =====================================================
+     WITHDRAWAL MODAL
+     ===================================================== -->
+
+<div
+    id="withdrawalModal"
+    class="modal"
+    hidden
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div class="modal-heading">
+
+                <div class="modal-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M12 3v18"></path>
+                        <path d="M17 7H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Withdrawal Details
+                    </h2>
+
+                    <p>
+                        Review this withdrawal request.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="closeWithdrawalModal"
+                class="modal-close"
+                aria-label="Close"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                >
+                    <path d="M6 6l12 12"></path>
+                    <path d="M18 6 6 18"></path>
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <div class="detail-grid">
+
+                <div class="detail-item">
+                    <span>Requested Amount</span>
+                    <strong id="withdrawalRequestedAmount">
+                        UGX 0
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Withdrawal Fee</span>
+                    <strong id="withdrawalFee">
+                        UGX 0
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Payout Amount</span>
+                    <strong id="withdrawalPayoutAmount">
+                        UGX 0
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Payment Method</span>
+                    <strong id="withdrawalPaymentMethod">
+                        —
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Registered Phone</span>
+                    <strong id="withdrawalRegisteredPhone">
+                        —
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Withdrawal Status</span>
+                    <strong id="withdrawalStatus">
+                        —
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Payout Status</span>
+                    <strong id="withdrawalPayoutStatus">
+                        —
+                    </strong>
+                </div>
+
+                <div class="detail-item">
+                    <span>Requested Date</span>
+                    <strong id="withdrawalRequestedDate">
+                        —
+                    </strong>
+                </div>
+
+                <div class="detail-item detail-wide">
+                    <span>Withdrawal ID</span>
+                    <strong id="withdrawalId">
+                        —
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="note-section">
+
+                <label for="withdrawalAdminNote">
+                    Admin Note
+                </label>
+
+                <textarea
+                    id="withdrawalAdminNote"
+                    placeholder="Add an optional administration note..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                id="rejectWithdrawalButton"
+                class="reject-button"
+            >
+                Reject
+            </button>
+
+            <button
+                type="button"
+                id="cancelWithdrawalReview"
+                class="cancel-button"
+            >
+                Close
+            </button>
+
+            <button
+                type="button"
+                id="approveWithdrawalButton"
+                class="approve-button"
+            >
+                Approve Withdrawal
+            </button>
+
+        </div>
+
     </div>
 
+</div>
 
-    <script src="admin-withdrawals.js?v=3"></script>
+
+<!-- =====================================================
+     LOADER CONTROLLER
+     ===================================================== -->
+
+<script>
+    /*
+     * Crown Cash - Admin Withdrawal Loader Controller
+     *
+     * IMPORTANT:
+     * This controls ONLY the visual loading overlay.
+     *
+     * It does not modify:
+     * - withdrawal requests
+     * - withdrawal amounts
+     * - approval/rejection
+     * - filters
+     * - statistics
+     * - administrator PHP authorization
+     * - database operations
+     */
+
+    (function () {
+
+        const loader = document.getElementById("pageLoader");
+
+        if (!loader) {
+            return;
+        }
+
+        let loaderFinished = false;
+
+        function hideAdminLoader() {
+
+            if (loaderFinished) {
+                return;
+            }
+
+            loaderFinished = true;
+
+            loader.classList.add("hidden");
+
+            /*
+             * Remove it completely after the fade.
+             * This prevents the invisible overlay from
+             * intercepting clicks.
+             */
+            window.setTimeout(function () {
+
+                loader.classList.add("force-hidden");
+
+            }, 450);
+
+        }
+
+
+        /*
+         * Make this available to admin-withdrawals.js.
+         * If that script finishes its own administrator
+         * verification, it can call:
+         *
+         * window.hideAdminWithdrawalLoader();
+         */
+        window.hideAdminWithdrawalLoader = hideAdminLoader;
+
+
+        /*
+         * Normal page-ready fallback.
+         */
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                window.setTimeout(
+                    hideAdminLoader,
+                    1200
+                );
+
+            }
+        );
+
+
+        /*
+         * If everything loads normally, remove the
+         * verification screen shortly after window load.
+         */
+        window.addEventListener(
+            "load",
+            function () {
+
+                window.setTimeout(
+                    hideAdminLoader,
+                    300
+                );
+
+            }
+        );
+
+
+        /*
+         * Absolute safety fallback.
+         *
+         * If administrator JavaScript hangs,
+         * throws an error, or waits indefinitely,
+         * the withdrawal page will still become usable.
+         */
+        window.setTimeout(
+            hideAdminLoader,
+            3500
+        );
+
+    })();
+</script>
+
+
+<!-- =====================================================
+     EXISTING WITHDRAWAL JAVASCRIPT
+     ===================================================== -->
+
+<script src="admin-withdrawals.js?v=3"></script>
 
 </body>
 </html>

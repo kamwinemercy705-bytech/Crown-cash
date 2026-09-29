@@ -2,341 +2,1681 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <title>Crown Cash Administration</title>
 
-    <meta name="description" content="Crown Cash Administration Dashboard">
-    <meta name="theme-color" content="#240914">
+    <meta
+        name="description"
+        content="Crown Cash Administration Dashboard">
+
+    <meta name="theme-color" content="#110711">
 
     <link rel="stylesheet" href="admin.css">
 
     <style>
+
         /* =========================================================
-           CROWN CASH ADMIN - SAFE LOADER FIX
+           CROWN CASH ADMIN DASHBOARD
+           RESTORED DASHBOARD DESIGN
            ========================================================= */
 
-        html,
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            width: 100%;
             min-height: 100%;
+            scroll-behavior: smooth;
         }
 
         body {
-            margin: 0;
-            background:
-                radial-gradient(circle at 15% 15%, rgba(164, 45, 105, 0.16), transparent 30%),
-                radial-gradient(circle at 85% 10%, rgba(255, 193, 7, 0.08), transparent 28%),
-                linear-gradient(135deg, #12060e 0%, #210912 45%, #12060e 100%);
+            width: 100%;
+            min-height: 100vh;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
             color: #ffffff;
+
+            background:
+                radial-gradient(
+                    circle at 10% 0%,
+                    rgba(255, 62, 180, 0.11),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at 90% 15%,
+                    rgba(255, 193, 7, 0.07),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at 50% 100%,
+                    rgba(125, 29, 105, 0.13),
+                    transparent 35%
+                ),
+                #100710;
+
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font-family: inherit;
         }
 
         /* =========================================================
            PAGE LOADER
+           Hidden so it cannot cover the dashboard permanently.
            ========================================================= */
 
-        .page-loader {
+        #pageLoader {
+            display: none !important;
+        }
+
+        /* =========================================================
+           MAIN ADMIN APP
+           ========================================================= */
+
+        .admin-layout {
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .main-content {
+            width: 100%;
+            min-height: 100vh;
+
+            padding: 34px 34px 50px;
+
+            position: relative;
+        }
+
+        /* =========================================================
+           DESKTOP SIDEBAR
+           ========================================================= */
+
+        .sidebar {
             position: fixed;
-            inset: 0;
-            z-index: 99999;
+
+            left: 0;
+            top: 0;
+            bottom: 0;
+
+            width: 250px;
+
+            padding: 24px 18px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(39, 13, 38, 0.98),
+                    rgba(18, 7, 18, 0.98)
+                );
+
+            border-right:
+                1px solid rgba(255, 255, 255, 0.07);
+
+            z-index: 1000;
+
+            overflow-y: auto;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 32px;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .logo-mark {
+            width: 42px;
+            height: 42px;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            background:
-                radial-gradient(circle at center,
-                    rgba(95, 20, 63, 0.96),
-                    rgba(15, 4, 12, 0.99));
-
-            opacity: 1;
-            visibility: visible;
-            pointer-events: all;
-
-            transition:
-                opacity 0.35s ease,
-                visibility 0.35s ease;
-        }
-
-        .page-loader.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        .loader-content {
-            width: min(90%, 380px);
-            padding: 34px 25px;
-            text-align: center;
-
-            border: 1px solid rgba(255, 193, 7, 0.20);
-            border-radius: 24px;
+            border-radius: 13px;
 
             background:
                 linear-gradient(
                     145deg,
-                    rgba(72, 14, 45, 0.92),
-                    rgba(28, 7, 20, 0.94)
-                );
-
-            box-shadow:
-                0 25px 70px rgba(0, 0, 0, 0.55),
-                0 0 35px rgba(255, 193, 7, 0.07);
-        }
-
-        .loader-icon {
-            width: 76px;
-            height: 76px;
-            margin: 0 auto 18px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 50%;
-
-            background:
-                radial-gradient(
-                    circle,
                     rgba(255, 193, 7, 0.20),
-                    rgba(224, 61, 142, 0.10)
+                    rgba(255, 55, 175, 0.16)
                 );
 
-            border: 1px solid rgba(255, 193, 7, 0.35);
+            border:
+                1px solid rgba(255, 193, 7, 0.22);
 
             box-shadow:
-                0 0 28px rgba(255, 193, 7, 0.14),
-                inset 0 0 20px rgba(224, 61, 142, 0.08);
+                0 0 20px rgba(255, 193, 7, 0.06);
         }
 
-        .loader-icon svg {
-            width: 38px;
-            height: 38px;
+        .logo-mark svg {
+            width: 23px;
+            height: 23px;
+
             fill: none;
-            stroke: #ffd45a;
-            stroke-width: 1.6;
+            stroke: #ffd24d;
+            stroke-width: 1.8;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
-        .loader-title {
-            margin: 0 0 8px;
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text strong {
+            font-size: 14px;
             color: #ffffff;
-            font-size: 21px;
-            font-weight: 700;
         }
 
-        .loader-text {
-            margin: 0;
-            color: rgba(255, 255, 255, 0.68);
+        .logo-text span {
+            font-size: 10px;
+            color: #d14bb0;
+            margin-top: 2px;
+        }
+
+        .sidebar-close {
+            display: none;
+
+            border: 0;
+            background: transparent;
+            color: #ffffff;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-section-title {
+            padding: 0 10px 8px;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+
+            color: rgba(255,255,255,0.40);
+        }
+
+        .nav-link {
+            min-height: 44px;
+
+            display: flex;
+            align-items: center;
+            gap: 11px;
+
+            padding: 9px 11px;
+
+            border-radius: 12px;
+
+            color: rgba(255,255,255,0.68);
+
             font-size: 13px;
-            line-height: 1.6;
+            font-weight: 600;
+
+            transition: 0.25s ease;
         }
 
-        .loader-spinner {
-            width: 28px;
-            height: 28px;
-            margin: 22px auto 0;
+        .nav-link:hover,
+        .nav-link.active {
+            color: #ffffff;
 
-            border-radius: 50%;
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(255, 61, 178, 0.15),
+                    rgba(255, 193, 7, 0.06)
+                );
 
-            border: 3px solid rgba(255, 255, 255, 0.10);
-            border-top-color: #ffd45a;
-            border-right-color: #e03d8e;
-
-            animation: crownSpin 0.85s linear infinite;
+            border:
+                1px solid rgba(255, 65, 183, 0.16);
         }
 
-        @keyframes crownSpin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* =========================================================
-           GENERAL ADMIN OVERRIDES
-           ========================================================= */
-
-        .admin-layout,
-        .dashboard-container,
-        .main-content,
-        main {
-            position: relative;
-            z-index: 1;
-        }
-
-        button,
-        a {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .admin-icon-circle {
-            width: 46px;
-            height: 46px;
-
-            flex: 0 0 46px;
+        .nav-icon {
+            width: 31px;
+            height: 31px;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            border-radius: 50%;
+            border-radius: 10px;
 
             background:
-                radial-gradient(
-                    circle,
-                    rgba(255, 193, 7, 0.16),
-                    rgba(224, 61, 142, 0.08)
-                );
-
-            border: 1px solid rgba(255, 193, 7, 0.20);
-
-            box-shadow:
-                0 0 20px rgba(255, 193, 7, 0.06),
-                inset 0 0 16px rgba(224, 61, 142, 0.04);
+                rgba(255,255,255,0.035);
         }
 
-        .admin-icon-circle svg {
-            width: 22px;
-            height: 22px;
+        .nav-icon svg {
+            width: 18px;
+            height: 18px;
 
             fill: none;
-            stroke: #ffd45a;
+            stroke: #e8c43d;
             stroke-width: 1.7;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
 
+        .nav-badge {
+            margin-left: auto;
+
+            min-width: 22px;
+            height: 22px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0 6px;
+
+            border-radius: 20px;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            color: #ffffff;
+
+            background:
+                rgba(255, 54, 168, 0.20);
+
+            border:
+                1px solid rgba(255, 54, 168, 0.22);
+        }
+
+        .sidebar-footer {
+            margin-top: 35px;
+            padding-top: 20px;
+
+            border-top:
+                1px solid rgba(255,255,255,0.06);
+        }
+
+        .admin-profile-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-avatar-small {
+            width: 37px;
+            height: 37px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            color: #ffd24d;
+            font-weight: 800;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 193, 7, 0.17),
+                    rgba(255, 53, 177, 0.13)
+                );
+
+            border:
+                1px solid rgba(255,193,7,0.17);
+        }
+
+        .admin-profile-info {
+            min-width: 0;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-profile-info strong {
+            font-size: 12px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .admin-profile-info span {
+            font-size: 10px;
+            color: rgba(255,255,255,0.45);
+
+            margin-top: 2px;
+        }
+
+        .logout-button {
+            width: 100%;
+
+            margin-top: 16px;
+
+            min-height: 40px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            border-radius: 11px;
+
+            border:
+                1px solid rgba(255,255,255,0.07);
+
+            background:
+                rgba(255,255,255,0.025);
+
+            color: rgba(255,255,255,0.65);
+
+            cursor: pointer;
+        }
+
+        .logout-button svg {
+            width: 17px;
+            height: 17px;
+
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+        }
+
+        .sidebar-overlay {
+            display: none;
+        }
+
         /* =========================================================
-           RESPONSIVE SIDEBAR SAFETY
+           MOBILE MENU
            ========================================================= */
 
-        @media (max-width: 900px) {
-            .sidebar {
-                z-index: 1000;
-            }
+        .mobile-header {
+            display: none;
+        }
 
-            .sidebar-overlay {
-                z-index: 999;
-            }
+        /* =========================================================
+           TOP AREA
+           ========================================================= */
 
-            .main-content {
-                width: 100%;
-            }
+        .dashboard-top {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 26px;
+        }
+
+        .top-label {
+            display: inline-block;
+
+            margin-bottom: 7px;
+
+            color: #ed4ac1;
+
+            font-size: 12px;
+            font-weight: 900;
+
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .top-title {
+            font-size: 30px;
+            line-height: 1.15;
+            font-weight: 800;
+
+            color: #ffffff;
+        }
+
+        .top-title span {
+            color: #ffd348;
+        }
+
+        /* =========================================================
+           WELCOME CARD
+           ========================================================= */
+
+        .welcome-card {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 0 auto;
+
+            padding: 30px 34px;
+
+            border-radius: 31px;
+
+            background:
+                radial-gradient(
+                    circle at 92% 10%,
+                    rgba(255, 65, 183, 0.15),
+                    transparent 31%
+                ),
+                radial-gradient(
+                    circle at 0% 100%,
+                    rgba(255, 193, 7, 0.07),
+                    transparent 34%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(51, 19, 49, 0.90),
+                    rgba(22, 12, 24, 0.92)
+                );
+
+            border:
+                1px solid rgba(255,255,255,0.10);
+
+            box-shadow:
+                0 24px 70px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.03);
+
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::after {
+            content: "";
+
+            position: absolute;
+
+            width: 260px;
+            height: 260px;
+
+            right: -120px;
+            top: -140px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255, 69, 190, 0.08);
+
+            filter: blur(10px);
+
+            pointer-events: none;
+        }
+
+        .welcome-eyebrow {
+            display: block;
+
+            margin-bottom: 14px;
+
+            color: #ef4dc5;
+
+            font-size: 13px;
+            font-weight: 900;
+
+            letter-spacing: 2px;
+
+            text-transform: uppercase;
+        }
+
+        .welcome-title {
+            position: relative;
+            z-index: 2;
+
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.12;
+
+            font-weight: 850;
+
+            letter-spacing: -1.3px;
+
+            color: #ffffff;
+        }
+
+        .welcome-title span {
+            color: #ffd348;
+        }
+
+        .welcome-description {
+            max-width: 770px;
+
+            margin-top: 17px;
+
+            color: rgba(255,255,255,0.62);
+
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .welcome-actions {
+            display: flex;
+
+            gap: 13px;
+
+            margin-top: 26px;
+
+            position: relative;
+            z-index: 2;
+        }
+
+        .primary-action,
+        .secondary-action {
+            min-height: 52px;
+
+            padding: 0 28px;
+
+            border-radius: 16px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 11px;
+
+            font-size: 14px;
+            font-weight: 800;
+
+            transition:
+                transform 0.22s ease,
+                box-shadow 0.22s ease;
+        }
+
+        .primary-action {
+            color: #170812;
+
+            background:
+                linear-gradient(
+                    110deg,
+                    #ffd04c 0%,
+                    #ffb15a 40%,
+                    #ff43b4 100%
+                );
+
+            box-shadow:
+                0 12px 30px rgba(255, 66, 177, 0.16);
+        }
+
+        .secondary-action {
+            color: #ffffff;
+
+            background:
+                rgba(255,255,255,0.035);
+
+            border:
+                1px solid rgba(255, 67, 184, 0.30);
+        }
+
+        .primary-action:hover,
+        .secondary-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .primary-action svg,
+        .secondary-action svg {
+            width: 23px;
+            height: 23px;
+
+            fill: none;
+
+            stroke: currentColor;
+
+            stroke-width: 1.8;
+
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* =========================================================
+           PLATFORM OVERVIEW
+           ========================================================= */
+
+        .overview-section {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 42px auto 0;
+        }
+
+        .section-label {
+            display: block;
+
+            margin-bottom: 10px;
+
+            color: #ed4ac1;
+
+            font-size: 12px;
+            font-weight: 900;
+
+            letter-spacing: 2px;
+
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-size: 29px;
+            line-height: 1.2;
+
+            color: #ffffff;
+
+            font-weight: 820;
+
+            letter-spacing: -0.7px;
+        }
+
+        /* =========================================================
+           STATS GRID
+           ========================================================= */
+
+        .stats-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
+
+            gap: 15px;
+
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            min-height: 188px;
+
+            padding: 23px;
+
+            border-radius: 23px;
+
+            background:
+                radial-gradient(
+                    circle at 100% 0%,
+                    rgba(255, 60, 182, 0.07),
+                    transparent 43%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(39, 20, 42, 0.90),
+                    rgba(23, 12, 26, 0.88)
+                );
+
+            border:
+                1px solid rgba(255,255,255,0.08);
+
+            box-shadow:
+                0 18px 45px rgba(0,0,0,0.18);
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: "";
+
+            position: absolute;
+
+            width: 100px;
+            height: 100px;
+
+            right: -55px;
+            top: -55px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,193,7,0.04);
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-icon {
+            width: 53px;
+            height: 53px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 17px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,193,7,0.13),
+                    rgba(255,59,177,0.10)
+                );
+
+            border:
+                1px solid rgba(255,193,7,0.13);
+
+            box-shadow:
+                inset 0 0 20px rgba(255,193,7,0.03);
+        }
+
+        .stat-icon svg {
+            width: 26px;
+            height: 26px;
+
+            fill: none;
+
+            stroke: #ffd343;
+
+            stroke-width: 1.8;
+
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .stat-label {
+            display: block;
+
+            margin-top: 22px;
+
+            color: rgba(255,255,255,0.56);
+
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .stat-value {
+            margin-top: 6px;
+
+            color: #ffffff;
+
+            font-size: 27px;
+            line-height: 1.15;
+
+            font-weight: 850;
+
+            letter-spacing: -0.5px;
+        }
+
+        .stat-value.currency {
+            font-size: 24px;
+        }
+
+        .stat-footer {
+            margin-top: 9px;
+
+            color: rgba(255,255,255,0.30);
+
+            font-size: 10px;
+        }
+
+        /* =========================================================
+           PENDING ACTIONS
+           ========================================================= */
+
+        .pending-section {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 38px auto 0;
+        }
+
+        .pending-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
+            gap: 15px;
+
+            margin-top: 20px;
+        }
+
+        .pending-card {
+            min-height: 92px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 15px;
+
+            padding: 17px;
+
+            border-radius: 18px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(42, 20, 44, 0.85),
+                    rgba(21, 11, 25, 0.88)
+                );
+
+            border:
+                1px solid rgba(255,255,255,0.07);
+
+            transition: 0.22s ease;
+        }
+
+        .pending-card:hover {
+            transform: translateY(-2px);
+
+            border-color:
+                rgba(255, 64, 183, 0.20);
+        }
+
+        .pending-icon {
+            width: 45px;
+            height: 45px;
+
+            flex: 0 0 45px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,193,7,0.08);
+
+            border:
+                1px solid rgba(255,193,7,0.13);
+        }
+
+        .pending-icon svg {
+            width: 22px;
+            height: 22px;
+
+            fill: none;
+
+            stroke: #ffd343;
+
+            stroke-width: 1.8;
+
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .pending-info {
+            min-width: 0;
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 4px;
+        }
+
+        .pending-info span {
+            color: rgba(255,255,255,0.48);
+
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .pending-info strong {
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        /* =========================================================
+           LOWER DASHBOARD
+           ========================================================= */
+
+        .lower-grid {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 34px auto 0;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 18px;
+        }
+
+        .dashboard-card {
+            padding: 23px;
+
+            min-height: 300px;
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(39,20,42,0.86),
+                    rgba(21,11,24,0.90)
+                );
+
+            border:
+                1px solid rgba(255,255,255,0.07);
+        }
+
+        .card-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 15px;
+
+            padding-bottom: 18px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,0.06);
+        }
+
+        .card-heading h3 {
+            color: #ffffff;
+
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .card-heading span {
+            display: block;
+
+            margin-bottom: 6px;
+
+            color: #ed4ac1;
+
+            font-size: 10px;
+            font-weight: 850;
+
+            letter-spacing: 1.3px;
+
+            text-transform: uppercase;
+        }
+
+        .view-all {
+            color: #ffd343;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+        .recent-list {
+            padding-top: 7px;
+        }
+
+        .empty-state {
+            min-height: 200px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+
+            color: rgba(255,255,255,0.35);
+        }
+
+        .empty-state p {
+            margin-top: 12px;
+
+            font-size: 12px;
+        }
+
+        .empty-icon {
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,193,7,0.06);
+
+            border:
+                1px solid rgba(255,193,7,0.08);
+        }
+
+        .empty-icon svg {
+            width: 22px;
+            height: 22px;
+
+            fill: none;
+
+            stroke: #dcb93d;
+
+            stroke-width: 1.6;
+        }
+
+        /* =========================================================
+           SECURITY
+           ========================================================= */
+
+        .security-card {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 25px auto 0;
+
+            padding: 17px 20px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 14px;
+
+            border-radius: 17px;
+
+            background:
+                rgba(255,255,255,0.025);
+
+            border:
+                1px solid rgba(255,255,255,0.06);
+        }
+
+        .security-icon {
+            width: 42px;
+            height: 42px;
+
+            flex: 0 0 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 13px;
+
+            background:
+                rgba(255,193,7,0.07);
+        }
+
+        .security-icon svg {
+            width: 21px;
+            height: 21px;
+
+            fill: none;
+
+            stroke: #ffd343;
+
+            stroke-width: 1.6;
+
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .security-card strong {
+            display: block;
+
+            color: #ffffff;
+
+            font-size: 12px;
+        }
+
+        .security-card p {
+            margin-top: 4px;
+
+            color: rgba(255,255,255,0.42);
+
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        /* =========================================================
+           FOOTER
+           ========================================================= */
+
+        .admin-footer {
+            width: 100%;
+            max-width: 1200px;
+
+            margin: 28px auto 0;
+
+            display: flex;
+            justify-content: space-between;
+
+            color: rgba(255,255,255,0.24);
+
+            font-size: 10px;
         }
 
         /* =========================================================
            MOBILE
            ========================================================= */
 
-        @media (max-width: 600px) {
-            .loader-content {
-                width: calc(100% - 36px);
-                padding: 30px 20px;
+        @media (max-width: 1050px) {
+
+            .stats-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .pending-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+        }
+
+        @media (max-width: 820px) {
+
+            .sidebar {
+                transform: translateX(-105%);
+
+                transition: transform 0.28s ease;
+
+                box-shadow:
+                    20px 0 60px rgba(0,0,0,0.35);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-close {
+                width: 36px;
+                height: 36px;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                border-radius: 10px;
+
+                background:
+                    rgba(255,255,255,0.04);
+
+                color: #ffffff;
+            }
+
+            .sidebar-close svg {
+                width: 18px;
+                height: 18px;
+
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.7;
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+
+                inset: 0;
+
+                background:
+                    rgba(5,2,6,0.70);
+
+                backdrop-filter: blur(5px);
+
+                z-index: 999;
+
+                opacity: 0;
+                visibility: hidden;
+
+                display: block;
+
+                transition: 0.25s ease;
+            }
+
+            .sidebar-overlay.open {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .main-content {
+                margin-left: 0;
+
+                width: 100%;
+
+                padding:
+                    22px 22px 40px;
+            }
+
+            .mobile-header {
+                min-height: 48px;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                margin-bottom: 20px;
+            }
+
+            .menu-button {
+                width: 43px;
+                height: 43px;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 13px;
+
+                background:
+                    rgba(255,255,255,0.035);
+
+                color: #ffffff;
+            }
+
+            .menu-button svg {
+                width: 21px;
+                height: 21px;
+
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.7;
+            }
+
+            .mobile-brand {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+            }
+
+            .mobile-brand-icon {
+                width: 34px;
+                height: 34px;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                border-radius: 11px;
+
+                background:
+                    rgba(255,193,7,0.09);
+
+                border:
+                    1px solid rgba(255,193,7,0.12);
+            }
+
+            .mobile-brand-icon svg {
+                width: 18px;
+                height: 18px;
+
+                fill: none;
+                stroke: #ffd343;
+                stroke-width: 1.8;
+            }
+
+            .mobile-brand strong {
+                font-size: 12px;
+            }
+
+            .dashboard-top {
+                display: none;
+            }
+
+            .welcome-card {
+                padding: 27px 25px;
+
+                border-radius: 28px;
+            }
+
+            .welcome-title {
+                font-size: 35px;
+            }
+
+            .welcome-description {
+                font-size: 14px;
+                line-height: 1.7;
+            }
+
+            .overview-section {
+                margin-top: 39px;
+            }
+
+            .section-title {
+                font-size: 29px;
+            }
+
+            .stats-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+
+                gap: 14px;
+            }
+
+            .stat-card {
+                min-height: 210px;
+
+                padding: 23px;
+
+                border-radius: 23px;
+            }
+
+            .stat-label {
+                margin-top: 23px;
+
+                font-size: 13px;
+            }
+
+            .stat-value {
+                font-size: 27px;
+            }
+
+            .stat-value.currency {
+                font-size: 23px;
+            }
+
+            .pending-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .lower-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        /* =========================================================
+           SMALL PHONES
+           ========================================================= */
+
+        @media (max-width: 520px) {
+
+            body {
+                background:
+                    radial-gradient(
+                        circle at 50% 0%,
+                        rgba(255,62,180,0.08),
+                        transparent 32%
+                    ),
+                    #100710;
+            }
+
+            .main-content {
+                padding:
+                    18px 22px 38px;
+            }
+
+            .mobile-header {
+                margin-bottom: 16px;
+            }
+
+            .welcome-card {
+                padding:
+                    28px 34px 30px;
+
+                border-radius: 30px;
+            }
+
+            .welcome-eyebrow {
+                font-size: 11px;
+
+                letter-spacing: 2px;
+
+                margin-bottom: 18px;
+            }
+
+            .welcome-title {
+                font-size: 31px;
+
+                letter-spacing: -1px;
+            }
+
+            .welcome-description {
+                margin-top: 20px;
+
+                font-size: 14px;
+
+                line-height: 1.7;
+            }
+
+            .welcome-actions {
+                display: flex;
+                flex-direction: column;
+
+                gap: 14px;
+
+                margin-top: 29px;
+            }
+
+            .primary-action,
+            .secondary-action {
+                width: 100%;
+
+                min-height: 58px;
+
+                border-radius: 18px;
+
+                font-size: 14px;
+            }
+
+            .overview-section {
+                margin-top: 39px;
+            }
+
+            .section-label {
+                font-size: 11px;
+
+                letter-spacing: 2px;
+
+                margin-bottom: 14px;
+            }
+
+            .section-title {
+                font-size: 29px;
+            }
+
+            .stats-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+
+                gap: 14px;
+
+                margin-top: 27px;
+            }
+
+            .stat-card {
+                min-height: 276px;
+
+                padding: 24px;
+
+                border-radius: 24px;
+            }
+
+            .stat-icon {
+                width: 69px;
+                height: 69px;
+
                 border-radius: 20px;
             }
 
-            .loader-icon {
-                width: 66px;
-                height: 66px;
+            .stat-icon svg {
+                width: 30px;
+                height: 30px;
             }
 
-            .loader-icon svg {
-                width: 33px;
-                height: 33px;
+            .stat-label {
+                margin-top: 23px;
+
+                font-size: 12px;
+
+                line-height: 1.35;
             }
 
-            .loader-title {
-                font-size: 19px;
+            .stat-value {
+                margin-top: 9px;
+
+                font-size: 27px;
             }
+
+            .stat-value.currency {
+                font-size: 20px;
+            }
+
+            .stat-footer {
+                display: none;
+            }
+
+            .pending-section {
+                margin-top: 36px;
+            }
+
+            .pending-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lower-grid {
+                margin-top: 30px;
+            }
+
+            .admin-footer {
+                flex-direction: column;
+
+                gap: 6px;
+            }
+
         }
+
+        /* =========================================================
+           VERY SMALL DEVICES
+           ========================================================= */
+
+        @media (max-width: 380px) {
+
+            .main-content {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .welcome-card {
+                padding-left: 22px;
+                padding-right: 22px;
+            }
+
+            .welcome-title {
+                font-size: 28px;
+            }
+
+            .stat-card {
+                min-height: 245px;
+
+                padding: 19px;
+            }
+
+            .stat-icon {
+                width: 58px;
+                height: 58px;
+            }
+
+            .stat-icon svg {
+                width: 26px;
+                height: 26px;
+            }
+
+            .stat-value {
+                font-size: 23px;
+            }
+
+            .stat-value.currency {
+                font-size: 18px;
+            }
+
+        }
+
     </style>
 </head>
 
 <body>
 
     <!-- =========================================================
-         PAGE LOADER
+         HIDDEN LOADER
+         Kept for compatibility with existing admin.js.
+         It can no longer block the dashboard.
          ========================================================= -->
 
-    <div class="page-loader" id="pageLoader">
-
-        <div class="loader-content">
-
-            <div class="loader-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14l4.8-.69L12 3z"></path>
-                    <path d="M5 20h14"></path>
-                </svg>
-            </div>
-
-            <h2 class="loader-title">
-                Loading Administration
-            </h2>
-
-            <p class="loader-text" id="loaderText">
-                Securing your administrator session...
-            </p>
-
-            <div class="loader-spinner"></div>
-
-        </div>
-
+    <div
+        id="pageLoader"
+        aria-hidden="true">
     </div>
 
 
-    <!-- =========================================================
-         ADMIN LAYOUT
-         ========================================================= -->
-
     <div class="admin-layout">
 
-
         <!-- =====================================================
-             SIDEBAR
+             DESKTOP / MOBILE SIDEBAR
              ===================================================== -->
 
-        <aside class="sidebar" id="sidebar">
+        <aside
+            class="sidebar"
+            id="sidebar">
 
             <div class="sidebar-header">
 
-                <a href="admin.html" class="admin-logo">
+                <a
+                    href="admin.html"
+                    class="admin-logo">
 
                     <div class="logo-mark">
 
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+
                             <path
                                 d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14l4.8-.69L12 3z">
                             </path>
+
                             <path d="M7 20h10"></path>
+
                         </svg>
 
                     </div>
 
                     <div class="logo-text">
+
                         <strong>Crown Cash</strong>
-                        <span>Administration</span>
+
+                        <span>
+                            Administration
+                        </span>
+
                     </div>
 
                 </a>
 
 
                 <button
-                    type="button"
                     class="sidebar-close"
                     id="sidebarClose"
-                    aria-label="Close menu">
+                    type="button">
 
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+
                         <path d="M6 6l12 12"></path>
                         <path d="M18 6L6 18"></path>
+
                     </svg>
 
                 </button>
 
             </div>
 
-
-            <!-- SIDEBAR NAVIGATION -->
 
             <nav class="sidebar-nav">
 
@@ -346,20 +1686,51 @@
                         Overview
                     </div>
 
-                    <a href="admin.html" class="nav-link active">
+                    <a
+                        href="admin.html"
+                        class="nav-link active">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-                                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-                                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                            <svg viewBox="0 0 24 24">
+
+                                <rect
+                                    x="3"
+                                    y="3"
+                                    width="7"
+                                    height="7"
+                                    rx="1">
+                                </rect>
+
+                                <rect
+                                    x="14"
+                                    y="3"
+                                    width="7"
+                                    height="7"
+                                    rx="1">
+                                </rect>
+
+                                <rect
+                                    x="3"
+                                    y="14"
+                                    width="7"
+                                    height="7"
+                                    rx="1">
+                                </rect>
+
+                                <rect
+                                    x="14"
+                                    y="14"
+                                    width="7"
+                                    height="7"
+                                    rx="1">
+                                </rect>
+
                             </svg>
 
                         </span>
 
-                        <span>Dashboard</span>
+                        Dashboard
 
                     </a>
 
@@ -373,118 +1744,196 @@
                     </div>
 
 
-                    <a href="admin-users.html" class="nav-link">
+                    <a
+                        href="admin-users.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            <svg viewBox="0 0 24 24">
+
+                                <path
+                                    d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
+                                </path>
+
+                                <circle
+                                    cx="9"
+                                    cy="7"
+                                    r="4">
+                                </circle>
+
+                                <path
+                                    d="M22 21v-2a4 4 0 0 0-3-3.87">
+                                </path>
+
+                                <path
+                                    d="M16 3.13a4 4 0 0 1 0 7.75">
+                                </path>
+
                             </svg>
 
                         </span>
 
-                        <span>Users</span>
+                        Users
 
                     </a>
 
 
-                    <a href="admin-deposits.html" class="nav-link">
+                    <a
+                        href="admin-deposits.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 3v13"></path>
-                                <path d="M7 11l5 5 5-5"></path>
-                                <path d="M5 21h14"></path>
+                            <svg viewBox="0 0 24 24">
+
+                                <rect
+                                    x="4"
+                                    y="5"
+                                    width="16"
+                                    height="14"
+                                    rx="3">
+                                </rect>
+
+                                <path d="M8 9h8"></path>
+                                <path d="M8 13h5"></path>
+
                             </svg>
 
                         </span>
 
-                        <span>Deposits</span>
+                        Deposits
 
-                        <span class="nav-badge" id="navPendingDeposits">
+                        <span
+                            class="nav-badge"
+                            id="navPendingDeposits">
                             0
                         </span>
 
                     </a>
 
 
-                    <a href="admin-withdrawals.html" class="nav-link">
+                    <a
+                        href="admin-withdrawals.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+
                                 <path d="M12 21V8"></path>
                                 <path d="M7 13l5-5 5 5"></path>
                                 <path d="M5 3h14"></path>
+
                             </svg>
 
                         </span>
 
-                        <span>Withdrawals</span>
+                        Withdrawals
 
-                        <span class="nav-badge" id="navPendingWithdrawals">
+                        <span
+                            class="nav-badge"
+                            id="navPendingWithdrawals">
                             0
                         </span>
 
                     </a>
 
 
-                    <a href="admin-investments.html" class="nav-link">
+                    <a
+                        href="admin-investments.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+
                                 <path d="M4 19V5"></path>
                                 <path d="M4 19h16"></path>
                                 <path d="M7 15l4-4 3 2 5-6"></path>
                                 <path d="M15 7h4v4"></path>
+
                             </svg>
 
                         </span>
 
-                        <span>Investments</span>
+                        Investments
 
                     </a>
 
 
-                    <a href="admin-transactions.html" class="nav-link">
+                    <a
+                        href="admin-transactions.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+
                                 <path d="M4 7h16"></path>
                                 <path d="M4 12h16"></path>
                                 <path d="M4 17h16"></path>
-                                <circle cx="8" cy="7" r="1"></circle>
-                                <circle cx="8" cy="12" r="1"></circle>
-                                <circle cx="8" cy="17" r="1"></circle>
+
+                                <circle
+                                    cx="8"
+                                    cy="7"
+                                    r="1">
+                                </circle>
+
+                                <circle
+                                    cx="8"
+                                    cy="12"
+                                    r="1">
+                                </circle>
+
+                                <circle
+                                    cx="8"
+                                    cy="17"
+                                    r="1">
+                                </circle>
+
                             </svg>
 
                         </span>
 
-                        <span>Transactions</span>
+                        Transactions
 
                     </a>
 
 
-                    <a href="admin-referrals.html" class="nav-link">
+                    <a
+                        href="admin-referrals.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="9" cy="7" r="3"></circle>
-                                <circle cx="17" cy="9" r="2.5"></circle>
-                                <path d="M3 20a6 6 0 0 1 12 0"></path>
-                                <path d="M14 19a5 5 0 0 1 7 0"></path>
+                            <svg viewBox="0 0 24 24">
+
+                                <circle
+                                    cx="9"
+                                    cy="7"
+                                    r="3">
+                                </circle>
+
+                                <circle
+                                    cx="17"
+                                    cy="9"
+                                    r="2.5">
+                                </circle>
+
+                                <path
+                                    d="M3 20a6 6 0 0 1 12 0">
+                                </path>
+
+                                <path
+                                    d="M14 19a5 5 0 0 1 7 0">
+                                </path>
+
                             </svg>
 
                         </span>
 
-                        <span>Referrals</span>
+                        Referrals
 
                     </a>
 
@@ -498,40 +1947,67 @@
                     </div>
 
 
-                    <a href="admin-support.html" class="nav-link">
+                    <a
+                        href="admin-support.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 5h16v11H8l-4 4V5z"></path>
+                            <svg viewBox="0 0 24 24">
+
+                                <path
+                                    d="M4 5h16v11H8l-4 4V5z">
+                                </path>
+
                                 <path d="M8 9h8"></path>
                                 <path d="M8 13h5"></path>
+
                             </svg>
 
                         </span>
 
-                        <span>Support</span>
+                        Support
 
-                        <span class="nav-badge" id="navOpenTickets">
+                        <span
+                            class="nav-badge"
+                            id="navOpenTickets">
                             0
                         </span>
 
                     </a>
 
 
-                    <a href="admin-security.html" class="nav-link">
+                    <a
+                        href="admin-security.html"
+                        class="nav-link">
 
                         <span class="nav-icon">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="5" y="10" width="14" height="10" rx="2"></rect>
-                                <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
-                                <circle cx="12" cy="15" r="1"></circle>
+                            <svg viewBox="0 0 24 24">
+
+                                <rect
+                                    x="5"
+                                    y="10"
+                                    width="14"
+                                    height="10"
+                                    rx="2">
+                                </rect>
+
+                                <path
+                                    d="M8 10V7a4 4 0 0 1 8 0v3">
+                                </path>
+
+                                <circle
+                                    cx="12"
+                                    cy="15"
+                                    r="1">
+                                </circle>
+
                             </svg>
 
                         </span>
 
-                        <span>Security</span>
+                        Security
 
                     </a>
 
@@ -540,13 +2016,13 @@
             </nav>
 
 
-            <!-- SIDEBAR FOOTER -->
-
             <div class="sidebar-footer">
 
                 <div class="admin-profile-mini">
 
-                    <div class="admin-avatar-small" id="adminAvatar">
+                    <div
+                        class="admin-avatar-small"
+                        id="adminAvatar">
                         A
                     </div>
 
@@ -570,13 +2046,15 @@
                     class="logout-button"
                     id="logoutBtn">
 
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+
                         <path d="M10 17l5-5-5-5"></path>
                         <path d="M15 12H3"></path>
                         <path d="M21 3v18"></path>
+
                     </svg>
 
-                    <span>Logout</span>
+                    Logout
 
                 </button>
 
@@ -585,8 +2063,6 @@
         </aside>
 
 
-        <!-- MOBILE OVERLAY -->
-
         <div
             class="sidebar-overlay"
             id="sidebarOverlay">
@@ -594,117 +2070,137 @@
 
 
         <!-- =====================================================
-             MAIN CONTENT
+             MAIN
              ===================================================== -->
 
         <main class="main-content">
 
 
-            <!-- TOP HEADER -->
+            <!-- MOBILE HEADER -->
 
-            <header class="top-header">
+            <div class="mobile-header">
 
-                <div class="header-left">
+                <button
+                    type="button"
+                    class="menu-button"
+                    id="menuButton">
 
-                    <button
-                        type="button"
-                        class="menu-button"
-                        id="menuButton"
-                        aria-label="Open menu">
+                    <svg viewBox="0 0 24 24">
 
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M4 6h16"></path>
-                            <path d="M4 12h16"></path>
-                            <path d="M4 18h16"></path>
+                        <path d="M4 6h16"></path>
+                        <path d="M4 12h16"></path>
+                        <path d="M4 18h16"></path>
+
+                    </svg>
+
+                </button>
+
+
+                <div class="mobile-brand">
+
+                    <div class="mobile-brand-icon">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path
+                                d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14 9.8 7.45 12 3z">
+                            </path>
+
                         </svg>
 
-                    </button>
-
-
-                    <div class="page-heading">
-
-                        <span class="heading-eyebrow">
-                            Crown Cash Administration
-                        </span>
-
-                        <h1>
-                            Dashboard
-                        </h1>
-
                     </div>
+
+                    <strong>
+                        Crown Cash
+                    </strong>
 
                 </div>
 
-
-                <div class="header-right">
-
-                    <div class="header-admin">
-
-                        <div
-                            class="header-admin-avatar"
-                            id="accountAvatar">
-
-                            A
-
-                        </div>
-
-                        <div class="header-admin-details">
-
-                            <strong id="headerUserName">
-                                Administrator
-                            </strong>
-
-                            <span>
-                                Secure Admin Panel
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </header>
+            </div>
 
 
             <!-- =================================================
-                 WELCOME CARD
+                 WELCOME
                  ================================================= -->
 
             <section class="welcome-card">
 
-                <div class="welcome-content">
-
-                    <div>
-
-                        <span class="welcome-label">
-                            Administration Center
-                        </span>
-
-                        <h2>
-                            Welcome back,
-                            <span id="adminFirstName">
-                                Administrator
-                            </span>
-                        </h2>
-
-                        <p>
-                            Manage Crown Cash users, deposits,
-                            withdrawals, investments and platform
-                            activity from one secure dashboard.
-                        </p>
-
-                    </div>
+                <span class="welcome-eyebrow">
+                    Crown Cash Administration
+                </span>
 
 
-                    <div class="welcome-icon">
+                <h1 class="welcome-title">
 
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 3l2.2 4.45L19 8.14l-3.5 3.42.83 4.83L12 14.1l-4.33 2.29.83-4.83L5 8.14 9.8 7.45 12 3z"></path>
-                            <path d="M6 20h12"></path>
+                    Welcome back,
+                    <span id="adminFirstName">
+                        Tumuhise
+                    </span>
+
+                </h1>
+
+
+                <p class="welcome-description">
+
+                    Review the current state of your platform,
+                    monitor financial activity, manage customer
+                    accounts and respond to items requiring
+                    administrator action.
+
+                </p>
+
+
+                <div class="welcome-actions">
+
+
+                    <a
+                        href="admin-users.html"
+                        class="primary-action">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path
+                                d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
+                            </path>
+
+                            <circle
+                                cx="9"
+                                cy="7"
+                                r="4">
+                            </circle>
+
+                            <path d="M19 8v6"></path>
+                            <path d="M16 11h6"></path>
+
                         </svg>
 
-                    </div>
+                        Manage Users
+
+                    </a>
+
+
+                    <a
+                        href="admin-deposits.html"
+                        class="secondary-action">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <rect
+                                x="4"
+                                y="5"
+                                width="16"
+                                height="14"
+                                rx="3">
+                            </rect>
+
+                            <path d="M8 9h8"></path>
+                            <path d="M8 13h5"></path>
+
+                        </svg>
+
+                        View Deposits
+
+                    </a>
 
                 </div>
 
@@ -712,276 +2208,357 @@
 
 
             <!-- =================================================
-                 STATISTICS
+                 PLATFORM OVERVIEW
                  ================================================= -->
 
-            <section class="stats-grid">
+            <section class="overview-section">
+
+                <span class="section-label">
+                    Platform Overview
+                </span>
+
+                <h2 class="section-title">
+                    Quick Overview
+                </h2>
 
 
-                <!-- TOTAL USERS -->
+                <div class="stats-grid">
 
-                <div class="stat-card">
 
-                    <div class="stat-card-top">
+                    <!-- USERS -->
 
-                        <div class="stat-icon">
+                    <div class="stat-card">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <path
+                                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
+                                    </path>
+
+                                    <circle
+                                        cx="9"
+                                        cy="7"
+                                        r="4">
+                                    </circle>
+
+                                    <path
+                                        d="M22 21v-2a4 4 0 0 0-3-3.87">
+                                    </path>
+
+                                    <path
+                                        d="M16 3.13a4 4 0 0 1 0 7.75">
+                                    </path>
+
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Total Users
                         </span>
 
+                        <div
+                            class="stat-value"
+                            id="totalUsers">
+                            0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value" id="totalUsers">
-                        0
-                    </div>
 
-                    <div class="stat-footer">
-                        Registered accounts
-                    </div>
+                    <!-- ACTIVE USERS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- ACTIVE USERS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9">
+                                    </circle>
 
-                        <div class="stat-icon">
+                                    <path
+                                        d="M8 12l2.5 2.5L16 9">
+                                    </path>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9"></circle>
-                                <path d="M8 12l2.5 2.5L16 9"></path>
-                            </svg>
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Active Users
                         </span>
 
+                        <div
+                            class="stat-value"
+                            id="activeUsers">
+                            0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value" id="activeUsers">
-                        0
-                    </div>
 
-                    <div class="stat-footer">
-                        Currently active
-                    </div>
+                    <!-- DEPOSITS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- TOTAL DEPOSITS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <rect
+                                        x="4"
+                                        y="5"
+                                        width="16"
+                                        height="14"
+                                        rx="3">
+                                    </rect>
 
-                        <div class="stat-icon">
+                                    <path d="M8 9h8"></path>
+                                    <path d="M8 13h5"></path>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 3v13"></path>
-                                <path d="M7 11l5 5 5-5"></path>
-                                <path d="M5 21h14"></path>
-                            </svg>
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Total Deposits
                         </span>
 
+                        <div
+                            class="stat-value currency"
+                            id="totalDeposits">
+                            UGX 0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value currency" id="totalDeposits">
-                        UGX 0
-                    </div>
 
-                    <div class="stat-footer">
-                        Platform deposits
-                    </div>
+                    <!-- WITHDRAWALS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- TOTAL WITHDRAWALS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <path d="M12 21V8"></path>
+                                    <path d="M7 13l5-5 5 5"></path>
+                                    <path d="M5 3h14"></path>
 
-                        <div class="stat-icon">
+                                </svg>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 21V8"></path>
-                                <path d="M7 13l5-5 5 5"></path>
-                                <path d="M5 3h14"></path>
-                            </svg>
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
-                            Total Withdrawals
+                            Withdrawals
                         </span>
 
+                        <div
+                            class="stat-value currency"
+                            id="totalWithdrawals">
+                            UGX 0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value currency" id="totalWithdrawals">
-                        UGX 0
-                    </div>
 
-                    <div class="stat-footer">
-                        Withdrawal requests
-                    </div>
+                    <!-- INVESTMENTS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- INVESTMENTS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <path d="M4 19V5"></path>
+                                    <path d="M4 19h16"></path>
+                                    <path d="M7 15l4-4 3 2 5-6"></path>
+                                    <path d="M15 7h4v4"></path>
 
-                        <div class="stat-icon">
+                                </svg>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 19V5"></path>
-                                <path d="M4 19h16"></path>
-                                <path d="M7 15l4-4 3 2 5-6"></path>
-                                <path d="M15 7h4v4"></path>
-                            </svg>
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Investments
                         </span>
 
+                        <div
+                            class="stat-value currency"
+                            id="totalInvestments">
+                            UGX 0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value currency" id="totalInvestments">
-                        UGX 0
-                    </div>
 
-                    <div class="stat-footer">
-                        Total invested
-                    </div>
+                    <!-- REFERRALS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- REFERRALS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <circle
+                                        cx="9"
+                                        cy="7"
+                                        r="3">
+                                    </circle>
 
-                        <div class="stat-icon">
+                                    <circle
+                                        cx="17"
+                                        cy="9"
+                                        r="2.5">
+                                    </circle>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="9" cy="7" r="3"></circle>
-                                <circle cx="17" cy="9" r="2.5"></circle>
-                                <path d="M3 20a6 6 0 0 1 12 0"></path>
-                                <path d="M14 19a5 5 0 0 1 7 0"></path>
-                            </svg>
+                                    <path
+                                        d="M3 20a6 6 0 0 1 12 0">
+                                    </path>
+
+                                    <path
+                                        d="M14 19a5 5 0 0 1 7 0">
+                                    </path>
+
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Referrals
                         </span>
 
+                        <div
+                            class="stat-value"
+                            id="totalReferrals">
+                            0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value" id="totalReferrals">
-                        0
-                    </div>
 
-                    <div class="stat-footer">
-                        Referral activity
-                    </div>
+                    <!-- TRANSACTIONS -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- TRANSACTIONS -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <path d="M4 7h16"></path>
+                                    <path d="M4 12h16"></path>
+                                    <path d="M4 17h16"></path>
 
-                        <div class="stat-icon">
+                                    <circle
+                                        cx="8"
+                                        cy="7"
+                                        r="1">
+                                    </circle>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 7h16"></path>
-                                <path d="M4 12h16"></path>
-                                <path d="M4 17h16"></path>
-                                <circle cx="8" cy="7" r="1"></circle>
-                                <circle cx="8" cy="12" r="1"></circle>
-                                <circle cx="8" cy="17" r="1"></circle>
-                            </svg>
+                                    <circle
+                                        cx="8"
+                                        cy="12"
+                                        r="1">
+                                    </circle>
+
+                                    <circle
+                                        cx="8"
+                                        cy="17"
+                                        r="1">
+                                    </circle>
+
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Transactions
                         </span>
 
+                        <div
+                            class="stat-value"
+                            id="totalTransactions">
+                            0
+                        </div>
+
                     </div>
 
-                    <div class="stat-value" id="totalTransactions">
-                        0
-                    </div>
 
-                    <div class="stat-footer">
-                        Platform transactions
-                    </div>
+                    <!-- SUPPORT -->
 
-                </div>
+                    <div class="stat-card">
 
+                        <div class="stat-top">
 
-                <!-- OPEN SUPPORT -->
+                            <div class="stat-icon">
 
-                <div class="stat-card">
+                                <svg viewBox="0 0 24 24">
 
-                    <div class="stat-card-top">
+                                    <path
+                                        d="M4 5h16v11H8l-4 4V5z">
+                                    </path>
 
-                        <div class="stat-icon">
+                                    <path d="M8 9h8"></path>
+                                    <path d="M8 13h5"></path>
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 5h16v11H8l-4 4V5z"></path>
-                                <path d="M8 9h8"></path>
-                                <path d="M8 13h5"></path>
-                            </svg>
+                                </svg>
+
+                            </div>
 
                         </div>
+
 
                         <span class="stat-label">
                             Open Tickets
                         </span>
 
-                    </div>
+                        <div
+                            class="stat-value"
+                            id="openTickets">
+                            0
+                        </div>
 
-                    <div class="stat-value" id="openTickets">
-                        0
-                    </div>
-
-                    <div class="stat-footer">
-                        Support requests
                     </div>
 
                 </div>
@@ -993,122 +2570,111 @@
                  PENDING ACTIONS
                  ================================================= -->
 
-            <section class="section-block">
+            <section class="pending-section">
 
-                <div class="section-heading">
+                <span class="section-label">
+                    Requires Attention
+                </span>
 
-                    <div>
-
-                        <span class="section-eyebrow">
-                            Requires attention
-                        </span>
-
-                        <h2>
-                            Pending Actions
-                        </h2>
-
-                    </div>
-
-                </div>
+                <h2 class="section-title">
+                    Pending Actions
+                </h2>
 
 
-                <div class="action-grid">
+                <div class="pending-grid">
 
 
-                    <!-- PENDING DEPOSITS -->
+                    <a
+                        href="admin-deposits.html"
+                        class="pending-card">
 
-                    <a href="admin-deposits.html" class="action-card">
+                        <div class="pending-icon">
 
-                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 3v13"></path>
                                 <path d="M7 11l5 5 5-5"></path>
                                 <path d="M5 21h14"></path>
+
                             </svg>
 
                         </div>
 
-                        <div class="action-info">
+
+                        <div class="pending-info">
 
                             <span>
                                 Pending Deposits
                             </span>
 
                             <strong id="pendingDeposits">
-                                0
+                                UGX 0
                             </strong>
 
                         </div>
 
-                        <svg
-                            class="action-arrow"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true">
-
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-
-                        </svg>
-
                     </a>
 
 
-                    <!-- PENDING WITHDRAWALS -->
+                    <a
+                        href="admin-withdrawals.html"
+                        class="pending-card">
 
-                    <a href="admin-withdrawals.html" class="action-card">
+                        <div class="pending-icon">
 
-                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 21V8"></path>
                                 <path d="M7 13l5-5 5 5"></path>
                                 <path d="M5 3h14"></path>
+
                             </svg>
 
                         </div>
 
-                        <div class="action-info">
+
+                        <div class="pending-info">
 
                             <span>
                                 Pending Withdrawals
                             </span>
 
                             <strong id="pendingWithdrawals">
-                                0
+                                UGX 0
                             </strong>
 
                         </div>
 
-                        <svg
-                            class="action-arrow"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true">
-
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-
-                        </svg>
-
                     </a>
 
 
-                    <!-- NEW ACCOUNTS -->
+                    <a
+                        href="admin-users.html"
+                        class="pending-card">
 
-                    <a href="admin-users.html" class="action-card">
+                        <div class="pending-icon">
 
-                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24">
 
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="9" cy="8" r="4"></circle>
-                                <path d="M3 21a6 6 0 0 1 12 0"></path>
+                                <circle
+                                    cx="9"
+                                    cy="8"
+                                    r="4">
+                                </circle>
+
+                                <path
+                                    d="M3 21a6 6 0 0 1 12 0">
+                                </path>
+
                                 <path d="M19 8v6"></path>
                                 <path d="M16 11h6"></path>
+
                             </svg>
 
                         </div>
 
-                        <div class="action-info">
+
+                        <div class="pending-info">
 
                             <span>
                                 New Accounts
@@ -1120,16 +2686,6 @@
 
                         </div>
 
-                        <svg
-                            class="action-arrow"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true">
-
-                            <path d="M5 12h14"></path>
-                            <path d="M13 6l6 6-6 6"></path>
-
-                        </svg>
-
                     </a>
 
                 </div>
@@ -1138,31 +2694,33 @@
 
 
             <!-- =================================================
-                 LOWER DASHBOARD
+                 RECENT INFORMATION
                  ================================================= -->
 
-            <div class="dashboard-columns">
+            <section class="lower-grid">
 
 
-                <!-- RECENT TRANSACTIONS -->
+                <!-- TRANSACTIONS -->
 
-                <section class="dashboard-card">
+                <div class="dashboard-card">
 
-                    <div class="card-header">
+                    <div class="card-heading">
 
                         <div>
 
-                            <span class="section-eyebrow">
-                                Latest activity
+                            <span>
+                                Latest Activity
                             </span>
 
-                            <h2>
+                            <h3>
                                 Recent Transactions
-                            </h2>
+                            </h3>
 
                         </div>
 
-                        <a href="admin-transactions.html">
+                        <a
+                            href="admin-transactions.html"
+                            class="view-all">
                             View all
                         </a>
 
@@ -1177,10 +2735,12 @@
 
                             <div class="empty-icon">
 
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+
                                     <path d="M4 7h16"></path>
                                     <path d="M4 12h16"></path>
                                     <path d="M4 17h16"></path>
+
                                 </svg>
 
                             </div>
@@ -1193,28 +2753,30 @@
 
                     </div>
 
-                </section>
+                </div>
 
 
-                <!-- RECENT USERS -->
+                <!-- USERS -->
 
-                <section class="dashboard-card">
+                <div class="dashboard-card">
 
-                    <div class="card-header">
+                    <div class="card-heading">
 
                         <div>
 
-                            <span class="section-eyebrow">
-                                Latest registrations
+                            <span>
+                                Latest Registrations
                             </span>
 
-                            <h2>
+                            <h3>
                                 Recent Users
-                            </h2>
+                            </h3>
 
                         </div>
 
-                        <a href="admin-users.html">
+                        <a
+                            href="admin-users.html"
+                            class="view-all">
                             View all
                         </a>
 
@@ -1229,9 +2791,18 @@
 
                             <div class="empty-icon">
 
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="12" cy="8" r="4"></circle>
-                                    <path d="M4 21a8 8 0 0 1 16 0"></path>
+                                <svg viewBox="0 0 24 24">
+
+                                    <circle
+                                        cx="12"
+                                        cy="8"
+                                        r="4">
+                                    </circle>
+
+                                    <path
+                                        d="M4 21a8 8 0 0 1 16 0">
+                                    </path>
+
                                 </svg>
 
                             </div>
@@ -1244,23 +2815,39 @@
 
                     </div>
 
-                </section>
+                </div>
 
-            </div>
+            </section>
 
 
             <!-- =================================================
-                 SECURITY NOTE
+                 SECURITY
                  ================================================= -->
 
-            <section class="security-notice">
+            <div class="security-card">
 
-                <div class="security-notice-icon">
+                <div class="security-icon">
 
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="5" y="10" width="14" height="10" rx="2"></rect>
-                        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
-                        <circle cx="12" cy="15" r="1"></circle>
+                    <svg viewBox="0 0 24 24">
+
+                        <rect
+                            x="5"
+                            y="10"
+                            width="14"
+                            height="10"
+                            rx="2">
+                        </rect>
+
+                        <path
+                            d="M8 10V7a4 4 0 0 1 8 0v3">
+                        </path>
+
+                        <circle
+                            cx="12"
+                            cy="15"
+                            r="1">
+                        </circle>
+
                     </svg>
 
                 </div>
@@ -1280,10 +2867,12 @@
 
                 </div>
 
-            </section>
+            </div>
 
 
-            <!-- FOOTER -->
+            <!-- =================================================
+                 FOOTER
+                 ================================================= -->
 
             <footer class="admin-footer">
 
@@ -1303,164 +2892,115 @@
 
 
     <!-- =========================================================
-         LOADER CONTROLLER
-         =========================================================
-
-         This controller prevents the page from being permanently
-         blocked when admin.js takes too long or encounters an
-         unexpected JavaScript/API problem.
-
-         admin.js can also call:
-             window.hideAdminLoader();
-
-         Backend administrator authorization must still be
-         enforced server-side.
+         DASHBOARD MOBILE MENU
          ========================================================= -->
 
     <script>
-        (function () {
 
-            const loader = document.getElementById('pageLoader');
-            const loaderText = document.getElementById('loaderText');
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
 
-            if (!loader) {
-                return;
-            }
+                const sidebar =
+                    document.getElementById("sidebar");
 
-            let loaderHidden = false;
+                const menuButton =
+                    document.getElementById("menuButton");
+
+                const sidebarClose =
+                    document.getElementById("sidebarClose");
+
+                const sidebarOverlay =
+                    document.getElementById("sidebarOverlay");
 
 
-            function hideAdminLoader() {
+                function openSidebar() {
 
-                if (loaderHidden) {
-                    return;
-                }
+                    if (!sidebar) return;
 
-                loaderHidden = true;
+                    sidebar.classList.add("open");
 
-                loader.classList.add('hidden');
-
-                document.body.classList.add('admin-ready');
-
-                setTimeout(function () {
-
-                    if (loader) {
-                        loader.style.display = 'none';
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.add("open");
                     }
 
-                }, 450);
-
-            }
-
-
-            function showAdminLoader(message) {
-
-                if (loaderHidden) {
-                    return;
+                    document.body.style.overflow =
+                        "hidden";
                 }
 
-                if (loaderText && message) {
-                    loaderText.textContent = message;
+
+                function closeSidebar() {
+
+                    if (!sidebar) return;
+
+                    sidebar.classList.remove("open");
+
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove("open");
+                    }
+
+                    document.body.style.overflow =
+                        "";
                 }
 
-                loader.classList.remove('hidden');
-                loader.style.display = 'flex';
+
+                if (menuButton) {
+
+                    menuButton.addEventListener(
+                        "click",
+                        openSidebar
+                    );
+
+                }
+
+
+                if (sidebarClose) {
+
+                    sidebarClose.addEventListener(
+                        "click",
+                        closeSidebar
+                    );
+
+                }
+
+
+                if (sidebarOverlay) {
+
+                    sidebarOverlay.addEventListener(
+                        "click",
+                        closeSidebar
+                    );
+
+                }
+
+
+                document.querySelectorAll(
+                    ".sidebar .nav-link"
+                ).forEach(function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        function () {
+
+                            if (
+                                window.innerWidth <= 820
+                            ) {
+                                closeSidebar();
+                            }
+
+                        }
+                    );
+
+                });
 
             }
+        );
 
-
-            /*
-             * Make the functions available to admin.js.
-             */
-
-            window.hideAdminLoader = hideAdminLoader;
-            window.showAdminLoader = showAdminLoader;
-
-
-            /*
-             * Give admin.js a short opportunity to perform its
-             * administrator/session checks.
-             *
-             * If admin.js fails to hide the loader, this prevents
-             * the dashboard from being permanently blocked.
-             */
-
-            document.addEventListener('DOMContentLoaded', function () {
-
-                setTimeout(function () {
-
-                    hideAdminLoader();
-
-                }, 2500);
-
-            });
-
-
-            /*
-             * If all page resources finish loading, remove the
-             * loader shortly afterwards.
-             */
-
-            window.addEventListener('load', function () {
-
-                setTimeout(function () {
-
-                    hideAdminLoader();
-
-                }, 400);
-
-            });
-
-
-            /*
-             * Absolute fail-safe.
-             */
-
-            setTimeout(function () {
-
-                hideAdminLoader();
-
-            }, 5000);
-
-
-        })();
     </script>
 
 
-    <!-- =========================================================
-         EXISTING ADMIN JAVASCRIPT
-         ========================================================= -->
-
+    <!-- YOUR EXISTING ADMIN JAVASCRIPT -->
     <script src="admin.js"></script>
-
-
-    <!-- =========================================================
-         FINAL LOADER FAIL-SAFE
-         ========================================================= -->
-
-    <script>
-        window.addEventListener('error', function () {
-
-            if (typeof window.hideAdminLoader === 'function') {
-                window.hideAdminLoader();
-            }
-
-        });
-
-
-        /*
-         * If admin.js is unavailable or stops execution, the page
-         * will still become visible.
-         */
-
-        setTimeout(function () {
-
-            if (typeof window.hideAdminLoader === 'function') {
-                window.hideAdminLoader();
-            }
-
-        }, 5200);
-    </script>
 
 </body>
 </html>

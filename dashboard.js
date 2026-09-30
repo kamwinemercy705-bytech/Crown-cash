@@ -1,725 +1,538 @@
-/* =========================================================
-   CROWN CASH — DASHBOARD JS
-   ========================================================= */
-
-const API = "https://crown-cash1.onrender.com";
+const API_BASE = "https://crown-cash1.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
-
     loadDashboard();
-
     setupCalculator();
-
     setupMobileMenu();
-
     setupLogout();
 
-    const year =
-        document.getElementById("currentYear");
+    const year = document.getElementById("currentYear");
 
     if (year) {
-        year.textContent =
-            new Date().getFullYear();
+        year.textContent = new Date().getFullYear();
     }
-
 });
 
 
 /* =========================================================
-   LOAD DASHBOARD
-   ========================================================= */
+   API HELPER
+========================================================= */
 
-async function loadDashboard() {
+async function apiFetch(path, options = {}) {
+    const requestOptions = {
+        credentials: "include",
+        ...options
+    };
 
-    try {
-
-        const response =
-            await fetch(
-                `${API}/dashboard.php`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        "Accept": "application/json"
-                    },
-                    cache: "no-store"
-                }
-            );
-
-
-        if (
-            response.status === 401
-        ) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `Dashboard request failed: ${response.status}`
-            );
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.message ||
-                "Dashboard data unavailable."
-            );
-
-        }
-
-
-        /*
-         * Display user information.
-         */
-
-        if (data.user) {
-
-            displayUser(
-                data.user
-            );
-
-        }
-
-
-        /*
-         * Display financial statistics.
-         */
-
-        displayStatistics(
-            data
-        );
-
+    /*
+     * Only add JSON content type when a body is actually
+     * being sent as JSON.
+     */
+    if (requestOptions.body && typeof requestOptions.body === "string") {
+        requestOptions.headers = {
+            "Content-Type": "application/json",
+            ...(requestOptions.headers || {})
+        };
     }
 
-    catch (error) {
+    const response = await fetch(
+        `${API_BASE}/${path}`,
+        requestOptions
+    );
+
+    let data = {};
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        data = {};
+    }
+
+    if (!response.ok || data.success === false) {
+        throw new Error(
+            data.message ||
+            `Request failed (${response.status})`
+        );
+    }
+
+    return data;
+}
+
+
+/* =========================================================
+   LOAD DASHBOARD
+========================================================= */
+
+async function loadDashboard() {
+    try {
+        /*
+         * dashboard.php now returns both user information
+         * and all dashboard statistics.
+         */
+        const data = await apiFetch("dashboard.php");
+
+        if (data.user) {
+            displayUser(data.user);
+        }
+
+        loadStatistics(data);
+
+    } catch (error) {
 
         console.error(
             "Dashboard loading error:",
             error
         );
 
-
         /*
-         * Try profile information as fallback.
+         * Try profile.php as a fallback if the dashboard
+         * endpoint temporarily fails.
          */
-
-        await loadProfile();
-
-    }
-
-}
-
-
-/* =========================================================
-   LOAD PROFILE FALLBACK
-   ========================================================= */
-
-async function loadProfile() {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API}/profile.php`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        "Accept": "application/json"
-                    },
-                    cache: "no-store"
-                }
-            );
-
-
-        if (!response.ok) {
-            throw new Error(
-                "Profile request failed."
-            );
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            data.success === true ||
-            data.user
-        ) {
+        try {
+            const profile = await apiFetch("profile.php");
 
             displayUser(
-                data.user ||
-                data.profile ||
-                data
+                profile.user ||
+                profile ||
+                {}
             );
 
+        } catch (profileError) {
+            console.error(
+                "Profile fallback failed:",
+                profileError
+            );
         }
-
     }
-
-    catch (error) {
-
-        console.warn(
-            "Profile unavailable:",
-            error
-        );
-
-        loadLocalUser();
-
-    }
-
 }
 
 
 /* =========================================================
-   DISPLAY USER
-   ========================================================= */
+   DISPLAY USER INFORMATION
+========================================================= */
 
 function displayUser(user) {
 
-    if (!user) {
-        return;
-    }
-
-
     const firstName =
-        user.first_name ||
         user.firstName ||
+        user.first_name ||
         "";
-
 
     const lastName =
-        user.last_name ||
         user.lastName ||
+        user.last_name ||
         "";
-
 
     const fullName =
         user.full_name ||
-        user.fullName ||
-        user.name ||
-        `${firstName} ${lastName}`.trim();
+        `${firstName} ${lastName}`.trim() ||
+        "User";
 
-
-    const finalName =
-        fullName ||
-        firstName ||
-        "Member";
+    /*
+     * User name
+     */
+    document
+        .querySelectorAll(
+            "[data-user-name], #userName, .user-name"
+        )
+        .forEach(element => {
+            element.textContent = fullName;
+        });
 
 
     /*
-     * Welcome name.
+     * Email
      */
-
-    const welcomeName =
-        document.getElementById(
-            "welcomeName"
-        );
-
-
-    if (welcomeName) {
-
-        welcomeName.textContent =
-            firstName ||
-            finalName.split(" ")[0];
-
-    }
+    document
+        .querySelectorAll(
+            "[data-user-email], #userEmail"
+        )
+        .forEach(element => {
+            element.textContent =
+                user.email || "";
+        });
 
 
     /*
-     * Sidebar name.
+     * Phone
      */
-
-    const sidebarName =
-        document.getElementById(
-            "sidebarUserName"
-        );
-
-
-    if (sidebarName) {
-
-        sidebarName.textContent =
-            finalName;
-
-    }
+    document
+        .querySelectorAll(
+            "[data-user-phone], #userPhone"
+        )
+        .forEach(element => {
+            element.textContent =
+                user.phone || "";
+        });
 
 
     /*
-     * Account type.
+     * Referral code
      */
-
-    const role =
-        String(
-            user.role ||
-            user.account_type ||
-            user.accountType ||
-            ""
-        ).toLowerCase();
-
-
-    const accountElement =
-        document.getElementById(
-            "sidebarAccountType"
-        );
-
-
-    if (accountElement) {
-
-        accountElement.textContent =
-            role === "admin"
-                ? "Administrator"
-                : "Personal Account";
-
-    }
+    document
+        .querySelectorAll(
+            "[data-referral-code], #referralCode"
+        )
+        .forEach(element => {
+            element.textContent =
+                user.referralCode ||
+                user.referral_code ||
+                "";
+        });
 
 
     /*
-     * Admin panel.
+     * Admin-only sections
      */
+    const role = String(
+        user.role || ""
+    ).toLowerCase();
 
-    if (role === "admin") {
+    document
+        .querySelectorAll(
+            ".admin-only, [data-admin-only]"
+        )
+        .forEach(element => {
 
-        showAdminPanel();
-
-    }
-    else {
-
-        hideAdminPanel();
-
-    }
-
-
-    /*
-     * Temporary local display information.
-     */
-
-    try {
-
-        localStorage.setItem(
-            "crown_cash_user",
-            JSON.stringify({
-                first_name: firstName,
-                last_name: lastName,
-                full_name: finalName,
-                role: role
-            })
-        );
-
-    }
-
-    catch (error) {}
-
+            if (role === "admin") {
+                element.style.display = "";
+            } else {
+                element.style.display = "none";
+            }
+        });
 }
 
 
 /* =========================================================
-   DISPLAY STATISTICS
-   ========================================================= */
+   LOAD DASHBOARD STATISTICS
+========================================================= */
 
-function displayStatistics(data) {
-
-    /*
-     * Balance
-     */
-
-    setText(
-        "availableBalance",
-        formatUGX(
-            data.balance ??
-            data.available_balance ??
-            0
-        )
-    );
-
+function loadStatistics(data) {
 
     /*
-     * Total deposits.
-     *
-     * If the HTML does not yet contain totalDeposits,
-     * nothing breaks.
+     * Wallet balance
      */
-
-    setText(
-        "totalDeposits",
-        formatUGX(
-            data.total_deposits ??
-            data.totalDeposits ??
-            0
-        )
-    );
-
-
-    /*
-     * Total investments.
-     */
-
-    setText(
-        "totalInvested",
-        formatUGX(
-            data.total_invested ??
-            data.totalInvested ??
-            0
-        )
-    );
-
-
-    /*
-     * Total accumulated earnings.
-     */
-
-    setText(
-        "totalEarnings",
-        formatUGX(
-            data.total_earnings ??
-            data.totalEarnings ??
-            0
-        )
-    );
-
-
-    /*
-     * Current daily return.
-     */
-
-    setText(
-        "dailyReturnAmount",
-        formatUGX(
-            data.daily_return ??
-            data.dailyReturn ??
-            0
-        )
-    );
-
-
-    /*
-     * Referral team.
-     */
-
-    setText(
-        "referralTeam",
-        data.referral_team ??
-        data.referralTeam ??
-        data.total_team ??
+    const balance = Number(
+        data.balance ??
+        data.available_balance ??
+        data.wallet_balance ??
         0
     );
 
 
     /*
-     * Transactions.
+     * Total deposits
      */
-
-    setText(
-        "transactionCount",
-        data.transaction_count ??
-        data.transactionCount ??
-        data.transactions ??
+    const deposits = Number(
+        data.totalDeposits ??
+        data.total_deposits ??
         0
     );
 
 
     /*
-     * Optional active investment count.
+     * Total invested
      */
+    const invested = Number(
+        data.totalInvested ??
+        data.total_invested ??
+        0
+    );
 
-    setText(
-        "activeInvestments",
-        data.active_investments ??
+
+    /*
+     * Total earnings
+     */
+    const earnings = Number(
+        data.totalEarnings ??
+        data.total_earnings ??
+        0
+    );
+
+
+    /*
+     * Today's return
+     */
+    const daily = Number(
+        data.dailyReturnAmount ??
+        data.daily_return ??
+        0
+    );
+
+
+    /*
+     * Active investments
+     */
+    const active = Number(
         data.activeInvestments ??
+        data.active_investments ??
         0
     );
 
+
+    /*
+     * Referral team
+     */
+    const referrals = Number(
+        data.referralTeam ??
+        data.referral_team ??
+        0
+    );
+
+
+    /*
+     * Transaction count
+     */
+    const transactions = Number(
+        data.transactionCount ??
+        data.transaction_count ??
+        0
+    );
+
+
+    /* -----------------------------------------------------
+       MONEY VALUES
+    ----------------------------------------------------- */
+
+    setMoney(
+        [
+            "#balance",
+            "#availableBalance",
+            "[data-balance]"
+        ],
+        balance
+    );
+
+
+    setMoney(
+        [
+            "#totalDeposits",
+            "[data-total-deposits]"
+        ],
+        deposits
+    );
+
+
+    setMoney(
+        [
+            "#totalInvested",
+            "[data-total-invested]"
+        ],
+        invested
+    );
+
+
+    setMoney(
+        [
+            "#totalEarnings",
+            "[data-total-earnings]"
+        ],
+        earnings
+    );
+
+
+    setMoney(
+        [
+            "#dailyReturn",
+            "#dailyReturnAmount",
+            "[data-daily-return]"
+        ],
+        daily
+    );
+
+
+    /* -----------------------------------------------------
+       COUNTS
+    ----------------------------------------------------- */
+
+    setText(
+        [
+            "#activeInvestments",
+            "[data-active-investments]"
+        ],
+        active
+    );
+
+
+    setText(
+        [
+            "#referralTeam",
+            "[data-referral-team]"
+        ],
+        referrals
+    );
+
+
+    setText(
+        [
+            "#transactionCount",
+            "[data-transaction-count]"
+        ],
+        transactions
+    );
 }
 
 
 /* =========================================================
-   SHOW ADMIN
-   ========================================================= */
+   MONEY FORMATTER
+========================================================= */
 
-function showAdminPanel() {
+function setMoney(selectors, value) {
 
-    const adminNav =
-        document.getElementById(
-            "adminNavLink"
-        );
+    const safeValue =
+        Number.isFinite(Number(value))
+            ? Number(value)
+            : 0;
 
-    const adminCard =
-        document.getElementById(
-            "adminActionCard"
-        );
+    const formatted =
+        `UGX ${Math.round(safeValue).toLocaleString()}`;
 
+    selectors.forEach(selector => {
 
-    if (adminNav) {
+        document
+            .querySelectorAll(selector)
+            .forEach(element => {
+                element.textContent = formatted;
+            });
 
-        adminNav.classList.remove(
-            "hidden"
-        );
-
-    }
-
-
-    if (adminCard) {
-
-        adminCard.classList.remove(
-            "hidden"
-        );
-
-    }
-
+    });
 }
 
 
 /* =========================================================
-   HIDE ADMIN
-   ========================================================= */
+   TEXT FORMATTER
+========================================================= */
 
-function hideAdminPanel() {
+function setText(selectors, value) {
 
-    const adminNav =
-        document.getElementById(
-            "adminNavLink"
-        );
+    selectors.forEach(selector => {
 
-    const adminCard =
-        document.getElementById(
-            "adminActionCard"
-        );
+        document
+            .querySelectorAll(selector)
+            .forEach(element => {
+                element.textContent =
+                    String(value);
+            });
 
-
-    if (adminNav) {
-
-        adminNav.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    if (adminCard) {
-
-        adminCard.classList.add(
-            "hidden"
-        );
-
-    }
-
+    });
 }
 
 
 /* =========================================================
-   LOCAL USER FALLBACK
-   ========================================================= */
-
-function loadLocalUser() {
-
-    try {
-
-        const stored =
-            localStorage.getItem(
-                "crown_cash_user"
-            );
-
-
-        if (!stored) {
-            return;
-        }
-
-
-        displayUser(
-            JSON.parse(stored)
-        );
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Local user data unavailable."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   CALCULATOR
-   ========================================================= */
+   INVESTMENT CALCULATOR
+========================================================= */
 
 function setupCalculator() {
 
-    const input =
-        document.getElementById(
-            "investmentAmount"
+    const amountInput =
+        document.querySelector(
+            "#investmentAmount, #calcAmount"
         );
 
-
-    if (!input) {
-        return;
-    }
-
-
-    input.addEventListener(
-        "input",
-        calculateReturns
-    );
-
-
-    calculateReturns();
-
-}
-
-
-function calculateReturns() {
-
-    const input =
-        document.getElementById(
-            "investmentAmount"
+    const daysInput =
+        document.querySelector(
+            "#investmentDays, #calcDays"
         );
 
-
-    if (!input) {
-        return;
-    }
-
-
-    let amount =
-        Number(input.value) || 0;
-
-
-    if (amount < 0) {
-        amount = 0;
-    }
-
-
-    const DAILY_RATE = 0.10;
-
-
-    const dailyReturn =
-        amount *
-        DAILY_RATE;
-
-
-    const thirtyDayReturn =
-        dailyReturn *
-        30;
-
-
-    const totalAfter30 =
-        amount +
-        thirtyDayReturn;
-
-
-    setText(
-        "dailyReturn",
-        formatUGX(
-            dailyReturn
-        )
-    );
-
+    const result =
+        document.querySelector(
+            "#calculatorResult, #calcResult"
+        );
 
     /*
-     * Also support the new dashboard ID.
+     * If the current dashboard doesn't contain the
+     * calculator, simply stop here.
      */
-
-    setText(
-        "dailyReturnAmount",
-        formatUGX(
-            dailyReturn
-        )
-    );
-
-
-    setText(
-        "monthlyReturn",
-        formatUGX(
-            thirtyDayReturn
-        )
-    );
-
-
-    setText(
-        "totalAfter30",
-        formatUGX(
-            totalAfter30
-        )
-    );
-
-}
-
-
-/* =========================================================
-   FORMAT UGX
-   ========================================================= */
-
-function formatUGX(value) {
-
-    const number =
-        Number(value) || 0;
-
-
-    return (
-        "UGX " +
-        Math.round(number)
-            .toLocaleString("en-UG")
-    );
-
-}
-
-
-/* =========================================================
-   SET TEXT
-   ========================================================= */
-
-function setText(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(id);
-
-
-    if (element) {
-
-        element.textContent =
-            value;
-
+    if (!amountInput || !result) {
+        return;
     }
 
+
+    const calculate = () => {
+
+        const amount =
+            Number(amountInput.value || 0);
+
+        const days =
+            Number(daysInput?.value || 30);
+
+
+        /*
+         * This is the configured application rate.
+         *
+         * It is illustrative and must not be presented
+         * as a guaranteed investment return.
+         */
+        const DAILY_RATE = 0.10;
+
+
+        const daily =
+            amount * DAILY_RATE;
+
+        const total =
+            daily * days;
+
+
+        result.innerHTML = `
+            <div>
+                Daily return:
+                <strong>
+                    UGX ${Math.round(daily).toLocaleString()}
+                </strong>
+            </div>
+
+            <div>
+                Total illustrative return:
+                <strong>
+                    UGX ${Math.round(total).toLocaleString()}
+                </strong>
+            </div>
+
+            <small>
+                This calculator is illustrative.
+                Actual credits depend on approved investments
+                and the configured application rate.
+            </small>
+        `;
+    };
+
+
+    amountInput.addEventListener(
+        "input",
+        calculate
+    );
+
+
+    if (daysInput) {
+        daysInput.addEventListener(
+            "input",
+            calculate
+        );
+    }
+
+
+    calculate();
 }
 
 
 /* =========================================================
    MOBILE MENU
-   ========================================================= */
+========================================================= */
 
 function setupMobileMenu() {
 
     const button =
-        document.getElementById(
-            "menuToggle"
+        document.querySelector(
+            "#menuToggle, .menu-toggle"
+        );
+
+    const menu =
+        document.querySelector(
+            "#mobileMenu, .mobile-menu"
         );
 
 
-    if (!button) {
+    if (!button || !menu) {
         return;
     }
 
@@ -728,102 +541,72 @@ function setupMobileMenu() {
         "click",
         () => {
 
-            button.classList.toggle(
+            menu.classList.toggle(
                 "active"
             );
 
         }
     );
-
 }
 
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
 function setupLogout() {
 
-    const button =
-        document.getElementById(
-            "logoutBtn"
-        );
+    document
+        .querySelectorAll(
+            "#logoutBtn, [data-logout]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                async event => {
+
+                    event.preventDefault();
 
 
-    if (!button) {
-        return;
-    }
+                    try {
 
+                        await fetch(
+                            `${API_BASE}/logout.php`,
+                            {
+                                method: "GET",
+                                credentials: "include"
+                            }
+                        );
 
-    button.addEventListener(
-        "click",
-        async () => {
+                    } catch (error) {
 
-            button.disabled = true;
-
-
-            try {
-
-                await fetch(
-                    `${API}/logout.php`,
-                    {
-                        method: "GET",
-                        credentials: "include"
+                        console.error(
+                            "Logout request failed:",
+                            error
+                        );
                     }
-                );
-
-            }
-
-            catch (error) {
-
-                console.warn(
-                    "Logout request failed:",
-                    error
-                );
-
-            }
 
 
-            try {
+                    /*
+                     * Clear locally stored user information.
+                     */
+                    localStorage.removeItem(
+                        "user"
+                    );
 
-                localStorage.removeItem(
-                    "crown_cash_user"
-                );
-
-                localStorage.removeItem(
-                    "user"
-                );
-
-                localStorage.removeItem(
-                    "loggedIn"
-                );
-
-            }
-
-            catch (error) {}
+                    localStorage.removeItem(
+                        "userData"
+                    );
 
 
-            window.location.href =
-                "login.html";
+                    /*
+                     * Redirect to login.
+                     */
+                    window.location.href =
+                        "/login.html";
+                }
+            );
 
-        }
-    );
-
+        });
 }
-
-
-/* =========================================================
-   GLOBAL COMPATIBILITY
-   ========================================================= */
-
-window.CrownCashDashboard = {
-
-    loadDashboard,
-
-    calculateReturns,
-
-    formatUGX,
-
-    displayStatistics
-
-};

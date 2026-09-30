@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupLogout();
 
     const year = document.getElementById("currentYear");
+
     if (year) {
         year.textContent = new Date().getFullYear();
     }
@@ -14,10 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 /* =========================================================
-   API HELPER
+   API
 ========================================================= */
 
 async function apiFetch(path, options = {}) {
+
     const requestOptions = {
         credentials: "include",
         ...options
@@ -48,7 +50,8 @@ async function apiFetch(path, options = {}) {
 
     if (!response.ok || data.success === false) {
         throw new Error(
-            data.message || `Request failed (${response.status})`
+            data.message ||
+            `Request failed (${response.status})`
         );
     }
 
@@ -61,28 +64,51 @@ async function apiFetch(path, options = {}) {
 ========================================================= */
 
 async function loadDashboard() {
+
     try {
-        const data = await apiFetch("dashboard.php");
+
+        const data =
+            await apiFetch("dashboard.php");
+
+        console.log(
+            "Dashboard user:",
+            data.user
+        );
 
         if (data.user) {
+
             displayUser(data.user);
-            setupAdminPanel(data.user);
+
+            setupAdminPanel(
+                data.user
+            );
         }
 
         loadStatistics(data);
 
     } catch (error) {
-        console.error("Dashboard loading error:", error);
+
+        console.error(
+            "Dashboard loading error:",
+            error
+        );
 
         try {
-            const profile = await apiFetch("profile.php");
 
-            const user = profile.user || profile || {};
+            const profile =
+                await apiFetch("profile.php");
+
+            const user =
+                profile.user ||
+                profile ||
+                {};
 
             displayUser(user);
+
             setupAdminPanel(user);
 
         } catch (profileError) {
+
             console.error(
                 "Profile fallback failed:",
                 profileError
@@ -93,7 +119,7 @@ async function loadDashboard() {
 
 
 /* =========================================================
-   DISPLAY USER
+   USER
 ========================================================= */
 
 function displayUser(user) {
@@ -111,75 +137,67 @@ function displayUser(user) {
     const fullName =
         user.full_name ||
         `${firstName} ${lastName}`.trim() ||
-        "User";
+        "Member";
 
 
     document
         .querySelectorAll(
-            "[data-user-name], #userName, .user-name"
+            "#welcomeName, " +
+            "#sidebarUserName, " +
+            "[data-user-name], " +
+            ".user-name"
         )
         .forEach(element => {
-            element.textContent = fullName;
-        });
 
-
-    document
-        .querySelectorAll(
-            "[data-user-email], #userEmail"
-        )
-        .forEach(element => {
-            element.textContent = user.email || "";
-        });
-
-
-    document
-        .querySelectorAll(
-            "[data-user-phone], #userPhone"
-        )
-        .forEach(element => {
-            element.textContent = user.phone || "";
-        });
-
-
-    document
-        .querySelectorAll(
-            "[data-referral-code], #referralCode"
-        )
-        .forEach(element => {
             element.textContent =
-                user.referralCode ||
-                user.referral_code ||
-                "";
+                fullName;
+
         });
-
-
-    const role = String(
-        user.role || ""
-    ).trim().toLowerCase();
 
 
     document
         .querySelectorAll(
-            ".admin-only, [data-admin-only]"
+            "#userEmail, " +
+            "[data-user-email]"
         )
         .forEach(element => {
 
-            if (role === "admin") {
-                element.style.display = "";
-            } else {
-                element.style.display = "none";
-            }
+            element.textContent =
+                user.email || "";
 
         });
+
+
+    const role =
+        String(
+            user.role || "user"
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const accountType =
+        document.getElementById(
+            "sidebarAccountType"
+        );
+
+
+    if (accountType) {
+
+        accountType.textContent =
+            role === "admin"
+                ? "Administrator Account"
+                : "Personal Account";
+    }
 
 
     /*
-     * Store user information locally only for
-     * interface convenience.
-     *
-     * Authorization is still handled by PHP.
+     * Save only basic interface data.
+     * Backend authorization remains authoritative.
      */
+
     try {
+
         localStorage.setItem(
             "user",
             JSON.stringify({
@@ -189,351 +207,181 @@ function displayUser(user) {
                 role: role
             })
         );
+
     } catch (error) {
+
         console.warn(
-            "Unable to store user information."
+            "Could not save user information."
         );
     }
 }
 
 
 /* =========================================================
-   ADMIN PANEL
+   ADMIN PANEL VISIBILITY
 ========================================================= */
 
 function setupAdminPanel(user) {
 
-    const role = String(
-        user.role || ""
-    ).trim().toLowerCase();
-
-    const existingAdminLinks =
-        document.querySelectorAll(
-            ".admin-only, [data-admin-only]"
-        );
-
-
-    /*
-     * Hide all admin elements for normal users.
-     */
-    if (role !== "admin") {
-
-        existingAdminLinks.forEach(element => {
-            element.style.display = "none";
-        });
-
-        return;
-    }
-
-
-    /*
-     * Admin user.
-     *
-     * If an Admin Panel link already exists,
-     * simply make it visible.
-     */
-
-    if (existingAdminLinks.length > 0) {
-
-        existingAdminLinks.forEach(element => {
-            element.style.display = "";
-        });
-
-        return;
-    }
-
-
-    /*
-     * No Admin Panel link exists in the HTML.
-     *
-     * Create one automatically.
-     */
-
-    createAdminPanelLink();
-}
-
-
-/* =========================================================
-   CREATE ADMIN PANEL LINK
-========================================================= */
-
-function createAdminPanelLink() {
-
-    /*
-     * Do not create it twice.
-     */
-    if (
-        document.querySelector(
-            "#dynamicAdminPanel"
+    const role =
+        String(
+            user.role || ""
         )
-    ) {
-        return;
-    }
+        .trim()
+        .toLowerCase();
 
 
-    const adminLink =
-        document.createElement("a");
-
-    adminLink.id =
-        "dynamicAdminPanel";
-
-    adminLink.className =
-        "admin-panel-link admin-only";
-
-    adminLink.href =
-        "/admin-dashboard.html";
-
-    adminLink.innerHTML = `
-        <span class="admin-panel-icon">
-            ⚙️
-        </span>
-
-        <span class="admin-panel-content">
-            <strong>Admin Panel</strong>
-            <small>
-                Manage Crown Cash
-            </small>
-        </span>
-
-        <span class="admin-panel-arrow">
-            →
-        </span>
-    `;
-
-
-    /*
-     * Try to place it in the sidebar first.
-     */
-
-    const sidebar =
-        document.querySelector(
-            ".sidebar .nav, " +
-            ".sidebar-nav, " +
-            ".admin-nav, " +
-            "aside nav"
+    const adminNav =
+        document.getElementById(
+            "adminNavLink"
         );
 
 
-    if (sidebar) {
-
-        sidebar.appendChild(adminLink);
-
-        addAdminPanelStyles();
-
-        return;
-    }
-
-
-    /*
-     * If no sidebar exists, place it
-     * inside the quick actions section.
-     */
-
-    const quickActions =
-        document.querySelector(
-            ".quick-actions, " +
-            "#quickActions, " +
-            "[data-quick-actions]"
+    const adminCard =
+        document.getElementById(
+            "adminActionCard"
         );
 
 
-    if (quickActions) {
-
-        quickActions.prepend(adminLink);
-
-        addAdminPanelStyles();
-
-        return;
-    }
-
-
     /*
-     * Final fallback:
-     * place it near the top of the dashboard.
+     * Only administrators can see
+     * the Admin Panel.
      */
 
-    const main =
-        document.querySelector(
-            "main, .main, .dashboard-main"
+    if (role === "admin") {
+
+        if (adminNav) {
+
+            adminNav.classList.remove(
+                "hidden"
+            );
+
+            adminNav.style.display =
+                "flex";
+        }
+
+
+        if (adminCard) {
+
+            adminCard.classList.remove(
+                "hidden"
+            );
+
+            adminCard.style.display =
+                "flex";
+        }
+
+
+        console.log(
+            "Admin Panel enabled."
         );
 
-    if (main) {
+    } else {
 
-        main.prepend(adminLink);
+        if (adminNav) {
 
-        addAdminPanelStyles();
+            adminNav.classList.add(
+                "hidden"
+            );
+
+            adminNav.style.display =
+                "none";
+        }
+
+
+        if (adminCard) {
+
+            adminCard.classList.add(
+                "hidden"
+            );
+
+            adminCard.style.display =
+                "none";
+        }
+
+
+        console.log(
+            "Regular member account."
+        );
     }
 }
 
 
 /* =========================================================
-   ADMIN PANEL STYLES
-========================================================= */
-
-function addAdminPanelStyles() {
-
-    if (
-        document.querySelector(
-            "#dynamicAdminPanelStyles"
-        )
-    ) {
-        return;
-    }
-
-
-    const style =
-        document.createElement("style");
-
-    style.id =
-        "dynamicAdminPanelStyles";
-
-
-    style.textContent = `
-        .admin-panel-link {
-            display: flex !important;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-            box-sizing: border-box;
-            padding: 13px 15px;
-            margin-top: 10px;
-            color: #f7f3fa;
-            text-decoration: none;
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(114,16,74,.95),
-                    rgba(77,9,47,.95)
-                );
-            border: 1px solid rgba(255,211,77,.28);
-            border-radius: 14px;
-            box-shadow:
-                0 8px 25px rgba(0,0,0,.22),
-                0 0 18px rgba(228,92,255,.08);
-            transition:
-                transform .2s ease,
-                border-color .2s ease,
-                box-shadow .2s ease;
-        }
-
-        .admin-panel-link:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255,211,77,.7);
-            box-shadow:
-                0 12px 30px rgba(0,0,0,.3),
-                0 0 22px rgba(228,92,255,.16);
-        }
-
-        .admin-panel-icon {
-            width: 38px;
-            height: 38px;
-            flex: 0 0 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255,211,77,.12);
-            border: 1px solid rgba(255,211,77,.2);
-            border-radius: 10px;
-            font-size: 18px;
-        }
-
-        .admin-panel-content {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .admin-panel-content strong {
-            color: #fff;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .admin-panel-content small {
-            margin-top: 2px;
-            color: #aaa1b0;
-            font-size: 11px;
-        }
-
-        .admin-panel-arrow {
-            color: #ffd34d;
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-        @media (max-width: 700px) {
-            .admin-panel-link {
-                margin-top: 8px;
-            }
-        }
-    `;
-
-
-    document.head.appendChild(style);
-}
-
-
-/* =========================================================
-   DASHBOARD STATISTICS
+   STATISTICS
 ========================================================= */
 
 function loadStatistics(data) {
 
-    const balance = Number(
-        data.balance ??
-        data.available_balance ??
-        data.wallet_balance ??
-        0
-    );
+    const balance =
+        Number(
+            data.balance ??
+            data.available_balance ??
+            data.wallet_balance ??
+            0
+        );
 
-    const deposits = Number(
-        data.totalDeposits ??
-        data.total_deposits ??
-        0
-    );
 
-    const invested = Number(
-        data.totalInvested ??
-        data.total_invested ??
-        0
-    );
+    const deposits =
+        Number(
+            data.totalDeposits ??
+            data.total_deposits ??
+            0
+        );
 
-    const earnings = Number(
-        data.totalEarnings ??
-        data.total_earnings ??
-        0
-    );
 
-    const daily = Number(
-        data.dailyReturnAmount ??
-        data.daily_return ??
-        0
-    );
+    const invested =
+        Number(
+            data.totalInvested ??
+            data.total_invested ??
+            0
+        );
 
-    const active = Number(
-        data.activeInvestments ??
-        data.active_investments ??
-        0
-    );
 
-    const referrals = Number(
-        data.referralTeam ??
-        data.referral_team ??
-        0
-    );
+    const earnings =
+        Number(
+            data.totalEarnings ??
+            data.total_earnings ??
+            0
+        );
 
-    const transactions = Number(
-        data.transactionCount ??
-        data.transaction_count ??
-        0
-    );
+
+    const daily =
+        Number(
+            data.dailyReturnAmount ??
+            data.daily_return ??
+            0
+        );
+
+
+    const active =
+        Number(
+            data.activeInvestments ??
+            data.active_investments ??
+            0
+        );
+
+
+    const referrals =
+        Number(
+            data.referralTeam ??
+            data.referral_team ??
+            0
+        );
+
+
+    const transactions =
+        Number(
+            data.transactionCount ??
+            data.transaction_count ??
+            0
+        );
 
 
     setMoney(
         [
-            "#balance",
             "#availableBalance",
+            "#balance",
             "[data-balance]"
         ],
         balance
@@ -606,19 +454,24 @@ function loadStatistics(data) {
 
 
 /* =========================================================
-   MONEY FORMATTER
+   MONEY
 ========================================================= */
 
 function setMoney(selectors, value) {
 
+    const number =
+        Number(value);
+
     const safeValue =
-        Number.isFinite(Number(value))
-            ? Number(value)
+        Number.isFinite(number)
+            ? number
             : 0;
 
 
     const formatted =
-        `UGX ${Math.round(safeValue).toLocaleString()}`;
+        `UGX ${Math.round(
+            safeValue
+        ).toLocaleString()}`;
 
 
     selectors.forEach(selector => {
@@ -637,7 +490,7 @@ function setMoney(selectors, value) {
 
 
 /* =========================================================
-   TEXT FORMATTER
+   TEXT
 ========================================================= */
 
 function setText(selectors, value) {
@@ -658,7 +511,7 @@ function setText(selectors, value) {
 
 
 /* =========================================================
-   INVESTMENT CALCULATOR
+   CALCULATOR
 ========================================================= */
 
 function setupCalculator() {
@@ -673,57 +526,83 @@ function setupCalculator() {
             "#investmentDays, #calcDays"
         );
 
-    const result =
-        document.querySelector(
-            "#calculatorResult, #calcResult"
+    const dailyResult =
+        document.getElementById(
+            "dailyReturn"
+        );
+
+    const monthlyResult =
+        document.getElementById(
+            "monthlyReturn"
+        );
+
+    const totalResult =
+        document.getElementById(
+            "totalAfter30"
         );
 
 
-    if (!amountInput || !result) {
+    if (!amountInput) {
         return;
     }
 
 
-    const calculate = () => {
+    function calculate() {
 
         const amount =
-            Number(amountInput.value || 0);
+            Number(
+                amountInput.value || 0
+            );
+
 
         const days =
-            Number(daysInput?.value || 30);
+            Number(
+                daysInput?.value || 30
+            );
 
-        const DAILY_RATE = 0.10;
+
+        const DAILY_RATE =
+            0.10;
+
 
         const daily =
             amount * DAILY_RATE;
 
-        const total =
+
+        const totalReturn =
             daily * days;
 
 
-        result.innerHTML = `
-            <div>
-                Daily return:
-                <strong>
-                    UGX ${Math.round(daily).toLocaleString()}
-                </strong>
-            </div>
+        const total =
+            amount + totalReturn;
 
-            <div>
-                Total illustrative return:
-                <strong>
-                    UGX ${Math.round(total).toLocaleString()}
-                </strong>
-            </div>
 
-            <small>
-                This calculator is illustrative.
-                Actual credits depend on approved
-                investments and the configured
-                application rate.
-            </small>
-        `;
-    };
+        if (dailyResult) {
+
+            dailyResult.textContent =
+                `UGX ${Math.round(
+                    daily
+                ).toLocaleString()}`;
+        }
+
+
+        if (monthlyResult) {
+
+            monthlyResult.textContent =
+                `UGX ${Math.round(
+                    totalReturn
+                ).toLocaleString()}`;
+        }
+
+
+        if (totalResult) {
+
+            totalResult.textContent =
+                `UGX ${Math.round(
+                    total
+                ).toLocaleString()}`;
+        }
+    }
 
 
     amountInput.addEventListener(
@@ -738,7 +617,6 @@ function setupCalculator() {
             "input",
             calculate
         );
-
     }
 
 
@@ -753,17 +631,17 @@ function setupCalculator() {
 function setupMobileMenu() {
 
     const button =
-        document.querySelector(
-            "#menuToggle, .menu-toggle"
+        document.getElementById(
+            "menuToggle"
         );
 
-    const menu =
+    const sidebar =
         document.querySelector(
-            "#mobileMenu, .mobile-menu"
+            ".sidebar"
         );
 
 
-    if (!button || !menu) {
+    if (!button || !sidebar) {
         return;
     }
 
@@ -771,7 +649,11 @@ function setupMobileMenu() {
     button.addEventListener(
         "click",
         () => {
-            menu.classList.toggle("active");
+
+            sidebar.classList.toggle(
+                "mobile-open"
+            );
+
         }
     );
 }
@@ -783,53 +665,54 @@ function setupMobileMenu() {
 
 function setupLogout() {
 
-    document
-        .querySelectorAll(
-            "#logoutBtn, [data-logout]"
-        )
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.preventDefault();
+    const button =
+        document.getElementById(
+            "logoutBtn"
+        );
 
 
-                    try {
+    if (!button) {
+        return;
+    }
 
-                        await fetch(
-                            `${API_BASE}/logout.php`,
-                            {
-                                method: "GET",
-                                credentials: "include"
-                            }
-                        );
 
-                    } catch (error) {
+    button.addEventListener(
+        "click",
+        async event => {
 
-                        console.error(
-                            "Logout request failed:",
-                            error
-                        );
+            event.preventDefault();
 
+
+            try {
+
+                await fetch(
+                    `${API_BASE}/logout.php`,
+                    {
+                        method: "GET",
+                        credentials: "include"
                     }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+            }
 
 
-                    localStorage.removeItem(
-                        "user"
-                    );
-
-                    localStorage.removeItem(
-                        "userData"
-                    );
-
-
-                    window.location.href =
-                        "/login.html";
-
-                }
+            localStorage.removeItem(
+                "user"
             );
 
-        });
+            localStorage.removeItem(
+                "userData"
+            );
+
+
+            window.location.href =
+                "/login.html";
+        }
+    );
 }

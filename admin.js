@@ -1,6 +1,16 @@
 /* =========================================================
    CROWN CASH - ADMIN DASHBOARD
    admin.js
+
+   Includes:
+   - Admin authentication
+   - Admin profile
+   - Dashboard statistics
+   - Recent transactions/users
+   - Deposit approval/rejection
+   - Withdrawal approval/rejection
+   - Investment approval/rejection
+   - Pending action counts
    ========================================================= */
 
 "use strict";
@@ -14,9 +24,15 @@ const API_BASE = "https://crown-cash1.onrender.com";
 const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
 const PROFILE_API = `${API_BASE}/profile.php`;
 const ADMIN_DASHBOARD_API = `${API_BASE}/admin-dashboard.php`;
+
+const ADMIN_DEPOSITS_API = `${API_BASE}/admin_deposit.php`;
+const ADMIN_WITHDRAWALS_API = `${API_BASE}/admin_withdrawal.php`;
+const ADMIN_INVESTMENTS_API = `${API_BASE}/admin_investments.php`;
+
 const LOGOUT_API = `${API_BASE}/logout.php`;
 
 const REQUEST_TIMEOUT = 15000;
+
 
 /* =========================================================
    STATE
@@ -26,8 +42,13 @@ const AdminDashboard = {
     data: null,
     profile: null,
     authenticated: false,
-    loading: false
+    loading: false,
+
+    deposits: [],
+    withdrawals: [],
+    investments: []
 };
+
 
 /* =========================================================
    DOM HELPERS
@@ -37,7 +58,9 @@ function $(selector) {
     return document.querySelector(selector);
 }
 
+
 function setText(selector, value) {
+
     const element = $(selector);
 
     if (element) {
@@ -45,7 +68,9 @@ function setText(selector, value) {
     }
 }
 
+
 function showElement(selector) {
+
     const element = $(selector);
 
     if (element) {
@@ -53,7 +78,9 @@ function showElement(selector) {
     }
 }
 
+
 function hideElement(selector) {
+
     const element = $(selector);
 
     if (element) {
@@ -61,11 +88,13 @@ function hideElement(selector) {
     }
 }
 
+
 /* =========================================================
    LOADER
    ========================================================= */
 
 function showLoader(message = "Loading Administration") {
+
     const loader = $("#pageLoader");
 
     if (!loader) {
@@ -88,11 +117,14 @@ function showLoader(message = "Loading Administration") {
     }
 
     if (subtitle) {
-        subtitle.textContent = "Securing your administrator session...";
+        subtitle.textContent =
+            "Securing your administrator session...";
     }
 }
 
+
 function hideLoader() {
+
     const loader = $("#pageLoader");
 
     if (!loader) {
@@ -101,63 +133,96 @@ function hideLoader() {
 
     loader.classList.add("hidden");
 
-    /*
-     * Extra protection in case CSS does not contain
-     * the .hidden rule.
-     */
     setTimeout(() => {
+
         if (loader) {
+
             loader.style.display = "none";
-            loader.setAttribute("aria-hidden", "true");
+
+            loader.setAttribute(
+                "aria-hidden",
+                "true"
+            );
         }
+
     }, 350);
 }
+
 
 /* =========================================================
    MESSAGE
    ========================================================= */
 
-function showAdminMessage(message, type = "info") {
-    let messageBox = $("#adminMessage");
+function showAdminMessage(
+    message,
+    type = "info"
+) {
+
+    let messageBox =
+        $("#adminMessage");
 
     if (!messageBox) {
-        messageBox = document.createElement("div");
-        messageBox.id = "adminMessage";
 
-        document.body.appendChild(messageBox);
+        messageBox =
+            document.createElement("div");
+
+        messageBox.id =
+            "adminMessage";
+
+        document.body.appendChild(
+            messageBox
+        );
     }
 
-    messageBox.className = `admin-message ${type}`;
-    messageBox.textContent = message;
+    messageBox.className =
+        `admin-message ${type}`;
 
-    messageBox.style.display = "block";
+    messageBox.textContent =
+        message;
+
+    messageBox.style.display =
+        "block";
 
     setTimeout(() => {
+
         if (messageBox) {
-            messageBox.style.display = "none";
+            messageBox.style.display =
+                "none";
         }
+
     }, 6000);
 }
+
 
 /* =========================================================
    REQUEST WITH TIMEOUT
    ========================================================= */
 
-async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
+async function fetchWithTimeout(
+    url,
+    options = {},
+    timeout = REQUEST_TIMEOUT
+) {
 
-    const controller = new AbortController();
+    const controller =
+        new AbortController();
 
-    const timeoutId = setTimeout(() => {
-        controller.abort();
-    }, timeout);
+    const timeoutId =
+        setTimeout(() => {
+            controller.abort();
+        }, timeout);
 
     try {
 
-        const response = await fetch(url, {
-            ...options,
-            credentials: "include",
-            signal: controller.signal
-        });
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    credentials: "include",
+                    signal: controller.signal
+                }
+            );
 
         clearTimeout(timeoutId);
 
@@ -167,7 +232,11 @@ async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
 
         clearTimeout(timeoutId);
 
-        if (error.name === "AbortError") {
+        if (
+            error.name ===
+            "AbortError"
+        ) {
+
             throw new Error(
                 "The server took too long to respond. Please try again."
             );
@@ -177,29 +246,99 @@ async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
     }
 }
 
+
 /* =========================================================
    SAFE JSON
    ========================================================= */
 
 async function readJson(response) {
 
-    const text = await response.text();
+    const text =
+        await response.text();
 
     if (!text) {
         return {};
     }
 
     try {
+
         return JSON.parse(text);
+
     } catch (error) {
 
-        console.error("Invalid JSON response:", text);
+        console.error(
+            "Invalid JSON response:",
+            text
+        );
 
         throw new Error(
             "The server returned an invalid response."
         );
     }
 }
+
+
+/* =========================================================
+   GENERIC API REQUEST
+   ========================================================= */
+
+async function apiRequest(
+    url,
+    options = {}
+) {
+
+    const response =
+        await fetchWithTimeout(
+            url,
+            {
+                ...options,
+                headers: {
+                    "Accept":
+                        "application/json",
+                    ...(options.headers || {})
+                }
+            }
+        );
+
+    const data =
+        await readJson(response);
+
+    if (
+        response.status === 401
+    ) {
+
+        window.location.href =
+            "login.html";
+
+        throw new Error(
+            "Administrator session expired."
+        );
+    }
+
+    if (
+        response.status === 403
+    ) {
+
+        throw new Error(
+            data.message ||
+            "Administrator access denied."
+        );
+    }
+
+    if (
+        !response.ok ||
+        data.success === false
+    ) {
+
+        throw new Error(
+            data.message ||
+            `Request failed (${response.status})`
+        );
+    }
+
+    return data;
+}
+
 
 /* =========================================================
    AUTHENTICATE ADMIN
@@ -209,57 +348,35 @@ async function authenticateAdmin() {
 
     try {
 
-        const response = await fetchWithTimeout(
-            ADMIN_AUTH_API,
-            {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json"
+        const data =
+            await apiRequest(
+                ADMIN_AUTH_API,
+                {
+                    method: "GET"
                 }
-            }
+            );
+
+        console.log(
+            "Admin authentication:",
+            data
         );
 
-        const data = await readJson(response);
-
-        console.log("Admin authentication:", data);
-
         if (
-            response.ok &&
             data.success === true &&
             data.authenticated === true &&
             data.authorized === true
         ) {
 
-            AdminDashboard.authenticated = true;
+            AdminDashboard.authenticated =
+                true;
 
             return true;
         }
 
-        if (response.status === 401) {
+        window.location.href =
+            "login.html";
 
-            window.location.href = "login.html";
-            return false;
-        }
-
-        if (response.status === 403) {
-
-            showAdminMessage(
-                data.message ||
-                "Administrator access is required.",
-                "error"
-            );
-
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 1800);
-
-            return false;
-        }
-
-        throw new Error(
-            data.message ||
-            "Administrator authentication failed."
-        );
+        return false;
 
     } catch (error) {
 
@@ -278,6 +395,7 @@ async function authenticateAdmin() {
     }
 }
 
+
 /* =========================================================
    LOAD ADMIN PROFILE
    ========================================================= */
@@ -286,32 +404,16 @@ async function loadAdminProfile() {
 
     try {
 
-        const response = await fetchWithTimeout(
-            PROFILE_API,
-            {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json"
+        const data =
+            await apiRequest(
+                PROFILE_API,
+                {
+                    method: "GET"
                 }
-            }
-        );
-
-        const data = await readJson(response);
-
-        console.log("Admin profile:", data);
-
-        if (
-            !response.ok ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data.message ||
-                "Unable to load administrator profile."
             );
-        }
 
-        AdminDashboard.profile = data.user || {};
+        AdminDashboard.profile =
+            data.user || {};
 
         renderAdminProfile(
             AdminDashboard.profile
@@ -326,20 +428,35 @@ async function loadAdminProfile() {
             error
         );
 
-        /*
-         * Profile failure should not completely
-         * destroy the dashboard.
-         */
+        setText(
+            "#adminName",
+            "Administrator"
+        );
 
-        setText("#adminName", "Administrator");
-        setText("#adminFirstName", "Administrator");
-        setText("#headerUserName", "Administrator");
-        setText("#accountName", "Administrator");
-        setText("#adminAccountType", "Admin Account");
+        setText(
+            "#adminFirstName",
+            "Administrator"
+        );
+
+        setText(
+            "#headerUserName",
+            "Administrator"
+        );
+
+        setText(
+            "#accountName",
+            "Administrator"
+        );
+
+        setText(
+            "#adminAccountType",
+            "Admin Account"
+        );
 
         return null;
     }
 }
+
 
 /* =========================================================
    RENDER ADMIN PROFILE
@@ -349,27 +466,36 @@ function renderAdminProfile(user) {
 
     const fullName =
         user.full_name ||
+        user.fullName ||
         [
-            user.first_name,
-            user.last_name
+            user.first_name ||
+            user.firstName,
+
+            user.last_name ||
+            user.lastName
         ]
             .filter(Boolean)
             .join(" ") ||
         "Administrator";
 
+
     const firstName =
         user.first_name ||
+        user.firstName ||
         fullName.split(" ")[0] ||
         "Administrator";
+
 
     const email =
         user.email ||
         "";
 
+
     const accountType =
         user.account_type ||
         user.role ||
         "admin";
+
 
     const avatarLetter =
         firstName
@@ -377,30 +503,51 @@ function renderAdminProfile(user) {
             .toUpperCase() ||
         "A";
 
-    setText("#adminName", fullName);
-    setText("#adminFirstName", firstName);
-    setText("#headerUserName", fullName);
-    setText("#accountName", fullName);
-    setText("#adminEmail", email);
-    setText("#adminAccountType", formatAccountType(accountType));
 
-    const avatars = [
+    setText(
+        "#adminName",
+        fullName
+    );
+
+    setText(
+        "#adminFirstName",
+        firstName
+    );
+
+    setText(
+        "#headerUserName",
+        fullName
+    );
+
+    setText(
+        "#accountName",
+        fullName
+    );
+
+    setText(
+        "#adminEmail",
+        email
+    );
+
+    setText(
+        "#adminAccountType",
+        formatAccountType(
+            accountType
+        )
+    );
+
+
+    [
         "#adminAvatar",
         "#accountAvatar"
-    ];
+    ].forEach(selector => {
 
-    avatars.forEach(selector => {
-
-        const element = $(selector);
+        const element =
+            $(selector);
 
         if (!element) {
             return;
         }
-
-        /*
-         * Only replace text when the avatar is a text
-         * avatar. Existing SVGs/images remain untouched.
-         */
 
         if (
             element.tagName === "IMG"
@@ -408,64 +555,30 @@ function renderAdminProfile(user) {
             return;
         }
 
-        element.textContent = avatarLetter;
+        element.textContent =
+            avatarLetter;
     });
 }
 
+
 /* =========================================================
-   LOAD DASHBOARD DATA
+   LOAD MAIN DASHBOARD
    ========================================================= */
 
 async function loadDashboardData() {
 
     try {
 
-        const response = await fetchWithTimeout(
-            ADMIN_DASHBOARD_API,
-            {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json"
+        const data =
+            await apiRequest(
+                ADMIN_DASHBOARD_API,
+                {
+                    method: "GET"
                 }
-            }
-        );
-
-        const data = await readJson(response);
-
-        console.log(
-            "Admin dashboard response:",
-            data
-        );
-
-        if (response.status === 401) {
-
-            window.location.href = "login.html";
-            return null;
-        }
-
-        if (response.status === 403) {
-
-            showAdminMessage(
-                data.message ||
-                "Administrator access denied.",
-                "error"
             );
 
-            return null;
-        }
-
-        if (
-            !response.ok ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data.message ||
-                "Unable to load dashboard data."
-            );
-        }
-
-        AdminDashboard.data = data;
+        AdminDashboard.data =
+            data;
 
         renderDashboard(data);
 
@@ -477,10 +590,6 @@ async function loadDashboardData() {
             "Dashboard data error:",
             error
         );
-
-        /*
-         * Do NOT keep the loading screen forever.
-         */
 
         showAdminMessage(
             error.message ||
@@ -494,8 +603,9 @@ async function loadDashboardData() {
     }
 }
 
+
 /* =========================================================
-   RENDER DASHBOARD
+   RENDER MAIN DASHBOARD
    ========================================================= */
 
 function renderDashboard(data) {
@@ -505,9 +615,6 @@ function renderDashboard(data) {
         data.summary ||
         data;
 
-    /* -------------------------------
-       USERS
-       ------------------------------- */
 
     setText(
         "#totalUsers",
@@ -524,6 +631,7 @@ function renderDashboard(data) {
         )
     );
 
+
     setText(
         "#activeUsers",
         formatNumber(
@@ -538,9 +646,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       DEPOSITS
-       ------------------------------- */
 
     setText(
         "#totalDeposits",
@@ -557,6 +662,7 @@ function renderDashboard(data) {
         )
     );
 
+
     setText(
         "#pendingDeposits",
         formatCurrency(
@@ -571,9 +677,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       WITHDRAWALS
-       ------------------------------- */
 
     setText(
         "#totalWithdrawals",
@@ -590,6 +693,7 @@ function renderDashboard(data) {
         )
     );
 
+
     setText(
         "#pendingWithdrawals",
         formatCurrency(
@@ -604,9 +708,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       INVESTMENTS
-       ------------------------------- */
 
     setText(
         "#totalInvestments",
@@ -623,9 +724,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       ACTIVE INVESTMENTS
-       ------------------------------- */
 
     setText(
         "#activeInvestments",
@@ -641,9 +739,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       REFERRALS
-       ------------------------------- */
 
     setText(
         "#totalReferrals",
@@ -660,9 +755,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       TRANSACTIONS
-       ------------------------------- */
 
     setText(
         "#totalTransactions",
@@ -679,9 +771,6 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       SUPPORT
-       ------------------------------- */
 
     setText(
         "#openTickets",
@@ -698,9 +787,21 @@ function renderDashboard(data) {
         )
     );
 
-    /* -------------------------------
-       RECENT TRANSACTIONS
-       ------------------------------- */
+
+    setText(
+        "#newAccounts",
+        formatNumber(
+            getValue(
+                stats,
+                [
+                    "new_accounts",
+                    "newAccounts"
+                ],
+                0
+            )
+        )
+    );
+
 
     renderRecentTransactions(
         data.recent_transactions ||
@@ -708,9 +809,6 @@ function renderDashboard(data) {
         []
     );
 
-    /* -------------------------------
-       RECENT USERS
-       ------------------------------- */
 
     renderRecentUsers(
         data.recent_users ||
@@ -719,8 +817,9 @@ function renderDashboard(data) {
     );
 }
 
+
 /* =========================================================
-   DASHBOARD ERROR STATE
+   DASHBOARD ERROR
    ========================================================= */
 
 function renderDashboardError() {
@@ -739,49 +838,30 @@ function renderDashboardError() {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle cx="12" cy="12" r="9"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        stroke-width="1.8">
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9">
+                        </circle>
+                        <line
+                            x1="12"
+                            y1="8"
+                            x2="12"
+                            y2="12">
+                        </line>
+                        <line
+                            x1="12"
+                            y1="16"
+                            x2="12.01"
+                            y2="16">
+                        </line>
                     </svg>
                 </div>
 
-                <strong>Unable to load activity</strong>
-
-                <span>
-                    Check your connection and refresh the page.
-                </span>
-            </div>
-        `;
-    }
-
-    const usersContainer =
-        $("#recentUsers");
-
-    if (usersContainer) {
-
-        usersContainer.innerHTML = `
-            <div class="admin-empty-state">
-                <div class="empty-icon">
-                    <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle cx="12" cy="8" r="3"></circle>
-                        <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path>
-                    </svg>
-                </div>
-
-                <strong>Unable to load users</strong>
+                <strong>
+                    Unable to load activity
+                </strong>
 
                 <span>
                     Check your connection and refresh the page.
@@ -791,11 +871,14 @@ function renderDashboardError() {
     }
 }
 
+
 /* =========================================================
    RECENT TRANSACTIONS
    ========================================================= */
 
-function renderRecentTransactions(transactions) {
+function renderRecentTransactions(
+    transactions
+) {
 
     const container =
         $("#recentTransactions");
@@ -818,16 +901,15 @@ function renderRecentTransactions(transactions) {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
+                        stroke-width="1.8">
                         <path d="M3 12h18"></path>
                         <path d="M12 3v18"></path>
                     </svg>
                 </div>
 
-                <strong>No transactions yet</strong>
+                <strong>
+                    No transactions yet
+                </strong>
 
                 <span>
                     Recent platform activity will appear here.
@@ -838,85 +920,88 @@ function renderRecentTransactions(transactions) {
         return;
     }
 
-    container.innerHTML = transactions
-        .slice(0, 8)
-        .map(transaction => {
 
-            const type =
-                transaction.type ||
-                transaction.transaction_type ||
-                "transaction";
+    container.innerHTML =
+        transactions
+            .slice(0, 8)
+            .map(transaction => {
 
-            const status =
-                transaction.status ||
-                "pending";
+                const type =
+                    transaction.type ||
+                    transaction.transaction_type ||
+                    "transaction";
 
-            const amount =
-                getNumericValue(
-                    transaction.amount
-                );
+                const status =
+                    transaction.status ||
+                    "pending";
 
-            const name =
-                transaction.full_name ||
-                transaction.user_name ||
-                transaction.name ||
-                transaction.email ||
-                "Crown Cash User";
+                const amount =
+                    getNumericValue(
+                        transaction.amount
+                    );
 
-            const date =
-                transaction.created_at ||
-                transaction.date ||
-                transaction.timestamp ||
-                "";
+                const name =
+                    transaction.full_name ||
+                    transaction.user_name ||
+                    transaction.name ||
+                    transaction.email ||
+                    "Crown Cash User";
 
-            return `
-                <div class="transaction-row">
 
-                    <div class="transaction-icon ${getTypeClass(type)}">
+                return `
+                    <div class="transaction-row">
 
-                        ${getTransactionIcon(type)}
+                        <div class="transaction-icon ${getTypeClass(type)}">
+
+                            ${getTransactionIcon(type)}
+
+                        </div>
+
+                        <div class="transaction-info">
+
+                            <strong>
+                                ${escapeHtml(
+                                    formatTransactionType(type)
+                                )}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(name)}
+                            </span>
+
+                        </div>
+
+                        <div class="transaction-value">
+
+                            <strong>
+                                ${formatCurrency(amount)}
+                            </strong>
+
+                            <span
+                                class="status-badge ${getStatusClass(status)}">
+
+                                ${escapeHtml(
+                                    formatStatus(status)
+                                )}
+
+                            </span>
+
+                        </div>
 
                     </div>
-
-                    <div class="transaction-info">
-
-                        <strong>
-                            ${escapeHtml(
-                                formatTransactionType(type)
-                            )}
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(name)}
-                        </span>
-
-                    </div>
-
-                    <div class="transaction-value">
-
-                        <strong>
-                            ${formatCurrency(amount)}
-                        </strong>
-
-                        <span class="status-badge ${getStatusClass(status)}">
-                            ${escapeHtml(
-                                formatStatus(status)
-                            )}
-                        </span>
-
-                    </div>
-
-                </div>
-            `;
-        })
-        .join("");
+                `;
+            })
+            .join("");
 }
+
 
 /* =========================================================
    RECENT USERS
    ========================================================= */
 
-function renderRecentUsers(users) {
+function renderRecentUsers(
+    users
+) {
 
     const container =
         $("#recentUsers");
@@ -941,17 +1026,25 @@ function renderRecentUsers(users) {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <circle cx="12" cy="8" r="3"></circle>
-                        <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path>
+                        stroke-width="1.8">
+
+                        <circle
+                            cx="12"
+                            cy="8"
+                            r="3">
+                        </circle>
+
+                        <path
+                            d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6">
+                        </path>
+
                     </svg>
 
                 </div>
 
-                <strong>No users yet</strong>
+                <strong>
+                    No users yet
+                </strong>
 
                 <span>
                     Newly registered users will appear here.
@@ -963,408 +1056,1633 @@ function renderRecentUsers(users) {
         return;
     }
 
-    container.innerHTML = users
-        .slice(0, 8)
-        .map(user => {
+
+    container.innerHTML =
+        users
+            .slice(0, 8)
+            .map(user => {
+
+                const name =
+                    user.full_name ||
+                    user.fullName ||
+                    [
+                        user.first_name ||
+                        user.firstName,
+
+                        user.last_name ||
+                        user.lastName
+                    ]
+                        .filter(Boolean)
+                        .join(" ") ||
+                    "User";
+
+
+                const email =
+                    user.email ||
+                    "No email";
+
+
+                const status =
+                    user.status ||
+                    "active";
+
+
+                const firstLetter =
+                    name
+                        .charAt(0)
+                        .toUpperCase();
+
+
+                return `
+                    <div class="user-row">
+
+                        <div class="user-avatar">
+                            ${escapeHtml(firstLetter)}
+                        </div>
+
+                        <div class="user-info">
+
+                            <strong>
+                                ${escapeHtml(name)}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(email)}
+                            </span>
+
+                        </div>
+
+                        <div class="user-status">
+
+                            <span
+                                class="status-badge ${getStatusClass(status)}">
+
+                                ${escapeHtml(
+                                    formatStatus(status)
+                                )}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+                `;
+            })
+            .join("");
+}
+
+
+/* =========================================================
+   APPROVAL CENTER
+   ========================================================= */
+
+function createApprovalCenter() {
+
+    let existing =
+        $("#adminApprovalCenter");
+
+    if (existing) {
+        return existing;
+    }
+
+
+    const pendingSection =
+        document.querySelector(
+            ".pending-section"
+        );
+
+    if (!pendingSection) {
+        return null;
+    }
+
+
+    const section =
+        document.createElement(
+            "section"
+        );
+
+    section.id =
+        "adminApprovalCenter";
+
+    section.className =
+        "admin-approval-center";
+
+
+    section.innerHTML = `
+
+        <style>
+
+            .admin-approval-center {
+                width: 100%;
+                max-width: 1200px;
+                margin: 34px auto 0;
+            }
+
+            .approval-heading {
+                margin-bottom: 18px;
+            }
+
+            .approval-heading .section-label {
+                display: block;
+                margin-bottom: 10px;
+                color: #ed4ac1;
+                font-size: 12px;
+                font-weight: 900;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+            }
+
+            .approval-heading h2 {
+                color: #ffffff;
+                font-size: 29px;
+                font-weight: 820;
+                letter-spacing: -0.7px;
+            }
+
+            .approval-tabs {
+                display: flex;
+                gap: 9px;
+                flex-wrap: wrap;
+                margin-bottom: 15px;
+            }
+
+            .approval-tab {
+                min-height: 40px;
+                padding: 0 16px;
+                border-radius: 11px;
+                border: 1px solid rgba(255,255,255,0.08);
+                background: rgba(255,255,255,0.035);
+                color: rgba(255,255,255,0.65);
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 750;
+            }
+
+            .approval-tab.active {
+                color: #170812;
+                background:
+                    linear-gradient(
+                        110deg,
+                        #ffd04c,
+                        #ff43b4
+                    );
+                border-color: transparent;
+            }
+
+            .approval-panel {
+                display: none;
+            }
+
+            .approval-panel.active {
+                display: block;
+            }
+
+            .approval-list {
+                display: flex;
+                flex-direction: column;
+                gap: 11px;
+            }
+
+            .approval-item {
+                padding: 18px;
+                border-radius: 18px;
+                background:
+                    linear-gradient(
+                        145deg,
+                        rgba(42,20,44,0.88),
+                        rgba(21,11,25,0.92)
+                    );
+                border:
+                    1px solid rgba(255,255,255,0.07);
+            }
+
+            .approval-item-top {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 15px;
+            }
+
+            .approval-user {
+                min-width: 0;
+            }
+
+            .approval-user strong {
+                display: block;
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .approval-user span {
+                display: block;
+                margin-top: 4px;
+                color: rgba(255,255,255,0.45);
+                font-size: 11px;
+            }
+
+            .approval-amount {
+                text-align: right;
+                white-space: nowrap;
+            }
+
+            .approval-amount strong {
+                display: block;
+                color: #ffd343;
+                font-size: 16px;
+                font-weight: 850;
+            }
+
+            .approval-details {
+                display: grid;
+                grid-template-columns:
+                    repeat(4, minmax(0, 1fr));
+                gap: 9px;
+                margin-top: 15px;
+            }
+
+            .approval-detail {
+                padding: 10px;
+                border-radius: 11px;
+                background: rgba(255,255,255,0.025);
+                border:
+                    1px solid rgba(255,255,255,0.05);
+            }
+
+            .approval-detail span {
+                display: block;
+                color: rgba(255,255,255,0.36);
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.7px;
+            }
+
+            .approval-detail strong {
+                display: block;
+                margin-top: 4px;
+                color: rgba(255,255,255,0.86);
+                font-size: 11px;
+                word-break: break-word;
+            }
+
+            .approval-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 9px;
+                margin-top: 15px;
+            }
+
+            .approval-btn {
+                min-height: 40px;
+                padding: 0 17px;
+                border-radius: 11px;
+                border: 1px solid transparent;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 800;
+            }
+
+            .approval-btn:disabled {
+                opacity: 0.55;
+                cursor: not-allowed;
+            }
+
+            .approval-btn.approve {
+                color: #091007;
+                background:
+                    linear-gradient(
+                        110deg,
+                        #b9f57c,
+                        #58d66b
+                    );
+            }
+
+            .approval-btn.reject {
+                color: #ffffff;
+                background: rgba(255,60,100,0.08);
+                border-color: rgba(255,60,100,0.25);
+            }
+
+            .approval-empty {
+                padding: 35px 20px;
+                text-align: center;
+                border-radius: 18px;
+                background: rgba(255,255,255,0.025);
+                border:
+                    1px solid rgba(255,255,255,0.06);
+                color: rgba(255,255,255,0.40);
+            }
+
+            .approval-empty strong {
+                display: block;
+                color: rgba(255,255,255,0.75);
+                font-size: 13px;
+            }
+
+            .approval-empty span {
+                display: block;
+                margin-top: 5px;
+                font-size: 11px;
+            }
+
+            @media (max-width: 700px) {
+
+                .approval-details {
+                    grid-template-columns:
+                        repeat(2, minmax(0, 1fr));
+                }
+
+                .approval-item-top {
+                    flex-direction: column;
+                }
+
+                .approval-amount {
+                    text-align: left;
+                }
+
+                .approval-actions {
+                    justify-content: stretch;
+                }
+
+                .approval-btn {
+                    flex: 1;
+                }
+            }
+
+            @media (max-width: 430px) {
+
+                .approval-details {
+                    grid-template-columns: 1fr;
+                }
+
+                .approval-actions {
+                    flex-direction: column;
+                }
+            }
+
+        </style>
+
+
+        <div class="approval-heading">
+
+            <span class="section-label">
+                Administrator Controls
+            </span>
+
+            <h2>
+                Approvals &amp; Rejections
+            </h2>
+
+        </div>
+
+
+        <div class="approval-tabs">
+
+            <button
+                type="button"
+                class="approval-tab active"
+                data-approval-tab="deposits">
+
+                Deposits
+                <span id="approvalDepositCount">
+                    (0)
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="approval-tab"
+                data-approval-tab="withdrawals">
+
+                Withdrawals
+                <span id="approvalWithdrawalCount">
+                    (0)
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="approval-tab"
+                data-approval-tab="investments">
+
+                Investments
+                <span id="approvalInvestmentCount">
+                    (0)
+                </span>
+
+            </button>
+
+        </div>
+
+
+        <div
+            class="approval-panel active"
+            id="approvalDeposits">
+
+            <div
+                class="approval-list"
+                id="depositApprovalList">
+            </div>
+
+        </div>
+
+
+        <div
+            class="approval-panel"
+            id="approvalWithdrawals">
+
+            <div
+                class="approval-list"
+                id="withdrawalApprovalList">
+            </div>
+
+        </div>
+
+
+        <div
+            class="approval-panel"
+            id="approvalInvestments">
+
+            <div
+                class="approval-list"
+                id="investmentApprovalList">
+            </div>
+
+        </div>
+
+    `;
+
+
+    pendingSection.insertAdjacentElement(
+        "afterend",
+        section
+    );
+
+
+    setupApprovalTabs();
+
+    return section;
+}
+
+
+/* =========================================================
+   APPROVAL TABS
+   ========================================================= */
+
+function setupApprovalTabs() {
+
+    document
+        .querySelectorAll(
+            "[data-approval-tab]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const target =
+                        button.dataset.approvalTab;
+
+
+                    document
+                        .querySelectorAll(
+                            "[data-approval-tab]"
+                        )
+                        .forEach(tab => {
+
+                            tab.classList.toggle(
+                                "active",
+                                tab === button
+                            );
+                        });
+
+
+                    document
+                        .querySelectorAll(
+                            ".approval-panel"
+                        )
+                        .forEach(panel => {
+
+                            panel.classList.remove(
+                                "active"
+                            );
+                        });
+
+
+                    const panel =
+                        document.querySelector(
+                            `#approval${capitalize(target)}`
+                        );
+
+                    if (panel) {
+                        panel.classList.add(
+                            "active"
+                        );
+                    }
+
+                }
+            );
+
+        });
+}
+
+
+/* =========================================================
+   LOAD ALL APPROVAL DATA
+   ========================================================= */
+
+async function loadApprovalData() {
+
+    createApprovalCenter();
+
+    try {
+
+        const [
+            depositData,
+            withdrawalData,
+            investmentData
+        ] = await Promise.all([
+
+            apiRequest(
+                ADMIN_DEPOSITS_API,
+                {
+                    method: "GET"
+                }
+            ),
+
+            apiRequest(
+                ADMIN_WITHDRAWALS_API,
+                {
+                    method: "GET"
+                }
+            ),
+
+            apiRequest(
+                ADMIN_INVESTMENTS_API,
+                {
+                    method: "GET"
+                }
+            )
+
+        ]);
+
+
+        AdminDashboard.deposits =
+            Array.isArray(
+                depositData.deposits
+            )
+                ? depositData.deposits
+                : [];
+
+
+        AdminDashboard.withdrawals =
+            Array.isArray(
+                withdrawalData.withdrawals
+            )
+                ? withdrawalData.withdrawals
+                : [];
+
+
+        AdminDashboard.investments =
+            Array.isArray(
+                investmentData.investments
+            )
+                ? investmentData.investments
+                : [];
+
+
+        renderApprovalCenter();
+
+        updatePendingBadges();
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Approval data error:",
+            error
+        );
+
+        showAdminMessage(
+            error.message ||
+            "Unable to load approval requests.",
+            "error"
+        );
+
+        renderApprovalError();
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   RENDER APPROVAL CENTER
+   ========================================================= */
+
+function renderApprovalCenter() {
+
+    renderDepositApprovals();
+
+    renderWithdrawalApprovals();
+
+    renderInvestmentApprovals();
+
+    updatePendingBadges();
+}
+
+
+/* =========================================================
+   DEPOSITS
+   ========================================================= */
+
+function renderDepositApprovals() {
+
+    const container =
+        $("#depositApprovalList");
+
+    if (!container) {
+        return;
+    }
+
+
+    const pending =
+        AdminDashboard.deposits.filter(
+            item =>
+                String(
+                    item.status ||
+                    "pending"
+                ).toLowerCase()
+                === "pending"
+        );
+
+
+    setText(
+        "#approvalDepositCount",
+        `(${pending.length})`
+    );
+
+
+    if (pending.length === 0) {
+
+        container.innerHTML =
+            approvalEmpty(
+                "No pending deposits",
+                "All deposit requests have been processed."
+            );
+
+        return;
+    }
+
+
+    container.innerHTML =
+        pending.map(deposit => {
+
+            const id =
+                deposit.id ||
+                deposit._id ||
+                "";
+
 
             const name =
-                user.full_name ||
-                [
-                    user.first_name,
-                    user.last_name
-                ]
-                    .filter(Boolean)
-                    .join(" ") ||
-                "User";
+                deposit.user_name ||
+                deposit.customer_name ||
+                deposit.email ||
+                "Crown Cash User";
+
 
             const email =
-                user.email ||
+                deposit.email ||
                 "No email";
 
-            const status =
-                user.status ||
-                "active";
 
-            const firstLetter =
-                name
-                    .charAt(0)
-                    .toUpperCase();
+            const amount =
+                getNumericValue(
+                    deposit.amount
+                );
+
+
+            const method =
+                deposit.payment_method ||
+                deposit.paymentMethod ||
+                "Mobile Money";
+
+
+            const reference =
+                deposit.transaction_reference ||
+                deposit.transactionReference ||
+                "—";
+
 
             return `
-                <div class="user-row">
+                <div class="approval-item">
 
-                    <div class="user-avatar">
-                        ${escapeHtml(firstLetter)}
+                    <div class="approval-item-top">
+
+                        <div class="approval-user">
+
+                            <strong>
+                                ${escapeHtml(name)}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(email)}
+                            </span>
+
+                        </div>
+
+
+                        <div class="approval-amount">
+
+                            <strong>
+                                ${formatCurrency(amount)}
+                            </strong>
+
+                            <span class="status-badge warning">
+                                Pending
+                            </span>
+
+                        </div>
+
                     </div>
 
-                    <div class="user-info">
 
-                        <strong>
-                            ${escapeHtml(name)}
-                        </strong>
+                    <div class="approval-details">
 
-                        <span>
-                            ${escapeHtml(email)}
-                        </span>
+                        ${approvalDetail(
+                            "Payment Method",
+                            method
+                        )}
+
+                        ${approvalDetail(
+                            "Reference",
+                            reference
+                        )}
+
+                        ${approvalDetail(
+                            "Merchant",
+                            deposit.merchant_code || "—"
+                        )}
+
+                        ${approvalDetail(
+                            "Date",
+                            formatDate(deposit.created_at)
+                        )}
 
                     </div>
 
-                    <div class="user-status">
 
-                        <span class="status-badge ${getStatusClass(status)}">
-                            ${escapeHtml(
-                                formatStatus(status)
-                            )}
-                        </span>
+                    <div class="approval-actions">
+
+                        <button
+                            type="button"
+                            class="approval-btn reject"
+                            data-approval-type="deposit"
+                            data-approval-action="reject"
+                            data-id="${escapeHtml(id)}">
+
+                            Reject
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="approval-btn approve"
+                            data-approval-type="deposit"
+                            data-approval-action="approve"
+                            data-id="${escapeHtml(id)}">
+
+                            Approve Deposit
+
+                        </button>
 
                     </div>
 
                 </div>
             `;
-        })
-        .join("");
+
+        }).join("");
 }
 
+
 /* =========================================================
-   TRANSACTION ICONS
+   WITHDRAWALS
    ========================================================= */
 
-function getTransactionIcon(type) {
+function renderWithdrawalApprovals() {
 
-    const value =
-        String(type)
-            .toLowerCase();
+    const container =
+        $("#withdrawalApprovalList");
 
-    if (
-        value.includes("deposit") ||
-        value.includes("credit")
-    ) {
-
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 16V8"></path>
-                <path d="M9 11l3-3 3 3"></path>
-            </svg>
-        `;
+    if (!container) {
+        return;
     }
 
-    if (
-        value.includes("withdraw")
-    ) {
 
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 8v8"></path>
-                <path d="M9 13l3 3 3-3"></path>
-            </svg>
-        `;
+    const pending =
+        AdminDashboard.withdrawals.filter(
+            item =>
+                String(
+                    item.status ||
+                    "pending"
+                ).toLowerCase()
+                === "pending"
+        );
+
+
+    setText(
+        "#approvalWithdrawalCount",
+        `(${pending.length})`
+    );
+
+
+    if (pending.length === 0) {
+
+        container.innerHTML =
+            approvalEmpty(
+                "No pending withdrawals",
+                "All withdrawal requests have been processed."
+            );
+
+        return;
     }
 
-    if (
-        value.includes("investment")
-    ) {
 
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M4 19V9"></path>
-                <path d="M10 19V5"></path>
-                <path d="M16 19v-7"></path>
-                <path d="M22 19V3"></path>
-            </svg>
-        `;
+    container.innerHTML =
+        pending.map(withdrawal => {
+
+            const id =
+                withdrawal.id ||
+                withdrawal._id ||
+                "";
+
+
+            const name =
+                withdrawal.user_name ||
+                withdrawal.email ||
+                "Crown Cash User";
+
+
+            const email =
+                withdrawal.email ||
+                "No email";
+
+
+            const amount =
+                getNumericValue(
+                    withdrawal.amount
+                );
+
+
+            const fee =
+                getNumericValue(
+                    withdrawal.fee
+                );
+
+
+            const net =
+                getNumericValue(
+                    withdrawal.net_amount
+                );
+
+
+            const phone =
+                withdrawal.phone ||
+                withdrawal.account ||
+                "—";
+
+
+            const reference =
+                withdrawal.reference ||
+                withdrawal.transaction_reference ||
+                "—";
+
+
+            return `
+                <div class="approval-item">
+
+                    <div class="approval-item-top">
+
+                        <div class="approval-user">
+
+                            <strong>
+                                ${escapeHtml(name)}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(email)}
+                            </span>
+
+                        </div>
+
+
+                        <div class="approval-amount">
+
+                            <strong>
+                                ${formatCurrency(amount)}
+                            </strong>
+
+                            <span class="status-badge warning">
+                                Pending
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="approval-details">
+
+                        ${approvalDetail(
+                            "Phone",
+                            phone
+                        )}
+
+                        ${approvalDetail(
+                            "Fee",
+                            formatCurrency(fee)
+                        )}
+
+                        ${approvalDetail(
+                            "Net Payout",
+                            formatCurrency(net)
+                        )}
+
+                        ${approvalDetail(
+                            "Reference",
+                            reference
+                        )}
+
+                    </div>
+
+
+                    <div class="approval-actions">
+
+                        <button
+                            type="button"
+                            class="approval-btn reject"
+                            data-approval-type="withdrawal"
+                            data-approval-action="reject"
+                            data-id="${escapeHtml(id)}">
+
+                            Reject
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="approval-btn approve"
+                            data-approval-type="withdrawal"
+                            data-approval-action="approve"
+                            data-id="${escapeHtml(id)}">
+
+                            Approve Withdrawal
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   INVESTMENTS
+   ========================================================= */
+
+function renderInvestmentApprovals() {
+
+    const container =
+        $("#investmentApprovalList");
+
+    if (!container) {
+        return;
     }
+
+
+    const pending =
+        AdminDashboard.investments.filter(
+            item =>
+                String(
+                    item.status ||
+                    "pending"
+                ).toLowerCase()
+                === "pending"
+        );
+
+
+    setText(
+        "#approvalInvestmentCount",
+        `(${pending.length})`
+    );
+
+
+    if (pending.length === 0) {
+
+        container.innerHTML =
+            approvalEmpty(
+                "No pending investments",
+                "All investment requests have been processed."
+            );
+
+        return;
+    }
+
+
+    container.innerHTML =
+        pending.map(investment => {
+
+            const id =
+                investment.id ||
+                investment._id ||
+                "";
+
+
+            const name =
+                investment.user_name ||
+                investment.email ||
+                "Crown Cash User";
+
+
+            const email =
+                investment.email ||
+                "No email";
+
+
+            const amount =
+                getNumericValue(
+                    investment.amount
+                );
+
+
+            const plan =
+                investment.plan ||
+                "Investment";
+
+
+            const duration =
+                investment.duration_days ||
+                30;
+
+
+            const reference =
+                investment.reference ||
+                "—";
+
+
+            return `
+                <div class="approval-item">
+
+                    <div class="approval-item-top">
+
+                        <div class="approval-user">
+
+                            <strong>
+                                ${escapeHtml(name)}
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(email)}
+                            </span>
+
+                        </div>
+
+
+                        <div class="approval-amount">
+
+                            <strong>
+                                ${formatCurrency(amount)}
+                            </strong>
+
+                            <span class="status-badge warning">
+                                Pending
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="approval-details">
+
+                        ${approvalDetail(
+                            "Plan",
+                            plan
+                        )}
+
+                        ${approvalDetail(
+                            "Duration",
+                            `${duration} days`
+                        )}
+
+                        ${approvalDetail(
+                            "Reference",
+                            reference
+                        )}
+
+                        ${approvalDetail(
+                            "Date",
+                            formatDate(investment.created_at)
+                        )}
+
+                    </div>
+
+
+                    <div class="approval-actions">
+
+                        <button
+                            type="button"
+                            class="approval-btn reject"
+                            data-approval-type="investment"
+                            data-approval-action="reject"
+                            data-id="${escapeHtml(id)}">
+
+                            Reject
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="approval-btn approve"
+                            data-approval-type="investment"
+                            data-approval-action="approve"
+                            data-id="${escapeHtml(id)}">
+
+                            Approve Investment
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   APPROVAL EMPTY STATE
+   ========================================================= */
+
+function approvalEmpty(
+    title,
+    description
+) {
 
     return `
-        <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-        >
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M8 12h8"></path>
-            <path d="M12 8v8"></path>
-        </svg>
+        <div class="approval-empty">
+
+            <strong>
+                ${escapeHtml(title)}
+            </strong>
+
+            <span>
+                ${escapeHtml(description)}
+            </span>
+
+        </div>
     `;
 }
 
+
 /* =========================================================
-   TYPE CLASS
+   APPROVAL DETAIL
    ========================================================= */
 
-function getTypeClass(type) {
+function approvalDetail(
+    label,
+    value
+) {
 
-    const value =
-        String(type)
-            .toLowerCase();
+    return `
+        <div class="approval-detail">
 
-    if (value.includes("deposit")) {
-        return "deposit";
-    }
+            <span>
+                ${escapeHtml(label)}
+            </span>
 
-    if (value.includes("withdraw")) {
-        return "withdrawal";
-    }
+            <strong>
+                ${escapeHtml(value)}
+            </strong>
 
-    if (value.includes("investment")) {
-        return "investment";
-    }
-
-    return "transaction";
+        </div>
+    `;
 }
 
+
 /* =========================================================
-   STATUS
+   APPROVAL ERROR
    ========================================================= */
 
-function getStatusClass(status) {
+function renderApprovalError() {
 
-    const value =
-        String(status)
-            .toLowerCase()
-            .replace(/\s+/g, "_");
+    [
+        "#depositApprovalList",
+        "#withdrawalApprovalList",
+        "#investmentApprovalList"
+    ].forEach(selector => {
 
-    if (
-        value === "approved" ||
-        value === "completed" ||
-        value === "active" ||
-        value === "success" ||
-        value === "successful"
-    ) {
-        return "success";
-    }
+        const element =
+            $(selector);
 
-    if (
-        value === "rejected" ||
-        value === "failed" ||
-        value === "blocked" ||
-        value === "suspended" ||
-        value === "disabled"
-    ) {
-        return "danger";
-    }
+        if (!element) {
+            return;
+        }
 
-    if (
-        value === "pending" ||
-        value === "processing" ||
-        value === "awaiting_payout"
-    ) {
-        return "warning";
-    }
-
-    return "neutral";
+        element.innerHTML =
+            approvalEmpty(
+                "Unable to load requests",
+                "Please refresh the administration dashboard."
+            );
+    });
 }
 
-/* =========================================================
-   FORMAT STATUS
-   ========================================================= */
-
-function formatStatus(status) {
-
-    return String(status || "unknown")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, letter =>
-            letter.toUpperCase()
-        );
-}
 
 /* =========================================================
-   FORMAT TRANSACTION TYPE
+   APPROVAL CLICK HANDLER
    ========================================================= */
 
-function formatTransactionType(type) {
+document.addEventListener(
+    "click",
+    async event => {
 
-    return String(type || "Transaction")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, letter =>
-            letter.toUpperCase()
-        );
-}
+        const button =
+            event.target.closest(
+                "[data-approval-action]"
+            );
 
-/* =========================================================
-   ACCOUNT TYPE
-   ========================================================= */
+        if (!button) {
+            return;
+        }
 
-function formatAccountType(type) {
 
-    const value =
-        String(type || "admin")
-            .toLowerCase();
+        const action =
+            button.dataset.approvalAction;
 
-    if (
-        value === "admin" ||
-        value === "administrator"
-    ) {
-        return "Admin Account";
-    }
 
-    return formatStatus(value);
-}
+        const type =
+            button.dataset.approvalType;
 
-/* =========================================================
-   CURRENCY
-   ========================================================= */
 
-function formatCurrency(value) {
+        const id =
+            button.dataset.id;
 
-    const number =
-        getNumericValue(value);
 
-    return (
-        "UGX " +
-        new Intl.NumberFormat(
-            "en-UG",
-            {
-                maximumFractionDigits: 0
+        if (!id) {
+
+            showAdminMessage(
+                "Invalid request ID.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        let reason = "";
+
+
+        if (action === "reject") {
+
+            reason =
+                window.prompt(
+                    "Enter the reason for rejecting this request:"
+                );
+
+
+            if (
+                reason === null
+            ) {
+                return;
             }
-        ).format(number)
+
+
+            reason =
+                reason.trim();
+
+
+            if (!reason) {
+
+                showAdminMessage(
+                    "A rejection reason is required.",
+                    "error"
+                );
+
+                return;
+            }
+        }
+
+
+        const actionName =
+            action === "approve"
+                ? "approve"
+                : "reject";
+
+
+        const confirmed =
+            window.confirm(
+                `Are you sure you want to ${actionName} this ${type}?`
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        await processApproval(
+            type,
+            action,
+            id,
+            reason,
+            button
+        );
+
+    }
+);
+
+
+/* =========================================================
+   PROCESS APPROVAL
+   ========================================================= */
+
+async function processApproval(
+    type,
+    action,
+    id,
+    reason,
+    button
+) {
+
+    if (button) {
+        button.disabled = true;
+    }
+
+
+    const originalText =
+        button
+            ? button.textContent
+            : "";
+
+
+    if (button) {
+        button.textContent =
+            action === "approve"
+                ? "Approving..."
+                : "Rejecting...";
+    }
+
+
+    try {
+
+        let endpoint;
+
+
+        if (type === "deposit") {
+            endpoint =
+                ADMIN_DEPOSITS_API;
+        }
+
+        else if (
+            type === "withdrawal"
+        ) {
+            endpoint =
+                ADMIN_WITHDRAWALS_API;
+        }
+
+        else if (
+            type === "investment"
+        ) {
+            endpoint =
+                ADMIN_INVESTMENTS_API;
+        }
+
+        else {
+            throw new Error(
+                "Unknown approval type."
+            );
+        }
+
+
+        const body = {
+            action: action
+        };
+
+
+        if (type === "deposit") {
+
+            body.depositId =
+                id;
+        }
+
+
+        if (
+            type === "withdrawal"
+        ) {
+
+            body.withdrawalId =
+                id;
+        }
+
+
+        if (
+            type === "investment"
+        ) {
+
+            body.investmentId =
+                id;
+        }
+
+
+        if (reason) {
+
+            body.reason =
+                reason;
+        }
+
+
+        const data =
+            await apiRequest(
+                endpoint,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(body)
+                }
+            );
+
+
+        showAdminMessage(
+            data.message ||
+            `${type} ${action}d successfully.`,
+            "success"
+        );
+
+
+        /*
+         * Refresh all dashboard information
+         * so balances, totals and pending counts
+         * immediately reflect the action.
+         */
+
+        await Promise.allSettled([
+
+            loadDashboardData(),
+
+            loadApprovalData()
+
+        ]);
+
+    } catch (error) {
+
+        console.error(
+            "Approval processing error:",
+            error
+        );
+
+        showAdminMessage(
+            error.message ||
+            `Unable to ${action} ${type}.`,
+            "error"
+        );
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                originalText;
+        }
+    }
+}
+
+
+/* =========================================================
+   UPDATE PENDING BADGES
+   ========================================================= */
+
+function updatePendingBadges() {
+
+    const pendingDeposits =
+        AdminDashboard.deposits.filter(
+            item =>
+                String(
+                    item.status ||
+                    ""
+                ).toLowerCase()
+                === "pending"
+        ).length;
+
+
+    const pendingWithdrawals =
+        AdminDashboard.withdrawals.filter(
+            item =>
+                String(
+                    item.status ||
+                    ""
+                ).toLowerCase()
+                === "pending"
+        ).length;
+
+
+    const pendingInvestments =
+        AdminDashboard.investments.filter(
+            item =>
+                String(
+                    item.status ||
+                    ""
+                ).toLowerCase()
+                === "pending"
+        ).length;
+
+
+    setText(
+        "#navPendingDeposits",
+        pendingDeposits
+    );
+
+
+    setText(
+        "#navPendingWithdrawals",
+        pendingWithdrawals
+    );
+
+
+    /*
+     * Your existing HTML does not currently have
+     * a pending-investment badge, so create one.
+     */
+
+    addInvestmentNavBadge(
+        pendingInvestments
     );
 }
 
-/* =========================================================
-   NUMBER
-   ========================================================= */
-
-function formatNumber(value) {
-
-    const number =
-        getNumericValue(value);
-
-    return new Intl.NumberFormat(
-        "en-UG",
-        {
-            maximumFractionDigits: 0
-        }
-    ).format(number);
-}
 
 /* =========================================================
-   NUMERIC VALUE
+   ADD INVESTMENT NAV BADGE
    ========================================================= */
 
-function getNumericValue(value) {
+function addInvestmentNavBadge(
+    count
+) {
 
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-        return 0;
-    }
-
-    if (typeof value === "number") {
-        return Number.isFinite(value)
-            ? value
-            : 0;
-    }
-
-    if (typeof value === "object") {
-
-        if (
-            value.$numberDecimal !== undefined
-        ) {
-            return parseFloat(
-                value.$numberDecimal
-            ) || 0;
-        }
-
-        if (
-            value.$numberInt !== undefined
-        ) {
-            return parseFloat(
-                value.$numberInt
-            ) || 0;
-        }
-
-        if (
-            value.$numberLong !== undefined
-        ) {
-            return parseFloat(
-                value.$numberLong
-            ) || 0;
-        }
-    }
-
-    const parsed =
-        parseFloat(
-            String(value)
-                .replace(/,/g, "")
+    const investmentLink =
+        document.querySelector(
+            'a[href="admin-investments.html"]'
         );
 
-    return Number.isFinite(parsed)
-        ? parsed
-        : 0;
-}
-
-/* =========================================================
-   GET VALUE FROM OBJECT
-   ========================================================= */
-
-function getValue(object, keys, fallback = 0) {
-
-    if (!object || typeof object !== "object") {
-        return fallback;
+    if (!investmentLink) {
+        return;
     }
 
-    for (const key of keys) {
 
-        if (
-            object[key] !== undefined &&
-            object[key] !== null
-        ) {
-            return object[key];
-        }
+    let badge =
+        investmentLink.querySelector(
+            ".nav-badge"
+        );
+
+
+    if (!badge) {
+
+        badge =
+            document.createElement(
+                "span"
+            );
+
+        badge.className =
+            "nav-badge";
+
+        investmentLink.appendChild(
+            badge
+        );
     }
 
-    return fallback;
+
+    badge.textContent =
+        count;
 }
 
-/* =========================================================
-   ESCAPE HTML
-   ========================================================= */
-
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 
 /* =========================================================
    SIDEBAR
@@ -1384,14 +2702,23 @@ function setupSidebar() {
     const sidebarClose =
         $("#sidebarClose");
 
+
     function openSidebar() {
 
         if (sidebar) {
-            sidebar.classList.add("open");
+            sidebar.classList.add(
+                "open"
+            );
         }
 
         if (overlay) {
-            overlay.classList.add("active");
+            overlay.classList.add(
+                "open"
+            );
+
+            overlay.classList.add(
+                "active"
+            );
         }
 
         document.body.classList.add(
@@ -1399,20 +2726,34 @@ function setupSidebar() {
         );
     }
 
+
     function closeSidebar() {
 
         if (sidebar) {
-            sidebar.classList.remove("open");
+            sidebar.classList.remove(
+                "open"
+            );
         }
 
         if (overlay) {
-            overlay.classList.remove("active");
+
+            overlay.classList.remove(
+                "open"
+            );
+
+            overlay.classList.remove(
+                "active"
+            );
         }
 
         document.body.classList.remove(
             "sidebar-open"
         );
+
+        document.body.style.overflow =
+            "";
     }
+
 
     if (menuButton) {
 
@@ -1422,6 +2763,7 @@ function setupSidebar() {
         );
     }
 
+
     if (sidebarClose) {
 
         sidebarClose.addEventListener(
@@ -1429,6 +2771,7 @@ function setupSidebar() {
             closeSidebar
         );
     }
+
 
     if (overlay) {
 
@@ -1438,10 +2781,6 @@ function setupSidebar() {
         );
     }
 
-    /*
-     * Close mobile sidebar when a navigation
-     * link is selected.
-     */
 
     document
         .querySelectorAll(
@@ -1456,6 +2795,7 @@ function setupSidebar() {
         });
 }
 
+
 /* =========================================================
    LOGOUT
    ========================================================= */
@@ -1465,10 +2805,16 @@ async function logoutAdmin() {
     const button =
         $("#logoutBtn");
 
+
     if (button) {
-        button.disabled = true;
-        button.style.opacity = "0.6";
+
+        button.disabled =
+            true;
+
+        button.style.opacity =
+            "0.6";
     }
+
 
     try {
 
@@ -1476,11 +2822,14 @@ async function logoutAdmin() {
             LOGOUT_API,
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type":
                         "application/json"
                 },
-                body: JSON.stringify({})
+
+                body:
+                    JSON.stringify({})
             },
             8000
         );
@@ -1494,9 +2843,11 @@ async function logoutAdmin() {
 
     } finally {
 
-        window.location.href = "login.html";
+        window.location.href =
+            "login.html";
     }
 }
+
 
 /* =========================================================
    SETUP LOGOUT
@@ -1511,76 +2862,92 @@ function setupLogout() {
         return;
     }
 
+
     button.addEventListener(
         "click",
         event => {
 
             event.preventDefault();
 
+
             const confirmed =
                 window.confirm(
                     "Are you sure you want to logout of the Crown Cash Administration Panel?"
                 );
 
+
             if (!confirmed) {
                 return;
             }
 
+
             logoutAdmin();
+
         }
     );
 }
 
+
 /* =========================================================
-   INITIALIZE DASHBOARD
+   INITIALIZE ADMIN DASHBOARD
    ========================================================= */
 
 async function initializeAdminDashboard() {
 
-    if (AdminDashboard.loading) {
+    if (
+        AdminDashboard.loading
+    ) {
         return;
     }
 
-    AdminDashboard.loading = true;
+
+    AdminDashboard.loading =
+        true;
+
 
     showLoader(
         "Loading Administration"
     );
 
+
     try {
 
         /*
-         * STEP 1
-         * Verify administrator session.
+         * 1. Verify admin.
          */
 
         const authenticated =
             await authenticateAdmin();
 
+
         if (!authenticated) {
             return;
         }
 
+
         /*
-         * STEP 2
-         * Set up UI immediately.
+         * 2. Prepare interface.
          */
 
         setupSidebar();
+
         setupLogout();
 
+        createApprovalCenter();
+
+
         /*
-         * STEP 3
-         * Load profile and dashboard
-         * independently.
-         *
-         * If profile fails, dashboard can
-         * still load.
+         * 3. Load dashboard/profile/approvals.
          */
 
         await Promise.allSettled([
+
             loadAdminProfile(),
-            loadDashboardData()
+
+            loadDashboardData(),
+
+            loadApprovalData()
+
         ]);
 
     } catch (error) {
@@ -1598,18 +2965,513 @@ async function initializeAdminDashboard() {
 
     } finally {
 
-        /*
-         * CRITICAL FIX:
-         *
-         * No matter what happens above,
-         * the loading screen is removed.
-         */
-
         hideLoader();
 
-        AdminDashboard.loading = false;
+        AdminDashboard.loading =
+            false;
     }
 }
+
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+
+function capitalize(value) {
+
+    const string =
+        String(value || "");
+
+    return (
+        string.charAt(0).toUpperCase() +
+        string.slice(1)
+    );
+}
+
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+
+    try {
+
+        let date;
+
+
+        if (
+            typeof value === "object" &&
+            value.$date
+        ) {
+            date =
+                new Date(
+                    value.$date
+                );
+        }
+
+        else {
+            date =
+                new Date(value);
+        }
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "—";
+        }
+
+
+        return new Intl.DateTimeFormat(
+            "en-UG",
+            {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        ).format(date);
+
+    } catch (error) {
+
+        return "—";
+    }
+}
+
+
+function getTransactionIcon(type) {
+
+    const value =
+        String(type)
+            .toLowerCase();
+
+
+    if (
+        value.includes("deposit") ||
+        value.includes("credit")
+    ) {
+
+        return `
+            <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8">
+
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="9">
+                </circle>
+
+                <path
+                    d="M12 16V8">
+                </path>
+
+                <path
+                    d="M9 11l3-3 3 3">
+                </path>
+
+            </svg>
+        `;
+    }
+
+
+    if (
+        value.includes("withdraw")
+    ) {
+
+        return `
+            <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8">
+
+                <circle
+                    cx="12"
+                    cy="12"
+                    r="9">
+                </circle>
+
+                <path
+                    d="M12 8v8">
+                </path>
+
+                <path
+                    d="M9 13l3 3 3-3">
+                </path>
+
+            </svg>
+        `;
+    }
+
+
+    if (
+        value.includes("investment")
+    ) {
+
+        return `
+            <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8">
+
+                <path d="M4 19V9"></path>
+                <path d="M10 19V5"></path>
+                <path d="M16 19v-7"></path>
+                <path d="M22 19V3"></path>
+
+            </svg>
+        `;
+    }
+
+
+    return `
+        <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8">
+
+            <circle
+                cx="12"
+                cy="12"
+                r="9">
+            </circle>
+
+            <path
+                d="M8 12h8">
+            </path>
+
+            <path
+                d="M12 8v8">
+            </path>
+
+        </svg>
+    `;
+}
+
+
+function getTypeClass(type) {
+
+    const value =
+        String(type)
+            .toLowerCase();
+
+
+    if (
+        value.includes("deposit")
+    ) {
+        return "deposit";
+    }
+
+
+    if (
+        value.includes("withdraw")
+    ) {
+        return "withdrawal";
+    }
+
+
+    if (
+        value.includes("investment")
+    ) {
+        return "investment";
+    }
+
+
+    return "transaction";
+}
+
+
+function getStatusClass(status) {
+
+    const value =
+        String(status)
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+
+    if (
+        value === "approved" ||
+        value === "completed" ||
+        value === "active" ||
+        value === "success" ||
+        value === "successful"
+    ) {
+        return "success";
+    }
+
+
+    if (
+        value === "rejected" ||
+        value === "failed" ||
+        value === "blocked" ||
+        value === "suspended" ||
+        value === "disabled"
+    ) {
+        return "danger";
+    }
+
+
+    if (
+        value === "pending" ||
+        value === "processing" ||
+        value === "awaiting_payout"
+    ) {
+        return "warning";
+    }
+
+
+    return "neutral";
+}
+
+
+function formatStatus(status) {
+
+    return String(
+        status || "unknown"
+    )
+        .replace(/_/g, " ")
+        .replace(
+            /\b\w/g,
+            letter =>
+                letter.toUpperCase()
+        );
+}
+
+
+function formatTransactionType(
+    type
+) {
+
+    return String(
+        type || "Transaction"
+    )
+        .replace(/_/g, " ")
+        .replace(
+            /\b\w/g,
+            letter =>
+                letter.toUpperCase()
+        );
+}
+
+
+function formatAccountType(type) {
+
+    const value =
+        String(
+            type || "admin"
+        ).toLowerCase();
+
+
+    if (
+        value === "admin" ||
+        value === "administrator"
+    ) {
+        return "Admin Account";
+    }
+
+
+    return formatStatus(value);
+}
+
+
+function formatCurrency(value) {
+
+    const number =
+        getNumericValue(value);
+
+
+    return (
+        "UGX " +
+        new Intl.NumberFormat(
+            "en-UG",
+            {
+                maximumFractionDigits: 0
+            }
+        ).format(number)
+    );
+}
+
+
+function formatNumber(value) {
+
+    const number =
+        getNumericValue(value);
+
+
+    return new Intl.NumberFormat(
+        "en-UG",
+        {
+            maximumFractionDigits: 0
+        }
+    ).format(number);
+}
+
+
+function getNumericValue(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+        return 0;
+    }
+
+
+    if (
+        typeof value === "number"
+    ) {
+
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
+
+
+    if (
+        typeof value === "object"
+    ) {
+
+        if (
+            value.$numberDecimal !==
+            undefined
+        ) {
+
+            return (
+                parseFloat(
+                    value.$numberDecimal
+                ) || 0
+            );
+        }
+
+
+        if (
+            value.$numberInt !==
+            undefined
+        ) {
+
+            return (
+                parseFloat(
+                    value.$numberInt
+                ) || 0
+            );
+        }
+
+
+        if (
+            value.$numberLong !==
+            undefined
+        ) {
+
+            return (
+                parseFloat(
+                    value.$numberLong
+                ) || 0
+            );
+        }
+
+
+        if (
+            value.$date !==
+            undefined
+        ) {
+            return 0;
+        }
+    }
+
+
+    const parsed =
+        parseFloat(
+            String(value)
+                .replace(/,/g, "")
+        );
+
+
+    return Number.isFinite(parsed)
+        ? parsed
+        : 0;
+}
+
+
+function getValue(
+    object,
+    keys,
+    fallback = 0
+) {
+
+    if (
+        !object ||
+        typeof object !== "object"
+    ) {
+        return fallback;
+    }
+
+
+    for (
+        const key of keys
+    ) {
+
+        if (
+            object[key] !==
+                undefined &&
+            object[key] !==
+                null
+        ) {
+
+            return object[key];
+        }
+    }
+
+
+    return fallback;
+}
+
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
 
 /* =========================================================
    START
@@ -1630,20 +3492,89 @@ if (
     initializeAdminDashboard();
 }
 
+
 /* =========================================================
    GLOBAL API
    ========================================================= */
 
 window.CrownCashAdmin = {
 
-    reload: initializeAdminDashboard,
+    reload:
+        initializeAdminDashboard,
 
-    loadProfile: loadAdminProfile,
+    loadProfile:
+        loadAdminProfile,
 
-    loadDashboard: loadDashboardData,
+    loadDashboard:
+        loadDashboardData,
 
-    logout: logoutAdmin,
+    loadApprovals:
+        loadApprovalData,
 
-    state: AdminDashboard
+    approveDeposit:
+        id =>
+            processApproval(
+                "deposit",
+                "approve",
+                id,
+                "",
+                null
+            ),
+
+    rejectDeposit:
+        id =>
+            processApproval(
+                "deposit",
+                "reject",
+                id,
+                "",
+                null
+            ),
+
+    approveWithdrawal:
+        id =>
+            processApproval(
+                "withdrawal",
+                "approve",
+                id,
+                "",
+                null
+            ),
+
+    rejectWithdrawal:
+        id =>
+            processApproval(
+                "withdrawal",
+                "reject",
+                id,
+                "",
+                null
+            ),
+
+    approveInvestment:
+        id =>
+            processApproval(
+                "investment",
+                "approve",
+                id,
+                "",
+                null
+            ),
+
+    rejectInvestment:
+        id =>
+            processApproval(
+                "investment",
+                "reject",
+                id,
+                "",
+                null
+            ),
+
+    logout:
+        logoutAdmin,
+
+    state:
+        AdminDashboard
 
 };

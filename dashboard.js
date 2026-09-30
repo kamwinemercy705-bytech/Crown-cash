@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupLogout();
 
     const year = document.getElementById("currentYear");
-
     if (year) {
         year.textContent = new Date().getFullYear();
     }
@@ -24,11 +23,10 @@ async function apiFetch(path, options = {}) {
         ...options
     };
 
-    /*
-     * Only add JSON content type when a body is actually
-     * being sent as JSON.
-     */
-    if (requestOptions.body && typeof requestOptions.body === "string") {
+    if (
+        requestOptions.body &&
+        typeof requestOptions.body === "string"
+    ) {
         requestOptions.headers = {
             "Content-Type": "application/json",
             ...(requestOptions.headers || {})
@@ -50,8 +48,7 @@ async function apiFetch(path, options = {}) {
 
     if (!response.ok || data.success === false) {
         throw new Error(
-            data.message ||
-            `Request failed (${response.status})`
+            data.message || `Request failed (${response.status})`
         );
     }
 
@@ -65,37 +62,25 @@ async function apiFetch(path, options = {}) {
 
 async function loadDashboard() {
     try {
-        /*
-         * dashboard.php now returns both user information
-         * and all dashboard statistics.
-         */
         const data = await apiFetch("dashboard.php");
 
         if (data.user) {
             displayUser(data.user);
+            setupAdminPanel(data.user);
         }
 
         loadStatistics(data);
 
     } catch (error) {
+        console.error("Dashboard loading error:", error);
 
-        console.error(
-            "Dashboard loading error:",
-            error
-        );
-
-        /*
-         * Try profile.php as a fallback if the dashboard
-         * endpoint temporarily fails.
-         */
         try {
             const profile = await apiFetch("profile.php");
 
-            displayUser(
-                profile.user ||
-                profile ||
-                {}
-            );
+            const user = profile.user || profile || {};
+
+            displayUser(user);
+            setupAdminPanel(user);
 
         } catch (profileError) {
             console.error(
@@ -108,7 +93,7 @@ async function loadDashboard() {
 
 
 /* =========================================================
-   DISPLAY USER INFORMATION
+   DISPLAY USER
 ========================================================= */
 
 function displayUser(user) {
@@ -128,9 +113,7 @@ function displayUser(user) {
         `${firstName} ${lastName}`.trim() ||
         "User";
 
-    /*
-     * User name
-     */
+
     document
         .querySelectorAll(
             "[data-user-name], #userName, .user-name"
@@ -140,35 +123,24 @@ function displayUser(user) {
         });
 
 
-    /*
-     * Email
-     */
     document
         .querySelectorAll(
             "[data-user-email], #userEmail"
         )
         .forEach(element => {
-            element.textContent =
-                user.email || "";
+            element.textContent = user.email || "";
         });
 
 
-    /*
-     * Phone
-     */
     document
         .querySelectorAll(
             "[data-user-phone], #userPhone"
         )
         .forEach(element => {
-            element.textContent =
-                user.phone || "";
+            element.textContent = user.phone || "";
         });
 
 
-    /*
-     * Referral code
-     */
     document
         .querySelectorAll(
             "[data-referral-code], #referralCode"
@@ -181,12 +153,10 @@ function displayUser(user) {
         });
 
 
-    /*
-     * Admin-only sections
-     */
     const role = String(
         user.role || ""
-    ).toLowerCase();
+    ).trim().toLowerCase();
+
 
     document
         .querySelectorAll(
@@ -199,19 +169,317 @@ function displayUser(user) {
             } else {
                 element.style.display = "none";
             }
+
         });
+
+
+    /*
+     * Store user information locally only for
+     * interface convenience.
+     *
+     * Authorization is still handled by PHP.
+     */
+    try {
+        localStorage.setItem(
+            "user",
+            JSON.stringify({
+                id: user.id || "",
+                name: fullName,
+                email: user.email || "",
+                role: role
+            })
+        );
+    } catch (error) {
+        console.warn(
+            "Unable to store user information."
+        );
+    }
 }
 
 
 /* =========================================================
-   LOAD DASHBOARD STATISTICS
+   ADMIN PANEL
+========================================================= */
+
+function setupAdminPanel(user) {
+
+    const role = String(
+        user.role || ""
+    ).trim().toLowerCase();
+
+    const existingAdminLinks =
+        document.querySelectorAll(
+            ".admin-only, [data-admin-only]"
+        );
+
+
+    /*
+     * Hide all admin elements for normal users.
+     */
+    if (role !== "admin") {
+
+        existingAdminLinks.forEach(element => {
+            element.style.display = "none";
+        });
+
+        return;
+    }
+
+
+    /*
+     * Admin user.
+     *
+     * If an Admin Panel link already exists,
+     * simply make it visible.
+     */
+
+    if (existingAdminLinks.length > 0) {
+
+        existingAdminLinks.forEach(element => {
+            element.style.display = "";
+        });
+
+        return;
+    }
+
+
+    /*
+     * No Admin Panel link exists in the HTML.
+     *
+     * Create one automatically.
+     */
+
+    createAdminPanelLink();
+}
+
+
+/* =========================================================
+   CREATE ADMIN PANEL LINK
+========================================================= */
+
+function createAdminPanelLink() {
+
+    /*
+     * Do not create it twice.
+     */
+    if (
+        document.querySelector(
+            "#dynamicAdminPanel"
+        )
+    ) {
+        return;
+    }
+
+
+    const adminLink =
+        document.createElement("a");
+
+    adminLink.id =
+        "dynamicAdminPanel";
+
+    adminLink.className =
+        "admin-panel-link admin-only";
+
+    adminLink.href =
+        "/admin-dashboard.html";
+
+    adminLink.innerHTML = `
+        <span class="admin-panel-icon">
+            ⚙️
+        </span>
+
+        <span class="admin-panel-content">
+            <strong>Admin Panel</strong>
+            <small>
+                Manage Crown Cash
+            </small>
+        </span>
+
+        <span class="admin-panel-arrow">
+            →
+        </span>
+    `;
+
+
+    /*
+     * Try to place it in the sidebar first.
+     */
+
+    const sidebar =
+        document.querySelector(
+            ".sidebar .nav, " +
+            ".sidebar-nav, " +
+            ".admin-nav, " +
+            "aside nav"
+        );
+
+
+    if (sidebar) {
+
+        sidebar.appendChild(adminLink);
+
+        addAdminPanelStyles();
+
+        return;
+    }
+
+
+    /*
+     * If no sidebar exists, place it
+     * inside the quick actions section.
+     */
+
+    const quickActions =
+        document.querySelector(
+            ".quick-actions, " +
+            "#quickActions, " +
+            "[data-quick-actions]"
+        );
+
+
+    if (quickActions) {
+
+        quickActions.prepend(adminLink);
+
+        addAdminPanelStyles();
+
+        return;
+    }
+
+
+    /*
+     * Final fallback:
+     * place it near the top of the dashboard.
+     */
+
+    const main =
+        document.querySelector(
+            "main, .main, .dashboard-main"
+        );
+
+    if (main) {
+
+        main.prepend(adminLink);
+
+        addAdminPanelStyles();
+    }
+}
+
+
+/* =========================================================
+   ADMIN PANEL STYLES
+========================================================= */
+
+function addAdminPanelStyles() {
+
+    if (
+        document.querySelector(
+            "#dynamicAdminPanelStyles"
+        )
+    ) {
+        return;
+    }
+
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "dynamicAdminPanelStyles";
+
+
+    style.textContent = `
+        .admin-panel-link {
+            display: flex !important;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px 15px;
+            margin-top: 10px;
+            color: #f7f3fa;
+            text-decoration: none;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(114,16,74,.95),
+                    rgba(77,9,47,.95)
+                );
+            border: 1px solid rgba(255,211,77,.28);
+            border-radius: 14px;
+            box-shadow:
+                0 8px 25px rgba(0,0,0,.22),
+                0 0 18px rgba(228,92,255,.08);
+            transition:
+                transform .2s ease,
+                border-color .2s ease,
+                box-shadow .2s ease;
+        }
+
+        .admin-panel-link:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,211,77,.7);
+            box-shadow:
+                0 12px 30px rgba(0,0,0,.3),
+                0 0 22px rgba(228,92,255,.16);
+        }
+
+        .admin-panel-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,211,77,.12);
+            border: 1px solid rgba(255,211,77,.2);
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .admin-panel-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .admin-panel-content strong {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .admin-panel-content small {
+            margin-top: 2px;
+            color: #aaa1b0;
+            font-size: 11px;
+        }
+
+        .admin-panel-arrow {
+            color: #ffd34d;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        @media (max-width: 700px) {
+            .admin-panel-link {
+                margin-top: 8px;
+            }
+        }
+    `;
+
+
+    document.head.appendChild(style);
+}
+
+
+/* =========================================================
+   DASHBOARD STATISTICS
 ========================================================= */
 
 function loadStatistics(data) {
 
-    /*
-     * Wallet balance
-     */
     const balance = Number(
         data.balance ??
         data.available_balance ??
@@ -219,80 +487,48 @@ function loadStatistics(data) {
         0
     );
 
-
-    /*
-     * Total deposits
-     */
     const deposits = Number(
         data.totalDeposits ??
         data.total_deposits ??
         0
     );
 
-
-    /*
-     * Total invested
-     */
     const invested = Number(
         data.totalInvested ??
         data.total_invested ??
         0
     );
 
-
-    /*
-     * Total earnings
-     */
     const earnings = Number(
         data.totalEarnings ??
         data.total_earnings ??
         0
     );
 
-
-    /*
-     * Today's return
-     */
     const daily = Number(
         data.dailyReturnAmount ??
         data.daily_return ??
         0
     );
 
-
-    /*
-     * Active investments
-     */
     const active = Number(
         data.activeInvestments ??
         data.active_investments ??
         0
     );
 
-
-    /*
-     * Referral team
-     */
     const referrals = Number(
         data.referralTeam ??
         data.referral_team ??
         0
     );
 
-
-    /*
-     * Transaction count
-     */
     const transactions = Number(
         data.transactionCount ??
         data.transaction_count ??
         0
     );
 
-
-    /* -----------------------------------------------------
-       MONEY VALUES
-    ----------------------------------------------------- */
 
     setMoney(
         [
@@ -341,10 +577,6 @@ function loadStatistics(data) {
     );
 
 
-    /* -----------------------------------------------------
-       COUNTS
-    ----------------------------------------------------- */
-
     setText(
         [
             "#activeInvestments",
@@ -384,15 +616,20 @@ function setMoney(selectors, value) {
             ? Number(value)
             : 0;
 
+
     const formatted =
         `UGX ${Math.round(safeValue).toLocaleString()}`;
+
 
     selectors.forEach(selector => {
 
         document
             .querySelectorAll(selector)
             .forEach(element => {
-                element.textContent = formatted;
+
+                element.textContent =
+                    formatted;
+
             });
 
     });
@@ -410,8 +647,10 @@ function setText(selectors, value) {
         document
             .querySelectorAll(selector)
             .forEach(element => {
+
                 element.textContent =
                     String(value);
+
             });
 
     });
@@ -439,10 +678,7 @@ function setupCalculator() {
             "#calculatorResult, #calcResult"
         );
 
-    /*
-     * If the current dashboard doesn't contain the
-     * calculator, simply stop here.
-     */
+
     if (!amountInput || !result) {
         return;
     }
@@ -456,15 +692,7 @@ function setupCalculator() {
         const days =
             Number(daysInput?.value || 30);
 
-
-        /*
-         * This is the configured application rate.
-         *
-         * It is illustrative and must not be presented
-         * as a guaranteed investment return.
-         */
         const DAILY_RATE = 0.10;
-
 
         const daily =
             amount * DAILY_RATE;
@@ -490,8 +718,9 @@ function setupCalculator() {
 
             <small>
                 This calculator is illustrative.
-                Actual credits depend on approved investments
-                and the configured application rate.
+                Actual credits depend on approved
+                investments and the configured
+                application rate.
             </small>
         `;
     };
@@ -504,10 +733,12 @@ function setupCalculator() {
 
 
     if (daysInput) {
+
         daysInput.addEventListener(
             "input",
             calculate
         );
+
     }
 
 
@@ -540,11 +771,7 @@ function setupMobileMenu() {
     button.addEventListener(
         "click",
         () => {
-
-            menu.classList.toggle(
-                "active"
-            );
-
+            menu.classList.toggle("active");
         }
     );
 }
@@ -585,12 +812,10 @@ function setupLogout() {
                             "Logout request failed:",
                             error
                         );
+
                     }
 
 
-                    /*
-                     * Clear locally stored user information.
-                     */
                     localStorage.removeItem(
                         "user"
                     );
@@ -600,11 +825,9 @@ function setupLogout() {
                     );
 
 
-                    /*
-                     * Redirect to login.
-                     */
                     window.location.href =
                         "/login.html";
+
                 }
             );
 

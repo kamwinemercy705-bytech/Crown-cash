@@ -1,5 +1,5 @@
 /* =========================================================
-   CROWN CASH DASHBOARD JS
+   CROWN CASH — DASHBOARD JS
    ========================================================= */
 
 const API = "https://crown-cash1.onrender.com";
@@ -14,8 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupLogout();
 
-    document.getElementById("currentYear").textContent =
-        new Date().getFullYear();
+    const year =
+        document.getElementById("currentYear");
+
+    if (year) {
+        year.textContent =
+            new Date().getFullYear();
+    }
 
 });
 
@@ -28,56 +33,78 @@ async function loadDashboard() {
 
     try {
 
-        /*
-         * First check the current PHP session.
-         */
-
-        const authResponse = await fetch(
-            `${API}/auth-check.php`,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
+        const response =
+            await fetch(
+                `${API}/dashboard.php`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    cache: "no-store"
                 }
-            }
-        );
+            );
 
-        let authData = null;
-
-        try {
-            authData = await authResponse.json();
-        } catch (e) {
-            authData = null;
-        }
-
-
-        /*
-         * If session is valid, use the returned user data.
-         */
 
         if (
-            authData &&
-            authData.success === true
+            response.status === 401
         ) {
 
-            displayUser(authData.user || authData);
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Dashboard request failed: ${response.status}`
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data ||
+            data.success !== true
+        ) {
+
+            throw new Error(
+                data?.message ||
+                "Dashboard data unavailable."
+            );
 
         }
 
 
         /*
-         * Load profile information.
+         * Display user information.
          */
 
-        await loadProfile();
+        if (data.user) {
+
+            displayUser(
+                data.user
+            );
+
+        }
 
 
         /*
-         * Load dashboard statistics if dashboard.php exists.
+         * Display financial statistics.
          */
 
-        await loadStatistics();
+        displayStatistics(
+            data
+        );
 
     }
 
@@ -88,12 +115,12 @@ async function loadDashboard() {
             error
         );
 
+
         /*
-         * Even if the backend is temporarily unavailable,
-         * don't destroy the dashboard interface.
+         * Try profile information as fallback.
          */
 
-        loadLocalUser();
+        await loadProfile();
 
     }
 
@@ -101,43 +128,48 @@ async function loadDashboard() {
 
 
 /* =========================================================
-   LOAD PROFILE
+   LOAD PROFILE FALLBACK
    ========================================================= */
 
 async function loadProfile() {
 
     try {
 
-        const response = await fetch(
-            `${API}/profile.php`,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
+        const response =
+            await fetch(
+                `${API}/profile.php`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Accept": "application/json"
+                    },
+                    cache: "no-store"
                 }
-            }
-        );
+            );
+
 
         if (!response.ok) {
             throw new Error(
-                `Profile request failed: ${response.status}`
+                "Profile request failed."
             );
         }
 
-        const data = await response.json();
+
+        const data =
+            await response.json();
+
 
         if (
             data.success === true ||
             data.user
         ) {
 
-            const user =
+            displayUser(
                 data.user ||
                 data.profile ||
-                data;
-
-            displayUser(user);
+                data
+            );
 
         }
 
@@ -146,7 +178,7 @@ async function loadProfile() {
     catch (error) {
 
         console.warn(
-            "Profile could not be loaded:",
+            "Profile unavailable:",
             error
         );
 
@@ -167,15 +199,18 @@ function displayUser(user) {
         return;
     }
 
+
     const firstName =
         user.first_name ||
         user.firstName ||
         "";
 
+
     const lastName =
         user.last_name ||
         user.lastName ||
         "";
+
 
     const fullName =
         user.full_name ||
@@ -191,7 +226,7 @@ function displayUser(user) {
 
 
     /*
-     * Welcome heading
+     * Welcome name.
      */
 
     const welcomeName =
@@ -199,14 +234,18 @@ function displayUser(user) {
             "welcomeName"
         );
 
+
     if (welcomeName) {
+
         welcomeName.textContent =
-            firstName || finalName.split(" ")[0];
+            firstName ||
+            finalName.split(" ")[0];
+
     }
 
 
     /*
-     * Sidebar name
+     * Sidebar name.
      */
 
     const sidebarName =
@@ -214,39 +253,17 @@ function displayUser(user) {
             "sidebarUserName"
         );
 
+
     if (sidebarName) {
+
         sidebarName.textContent =
             finalName;
-    }
-
-
-    /*
-     * Account type
-     */
-
-    const accountType =
-        user.account_type ||
-        user.accountType ||
-        user.role ||
-        "Personal Account";
-
-    const accountElement =
-        document.getElementById(
-            "sidebarAccountType"
-        );
-
-    if (accountElement) {
-
-        accountElement.textContent =
-            accountType === "admin"
-                ? "Administrator"
-                : "Personal Account";
 
     }
 
 
     /*
-     * ADMIN VISIBILITY
+     * Account type.
      */
 
     const role =
@@ -257,6 +274,26 @@ function displayUser(user) {
             ""
         ).toLowerCase();
 
+
+    const accountElement =
+        document.getElementById(
+            "sidebarAccountType"
+        );
+
+
+    if (accountElement) {
+
+        accountElement.textContent =
+            role === "admin"
+                ? "Administrator"
+                : "Personal Account";
+
+    }
+
+
+    /*
+     * Admin panel.
+     */
 
     if (role === "admin") {
 
@@ -271,27 +308,143 @@ function displayUser(user) {
 
 
     /*
-     * Save useful non-sensitive display information
-     * for temporary UI fallback.
+     * Temporary local display information.
      */
 
     try {
 
-        const storedUser = {
-            first_name: firstName,
-            last_name: lastName,
-            full_name: finalName,
-            role: role
-        };
-
         localStorage.setItem(
             "crown_cash_user",
-            JSON.stringify(storedUser)
+            JSON.stringify({
+                first_name: firstName,
+                last_name: lastName,
+                full_name: finalName,
+                role: role
+            })
         );
 
     }
 
-    catch (e) {}
+    catch (error) {}
+
+}
+
+
+/* =========================================================
+   DISPLAY STATISTICS
+   ========================================================= */
+
+function displayStatistics(data) {
+
+    /*
+     * Balance
+     */
+
+    setText(
+        "availableBalance",
+        formatUGX(
+            data.balance ??
+            data.available_balance ??
+            0
+        )
+    );
+
+
+    /*
+     * Total deposits.
+     *
+     * If the HTML does not yet contain totalDeposits,
+     * nothing breaks.
+     */
+
+    setText(
+        "totalDeposits",
+        formatUGX(
+            data.total_deposits ??
+            data.totalDeposits ??
+            0
+        )
+    );
+
+
+    /*
+     * Total investments.
+     */
+
+    setText(
+        "totalInvested",
+        formatUGX(
+            data.total_invested ??
+            data.totalInvested ??
+            0
+        )
+    );
+
+
+    /*
+     * Total accumulated earnings.
+     */
+
+    setText(
+        "totalEarnings",
+        formatUGX(
+            data.total_earnings ??
+            data.totalEarnings ??
+            0
+        )
+    );
+
+
+    /*
+     * Current daily return.
+     */
+
+    setText(
+        "dailyReturnAmount",
+        formatUGX(
+            data.daily_return ??
+            data.dailyReturn ??
+            0
+        )
+    );
+
+
+    /*
+     * Referral team.
+     */
+
+    setText(
+        "referralTeam",
+        data.referral_team ??
+        data.referralTeam ??
+        data.total_team ??
+        0
+    );
+
+
+    /*
+     * Transactions.
+     */
+
+    setText(
+        "transactionCount",
+        data.transaction_count ??
+        data.transactionCount ??
+        data.transactions ??
+        0
+    );
+
+
+    /*
+     * Optional active investment count.
+     */
+
+    setText(
+        "activeInvestments",
+        data.active_investments ??
+        data.activeInvestments ??
+        0
+    );
 
 }
 
@@ -383,143 +536,14 @@ function loadLocalUser() {
                 "crown_cash_user"
             );
 
+
         if (!stored) {
             return;
         }
 
-        const user =
-            JSON.parse(stored);
 
-        displayUser(user);
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Local user data unavailable"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DASHBOARD STATISTICS
-   ========================================================= */
-
-async function loadStatistics() {
-
-    try {
-
-        const response = await fetch(
-            `${API}/dashboard.php`,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
-
-
-        if (!response.ok) {
-
-            /*
-             * If dashboard.php isn't currently available,
-             * keep the default zero values.
-             */
-
-            return;
-
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (!data) {
-            return;
-        }
-
-
-        const source =
-            data.data ||
-            data.dashboard ||
-            data;
-
-
-        /*
-         * Balance
-         */
-
-        const balance =
-            source.balance ??
-            source.available_balance ??
-            source.wallet_balance ??
-            0;
-
-
-        setText(
-            "availableBalance",
-            formatUGX(balance)
-        );
-
-
-        /*
-         * Total invested
-         */
-
-        setText(
-            "totalInvested",
-            formatUGX(
-                source.total_invested ??
-                source.totalInvested ??
-                0
-            )
-        );
-
-
-        /*
-         * Earnings
-         */
-
-        setText(
-            "totalEarnings",
-            formatUGX(
-                source.total_earnings ??
-                source.totalEarnings ??
-                0
-            )
-        );
-
-
-        /*
-         * Referral team
-         */
-
-        setText(
-            "referralTeam",
-            source.referral_team ??
-            source.referralTeam ??
-            source.total_team ??
-            0
-        );
-
-
-        /*
-         * Transactions
-         */
-
-        setText(
-            "transactionCount",
-            source.transaction_count ??
-            source.transactionCount ??
-            source.transactions ??
-            0
+        displayUser(
+            JSON.parse(stored)
         );
 
     }
@@ -527,8 +551,7 @@ async function loadStatistics() {
     catch (error) {
 
         console.warn(
-            "Statistics unavailable:",
-            error
+            "Local user data unavailable."
         );
 
     }
@@ -571,6 +594,7 @@ function calculateReturns() {
             "investmentAmount"
         );
 
+
     if (!input) {
         return;
     }
@@ -585,40 +609,57 @@ function calculateReturns() {
     }
 
 
-    /*
-     * Configured interface rate.
-     *
-     * This is an illustrative calculation and should
-     * not be treated as a guaranteed investment return.
-     */
-
     const DAILY_RATE = 0.10;
 
+
     const dailyReturn =
-        amount * DAILY_RATE;
+        amount *
+        DAILY_RATE;
+
 
     const thirtyDayReturn =
-        dailyReturn * 30;
+        dailyReturn *
+        30;
+
 
     const totalAfter30 =
-        amount + thirtyDayReturn;
+        amount +
+        thirtyDayReturn;
 
 
     setText(
         "dailyReturn",
-        formatUGX(dailyReturn)
+        formatUGX(
+            dailyReturn
+        )
+    );
+
+
+    /*
+     * Also support the new dashboard ID.
+     */
+
+    setText(
+        "dailyReturnAmount",
+        formatUGX(
+            dailyReturn
+        )
     );
 
 
     setText(
         "monthlyReturn",
-        formatUGX(thirtyDayReturn)
+        formatUGX(
+            thirtyDayReturn
+        )
     );
 
 
     setText(
         "totalAfter30",
-        formatUGX(totalAfter30)
+        formatUGX(
+            totalAfter30
+        )
     );
 
 }
@@ -630,21 +671,8 @@ function calculateReturns() {
 
 function formatUGX(value) {
 
-    let number = 0;
-
-    if (
-        typeof value === "number"
-    ) {
-
-        number = value;
-
-    }
-    else {
-
-        number =
-            Number(value) || 0;
-
-    }
+    const number =
+        Number(value) || 0;
 
 
     return (
@@ -660,10 +688,14 @@ function formatUGX(value) {
    SET TEXT
    ========================================================= */
 
-function setText(id, value) {
+function setText(
+    id,
+    value
+) {
 
     const element =
         document.getElementById(id);
+
 
     if (element) {
 
@@ -695,12 +727,6 @@ function setupMobileMenu() {
     button.addEventListener(
         "click",
         () => {
-
-            /*
-             * Your current mobile design uses the
-             * bottom navigation, so this button simply
-             * gives a visual interaction.
-             */
 
             button.classList.toggle(
                 "active"
@@ -735,6 +761,7 @@ function setupLogout() {
 
             button.disabled = true;
 
+
             try {
 
                 await fetch(
@@ -746,10 +773,11 @@ function setupLogout() {
                 );
 
             }
+
             catch (error) {
 
                 console.warn(
-                    "Logout request failed",
+                    "Logout request failed:",
                     error
                 );
 
@@ -766,9 +794,13 @@ function setupLogout() {
                     "user"
                 );
 
+                localStorage.removeItem(
+                    "loggedIn"
+                );
+
             }
 
-            catch (e) {}
+            catch (error) {}
 
 
             window.location.href =
@@ -785,7 +817,13 @@ function setupLogout() {
    ========================================================= */
 
 window.CrownCashDashboard = {
+
     loadDashboard,
+
     calculateReturns,
-    formatUGX
+
+    formatUGX,
+
+    displayStatistics
+
 };

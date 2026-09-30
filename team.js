@@ -1,11 +1,27 @@
 /* ============================================================
    CROWN CASH - REFERRAL TEAM
    File: team.js
+
+   Referral flow:
+   Referral Center
+        ↓
+   Home Page
+        ↓
+   Registration
+        ↓
+   Dashboard
    ============================================================ */
 
 "use strict";
 
 const API_URL = "https://crown-cash1.onrender.com";
+
+/*
+ * IMPORTANT:
+ * All referral links now start from the Crown Cash HOME PAGE.
+ */
+const HOME_URL = "https://crown-cash.vercel.app/";
+
 
 /* ============================================================
    PAGE ELEMENTS
@@ -53,12 +69,9 @@ const level3Income =
 const totalIncome =
     document.getElementById("totalIncome");
 
-/*
- * IMPORTANT:
- * team.html uses id="teamList".
- */
 const teamList =
     document.getElementById("teamList");
+
 
 /* ============================================================
    FORMAT MONEY
@@ -74,6 +87,7 @@ function formatMoney(amount) {
     );
 }
 
+
 /* ============================================================
    ESCAPE HTML
    ============================================================ */
@@ -88,20 +102,50 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
+
+/* ============================================================
+   BUILD HOME-PAGE REFERRAL LINK
+   ============================================================ */
+
+function buildReferralLink(code) {
+
+    const cleanCode =
+        String(code || "")
+            .trim()
+            .toUpperCase();
+
+    if (!cleanCode) {
+        return "";
+    }
+
+    return (
+        HOME_URL +
+        "?ref=" +
+        encodeURIComponent(cleanCode)
+    );
+}
+
+
 /* ============================================================
    SHOW COPY MESSAGE
    ============================================================ */
 
-function showCopyMessage(message, success = true) {
+function showCopyMessage(
+    message,
+    success = true
+) {
 
     const box =
-        document.getElementById("copyMessage");
+        document.getElementById(
+            "copyMessage"
+        );
 
     if (!box) {
         return;
     }
 
-    box.textContent = message;
+    box.textContent =
+        message;
 
     box.classList.remove(
         "show",
@@ -110,12 +154,11 @@ function showCopyMessage(message, success = true) {
     );
 
     box.classList.add(
-        success ? "success" : "error"
+        success
+            ? "success"
+            : "error"
     );
 
-    /*
-     * Force animation restart.
-     */
     void box.offsetWidth;
 
     box.classList.add("show");
@@ -125,12 +168,18 @@ function showCopyMessage(message, success = true) {
     );
 
     window.crownCashCopyMessageTimer =
-        setTimeout(() => {
+        setTimeout(
+            () => {
 
-            box.classList.remove("show");
+                box.classList.remove(
+                    "show"
+                );
 
-        }, 3000);
+            },
+            3000
+        );
 }
+
 
 /* ============================================================
    COPY TEXT
@@ -145,10 +194,6 @@ async function copyText(text) {
         return false;
     }
 
-    /*
-     * METHOD 1:
-     * Modern Clipboard API.
-     */
     try {
 
         if (
@@ -172,16 +217,18 @@ async function copyText(text) {
         );
     }
 
-    /*
-     * METHOD 2:
-     * Older browser fallback.
-     */
+
+    /* Older browser fallback */
+
     try {
 
         const textarea =
-            document.createElement("textarea");
+            document.createElement(
+                "textarea"
+            );
 
-        textarea.value = value;
+        textarea.value =
+            value;
 
         textarea.setAttribute(
             "readonly",
@@ -223,7 +270,9 @@ async function copyText(text) {
         );
 
         const successful =
-            document.execCommand("copy");
+            document.execCommand(
+                "copy"
+            );
 
         document.body.removeChild(
             textarea
@@ -241,6 +290,7 @@ async function copyText(text) {
         return false;
     }
 }
+
 
 /* ============================================================
    COPY REFERRAL CODE
@@ -263,7 +313,8 @@ async function copyReferralCode() {
 
     if (
         !code ||
-        code.toLowerCase() === "loading..."
+        code.toLowerCase() ===
+            "loading..."
     ) {
 
         showCopyMessage(
@@ -284,9 +335,6 @@ async function copyReferralCode() {
             true
         );
 
-        /*
-         * Change button temporarily.
-         */
         if (copyCodeBtn) {
 
             const original =
@@ -301,35 +349,34 @@ async function copyReferralCode() {
                 "copied"
             );
 
-            setTimeout(() => {
+            setTimeout(
+                () => {
 
-                copyCodeBtn.innerHTML =
-                    original;
+                    copyCodeBtn.innerHTML =
+                        original;
 
-                copyCodeBtn.classList.remove(
-                    "copied"
-                );
+                    copyCodeBtn.classList.remove(
+                        "copied"
+                    );
 
-            }, 2000);
+                },
+                2000
+            );
         }
 
     } else {
 
-        /*
-         * If browser blocks clipboard,
-         * select the input so the user can
-         * manually copy it.
-         */
         referralCodeInput.focus();
 
         referralCodeInput.select();
 
         showCopyMessage(
-            "Copy was blocked by your browser. The code has been selected; tap Copy.",
+            "Copy was blocked by your browser. The code has been selected.",
             false
         );
     }
 }
+
 
 /* ============================================================
    COPY REFERRAL LINK
@@ -352,7 +399,8 @@ async function copyReferralLink() {
 
     if (
         !link ||
-        link.toLowerCase() === "loading..."
+        link.toLowerCase() ===
+            "loading..."
     ) {
 
         showCopyMessage(
@@ -387,16 +435,19 @@ async function copyReferralLink() {
                 "copied"
             );
 
-            setTimeout(() => {
+            setTimeout(
+                () => {
 
-                copyLinkBtn.innerHTML =
-                    original;
+                    copyLinkBtn.innerHTML =
+                        original;
 
-                copyLinkBtn.classList.remove(
-                    "copied"
-                );
+                    copyLinkBtn.classList.remove(
+                        "copied"
+                    );
 
-            }, 2000);
+                },
+                2000
+            );
         }
 
     } else {
@@ -406,11 +457,12 @@ async function copyReferralLink() {
         referralLinkInput.select();
 
         showCopyMessage(
-            "Copy was blocked by your browser. The link has been selected; tap Copy.",
+            "Copy was blocked by your browser. The link has been selected.",
             false
         );
     }
 }
+
 
 /* ============================================================
    SHARE REFERRAL LINK
@@ -430,7 +482,8 @@ async function shareReferralLink() {
 
     if (
         !link ||
-        link.toLowerCase() === "loading..."
+        link.toLowerCase() ===
+            "loading..."
     ) {
 
         showCopyMessage(
@@ -441,12 +494,13 @@ async function shareReferralLink() {
         return;
     }
 
-    /*
-     * Native Android / browser sharing.
-     */
+
+    /* Native sharing */
+
     if (
         navigator.share &&
-        typeof navigator.share === "function"
+        typeof navigator.share ===
+            "function"
     ) {
 
         try {
@@ -463,19 +517,19 @@ async function shareReferralLink() {
 
                 url:
                     link
+
             });
 
             return;
 
         } catch (error) {
 
-            /*
-             * User simply cancelled sharing.
-             */
             if (
                 error &&
-                error.name === "AbortError"
+                error.name ===
+                    "AbortError"
             ) {
+
                 return;
             }
 
@@ -486,16 +540,18 @@ async function shareReferralLink() {
         }
     }
 
-    /*
-     * WhatsApp fallback.
-     */
+
+    /* WhatsApp fallback */
+
     const message =
         "Join Crown Cash using my referral link:\n\n" +
         link;
 
     const whatsappUrl =
         "https://wa.me/?text=" +
-        encodeURIComponent(message);
+        encodeURIComponent(
+            message
+        );
 
     window.open(
         whatsappUrl,
@@ -503,6 +559,7 @@ async function shareReferralLink() {
         "noopener,noreferrer"
     );
 }
+
 
 /* ============================================================
    SHOW TEAM LOADING
@@ -520,12 +577,15 @@ function showLoadingState() {
 
             <div class="loading-spinner"></div>
 
-            <p>Loading team members...</p>
+            <p>
+                Loading team members...
+            </p>
 
         </div>
 
     `;
 }
+
 
 /* ============================================================
    SHOW TEAM ERROR
@@ -598,6 +658,7 @@ function showTeamError(message) {
     }
 }
 
+
 /* ============================================================
    SHOW EMPTY TEAM
    ============================================================ */
@@ -645,6 +706,7 @@ function showEmptyTeam() {
 
     `;
 }
+
 
 /* ============================================================
    LOAD REFERRAL DATA
@@ -711,6 +773,7 @@ async function loadReferralData() {
             );
         }
 
+
         /* ====================================================
            REFERRAL CODE
            ==================================================== */
@@ -720,7 +783,9 @@ async function loadReferralData() {
                 data.referral_code ||
                 data.referralCode ||
                 ""
-            ).trim();
+            )
+                .trim()
+                .toUpperCase();
 
         if (referralCodeInput) {
 
@@ -728,36 +793,27 @@ async function loadReferralData() {
                 code || "Unavailable";
         }
 
+
         /* ====================================================
            REFERRAL LINK
+
+           IMPORTANT:
+           Ignore an old backend referral link.
+
+           ALWAYS generate:
+
+           https://crown-cash.vercel.app/?ref=CODE
            ==================================================== */
 
-        let link =
-            String(
-                data.referral_link ||
-                data.referralLink ||
-                ""
-            ).trim();
-
-        /*
-         * Build the link ourselves if backend
-         * doesn't return one.
-         */
-        if (
-            !link &&
-            code
-        ) {
-
-            link =
-                "https://crown-cash.vercel.app/register.html?ref=" +
-                encodeURIComponent(code);
-        }
+        const link =
+            buildReferralLink(code);
 
         if (referralLinkInput) {
 
             referralLinkInput.value =
                 link || "Unavailable";
         }
+
 
         /* ====================================================
            COUNTS
@@ -792,7 +848,11 @@ async function loadReferralData() {
         const total =
             Number(
                 counts.total ??
-                (l1 + l2 + l3)
+                (
+                    l1 +
+                    l2 +
+                    l3
+                )
             );
 
         if (totalTeam) {
@@ -818,6 +878,7 @@ async function loadReferralData() {
             level3Count.textContent =
                 l3;
         }
+
 
         /* ====================================================
            EARNINGS
@@ -883,6 +944,7 @@ async function loadReferralData() {
                 formatMoney(incomeTotal);
         }
 
+
         /* ====================================================
            COMMISSION STRUCTURE
            ==================================================== */
@@ -933,6 +995,7 @@ async function loadReferralData() {
                 ) + "%";
         }
 
+
         /* ====================================================
            TEAM MEMBERS
            ==================================================== */
@@ -957,6 +1020,7 @@ async function loadReferralData() {
         );
     }
 }
+
 
 /* ============================================================
    RENDER TEAM MEMBERS
@@ -1077,6 +1141,7 @@ function renderMembers(members) {
     applyCurrentFilter();
 }
 
+
 /* ============================================================
    FILTERS
    ============================================================ */
@@ -1113,6 +1178,7 @@ function setupFilters() {
                     btn.classList.remove(
                         "active"
                     );
+
                 });
 
                 this.classList.add(
@@ -1124,6 +1190,7 @@ function setupFilters() {
         );
     });
 }
+
 
 /* ============================================================
    APPLY CURRENT FILTER
@@ -1170,6 +1237,7 @@ function applyCurrentFilter() {
         }
     });
 }
+
 
 /* ============================================================
    LOGOUT
@@ -1220,6 +1288,7 @@ async function logoutUser() {
     window.location.href =
         "/login.html";
 }
+
 
 /* ============================================================
    MOBILE MENU
@@ -1287,6 +1356,7 @@ function setupMobileMenu() {
     }
 }
 
+
 function closeMobileSidebar() {
 
     const sidebar =
@@ -1314,15 +1384,13 @@ function closeMobileSidebar() {
     }
 }
 
+
 /* ============================================================
    BUTTON EVENTS
    ============================================================ */
 
 function setupButtonEvents() {
 
-    /*
-     * COPY REFERRAL CODE
-     */
     if (copyCodeBtn) {
 
         copyCodeBtn.addEventListener(
@@ -1331,9 +1399,6 @@ function setupButtonEvents() {
         );
     }
 
-    /*
-     * COPY REFERRAL LINK
-     */
     if (copyLinkBtn) {
 
         copyLinkBtn.addEventListener(
@@ -1342,9 +1407,6 @@ function setupButtonEvents() {
         );
     }
 
-    /*
-     * SHARE
-     */
     if (shareBtn) {
 
         shareBtn.addEventListener(
@@ -1353,9 +1415,6 @@ function setupButtonEvents() {
         );
     }
 
-    /*
-     * LOGOUT
-     */
     const logoutBtn =
         document.getElementById(
             "logoutBtn"
@@ -1369,6 +1428,7 @@ function setupButtonEvents() {
         );
     }
 }
+
 
 /* ============================================================
    START PAGE
@@ -1384,6 +1444,7 @@ function initializeReferralPage() {
 
     loadReferralData();
 }
+
 
 /* ============================================================
    DOM READY
@@ -1403,6 +1464,7 @@ if (
 
     initializeReferralPage();
 }
+
 
 /* ============================================================
    GLOBAL FUNCTIONS

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| Crown Cash - User Dashboard
+| Crown Cash - User Dashboard API
 |--------------------------------------------------------------------------
 */
 
@@ -28,6 +28,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 startSecureSession();
 
+/*
+|--------------------------------------------------------------------------
+| Small helpers
+|--------------------------------------------------------------------------
+*/
+
+function dashboardValue(object $document, array $fields, mixed $default = null): mixed
+{
+    foreach ($fields as $field) {
+        try {
+            if (isset($document->{$field})) {
+                return $document->{$field};
+            }
+        } catch (Throwable $e) {
+            // Continue checking other fields.
+        }
+    }
+
+    return $default;
+}
+
+function dashboardMoney(object $document, array $fields): int
+{
+    foreach ($fields as $field) {
+        try {
+            if (isset($document->{$field})) {
+                return moneyInt($document->{$field});
+            }
+        } catch (Throwable $e) {
+            // Continue checking.
+        }
+    }
+
+    return 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Main
+|--------------------------------------------------------------------------
+*/
+
 try {
 
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -36,6 +78,12 @@ try {
             'message' => 'Only GET requests are allowed.'
         ], 405);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication
+    |--------------------------------------------------------------------------
+    */
 
     $userId = currentUserId();
 
@@ -54,11 +102,24 @@ try {
 
     $user = null;
 
-    if (isValidObjectId($userId)) {
-        $user = $users->findOne([
-            '_id' => objectIdOrNull($userId)
-        ]);
+    /*
+    | First: Mongo ObjectId
+    */
+
+    if (isValidObjectId((string)$userId)) {
+
+        $objectId = objectIdOrNull((string)$userId);
+
+        if ($objectId !== null) {
+            $user = $users->findOne([
+                '_id' => $objectId
+            ]);
+        }
     }
+
+    /*
+    | Second: string id
+    */
 
     if (!$user) {
         $user = $users->findOne([
@@ -66,29 +127,233 @@ try {
         ]);
     }
 
+    /*
+    | Third: email from session, if available.
+    */
+
     if (!$user) {
+
+        $sessionEmail =
+            $_SESSION['email']
+            ?? $_SESSION['user_email']
+            ?? null;
+
+        if ($sessionEmail) {
+
+            $user = $users->findOne([
+                'email' => (string)$sessionEmail
+            ]);
+        }
+    }
+
+    if (!$user) {
+
         jsonResponse([
             'success' => false,
             'message' => 'User account not found.'
         ], 404);
     }
 
-    $resolvedUserId = isset($user->_id)
-        ? (string)$user->_id
-        : (string)($user->id ?? $userId);
-
     /*
     |--------------------------------------------------------------------------
-    | Wallet
+    | Resolved user ID
     |--------------------------------------------------------------------------
     */
 
-    $walletBalance = moneyInt(
-        $user->balance
-        ?? $user->wallet_balance
-        ?? $user->walletBalance
-        ?? 0
+    $resolvedUserId = '';
+
+    if (isset($user->_id)) {
+        $resolvedUserId = (string)$user->_id;
+    } elseif (isset($user->id)) {
+        $resolvedUserId = (string)$user->id;
+    } else {
+        $resolvedUserId = (string)$userId;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | User information
+    |--------------------------------------------------------------------------
+    */
+
+    $firstName = (string)(
+        dashboardValue(
+            $user,
+            ['first_name', 'firstname', 'firstName'],
+            ''
+        )
     );
+
+    $lastName = (string)(
+        dashboardValue(
+            $user,
+            ['last_name', 'lastname', 'lastName'],
+            ''
+        )
+    );
+
+    $nameFromDatabase = dashboardValue(
+        $user,
+        ['name', 'full_name', 'fullName', 'username'],
+        ''
+    );
+
+    $fullName = trim((string)$nameFromDatabase);
+
+    if ($fullName === '') {
+        $fullName = trim(
+            $firstName . ' ' . $lastName
+        );
+    }
+
+    if ($fullName === '') {
+        $fullName = 'Crown Cash User';
+    }
+
+    $email = (string)(
+        dashboardValue(
+            $user,
+            ['email', 'user_email'],
+            ''
+        )
+    );
+
+    $role = strtolower(
+        trim(
+            (string)(
+                dashboardValue(
+                    $user,
+                    ['role'],
+                    ''
+                )
+            )
+        )
+    );
+
+    $accountType = strtolower(
+        trim(
+            (string)(
+                dashboardValue(
+                    $user,
+                    ['account_type', 'accountType'],
+                    ''
+                )
+            )
+        )
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin detection
+    |--------------------------------------------------------------------------
+    |
+    | We check BOTH the database role and the admin configuration.
+    | This fixes the situation where admin-auth.php recognizes an admin
+    | through ADMIN_EMAIL or ADMIN_USER_ID but the user document still
+    | contains account_type=user.
+    |--------------------------------------------------------------------------
+    */
+
+    $isAdmin = (
+        $role === 'admin' ||
+        $role === 'administrator' ||
+        $accountType === 'admin' ||
+        $accountType === 'administrator'
+    );
+
+    $configuredAdminEmail = trim(
+        (string)(getenv('ADMIN_EMAIL') ?: '')
+    );
+
+    $configuredAdminUserId = trim(
+        (string)(getenv('ADMIN_USER_ID') ?: '')
+    );
+
+    if (
+        $configuredAdminEmail !== '' &&
+        $email !== '' &&
+        strcasecmp(
+            $configuredAdminEmail,
+            $email
+        ) === 0
+    ) {
+        $isAdmin = true;
+    }
+
+    if (
+        $configuredAdminUserId !== '' &&
+        $resolvedUserId !== '' &&
+        $configuredAdminUserId === $resolvedUserId
+    ) {
+        $isAdmin = true;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet balance
+    |--------------------------------------------------------------------------
+    |
+    | Support all wallet field names currently used by Crown Cash.
+    |--------------------------------------------------------------------------
+    */
+
+    $walletBalance = 0;
+
+    foreach (
+        [
+            'balance',
+            'wallet_balance',
+            'walletBalance',
+            'available_balance',
+            'availableBalance'
+        ] as $walletField
+    ) {
+
+        try {
+
+            if (isset($user->{$walletField})) {
+
+                $walletBalance =
+                    moneyInt($user->{$walletField});
+
+                break;
+            }
+
+        } catch (Throwable $e) {
+            // Continue checking.
+        }
+    }
+
+    /*
+    | Some installations may store:
+    |
+    | wallet: {
+    |     balance: 55000
+    | }
+    |
+    */
+
+    if (
+        $walletBalance === 0 &&
+        isset($user->wallet)
+    ) {
+
+        try {
+
+            $wallet = $user->wallet;
+
+            if (
+                is_object($wallet) &&
+                isset($wallet->balance)
+            ) {
+                $walletBalance =
+                    moneyInt($wallet->balance);
+            }
+
+        } catch (Throwable $e) {
+            // Keep zero if unavailable.
+        }
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -96,29 +361,45 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    $approvedDepositStatuses = [
-        'approved',
-        'verified',
-        'completed',
-        'success',
-        'successful'
-    ];
-
     $totalDeposited = 0;
 
-    $depositCursor = $deposits->find([
-        'user_id' => $resolvedUserId,
-        'status' => [
-            '$in' => $approvedDepositStatuses
-        ]
-    ]);
+    try {
 
-    foreach ($depositCursor as $deposit) {
+        $approvedDepositStatuses = [
+            'approved',
+            'verified',
+            'completed',
+            'success',
+            'successful'
+        ];
 
-        $totalDeposited += moneyInt(
-            $deposit->amount
-            ?? $deposit->deposit_amount
-            ?? 0
+        $depositCursor = $deposits->find([
+            '$or' => [
+                ['user_id' => $resolvedUserId],
+                ['userId' => $resolvedUserId]
+            ],
+            'status' => [
+                '$in' => $approvedDepositStatuses
+            ]
+        ]);
+
+        foreach ($depositCursor as $deposit) {
+
+            $totalDeposited += dashboardMoney(
+                $deposit,
+                [
+                    'amount',
+                    'deposit_amount',
+                    'depositAmount'
+                ]
+            );
+        }
+
+    } catch (Throwable $e) {
+
+        error_log(
+            'Dashboard deposit query: ' .
+            $e->getMessage()
         );
     }
 
@@ -128,176 +409,271 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    $investmentStatuses = [
-        'active',
-        'approved',
-        'running',
-        'completed'
-    ];
-
     $totalInvested = 0;
     $activeInvestmentCount = 0;
     $completedInvestmentCount = 0;
+    $pendingInvestmentCount = 0;
 
-    $investmentCursor = $investments->find([
-        'user_id' => $resolvedUserId,
-        'status' => [
-            '$in' => $investmentStatuses
-        ]
-    ]);
+    try {
 
-    foreach ($investmentCursor as $investment) {
+        $investmentCursor = $investments->find([
+            '$or' => [
+                ['user_id' => $resolvedUserId],
+                ['userId' => $resolvedUserId]
+            ]
+        ]);
 
-        $amount = moneyInt(
-            $investment->principal
-            ?? $investment->amount
-            ?? 0
-        );
+        foreach ($investmentCursor as $investment) {
 
-        $totalInvested += $amount;
+            $status = strtolower(
+                trim(
+                    (string)(
+                        dashboardValue(
+                            $investment,
+                            ['status'],
+                            ''
+                        )
+                    )
+                )
+            );
 
-        $status = strtolower(
-            trim((string)($investment->status ?? ''))
-        );
+            $amount = dashboardMoney(
+                $investment,
+                [
+                    'principal',
+                    'amount',
+                    'investment_amount',
+                    'investmentAmount'
+                ]
+            );
 
-        if (
-            in_array(
-                $status,
-                ['active', 'approved', 'running'],
-                true
-            )
-        ) {
-            $activeInvestmentCount++;
+            /*
+            | Approved/active investments are included in total invested.
+            */
+
+            if (
+                in_array(
+                    $status,
+                    [
+                        'active',
+                        'approved',
+                        'running',
+                        'completed'
+                    ],
+                    true
+                )
+            ) {
+                $totalInvested += $amount;
+            }
+
+            if (
+                in_array(
+                    $status,
+                    [
+                        'active',
+                        'approved',
+                        'running'
+                    ],
+                    true
+                )
+            ) {
+                $activeInvestmentCount++;
+            }
+
+            if ($status === 'completed') {
+                $completedInvestmentCount++;
+            }
+
+            if ($status === 'pending') {
+                $pendingInvestmentCount++;
+            }
         }
 
-        if ($status === 'completed') {
-            $completedInvestmentCount++;
-        }
+    } catch (Throwable $e) {
+
+        error_log(
+            'Dashboard investment query: ' .
+            $e->getMessage()
+        );
     }
 
     /*
     |--------------------------------------------------------------------------
     | Investment earnings
     |--------------------------------------------------------------------------
-    |
-    | Only daily_earning records are counted here.
-    | Principal returns are NOT earnings.
-    |--------------------------------------------------------------------------
     */
 
     $investmentEarnings = 0;
 
-    $earningCursor = $earnings->find([
-        'user_id' => $resolvedUserId,
-        'type' => 'daily_earning'
-    ]);
+    try {
 
-    foreach ($earningCursor as $earning) {
+        $earningCursor = $earnings->find([
+            '$or' => [
+                ['user_id' => $resolvedUserId],
+                ['userId' => $resolvedUserId]
+            ],
+            'type' => [
+                '$in' => [
+                    'daily_earning',
+                    'investment_earning',
+                    'investment_daily_earning'
+                ]
+            ]
+        ]);
 
-        $investmentEarnings += moneyInt(
-            $earning->amount ?? 0
+        foreach ($earningCursor as $earning) {
+
+            $investmentEarnings += dashboardMoney(
+                $earning,
+                ['amount', 'earning', 'value']
+            );
+        }
+
+    } catch (Throwable $e) {
+
+        error_log(
+            'Dashboard earnings query: ' .
+            $e->getMessage()
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Referral earnings
-    |--------------------------------------------------------------------------
-    |
-    | Different referral implementations sometimes use:
-    | amount, commission, bonus, reward, referral_earning.
-    |
-    | We support those common fields while preventing the same document
-    | from being counted more than once.
+    | Referral team and earnings
     |--------------------------------------------------------------------------
     */
 
-    $referralEarnings = 0;
     $referralTeam = 0;
+    $referralEarnings = 0;
 
-    /*
-    | Count direct referrals.
-    */
+    try {
 
-    $referralTeam = $referrals->countDocuments([
-        'referrer_id' => $resolvedUserId
-    ]);
+        /*
+        | Count direct referrals using the possible field names.
+        */
 
-    /*
-    | If your referral documents use user_id/referrer instead,
-    | include those records too without double-counting where possible.
-    */
+        $referralIds = [];
 
-    if ($referralTeam === 0) {
-
-        $referralTeam = $referrals->countDocuments([
-            'referrer' => $resolvedUserId
-        ]);
-    }
-
-    /*
-    | Referral earnings.
-    */
-
-    $referralCursor = $referrals->find([
-        '$or' => [
+        $referralQueries = [
             ['referrer_id' => $resolvedUserId],
             ['referrer' => $resolvedUserId],
-            ['sponsor_id' => $resolvedUserId]
-        ]
-    ]);
+            ['sponsor_id' => $resolvedUserId],
+            ['sponsor' => $resolvedUserId]
+        ];
 
-    $processedReferralIds = [];
+        foreach ($referralQueries as $query) {
 
-    foreach ($referralCursor as $referral) {
+            try {
 
-        $referralId = isset($referral->_id)
-            ? (string)$referral->_id
-            : '';
+                $cursor = $referrals->find($query);
 
-        if (
-            $referralId !== '' &&
-            isset($processedReferralIds[$referralId])
-        ) {
-            continue;
-        }
+                foreach ($cursor as $referral) {
 
-        if ($referralId !== '') {
-            $processedReferralIds[$referralId] = true;
-        }
+                    if (isset($referral->_id)) {
+                        $referralIds[
+                            (string)$referral->_id
+                        ] = true;
+                    } else {
+                        $referralIds[
+                            md5(serialize($referral))
+                        ] = true;
+                    }
+                }
 
-        $amount = 0;
-
-        foreach (
-            [
-                'commission',
-                'referral_earning',
-                'referral_commission',
-                'bonus',
-                'reward',
-                'amount'
-            ] as $field
-        ) {
-
-            if (
-                isset($referral->{$field}) &&
-                is_numeric((string)$referral->{$field})
-            ) {
-                $amount = moneyInt(
-                    $referral->{$field}
-                );
-
-                break;
+            } catch (Throwable $e) {
+                // Try next referral structure.
             }
         }
 
+        $referralTeam = count($referralIds);
+
         /*
-        | Only count positive referral rewards.
+        | Calculate referral earnings.
         */
 
-        if ($amount > 0) {
-            $referralEarnings += $amount;
+        $processedReferralIds = [];
+
+        foreach ($referralQueries as $query) {
+
+            try {
+
+                $cursor = $referrals->find($query);
+
+                foreach ($cursor as $referral) {
+
+                    $referralId = isset($referral->_id)
+                        ? (string)$referral->_id
+                        : md5(serialize($referral));
+
+                    if (
+                        isset(
+                            $processedReferralIds[$referralId]
+                        )
+                    ) {
+                        continue;
+                    }
+
+                    $processedReferralIds[
+                        $referralId
+                    ] = true;
+
+                    /*
+                    | We only count explicit reward/commission fields.
+                    |
+                    | "amount" is deliberately NOT used here because
+                    | some referral records use amount for the deposit
+                    | made by the referred user.
+                    */
+
+                    foreach (
+                        [
+                            'commission',
+                            'referral_earning',
+                            'referral_commission',
+                            'referral_bonus',
+                            'bonus',
+                            'reward',
+                            'commission_amount'
+                        ] as $field
+                    ) {
+
+                        try {
+
+                            if (
+                                isset($referral->{$field}) &&
+                                is_numeric(
+                                    (string)$referral->{$field}
+                                )
+                            ) {
+
+                                $amount = moneyInt(
+                                    $referral->{$field}
+                                );
+
+                                if ($amount > 0) {
+                                    $referralEarnings += $amount;
+                                }
+
+                                break;
+                            }
+
+                        } catch (Throwable $e) {
+                            continue;
+                        }
+                    }
+                }
+
+            } catch (Throwable $e) {
+                // Continue.
+            }
         }
+
+    } catch (Throwable $e) {
+
+        error_log(
+            'Dashboard referral query: ' .
+            $e->getMessage()
+        );
     }
 
     /*
@@ -316,125 +692,126 @@ try {
     |--------------------------------------------------------------------------
     */
 
-    $transactionCount = $transactions->countDocuments([
-        'user_id' => $resolvedUserId
-    ]);
+    $transactionCount = 0;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pending investment count
-    |--------------------------------------------------------------------------
-    */
+    try {
 
-    $pendingInvestmentCount = $investments->countDocuments([
-        'user_id' => $resolvedUserId,
-        'status' => 'pending'
-    ]);
+        $transactionCount =
+            $transactions->countDocuments([
+                '$or' => [
+                    ['user_id' => $resolvedUserId],
+                    ['userId' => $resolvedUserId]
+                ]
+            ]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pending withdrawal
-    |--------------------------------------------------------------------------
-    */
+    } catch (Throwable $e) {
 
-    $pendingWithdrawalCount = $withdrawals->countDocuments([
-        'user_id' => $resolvedUserId,
-        'status' => 'pending'
-    ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | User information
-    |--------------------------------------------------------------------------
-    */
-
-    $firstName = (string)(
-        $user->first_name
-        ?? $user->firstname
-        ?? ''
-    );
-
-    $lastName = (string)(
-        $user->last_name
-        ?? $user->lastname
-        ?? ''
-    );
-
-    $fullName = trim(
-        (string)(
-            $user->name
-            ?? $user->full_name
-            ?? trim($firstName . ' ' . $lastName)
-        )
-    );
-
-    if ($fullName === '') {
-        $fullName = 'Crown Cash User';
+        error_log(
+            'Dashboard transaction query: ' .
+            $e->getMessage()
+        );
     }
 
-    $email = (string)(
-        $user->email ?? ''
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | Pending withdrawals
+    |--------------------------------------------------------------------------
+    */
 
-    $role = (string)(
-        $user->role
-        ?? $user->account_type
-        ?? 'user'
-    );
+    $pendingWithdrawalCount = 0;
+
+    try {
+
+        $pendingWithdrawalCount =
+            $withdrawals->countDocuments([
+                '$or' => [
+                    ['user_id' => $resolvedUserId],
+                    ['userId' => $resolvedUserId]
+                ],
+                'status' => 'pending'
+            ]);
+
+    } catch (Throwable $e) {
+
+        error_log(
+            'Dashboard withdrawal query: ' .
+            $e->getMessage()
+        );
+    }
 
     /*
     |--------------------------------------------------------------------------
-    | Response
+    | Final response
     |--------------------------------------------------------------------------
     */
 
     jsonResponse([
+
         'success' => true,
 
-        'message' => 'Dashboard loaded successfully.',
+        'message' =>
+            'Dashboard loaded successfully.',
 
         'user' => [
-            'id' => $resolvedUserId,
-            'name' => $fullName,
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'email' => $email,
-            'role' => $role,
-            'account_type' => (string)(
-                $user->account_type ?? 'user'
-            ),
-            'status' => (string)(
-                $user->status ?? 'active'
-            )
+
+            'id' =>
+                $resolvedUserId,
+
+            'name' =>
+                $fullName,
+
+            'first_name' =>
+                $firstName,
+
+            'last_name' =>
+                $lastName,
+
+            'email' =>
+                $email,
+
+            'role' =>
+                $role,
+
+            'account_type' =>
+                $accountType !== ''
+                    ? $accountType
+                    : 'user',
+
+            'is_admin' =>
+                $isAdmin,
+
+            'status' =>
+                (string)(
+                    dashboardValue(
+                        $user,
+                        ['status'],
+                        'active'
+                    )
+                )
         ],
 
         'stats' => [
 
-            /*
-            | Wallet
-            */
+            'available_balance' =>
+                $walletBalance,
 
-            'available_balance' => $walletBalance,
+            'wallet_balance' =>
+                $walletBalance,
 
-            'wallet_balance' => $walletBalance,
+            'total_deposited' =>
+                $totalDeposited,
 
-            /*
-            | Investments
-            */
+            'total_invested' =>
+                $totalInvested,
 
-            'total_invested' => $totalInvested,
-
-            'active_investments' => $activeInvestmentCount,
+            'active_investments' =>
+                $activeInvestmentCount,
 
             'completed_investments' =>
                 $completedInvestmentCount,
 
             'pending_investments' =>
                 $pendingInvestmentCount,
-
-            /*
-            | Earnings
-            */
 
             'investment_earnings' =>
                 $investmentEarnings,
@@ -445,29 +822,14 @@ try {
             'total_earnings' =>
                 $totalEarnings,
 
-            /*
-            | Referrals
-            */
-
             'referral_team' =>
                 $referralTeam,
-
-            /*
-            | Activity
-            */
 
             'transaction_count' =>
                 $transactionCount,
 
             'pending_withdrawals' =>
-                $pendingWithdrawalCount,
-
-            /*
-            | Deposits
-            */
-
-            'total_deposited' =>
-                $totalDeposited
+                $pendingWithdrawalCount
         ],
 
         'earnings' => [
@@ -480,6 +842,15 @@ try {
 
             'total' =>
                 $totalEarnings
+        ],
+
+        'referrals' => [
+
+            'team' =>
+                $referralTeam,
+
+            'earnings' =>
+                $referralEarnings
         ],
 
         'investment' => [
@@ -497,29 +868,39 @@ try {
                 $pendingInvestmentCount
         ],
 
-        'referrals' => [
+        'admin' => [
 
-            'team' =>
-                $referralTeam,
-
-            'earnings' =>
-                $referralEarnings
+            'is_admin' =>
+                $isAdmin
         ],
 
         'daily_rate' => 0.10,
 
         'currency' => 'UGX'
+
     ]);
 
 } catch (Throwable $e) {
 
     error_log(
-        'Crown Cash dashboard.php error: ' .
+        'Crown Cash dashboard.php fatal error: ' .
         $e->getMessage()
     );
 
     jsonResponse([
+
         'success' => false,
-        'message' => 'Unable to load dashboard data.'
+
+        'message' =>
+            'Unable to load dashboard data.',
+
+        /*
+        | This makes debugging easier from the browser console
+        | without exposing the actual PHP error to users.
+        */
+
+        'error_code' =>
+            'DASHBOARD_SERVER_ERROR'
+
     ], 500);
 }

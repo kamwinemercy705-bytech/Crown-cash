@@ -1,718 +1,637 @@
+/*
+|--------------------------------------------------------------------------
+| Crown Cash - User Dashboard
+|--------------------------------------------------------------------------
+*/
+
 const API_BASE = "https://crown-cash1.onrender.com";
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadDashboard();
-    setupCalculator();
-    setupMobileMenu();
-    setupLogout();
+const DASHBOARD_API = `${API_BASE}/dashboard.php`;
+const LOGOUT_API = `${API_BASE}/logout.php`;
 
-    const year = document.getElementById("currentYear");
+const REQUEST_TIMEOUT = 15000;
 
-    if (year) {
-        year.textContent = new Date().getFullYear();
+/*
+|--------------------------------------------------------------------------
+| Helpers
+|--------------------------------------------------------------------------
+*/
+
+const $ = (id) => document.getElementById(id);
+
+function setText(id, value) {
+    const element = $(id);
+
+    if (element) {
+        element.textContent = value;
     }
-});
-
-
-/* =========================================================
-   API
-========================================================= */
-
-async function apiFetch(path, options = {}) {
-
-    const requestOptions = {
-        credentials: "include",
-        ...options
-    };
-
-    if (
-        requestOptions.body &&
-        typeof requestOptions.body === "string"
-    ) {
-        requestOptions.headers = {
-            "Content-Type": "application/json",
-            ...(requestOptions.headers || {})
-        };
-    }
-
-    const response = await fetch(
-        `${API_BASE}/${path}`,
-        requestOptions
-    );
-
-    let data = {};
-
-    try {
-        data = await response.json();
-    } catch (error) {
-        data = {};
-    }
-
-    if (!response.ok || data.success === false) {
-        throw new Error(
-            data.message ||
-            `Request failed (${response.status})`
-        );
-    }
-
-    return data;
 }
 
+function formatCurrency(value) {
+    const number = Number(value) || 0;
 
-/* =========================================================
-   LOAD DASHBOARD
-========================================================= */
+    return `UGX ${Math.round(number).toLocaleString("en-UG")}`;
+}
+
+function formatNumber(value) {
+    const number = Number(value) || 0;
+
+    return Math.round(number).toLocaleString("en-UG");
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fetch
+|--------------------------------------------------------------------------
+*/
+
+async function fetchWithTimeout(
+    url,
+    options = {},
+    timeout = REQUEST_TIMEOUT
+) {
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(
+        () => controller.abort(),
+        timeout
+    );
+
+    try {
+
+        return await fetch(url, {
+            ...options,
+            credentials: "include",
+            signal: controller.signal,
+            headers: {
+                "Accept": "application/json",
+                ...(options.headers || {})
+            }
+        });
+
+    } finally {
+
+        clearTimeout(timer);
+    }
+}
+
+async function readJson(response) {
+
+    const text = await response.text();
+
+    if (!text) {
+        return {};
+    }
+
+    try {
+
+        return JSON.parse(text);
+
+    } catch (error) {
+
+        console.error(
+            "Invalid JSON response:",
+            text
+        );
+
+        throw new Error(
+            "The server returned an invalid response."
+        );
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
 
 async function loadDashboard() {
 
     try {
 
-        const data =
-            await apiFetch("dashboard.php");
-
-        console.log(
-            "Dashboard user:",
-            data.user
+        const response = await fetchWithTimeout(
+            DASHBOARD_API,
+            {
+                method: "GET"
+            }
         );
 
-        if (data.user) {
+        const data = await readJson(response);
 
-            displayUser(data.user);
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
 
-            setupAdminPanel(
-                data.user
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (!response.ok || data.success === false) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load dashboard."
             );
         }
 
-        loadStatistics(data);
+        displayUser(data.user || {});
+
+        displayDashboardStats(
+            data.stats || {},
+            data.earnings || {},
+            data.referrals || {}
+        );
+
+        setupAdminPanel(
+            data.user || {}
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dispatch event for other dashboard components
+        |--------------------------------------------------------------------------
+        */
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "crownCashDashboardLoaded",
+                {
+                    detail: data
+                }
+            )
+        );
+
+        return data;
 
     } catch (error) {
 
         console.error(
-            "Dashboard loading error:",
+            "Dashboard error:",
             error
         );
 
-        try {
+        showDashboardError(
+            error.message ||
+            "Unable to load dashboard data."
+        );
 
-            const profile =
-                await apiFetch("profile.php");
-
-            const user =
-                profile.user ||
-                profile ||
-                {};
-
-            displayUser(user);
-
-            setupAdminPanel(user);
-
-        } catch (profileError) {
-
-            console.error(
-                "Profile fallback failed:",
-                profileError
-            );
-        }
+        return null;
     }
 }
 
-
-/* =========================================================
-   USER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| User information
+|--------------------------------------------------------------------------
+*/
 
 function displayUser(user) {
 
-    const firstName =
-        user.firstName ||
-        user.first_name ||
-        "";
-
-    const lastName =
-        user.lastName ||
-        user.last_name ||
-        "";
-
-    const fullName =
+    const name =
+        user.name ||
         user.full_name ||
-        `${firstName} ${lastName}`.trim() ||
-        "Member";
+        "Crown Cash User";
 
+    const firstName =
+        user.first_name ||
+        name.split(" ")[0] ||
+        "User";
 
-    document
-        .querySelectorAll(
-            "#welcomeName, " +
-            "#sidebarUserName, " +
-            "[data-user-name], " +
-            ".user-name"
+    setText(
+        "welcomeName",
+        name
+    );
+
+    setText(
+        "sidebarUserName",
+        name
+    );
+
+    setText(
+        "sidebarAccountType",
+        formatAccountType(
+            user.account_type ||
+            user.role ||
+            "User"
         )
-        .forEach(element => {
+    );
+}
 
-            element.textContent =
-                fullName;
+/*
+|--------------------------------------------------------------------------
+| Dashboard statistics
+|--------------------------------------------------------------------------
+*/
 
-        });
+function displayDashboardStats(
+    stats,
+    earnings = {},
+    referrals = {}
+) {
 
-
-    document
-        .querySelectorAll(
-            "#userEmail, " +
-            "[data-user-email]"
-        )
-        .forEach(element => {
-
-            element.textContent =
-                user.email || "";
-
-        });
-
-
-    const role =
-        String(
-            user.role || "user"
-        )
-        .trim()
-        .toLowerCase();
-
-
-    const accountType =
-        document.getElementById(
-            "sidebarAccountType"
+    const walletBalance =
+        Number(
+            stats.available_balance ??
+            stats.wallet_balance ??
+            0
         );
 
+    const totalInvested =
+        Number(
+            stats.total_invested ??
+            0
+        );
 
-    if (accountType) {
+    const investmentEarnings =
+        Number(
+            stats.investment_earnings ??
+            earnings.investment ??
+            0
+        );
 
-        accountType.textContent =
-            role === "admin"
-                ? "Administrator Account"
-                : "Personal Account";
-    }
+    const referralEarnings =
+        Number(
+            stats.referral_earnings ??
+            earnings.referral ??
+            referrals.earnings ??
+            0
+        );
 
+    const totalEarnings =
+        Number(
+            stats.total_earnings ??
+            earnings.total ??
+            (
+                investmentEarnings +
+                referralEarnings
+            )
+        );
+
+    const referralTeam =
+        Number(
+            stats.referral_team ??
+            referrals.team ??
+            0
+        );
+
+    const transactionCount =
+        Number(
+            stats.transaction_count ??
+            0
+        );
 
     /*
-     * Save only basic interface data.
-     * Backend authorization remains authoritative.
-     */
+    |--------------------------------------------------------------------------
+    | Existing dashboard cards
+    |--------------------------------------------------------------------------
+    */
 
-    try {
+    setText(
+        "availableBalance",
+        formatCurrency(walletBalance)
+    );
 
-        localStorage.setItem(
-            "user",
-            JSON.stringify({
-                id: user.id || "",
-                name: fullName,
-                email: user.email || "",
-                role: role
-            })
-        );
+    setText(
+        "totalInvested",
+        formatCurrency(totalInvested)
+    );
 
-    } catch (error) {
+    setText(
+        "totalEarnings",
+        formatCurrency(totalEarnings)
+    );
 
-        console.warn(
-            "Could not save user information."
-        );
+    setText(
+        "referralTeam",
+        formatNumber(referralTeam)
+    );
+
+    setText(
+        "transactionCount",
+        formatNumber(transactionCount)
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optional detailed earnings elements
+    |--------------------------------------------------------------------------
+    |
+    | These will work automatically if you later add these IDs to HTML.
+    |--------------------------------------------------------------------------
+    */
+
+    setText(
+        "investmentEarnings",
+        formatCurrency(investmentEarnings)
+    );
+
+    setText(
+        "referralEarnings",
+        formatCurrency(referralEarnings)
+    );
+
+    setText(
+        "totalInvestmentEarnings",
+        formatCurrency(investmentEarnings)
+    );
+
+    setText(
+        "totalReferralEarnings",
+        formatCurrency(referralEarnings)
+    );
+
+    setText(
+        "totalEarningsBreakdown",
+        formatCurrency(totalEarnings)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Error
+|--------------------------------------------------------------------------
+*/
+
+function showDashboardError(message) {
+
+    console.error(
+        "Crown Cash:",
+        message
+    );
+
+    const balance =
+        $("availableBalance");
+
+    if (balance) {
+        balance.textContent =
+            "Unable to load";
     }
 }
 
-
-/* =========================================================
-   ADMIN PANEL VISIBILITY
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Admin panel
+|--------------------------------------------------------------------------
+*/
 
 function setupAdminPanel(user) {
 
     const role =
         String(
-            user.role || ""
+            user.role ||
+            user.account_type ||
+            ""
         )
         .trim()
         .toLowerCase();
 
+    const isAdmin =
+        role === "admin" ||
+        role === "administrator" ||
+        String(user.account_type || "")
+            .trim()
+            .toLowerCase() === "admin" ||
+        String(user.account_type || "")
+            .trim()
+            .toLowerCase() === "administrator";
 
-    const adminNav =
-        document.getElementById(
-            "adminNavLink"
-        );
+    const adminNavLink =
+        $("adminNavLink");
 
+    const adminActionCard =
+        $("adminActionCard");
 
-    const adminCard =
-        document.getElementById(
-            "adminActionCard"
-        );
+    if (isAdmin) {
 
-
-    /*
-     * Only administrators can see
-     * the Admin Panel.
-     */
-
-    if (role === "admin") {
-
-        if (adminNav) {
-
-            adminNav.classList.remove(
+        if (adminNavLink) {
+            adminNavLink.classList.remove(
                 "hidden"
             );
 
-            adminNav.style.display =
-                "flex";
+            adminNavLink.style.display = "flex";
         }
 
-
-        if (adminCard) {
-
-            adminCard.classList.remove(
+        if (adminActionCard) {
+            adminActionCard.classList.remove(
                 "hidden"
             );
 
-            adminCard.style.display =
-                "flex";
+            adminActionCard.style.display = "flex";
         }
-
-
-        console.log(
-            "Admin Panel enabled."
-        );
 
     } else {
 
-        if (adminNav) {
-
-            adminNav.classList.add(
+        if (adminNavLink) {
+            adminNavLink.classList.add(
                 "hidden"
             );
 
-            adminNav.style.display =
-                "none";
+            adminNavLink.style.display = "none";
         }
 
-
-        if (adminCard) {
-
-            adminCard.classList.add(
+        if (adminActionCard) {
+            adminActionCard.classList.add(
                 "hidden"
             );
 
-            adminCard.style.display =
-                "none";
+            adminActionCard.style.display = "none";
         }
-
-
-        console.log(
-            "Regular member account."
-        );
     }
 }
 
+/*
+|--------------------------------------------------------------------------
+| Investment calculator
+|--------------------------------------------------------------------------
+*/
 
-/* =========================================================
-   STATISTICS
-========================================================= */
-
-function loadStatistics(data) {
-
-    const balance =
-        Number(
-            data.balance ??
-            data.available_balance ??
-            data.wallet_balance ??
-            0
-        );
-
-
-    const deposits =
-        Number(
-            data.totalDeposits ??
-            data.total_deposits ??
-            0
-        );
-
-
-    const invested =
-        Number(
-            data.totalInvested ??
-            data.total_invested ??
-            0
-        );
-
-
-    const earnings =
-        Number(
-            data.totalEarnings ??
-            data.total_earnings ??
-            0
-        );
-
-
-    const daily =
-        Number(
-            data.dailyReturnAmount ??
-            data.daily_return ??
-            0
-        );
-
-
-    const active =
-        Number(
-            data.activeInvestments ??
-            data.active_investments ??
-            0
-        );
-
-
-    const referrals =
-        Number(
-            data.referralTeam ??
-            data.referral_team ??
-            0
-        );
-
-
-    const transactions =
-        Number(
-            data.transactionCount ??
-            data.transaction_count ??
-            0
-        );
-
-
-    setMoney(
-        [
-            "#availableBalance",
-            "#balance",
-            "[data-balance]"
-        ],
-        balance
-    );
-
-
-    setMoney(
-        [
-            "#totalDeposits",
-            "[data-total-deposits]"
-        ],
-        deposits
-    );
-
-
-    setMoney(
-        [
-            "#totalInvested",
-            "[data-total-invested]"
-        ],
-        invested
-    );
-
-
-    setMoney(
-        [
-            "#totalEarnings",
-            "[data-total-earnings]"
-        ],
-        earnings
-    );
-
-
-    setMoney(
-        [
-            "#dailyReturn",
-            "#dailyReturnAmount",
-            "[data-daily-return]"
-        ],
-        daily
-    );
-
-
-    setText(
-        [
-            "#activeInvestments",
-            "[data-active-investments]"
-        ],
-        active
-    );
-
-
-    setText(
-        [
-            "#referralTeam",
-            "[data-referral-team]"
-        ],
-        referrals
-    );
-
-
-    setText(
-        [
-            "#transactionCount",
-            "[data-transaction-count]"
-        ],
-        transactions
-    );
-}
-
-
-/* =========================================================
-   MONEY
-========================================================= */
-
-function setMoney(selectors, value) {
-
-    const number =
-        Number(value);
-
-    const safeValue =
-        Number.isFinite(number)
-            ? number
-            : 0;
-
-
-    const formatted =
-        `UGX ${Math.round(
-            safeValue
-        ).toLocaleString()}`;
-
-
-    selectors.forEach(selector => {
-
-        document
-            .querySelectorAll(selector)
-            .forEach(element => {
-
-                element.textContent =
-                    formatted;
-
-            });
-
-    });
-}
-
-
-/* =========================================================
-   TEXT
-========================================================= */
-
-function setText(selectors, value) {
-
-    selectors.forEach(selector => {
-
-        document
-            .querySelectorAll(selector)
-            .forEach(element => {
-
-                element.textContent =
-                    String(value);
-
-            });
-
-    });
-}
-
-
-/* =========================================================
-   CALCULATOR
-========================================================= */
-
-function setupCalculator() {
+function setupInvestmentCalculator() {
 
     const amountInput =
-        document.querySelector(
-            "#investmentAmount, #calcAmount"
-        );
+        $("investmentAmount");
 
-    const daysInput =
-        document.querySelector(
-            "#investmentDays, #calcDays"
-        );
+    const dailyReturn =
+        $("dailyReturn");
 
-    const dailyResult =
-        document.getElementById(
-            "dailyReturn"
-        );
+    const monthlyReturn =
+        $("monthlyReturn");
 
-    const monthlyResult =
-        document.getElementById(
-            "monthlyReturn"
-        );
-
-    const totalResult =
-        document.getElementById(
-            "totalAfter30"
-        );
-
+    const totalAfter30 =
+        $("totalAfter30");
 
     if (!amountInput) {
         return;
     }
 
-
     function calculate() {
 
         const amount =
-            Number(
-                amountInput.value || 0
-            );
+            Number(amountInput.value) || 0;
 
-
-        const days =
-            Number(
-                daysInput?.value || 30
-            );
-
-
-        const DAILY_RATE =
-            0.10;
-
+        const rate = 0.10;
 
         const daily =
-            amount * DAILY_RATE;
+            amount * rate;
 
-
-        const totalReturn =
-            daily * days;
-
+        const monthly =
+            daily * 30;
 
         const total =
-            amount + totalReturn;
+            amount + monthly;
 
+        if (dailyReturn) {
 
-        if (dailyResult) {
-
-            dailyResult.textContent =
-                `UGX ${Math.round(
-                    daily
-                ).toLocaleString()}`;
+            dailyReturn.textContent =
+                formatCurrency(daily);
         }
 
+        if (monthlyReturn) {
 
-        if (monthlyResult) {
-
-            monthlyResult.textContent =
-                `UGX ${Math.round(
-                    totalReturn
-                ).toLocaleString()}`;
+            monthlyReturn.textContent =
+                formatCurrency(monthly);
         }
 
+        if (totalAfter30) {
 
-        if (totalResult) {
-
-            totalResult.textContent =
-                `UGX ${Math.round(
-                    total
-                ).toLocaleString()}`;
+            totalAfter30.textContent =
+                formatCurrency(total);
         }
     }
-
 
     amountInput.addEventListener(
         "input",
         calculate
     );
 
-
-    if (daysInput) {
-
-        daysInput.addEventListener(
-            "input",
-            calculate
-        );
-    }
-
-
     calculate();
 }
 
-
-/* =========================================================
-   MOBILE MENU
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| Mobile menu
+|--------------------------------------------------------------------------
+*/
 
 function setupMobileMenu() {
 
-    const button =
-        document.getElementById(
-            "menuToggle"
-        );
+    const menuToggle =
+        $("menuToggle");
 
     const sidebar =
-        document.querySelector(
-            ".sidebar"
-        );
+        document.querySelector(".sidebar");
 
-
-    if (!button || !sidebar) {
+    if (!menuToggle || !sidebar) {
         return;
     }
 
-
-    button.addEventListener(
+    menuToggle.addEventListener(
         "click",
         () => {
 
             sidebar.classList.toggle(
                 "mobile-open"
             );
-
         }
     );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+*/
 
-/* =========================================================
-   LOGOUT
-========================================================= */
+async function logoutUser() {
+
+    try {
+
+        await fetchWithTimeout(
+            LOGOUT_API,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+                body: JSON.stringify({})
+            }
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Logout request failed:",
+            error
+        );
+
+    } finally {
+
+        window.location.href =
+            "login.html";
+    }
+}
 
 function setupLogout() {
 
-    const button =
-        document.getElementById(
-            "logoutBtn"
-        );
+    const logoutButton =
+        $("logoutBtn");
 
-
-    if (!button) {
+    if (!logoutButton) {
         return;
     }
 
-
-    button.addEventListener(
+    logoutButton.addEventListener(
         "click",
-        async event => {
+        async (event) => {
 
             event.preventDefault();
 
-
-            try {
-
-                await fetch(
-                    `${API_BASE}/logout.php`,
-                    {
-                        method: "GET",
-                        credentials: "include"
-                    }
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Logout error:",
-                    error
-                );
-            }
-
-
-            localStorage.removeItem(
-                "user"
-            );
-
-            localStorage.removeItem(
-                "userData"
-            );
-
-
-            window.location.href =
-                "/login.html";
+            await logoutUser();
         }
     );
 }
+
+/*
+|--------------------------------------------------------------------------
+| Initialize
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        setupInvestmentCalculator();
+
+        setupMobileMenu();
+
+        setupLogout();
+
+        await loadDashboard();
+    }
+);
+
+/*
+|--------------------------------------------------------------------------
+| Global API
+|--------------------------------------------------------------------------
+*/
+
+window.CrownCashDashboard = {
+
+    reload: loadDashboard,
+
+    logout: logoutUser
+};

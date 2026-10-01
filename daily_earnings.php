@@ -1,916 +1,595 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/config.php';
-
 /*
 |--------------------------------------------------------------------------
-| DAILY EARNINGS PROCESSOR
+| Crown Cash - Daily Investment Earnings
 |--------------------------------------------------------------------------
 |
-| This file should be executed ONCE PER DAY by a trusted scheduler.
+| Daily configured rate:
+| 10% per day
 |
-| HTTP:
-|   POST /daily_earnings.php
-|   Header: X-Cron-Secret: YOUR_CRON_SECRET
-|
-| CLI:
-|   php daily_earnings.php
-|
-| The job:
-|   1. Finds active investments.
-|   2. Calculates eligible daily earnings.
-|   3. Uses a unique ledger key to prevent duplicate credits.
-|   4. Credits the user's wallet.
-|   5. Creates an earnings transaction.
-|   6. Returns the principal when the investment reaches its
-|      configured duration.
-|   7. Marks the investment completed.
-|
+| IMPORTANT:
+| This is a configured/illustrative rate and should not be treated as
+| a guaranteed financial return.
 |--------------------------------------------------------------------------
 */
 
+require_once __DIR__ . '/config.php';
 
-/* =========================================================
-   AUTHENTICATE CRON REQUEST
-========================================================= */
+header('Content-Type: application/json; charset=utf-8');
 
-$cronSecret = getenv('CRON_SECRET') ?: '';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if ($origin === 'https://crown-cash.vercel.app') {
+    header('Access-Control-Allow-Origin: https://crown-cash.vercel.app');
+    header('Access-Control-Allow-Credentials: true');
+}
+
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+
+if ($origin === 'https://crown-cash.vercel.app') {
+    header('Access-Control-Allow-Origin: https://crown-cash.vercel.app');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Security
+|--------------------------------------------------------------------------
+*/
+
+$cronSecret = trim(
+    (string)(getenv('CRON_SECRET') ?: '')
+);
 
 $isCli = PHP_SAPI === 'cli';
 
-
 if (!$isCli) {
 
-    $providedSecret =
-        $_SERVER['HTTP_X_CRON_SECRET']
-        ?? '';
+    $providedSecret = trim(
+        (string)(
+            $_SERVER['HTTP_X_CRON_SECRET']
+            ?? $_GET['secret']
+            ?? ''
+        )
+    );
 
     if (
-        $cronSecret === ''
-        ||
-        !hash_equals(
-            $cronSecret,
-            $providedSecret
-        )
+        $cronSecret === '' ||
+        $providedSecret === '' ||
+        !hash_equals($cronSecret, $providedSecret)
     ) {
-
         jsonResponse([
             'success' => false,
-            'message' => 'Unauthorized cron request.'
+            'message' => 'Unauthorized.'
         ], 401);
     }
 }
 
-
-/* =========================================================
-   CONFIGURATION
-========================================================= */
-
 /*
- * Application daily return rate.
- *
- * 0.10 = 10% of the investment principal per eligible day.
- *
- * This is an application-configured rate, not a guaranteed
- * financial return.
- */
+|--------------------------------------------------------------------------
+| Rate
+|--------------------------------------------------------------------------
+*/
+
 $DAILY_RATE = 0.10;
 
-
-/*
- * Uganda/Kampala timezone is used for determining the
- * investment earning date.
- */
-$timezone =
-    new DateTimeZone(
-        'Africa/Kampala'
-    );
-
-
-$nowLocal =
-    new DateTimeImmutable(
-        'now',
-        $timezone
-    );
-
-
-$nowUtc =
-    new MongoDB\BSON\UTCDateTime();
-
-
-/* =========================================================
-   ENSURE UNIQUE EARNINGS LEDGER
-========================================================= */
+date_default_timezone_set('Africa/Kampala');
 
 try {
 
     /*
-     * One investment can only have one daily earning
-     * record for a particular earning date.
-     *
-     * Example:
-     *
-     * investmentID|DAILY|2026-10-01
-     *
-     * This prevents the scheduler from paying the same
-     * day's earning twice.
-     */
-    $earnings->createIndex(
-        [
-            'ledger_key' => 1
-        ],
-        [
-            'unique' => true,
-            'name' =>
-                'unique_earnings_ledger_key'
-        ]
-    );
-
-} catch (Throwable $e) {
-
-    /*
-     * The index may already exist.
-     * Processing can continue.
-     */
-}
-
-
-/* =========================================================
-   PROCESSING COUNTERS
-========================================================= */
-
-$processedInvestments = 0;
-
-$creditedDays = 0;
-
-$principalReturns = 0;
-
-$errors = [];
-
-
-/* =========================================================
-   FIND ACTIVE INVESTMENTS
-========================================================= */
-
-try {
+    |--------------------------------------------------------------------------
+    | Active investments only
+    |--------------------------------------------------------------------------
+    */
 
     $cursor = $investments->find([
-        'status' => 'active'
+        '$or' => [
+            ['status' => 'active'],
+            ['status' => 'approved'],
+            ['status' => 'running']
+        ]
     ]);
 
+    $processed = 0;
+    $earningsCreated = 0;
+    $principalReturned = 0;
+    $totalEarnings = 0;
 
     foreach ($cursor as $investment) {
 
-        $processedInvestments++;
-
-
         try {
 
-            /* -------------------------------------------------
-               INVESTMENT ID
-            ------------------------------------------------- */
+            $investmentId = isset($investment->_id)
+                ? (string)$investment->_id
+                : (string)($investment->id ?? '');
 
-            $investmentId =
-                $investment['_id'];
-
-
-            /* -------------------------------------------------
-               USER ID
-            ------------------------------------------------- */
-
-            $userId =
-                objectIdOrNull(
-                    $investment['user_id']
-                    ?? null
-                );
-
-
-            if (!$userId) {
-
-                throw new RuntimeException(
-                    'Investment has an invalid user ID.'
-                );
-            }
-
-
-            /* -------------------------------------------------
-               PRINCIPAL
-            ------------------------------------------------- */
-
-            $principal =
-                moneyInt(
-                    $investment['amount']
-                    ?? 0
-                );
-
-
-            if ($principal <= 0) {
-
-                throw new RuntimeException(
-                    'Investment has an invalid amount.'
-                );
-            }
-
-
-            /* -------------------------------------------------
-               DURATION
-            ------------------------------------------------- */
-
-            $duration =
-                (int)(
-                    $investment['duration_days']
-                    ?? 30
-                );
-
-
-            if ($duration <= 0) {
-                $duration = 30;
-            }
-
-
-            /* -------------------------------------------------
-               ACTIVATION DATE
-            ------------------------------------------------- */
-
-            $activatedAt =
-                $investment['activated_at']
-                ?? $investment['approved_at']
-                ?? null;
-
-
-            if (
-                !(
-                    $activatedAt
-                    instanceof MongoDB\BSON\UTCDateTime
-                )
-            ) {
-
-                throw new RuntimeException(
-                    'Investment has no valid activation date.'
-                );
-            }
-
-
-            /* -------------------------------------------------
-               CONVERT ACTIVATION TIME TO KAMPALA TIME
-            ------------------------------------------------- */
-
-            $activationLocal =
-                $activatedAt
-                    ->toDateTime()
-                    ->setTimezone(
-                        $timezone
-                    );
-
-
-            /* -------------------------------------------------
-               CALCULATE ELIGIBLE DAYS
-            ------------------------------------------------- */
-
-            $elapsedSeconds =
-                $nowLocal->getTimestamp()
-                -
-                $activationLocal->getTimestamp();
-
-
-            $eligibleDays =
-                (int)floor(
-                    $elapsedSeconds / 86400
-                );
-
-
-            /*
-             * No full 24-hour period has passed yet.
-             */
-            if ($eligibleDays <= 0) {
+            if ($investmentId === '') {
                 continue;
             }
 
+            $userId = (string)($investment->user_id ?? '');
 
-            /*
-             * Never exceed the investment duration.
-             */
-            if ($eligibleDays > $duration) {
-                $eligibleDays = $duration;
+            if ($userId === '') {
+                continue;
             }
 
+            $principal = moneyInt(
+                $investment->principal
+                ?? $investment->amount
+                ?? 0
+            );
 
-            /* =================================================
-               PROCESS EACH ELIGIBLE DAY
-            ================================================= */
+            if ($principal <= 0) {
+                continue;
+            }
 
-            for (
-                $dayIndex = 1;
-                $dayIndex <= $eligibleDays;
-                $dayIndex++
-            ) {
+            $durationDays = (int)(
+                $investment->duration_days
+                ?? 30
+            );
 
-                /*
-                 * Calculate the earning date.
-                 *
-                 * Example:
-                 * Activation = 1 October
-                 *
-                 * Day 1 = 2 October
-                 * Day 2 = 3 October
-                 */
-                $earningDate =
-                    $activationLocal
-                        ->modify(
-                            "+{$dayIndex} days"
-                        )
-                        ->format(
-                            'Y-m-d'
-                        );
+            $activationDate =
+                $investment->activation_date
+                ?? $investment->approved_at
+                ?? $investment->start_date
+                ?? $investment->created_at;
 
+            if (!$activationDate) {
+                continue;
+            }
 
-                /*
-                 * Unique ledger identifier.
-                 */
-                $ledgerKey =
-                    (string)$investmentId
-                    . '|DAILY|'
-                    . $earningDate;
+            /*
+            |--------------------------------------------------------------------------
+            | Convert activation date to DateTime
+            |--------------------------------------------------------------------------
+            */
 
+            if ($activationDate instanceof MongoDB\BSON\UTCDateTime) {
+                $activationDateTime =
+                    $activationDate->toDateTime();
+            } elseif ($activationDate instanceof DateTimeInterface) {
+                $activationDateTime =
+                    new DateTime(
+                        $activationDate->format('Y-m-d H:i:s'),
+                        new DateTimeZone('Africa/Kampala')
+                    );
+            } else {
+                $activationDateTime =
+                    new DateTime(
+                        (string)$activationDate,
+                        new DateTimeZone('Africa/Kampala')
+                    );
+            }
 
-                /*
-                 * Each earning day is processed in its
-                 * own MongoDB transaction.
-                 */
-                $session =
-                    $client->startSession();
+            $activationDateTime->setTimezone(
+                new DateTimeZone('Africa/Kampala')
+            );
 
+            $today = new DateTime(
+                'today',
+                new DateTimeZone('Africa/Kampala')
+            );
 
-                try {
+            /*
+            |--------------------------------------------------------------------------
+            | Number of completed earning days
+            |--------------------------------------------------------------------------
+            */
 
-                    $session->startTransaction();
+            $activationDay = new DateTime(
+                $activationDateTime->format('Y-m-d'),
+                new DateTimeZone('Africa/Kampala')
+            );
 
+            $daysElapsed =
+                (int)$activationDay->diff($today)->days;
 
-                    /* =========================================
-                       CALCULATE DAILY EARNING
-                    ========================================= */
+            /*
+            |--------------------------------------------------------------------------
+            | Do not exceed investment duration
+            |--------------------------------------------------------------------------
+            */
 
-                    $earningAmount =
-                        moneyInt(
-                            $principal
-                            *
-                            $DAILY_RATE
-                        );
+            $completedDays = min(
+                max($daysElapsed, 0),
+                $durationDays
+            );
 
+            if ($completedDays <= 0) {
+                continue;
+            }
 
-                    if ($earningAmount <= 0) {
+            /*
+            |--------------------------------------------------------------------------
+            | Process every missing earning day.
+            |--------------------------------------------------------------------------
+            */
 
-                        $session->abortTransaction();
+            $session = null;
 
+            try {
+
+                $session = $mongoClient->startSession();
+                $session->startTransaction();
+
+                $investmentEarningsForThisInvestment = 0;
+
+                for (
+                    $dayNumber = 1;
+                    $dayNumber <= $completedDays;
+                    $dayNumber++
+                ) {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Unique ledger key
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $ledgerKey =
+                        $investmentId .
+                        ':day:' .
+                        $dayNumber;
+
+                    $existing = $earnings->findOne([
+                        'ledger_key' => $ledgerKey
+                    ]);
+
+                    if ($existing) {
                         continue;
                     }
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Daily earning
+                    |--------------------------------------------------------------------------
+                    */
 
-                    /* =========================================
-                       CREATE EARNING LEDGER RECORD
-                    ========================================= */
-
-                    try {
-
-                        $earnings->insertOne(
-
-                            [
-
-                                'ledger_key' =>
-                                    $ledgerKey,
-
-                                'investment_id' =>
-                                    $investmentId,
-
-                                'user_id' =>
-                                    $userId,
-
-                                'type' =>
-                                    'daily_earning',
-
-                                'earning_date' =>
-                                    $earningDate,
-
-                                'day_number' =>
-                                    $dayIndex,
-
-                                'rate' =>
-                                    $DAILY_RATE,
-
-                                'principal' =>
-                                    $principal,
-
-                                'amount' =>
-                                    $earningAmount,
-
-                                'currency' =>
-                                    'UGX',
-
-                                'created_at' =>
-                                    $nowUtc
-
-                            ],
-
-                            [
-                                'session' =>
-                                    $session
-                            ]
-
-                        );
-
-                    } catch (
-                        MongoDB\Driver\Exception\BulkWriteException $duplicate
-                    ) {
-
-                        /*
-                         * The unique ledger key means this earning
-                         * has already been credited.
-                         *
-                         * Abort this transaction and move to the
-                         * next day.
-                         */
-                        try {
-                            $session->abortTransaction();
-                        } catch (Throwable $ignored) {
-                        }
-
-                        continue;
-                    }
-
-
-                    /* =========================================
-                       CREDIT DAILY EARNING TO WALLET
-                    ========================================= */
-
-                    $walletUpdate =
-                        $users->updateOne(
-
-                            [
-                                '_id' =>
-                                    $userId
-                            ],
-
-                            [
-                                '$inc' => [
-
-                                    'balance' =>
-                                        $earningAmount
-
-                                ],
-
-                                '$set' => [
-
-                                    'updated_at' =>
-                                        $nowUtc
-
-                                ]
-
-                            ],
-
-                            [
-                                'session' =>
-                                    $session
-                            ]
-
-                        );
-
-
-                    if (
-                        $walletUpdate->getMatchedCount()
-                        !== 1
-                    ) {
-
-                        throw new RuntimeException(
-                            'User wallet could not be updated.'
-                        );
-                    }
-
-
-                    /* =========================================
-                       CREATE EARNING TRANSACTION
-                    ========================================= */
-
-                    $transactions->insertOne(
-
-                        [
-
-                            'user_id' =>
-                                $userId,
-
-                            'type' =>
-                                'earning',
-
-                            'transaction_type' =>
-                                'earning',
-
-                            'title' =>
-                                'Daily investment earning',
-
-                            'description' =>
-                                "Daily return for investment "
-                                . (string)$investmentId
-                                . ", day "
-                                . $dayIndex
-                                . " of "
-                                . $duration
-                                . ".",
-
-                            'amount' =>
-                                $earningAmount,
-
-                            'currency' =>
-                                'UGX',
-
-                            'status' =>
-                                'approved',
-
-                            'reference' =>
-                                'EARN-'
-                                .
-                                strtoupper(
-                                    bin2hex(
-                                        random_bytes(6)
-                                    )
-                                ),
-
-                            'investment_id' =>
-                                $investmentId,
-
-                            'earning_date' =>
-                                $earningDate,
-
-                            'created_at' =>
-                                $nowUtc,
-
-                            'updated_at' =>
-                                $nowUtc
-
-                        ],
-
-                        [
-                            'session' =>
-                                $session
-                        ]
-
+                    $dailyEarning = (int)round(
+                        $principal * $DAILY_RATE
                     );
 
+                    if ($dailyEarning <= 0) {
+                        continue;
+                    }
 
-                    /* =========================================
-                       INVESTMENT FINAL DAY
-                    ========================================= */
+                    $earningDate = clone $activationDay;
 
-                    if (
-                        $dayIndex === $duration
-                    ) {
+                    $earningDate->modify(
+                        '+' . ($dayNumber - 1) . ' days'
+                    );
 
-                        /*
-                         * Unique principal-return ledger key.
-                         */
-                        $principalLedgerKey =
-                            (string)$investmentId
-                            . '|PRINCIPAL_RETURN';
+                    $earningDate->setTime(
+                        23,
+                        59,
+                        59
+                    );
 
+                    $now = nowUtc();
 
-                        try {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Earnings ledger
+                    |--------------------------------------------------------------------------
+                    */
 
-                            /*
-                             * Record the principal return first.
-                             */
-                            $earnings->insertOne(
+                    $earnings->insertOne(
+                        [
+                            'user_id' => $userId,
 
-                                [
+                            'investment_id' => $investmentId,
 
-                                    'ledger_key' =>
-                                        $principalLedgerKey,
+                            'type' => 'daily_earning',
 
-                                    'investment_id' =>
-                                        $investmentId,
+                            'category' => 'investment',
 
-                                    'user_id' =>
-                                        $userId,
+                            'amount' => $dailyEarning,
 
-                                    'type' =>
-                                        'principal_return',
+                            'rate' => $DAILY_RATE,
 
-                                    'earning_date' =>
-                                        $earningDate,
+                            'day_number' => $dayNumber,
 
-                                    'amount' =>
-                                        $principal,
+                            'earning_date' => new MongoDB\BSON\UTCDateTime(
+                                $earningDate->getTimestamp() * 1000
+                            ),
 
-                                    'currency' =>
-                                        'UGX',
+                            'ledger_key' => $ledgerKey,
 
-                                    'created_at' =>
-                                        $nowUtc
+                            'created_at' => $now
+                        ],
+                        [
+                            'session' => $session
+                        ]
+                    );
 
-                                ],
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Add earning to wallet
+                    |--------------------------------------------------------------------------
+                    */
 
-                                [
-                                    'session' =>
-                                        $session
-                                ]
+                    $user = null;
 
-                            );
+                    if (isValidObjectId($userId)) {
+                        $user = $users->findOne([
+                            '_id' => objectIdOrNull($userId)
+                        ]);
+                    }
 
+                    if (!$user) {
+                        $user = $users->findOne([
+                            'id' => $userId
+                        ]);
+                    }
 
-                            /* ---------------------------------
-                               RETURN PRINCIPAL TO WALLET
-                            --------------------------------- */
-
-                            $principalUpdate =
-                                $users->updateOne(
-
-                                    [
-                                        '_id' =>
-                                            $userId
-                                    ],
-
-                                    [
-                                        '$inc' => [
-
-                                            'balance' =>
-                                                $principal
-
-                                        ],
-
-                                        '$set' => [
-
-                                            'updated_at' =>
-                                                $nowUtc
-
-                                        ]
-
-                                    ],
-
-                                    [
-                                        'session' =>
-                                            $session
-                                    ]
-
-                                );
-
-
-                            if (
-                                $principalUpdate
-                                    ->getMatchedCount()
-                                !== 1
-                            ) {
-
-                                throw new RuntimeException(
-                                    'Unable to return investment principal.'
-                                );
-                            }
-
-
-                            /* ---------------------------------
-                               PRINCIPAL RETURN TRANSACTION
-                            --------------------------------- */
-
-                            $transactions->insertOne(
-
-                                [
-
-                                    'user_id' =>
-                                        $userId,
-
-                                    'type' =>
-                                        'principal_return',
-
-                                    'transaction_type' =>
-                                        'principal_return',
-
-                                    'title' =>
-                                        'Investment principal returned',
-
-                                    'description' =>
-                                        'Investment completed and principal returned to wallet.',
-
-                                    'amount' =>
-                                        $principal,
-
-                                    'currency' =>
-                                        'UGX',
-
-                                    'status' =>
-                                        'approved',
-
-                                    'reference' =>
-                                        'PRINCIPAL-'
-                                        .
-                                        strtoupper(
-                                            bin2hex(
-                                                random_bytes(6)
-                                            )
-                                        ),
-
-                                    'investment_id' =>
-                                        $investmentId,
-
-                                    'earning_date' =>
-                                        $earningDate,
-
-                                    'created_at' =>
-                                        $nowUtc,
-
-                                    'updated_at' =>
-                                        $nowUtc
-
-                                ],
-
-                                [
-                                    'session' =>
-                                        $session
-                                ]
-
-                            );
-
-
-                            $principalReturns++;
-
-                        } catch (
-                            MongoDB\Driver\Exception\BulkWriteException $duplicate
-                        ) {
-
-                            /*
-                             * Principal was already returned.
-                             *
-                             * Do not return it again.
-                             */
-                        }
-
-
-                        /* ---------------------------------
-                           MARK INVESTMENT COMPLETED
-                        --------------------------------- */
-
-                        $investments->updateOne(
-
-                            [
-                                '_id' =>
-                                    $investmentId,
-
-                                'status' =>
-                                    'active'
-                            ],
-
-                            [
-                                '$set' => [
-
-                                    'status' =>
-                                        'completed',
-
-                                    'completed_at' =>
-                                        $nowUtc,
-
-                                    'updated_at' =>
-                                        $nowUtc
-
-                                ]
-
-                            ],
-
-                            [
-                                'session' =>
-                                    $session
-                            ]
-
+                    if (!$user) {
+                        throw new RuntimeException(
+                            'User not found for investment earning.'
                         );
                     }
 
+                    $currentBalance = moneyInt(
+                        $user->balance
+                        ?? $user->wallet_balance
+                        ?? 0
+                    );
 
-                    /* =========================================
-                       COMMIT DAY
-                    ========================================= */
+                    $newBalance =
+                        $currentBalance +
+                        $dailyEarning;
 
-                    $session->commitTransaction();
+                    $users->updateOne(
+                        [
+                            '_id' => $user->_id
+                        ],
+                        [
+                            '$set' => [
+                                'balance' => $newBalance,
+                                'wallet_balance' => $newBalance,
+                                'updated_at' => $now
+                            ]
+                        ],
+                        [
+                            'session' => $session
+                        ]
+                    );
 
-                    $creditedDays++;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Transaction
+                    |--------------------------------------------------------------------------
+                    */
 
+                    $transactions->insertOne(
+                        [
+                            'user_id' => $userId,
 
-                } catch (Throwable $e) {
+                            'investment_id' => $investmentId,
 
+                            'type' => 'daily_earning',
+
+                            'transaction_type' => 'daily_earning',
+
+                            'category' => 'investment_earning',
+
+                            'amount' => $dailyEarning,
+
+                            'direction' => 'credit',
+
+                            'status' => 'completed',
+
+                            'day_number' => $dayNumber,
+
+                            'description' =>
+                                'Investment daily earning - Day ' .
+                                $dayNumber,
+
+                            'created_at' => $now,
+
+                            'updated_at' => $now
+                        ],
+                        [
+                            'session' => $session
+                        ]
+                    );
+
+                    $investmentEarningsForThisInvestment +=
+                        $dailyEarning;
+
+                    $earningsCreated++;
+                    $totalEarnings += $dailyEarning;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Return principal when investment completes
+                |--------------------------------------------------------------------------
+                */
+
+                if ($completedDays >= $durationDays) {
+
+                    $alreadyCompleted =
+                        strtolower(
+                            trim(
+                                (string)(
+                                    $investment->status ?? ''
+                                )
+                            )
+                        ) === 'completed';
+
+                    if (!$alreadyCompleted) {
+
+                        $user = null;
+
+                        if (isValidObjectId($userId)) {
+                            $user = $users->findOne([
+                                '_id' => objectIdOrNull($userId)
+                            ]);
+                        }
+
+                        if (!$user) {
+                            $user = $users->findOne([
+                                'id' => $userId
+                            ]);
+                        }
+
+                        if (!$user) {
+                            throw new RuntimeException(
+                                'User not found for principal return.'
+                            );
+                        }
+
+                        $currentBalance = moneyInt(
+                            $user->balance
+                            ?? $user->wallet_balance
+                            ?? 0
+                        );
+
+                        $newBalance =
+                            $currentBalance +
+                            $principal;
+
+                        $now = nowUtc();
+
+                        $users->updateOne(
+                            [
+                                '_id' => $user->_id
+                            ],
+                            [
+                                '$set' => [
+                                    'balance' => $newBalance,
+                                    'wallet_balance' => $newBalance,
+                                    'updated_at' => $now
+                                ]
+                            ],
+                            [
+                                'session' => $session
+                            ]
+                        );
+
+                        $transactions->insertOne(
+                            [
+                                'user_id' => $userId,
+
+                                'investment_id' => $investmentId,
+
+                                'type' => 'investment_principal_return',
+
+                                'transaction_type' =>
+                                    'investment_principal_return',
+
+                                'category' => 'investment',
+
+                                'amount' => $principal,
+
+                                'direction' => 'credit',
+
+                                'status' => 'completed',
+
+                                'description' =>
+                                    'Investment principal returned after completion.',
+
+                                'created_at' => $now,
+
+                                'updated_at' => $now
+                            ],
+                            [
+                                'session' => $session
+                            ]
+                        );
+
+                        $investments->updateOne(
+                            [
+                                '_id' => objectIdOrNull($investmentId)
+                            ],
+                            [
+                                '$set' => [
+                                    'status' => 'completed',
+                                    'completed_at' => $now,
+                                    'principal_returned' => true,
+                                    'updated_at' => $now,
+                                    'balance_reserved' => false,
+                                    'reserved_amount' => 0
+                                ]
+                            ],
+                            [
+                                'session' => $session
+                            ]
+                        );
+
+                        $principalReturned += $principal;
+                    }
+                }
+
+                $session->commitTransaction();
+
+                $processed++;
+
+            } catch (Throwable $investmentError) {
+
+                if ($session) {
                     try {
                         $session->abortTransaction();
-                    } catch (Throwable $ignored) {
+                    } catch (Throwable $ignore) {
                     }
+                }
 
-                    throw $e;
+                error_log(
+                    'Crown Cash daily earnings investment ' .
+                    $investmentId .
+                    ': ' .
+                    $investmentError->getMessage()
+                );
+
+            } finally {
+
+                if ($session) {
+                    $session->endSession();
                 }
             }
 
+        } catch (Throwable $individualError) {
 
-        } catch (Throwable $e) {
-
-            $errors[] = [
-
-                'investment_id' =>
-                    (string)(
-                        $investment['_id']
-                        ?? ''
-                    ),
-
-                'message' =>
-                    $e->getMessage()
-
-            ];
+            error_log(
+                'Crown Cash daily earnings individual error: ' .
+                $individualError->getMessage()
+            );
         }
     }
 
+    jsonResponse([
+        'success' => true,
 
-    /* =========================================================
-       FINAL RESPONSE
-    ========================================================= */
+        'message' => 'Daily investment earnings processing completed.',
 
-    $result = [
+        'daily_rate' => $DAILY_RATE,
 
-        'success' =>
-            true,
+        'processed_investments' => $processed,
 
-        'message' =>
-            'Daily earnings processing completed.',
+        'earnings_created' => $earningsCreated,
 
-        'processed_investments' =>
-            $processedInvestments,
+        'total_earnings_credited' => $totalEarnings,
 
-        'daily_credits' =>
-            $creditedDays,
-
-        'principal_returns' =>
-            $principalReturns,
-
-        'errors' =>
-            $errors,
-
-        'processed_at' =>
-            $nowLocal->format(
-                DATE_ATOM
-            )
-
-    ];
-
-
-    /* =========================================================
-       CLI RESPONSE
-    ========================================================= */
-
-    if ($isCli) {
-
-        echo json_encode(
-            $result,
-            JSON_PRETTY_PRINT |
-            JSON_UNESCAPED_SLASHES
-        );
-
-        echo PHP_EOL;
-
-        exit;
-    }
-
-
-    /* =========================================================
-       HTTP RESPONSE
-    ========================================================= */
-
-    jsonResponse(
-        $result
-    );
-
+        'principal_returned' => $principalReturned
+    ]);
 
 } catch (Throwable $e) {
 
     error_log(
-        'Daily earnings job error: '
-        . $e->getMessage()
+        'Crown Cash daily_earnings.php error: ' .
+        $e->getMessage()
     );
 
-
-    if ($isCli) {
-
-        fwrite(
-            STDERR,
-            json_encode([
-                'success' =>
-                    false,
-
-                'message' =>
-                    $e->getMessage()
-            ])
-            . PHP_EOL
-        );
-
-        exit(1);
-    }
-
-
     jsonResponse([
-
-        'success' =>
-            false,
-
-        'message' =>
-            'Daily earnings job failed.'
-
+        'success' => false,
+        'message' => 'Daily earnings processing failed.'
     ], 500);
 }

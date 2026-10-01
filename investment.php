@@ -1,537 +1,403 @@
 <?php
 declare(strict_types=1);
 
+/*
+|--------------------------------------------------------------------------
+| Crown Cash - Investment API
+|--------------------------------------------------------------------------
+| Creates an investment request and RESERVES the investment amount
+| immediately from the user's wallet.
+|
+| Flow:
+| 1. User submits investment.
+| 2. Wallet balance is reduced immediately.
+| 3. Investment is created as pending.
+| 4. Admin approves or rejects.
+| 5. Approval does NOT deduct again.
+| 6. Rejection restores the reserved amount.
+|--------------------------------------------------------------------------
+*/
+
 require_once __DIR__ . '/config.php';
 
-$userId = requireLogin();
+header('Content-Type: application/json; charset=utf-8');
 
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-/* =========================================================
-   INVESTMENT PLANS
-========================================================= */
-
-$plans = [
-
-    'starter' => [
-        'name' => 'Starter',
-        'amount' => 10000,
-        'duration_days' => 30
-    ],
-
-    'standard' => [
-        'name' => 'Standard',
-        'amount' => 15000,
-        'duration_days' => 30
-    ],
-
-    'advanced' => [
-        'name' => 'Advanced',
-        'amount' => 25000,
-        'duration_days' => 30
-    ]
-
-];
-
-
-/* =========================================================
-   GET INVESTMENT PLANS AND USER INVESTMENTS
-========================================================= */
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-
-    try {
-
-        $items = [];
-
-        $cursor = $investments->find(
-            [
-                '$or' => [
-                    ['user_id' => $userId],
-                    ['user_id' => (string)$userId]
-                ]
-            ],
-            [
-                'sort' => [
-                    'created_at' => -1
-                ],
-                'limit' => 100
-            ]
-        );
-
-
-        foreach ($cursor as $investment) {
-
-            $items[] = jsonSafe([
-
-                'id' =>
-                    $investment['_id'],
-
-                'plan' =>
-                    $investment['plan']
-                    ?? '',
-
-                'plan_key' =>
-                    $investment['plan_key']
-                    ?? '',
-
-                'amount' =>
-                    moneyInt(
-                        $investment['amount']
-                        ?? 0
-                    ),
-
-                'currency' =>
-                    $investment['currency']
-                    ?? 'UGX',
-
-                'duration_days' =>
-                    (int)(
-                        $investment['duration_days']
-                        ?? 30
-                    ),
-
-                'status' =>
-                    $investment['status']
-                    ?? 'pending',
-
-                'reference' =>
-                    $investment['reference']
-                    ?? '',
-
-                'created_at' =>
-                    $investment['created_at']
-                    ?? null,
-
-                'approved_at' =>
-                    $investment['approved_at']
-                    ?? null,
-
-                'activated_at' =>
-                    $investment['activated_at']
-                    ?? null,
-
-                'completed_at' =>
-                    $investment['completed_at']
-                    ?? null,
-
-                'rejection_reason' =>
-                    $investment['rejection_reason']
-                    ?? ''
-
-            ]);
-        }
-
-
-        jsonResponse([
-
-            'success' => true,
-
-            'plans' => $plans,
-
-            'investments' => $items
-
-        ]);
-
-    } catch (Throwable $e) {
-
-        jsonResponse([
-
-            'success' => false,
-
-            'message' =>
-                'Unable to load investments.'
-
-        ], 500);
-    }
+if ($origin === 'https://crown-cash.vercel.app') {
+    header('Access-Control-Allow-Origin: https://crown-cash.vercel.app');
+    header('Access-Control-Allow-Credentials: true');
 }
 
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 
-/* =========================================================
-   ONLY POST IS ALLOWED AFTER THIS POINT
-========================================================= */
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+startSecureSession();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     jsonResponse([
-
         'success' => false,
-
-        'message' =>
-            'Method not allowed.'
-
+        'message' => 'Only POST requests are allowed.'
     ], 405);
 }
 
-
-/* =========================================================
-   READ REQUEST
-========================================================= */
-
-$rawInput = file_get_contents(
-    'php://input'
-);
-
-$input = json_decode(
-    $rawInput,
-    true
-);
-
-if (!is_array($input)) {
-    $input = $_POST;
-}
-
-
-/* =========================================================
-   GET SELECTED PLAN
-========================================================= */
-
-$planKey = strtolower(
-    trim(
-        (string)(
-            $input['plan']
-            ?? $input['plan_key']
-            ?? ''
-        )
-    )
-);
-
-
-if (!isset($plans[$planKey])) {
-
-    jsonResponse([
-
-        'success' => false,
-
-        'message' =>
-            'Invalid investment plan.'
-
-    ], 400);
-}
-
-
-$plan = $plans[$planKey];
-
-
-/* =========================================================
-   CREATE INVESTMENT REQUEST
-========================================================= */
-
 try {
 
-    /* -----------------------------------------------------
-       CHECK USER
-    ----------------------------------------------------- */
+    $userId = currentUserId();
 
-    $user = $users->findOne([
-        '_id' => $userId
-    ]);
+    if (!$userId) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Please log in to continue.'
+        ], 401);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Investment plans
+    |--------------------------------------------------------------------------
+    */
+
+    $plans = [
+        'starter' => [
+            'name' => 'Starter',
+            'amount' => 10000,
+            'duration_days' => 30
+        ],
+
+        'standard' => [
+            'name' => 'Standard',
+            'amount' => 15000,
+            'duration_days' => 30
+        ],
+
+        'advanced' => [
+            'name' => 'Advanced',
+            'amount' => 25000,
+            'duration_days' => 30
+        ]
+    ];
+
+    $rawBody = file_get_contents('php://input');
+    $input = json_decode($rawBody ?: '{}', true);
+
+    if (!is_array($input)) {
+        $input = $_POST;
+    }
+
+    $planKey = strtolower(trim((string)($input['plan'] ?? '')));
+    $amountInput = $input['amount'] ?? null;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Determine amount
+    |--------------------------------------------------------------------------
+    */
+
+    if ($planKey !== '' && isset($plans[$planKey])) {
+
+        $plan = $plans[$planKey];
+
+        $amount = $plan['amount'];
+        $planName = $plan['name'];
+        $durationDays = $plan['duration_days'];
+
+    } else {
+
+        if ($amountInput === null || !is_numeric($amountInput)) {
+            jsonResponse([
+                'success' => false,
+                'message' => 'Please select a valid investment plan.'
+            ], 422);
+        }
+
+        $amount = (int)round((float)$amountInput);
+
+        $planName = 'Custom Investment';
+        $durationDays = 30;
+
+        $allowedAmounts = array_column($plans, 'amount');
+
+        if (!in_array($amount, $allowedAmounts, true)) {
+            jsonResponse([
+                'success' => false,
+                'message' => 'Invalid investment amount.'
+            ], 422);
+        }
+    }
+
+    if ($amount <= 0) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Investment amount must be greater than zero.'
+        ], 422);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resolve user
+    |--------------------------------------------------------------------------
+    */
+
+    $user = null;
+
+    if (isValidObjectId($userId)) {
+        $user = $users->findOne([
+            '_id' => objectIdOrNull($userId)
+        ]);
+    }
 
     if (!$user) {
+        $user = $users->findOne([
+            'id' => (string)$userId
+        ]);
+    }
 
+    if (!$user) {
         jsonResponse([
-
             'success' => false,
-
-            'message' =>
-                'User not found.'
-
+            'message' => 'User account could not be found.'
         ], 404);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Current wallet balance
+    |--------------------------------------------------------------------------
+    */
 
-    /* -----------------------------------------------------
-       CHECK FOR EXISTING PENDING INVESTMENT
-    ----------------------------------------------------- */
+    $walletBalance = moneyInt(
+        $user->balance
+        ?? $user->wallet_balance
+        ?? $user->walletBalance
+        ?? 0
+    );
 
-    $pendingInvestment =
-        $investments->findOne([
-
-            '$or' => [
-                ['user_id' => $userId],
-                ['user_id' => (string)$userId]
-            ],
-
-            'status' => 'pending'
-
-        ]);
-
-
-    if ($pendingInvestment) {
-
+    if ($walletBalance < $amount) {
         jsonResponse([
-
             'success' => false,
-
-            'message' =>
-                'You already have a pending investment awaiting admin approval.'
-
-        ], 409);
+            'message' => 'Insufficient wallet balance.',
+            'available_balance' => $walletBalance,
+            'required_amount' => $amount
+        ], 422);
     }
-
-
-    /* -----------------------------------------------------
-       CHECK FOR DUPLICATE ACTIVE INVESTMENT
-       WITH SAME PLAN AND AMOUNT
-    ----------------------------------------------------- */
 
     /*
-     * We allow multiple investments in general, but prevent
-     * accidental duplicate submissions occurring at almost
-     * the same time.
-     */
+    |--------------------------------------------------------------------------
+    | Prevent duplicate pending investment of same amount
+    |--------------------------------------------------------------------------
+    */
 
-    $recentInvestment =
-        $investments->findOne([
+    $pendingExisting = $investments->findOne([
+        'user_id' => (string)$userId,
+        'status' => 'pending'
+    ]);
 
-            '$or' => [
-                ['user_id' => $userId],
-                ['user_id' => (string)$userId]
-            ],
-
-            'plan_key' => $planKey,
-
-            'amount' => $plan['amount'],
-
-            'status' => [
-                '$in' => [
-                    'pending',
-                    'active',
-                    'approved',
-                    'running'
-                ]
-            ],
-
-            'created_at' => [
-                '$gte' => new MongoDB\BSON\UTCDateTime(
-                    (time() - 60) * 1000
-                )
-            ]
-
-        ]);
-
-
-    if ($recentInvestment) {
-
+    if ($pendingExisting) {
         jsonResponse([
-
             'success' => false,
-
-            'message' =>
-                'A similar investment request was recently submitted. Please wait before trying again.'
-
+            'message' => 'You already have a pending investment awaiting admin approval.'
         ], 409);
     }
 
-
-    /* -----------------------------------------------------
-       GENERATE REFERENCE
-    ----------------------------------------------------- */
-
-    $reference =
-        'INV-' .
-        strtoupper(
-            bin2hex(
-                random_bytes(7)
-            )
-        );
-
+    /*
+    |--------------------------------------------------------------------------
+    | Dates
+    |--------------------------------------------------------------------------
+    */
 
     $now = nowUtc();
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mongo transaction
+    |--------------------------------------------------------------------------
+    */
 
-    /* -----------------------------------------------------
-       CREATE INVESTMENT
-    ----------------------------------------------------- */
-
-    $investmentResult =
-        $investments->insertOne([
-
-            'user_id' =>
-                $userId,
-
-            'plan' =>
-                $plan['name'],
-
-            'plan_key' =>
-                $planKey,
-
-            'amount' =>
-                $plan['amount'],
-
-            'currency' =>
-                'UGX',
-
-            'duration_days' =>
-                $plan['duration_days'],
-
-            /*
-             * The investment remains pending until an
-             * administrator approves it.
-             */
-            'status' =>
-                'pending',
-
-            'approved' =>
-                false,
-
-            'reference' =>
-                $reference,
-
-            'created_at' =>
-                $now,
-
-            'updated_at' =>
-                $now
-
-        ]);
-
-
-    $investmentId =
-        $investmentResult->getInsertedId();
-
-
-    /* -----------------------------------------------------
-       CREATE PENDING TRANSACTION
-    ----------------------------------------------------- */
-
-    $transactions->insertOne([
-
-        'user_id' =>
-            $userId,
-
-        'investment_id' =>
-            $investmentId,
-
-        'type' =>
-            'investment',
-
-        'transaction_type' =>
-            'investment',
-
-        'title' =>
-            'Investment request',
-
-        'description' =>
-            $plan['name'] .
-            ' investment awaiting admin approval.',
-
-        'amount' =>
-            $plan['amount'],
-
-        'currency' =>
-            'UGX',
-
-        'status' =>
-            'pending',
-
-        'reference' =>
-            $reference,
-
-        'transaction_reference' =>
-            $reference,
-
-        'created_at' =>
-            $now,
-
-        'updated_at' =>
-            $now
-
-    ]);
-
-
-    /* =====================================================
-       AUDIT LOG
-    ===================================================== */
+    $session = null;
 
     try {
 
-        $auditLogs->insertOne([
+        $session = $mongoClient->startSession();
 
-            'action' =>
-                'investment_created',
-
-            'user_id' =>
-                $userId,
-
-            'investment_id' =>
-                $investmentId,
-
-            'amount' =>
-                $plan['amount'],
-
-            'plan' =>
-                $plan['name'],
-
-            'created_at' =>
-                $now
-
-        ]);
-
-    } catch (Throwable $ignored) {
+        $session->startTransaction();
 
         /*
-         * Audit logging should not prevent a valid
-         * investment request from being created.
-         */
+        |--------------------------------------------------------------------------
+        | Deduct / reserve wallet amount NOW
+        |--------------------------------------------------------------------------
+        */
+
+        $newBalance = $walletBalance - $amount;
+
+        $users->updateOne(
+            [
+                '_id' => $user->_id,
+                '$or' => [
+                    ['balance' => ['$gte' => $amount]],
+                    ['wallet_balance' => ['$gte' => $amount]]
+                ]
+            ],
+            [
+                '$set' => [
+                    'balance' => $newBalance,
+                    'wallet_balance' => $newBalance,
+                    'updated_at' => $now
+                ]
+            ],
+            [
+                'session' => $session
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create investment
+        |--------------------------------------------------------------------------
+        */
+
+        $investmentDocument = [
+            'user_id' => (string)$userId,
+
+            'plan' => $planKey !== '' ? $planKey : 'custom',
+
+            'plan_name' => $planName,
+
+            'amount' => $amount,
+
+            'principal' => $amount,
+
+            'duration_days' => $durationDays,
+
+            'daily_rate' => 0.10,
+
+            'status' => 'pending',
+
+            'balance_reserved' => true,
+
+            'reserved_amount' => $amount,
+
+            'created_at' => $now,
+
+            'updated_at' => $now
+        ];
+
+        $investmentResult = $investments->insertOne(
+            $investmentDocument,
+            [
+                'session' => $session
+            ]
+        );
+
+        $investmentId = (string)$investmentResult->getInsertedId();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create pending transaction
+        |--------------------------------------------------------------------------
+        */
+
+        $transactions->insertOne(
+            [
+                'user_id' => (string)$userId,
+
+                'investment_id' => $investmentId,
+
+                'type' => 'investment',
+
+                'transaction_type' => 'investment',
+
+                'category' => 'investment_principal',
+
+                'amount' => $amount,
+
+                'direction' => 'debit',
+
+                'status' => 'pending',
+
+                'balance_reserved' => true,
+
+                'description' => 'Investment amount reserved - ' . $planName,
+
+                'created_at' => $now,
+
+                'updated_at' => $now
+            ],
+            [
+                'session' => $session
+            ]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Audit
+        |--------------------------------------------------------------------------
+        */
+
+        if (function_exists('audit')) {
+            audit(
+                'investment_created',
+                (string)$userId,
+                [
+                    'investment_id' => $investmentId,
+                    'amount' => $amount,
+                    'plan' => $planName
+                ]
+            );
+        }
+
+        $session->commitTransaction();
+
+    } catch (Throwable $transactionError) {
+
+        if ($session) {
+            try {
+                $session->abortTransaction();
+            } catch (Throwable $ignore) {
+            }
+        }
+
+        throw $transactionError;
+
+    } finally {
+
+        if ($session) {
+            $session->endSession();
+        }
     }
 
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
-
     jsonResponse([
-
-        'success' =>
-            true,
-
-        'message' =>
-            'Investment request submitted and is awaiting admin approval.',
+        'success' => true,
+        'message' => 'Investment created successfully. The investment amount has been reserved from your wallet and is awaiting admin approval.',
 
         'investment' => [
+            'id' => $investmentId,
+            'plan' => $planName,
+            'amount' => $amount,
+            'duration_days' => $durationDays,
+            'status' => 'pending'
+        ],
 
-            'id' =>
-                (string)$investmentId,
-
-            'plan' =>
-                $plan['name'],
-
-            'plan_key' =>
-                $planKey,
-
-            'amount' =>
-                $plan['amount'],
-
-            'currency' =>
-                'UGX',
-
-            'duration_days' =>
-                $plan['duration_days'],
-
-            'status' =>
-                'pending',
-
-            'reference' =>
-                $reference
-
+        'wallet' => [
+            'previous_balance' => $walletBalance,
+            'new_balance' => $newBalance
         ]
-
     ], 201);
-
 
 } catch (Throwable $e) {
 
     error_log(
-        'Investment creation error: ' .
+        'Crown Cash investment.php error: ' .
         $e->getMessage()
     );
 
     jsonResponse([
-
         'success' => false,
-
-        'message' =>
-            'Unable to create investment.'
-
+        'message' => 'Unable to create investment at this time.'
     ], 500);
 }

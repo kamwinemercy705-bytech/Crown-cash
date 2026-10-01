@@ -22,11 +22,12 @@ let filteredWithdrawals = [];
 let selectedWithdrawal = null;
 
 let currentPage = 1;
+
 const ITEMS_PER_PAGE = 10;
 
 
 /* =========================================================
-   DOM HELPERS
+   DOM HELPER
    ========================================================= */
 
 function $(id) {
@@ -40,7 +41,10 @@ function $(id) {
 
 function hidePageLoader() {
 
-    if (typeof window.hideAdminWithdrawalLoader === "function") {
+    if (
+        typeof window.hideAdminWithdrawalLoader ===
+        "function"
+    ) {
         window.hideAdminWithdrawalLoader();
         return;
     }
@@ -54,7 +58,9 @@ function hidePageLoader() {
     loader.classList.add("hidden");
 
     setTimeout(function () {
+
         loader.classList.add("force-hidden");
+
     }, 450);
 }
 
@@ -63,25 +69,37 @@ function hidePageLoader() {
    MESSAGE
    ========================================================= */
 
-function showMessage(message, type = "info") {
+function showMessage(
+    message,
+    type = "info"
+) {
 
-    const box = $("withdrawalMessage");
+    const box =
+        $("withdrawalMessage");
 
     if (!box) {
         return;
     }
 
-    box.textContent = message;
-    box.className = "admin-message " + type;
+    box.textContent =
+        message;
 
-    box.style.display = "block";
+    box.className =
+        "admin-message " + type;
+
+    box.style.display =
+        "block";
 
     if (type !== "error") {
 
         setTimeout(function () {
 
-            if (box.textContent === message) {
-                box.style.display = "none";
+            if (
+                box.textContent === message
+            ) {
+
+                box.style.display =
+                    "none";
             }
 
         }, 5000);
@@ -91,14 +109,18 @@ function showMessage(message, type = "info") {
 
 function clearMessage() {
 
-    const box = $("withdrawalMessage");
+    const box =
+        $("withdrawalMessage");
 
     if (!box) {
         return;
     }
 
-    box.textContent = "";
-    box.style.display = "none";
+    box.textContent =
+        "";
+
+    box.style.display =
+        "none";
 }
 
 
@@ -106,38 +128,62 @@ function clearMessage() {
    API REQUEST
    ========================================================= */
 
-async function apiRequest(url, options = {}) {
+async function apiRequest(
+    url,
+    options = {}
+) {
 
     const requestOptions = {
-        method: options.method || "GET",
-        credentials: "include",
-        cache: "no-store",
+
+        method:
+            options.method || "GET",
+
+        credentials:
+            "include",
+
+        cache:
+            "no-store",
+
         headers: {
-            "Accept": "application/json",
+
+            "Accept":
+                "application/json",
+
             ...(options.body
                 ? {
-                    "Content-Type": "application/json"
+                    "Content-Type":
+                        "application/json"
                 }
                 : {}),
+
             ...(options.headers || {})
         }
     };
 
+
     if (options.body) {
+
         requestOptions.body =
-            typeof options.body === "string"
+            typeof options.body ===
+            "string"
+
                 ? options.body
-                : JSON.stringify(options.body);
+
+                : JSON.stringify(
+                    options.body
+                );
     }
+
 
     let response;
 
     try {
 
-        response = await fetch(
-            url,
-            requestOptions
-        );
+        response =
+            await fetch(
+                url,
+                requestOptions
+            );
 
     } catch (error) {
 
@@ -155,6 +201,7 @@ async function apiRequest(url, options = {}) {
     const rawText =
         await response.text();
 
+
     console.log(
         "Crown Cash API:",
         url,
@@ -165,11 +212,15 @@ async function apiRequest(url, options = {}) {
 
     let data = null;
 
+
     if (rawText) {
 
         try {
 
-            data = JSON.parse(rawText);
+            data =
+                JSON.parse(
+                    rawText
+                );
 
         } catch (error) {
 
@@ -203,6 +254,7 @@ async function apiRequest(url, options = {}) {
                 data.details
             );
 
+
         throw new Error(
             message ||
             "Server error (" +
@@ -217,7 +269,7 @@ async function apiRequest(url, options = {}) {
 
 
 /* =========================================================
-   AUTHENTICATION
+   ADMIN AUTHENTICATION
    ========================================================= */
 
 async function verifyAdministrator() {
@@ -225,12 +277,16 @@ async function verifyAdministrator() {
     try {
 
         const data =
-            await apiRequest(AUTH_API);
+            await apiRequest(
+                AUTH_API
+            );
+
 
         console.log(
             "Administrator authentication:",
             data
         );
+
 
         if (
             data &&
@@ -241,30 +297,37 @@ async function verifyAdministrator() {
             )
         ) {
 
-            updateAdministratorName(data);
+            updateAdministratorName(
+                data
+            );
 
             return true;
         }
 
-
-        /*
-         * Some existing Crown Cash deployments may
-         * return the authenticated user directly.
-         */
 
         if (
             data &&
             data.user &&
             (
                 data.user.is_admin === true ||
-                data.user.role === "admin" ||
-                data.user.role === "administrator" ||
-                data.user.account_type === "admin" ||
-                data.user.account_type === "administrator"
+
+                data.user.role ===
+                    "admin" ||
+
+                data.user.role ===
+                    "administrator" ||
+
+                data.user.account_type ===
+                    "admin" ||
+
+                data.user.account_type ===
+                    "administrator"
             )
         ) {
 
-            updateAdministratorName(data);
+            updateAdministratorName(
+                data
+            );
 
             return true;
         }
@@ -283,11 +346,8 @@ async function verifyAdministrator() {
         );
 
         /*
-         * Do not block the withdrawal API if the
-         * separate auth endpoint has a temporary issue.
-         *
-         * The withdrawal PHP endpoint performs its
-         * own administrator authorization.
+         * The withdrawal API performs its own
+         * administrator authorization.
          */
 
         return false;
@@ -295,7 +355,9 @@ async function verifyAdministrator() {
 }
 
 
-function updateAdministratorName(data) {
+function updateAdministratorName(
+    data
+) {
 
     const nameElement =
         $("headerUserName");
@@ -304,10 +366,12 @@ function updateAdministratorName(data) {
         return;
     }
 
+
     const user =
         data && data.user
             ? data.user
             : data;
+
 
     const name =
         user &&
@@ -318,8 +382,11 @@ function updateAdministratorName(data) {
             user.firstName
         );
 
+
     if (name) {
-        nameElement.textContent = name;
+
+        nameElement.textContent =
+            name;
     }
 }
 
@@ -338,19 +405,27 @@ function numberValue(value) {
         return 0;
     }
 
-    if (typeof value === "number") {
+
+    if (
+        typeof value ===
+        "number"
+    ) {
+
         return Number.isFinite(value)
             ? value
             : 0;
     }
+
 
     const cleaned =
         String(value)
             .replace(/,/g, "")
             .replace(/[^\d.-]/g, "");
 
+
     const number =
         Number(cleaned);
+
 
     return Number.isFinite(number)
         ? number
@@ -358,7 +433,10 @@ function numberValue(value) {
 }
 
 
-function stringValue(value, fallback = "") {
+function stringValue(
+    value,
+    fallback = ""
+) {
 
     if (
         value === null ||
@@ -367,22 +445,32 @@ function stringValue(value, fallback = "") {
         return fallback;
     }
 
-    return String(value).trim() || fallback;
+
+    return (
+        String(value).trim() ||
+        fallback
+    );
 }
 
 
-function firstValue(...values) {
+function firstValue(
+    ...values
+) {
 
-    for (const value of values) {
+    for (
+        const value of values
+    ) {
 
         if (
             value !== undefined &&
             value !== null &&
             String(value).trim() !== ""
         ) {
+
             return value;
         }
     }
+
 
     return "";
 }
@@ -392,16 +480,18 @@ function firstValue(...values) {
    MONEY
    ========================================================= */
 
-function formatMoney(amount) {
+function formatMoney(
+    amount
+) {
 
     const value =
         numberValue(amount);
 
+
     return (
         "UGX " +
-        Math.round(value).toLocaleString(
-            "en-UG"
-        )
+        Math.round(value)
+            .toLocaleString("en-UG")
     );
 }
 
@@ -410,34 +500,49 @@ function formatMoney(amount) {
    DATE
    ========================================================= */
 
-function formatDate(value) {
+function formatDate(
+    value
+) {
 
     if (!value) {
         return "—";
     }
 
+
     const date =
         new Date(value);
+
 
     if (
         Number.isNaN(
             date.getTime()
         )
     ) {
+
         return stringValue(
             value,
             "—"
         );
     }
 
+
     return date.toLocaleString(
         "en-UG",
         {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
+            year:
+                "numeric",
+
+            month:
+                "short",
+
+            day:
+                "2-digit",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
         }
     );
 }
@@ -447,7 +552,9 @@ function formatDate(value) {
    NORMALIZE WITHDRAWAL
    ========================================================= */
 
-function normalizeWithdrawal(item) {
+function normalizeWithdrawal(
+    item
+) {
 
     const withdrawal =
         item || {};
@@ -487,7 +594,9 @@ function normalizeWithdrawal(item) {
 
     const payout =
         payoutExplicit !== ""
-            ? numberValue(payoutExplicit)
+            ? numberValue(
+                payoutExplicit
+            )
             : Math.max(
                 0,
                 amount - fee
@@ -524,7 +633,8 @@ function normalizeWithdrawal(item) {
             ]
                 .filter(Boolean)
                 .join(" ")
-        ) || "Unknown User";
+        ) ||
+        "Unknown User";
 
 
     const status =
@@ -554,18 +664,38 @@ function normalizeWithdrawal(item) {
     if (!payoutStatus) {
 
         if (payoutSent) {
-            payoutStatus = "paid";
-        } else if (status === "approved") {
-            payoutStatus = "awaiting_payout";
+
+            payoutStatus =
+                "paid";
+
+        } else if (
+            status === "approved"
+        ) {
+
+            payoutStatus =
+                "awaiting_payout";
+
         } else {
-            payoutStatus = "not_required";
+
+            payoutStatus =
+                "not_required";
         }
     }
 
 
+    const userId =
+        firstValue(
+            withdrawal.user_id,
+            withdrawal.userId,
+            withdrawal.userid,
+            withdrawal.userID
+        );
+
+
     return {
 
-        raw: withdrawal,
+        raw:
+            withdrawal,
 
         id:
             firstValue(
@@ -582,12 +712,10 @@ function normalizeWithdrawal(item) {
             ),
 
         userId:
-            firstValue(
-                withdrawal.user_id,
-                withdrawal.userId
-            ),
+            userId,
 
-        name,
+        name:
+            name,
 
         email:
             firstValue(
@@ -595,15 +723,20 @@ function normalizeWithdrawal(item) {
                 withdrawal.user_email
             ),
 
-        phone,
+        phone:
+            phone,
 
-        amount,
+        amount:
+            amount,
 
-        fee,
+        fee:
+            fee,
 
-        payout,
+        payout:
+            payout,
 
-        method,
+        method:
+            method,
 
         accountName:
             firstValue(
@@ -619,20 +752,26 @@ function normalizeWithdrawal(item) {
                 phone
             ),
 
-        status,
+        status:
+            status,
 
-        payoutStatus,
+        payoutStatus:
+            payoutStatus,
 
         balanceReserved:
-            withdrawal.balance_reserved === true,
+            withdrawal.balance_reserved ===
+            true,
 
         balanceDeducted:
-            withdrawal.balance_deducted === true,
+            withdrawal.balance_deducted ===
+            true,
 
         adminApproved:
-            withdrawal.admin_approved === true,
+            withdrawal.admin_approved ===
+            true,
 
-        payoutSent,
+        payoutSent:
+            payoutSent,
 
         adminNote:
             firstValue(
@@ -703,32 +842,28 @@ async function loadWithdrawals() {
             throw new Error(
                 data &&
                 data.message
+
                     ? data.message
+
                     : "Unable to load withdrawal requests."
             );
         }
 
 
-        /*
-         * Your API returns both:
-         *
-         * withdrawals: [...]
-         *
-         * and
-         *
-         * data: [...]
-         *
-         * Prefer withdrawals.
-         */
-
         const rawWithdrawals =
             Array.isArray(
                 data.withdrawals
             )
+
                 ? data.withdrawals
+
                 : (
-                    Array.isArray(data.data)
+                    Array.isArray(
+                        data.data
+                    )
+
                         ? data.data
+
                         : []
                 );
 
@@ -745,7 +880,10 @@ async function loadWithdrawals() {
         );
 
 
-        updateStatistics(data);
+        updateStatistics(
+            data
+        );
+
 
         applyFilters();
 
@@ -762,7 +900,6 @@ async function loadWithdrawals() {
             "success"
         );
 
-
     } catch (error) {
 
         console.error(
@@ -772,15 +909,24 @@ async function loadWithdrawals() {
 
 
         withdrawals = [];
+
         filteredWithdrawals = [];
 
 
         updateStatistics({
             totals: {
-                total_withdrawals: 0,
-                pending_withdrawals: 0,
-                approved_withdrawals: 0,
-                rejected_withdrawals: 0
+
+                total_withdrawals:
+                    0,
+
+                pending_withdrawals:
+                    0,
+
+                approved_withdrawals:
+                    0,
+
+                rejected_withdrawals:
+                    0
             }
         });
 
@@ -809,11 +955,15 @@ function setLoadingState() {
     const tableBody =
         $("withdrawalsTableBody");
 
+
     if (tableBody) {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="loading-cell">
+                <td
+                    colspan="10"
+                    class="loading-cell"
+                >
                     Loading withdrawals...
                 </td>
             </tr>
@@ -823,6 +973,7 @@ function setLoadingState() {
 
     const mobileList =
         $("withdrawalsMobileList");
+
 
     if (mobileList) {
 
@@ -839,23 +990,37 @@ function setLoadingState() {
    ERROR STATE
    ========================================================= */
 
-function showErrorState(message) {
+function showErrorState(
+    message
+) {
 
     const tableBody =
         $("withdrawalsTableBody");
+
 
     if (tableBody) {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="loading-cell">
-                    <div style="padding:20px;">
+                <td
+                    colspan="10"
+                    class="loading-cell"
+                >
+
+                    <div
+                        style="padding:20px;"
+                    >
+
                         <strong>
                             Unable to load withdrawal requests
                         </strong>
 
-                        <p style="margin:8px 0;">
-                            ${escapeHtml(message)}
+                        <p
+                            style="margin:8px 0;"
+                        >
+                            ${escapeHtml(
+                                message
+                            )}
                         </p>
 
                         <button
@@ -865,7 +1030,9 @@ function showErrorState(message) {
                         >
                             Retry
                         </button>
+
                     </div>
+
                 </td>
             </tr>
         `;
@@ -875,16 +1042,23 @@ function showErrorState(message) {
     const mobileList =
         $("withdrawalsMobileList");
 
+
     if (mobileList) {
 
         mobileList.innerHTML = `
-            <div class="loading-cell" style="padding:20px;">
+            <div
+                class="loading-cell"
+                style="padding:20px;"
+            >
+
                 <strong>
                     Unable to load withdrawal requests
                 </strong>
 
                 <p>
-                    ${escapeHtml(message)}
+                    ${escapeHtml(
+                        message
+                    )}
                 </p>
 
                 <button
@@ -894,6 +1068,7 @@ function showErrorState(message) {
                 >
                     Retry
                 </button>
+
             </div>
         `;
     }
@@ -910,7 +1085,9 @@ function showErrorState(message) {
    STATISTICS
    ========================================================= */
 
-function updateStatistics(data) {
+function updateStatistics(
+    data
+) {
 
     const totals =
         data &&
@@ -955,11 +1132,6 @@ function updateStatistics(data) {
         );
 
 
-    /*
-     * If the backend doesn't provide totals,
-     * calculate them from the records.
-     */
-
     if (
         total === 0 &&
         withdrawals.length > 0
@@ -967,8 +1139,17 @@ function updateStatistics(data) {
 
         total =
             withdrawals.reduce(
-                (sum, item) =>
-                    sum + item.amount,
+                function (
+                    sum,
+                    item
+                ) {
+
+                    return (
+                        sum +
+                        item.amount
+                    );
+
+                },
                 0
             );
     }
@@ -977,7 +1158,9 @@ function updateStatistics(data) {
     if (
         pending === 0 &&
         withdrawals.some(
-            item => item.status === "pending"
+            item =>
+                item.status ===
+                "pending"
         )
     ) {
 
@@ -985,11 +1168,21 @@ function updateStatistics(data) {
             withdrawals
                 .filter(
                     item =>
-                        item.status === "pending"
+                        item.status ===
+                        "pending"
                 )
                 .reduce(
-                    (sum, item) =>
-                        sum + item.amount,
+                    function (
+                        sum,
+                        item
+                    ) {
+
+                        return (
+                            sum +
+                            item.amount
+                        );
+
+                    },
                     0
                 );
     }
@@ -998,7 +1191,9 @@ function updateStatistics(data) {
     if (
         approved === 0 &&
         withdrawals.some(
-            item => item.status === "approved"
+            item =>
+                item.status ===
+                "approved"
         )
     ) {
 
@@ -1006,11 +1201,21 @@ function updateStatistics(data) {
             withdrawals
                 .filter(
                     item =>
-                        item.status === "approved"
+                        item.status ===
+                        "approved"
                 )
                 .reduce(
-                    (sum, item) =>
-                        sum + item.amount,
+                    function (
+                        sum,
+                        item
+                    ) {
+
+                        return (
+                            sum +
+                            item.amount
+                        );
+
+                    },
                     0
                 );
     }
@@ -1019,7 +1224,9 @@ function updateStatistics(data) {
     if (
         rejected === 0 &&
         withdrawals.some(
-            item => item.status === "rejected"
+            item =>
+                item.status ===
+                "rejected"
         )
     ) {
 
@@ -1027,36 +1234,54 @@ function updateStatistics(data) {
             withdrawals
                 .filter(
                     item =>
-                        item.status === "rejected"
+                        item.status ===
+                        "rejected"
                 )
                 .reduce(
-                    (sum, item) =>
-                        sum + item.amount,
+                    function (
+                        sum,
+                        item
+                    ) {
+
+                        return (
+                            sum +
+                            item.amount
+                        );
+
+                    },
                     0
                 );
     }
 
 
     if ($("totalWithdrawals")) {
-        $("totalWithdrawals").textContent =
+
+        $("totalWithdrawals")
+            .textContent =
             formatMoney(total);
     }
 
 
     if ($("pendingWithdrawals")) {
-        $("pendingWithdrawals").textContent =
+
+        $("pendingWithdrawals")
+            .textContent =
             formatMoney(pending);
     }
 
 
     if ($("approvedWithdrawals")) {
-        $("approvedWithdrawals").textContent =
+
+        $("approvedWithdrawals")
+            .textContent =
             formatMoney(approved);
     }
 
 
     if ($("rejectedWithdrawals")) {
-        $("rejectedWithdrawals").textContent =
+
+        $("rejectedWithdrawals")
+            .textContent =
             formatMoney(rejected);
     }
 }
@@ -1097,13 +1322,21 @@ function applyFilters() {
             function (item) {
 
                 const searchable = [
+
                     item.name,
+
                     item.email,
+
                     item.phone,
+
                     item.reference,
+
                     item.id,
+
                     item.userId,
+
                     item.accountNumber
+
                 ]
                     .filter(Boolean)
                     .join(" ")
@@ -1112,8 +1345,11 @@ function applyFilters() {
 
                 if (
                     search &&
-                    !searchable.includes(search)
+                    !searchable.includes(
+                        search
+                    )
                 ) {
+
                     return false;
                 }
 
@@ -1122,6 +1358,7 @@ function applyFilters() {
                     status !== "all" &&
                     item.status !== status
                 ) {
+
                     return false;
                 }
 
@@ -1133,14 +1370,17 @@ function applyFilters() {
                         method
                     )
                 ) {
+
                     return false;
                 }
 
 
                 if (
                     payoutStatus !== "all" &&
-                    item.payoutStatus !== payoutStatus
+                    item.payoutStatus !==
+                        payoutStatus
                 ) {
+
                     return false;
                 }
 
@@ -1156,15 +1396,21 @@ function applyFilters() {
 }
 
 
-function methodMatches(actual, expected) {
+function methodMatches(
+    actual,
+    expected
+) {
 
     const a =
-        stringValue(actual)
-            .toLowerCase();
+        stringValue(
+            actual
+        ).toLowerCase();
+
 
     const e =
-        stringValue(expected)
-            .toLowerCase();
+        stringValue(
+            expected
+        ).toLowerCase();
 
 
     if (!a) {
@@ -1187,7 +1433,7 @@ function methodMatches(actual, expected) {
 
 
 /* =========================================================
-   RENDER
+   RENDER WITHDRAWALS
    ========================================================= */
 
 function renderWithdrawals() {
@@ -1276,17 +1522,23 @@ function renderWithdrawals() {
    TABLE ROW
    ========================================================= */
 
-function renderTableRow(item) {
+function renderTableRow(
+    item
+) {
 
     const method =
         item.method
-            ? escapeHtml(item.method)
+            ? escapeHtml(
+                item.method
+            )
             : "—";
 
 
     const phone =
         item.phone
-            ? escapeHtml(item.phone)
+            ? escapeHtml(
+                item.phone
+            )
             : "—";
 
 
@@ -1294,42 +1546,58 @@ function renderTableRow(item) {
         <tr>
 
             <td>
+
                 <div class="withdrawal-user">
 
                     <strong>
-                        ${escapeHtml(item.name)}
+                        ${escapeHtml(
+                            item.name
+                        )}
                     </strong>
 
                     ${
                         item.email
                             ? `
                                 <small>
-                                    ${escapeHtml(item.email)}
+                                    ${escapeHtml(
+                                        item.email
+                                    )}
                                 </small>
                             `
                             : ""
                     }
 
                 </div>
+
             </td>
 
 
             <td>
+
                 <strong>
-                    ${formatMoney(item.amount)}
+                    ${formatMoney(
+                        item.amount
+                    )}
                 </strong>
+
             </td>
 
 
             <td>
-                ${formatMoney(item.fee)}
+                ${formatMoney(
+                    item.fee
+                )}
             </td>
 
 
             <td>
+
                 <strong>
-                    ${formatMoney(item.payout)}
+                    ${formatMoney(
+                        item.payout
+                    )}
                 </strong>
+
             </td>
 
 
@@ -1344,18 +1612,24 @@ function renderTableRow(item) {
 
 
             <td>
-                ${statusBadge(item.status)}
+                ${statusBadge(
+                    item.status
+                )}
             </td>
 
 
             <td>
-                ${payoutBadge(item.payoutStatus)}
+                ${payoutBadge(
+                    item.payoutStatus
+                )}
             </td>
 
 
             <td>
                 ${escapeHtml(
-                    formatDate(item.createdAt)
+                    formatDate(
+                        item.createdAt
+                    )
                 )}
             </td>
 
@@ -1366,7 +1640,9 @@ function renderTableRow(item) {
                     type="button"
                     class="withdrawal-action-button"
                     data-withdrawal-action="view"
-                    data-withdrawal-id="${escapeHtml(item.id)}"
+                    data-withdrawal-id="${escapeHtml(
+                        item.id
+                    )}"
                 >
                     Review
                 </button>
@@ -1382,80 +1658,124 @@ function renderTableRow(item) {
    MOBILE CARD
    ========================================================= */
 
-function renderMobileCard(item) {
+function renderMobileCard(
+    item
+) {
 
     return `
         <article
             class="withdrawal-mobile-card"
         >
 
-            <div class="withdrawal-mobile-header">
+            <div
+                class="withdrawal-mobile-header"
+            >
 
                 <div>
 
                     <strong>
-                        ${escapeHtml(item.name)}
+                        ${escapeHtml(
+                            item.name
+                        )}
                     </strong>
 
                     <small>
                         ${escapeHtml(
-                            item.reference || item.id
+                            item.reference ||
+                            item.id
                         )}
                     </small>
 
                 </div>
 
-                ${statusBadge(item.status)}
+                ${statusBadge(
+                    item.status
+                )}
 
             </div>
 
 
-            <div class="withdrawal-mobile-details">
+            <div
+                class="withdrawal-mobile-details"
+            >
 
                 <div>
-                    <span>Requested</span>
-                    <strong>
-                        ${formatMoney(item.amount)}
-                    </strong>
-                </div>
+                    <span>
+                        Requested
+                    </span>
 
-                <div>
-                    <span>Fee</span>
                     <strong>
-                        ${formatMoney(item.fee)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span>Payout</span>
-                    <strong>
-                        ${formatMoney(item.payout)}
-                    </strong>
-                </div>
-
-                <div>
-                    <span>Phone</span>
-                    <strong>
-                        ${escapeHtml(
-                            item.phone || "—"
+                        ${formatMoney(
+                            item.amount
                         )}
                     </strong>
                 </div>
 
+
                 <div>
-                    <span>Method</span>
+                    <span>
+                        Fee
+                    </span>
+
                     <strong>
-                        ${escapeHtml(
-                            item.method || "—"
+                        ${formatMoney(
+                            item.fee
                         )}
                     </strong>
                 </div>
 
+
                 <div>
-                    <span>Date</span>
+                    <span>
+                        Payout
+                    </span>
+
+                    <strong>
+                        ${formatMoney(
+                            item.payout
+                        )}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        Phone
+                    </span>
+
                     <strong>
                         ${escapeHtml(
-                            formatDate(item.createdAt)
+                            item.phone ||
+                            "—"
+                        )}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        Method
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            item.method ||
+                            "—"
+                        )}
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        Date
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            formatDate(
+                                item.createdAt
+                            )
                         )}
                     </strong>
                 </div>
@@ -1463,13 +1783,17 @@ function renderMobileCard(item) {
             </div>
 
 
-            <div class="withdrawal-mobile-actions">
+            <div
+                class="withdrawal-mobile-actions"
+            >
 
                 <button
                     type="button"
                     class="withdrawal-action-button"
                     data-withdrawal-action="view"
-                    data-withdrawal-id="${escapeHtml(item.id)}"
+                    data-withdrawal-id="${escapeHtml(
+                        item.id
+                    )}"
                 >
                     Review Withdrawal
                 </button>
@@ -1485,7 +1809,9 @@ function renderMobileCard(item) {
    STATUS BADGES
    ========================================================= */
 
-function statusBadge(status) {
+function statusBadge(
+    status
+) {
 
     const normalized =
         stringValue(
@@ -1495,21 +1821,28 @@ function statusBadge(status) {
 
 
     const label =
-        normalized.charAt(0).toUpperCase() +
+        normalized.charAt(0)
+            .toUpperCase() +
         normalized.slice(1);
 
 
     return `
         <span
-            class="withdrawal-status status-${escapeHtml(normalized)}"
+            class="withdrawal-status status-${escapeHtml(
+                normalized
+            )}"
         >
-            ${escapeHtml(label)}
+            ${escapeHtml(
+                label
+            )}
         </span>
     `;
 }
 
 
-function payoutBadge(status) {
+function payoutBadge(
+    status
+) {
 
     const normalized =
         stringValue(
@@ -1536,7 +1869,9 @@ function payoutBadge(status) {
 
     return `
         <span
-            class="withdrawal-payout-status payout-${escapeHtml(normalized)}"
+            class="withdrawal-payout-status payout-${escapeHtml(
+                normalized
+            )}"
         >
             ${escapeHtml(
                 labels[normalized] ||
@@ -1551,12 +1886,20 @@ function payoutBadge(status) {
    MODAL
    ========================================================= */
 
-function openWithdrawalModal(id) {
+function openWithdrawalModal(
+    id
+) {
 
     const item =
         withdrawals.find(
-            withdrawal =>
-                String(withdrawal.id) === String(id)
+            function (withdrawal) {
+
+                return String(
+                    withdrawal.id
+                ) ===
+                String(id);
+
+            }
         );
 
 
@@ -1571,42 +1914,53 @@ function openWithdrawalModal(id) {
     }
 
 
-    selectedWithdrawal = item;
+    selectedWithdrawal =
+        item;
 
 
     setText(
         "withdrawalRequestedAmount",
-        formatMoney(item.amount)
+        formatMoney(
+            item.amount
+        )
     );
 
 
     setText(
         "withdrawalFee",
-        formatMoney(item.fee)
+        formatMoney(
+            item.fee
+        )
     );
 
 
     setText(
         "withdrawalPayoutAmount",
-        formatMoney(item.payout)
+        formatMoney(
+            item.payout
+        )
     );
 
 
     setText(
         "withdrawalPaymentMethod",
-        item.method || "Not specified"
+        item.method ||
+        "Not specified"
     );
 
 
     setText(
         "withdrawalRegisteredPhone",
-        item.phone || "Not specified"
+        item.phone ||
+        "Not specified"
     );
 
 
     setText(
         "withdrawalStatus",
-        capitalize(item.status)
+        capitalize(
+            item.status
+        )
     );
 
 
@@ -1620,7 +1974,9 @@ function openWithdrawalModal(id) {
 
     setText(
         "withdrawalRequestedDate",
-        formatDate(item.createdAt)
+        formatDate(
+            item.createdAt
+        )
     );
 
 
@@ -1632,33 +1988,53 @@ function openWithdrawalModal(id) {
     );
 
 
+    /*
+     * IMPORTANT:
+     * Show the actual user ID if the HTML
+     * contains an element with this ID.
+     */
+
+    setText(
+        "withdrawalUserId",
+        item.userId ||
+        "—"
+    );
+
+
     const note =
         $("withdrawalAdminNote");
 
+
     if (note) {
+
         note.value =
-            item.adminNote || "";
+            item.adminNote ||
+            "";
     }
 
 
     const approve =
         $("approveWithdrawalButton");
 
+
     const reject =
         $("rejectWithdrawalButton");
 
 
     const isPending =
-        item.status === "pending";
+        item.status ===
+        "pending";
 
 
     if (approve) {
+
         approve.disabled =
             !isPending;
     }
 
 
     if (reject) {
+
         reject.disabled =
             !isPending;
     }
@@ -1667,12 +2043,15 @@ function openWithdrawalModal(id) {
     const modal =
         $("withdrawalModal");
 
+
     if (!modal) {
         return;
     }
 
 
-    modal.hidden = false;
+    modal.hidden =
+        false;
+
 
     document.body.classList.add(
         "modal-open"
@@ -1685,30 +2064,46 @@ function closeWithdrawalModal() {
     const modal =
         $("withdrawalModal");
 
+
     if (modal) {
-        modal.hidden = true;
+
+        modal.hidden =
+            true;
     }
+
 
     document.body.classList.remove(
         "modal-open"
     );
 
-    selectedWithdrawal = null;
+
+    selectedWithdrawal =
+        null;
 }
 
 
-function setText(id, value) {
+function setText(
+    id,
+    value
+) {
 
-    const element = $(id);
+    const element =
+        $(id);
 
-    if (element) {
-        element.textContent =
-            value === undefined ||
-            value === null ||
-            value === ""
-                ? "—"
-                : value;
+
+    if (!element) {
+        return;
     }
+
+
+    element.textContent =
+        value === undefined ||
+        value === null ||
+        value === ""
+
+            ? "—"
+
+            : value;
 }
 
 
@@ -1743,10 +2138,38 @@ async function processWithdrawal(
         selectedWithdrawal.id;
 
 
+    const userId =
+        selectedWithdrawal.userId ||
+        "";
+
+
     const note =
         $("withdrawalAdminNote")
-            ? $("withdrawalAdminNote").value.trim()
+            ? $("withdrawalAdminNote")
+                .value
+                .trim()
             : "";
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Require user ID on the frontend too.
+    |--------------------------------------------------------------------------
+    |
+    | The backend can also read it directly from the database withdrawal
+    | record, but sending it here makes debugging and validation easier.
+    |--------------------------------------------------------------------------
+    */
+
+    if (!userId) {
+
+        showMessage(
+            "This withdrawal does not contain a user ID.",
+            "error"
+        );
+
+        return;
+    }
 
 
     const actionLabel =
@@ -1775,36 +2198,84 @@ async function processWithdrawal(
     const approveButton =
         $("approveWithdrawalButton");
 
+
     const rejectButton =
         $("rejectWithdrawalButton");
 
 
     if (approveButton) {
-        approveButton.disabled = true;
+
+        approveButton.disabled =
+            true;
     }
 
 
     if (rejectButton) {
-        rejectButton.disabled = true;
+
+        rejectButton.disabled =
+            true;
     }
 
 
     try {
 
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT POST BODY
+        |--------------------------------------------------------------------------
+        |
+        | Both user_id and userId are sent for compatibility.
+        |--------------------------------------------------------------------------
+        */
+
+        const requestBody = {
+
+            withdrawalId:
+                id,
+
+            withdrawal_id:
+                id,
+
+            user_id:
+                userId,
+
+            userId:
+                userId,
+
+            action:
+                action,
+
+            admin_note:
+                note,
+
+            note:
+                note
+        };
+
+
+        console.log(
+            "Processing withdrawal:",
+            requestBody
+        );
+
+
         const data =
             await apiRequest(
                 API_URL,
                 {
-                    method: "POST",
+                    method:
+                        "POST",
 
-                    body: {
-                        withdrawalId: id,
-                        action: action,
-                        admin_note: note,
-                        note: note
-                    }
+                    body:
+                        requestBody
                 }
             );
+
+
+        console.log(
+            "Withdrawal processing response:",
+            data
+        );
 
 
         if (
@@ -1821,17 +2292,28 @@ async function processWithdrawal(
 
         showMessage(
             data.message ||
+
             (
-                action === "approve"
+                action ===
+                "approve"
+
                     ? "Withdrawal approved successfully."
+
                     : "Withdrawal rejected successfully."
             ),
+
             "success"
         );
 
 
         closeWithdrawalModal();
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reload immediately so the status and totals change.
+        |--------------------------------------------------------------------------
+        */
 
         await loadWithdrawals();
 
@@ -1852,12 +2334,16 @@ async function processWithdrawal(
 
 
         if (approveButton) {
-            approveButton.disabled = false;
+
+            approveButton.disabled =
+                false;
         }
 
 
         if (rejectButton) {
-            rejectButton.disabled = false;
+
+            rejectButton.disabled =
+                false;
         }
     }
 }
@@ -1871,6 +2357,7 @@ function renderPagination() {
 
     const container =
         $("withdrawalPagination");
+
 
     if (!container) {
         return;
@@ -1886,13 +2373,15 @@ function renderPagination() {
 
     if (totalPages <= 1) {
 
-        container.innerHTML = "";
+        container.innerHTML =
+            "";
 
         return;
     }
 
 
-    let html = "";
+    let html =
+        "";
 
 
     if (currentPage > 1) {
@@ -1931,7 +2420,8 @@ function renderPagination() {
 
 
     if (
-        currentPage < totalPages
+        currentPage <
+        totalPages
     ) {
 
         html += `
@@ -1945,7 +2435,8 @@ function renderPagination() {
     }
 
 
-    container.innerHTML = html;
+    container.innerHTML =
+        html;
 }
 
 
@@ -1957,6 +2448,7 @@ function setupEvents() {
 
     const search =
         $("withdrawalSearch");
+
 
     if (search) {
 
@@ -1970,6 +2462,7 @@ function setupEvents() {
     const status =
         $("statusFilter");
 
+
     if (status) {
 
         status.addEventListener(
@@ -1981,6 +2474,7 @@ function setupEvents() {
 
     const method =
         $("methodFilter");
+
 
     if (method) {
 
@@ -1994,6 +2488,7 @@ function setupEvents() {
     const payoutStatus =
         $("payoutStatusFilter");
 
+
     if (payoutStatus) {
 
         payoutStatus.addEventListener(
@@ -2005,6 +2500,7 @@ function setupEvents() {
 
     const refresh =
         $("refreshWithdrawalsBtn");
+
 
     if (refresh) {
 
@@ -2022,6 +2518,7 @@ function setupEvents() {
     const tableBody =
         $("withdrawalsTableBody");
 
+
     if (tableBody) {
 
         tableBody.addEventListener(
@@ -2033,6 +2530,7 @@ function setupEvents() {
 
     const mobileList =
         $("withdrawalsMobileList");
+
 
     if (mobileList) {
 
@@ -2046,6 +2544,7 @@ function setupEvents() {
     const pagination =
         $("withdrawalPagination");
 
+
     if (pagination) {
 
         pagination.addEventListener(
@@ -2056,6 +2555,7 @@ function setupEvents() {
                     event.target.closest(
                         "[data-page]"
                     );
+
 
                 if (!button) {
                     return;
@@ -2069,14 +2569,16 @@ function setupEvents() {
 
 
                 if (
-                    Number.isFinite(page) &&
+                    Number.isFinite(
+                        page
+                    ) &&
                     page > 0
                 ) {
 
-                    currentPage = page;
+                    currentPage =
+                        page;
 
                     renderWithdrawals();
-
                 }
             }
         );
@@ -2085,6 +2587,7 @@ function setupEvents() {
 
     const closeButton =
         $("closeWithdrawalModal");
+
 
     if (closeButton) {
 
@@ -2098,6 +2601,7 @@ function setupEvents() {
     const cancelButton =
         $("cancelWithdrawalReview");
 
+
     if (cancelButton) {
 
         cancelButton.addEventListener(
@@ -2109,6 +2613,7 @@ function setupEvents() {
 
     const approveButton =
         $("approveWithdrawalButton");
+
 
     if (approveButton) {
 
@@ -2128,6 +2633,7 @@ function setupEvents() {
     const rejectButton =
         $("rejectWithdrawalButton");
 
+
     if (rejectButton) {
 
         rejectButton.addEventListener(
@@ -2146,6 +2652,7 @@ function setupEvents() {
     const modal =
         $("withdrawalModal");
 
+
     if (modal) {
 
         modal.addEventListener(
@@ -2153,11 +2660,11 @@ function setupEvents() {
             function (event) {
 
                 if (
-                    event.target === modal
+                    event.target ===
+                    modal
                 ) {
 
                     closeWithdrawalModal();
-
                 }
             }
         );
@@ -2169,11 +2676,13 @@ function setupEvents() {
         function (event) {
 
             if (
-                event.key === "Escape"
+                event.key ===
+                "Escape"
             ) {
 
                 const modal =
                     $("withdrawalModal");
+
 
                 if (
                     modal &&
@@ -2181,7 +2690,6 @@ function setupEvents() {
                 ) {
 
                     closeWithdrawalModal();
-
                 }
             }
         }
@@ -2189,7 +2697,9 @@ function setupEvents() {
 }
 
 
-function handleWithdrawalClick(event) {
+function handleWithdrawalClick(
+    event
+) {
 
     const button =
         event.target.closest(
@@ -2214,8 +2724,9 @@ function handleWithdrawalClick(event) {
         action === "view"
     ) {
 
-        openWithdrawalModal(id);
-
+        openWithdrawalModal(
+            id
+        );
     }
 }
 
@@ -2224,7 +2735,9 @@ function handleWithdrawalClick(event) {
    UTILITY
    ========================================================= */
 
-function capitalize(value) {
+function capitalize(
+    value
+) {
 
     const text =
         stringValue(
@@ -2233,12 +2746,17 @@ function capitalize(value) {
         );
 
 
-    return text.charAt(0).toUpperCase() +
-        text.slice(1);
+    return (
+        text.charAt(0)
+            .toUpperCase() +
+        text.slice(1)
+    );
 }
 
 
-function payoutStatusLabel(status) {
+function payoutStatusLabel(
+    status
+) {
 
     const labels = {
 
@@ -2263,7 +2781,9 @@ function payoutStatusLabel(status) {
 }
 
 
-function escapeHtml(value) {
+function escapeHtml(
+    value
+) {
 
     return String(
         value === undefined ||
@@ -2271,11 +2791,26 @@ function escapeHtml(value) {
             ? ""
             : value
     )
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
 
@@ -2290,9 +2825,9 @@ async function initializeWithdrawals() {
         setupEvents();
 
         /*
-         * Authentication is checked separately by PHP.
-         * We don't prevent loading the withdrawal API when
-         * this optional preliminary check fails.
+         * Authentication is checked separately.
+         * The withdrawal PHP endpoint performs its own
+         * administrator authorization.
          */
 
         await verifyAdministrator();
@@ -2315,13 +2850,17 @@ async function initializeWithdrawals() {
    AUTO REFRESH
    ========================================================= */
 
-let refreshTimer = null;
+let refreshTimer =
+    null;
 
 
 function startAutoRefresh() {
 
     if (refreshTimer) {
-        clearInterval(refreshTimer);
+
+        clearInterval(
+            refreshTimer
+        );
     }
 
 
@@ -2330,17 +2869,19 @@ function startAutoRefresh() {
             function () {
 
                 /*
-                 * Don't refresh while the administrator
+                 * Don't refresh while the admin
                  * is reviewing a withdrawal.
                  */
 
                 const modal =
                     $("withdrawalModal");
 
+
                 if (
                     modal &&
                     !modal.hidden
                 ) {
+
                     return;
                 }
 
@@ -2359,26 +2900,33 @@ function startAutoRefresh() {
 
 window.CrownCashWithdrawals = {
 
-    load: loadWithdrawals,
+    load:
+        loadWithdrawals,
 
-    refresh: loadWithdrawals,
+    refresh:
+        loadWithdrawals,
 
-    open: openWithdrawalModal,
+    open:
+        openWithdrawalModal,
 
-    close: closeWithdrawalModal,
+    close:
+        closeWithdrawalModal,
 
-    approve: function () {
-        return processWithdrawal(
-            "approve"
-        );
-    },
+    approve:
+        function () {
 
-    reject: function () {
-        return processWithdrawal(
-            "reject"
-        );
-    }
+            return processWithdrawal(
+                "approve"
+            );
+        },
 
+    reject:
+        function () {
+
+            return processWithdrawal(
+                "reject"
+            );
+        }
 };
 
 
@@ -2387,7 +2935,8 @@ window.CrownCashWithdrawals = {
    ========================================================= */
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
@@ -2395,6 +2944,7 @@ if (
         function () {
 
             initializeWithdrawals();
+
             startAutoRefresh();
 
         }
@@ -2403,6 +2953,6 @@ if (
 } else {
 
     initializeWithdrawals();
-    startAutoRefresh();
 
+    startAutoRefresh();
 }

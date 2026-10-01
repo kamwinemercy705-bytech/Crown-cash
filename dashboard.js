@@ -39,13 +39,23 @@ function formatNumber(value) {
     return Math.round(number).toLocaleString("en-UG");
 }
 
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function formatAccountType(value) {
+
+    const text = String(value || "User")
+        .replace(/[_-]+/g, " ")
+        .trim();
+
+    if (!text) {
+        return "User";
+    }
+
+    return text
+        .split(" ")
+        .map(word => {
+            return word.charAt(0).toUpperCase() +
+                   word.slice(1).toLowerCase();
+        })
+        .join(" ");
 }
 
 /*
@@ -60,24 +70,35 @@ async function fetchWithTimeout(
     timeout = REQUEST_TIMEOUT
 ) {
 
-    const controller = new AbortController();
+    const controller =
+        new AbortController();
 
-    const timer = setTimeout(
-        () => controller.abort(),
-        timeout
-    );
+    const timer =
+        setTimeout(
+            () => controller.abort(),
+            timeout
+        );
 
     try {
 
-        return await fetch(url, {
-            ...options,
-            credentials: "include",
-            signal: controller.signal,
-            headers: {
-                "Accept": "application/json",
-                ...(options.headers || {})
+        return await fetch(
+            url,
+            {
+                ...options,
+
+                credentials: "include",
+
+                signal:
+                    controller.signal,
+
+                headers: {
+                    "Accept":
+                        "application/json",
+
+                    ...(options.headers || {})
+                }
             }
-        });
+        );
 
     } finally {
 
@@ -87,7 +108,8 @@ async function fetchWithTimeout(
 
 async function readJson(response) {
 
-    const text = await response.text();
+    const text =
+        await response.text();
 
     if (!text) {
         return {};
@@ -100,7 +122,7 @@ async function readJson(response) {
     } catch (error) {
 
         console.error(
-            "Invalid JSON response:",
+            "Invalid dashboard JSON:",
             text
         );
 
@@ -120,25 +142,55 @@ async function loadDashboard() {
 
     try {
 
-        const response = await fetchWithTimeout(
-            DASHBOARD_API,
-            {
-                method: "GET"
-            }
+        const response =
+            await fetchWithTimeout(
+                DASHBOARD_API,
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
+
+        const data =
+            await readJson(response);
+
+        console.log(
+            "Crown Cash dashboard response:",
+            data
         );
 
-        const data = await readJson(response);
+        /*
+        |--------------------------------------------------------------------------
+        | Login required
+        |--------------------------------------------------------------------------
+        */
 
         if (
             response.status === 401 ||
             response.status === 403
         ) {
 
-            window.location.href = "login.html";
-            return;
+            window.location.href =
+                "login.html";
+
+            return null;
         }
 
-        if (!response.ok || data.success === false) {
+        /*
+        |--------------------------------------------------------------------------
+        | Server error
+        |--------------------------------------------------------------------------
+        */
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                `Dashboard request failed (${response.status}).`
+            );
+        }
+
+        if (data.success === false) {
 
             throw new Error(
                 data.message ||
@@ -146,7 +198,21 @@ async function loadDashboard() {
             );
         }
 
-        displayUser(data.user || {});
+        /*
+        |--------------------------------------------------------------------------
+        | Display user
+        |--------------------------------------------------------------------------
+        */
+
+        displayUser(
+            data.user || {}
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Display statistics
+        |--------------------------------------------------------------------------
+        */
 
         displayDashboardStats(
             data.stats || {},
@@ -154,13 +220,20 @@ async function loadDashboard() {
             data.referrals || {}
         );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Admin panel
+        |--------------------------------------------------------------------------
+        */
+
         setupAdminPanel(
-            data.user || {}
+            data.user || {},
+            data.admin || {}
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Dispatch event for other dashboard components
+        | Dashboard event
         |--------------------------------------------------------------------------
         */
 
@@ -178,7 +251,7 @@ async function loadDashboard() {
     } catch (error) {
 
         console.error(
-            "Dashboard error:",
+            "Crown Cash dashboard error:",
             error
         );
 
@@ -193,7 +266,7 @@ async function loadDashboard() {
 
 /*
 |--------------------------------------------------------------------------
-| User information
+| User
 |--------------------------------------------------------------------------
 */
 
@@ -202,6 +275,7 @@ function displayUser(user) {
     const name =
         user.name ||
         user.full_name ||
+        user.username ||
         "Crown Cash User";
 
     const firstName =
@@ -231,7 +305,7 @@ function displayUser(user) {
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard statistics
+| Statistics
 |--------------------------------------------------------------------------
 */
 
@@ -241,6 +315,12 @@ function displayDashboardStats(
     referrals = {}
 ) {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet
+    |--------------------------------------------------------------------------
+    */
+
     const walletBalance =
         Number(
             stats.available_balance ??
@@ -248,11 +328,23 @@ function displayDashboardStats(
             0
         );
 
+    /*
+    |--------------------------------------------------------------------------
+    | Investment
+    |--------------------------------------------------------------------------
+    */
+
     const totalInvested =
         Number(
             stats.total_invested ??
             0
         );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Earnings
+    |--------------------------------------------------------------------------
+    */
 
     const investmentEarnings =
         Number(
@@ -279,12 +371,24 @@ function displayDashboardStats(
             )
         );
 
+    /*
+    |--------------------------------------------------------------------------
+    | Referral team
+    |--------------------------------------------------------------------------
+    */
+
     const referralTeam =
         Number(
             stats.referral_team ??
             referrals.team ??
             0
         );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transactions
+    |--------------------------------------------------------------------------
+    */
 
     const transactionCount =
         Number(
@@ -294,67 +398,84 @@ function displayDashboardStats(
 
     /*
     |--------------------------------------------------------------------------
-    | Existing dashboard cards
+    | Main cards
     |--------------------------------------------------------------------------
     */
 
     setText(
         "availableBalance",
-        formatCurrency(walletBalance)
+        formatCurrency(
+            walletBalance
+        )
     );
 
     setText(
         "totalInvested",
-        formatCurrency(totalInvested)
+        formatCurrency(
+            totalInvested
+        )
     );
 
     setText(
         "totalEarnings",
-        formatCurrency(totalEarnings)
+        formatCurrency(
+            totalEarnings
+        )
     );
 
     setText(
         "referralTeam",
-        formatNumber(referralTeam)
+        formatNumber(
+            referralTeam
+        )
     );
 
     setText(
         "transactionCount",
-        formatNumber(transactionCount)
+        formatNumber(
+            transactionCount
+        )
     );
 
     /*
     |--------------------------------------------------------------------------
-    | Optional detailed earnings elements
-    |--------------------------------------------------------------------------
-    |
-    | These will work automatically if you later add these IDs to HTML.
+    | Optional earnings fields
     |--------------------------------------------------------------------------
     */
 
     setText(
         "investmentEarnings",
-        formatCurrency(investmentEarnings)
+        formatCurrency(
+            investmentEarnings
+        )
     );
 
     setText(
         "referralEarnings",
-        formatCurrency(referralEarnings)
+        formatCurrency(
+            referralEarnings
+        )
     );
 
     setText(
         "totalInvestmentEarnings",
-        formatCurrency(investmentEarnings)
+        formatCurrency(
+            investmentEarnings
+        )
     );
 
     setText(
         "totalReferralEarnings",
-        formatCurrency(referralEarnings)
+        formatCurrency(
+            referralEarnings
+        )
     );
 
     setText(
         "totalEarningsBreakdown",
-        formatCurrency(totalEarnings)
+        formatCurrency(
+            totalEarnings
+        )
     );
 }
 
@@ -375,6 +496,7 @@ function showDashboardError(message) {
         $("availableBalance");
 
     if (balance) {
+
         balance.textContent =
             "Unable to load";
     }
@@ -382,30 +504,66 @@ function showDashboardError(message) {
 
 /*
 |--------------------------------------------------------------------------
-| Admin panel
+| Admin Panel
 |--------------------------------------------------------------------------
 */
 
-function setupAdminPanel(user) {
+function setupAdminPanel(
+    user = {},
+    admin = {}
+) {
 
     const role =
         String(
             user.role ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
+
+    const accountType =
+        String(
             user.account_type ||
             ""
         )
         .trim()
         .toLowerCase();
 
-    const isAdmin =
+    /*
+    |--------------------------------------------------------------------------
+    | Primary server-side admin flag
+    |--------------------------------------------------------------------------
+    */
+
+    const serverAdmin =
+        user.is_admin === true ||
+        admin.is_admin === true;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fallback role detection
+    |--------------------------------------------------------------------------
+    */
+
+    const roleAdmin =
         role === "admin" ||
         role === "administrator" ||
-        String(user.account_type || "")
-            .trim()
-            .toLowerCase() === "admin" ||
-        String(user.account_type || "")
-            .trim()
-            .toLowerCase() === "administrator";
+        accountType === "admin" ||
+        accountType === "administrator";
+
+    const isAdmin =
+        serverAdmin ||
+        roleAdmin;
+
+    console.log(
+        "Crown Cash admin status:",
+        {
+            isAdmin,
+            serverAdmin,
+            role,
+            accountType
+        }
+    );
 
     const adminNavLink =
         $("adminNavLink");
@@ -415,45 +573,69 @@ function setupAdminPanel(user) {
 
     if (isAdmin) {
 
+        /*
+        | Sidebar Admin Panel
+        */
+
         if (adminNavLink) {
+
             adminNavLink.classList.remove(
                 "hidden"
             );
 
-            adminNavLink.style.display = "flex";
+            adminNavLink.style.display =
+                "flex";
+
+            adminNavLink.removeAttribute(
+                "aria-hidden"
+            );
         }
 
+        /*
+        | Quick Action Admin Panel
+        */
+
         if (adminActionCard) {
+
             adminActionCard.classList.remove(
                 "hidden"
             );
 
-            adminActionCard.style.display = "flex";
+            adminActionCard.style.display =
+                "flex";
+
+            adminActionCard.removeAttribute(
+                "aria-hidden"
+            );
         }
 
     } else {
 
         if (adminNavLink) {
+
             adminNavLink.classList.add(
                 "hidden"
             );
 
-            adminNavLink.style.display = "none";
+            adminNavLink.style.display =
+                "none";
         }
 
         if (adminActionCard) {
+
             adminActionCard.classList.add(
                 "hidden"
             );
 
-            adminActionCard.style.display = "none";
+            adminActionCard.style.display =
+                "none";
         }
     }
 }
 
 /*
 |--------------------------------------------------------------------------
-| Investment calculator
+| Investment Calculator
 |--------------------------------------------------------------------------
 */
 
@@ -478,7 +660,9 @@ function setupInvestmentCalculator() {
     function calculate() {
 
         const amount =
-            Number(amountInput.value) || 0;
+            Number(
+                amountInput.value
+            ) || 0;
 
         const rate = 0.10;
 
@@ -494,19 +678,25 @@ function setupInvestmentCalculator() {
         if (dailyReturn) {
 
             dailyReturn.textContent =
-                formatCurrency(daily);
+                formatCurrency(
+                    daily
+                );
         }
 
         if (monthlyReturn) {
 
             monthlyReturn.textContent =
-                formatCurrency(monthly);
+                formatCurrency(
+                    monthly
+                );
         }
 
         if (totalAfter30) {
 
             totalAfter30.textContent =
-                formatCurrency(total);
+                formatCurrency(
+                    total
+                );
         }
     }
 
@@ -520,7 +710,7 @@ function setupInvestmentCalculator() {
 
 /*
 |--------------------------------------------------------------------------
-| Mobile menu
+| Mobile Menu
 |--------------------------------------------------------------------------
 */
 
@@ -530,9 +720,14 @@ function setupMobileMenu() {
         $("menuToggle");
 
     const sidebar =
-        document.querySelector(".sidebar");
+        document.querySelector(
+            ".sidebar"
+        );
 
-    if (!menuToggle || !sidebar) {
+    if (
+        !menuToggle ||
+        !sidebar
+    ) {
         return;
     }
 
@@ -561,11 +756,14 @@ async function logoutUser() {
             LOGOUT_API,
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type":
                         "application/json"
                 },
-                body: JSON.stringify({})
+
+                body:
+                    JSON.stringify({})
             }
         );
 
@@ -631,7 +829,9 @@ document.addEventListener(
 
 window.CrownCashDashboard = {
 
-    reload: loadDashboard,
+    reload:
+        loadDashboard,
 
-    logout: logoutUser
+    logout:
+        logoutUser
 };

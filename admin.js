@@ -1,3030 +1,2593 @@
-/* =========================================================
+/* ==========================================================================
    CROWN CASH - ADMIN DASHBOARD
-   admin.js
+   ========================================================================== */
 
-   Includes:
-   - Admin authentication
-   - Admin profile
-   - Dashboard statistics
-   - Recent transactions/users
-   - Deposit approval/rejection
-   - Withdrawal approval/rejection
-   - Investment approval/rejection
-   - Pending action counts
-   ========================================================= */
+(() => {
+    "use strict";
 
-"use strict";
+    /* ----------------------------------------------------------------------
+       CONFIGURATION
+    ---------------------------------------------------------------------- */
 
-/* =========================================================
-   CONFIGURATION
-   ========================================================= */
+    const API_BASE = "https://crown-cash1.onrender.com";
 
-const API_BASE = "https://crown-cash1.onrender.com";
+    const ADMIN_AUTH_API =
+        `${API_BASE}/admin-auth.php`;
 
-const ADMIN_AUTH_API = `${API_BASE}/admin-auth.php`;
-const PROFILE_API = `${API_BASE}/profile.php`;
-const ADMIN_DASHBOARD_API = `${API_BASE}/admin-dashboard.php`;
+    const PROFILE_API =
+        `${API_BASE}/profile.php`;
 
-const ADMIN_DEPOSITS_API = `${API_BASE}/admin_deposit.php`;
-const ADMIN_WITHDRAWALS_API = `${API_BASE}/admin_withdrawal.php`;
-const ADMIN_INVESTMENTS_API = `${API_BASE}/admin_investments.php`;
+    const ADMIN_DASHBOARD_API =
+        `${API_BASE}/admin-dashboard.php`;
 
-const LOGOUT_API = `${API_BASE}/logout.php`;
+    const ADMIN_DEPOSITS_API =
+        `${API_BASE}/admin_deposit.php`;
 
-const REQUEST_TIMEOUT = 15000;
+    const ADMIN_WITHDRAWALS_API =
+        `${API_BASE}/admin_withdrawal.php`;
 
+    const ADMIN_INVESTMENTS_API =
+        `${API_BASE}/admin_investments.php`;
 
-/* =========================================================
-   STATE
-   ========================================================= */
+    const LOGOUT_API =
+        `${API_BASE}/logout.php`;
 
-const AdminDashboard = {
-    data: null,
-    profile: null,
-    authenticated: false,
-    loading: false,
-
-    deposits: [],
-    withdrawals: [],
-    investments: []
-};
+    const REQUEST_TIMEOUT = 15000;
 
 
-/* =========================================================
-   DOM HELPERS
-   ========================================================= */
+    /* ----------------------------------------------------------------------
+       STATE
+    ---------------------------------------------------------------------- */
 
-function $(selector) {
-    return document.querySelector(selector);
-}
+    const AdminDashboard = {
+        authenticated: false,
+        authorized: false,
+        loading: false,
 
+        data: null,
+        profile: null,
 
-function setText(selector, value) {
+        deposits: [],
+        withdrawals: [],
+        investments: [],
 
-    const element = $(selector);
-
-    if (element) {
-        element.textContent = value ?? "";
-    }
-}
-
-
-function showElement(selector) {
-
-    const element = $(selector);
-
-    if (element) {
-        element.style.display = "";
-    }
-}
+        initialized: false
+    };
 
 
-function hideElement(selector) {
+    /* ----------------------------------------------------------------------
+       DOM HELPERS
+    ---------------------------------------------------------------------- */
 
-    const element = $(selector);
+    const $ = (selector, parent = document) =>
+        parent.querySelector(selector);
 
-    if (element) {
-        element.style.display = "none";
-    }
-}
+    const $$ = (selector, parent = document) =>
+        Array.from(parent.querySelectorAll(selector));
 
 
-/* =========================================================
-   LOADER
-   ========================================================= */
+    function setText(selector, value) {
+        const element = $(selector);
 
-function showLoader(message = "Loading Administration") {
-
-    const loader = $("#pageLoader");
-
-    if (!loader) {
-        return;
+        if (element) {
+            element.textContent =
+                value === null ||
+                value === undefined ||
+                value === ""
+                    ? "0"
+                    : String(value);
+        }
     }
 
-    loader.classList.remove("hidden");
 
-    const title =
-        loader.querySelector(".loader-title") ||
-        loader.querySelector("h1") ||
-        loader.querySelector("h2");
+    function showElement(selector) {
+        const element = $(selector);
 
-    const subtitle =
-        loader.querySelector(".loader-subtitle") ||
-        loader.querySelector("p");
+        if (element) {
+            element.classList.remove("hidden");
 
-    if (title) {
-        title.textContent = message;
+            if (element.dataset.previousDisplay) {
+                element.style.display =
+                    element.dataset.previousDisplay;
+            }
+        }
     }
 
-    if (subtitle) {
-        subtitle.textContent =
-            "Securing your administrator session...";
-    }
-}
 
+    function hideElement(selector) {
+        const element = $(selector);
 
-function hideLoader() {
-
-    const loader = $("#pageLoader");
-
-    if (!loader) {
-        return;
+        if (element) {
+            element.classList.add("hidden");
+        }
     }
 
-    loader.classList.add("hidden");
 
-    setTimeout(() => {
+    /* ----------------------------------------------------------------------
+       LOADER
+    ---------------------------------------------------------------------- */
 
-        if (loader) {
+    function showLoader() {
+        const loader = $("#pageLoader");
 
-            loader.style.display = "none";
+        if (!loader) return;
 
-            loader.setAttribute(
-                "aria-hidden",
-                "true"
-            );
+        loader.classList.remove("hidden");
+
+        /*
+         * The existing admin.html has a CSS rule hiding the loader.
+         * Do not force display if the page intentionally hides it.
+         */
+    }
+
+
+    function hideLoader() {
+        const loader = $("#pageLoader");
+
+        if (!loader) return;
+
+        loader.classList.add("hidden");
+        loader.style.display = "none";
+    }
+
+
+    /* ----------------------------------------------------------------------
+       MESSAGE
+    ---------------------------------------------------------------------- */
+
+    function showAdminMessage(message, type = "info") {
+        let box = $("#adminMessage");
+
+        if (!box) {
+            box = document.createElement("div");
+            box.id = "adminMessage";
+
+            box.style.position = "fixed";
+            box.style.top = "20px";
+            box.style.right = "20px";
+            box.style.zIndex = "99999";
+            box.style.maxWidth = "380px";
+            box.style.padding = "14px 18px";
+            box.style.borderRadius = "12px";
+            box.style.fontSize = "14px";
+            box.style.fontWeight = "600";
+            box.style.boxShadow =
+                "0 10px 30px rgba(0,0,0,.15)";
+
+            document.body.appendChild(box);
         }
 
-    }, 350);
-}
+        const colors = {
+            success: {
+                background: "#e8f8ef",
+                color: "#147a42"
+            },
+            error: {
+                background: "#fdecec",
+                color: "#b42318"
+            },
+            warning: {
+                background: "#fff7e6",
+                color: "#9a6700"
+            },
+            info: {
+                background: "#eef4ff",
+                color: "#2456a6"
+            }
+        };
 
+        const selected =
+            colors[type] || colors.info;
 
-/* =========================================================
-   MESSAGE
-   ========================================================= */
+        box.style.background =
+            selected.background;
 
-function showAdminMessage(
-    message,
-    type = "info"
-) {
+        box.style.color =
+            selected.color;
 
-    let messageBox =
-        $("#adminMessage");
+        box.textContent = message;
 
-    if (!messageBox) {
+        box.style.display = "block";
 
-        messageBox =
-            document.createElement("div");
+        clearTimeout(box._hideTimer);
 
-        messageBox.id =
-            "adminMessage";
-
-        document.body.appendChild(
-            messageBox
-        );
+        box._hideTimer = setTimeout(() => {
+            box.style.display = "none";
+        }, 5000);
     }
 
-    messageBox.className =
-        `admin-message ${type}`;
 
-    messageBox.textContent =
-        message;
+    /* ----------------------------------------------------------------------
+       FETCH
+    ---------------------------------------------------------------------- */
 
-    messageBox.style.display =
-        "block";
+    async function fetchWithTimeout(
+        url,
+        options = {},
+        timeout = REQUEST_TIMEOUT
+    ) {
+        const controller =
+            new AbortController();
 
-    setTimeout(() => {
-
-        if (messageBox) {
-            messageBox.style.display =
-                "none";
-        }
-
-    }, 6000);
-}
-
-
-/* =========================================================
-   REQUEST WITH TIMEOUT
-   ========================================================= */
-
-async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = REQUEST_TIMEOUT
-) {
-
-    const controller =
-        new AbortController();
-
-    const timeoutId =
-        setTimeout(() => {
-            controller.abort();
-        }, timeout);
-
-    try {
-
-        const response =
-            await fetch(
-                url,
-                {
-                    ...options,
-                    credentials: "include",
-                    signal: controller.signal
-                }
+        const timer =
+            setTimeout(
+                () => controller.abort(),
+                timeout
             );
 
-        clearTimeout(timeoutId);
+        try {
+            return await fetch(url, {
+                ...options,
+                credentials: "include",
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 
-        return response;
 
-    } catch (error) {
+    async function readJson(response) {
+        const text =
+            await response.text();
 
-        clearTimeout(timeoutId);
+        if (!text) {
+            return {};
+        }
 
-        if (
-            error.name ===
-            "AbortError"
-        ) {
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            console.error(
+                "Invalid JSON response:",
+                text
+            );
 
             throw new Error(
-                "The server took too long to respond. Please try again."
+                "The server returned an invalid response."
+            );
+        }
+    }
+
+
+    async function apiRequest(
+        url,
+        options = {},
+        config = {}
+    ) {
+        const {
+            redirectOnAuth = true,
+            timeout = REQUEST_TIMEOUT
+        } = config;
+
+        let response;
+
+        try {
+            response =
+                await fetchWithTimeout(
+                    url,
+                    {
+                        ...options,
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                            ...(options.headers || {})
+                        }
+                    },
+                    timeout
+                );
+        } catch (error) {
+            if (error.name === "AbortError") {
+                throw new Error(
+                    "Request timed out. Please try again."
+                );
+            }
+
+            throw new Error(
+                "Unable to connect to the Crown Cash server."
             );
         }
 
-        throw error;
-    }
-}
-
-
-/* =========================================================
-   SAFE JSON
-   ========================================================= */
-
-async function readJson(response) {
-
-    const text =
-        await response.text();
-
-    if (!text) {
-        return {};
-    }
-
-    try {
-
-        return JSON.parse(text);
-
-    } catch (error) {
-
-        console.error(
-            "Invalid JSON response:",
-            text
-        );
-
-        throw new Error(
-            "The server returned an invalid response."
-        );
-    }
-}
-
-
-/* =========================================================
-   GENERIC API REQUEST
-   ========================================================= */
-
-async function apiRequest(
-    url,
-    options = {}
-) {
-
-    const response =
-        await fetchWithTimeout(
-            url,
-            {
-                ...options,
-                headers: {
-                    "Accept":
-                        "application/json",
-                    ...(options.headers || {})
-                }
-            }
-        );
-
-    const data =
-        await readJson(response);
-
-    if (
-        response.status === 401
-    ) {
-
-        window.location.href =
-            "login.html";
-
-        throw new Error(
-            "Administrator session expired."
-        );
-    }
-
-    if (
-        response.status === 403
-    ) {
-
-        throw new Error(
-            data.message ||
-            "Administrator access denied."
-        );
-    }
-
-    if (
-        !response.ok ||
-        data.success === false
-    ) {
-
-        throw new Error(
-            data.message ||
-            `Request failed (${response.status})`
-        );
-    }
-
-    return data;
-}
-
-
-/* =========================================================
-   AUTHENTICATE ADMIN
-   ========================================================= */
-
-async function authenticateAdmin() {
-
-    try {
-
         const data =
-            await apiRequest(
-                ADMIN_AUTH_API,
-                {
-                    method: "GET"
-                }
-            );
+            await readJson(response);
 
-        console.log(
-            "Admin authentication:",
-            data
-        );
+        if (response.status === 401) {
+            AdminDashboard.authenticated = false;
+            AdminDashboard.authorized = false;
+
+            if (redirectOnAuth) {
+                redirectToLogin();
+            }
+
+            throw new Error(
+                data.message ||
+                "Your session has expired."
+            );
+        }
+
+        if (response.status === 403) {
+            AdminDashboard.authorized = false;
+
+            throw new Error(
+                data.message ||
+                "Administrator access denied."
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.message ||
+                `Server error (${response.status}).`
+            );
+        }
 
         if (
-            data.success === true &&
-            data.authenticated === true &&
-            data.authorized === true
+            Object.prototype.hasOwnProperty.call(
+                data,
+                "success"
+            ) &&
+            data.success === false
         ) {
-
-            AdminDashboard.authenticated =
-                true;
-
-            return true;
+            throw new Error(
+                data.message ||
+                "The requested operation failed."
+            );
         }
 
-        window.location.href =
+        return data;
+    }
+
+
+    function redirectToLogin() {
+        /*
+         * Keep the existing login destination if one exists.
+         */
+        const loginPage =
             "login.html";
 
-        return false;
-
-    } catch (error) {
-
-        console.error(
-            "Admin authentication error:",
-            error
-        );
-
-        showAdminMessage(
-            error.message ||
-            "Unable to verify administrator access.",
-            "error"
-        );
-
-        return false;
+        if (
+            !window.location.pathname.endsWith(
+                loginPage
+            )
+        ) {
+            window.location.href =
+                loginPage;
+        }
     }
-}
 
 
-/* =========================================================
-   LOAD ADMIN PROFILE
-   ========================================================= */
+    /* ----------------------------------------------------------------------
+       ADMIN AUTHENTICATION
+    ---------------------------------------------------------------------- */
 
-async function loadAdminProfile() {
+    async function authenticateAdmin() {
+        try {
+            const data =
+                await apiRequest(
+                    ADMIN_AUTH_API,
+                    {
+                        method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
+                    }
+                );
 
-    try {
+            const authenticated =
+                data.authenticated === true;
 
-        const data =
-            await apiRequest(
-                PROFILE_API,
-                {
-                    method: "GET"
-                }
+            const authorized =
+                data.authorized === true;
+
+            AdminDashboard.authenticated =
+                authenticated;
+
+            AdminDashboard.authorized =
+                authorized;
+
+            if (!authenticated || !authorized) {
+                showAdminMessage(
+                    data.message ||
+                    "Administrator access is required.",
+                    "error"
+                );
+
+                setTimeout(
+                    redirectToLogin,
+                    1200
+                );
+
+                return false;
+            }
+
+            return true;
+
+        } catch (error) {
+            AdminDashboard.authenticated = false;
+            AdminDashboard.authorized = false;
+
+            showAdminMessage(
+                error.message ||
+                "Administrator authentication failed.",
+                "error"
             );
 
-        AdminDashboard.profile =
-            data.user || {};
+            setTimeout(
+                redirectToLogin,
+                1200
+            );
 
-        renderAdminProfile(
-            AdminDashboard.profile
-        );
+            return false;
+        }
+    }
 
-        return AdminDashboard.profile;
 
-    } catch (error) {
+    /* ----------------------------------------------------------------------
+       PROFILE
+    ---------------------------------------------------------------------- */
 
-        console.error(
-            "Profile loading error:",
-            error
-        );
+    async function loadAdminProfile() {
+        try {
+            const data =
+                await apiRequest(
+                    PROFILE_API,
+                    {
+                        method: "GET"
+                    }
+                );
+
+            if (data.user) {
+                AdminDashboard.profile =
+                    data.user;
+
+                renderAdminProfile(
+                    data.user
+                );
+            }
+
+            return data;
+
+        } catch (error) {
+            console.warn(
+                "Admin profile could not be loaded:",
+                error.message
+            );
+
+            /*
+             * Dashboard authentication remains valid.
+             * Use admin information returned by admin-dashboard.php.
+             */
+            return null;
+        }
+    }
+
+
+    function renderAdminProfile(user) {
+        const firstName =
+            getValue(
+                user,
+                [
+                    "first_name",
+                    "firstName"
+                ],
+                ""
+            );
+
+        const lastName =
+            getValue(
+                user,
+                [
+                    "last_name",
+                    "lastName"
+                ],
+                ""
+            );
+
+        let fullName =
+            getValue(
+                user,
+                [
+                    "name",
+                    "full_name",
+                    "fullName"
+                ],
+                ""
+            );
+
+        if (!fullName) {
+            fullName =
+                `${firstName} ${lastName}`.trim();
+        }
+
+        if (!fullName) {
+            fullName =
+                "Administrator";
+        }
+
+        const email =
+            getValue(
+                user,
+                ["email"],
+                ""
+            );
+
+        const role =
+            getValue(
+                user,
+                [
+                    "role",
+                    "account_type",
+                    "accountType"
+                ],
+                "Administrator"
+            );
 
         setText(
             "#adminName",
-            "Administrator"
+            fullName
         );
 
         setText(
             "#adminFirstName",
-            "Administrator"
+            firstName || fullName.split(" ")[0]
         );
 
         setText(
             "#headerUserName",
-            "Administrator"
+            fullName
         );
 
         setText(
             "#accountName",
-            "Administrator"
+            fullName
+        );
+
+        setText(
+            "#adminEmail",
+            email
         );
 
         setText(
             "#adminAccountType",
-            "Admin Account"
+            formatAccountType(role)
         );
 
-        return null;
+        const avatar =
+            $("#adminAvatar");
+
+        if (avatar) {
+            const initials =
+                getInitials(fullName);
+
+            avatar.textContent =
+                initials;
+        }
     }
-}
 
 
-/* =========================================================
-   RENDER ADMIN PROFILE
-   ========================================================= */
+    /* ----------------------------------------------------------------------
+       DASHBOARD DATA
+    ---------------------------------------------------------------------- */
 
-function renderAdminProfile(user) {
+    async function loadDashboardData() {
+        try {
+            const data =
+                await apiRequest(
+                    ADMIN_DASHBOARD_API,
+                    {
+                        method: "GET"
+                    }
+                );
 
-    const fullName =
-        user.full_name ||
-        user.fullName ||
-        [
-            user.first_name ||
-            user.firstName,
+            AdminDashboard.data =
+                data;
 
-            user.last_name ||
-            user.lastName
-        ]
-            .filter(Boolean)
-            .join(" ") ||
-        "Administrator";
+            if (data.admin) {
+                renderAdminProfile(
+                    data.admin
+                );
+            }
 
+            renderDashboard(data);
 
-    const firstName =
-        user.first_name ||
-        user.firstName ||
-        fullName.split(" ")[0] ||
-        "Administrator";
+            return data;
 
+        } catch (error) {
+            console.error(
+                "Dashboard error:",
+                error
+            );
 
-    const email =
-        user.email ||
-        "";
+            renderDashboardError(
+                error.message
+            );
 
-
-    const accountType =
-        user.account_type ||
-        user.role ||
-        "admin";
-
-
-    const avatarLetter =
-        firstName
-            .charAt(0)
-            .toUpperCase() ||
-        "A";
+            throw error;
+        }
+    }
 
 
-    setText(
-        "#adminName",
-        fullName
-    );
+    function renderDashboard(data) {
+        const stats =
+            data.stats ||
+            data.summary ||
+            {};
 
-    setText(
-        "#adminFirstName",
-        firstName
-    );
-
-    setText(
-        "#headerUserName",
-        fullName
-    );
-
-    setText(
-        "#accountName",
-        fullName
-    );
-
-    setText(
-        "#adminEmail",
-        email
-    );
-
-    setText(
-        "#adminAccountType",
-        formatAccountType(
-            accountType
-        )
-    );
+        const pending =
+            data.pending_activity ||
+            {};
 
 
-    [
-        "#adminAvatar",
-        "#accountAvatar"
-    ].forEach(selector => {
+        /* ------------------------------------------------------------------
+           USERS
+        ------------------------------------------------------------------ */
 
-        const element =
-            $(selector);
+        setText(
+            "#totalUsers",
+            formatNumber(
+                getNumericValue(
+                    stats.total_users,
+                    stats.users,
+                    0
+                )
+            )
+        );
 
-        if (!element) {
+        setText(
+            "#activeUsers",
+            formatNumber(
+                getNumericValue(
+                    stats.active_users,
+                    0
+                )
+            )
+        );
+
+        setText(
+            "#newAccounts",
+            formatNumber(
+                getNumericValue(
+                    stats.new_accounts,
+                    pending.new_accounts,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           DEPOSITS
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#totalDeposits",
+            formatCurrency(
+                getNumericValue(
+                    stats.total_deposits,
+                    stats.deposits,
+                    0
+                )
+            )
+        );
+
+        setText(
+            "#pendingDeposits",
+            formatCurrency(
+                getNumericValue(
+                    stats.pending_deposits,
+                    pending.deposits,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           WITHDRAWALS
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#totalWithdrawals",
+            formatCurrency(
+                getNumericValue(
+                    stats.total_withdrawals,
+                    stats.withdrawals,
+                    0
+                )
+            )
+        );
+
+        setText(
+            "#pendingWithdrawals",
+            formatCurrency(
+                getNumericValue(
+                    stats.pending_withdrawals,
+                    pending.withdrawals,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           INVESTMENTS
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#totalInvestments",
+            formatCurrency(
+                getNumericValue(
+                    stats.total_investments,
+                    stats.investments,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           REFERRALS
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#totalReferrals",
+            formatNumber(
+                getNumericValue(
+                    stats.total_referrals,
+                    stats.referrals,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           TRANSACTIONS
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#totalTransactions",
+            formatNumber(
+                getNumericValue(
+                    stats.total_transactions,
+                    stats.transactions,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           SUPPORT
+        ------------------------------------------------------------------ */
+
+        setText(
+            "#openTickets",
+            formatNumber(
+                getNumericValue(
+                    stats.open_tickets,
+                    0
+                )
+            )
+        );
+
+
+        /* ------------------------------------------------------------------
+           RECENT TRANSACTIONS
+        ------------------------------------------------------------------ */
+
+        renderRecentTransactions(
+            data.recent_transactions || []
+        );
+
+
+        /* ------------------------------------------------------------------
+           RECENT USERS
+        ------------------------------------------------------------------ */
+
+        renderRecentUsers(
+            data.recent_users || []
+        );
+    }
+
+
+    function renderDashboardError(message) {
+        console.error(
+            "Admin dashboard:",
+            message
+        );
+
+        /*
+         * Do not destroy the existing design.
+         * Keep visible values and show a notification.
+         */
+        showAdminMessage(
+            message ||
+            "Unable to load dashboard data.",
+            "error"
+        );
+    }
+
+
+    /* ----------------------------------------------------------------------
+       RECENT TRANSACTIONS
+    ---------------------------------------------------------------------- */
+
+    function renderRecentTransactions(
+        transactions
+    ) {
+        const container =
+            $("#recentTransactions");
+
+        if (!container) {
             return;
         }
 
         if (
-            element.tagName === "IMG"
+            !Array.isArray(transactions) ||
+            transactions.length === 0
+        ) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>No recent transactions found.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            transactions.map(
+                transaction => {
+
+                    const amount =
+                        getNumericValue(
+                            transaction.amount,
+                            0
+                        );
+
+                    const type =
+                        formatTransactionType(
+                            transaction.type
+                        );
+
+                    const status =
+                        formatStatus(
+                            transaction.status
+                        );
+
+                    const date =
+                        formatDate(
+                            transaction.created_at
+                        );
+
+                    const name =
+                        escapeHtml(
+                            transaction.user_name ||
+                            transaction.name ||
+                            "Crown Cash User"
+                        );
+
+                    const typeClass =
+                        getTypeClass(
+                            transaction.type
+                        );
+
+                    const statusClass =
+                        getStatusClass(
+                            transaction.status
+                        );
+
+                    const icon =
+                        getTransactionIcon(
+                            transaction.type
+                        );
+
+                    return `
+                        <div class="transaction-item">
+                            <div class="transaction-icon ${typeClass}">
+                                ${icon}
+                            </div>
+
+                            <div class="transaction-details">
+                                <strong>${name}</strong>
+                                <span>${escapeHtml(type)}</span>
+                                <small>${escapeHtml(date)}</small>
+                            </div>
+
+                            <div class="transaction-amount">
+                                <strong>
+                                    ${formatCurrency(amount)}
+                                </strong>
+
+                                <span class="${statusClass}">
+                                    ${escapeHtml(status)}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+    }
+
+
+    /* ----------------------------------------------------------------------
+       RECENT USERS
+    ---------------------------------------------------------------------- */
+
+    function renderRecentUsers(users) {
+        const container =
+            $("#recentUsers");
+
+        if (!container) {
+            return;
+        }
+
+        if (
+            !Array.isArray(users) ||
+            users.length === 0
+        ) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>No users found.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            users.map(user => {
+
+                const name =
+                    escapeHtml(
+                        user.name ||
+                        `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                        "Crown Cash User"
+                    );
+
+                const email =
+                    escapeHtml(
+                        user.email ||
+                        ""
+                    );
+
+                const status =
+                    formatStatus(
+                        user.status
+                    );
+
+                const date =
+                    formatDate(
+                        user.created_at
+                    );
+
+                const statusClass =
+                    getStatusClass(
+                        user.status
+                    );
+
+                const initials =
+                    escapeHtml(
+                        getInitials(
+                            user.name ||
+                            `${user.first_name || ""} ${user.last_name || ""}`
+                        )
+                    );
+
+                return `
+                    <div class="user-item">
+
+                        <div class="user-avatar">
+                            ${initials}
+                        </div>
+
+                        <div class="user-details">
+                            <strong>${name}</strong>
+                            <span>${email}</span>
+                            <small>${escapeHtml(date)}</small>
+                        </div>
+
+                        <span class="${statusClass}">
+                            ${escapeHtml(status)}
+                        </span>
+
+                    </div>
+                `;
+            }).join("");
+    }
+
+
+    /* ----------------------------------------------------------------------
+       APPROVAL CENTER
+    ---------------------------------------------------------------------- */
+
+    function createApprovalCenter() {
+        if (
+            $("#approvalCenter")
         ) {
             return;
         }
 
-        element.textContent =
-            avatarLetter;
-    });
-}
+        const pendingSection =
+            $(".pending-section");
 
+        if (!pendingSection) {
+            return;
+        }
 
-/* =========================================================
-   LOAD MAIN DASHBOARD
-   ========================================================= */
+        const section =
+            document.createElement("section");
 
-async function loadDashboardData() {
+        section.id =
+            "approvalCenter";
 
-    try {
+        section.className =
+            "approval-center";
 
-        const data =
-            await apiRequest(
-                ADMIN_DASHBOARD_API,
-                {
-                    method: "GET"
+        section.innerHTML = `
+            <div class="approval-header">
+
+                <div>
+                    <h2>Approval Center</h2>
+                    <p>
+                        Review and process pending
+                        deposits, withdrawals and investments.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    id="refreshApprovals"
+                    class="approval-refresh"
+                >
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+            <div class="approval-tabs">
+
+                <button
+                    type="button"
+                    class="approval-tab active"
+                    data-approval-tab="deposits"
+                >
+                    Deposits
+                    <span id="approvalDepositCount">0</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="approval-tab"
+                    data-approval-tab="withdrawals"
+                >
+                    Withdrawals
+                    <span id="approvalWithdrawalCount">0</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="approval-tab"
+                    data-approval-tab="investments"
+                >
+                    Investments
+                    <span id="approvalInvestmentCount">0</span>
+                </button>
+
+            </div>
+
+            <div
+                id="approvalDeposits"
+                class="approval-panel active"
+            ></div>
+
+            <div
+                id="approvalWithdrawals"
+                class="approval-panel"
+                style="display:none;"
+            ></div>
+
+            <div
+                id="approvalInvestments"
+                class="approval-panel"
+                style="display:none;"
+            ></div>
+        `;
+
+        pendingSection.insertAdjacentElement(
+            "afterend",
+            section
+        );
+
+        addApprovalStyles();
+        setupApprovalTabs();
+
+        const refreshButton =
+            $("#refreshApprovals");
+
+        if (refreshButton) {
+            refreshButton.addEventListener(
+                "click",
+                async () => {
+
+                    refreshButton.disabled =
+                        true;
+
+                    refreshButton.textContent =
+                        "Refreshing...";
+
+                    try {
+                        await loadApprovalData();
+
+                        showAdminMessage(
+                            "Approval data refreshed.",
+                            "success"
+                        );
+
+                    } catch (error) {
+                        showAdminMessage(
+                            error.message,
+                            "error"
+                        );
+
+                    } finally {
+                        refreshButton.disabled =
+                            false;
+
+                        refreshButton.textContent =
+                            "↻ Refresh";
+                    }
                 }
             );
-
-        AdminDashboard.data =
-            data;
-
-        renderDashboard(data);
-
-        return data;
-
-    } catch (error) {
-
-        console.error(
-            "Dashboard data error:",
-            error
-        );
-
-        showAdminMessage(
-            error.message ||
-            "Dashboard data could not be loaded.",
-            "error"
-        );
-
-        renderDashboardError();
-
-        return null;
-    }
-}
-
-
-/* =========================================================
-   RENDER MAIN DASHBOARD
-   ========================================================= */
-
-function renderDashboard(data) {
-
-    const stats =
-        data.stats ||
-        data.summary ||
-        data;
-
-
-    setText(
-        "#totalUsers",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "total_users",
-                    "users",
-                    "totalUsers"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#activeUsers",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "active_users",
-                    "activeUsers"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#totalDeposits",
-        formatCurrency(
-            getValue(
-                stats,
-                [
-                    "total_deposits",
-                    "deposits",
-                    "totalDeposits"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#pendingDeposits",
-        formatCurrency(
-            getValue(
-                stats,
-                [
-                    "pending_deposits",
-                    "pendingDeposits"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#totalWithdrawals",
-        formatCurrency(
-            getValue(
-                stats,
-                [
-                    "total_withdrawals",
-                    "withdrawals",
-                    "totalWithdrawals"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#pendingWithdrawals",
-        formatCurrency(
-            getValue(
-                stats,
-                [
-                    "pending_withdrawals",
-                    "pendingWithdrawals"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#totalInvestments",
-        formatCurrency(
-            getValue(
-                stats,
-                [
-                    "total_investments",
-                    "investments",
-                    "totalInvestments"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#activeInvestments",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "active_investments",
-                    "activeInvestments"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#totalReferrals",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "total_referrals",
-                    "referrals",
-                    "totalReferrals"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#totalTransactions",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "total_transactions",
-                    "transactions",
-                    "totalTransactions"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#openTickets",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "open_tickets",
-                    "open_support",
-                    "openTickets"
-                ],
-                0
-            )
-        )
-    );
-
-
-    setText(
-        "#newAccounts",
-        formatNumber(
-            getValue(
-                stats,
-                [
-                    "new_accounts",
-                    "newAccounts"
-                ],
-                0
-            )
-        )
-    );
-
-
-    renderRecentTransactions(
-        data.recent_transactions ||
-        data.recentTransactions ||
-        []
-    );
-
-
-    renderRecentUsers(
-        data.recent_users ||
-        data.recentUsers ||
-        []
-    );
-}
-
-
-/* =========================================================
-   DASHBOARD ERROR
-   ========================================================= */
-
-function renderDashboardError() {
-
-    const transactionContainer =
-        $("#recentTransactions");
-
-    if (transactionContainer) {
-
-        transactionContainer.innerHTML = `
-            <div class="admin-empty-state">
-                <div class="empty-icon">
-                    <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8">
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9">
-                        </circle>
-                        <line
-                            x1="12"
-                            y1="8"
-                            x2="12"
-                            y2="12">
-                        </line>
-                        <line
-                            x1="12"
-                            y1="16"
-                            x2="12.01"
-                            y2="16">
-                        </line>
-                    </svg>
-                </div>
-
-                <strong>
-                    Unable to load activity
-                </strong>
-
-                <span>
-                    Check your connection and refresh the page.
-                </span>
-            </div>
-        `;
-    }
-}
-
-
-/* =========================================================
-   RECENT TRANSACTIONS
-   ========================================================= */
-
-function renderRecentTransactions(
-    transactions
-) {
-
-    const container =
-        $("#recentTransactions");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        !Array.isArray(transactions) ||
-        transactions.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="admin-empty-state">
-                <div class="empty-icon">
-                    <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8">
-                        <path d="M3 12h18"></path>
-                        <path d="M12 3v18"></path>
-                    </svg>
-                </div>
-
-                <strong>
-                    No transactions yet
-                </strong>
-
-                <span>
-                    Recent platform activity will appear here.
-                </span>
-            </div>
-        `;
-
-        return;
+        }
     }
 
 
-    container.innerHTML =
-        transactions
-            .slice(0, 8)
-            .map(transaction => {
-
-                const type =
-                    transaction.type ||
-                    transaction.transaction_type ||
-                    "transaction";
-
-                const status =
-                    transaction.status ||
-                    "pending";
-
-                const amount =
-                    getNumericValue(
-                        transaction.amount
-                    );
-
-                const name =
-                    transaction.full_name ||
-                    transaction.user_name ||
-                    transaction.name ||
-                    transaction.email ||
-                    "Crown Cash User";
-
-
-                return `
-                    <div class="transaction-row">
-
-                        <div class="transaction-icon ${getTypeClass(type)}">
-
-                            ${getTransactionIcon(type)}
-
-                        </div>
-
-                        <div class="transaction-info">
-
-                            <strong>
-                                ${escapeHtml(
-                                    formatTransactionType(type)
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(name)}
-                            </span>
-
-                        </div>
-
-                        <div class="transaction-value">
-
-                            <strong>
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span
-                                class="status-badge ${getStatusClass(status)}">
-
-                                ${escapeHtml(
-                                    formatStatus(status)
-                                )}
-
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-            })
-            .join("");
-}
-
-
-/* =========================================================
-   RECENT USERS
-   ========================================================= */
-
-function renderRecentUsers(
-    users
-) {
-
-    const container =
-        $("#recentUsers");
-
-    if (!container) {
-        return;
-    }
-
-    if (
-        !Array.isArray(users) ||
-        users.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="admin-empty-state">
-
-                <div class="empty-icon">
-
-                    <svg
-                        width="28"
-                        height="28"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8">
-
-                        <circle
-                            cx="12"
-                            cy="8"
-                            r="3">
-                        </circle>
-
-                        <path
-                            d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6">
-                        </path>
-
-                    </svg>
-
-                </div>
-
-                <strong>
-                    No users yet
-                </strong>
-
-                <span>
-                    Newly registered users will appear here.
-                </span>
-
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        users
-            .slice(0, 8)
-            .map(user => {
-
-                const name =
-                    user.full_name ||
-                    user.fullName ||
-                    [
-                        user.first_name ||
-                        user.firstName,
-
-                        user.last_name ||
-                        user.lastName
-                    ]
-                        .filter(Boolean)
-                        .join(" ") ||
-                    "User";
-
-
-                const email =
-                    user.email ||
-                    "No email";
-
-
-                const status =
-                    user.status ||
-                    "active";
-
-
-                const firstLetter =
-                    name
-                        .charAt(0)
-                        .toUpperCase();
-
-
-                return `
-                    <div class="user-row">
-
-                        <div class="user-avatar">
-                            ${escapeHtml(firstLetter)}
-                        </div>
-
-                        <div class="user-info">
-
-                            <strong>
-                                ${escapeHtml(name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(email)}
-                            </span>
-
-                        </div>
-
-                        <div class="user-status">
-
-                            <span
-                                class="status-badge ${getStatusClass(status)}">
-
-                                ${escapeHtml(
-                                    formatStatus(status)
-                                )}
-
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-            })
-            .join("");
-}
-
-
-/* =========================================================
-   APPROVAL CENTER
-   ========================================================= */
-
-function createApprovalCenter() {
-
-    let existing =
-        $("#adminApprovalCenter");
-
-    if (existing) {
-        return existing;
-    }
-
-
-    const pendingSection =
-        document.querySelector(
-            ".pending-section"
-        );
-
-    if (!pendingSection) {
-        return null;
-    }
-
-
-    const section =
-        document.createElement(
-            "section"
-        );
-
-    section.id =
-        "adminApprovalCenter";
-
-    section.className =
-        "admin-approval-center";
-
-
-    section.innerHTML = `
-
-        <style>
-
-            .admin-approval-center {
-                width: 100%;
-                max-width: 1200px;
-                margin: 34px auto 0;
+    function addApprovalStyles() {
+        if (
+            $("#approvalCenterStyles")
+        ) {
+            return;
+        }
+
+        const style =
+            document.createElement("style");
+
+        style.id =
+            "approvalCenterStyles";
+
+        style.textContent = `
+            #approvalCenter {
+                margin-top: 24px;
+                background: #fff;
+                border-radius: 18px;
+                padding: 20px;
+                box-shadow: 0 8px 30px rgba(0,0,0,.06);
             }
 
-            .approval-heading {
+            .approval-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
                 margin-bottom: 18px;
             }
 
-            .approval-heading .section-label {
-                display: block;
-                margin-bottom: 10px;
-                color: #ed4ac1;
-                font-size: 12px;
-                font-weight: 900;
-                letter-spacing: 2px;
-                text-transform: uppercase;
+            .approval-header h2 {
+                margin: 0 0 5px;
             }
 
-            .approval-heading h2 {
-                color: #ffffff;
-                font-size: 29px;
-                font-weight: 820;
-                letter-spacing: -0.7px;
+            .approval-header p {
+                margin: 0;
+                opacity: .7;
+                font-size: 14px;
+            }
+
+            .approval-refresh {
+                border: 0;
+                border-radius: 10px;
+                padding: 10px 15px;
+                cursor: pointer;
+                font-weight: 700;
+            }
+
+            .approval-refresh:disabled {
+                opacity: .6;
+                cursor: wait;
             }
 
             .approval-tabs {
                 display: flex;
-                gap: 9px;
+                gap: 8px;
                 flex-wrap: wrap;
-                margin-bottom: 15px;
+                margin-bottom: 16px;
             }
 
             .approval-tab {
-                min-height: 40px;
-                padding: 0 16px;
-                border-radius: 11px;
-                border: 1px solid rgba(255,255,255,0.08);
-                background: rgba(255,255,255,0.035);
-                color: rgba(255,255,255,0.65);
+                border: 0;
+                padding: 10px 14px;
+                border-radius: 10px;
                 cursor: pointer;
-                font-size: 12px;
-                font-weight: 750;
+                font-weight: 700;
+                background: #f3f5f8;
             }
 
             .approval-tab.active {
-                color: #170812;
-                background:
-                    linear-gradient(
-                        110deg,
-                        #ffd04c,
-                        #ff43b4
-                    );
-                border-color: transparent;
+                background: #111827;
+                color: #fff;
+            }
+
+            .approval-tab span {
+                display: inline-flex;
+                min-width: 22px;
+                height: 22px;
+                align-items: center;
+                justify-content: center;
+                margin-left: 5px;
+                border-radius: 50%;
+                background: rgba(255,255,255,.2);
+                font-size: 11px;
             }
 
             .approval-panel {
-                display: none;
-            }
-
-            .approval-panel.active {
                 display: block;
-            }
-
-            .approval-list {
-                display: flex;
-                flex-direction: column;
-                gap: 11px;
             }
 
             .approval-item {
-                padding: 18px;
-                border-radius: 18px;
-                background:
-                    linear-gradient(
-                        145deg,
-                        rgba(42,20,44,0.88),
-                        rgba(21,11,25,0.92)
-                    );
-                border:
-                    1px solid rgba(255,255,255,0.07);
-            }
-
-            .approval-item-top {
+                border: 1px solid #edf0f4;
+                border-radius: 14px;
+                padding: 16px;
+                margin-bottom: 12px;
                 display: flex;
-                align-items: flex-start;
+                align-items: center;
                 justify-content: space-between;
-                gap: 15px;
+                gap: 18px;
             }
 
-            .approval-user {
+            .approval-info {
                 min-width: 0;
+                flex: 1;
             }
 
-            .approval-user strong {
+            .approval-info strong {
                 display: block;
-                color: #ffffff;
-                font-size: 14px;
-                font-weight: 800;
+                margin-bottom: 4px;
             }
 
-            .approval-user span {
+            .approval-info span {
                 display: block;
-                margin-top: 4px;
-                color: rgba(255,255,255,0.45);
-                font-size: 11px;
+                font-size: 13px;
+                opacity: .7;
+                margin-bottom: 3px;
+                overflow-wrap: anywhere;
             }
 
             .approval-amount {
-                text-align: right;
+                font-size: 17px;
+                font-weight: 800;
                 white-space: nowrap;
-            }
-
-            .approval-amount strong {
-                display: block;
-                color: #ffd343;
-                font-size: 16px;
-                font-weight: 850;
-            }
-
-            .approval-details {
-                display: grid;
-                grid-template-columns:
-                    repeat(4, minmax(0, 1fr));
-                gap: 9px;
-                margin-top: 15px;
-            }
-
-            .approval-detail {
-                padding: 10px;
-                border-radius: 11px;
-                background: rgba(255,255,255,0.025);
-                border:
-                    1px solid rgba(255,255,255,0.05);
-            }
-
-            .approval-detail span {
-                display: block;
-                color: rgba(255,255,255,0.36);
-                font-size: 9px;
-                text-transform: uppercase;
-                letter-spacing: 0.7px;
-            }
-
-            .approval-detail strong {
-                display: block;
-                margin-top: 4px;
-                color: rgba(255,255,255,0.86);
-                font-size: 11px;
-                word-break: break-word;
             }
 
             .approval-actions {
                 display: flex;
-                justify-content: flex-end;
-                gap: 9px;
-                margin-top: 15px;
+                gap: 8px;
+                flex-wrap: wrap;
             }
 
-            .approval-btn {
-                min-height: 40px;
-                padding: 0 17px;
-                border-radius: 11px;
-                border: 1px solid transparent;
+            .approval-actions button {
+                border: 0;
+                border-radius: 9px;
+                padding: 9px 13px;
                 cursor: pointer;
-                font-size: 11px;
-                font-weight: 800;
+                font-weight: 700;
             }
 
-            .approval-btn:disabled {
-                opacity: 0.55;
-                cursor: not-allowed;
+            .approval-actions .approve-btn {
+                background: #e8f8ef;
+                color: #147a42;
             }
 
-            .approval-btn.approve {
-                color: #091007;
-                background:
-                    linear-gradient(
-                        110deg,
-                        #b9f57c,
-                        #58d66b
-                    );
+            .approval-actions .reject-btn {
+                background: #fdecec;
+                color: #b42318;
             }
 
-            .approval-btn.reject {
-                color: #ffffff;
-                background: rgba(255,60,100,0.08);
-                border-color: rgba(255,60,100,0.25);
+            .approval-actions button:disabled {
+                opacity: .5;
+                cursor: wait;
             }
 
             .approval-empty {
-                padding: 35px 20px;
+                padding: 30px 15px;
                 text-align: center;
-                border-radius: 18px;
-                background: rgba(255,255,255,0.025);
-                border:
-                    1px solid rgba(255,255,255,0.06);
-                color: rgba(255,255,255,0.40);
-            }
-
-            .approval-empty strong {
-                display: block;
-                color: rgba(255,255,255,0.75);
-                font-size: 13px;
-            }
-
-            .approval-empty span {
-                display: block;
-                margin-top: 5px;
-                font-size: 11px;
+                opacity: .65;
             }
 
             @media (max-width: 700px) {
-
-                .approval-details {
-                    grid-template-columns:
-                        repeat(2, minmax(0, 1fr));
-                }
-
-                .approval-item-top {
+                .approval-header,
+                .approval-item {
+                    align-items: stretch;
                     flex-direction: column;
                 }
 
                 .approval-amount {
-                    text-align: left;
+                    white-space: normal;
                 }
 
                 .approval-actions {
-                    justify-content: stretch;
+                    width: 100%;
                 }
 
-                .approval-btn {
+                .approval-actions button {
                     flex: 1;
                 }
             }
+        `;
 
-            @media (max-width: 430px) {
-
-                .approval-details {
-                    grid-template-columns: 1fr;
-                }
-
-                .approval-actions {
-                    flex-direction: column;
-                }
-            }
-
-        </style>
+        document.head.appendChild(style);
+    }
 
 
-        <div class="approval-heading">
+    function setupApprovalTabs() {
+        $$(".approval-tab").forEach(tab => {
 
-            <span class="section-label">
-                Administrator Controls
-            </span>
-
-            <h2>
-                Approvals &amp; Rejections
-            </h2>
-
-        </div>
-
-
-        <div class="approval-tabs">
-
-            <button
-                type="button"
-                class="approval-tab active"
-                data-approval-tab="deposits">
-
-                Deposits
-                <span id="approvalDepositCount">
-                    (0)
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="approval-tab"
-                data-approval-tab="withdrawals">
-
-                Withdrawals
-                <span id="approvalWithdrawalCount">
-                    (0)
-                </span>
-
-            </button>
-
-
-            <button
-                type="button"
-                class="approval-tab"
-                data-approval-tab="investments">
-
-                Investments
-                <span id="approvalInvestmentCount">
-                    (0)
-                </span>
-
-            </button>
-
-        </div>
-
-
-        <div
-            class="approval-panel active"
-            id="approvalDeposits">
-
-            <div
-                class="approval-list"
-                id="depositApprovalList">
-            </div>
-
-        </div>
-
-
-        <div
-            class="approval-panel"
-            id="approvalWithdrawals">
-
-            <div
-                class="approval-list"
-                id="withdrawalApprovalList">
-            </div>
-
-        </div>
-
-
-        <div
-            class="approval-panel"
-            id="approvalInvestments">
-
-            <div
-                class="approval-list"
-                id="investmentApprovalList">
-            </div>
-
-        </div>
-
-    `;
-
-
-    pendingSection.insertAdjacentElement(
-        "afterend",
-        section
-    );
-
-
-    setupApprovalTabs();
-
-    return section;
-}
-
-
-/* =========================================================
-   APPROVAL TABS
-   ========================================================= */
-
-function setupApprovalTabs() {
-
-    document
-        .querySelectorAll(
-            "[data-approval-tab]"
-        )
-        .forEach(button => {
-
-            button.addEventListener(
+            tab.addEventListener(
                 "click",
                 () => {
 
-                    const target =
-                        button.dataset.approvalTab;
-
-
-                    document
-                        .querySelectorAll(
-                            "[data-approval-tab]"
-                        )
-                        .forEach(tab => {
-
-                            tab.classList.toggle(
-                                "active",
-                                tab === button
+                    $$(".approval-tab")
+                        .forEach(button => {
+                            button.classList.remove(
+                                "active"
                             );
                         });
 
-
-                    document
-                        .querySelectorAll(
-                            ".approval-panel"
-                        )
+                    $$(".approval-panel")
                         .forEach(panel => {
+                            panel.style.display =
+                                "none";
 
                             panel.classList.remove(
                                 "active"
                             );
                         });
 
+                    tab.classList.add(
+                        "active"
+                    );
+
+                    const target =
+                        tab.dataset.approvalTab;
 
                     const panel =
-                        document.querySelector(
-                            `#approval${capitalize(target)}`
-                        );
+                        $(`#approval${capitalize(target)}`);
 
                     if (panel) {
+                        panel.style.display =
+                            "block";
+
                         panel.classList.add(
                             "active"
                         );
                     }
-
                 }
             );
-
         });
-}
+    }
 
 
-/* =========================================================
-   LOAD ALL APPROVAL DATA
-   ========================================================= */
+    /* ----------------------------------------------------------------------
+       APPROVAL DATA
+    ---------------------------------------------------------------------- */
 
-async function loadApprovalData() {
+    async function loadApprovalData() {
+        createApprovalCenter();
 
-    createApprovalCenter();
+        const results =
+            await Promise.allSettled([
+                apiRequest(
+                    ADMIN_DEPOSITS_API,
+                    {
+                        method: "GET"
+                    }
+                ),
 
-    try {
+                apiRequest(
+                    ADMIN_WITHDRAWALS_API,
+                    {
+                        method: "GET"
+                    }
+                ),
+
+                apiRequest(
+                    ADMIN_INVESTMENTS_API,
+                    {
+                        method: "GET"
+                    }
+                )
+            ]);
 
         const [
-            depositData,
-            withdrawalData,
-            investmentData
-        ] = await Promise.all([
-
-            apiRequest(
-                ADMIN_DEPOSITS_API,
-                {
-                    method: "GET"
-                }
-            ),
-
-            apiRequest(
-                ADMIN_WITHDRAWALS_API,
-                {
-                    method: "GET"
-                }
-            ),
-
-            apiRequest(
-                ADMIN_INVESTMENTS_API,
-                {
-                    method: "GET"
-                }
-            )
-
-        ]);
+            depositResult,
+            withdrawalResult,
+            investmentResult
+        ] = results;
 
 
-        AdminDashboard.deposits =
-            Array.isArray(
-                depositData.deposits
-            )
-                ? depositData.deposits
-                : [];
+        /*
+         * Deposits
+         */
+        if (
+            depositResult.status ===
+            "fulfilled"
+        ) {
+            AdminDashboard.deposits =
+                extractArray(
+                    depositResult.value,
+                    [
+                        "deposits",
+                        "data",
+                        "items",
+                        "pending"
+                    ]
+                );
+        } else {
+            AdminDashboard.deposits = [];
+
+            console.warn(
+                "Deposit approval data:",
+                depositResult.reason
+            );
+        }
 
 
-        AdminDashboard.withdrawals =
-            Array.isArray(
-                withdrawalData.withdrawals
-            )
-                ? withdrawalData.withdrawals
-                : [];
+        /*
+         * Withdrawals
+         */
+        if (
+            withdrawalResult.status ===
+            "fulfilled"
+        ) {
+            AdminDashboard.withdrawals =
+                extractArray(
+                    withdrawalResult.value,
+                    [
+                        "withdrawals",
+                        "data",
+                        "items",
+                        "pending"
+                    ]
+                );
+        } else {
+            AdminDashboard.withdrawals = [];
+
+            console.warn(
+                "Withdrawal approval data:",
+                withdrawalResult.reason
+            );
+        }
 
 
-        AdminDashboard.investments =
-            Array.isArray(
-                investmentData.investments
-            )
-                ? investmentData.investments
-                : [];
+        /*
+         * Investments
+         */
+        if (
+            investmentResult.status ===
+            "fulfilled"
+        ) {
+            AdminDashboard.investments =
+                extractArray(
+                    investmentResult.value,
+                    [
+                        "investments",
+                        "data",
+                        "items",
+                        "pending"
+                    ]
+                );
+        } else {
+            AdminDashboard.investments = [];
+
+            console.warn(
+                "Investment approval data:",
+                investmentResult.reason
+            );
+        }
 
 
         renderApprovalCenter();
-
         updatePendingBadges();
 
-        return true;
+        return {
+            deposits:
+                AdminDashboard.deposits,
 
-    } catch (error) {
+            withdrawals:
+                AdminDashboard.withdrawals,
 
-        console.error(
-            "Approval data error:",
-            error
-        );
-
-        showAdminMessage(
-            error.message ||
-            "Unable to load approval requests.",
-            "error"
-        );
-
-        renderApprovalError();
-
-        return false;
-    }
-}
-
-
-/* =========================================================
-   RENDER APPROVAL CENTER
-   ========================================================= */
-
-function renderApprovalCenter() {
-
-    renderDepositApprovals();
-
-    renderWithdrawalApprovals();
-
-    renderInvestmentApprovals();
-
-    updatePendingBadges();
-}
-
-
-/* =========================================================
-   DEPOSITS
-   ========================================================= */
-
-function renderDepositApprovals() {
-
-    const container =
-        $("#depositApprovalList");
-
-    if (!container) {
-        return;
+            investments:
+                AdminDashboard.investments
+        };
     }
 
 
-    const pending =
-        AdminDashboard.deposits.filter(
-            item =>
-                String(
-                    item.status ||
-                    "pending"
-                ).toLowerCase()
-                === "pending"
-        );
+    function extractArray(
+        data,
+        keys
+    ) {
+        if (Array.isArray(data)) {
+            return data;
+        }
 
+        for (const key of keys) {
+            if (Array.isArray(data?.[key])) {
+                return data[key];
+            }
+        }
 
-    setText(
-        "#approvalDepositCount",
-        `(${pending.length})`
-    );
-
-
-    if (pending.length === 0) {
-
-        container.innerHTML =
-            approvalEmpty(
-                "No pending deposits",
-                "All deposit requests have been processed."
-            );
-
-        return;
+        return [];
     }
 
 
-    container.innerHTML =
-        pending.map(deposit => {
+    /* ----------------------------------------------------------------------
+       APPROVAL CENTER RENDER
+    ---------------------------------------------------------------------- */
 
-            const id =
-                deposit.id ||
-                deposit._id ||
-                "";
+    function renderApprovalCenter() {
+        renderDepositApprovals(
+            AdminDashboard.deposits
+        );
 
+        renderWithdrawalApprovals(
+            AdminDashboard.withdrawals
+        );
 
-            const name =
-                deposit.user_name ||
-                deposit.customer_name ||
-                deposit.email ||
-                "Crown Cash User";
+        renderInvestmentApprovals(
+            AdminDashboard.investments
+        );
 
+        setText(
+            "#approvalDepositCount",
+            AdminDashboard.deposits.length
+        );
 
-            const email =
-                deposit.email ||
-                "No email";
+        setText(
+            "#approvalWithdrawalCount",
+            AdminDashboard.withdrawals.length
+        );
 
-
-            const amount =
-                getNumericValue(
-                    deposit.amount
-                );
-
-
-            const method =
-                deposit.payment_method ||
-                deposit.paymentMethod ||
-                "Mobile Money";
-
-
-            const reference =
-                deposit.transaction_reference ||
-                deposit.transactionReference ||
-                "—";
+        setText(
+            "#approvalInvestmentCount",
+            AdminDashboard.investments.length
+        );
+    }
 
 
-            return `
-                <div class="approval-item">
+    function renderDepositApprovals(items) {
+        const container =
+            $("#approvalDeposits");
 
-                    <div class="approval-item-top">
+        if (!container) return;
 
-                        <div class="approval-user">
-
-                            <strong>
-                                ${escapeHtml(name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(email)}
-                            </span>
-
-                        </div>
-
-
-                        <div class="approval-amount">
-
-                            <strong>
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span class="status-badge warning">
-                                Pending
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="approval-details">
-
-                        ${approvalDetail(
-                            "Payment Method",
-                            method
-                        )}
-
-                        ${approvalDetail(
-                            "Reference",
-                            reference
-                        )}
-
-                        ${approvalDetail(
-                            "Merchant",
-                            deposit.merchant_code || "—"
-                        )}
-
-                        ${approvalDetail(
-                            "Date",
-                            formatDate(deposit.created_at)
-                        )}
-
-                    </div>
-
-
-                    <div class="approval-actions">
-
-                        <button
-                            type="button"
-                            class="approval-btn reject"
-                            data-approval-type="deposit"
-                            data-approval-action="reject"
-                            data-id="${escapeHtml(id)}">
-
-                            Reject
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="approval-btn approve"
-                            data-approval-type="deposit"
-                            data-approval-action="approve"
-                            data-id="${escapeHtml(id)}">
-
-                            Approve Deposit
-
-                        </button>
-
-                    </div>
-
+        if (
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
+            container.innerHTML = `
+                <div class="approval-empty">
+                    No pending deposits.
                 </div>
             `;
 
-        }).join("");
-}
-
-
-/* =========================================================
-   WITHDRAWALS
-   ========================================================= */
-
-function renderWithdrawalApprovals() {
-
-    const container =
-        $("#withdrawalApprovalList");
-
-    if (!container) {
-        return;
-    }
-
-
-    const pending =
-        AdminDashboard.withdrawals.filter(
-            item =>
-                String(
-                    item.status ||
-                    "pending"
-                ).toLowerCase()
-                === "pending"
-        );
-
-
-    setText(
-        "#approvalWithdrawalCount",
-        `(${pending.length})`
-    );
-
-
-    if (pending.length === 0) {
-
-        container.innerHTML =
-            approvalEmpty(
-                "No pending withdrawals",
-                "All withdrawal requests have been processed."
-            );
-
-        return;
-    }
-
-
-    container.innerHTML =
-        pending.map(withdrawal => {
-
-            const id =
-                withdrawal.id ||
-                withdrawal._id ||
-                "";
-
-
-            const name =
-                withdrawal.user_name ||
-                withdrawal.email ||
-                "Crown Cash User";
-
-
-            const email =
-                withdrawal.email ||
-                "No email";
-
-
-            const amount =
-                getNumericValue(
-                    withdrawal.amount
-                );
-
-
-            const fee =
-                getNumericValue(
-                    withdrawal.fee
-                );
-
-
-            const net =
-                getNumericValue(
-                    withdrawal.net_amount
-                );
-
-
-            const phone =
-                withdrawal.phone ||
-                withdrawal.account ||
-                "—";
-
-
-            const reference =
-                withdrawal.reference ||
-                withdrawal.transaction_reference ||
-                "—";
-
-
-            return `
-                <div class="approval-item">
-
-                    <div class="approval-item-top">
-
-                        <div class="approval-user">
-
-                            <strong>
-                                ${escapeHtml(name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(email)}
-                            </span>
-
-                        </div>
-
-
-                        <div class="approval-amount">
-
-                            <strong>
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span class="status-badge warning">
-                                Pending
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="approval-details">
-
-                        ${approvalDetail(
-                            "Phone",
-                            phone
-                        )}
-
-                        ${approvalDetail(
-                            "Fee",
-                            formatCurrency(fee)
-                        )}
-
-                        ${approvalDetail(
-                            "Net Payout",
-                            formatCurrency(net)
-                        )}
-
-                        ${approvalDetail(
-                            "Reference",
-                            reference
-                        )}
-
-                    </div>
-
-
-                    <div class="approval-actions">
-
-                        <button
-                            type="button"
-                            class="approval-btn reject"
-                            data-approval-type="withdrawal"
-                            data-approval-action="reject"
-                            data-id="${escapeHtml(id)}">
-
-                            Reject
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="approval-btn approve"
-                            data-approval-type="withdrawal"
-                            data-approval-action="approve"
-                            data-id="${escapeHtml(id)}">
-
-                            Approve Withdrawal
-
-                        </button>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
-}
-
-
-/* =========================================================
-   INVESTMENTS
-   ========================================================= */
-
-function renderInvestmentApprovals() {
-
-    const container =
-        $("#investmentApprovalList");
-
-    if (!container) {
-        return;
-    }
-
-
-    const pending =
-        AdminDashboard.investments.filter(
-            item =>
-                String(
-                    item.status ||
-                    "pending"
-                ).toLowerCase()
-                === "pending"
-        );
-
-
-    setText(
-        "#approvalInvestmentCount",
-        `(${pending.length})`
-    );
-
-
-    if (pending.length === 0) {
-
-        container.innerHTML =
-            approvalEmpty(
-                "No pending investments",
-                "All investment requests have been processed."
-            );
-
-        return;
-    }
-
-
-    container.innerHTML =
-        pending.map(investment => {
-
-            const id =
-                investment.id ||
-                investment._id ||
-                "";
-
-
-            const name =
-                investment.user_name ||
-                investment.email ||
-                "Crown Cash User";
-
-
-            const email =
-                investment.email ||
-                "No email";
-
-
-            const amount =
-                getNumericValue(
-                    investment.amount
-                );
-
-
-            const plan =
-                investment.plan ||
-                "Investment";
-
-
-            const duration =
-                investment.duration_days ||
-                30;
-
-
-            const reference =
-                investment.reference ||
-                "—";
-
-
-            return `
-                <div class="approval-item">
-
-                    <div class="approval-item-top">
-
-                        <div class="approval-user">
-
-                            <strong>
-                                ${escapeHtml(name)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(email)}
-                            </span>
-
-                        </div>
-
-
-                        <div class="approval-amount">
-
-                            <strong>
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span class="status-badge warning">
-                                Pending
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="approval-details">
-
-                        ${approvalDetail(
-                            "Plan",
-                            plan
-                        )}
-
-                        ${approvalDetail(
-                            "Duration",
-                            `${duration} days`
-                        )}
-
-                        ${approvalDetail(
-                            "Reference",
-                            reference
-                        )}
-
-                        ${approvalDetail(
-                            "Date",
-                            formatDate(investment.created_at)
-                        )}
-
-                    </div>
-
-
-                    <div class="approval-actions">
-
-                        <button
-                            type="button"
-                            class="approval-btn reject"
-                            data-approval-type="investment"
-                            data-approval-action="reject"
-                            data-id="${escapeHtml(id)}">
-
-                            Reject
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="approval-btn approve"
-                            data-approval-type="investment"
-                            data-approval-action="approve"
-                            data-id="${escapeHtml(id)}">
-
-                            Approve Investment
-
-                        </button>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
-}
-
-
-/* =========================================================
-   APPROVAL EMPTY STATE
-   ========================================================= */
-
-function approvalEmpty(
-    title,
-    description
-) {
-
-    return `
-        <div class="approval-empty">
-
-            <strong>
-                ${escapeHtml(title)}
-            </strong>
-
-            <span>
-                ${escapeHtml(description)}
-            </span>
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   APPROVAL DETAIL
-   ========================================================= */
-
-function approvalDetail(
-    label,
-    value
-) {
-
-    return `
-        <div class="approval-detail">
-
-            <span>
-                ${escapeHtml(label)}
-            </span>
-
-            <strong>
-                ${escapeHtml(value)}
-            </strong>
-
-        </div>
-    `;
-}
-
-
-/* =========================================================
-   APPROVAL ERROR
-   ========================================================= */
-
-function renderApprovalError() {
-
-    [
-        "#depositApprovalList",
-        "#withdrawalApprovalList",
-        "#investmentApprovalList"
-    ].forEach(selector => {
-
-        const element =
-            $(selector);
-
-        if (!element) {
             return;
         }
 
-        element.innerHTML =
-            approvalEmpty(
-                "Unable to load requests",
-                "Please refresh the administration dashboard."
-            );
-    });
-}
+        container.innerHTML =
+            items.map(
+                item => {
+
+                    const id =
+                        getItemId(item);
+
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            0
+                        );
+
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "name",
+                                    "full_name"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
+
+                    const phone =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "phone",
+                                    "phone_number",
+                                    "mobile"
+                                ],
+                                ""
+                            )
+                        );
+
+                    const reference =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "reference",
+                                    "transaction_reference",
+                                    "payment_reference"
+                                ],
+                                ""
+                            )
+                        );
+
+                    return `
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
+
+                            <div class="approval-info">
+                                <strong>
+                                    ${name}
+                                </strong>
+
+                                <span>
+                                    ${phone}
+                                </span>
+
+                                <span>
+                                    ${reference
+                                        ? `Reference: ${reference}`
+                                        : "Deposit awaiting approval"}
+                                </span>
+                            </div>
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="deposit"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="deposit"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+        attachApprovalListeners(
+            container
+        );
+    }
 
 
-/* =========================================================
-   APPROVAL CLICK HANDLER
-   ========================================================= */
+    function renderWithdrawalApprovals(items) {
+        const container =
+            $("#approvalWithdrawals");
 
-document.addEventListener(
-    "click",
-    async event => {
+        if (!container) return;
 
-        const button =
-            event.target.closest(
+        if (
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
+            container.innerHTML = `
+                <div class="approval-empty">
+                    No pending withdrawals.
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            items.map(
+                item => {
+
+                    const id =
+                        getItemId(item);
+
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            0
+                        );
+
+                    const netAmount =
+                        getNumericValue(
+                            item.net_amount,
+                            item.netAmount,
+                            amount
+                        );
+
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "name",
+                                    "full_name"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
+
+                    const phone =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "phone",
+                                    "phone_number",
+                                    "mobile"
+                                ],
+                                ""
+                            )
+                        );
+
+                    return `
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
+
+                            <div class="approval-info">
+                                <strong>
+                                    ${name}
+                                </strong>
+
+                                <span>
+                                    ${phone}
+                                </span>
+
+                                <span>
+                                    Requested:
+                                    ${formatCurrency(amount)}
+                                </span>
+
+                                <span>
+                                    Net payout:
+                                    ${formatCurrency(netAmount)}
+                                </span>
+                            </div>
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="withdrawal"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="withdrawal"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+        attachApprovalListeners(
+            container
+        );
+    }
+
+
+    function renderInvestmentApprovals(items) {
+        const container =
+            $("#approvalInvestments");
+
+        if (!container) return;
+
+        if (
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
+            container.innerHTML = `
+                <div class="approval-empty">
+                    No pending investments.
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            items.map(
+                item => {
+
+                    const id =
+                        getItemId(item);
+
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            item.principal,
+                            0
+                        );
+
+                    const plan =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "plan",
+                                    "plan_name",
+                                    "package"
+                                ],
+                                "Investment"
+                            )
+                        );
+
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "name",
+                                    "full_name"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
+
+                    const duration =
+                        getNumericValue(
+                            item.duration,
+                            item.duration_days,
+                            0
+                        );
+
+                    return `
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
+
+                            <div class="approval-info">
+                                <strong>
+                                    ${name}
+                                </strong>
+
+                                <span>
+                                    Plan: ${plan}
+                                </span>
+
+                                <span>
+                                    ${
+                                        duration > 0
+                                            ? `${duration} days`
+                                            : "Investment awaiting approval"
+                                    }
+                                </span>
+                            </div>
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="investment"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="investment"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+        attachApprovalListeners(
+            container
+        );
+    }
+
+
+    function attachApprovalListeners(
+        container
+    ) {
+        container
+            .querySelectorAll(
                 "[data-approval-action]"
-            );
+            )
+            .forEach(button => {
 
-        if (!button) {
-            return;
-        }
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        const action =
+                            button.dataset.approvalAction;
+
+                        const type =
+                            button.dataset.approvalType;
+
+                        const id =
+                            button.dataset.approvalId;
+
+                        if (
+                            !id ||
+                            !type ||
+                            !action
+                        ) {
+                            return;
+                        }
+
+                        let reason = "";
+
+                        if (action === "reject") {
+
+                            reason =
+                                window.prompt(
+                                    "Enter the reason for rejecting this request:"
+                                );
+
+                            if (
+                                reason === null
+                            ) {
+                                return;
+                            }
+
+                            reason =
+                                reason.trim();
+
+                            if (!reason) {
+                                showAdminMessage(
+                                    "A rejection reason is required.",
+                                    "warning"
+                                );
+
+                                return;
+                            }
+                        }
+
+                        const message =
+                            action === "approve"
+                                ? `Approve this ${type}?`
+                                : `Reject this ${type}?`;
+
+                        if (
+                            !window.confirm(
+                                message
+                            )
+                        ) {
+                            return;
+                        }
+
+                        await processApproval(
+                            type,
+                            action,
+                            id,
+                            reason,
+                            button
+                        );
+                    }
+                );
+            });
+    }
 
 
-        const action =
-            button.dataset.approvalAction;
+    /* ----------------------------------------------------------------------
+       PROCESS APPROVAL
+    ---------------------------------------------------------------------- */
 
-
-        const type =
-            button.dataset.approvalType;
-
-
-        const id =
-            button.dataset.id;
-
-
+    async function processApproval(
+        type,
+        action,
+        id,
+        reason = "",
+        button = null
+    ) {
         if (!id) {
-
             showAdminMessage(
-                "Invalid request ID.",
+                "Invalid approval ID.",
                 "error"
             );
 
-            return;
+            return false;
         }
 
-
-        let reason = "";
-
-
-        if (action === "reject") {
-
-            reason =
-                window.prompt(
-                    "Enter the reason for rejecting this request:"
-                );
-
-
-            if (
-                reason === null
-            ) {
-                return;
-            }
-
-
-            reason =
-                reason.trim();
-
-
-            if (!reason) {
-
-                showAdminMessage(
-                    "A rejection reason is required.",
-                    "error"
-                );
-
-                return;
-            }
+        if (button) {
+            button.disabled = true;
+            button.textContent =
+                action === "approve"
+                    ? "Approving..."
+                    : "Rejecting...";
         }
-
-
-        const actionName =
-            action === "approve"
-                ? "approve"
-                : "reject";
-
-
-        const confirmed =
-            window.confirm(
-                `Are you sure you want to ${actionName} this ${type}?`
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        await processApproval(
-            type,
-            action,
-            id,
-            reason,
-            button
-        );
-
-    }
-);
-
-
-/* =========================================================
-   PROCESS APPROVAL
-   ========================================================= */
-
-async function processApproval(
-    type,
-    action,
-    id,
-    reason,
-    button
-) {
-
-    if (button) {
-        button.disabled = true;
-    }
-
-
-    const originalText =
-        button
-            ? button.textContent
-            : "";
-
-
-    if (button) {
-        button.textContent =
-            action === "approve"
-                ? "Approving..."
-                : "Rejecting...";
-    }
-
-
-    try {
 
         let endpoint;
 
+        switch (type) {
 
-        if (type === "deposit") {
-            endpoint =
-                ADMIN_DEPOSITS_API;
+            case "deposit":
+                endpoint =
+                    ADMIN_DEPOSITS_API;
+                break;
+
+            case "withdrawal":
+                endpoint =
+                    ADMIN_WITHDRAWALS_API;
+                break;
+
+            case "investment":
+                endpoint =
+                    ADMIN_INVESTMENTS_API;
+                break;
+
+            default:
+                showAdminMessage(
+                    "Unknown approval type.",
+                    "error"
+                );
+
+                if (button) {
+                    button.disabled =
+                        false;
+                }
+
+                return false;
         }
 
-        else if (
-            type === "withdrawal"
-        ) {
-            endpoint =
-                ADMIN_WITHDRAWALS_API;
-        }
 
-        else if (
-            type === "investment"
-        ) {
-            endpoint =
-                ADMIN_INVESTMENTS_API;
-        }
-
-        else {
-            throw new Error(
-                "Unknown approval type."
-            );
-        }
-
-
-        const body = {
-            action: action
+        const payload = {
+            action,
+            reason
         };
 
 
         if (type === "deposit") {
+            payload.depositId = id;
+        }
 
-            body.depositId =
-                id;
+        if (type === "withdrawal") {
+            payload.withdrawalId = id;
+        }
+
+        if (type === "investment") {
+            payload.investmentId = id;
+        }
+
+
+        try {
+
+            const data =
+                await apiRequest(
+                    endpoint,
+                    {
+                        method: "POST",
+                        body: JSON.stringify(
+                            payload
+                        )
+                    }
+                );
+
+            showAdminMessage(
+                data.message ||
+                `${capitalize(type)} ${action}d successfully.`,
+                "success"
+            );
+
+
+            /*
+             * Refresh everything after approval.
+             */
+            await Promise.allSettled([
+                loadDashboardData(),
+                loadApprovalData()
+            ]);
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "Approval error:",
+                error
+            );
+
+            showAdminMessage(
+                error.message ||
+                "Approval operation failed.",
+                "error"
+            );
+
+            if (button) {
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    action === "approve"
+                        ? "Approve"
+                        : "Reject";
+            }
+
+            return false;
+        }
+    }
+
+
+    /* ----------------------------------------------------------------------
+       PENDING BADGES
+    ---------------------------------------------------------------------- */
+
+    function updatePendingBadges() {
+
+        const depositCount =
+            AdminDashboard.deposits.length;
+
+        const withdrawalCount =
+            AdminDashboard.withdrawals.length;
+
+        const investmentCount =
+            AdminDashboard.investments.length;
+
+
+        updateBadge(
+            "#navPendingDeposits",
+            depositCount
+        );
+
+        updateBadge(
+            "#navPendingWithdrawals",
+            withdrawalCount
+        );
+
+
+        /*
+         * Create investment badge if the existing
+         * admin.html does not contain one.
+         */
+        let investmentLink =
+            document.querySelector(
+                'a[href="admin-investments.html"]'
+            );
+
+        if (investmentLink) {
+
+            let badge =
+                investmentLink.querySelector(
+                    ".nav-badge"
+                );
+
+            if (!badge) {
+                badge =
+                    document.createElement("span");
+
+                badge.className =
+                    "nav-badge";
+
+                badge.id =
+                    "navPendingInvestments";
+
+                investmentLink.appendChild(
+                    badge
+                );
+            }
+
+            updateBadgeElement(
+                badge,
+                investmentCount
+            );
+        }
+    }
+
+
+    function updateBadge(
+        selector,
+        count
+    ) {
+        const badge =
+            $(selector);
+
+        if (!badge) return;
+
+        updateBadgeElement(
+            badge,
+            count
+        );
+    }
+
+
+    function updateBadgeElement(
+        badge,
+        count
+    ) {
+        const safeCount =
+            Number.isFinite(Number(count))
+                ? Number(count)
+                : 0;
+
+        badge.textContent =
+            String(safeCount);
+
+        /*
+         * Keep the badge available in the DOM but
+         * visually hide it when there is nothing pending.
+         */
+        if (safeCount <= 0) {
+            badge.style.display =
+                "none";
+        } else {
+            badge.style.display =
+                "inline-flex";
+        }
+    }
+
+
+    /* ----------------------------------------------------------------------
+       SIDEBAR
+    ---------------------------------------------------------------------- */
+
+    function setupSidebar() {
+
+        /*
+         * admin.html already contains a mobile sidebar script.
+         *
+         * We intentionally use idempotent onclick handlers here instead
+         * of adding another group of listeners that could fight with the
+         * existing inline script.
+         */
+
+        const sidebar =
+            $("#sidebar");
+
+        const overlay =
+            $("#sidebarOverlay");
+
+        const menuButton =
+            $("#menuButton");
+
+        const sidebarClose =
+            $("#sidebarClose");
+
+
+        function openSidebar() {
+
+            if (sidebar) {
+                sidebar.classList.add(
+                    "open"
+                );
+            }
+
+            if (overlay) {
+                overlay.classList.add(
+                    "open"
+                );
+            }
+
+            document.body.style.overflow =
+                "hidden";
+        }
+
+
+        function closeSidebar() {
+
+            if (sidebar) {
+                sidebar.classList.remove(
+                    "open"
+                );
+            }
+
+            if (overlay) {
+                overlay.classList.remove(
+                    "open"
+                );
+            }
+
+            document.body.style.overflow =
+                "";
+        }
+
+
+        /*
+         * Only attach if the element does not already
+         * have our admin handler.
+         */
+        if (
+            menuButton &&
+            !menuButton.dataset.ccAdminHandler
+        ) {
+            menuButton.dataset.ccAdminHandler =
+                "true";
+
+            menuButton.addEventListener(
+                "click",
+                event => {
+                    event.stopPropagation();
+
+                    if (
+                        sidebar &&
+                        sidebar.classList.contains(
+                            "open"
+                        )
+                    ) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
+                    }
+                }
+            );
         }
 
 
         if (
-            type === "withdrawal"
+            sidebarClose &&
+            !sidebarClose.dataset.ccAdminHandler
         ) {
+            sidebarClose.dataset.ccAdminHandler =
+                "true";
 
-            body.withdrawalId =
-                id;
+            sidebarClose.addEventListener(
+                "click",
+                event => {
+                    event.stopPropagation();
+                    closeSidebar();
+                }
+            );
         }
 
 
         if (
-            type === "investment"
+            overlay &&
+            !overlay.dataset.ccAdminHandler
         ) {
+            overlay.dataset.ccAdminHandler =
+                "true";
 
-            body.investmentId =
-                id;
+            overlay.addEventListener(
+                "click",
+                closeSidebar
+            );
         }
 
 
-        if (reason) {
+        $$("#sidebar a").forEach(link => {
 
-            body.reason =
-                reason;
+            if (
+                link.dataset.ccAdminHandler
+            ) {
+                return;
+            }
+
+            link.dataset.ccAdminHandler =
+                "true";
+
+            link.addEventListener(
+                "click",
+                () => {
+                    if (
+                        window.innerWidth <=
+                        1050
+                    ) {
+                        closeSidebar();
+                    }
+                }
+            );
+        });
+
+
+        window.addEventListener(
+            "resize",
+            () => {
+                if (
+                    window.innerWidth >
+                    1050
+                ) {
+                    closeSidebar();
+                }
+            }
+        );
+    }
+
+
+    /* ----------------------------------------------------------------------
+       LOGOUT
+    ---------------------------------------------------------------------- */
+
+    function setupLogout() {
+        const logoutButton =
+            $("#logoutBtn");
+
+        if (!logoutButton) {
+            return;
         }
 
+        if (
+            logoutButton.dataset.ccLogoutReady
+        ) {
+            return;
+        }
 
-        const data =
-            await apiRequest(
-                endpoint,
+        logoutButton.dataset.ccLogoutReady =
+            "true";
+
+        logoutButton.addEventListener(
+            "click",
+            async event => {
+
+                event.preventDefault();
+
+                if (
+                    !window.confirm(
+                        "Are you sure you want to logout?"
+                    )
+                ) {
+                    return;
+                }
+
+                logoutButton.disabled =
+                    true;
+
+                logoutButton.textContent =
+                    "Logging out...";
+
+                await logoutAdmin(
+                    logoutButton
+                );
+            }
+        );
+    }
+
+
+    async function logoutAdmin(
+        button = null
+    ) {
+        try {
+
+            await fetchWithTimeout(
+                LOGOUT_API,
                 {
                     method: "POST",
-
                     headers: {
                         "Content-Type":
                             "application/json"
                     },
-
-                    body:
-                        JSON.stringify(body)
-                }
+                    body: JSON.stringify({})
+                },
+                10000
             );
 
+        } catch (error) {
+            console.warn(
+                "Logout request failed:",
+                error.message
+            );
 
-        showAdminMessage(
-            data.message ||
-            `${type} ${action}d successfully.`,
-            "success"
-        );
+        } finally {
 
-
-        /*
-         * Refresh all dashboard information
-         * so balances, totals and pending counts
-         * immediately reflect the action.
-         */
-
-        await Promise.allSettled([
-
-            loadDashboardData(),
-
-            loadApprovalData()
-
-        ]);
-
-    } catch (error) {
-
-        console.error(
-            "Approval processing error:",
-            error
-        );
-
-        showAdminMessage(
-            error.message ||
-            `Unable to ${action} ${type}.`,
-            "error"
-        );
-
-        if (button) {
-
-            button.disabled =
+            AdminDashboard.authenticated =
                 false;
 
-            button.textContent =
-                originalText;
+            AdminDashboard.authorized =
+                false;
+
+            window.location.href =
+                "login.html";
         }
     }
-}
 
 
-/* =========================================================
-   UPDATE PENDING BADGES
-   ========================================================= */
+    /* ----------------------------------------------------------------------
+       FORMATTING
+    ---------------------------------------------------------------------- */
 
-function updatePendingBadges() {
+    function formatCurrency(value) {
+        const number =
+            Number(value) || 0;
 
-    const pendingDeposits =
-        AdminDashboard.deposits.filter(
-            item =>
-                String(
-                    item.status ||
-                    ""
-                ).toLowerCase()
-                === "pending"
-        ).length;
-
-
-    const pendingWithdrawals =
-        AdminDashboard.withdrawals.filter(
-            item =>
-                String(
-                    item.status ||
-                    ""
-                ).toLowerCase()
-                === "pending"
-        ).length;
-
-
-    const pendingInvestments =
-        AdminDashboard.investments.filter(
-            item =>
-                String(
-                    item.status ||
-                    ""
-                ).toLowerCase()
-                === "pending"
-        ).length;
-
-
-    setText(
-        "#navPendingDeposits",
-        pendingDeposits
-    );
-
-
-    setText(
-        "#navPendingWithdrawals",
-        pendingWithdrawals
-    );
-
-
-    /*
-     * Your existing HTML does not currently have
-     * a pending-investment badge, so create one.
-     */
-
-    addInvestmentNavBadge(
-        pendingInvestments
-    );
-}
-
-
-/* =========================================================
-   ADD INVESTMENT NAV BADGE
-   ========================================================= */
-
-function addInvestmentNavBadge(
-    count
-) {
-
-    const investmentLink =
-        document.querySelector(
-            'a[href="admin-investments.html"]'
-        );
-
-    if (!investmentLink) {
-        return;
-    }
-
-
-    let badge =
-        investmentLink.querySelector(
-            ".nav-badge"
-        );
-
-
-    if (!badge) {
-
-        badge =
-            document.createElement(
-                "span"
-            );
-
-        badge.className =
-            "nav-badge";
-
-        investmentLink.appendChild(
-            badge
-        );
-    }
-
-
-    badge.textContent =
-        count;
-}
-
-
-/* =========================================================
-   SIDEBAR
-   ========================================================= */
-
-function setupSidebar() {
-
-    const sidebar =
-        $("#sidebar");
-
-    const overlay =
-        $("#sidebarOverlay");
-
-    const menuButton =
-        $("#menuButton");
-
-    const sidebarClose =
-        $("#sidebarClose");
-
-
-    function openSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.add(
-                "open"
-            );
-        }
-
-        if (overlay) {
-            overlay.classList.add(
-                "open"
-            );
-
-            overlay.classList.add(
-                "active"
-            );
-        }
-
-        document.body.classList.add(
-            "sidebar-open"
-        );
-    }
-
-
-    function closeSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.remove(
-                "open"
-            );
-        }
-
-        if (overlay) {
-
-            overlay.classList.remove(
-                "open"
-            );
-
-            overlay.classList.remove(
-                "active"
-            );
-        }
-
-        document.body.classList.remove(
-            "sidebar-open"
-        );
-
-        document.body.style.overflow =
-            "";
-    }
-
-
-    if (menuButton) {
-
-        menuButton.addEventListener(
-            "click",
-            openSidebar
-        );
-    }
-
-
-    if (sidebarClose) {
-
-        sidebarClose.addEventListener(
-            "click",
-            closeSidebar
-        );
-    }
-
-
-    if (overlay) {
-
-        overlay.addEventListener(
-            "click",
-            closeSidebar
-        );
-    }
-
-
-    document
-        .querySelectorAll(
-            "#sidebar a"
-        )
-        .forEach(link => {
-
-            link.addEventListener(
-                "click",
-                closeSidebar
-            );
-        });
-}
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-async function logoutAdmin() {
-
-    const button =
-        $("#logoutBtn");
-
-
-    if (button) {
-
-        button.disabled =
-            true;
-
-        button.style.opacity =
-            "0.6";
-    }
-
-
-    try {
-
-        await fetchWithTimeout(
-            LOGOUT_API,
+        return new Intl.NumberFormat(
+            "en-UG",
             {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body:
-                    JSON.stringify({})
-            },
-            8000
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Logout request error:",
-            error
-        );
-
-    } finally {
-
-        window.location.href =
-            "login.html";
-    }
-}
-
-
-/* =========================================================
-   SETUP LOGOUT
-   ========================================================= */
-
-function setupLogout() {
-
-    const button =
-        $("#logoutBtn");
-
-    if (!button) {
-        return;
-    }
-
-
-    button.addEventListener(
-        "click",
-        event => {
-
-            event.preventDefault();
-
-
-            const confirmed =
-                window.confirm(
-                    "Are you sure you want to logout of the Crown Cash Administration Panel?"
-                );
-
-
-            if (!confirmed) {
-                return;
+                style: "currency",
+                currency: "UGX",
+                maximumFractionDigits: 0
             }
-
-
-            logoutAdmin();
-
-        }
-    );
-}
-
-
-/* =========================================================
-   INITIALIZE ADMIN DASHBOARD
-   ========================================================= */
-
-async function initializeAdminDashboard() {
-
-    if (
-        AdminDashboard.loading
-    ) {
-        return;
+        ).format(number);
     }
 
 
-    AdminDashboard.loading =
-        true;
+    function formatNumber(value) {
+        const number =
+            Number(value) || 0;
 
-
-    showLoader(
-        "Loading Administration"
-    );
-
-
-    try {
-
-        /*
-         * 1. Verify admin.
-         */
-
-        const authenticated =
-            await authenticateAdmin();
-
-
-        if (!authenticated) {
-            return;
-        }
-
-
-        /*
-         * 2. Prepare interface.
-         */
-
-        setupSidebar();
-
-        setupLogout();
-
-        createApprovalCenter();
-
-
-        /*
-         * 3. Load dashboard/profile/approvals.
-         */
-
-        await Promise.allSettled([
-
-            loadAdminProfile(),
-
-            loadDashboardData(),
-
-            loadApprovalData()
-
-        ]);
-
-    } catch (error) {
-
-        console.error(
-            "Admin initialization error:",
-            error
-        );
-
-        showAdminMessage(
-            error.message ||
-            "Unable to load administration dashboard.",
-            "error"
-        );
-
-    } finally {
-
-        hideLoader();
-
-        AdminDashboard.loading =
-            false;
-    }
-}
-
-
-/* =========================================================
-   UTILITIES
-   ========================================================= */
-
-function capitalize(value) {
-
-    const string =
-        String(value || "");
-
-    return (
-        string.charAt(0).toUpperCase() +
-        string.slice(1)
-    );
-}
-
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
+        return new Intl.NumberFormat(
+            "en-UG"
+        ).format(number);
     }
 
 
-    try {
+    function formatDate(value) {
 
-        let date;
-
-
-        if (
-            typeof value === "object" &&
-            value.$date
-        ) {
-            date =
-                new Date(
-                    value.$date
-                );
+        if (!value) {
+            return "Date unavailable";
         }
 
-        else {
-            date =
-                new Date(value);
-        }
-
+        const date =
+            new Date(value);
 
         if (
             Number.isNaN(
                 date.getTime()
             )
         ) {
-            return "—";
+            return "Date unavailable";
         }
-
 
         return new Intl.DateTimeFormat(
             "en-UG",
@@ -3036,545 +2599,593 @@ function formatDate(value) {
                 minute: "2-digit"
             }
         ).format(date);
-
-    } catch (error) {
-
-        return "—";
-    }
-}
-
-
-function getTransactionIcon(type) {
-
-    const value =
-        String(type)
-            .toLowerCase();
-
-
-    if (
-        value.includes("deposit") ||
-        value.includes("credit")
-    ) {
-
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8">
-
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9">
-                </circle>
-
-                <path
-                    d="M12 16V8">
-                </path>
-
-                <path
-                    d="M9 11l3-3 3 3">
-                </path>
-
-            </svg>
-        `;
     }
 
 
-    if (
-        value.includes("withdraw")
-    ) {
+    function formatStatus(status) {
 
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8">
-
-                <circle
-                    cx="12"
-                    cy="12"
-                    r="9">
-                </circle>
-
-                <path
-                    d="M12 8v8">
-                </path>
-
-                <path
-                    d="M9 13l3 3 3-3">
-                </path>
-
-            </svg>
-        `;
-    }
-
-
-    if (
-        value.includes("investment")
-    ) {
-
-        return `
-            <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8">
-
-                <path d="M4 19V9"></path>
-                <path d="M10 19V5"></path>
-                <path d="M16 19v-7"></path>
-                <path d="M22 19V3"></path>
-
-            </svg>
-        `;
-    }
-
-
-    return `
-        <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8">
-
-            <circle
-                cx="12"
-                cy="12"
-                r="9">
-            </circle>
-
-            <path
-                d="M8 12h8">
-            </path>
-
-            <path
-                d="M12 8v8">
-            </path>
-
-        </svg>
-    `;
-}
-
-
-function getTypeClass(type) {
-
-    const value =
-        String(type)
-            .toLowerCase();
-
-
-    if (
-        value.includes("deposit")
-    ) {
-        return "deposit";
-    }
-
-
-    if (
-        value.includes("withdraw")
-    ) {
-        return "withdrawal";
-    }
-
-
-    if (
-        value.includes("investment")
-    ) {
-        return "investment";
-    }
-
-
-    return "transaction";
-}
-
-
-function getStatusClass(status) {
-
-    const value =
-        String(status)
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-
-
-    if (
-        value === "approved" ||
-        value === "completed" ||
-        value === "active" ||
-        value === "success" ||
-        value === "successful"
-    ) {
-        return "success";
-    }
-
-
-    if (
-        value === "rejected" ||
-        value === "failed" ||
-        value === "blocked" ||
-        value === "suspended" ||
-        value === "disabled"
-    ) {
-        return "danger";
-    }
-
-
-    if (
-        value === "pending" ||
-        value === "processing" ||
-        value === "awaiting_payout"
-    ) {
-        return "warning";
-    }
-
-
-    return "neutral";
-}
-
-
-function formatStatus(status) {
-
-    return String(
-        status || "unknown"
-    )
-        .replace(/_/g, " ")
-        .replace(
-            /\b\w/g,
-            letter =>
-                letter.toUpperCase()
-        );
-}
-
-
-function formatTransactionType(
-    type
-) {
-
-    return String(
-        type || "Transaction"
-    )
-        .replace(/_/g, " ")
-        .replace(
-            /\b\w/g,
-            letter =>
-                letter.toUpperCase()
-        );
-}
-
-
-function formatAccountType(type) {
-
-    const value =
-        String(
-            type || "admin"
-        ).toLowerCase();
-
-
-    if (
-        value === "admin" ||
-        value === "administrator"
-    ) {
-        return "Admin Account";
-    }
-
-
-    return formatStatus(value);
-}
-
-
-function formatCurrency(value) {
-
-    const number =
-        getNumericValue(value);
-
-
-    return (
-        "UGX " +
-        new Intl.NumberFormat(
-            "en-UG",
-            {
-                maximumFractionDigits: 0
-            }
-        ).format(number)
-    );
-}
-
-
-function formatNumber(value) {
-
-    const number =
-        getNumericValue(value);
-
-
-    return new Intl.NumberFormat(
-        "en-UG",
-        {
-            maximumFractionDigits: 0
+        if (!status) {
+            return "Unknown";
         }
-    ).format(number);
-}
+
+        return String(status)
+            .replace(/[_-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .replace(
+                /\b\w/g,
+                letter =>
+                    letter.toUpperCase()
+            );
+    }
 
 
-function getNumericValue(value) {
+    function formatTransactionType(type) {
 
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
+        if (!type) {
+            return "Transaction";
+        }
+
+        const map = {
+            deposit: "Deposit",
+            withdrawal: "Withdrawal",
+            investment: "Investment",
+            investment_principal:
+                "Investment",
+            daily_earning:
+                "Daily Earning",
+            referral_bonus:
+                "Referral Bonus",
+            refund:
+                "Refund",
+            fee:
+                "Fee",
+            debit:
+                "Debit",
+            credit:
+                "Credit"
+        };
+
+        const key =
+            String(type)
+                .toLowerCase();
+
+        return map[key] ||
+            formatStatus(type);
+    }
+
+
+    function formatAccountType(type) {
+
+        if (!type) {
+            return "Administrator";
+        }
+
+        return String(type)
+            .replace(/[_-]+/g, " ")
+            .replace(/\b\w/g, letter =>
+                letter.toUpperCase()
+            );
+    }
+
+
+    function getTransactionIcon(type) {
+
+        const key =
+            String(type || "")
+                .toLowerCase();
+
+        const icons = {
+            deposit: "↓",
+            withdrawal: "↑",
+            investment: "◆",
+            investment_principal: "◆",
+            daily_earning: "✦",
+            referral_bonus: "★",
+            refund: "↩",
+            fee: "−",
+            debit: "−",
+            credit: "+"
+        };
+
+        return icons[key] || "•";
+    }
+
+
+    function getTypeClass(type) {
+
+        const key =
+            String(type || "")
+                .toLowerCase();
+
+        if (
+            key.includes("deposit")
+        ) {
+            return "deposit";
+        }
+
+        if (
+            key.includes("withdraw")
+        ) {
+            return "withdrawal";
+        }
+
+        if (
+            key.includes("earning")
+        ) {
+            return "earning";
+        }
+
+        if (
+            key.includes("referral")
+        ) {
+            return "referral";
+        }
+
+        if (
+            key.includes("investment")
+        ) {
+            return "investment";
+        }
+
+        return "transaction";
+    }
+
+
+    function getStatusClass(status) {
+
+        const key =
+            String(status || "")
+                .toLowerCase();
+
+        if (
+            [
+                "approved",
+                "active",
+                "completed",
+                "verified",
+                "paid",
+                "processed",
+                "success",
+                "successful"
+            ].includes(key)
+        ) {
+            return "status-success";
+        }
+
+        if (
+            [
+                "pending",
+                "processing",
+                "submitted",
+                "running"
+            ].includes(key)
+        ) {
+            return "status-pending";
+        }
+
+        if (
+            [
+                "rejected",
+                "declined",
+                "cancelled",
+                "canceled",
+                "failed",
+                "blocked",
+                "suspended"
+            ].includes(key)
+        ) {
+            return "status-danger";
+        }
+
+        return "status-neutral";
+    }
+
+
+    /* ----------------------------------------------------------------------
+       VALUE HELPERS
+    ---------------------------------------------------------------------- */
+
+    function getNumericValue(
+        ...values
     ) {
+        for (const value of values) {
+
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+                continue;
+            }
+
+            const number =
+                Number(
+                    String(value)
+                        .replace(/,/g, "")
+                );
+
+            if (
+                Number.isFinite(number)
+            ) {
+                return number;
+            }
+        }
+
         return 0;
     }
 
 
-    if (
-        typeof value === "number"
+    function getValue(
+        object,
+        keys,
+        fallback = ""
     ) {
-
-        return Number.isFinite(value)
-            ? value
-            : 0;
-    }
-
-
-    if (
-        typeof value === "object"
-    ) {
-
-        if (
-            value.$numberDecimal !==
-            undefined
-        ) {
-
-            return (
-                parseFloat(
-                    value.$numberDecimal
-                ) || 0
-            );
+        if (!object) {
+            return fallback;
         }
 
+        for (const key of keys) {
 
-        if (
-            value.$numberInt !==
-            undefined
-        ) {
-
-            return (
-                parseFloat(
-                    value.$numberInt
-                ) || 0
-            );
+            if (
+                object[key] !== undefined &&
+                object[key] !== null &&
+                object[key] !== ""
+            ) {
+                return object[key];
+            }
         }
 
-
-        if (
-            value.$numberLong !==
-            undefined
-        ) {
-
-            return (
-                parseFloat(
-                    value.$numberLong
-                ) || 0
-            );
-        }
-
-
-        if (
-            value.$date !==
-            undefined
-        ) {
-            return 0;
-        }
-    }
-
-
-    const parsed =
-        parseFloat(
-            String(value)
-                .replace(/,/g, "")
-        );
-
-
-    return Number.isFinite(parsed)
-        ? parsed
-        : 0;
-}
-
-
-function getValue(
-    object,
-    keys,
-    fallback = 0
-) {
-
-    if (
-        !object ||
-        typeof object !== "object"
-    ) {
         return fallback;
     }
 
 
-    for (
-        const key of keys
-    ) {
+    function getItemId(item) {
+
+        if (!item) {
+            return "";
+        }
+
+        return String(
+            getValue(
+                item,
+                [
+                    "_id",
+                    "id",
+                    "depositId",
+                    "withdrawalId",
+                    "investmentId"
+                ],
+                ""
+            )
+        );
+    }
+
+
+    function getInitials(name) {
+
+        if (!name) {
+            return "CC";
+        }
+
+        const parts =
+            String(name)
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean);
+
+        if (parts.length === 1) {
+            return parts[0]
+                .substring(0, 2)
+                .toUpperCase();
+        }
+
+        return (
+            parts[0][0] +
+            parts[parts.length - 1][0]
+        ).toUpperCase();
+    }
+
+
+    function capitalize(value) {
+
+        if (!value) {
+            return "";
+        }
+
+        return (
+            String(value)
+                .charAt(0)
+                .toUpperCase() +
+            String(value)
+                .slice(1)
+        );
+    }
+
+
+    /* ----------------------------------------------------------------------
+       HTML ESCAPING
+    ---------------------------------------------------------------------- */
+
+    function escapeHtml(value) {
+
+        return String(
+            value === null ||
+            value === undefined
+                ? ""
+                : value
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
+    /* ----------------------------------------------------------------------
+       GLOBAL ADMIN API
+    ---------------------------------------------------------------------- */
+
+    window.CrownCashAdmin = {
+
+        reload: async () => {
+            await Promise.allSettled([
+                loadDashboardData(),
+                loadApprovalData()
+            ]);
+        },
+
+        loadDashboard:
+            loadDashboardData,
+
+        loadApprovals:
+            loadApprovalData,
+
+        refresh: async () => {
+            await Promise.allSettled([
+                loadDashboardData(),
+                loadApprovalData()
+            ]);
+        },
+
+        approveDeposit:
+            id =>
+                processApproval(
+                    "deposit",
+                    "approve",
+                    id
+                ),
+
+        rejectDeposit:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this deposit:"
+                    );
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+                    return false;
+                }
+
+                return processApproval(
+                    "deposit",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+        approveWithdrawal:
+            id =>
+                processApproval(
+                    "withdrawal",
+                    "approve",
+                    id
+                ),
+
+        rejectWithdrawal:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this withdrawal:"
+                    );
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+                    return false;
+                }
+
+                return processApproval(
+                    "withdrawal",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+        approveInvestment:
+            id =>
+                processApproval(
+                    "investment",
+                    "approve",
+                    id
+                ),
+
+        rejectInvestment:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this investment:"
+                    );
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+                    return false;
+                }
+
+                return processApproval(
+                    "investment",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+        logout:
+            logoutAdmin
+    };
+
+
+    /* ----------------------------------------------------------------------
+       INITIALIZATION
+    ---------------------------------------------------------------------- */
+
+    async function initializeAdminDashboard() {
 
         if (
-            object[key] !==
-                undefined &&
-            object[key] !==
-                null
+            AdminDashboard.initialized
         ) {
+            return;
+        }
 
-            return object[key];
+        AdminDashboard.initialized =
+            true;
+
+        AdminDashboard.loading =
+            true;
+
+        showLoader();
+
+        try {
+
+            /*
+             * First verify administrator privileges.
+             */
+            const authenticated =
+                await authenticateAdmin();
+
+            if (!authenticated) {
+                return;
+            }
+
+
+            /*
+             * Setup existing page controls.
+             */
+            setupSidebar();
+            setupLogout();
+
+
+            /*
+             * Create approval section.
+             */
+            createApprovalCenter();
+
+
+            /*
+             * Load all admin information.
+             *
+             * A profile failure does not prevent the dashboard
+             * or approval center from loading.
+             */
+            const results =
+                await Promise.allSettled([
+                    loadAdminProfile(),
+                    loadDashboardData(),
+                    loadApprovalData()
+                ]);
+
+
+            const failures =
+                results.filter(
+                    result =>
+                        result.status ===
+                        "rejected"
+                );
+
+
+            if (
+                failures.length > 0
+            ) {
+                console.warn(
+                    "Some admin dashboard resources failed:",
+                    failures
+                );
+            }
+
+
+            /*
+             * Final UI state.
+             */
+            AdminDashboard.loading =
+                false;
+
+        } catch (error) {
+
+            console.error(
+                "Admin initialization error:",
+                error
+            );
+
+            showAdminMessage(
+                error.message ||
+                "Unable to initialize administrator dashboard.",
+                "error"
+            );
+
+        } finally {
+
+            AdminDashboard.loading =
+                false;
+
+            hideLoader();
         }
     }
 
 
-    return fallback;
-}
+    /* ----------------------------------------------------------------------
+       START
+    ---------------------------------------------------------------------- */
 
-
-function escapeHtml(value) {
-
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializeAdminDashboard,
+            {
+                once: true
+            }
         );
-}
+    } else {
+        initializeAdminDashboard();
+    }
 
-
-/* =========================================================
-   START
-   ========================================================= */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeAdminDashboard
-    );
-
-} else {
-
-    initializeAdminDashboard();
-}
-
-
-/* =========================================================
-   GLOBAL API
-   ========================================================= */
-
-window.CrownCashAdmin = {
-
-    reload:
-        initializeAdminDashboard,
-
-    loadProfile:
-        loadAdminProfile,
-
-    loadDashboard:
-        loadDashboardData,
-
-    loadApprovals:
-        loadApprovalData,
-
-    approveDeposit:
-        id =>
-            processApproval(
-                "deposit",
-                "approve",
-                id,
-                "",
-                null
-            ),
-
-    rejectDeposit:
-        id =>
-            processApproval(
-                "deposit",
-                "reject",
-                id,
-                "",
-                null
-            ),
-
-    approveWithdrawal:
-        id =>
-            processApproval(
-                "withdrawal",
-                "approve",
-                id,
-                "",
-                null
-            ),
-
-    rejectWithdrawal:
-        id =>
-            processApproval(
-                "withdrawal",
-                "reject",
-                id,
-                "",
-                null
-            ),
-
-    approveInvestment:
-        id =>
-            processApproval(
-                "investment",
-                "approve",
-                id,
-                "",
-                null
-            ),
-
-    rejectInvestment:
-        id =>
-            processApproval(
-                "investment",
-                "reject",
-                id,
-                "",
-                null
-            ),
-
-    logout:
-        logoutAdmin,
-
-    state:
-        AdminDashboard
-
-};
+})();

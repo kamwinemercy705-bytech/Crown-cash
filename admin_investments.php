@@ -1,917 +1,561 @@
 <?php
 declare(strict_types=1);
 
+/*
+|--------------------------------------------------------------------------
+| Crown Cash - Admin Investment Management
+|--------------------------------------------------------------------------
+*/
+
 require_once __DIR__ . '/config.php';
 
-$adminId = requireAdmin();
+header('Content-Type: application/json; charset=utf-8');
 
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-/* =========================================================
-   GET INVESTMENTS
-========================================================= */
+if ($origin === 'https://crown-cash.vercel.app') {
+    header('Access-Control-Allow-Origin: https://crown-cash.vercel.app');
+    header('Access-Control-Allow-Credentials: true');
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 
-    try {
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
-        $items = [];
+startSecureSession();
+
+try {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin authentication
+    |--------------------------------------------------------------------------
+    */
+
+    $adminId = currentUserId();
+
+    if (!$adminId) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Authentication required.'
+        ], 401);
+    }
+
+    $adminUser = null;
+
+    if (isValidObjectId($adminId)) {
+        $adminUser = $users->findOne([
+            '_id' => objectIdOrNull($adminId)
+        ]);
+    }
+
+    if (!$adminUser) {
+        $adminUser = $users->findOne([
+            'id' => (string)$adminId
+        ]);
+    }
+
+    if (!$adminUser) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Administrator account not found.'
+        ], 403);
+    }
+
+    $role = strtolower(trim((string)($adminUser->role ?? '')));
+    $accountType = strtolower(trim((string)($adminUser->account_type ?? '')));
+
+    $isAdmin =
+        in_array($role, ['admin', 'administrator'], true) ||
+        in_array($accountType, ['admin', 'administrator'], true);
+
+    if (!$isAdmin) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Administrator access required.'
+        ], 403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET - List investment requests
+    |--------------------------------------------------------------------------
+    */
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         $cursor = $investments->find(
-            [],
+            [
+                'status' => [
+                    '$in' => [
+                        'pending',
+                        'active',
+                        'approved',
+                        'rejected',
+                        'completed'
+                    ]
+                ]
+            ],
             [
                 'sort' => [
                     'created_at' => -1
                 ],
-                'limit' => 500
+                'limit' => 200
             ]
         );
 
-
-        $stats = [
-            'total_investments' => 0,
-            'total_amount' => 0,
-            'active' => 0,
-            'pending' => 0,
-            'completed' => 0,
-            'rejected' => 0
-        ];
-
+        $items = [];
 
         foreach ($cursor as $investment) {
 
-            $stats['total_investments']++;
+            $item = jsonSafe($investment);
 
-            $amount = moneyInt(
-                $investment['amount'] ?? 0
+            $item['id'] = isset($investment->_id)
+                ? (string)$investment->_id
+                : (string)($investment->id ?? '');
+
+            $item['user_id'] = (string)($investment->user_id ?? '');
+
+            $item['amount'] = moneyInt(
+                $investment->amount
+                ?? $investment->principal
+                ?? 0
             );
 
-            $stats['total_amount'] += $amount;
-
-
-            $status = strtolower(
-                (string)(
-                    $investment['status']
-                    ?? 'pending'
-                )
+            $item['principal'] = moneyInt(
+                $investment->principal
+                ?? $investment->amount
+                ?? 0
             );
 
+            $item['status'] = strtolower(
+                trim((string)($investment->status ?? 'pending'))
+            );
 
-            if (isset($stats[$status])) {
-                $stats[$status]++;
-            }
-
-
-            /* -------------------------------------------------
-               FIND INVESTMENT OWNER
-            ------------------------------------------------- */
-
-            $userIdValue =
-                $investment['user_id']
-                ?? null;
-
-            $user = null;
-
-            if (
-                $userIdValue
-                instanceof MongoDB\BSON\ObjectId
-            ) {
-
-                $user = $users->findOne([
-                    '_id' => $userIdValue
-                ]);
-
-            } elseif (
-                is_string($userIdValue)
-                && isValidObjectId($userIdValue)
-            ) {
-
-                $user = $users->findOne([
-                    '_id' =>
-                        new MongoDB\BSON\ObjectId(
-                            $userIdValue
-                        )
-                ]);
-            }
-
-
-            /* -------------------------------------------------
-               USER NAME
-            ------------------------------------------------- */
-
-            $userName = '';
-
-            if ($user) {
-
-                $firstName = (string)(
-                    $user['firstName']
-                    ?? $user['first_name']
-                    ?? ''
-                );
-
-                $lastName = (string)(
-                    $user['lastName']
-                    ?? $user['last_name']
-                    ?? ''
-                );
-
-                $userName = trim(
-                    $firstName .
-                    ' ' .
-                    $lastName
-                );
-
-                if ($userName === '') {
-
-                    $userName = (string)(
-                        $user['full_name']
-                        ?? $user['name']
-                        ?? ''
-                    );
-                }
-            }
-
-
-            /* -------------------------------------------------
-               RETURN INVESTMENT DATA
-            ------------------------------------------------- */
-
-            $items[] = jsonSafe([
-
-                'id' =>
-                    $investment['_id'],
-
-                'user_id' =>
-                    $userIdValue,
-
-                'user_name' =>
-                    $userName,
-
-                'email' =>
-                    $user['email']
-                    ?? $investment['email']
-                    ?? '',
-
-                'phone' =>
-                    $user['phone']
-                    ?? $investment['phone']
-                    ?? '',
-
-                'plan' =>
-                    $investment['plan']
-                    ?? '',
-
-                'plan_key' =>
-                    $investment['plan_key']
-                    ?? '',
-
-                'amount' =>
-                    $amount,
-
-                'currency' =>
-                    $investment['currency']
-                    ?? 'UGX',
-
-                'status' =>
-                    $status,
-
-                'type' =>
-                    $investment['type']
-                    ?? 'investment',
-
-                'duration_days' =>
-                    (int)(
-                        $investment['duration_days']
-                        ?? 30
-                    ),
-
-                'reference' =>
-                    $investment['reference']
-                    ?? '',
-
-                'created_at' =>
-                    $investment['created_at']
-                    ?? null,
-
-                'approved_at' =>
-                    $investment['approved_at']
-                    ?? null,
-
-                'activated_at' =>
-                    $investment['activated_at']
-                    ?? null,
-
-                'completed_at' =>
-                    $investment['completed_at']
-                    ?? null,
-
-                'updated_at' =>
-                    $investment['updated_at']
-                    ?? null,
-
-                'rejection_reason' =>
-                    $investment['rejection_reason']
-                    ?? ''
-
-            ]);
+            $items[] = $item;
         }
 
-
-        /* =====================================================
-           RESPONSE
-        ===================================================== */
-
-        jsonResponse([
-
-            'success' => true,
-
-            'stats' => $stats,
-
-            'investments' => $items
-
+        $pendingCount = $investments->countDocuments([
+            'status' => 'pending'
         ]);
 
-    } catch (Throwable $e) {
+        $activeCount = $investments->countDocuments([
+            '$or' => [
+                ['status' => 'active'],
+                ['status' => 'approved'],
+                ['status' => 'running']
+            ]
+        ]);
 
-        error_log(
-            'Admin investments GET error: ' .
-            $e->getMessage()
-        );
+        $completedCount = $investments->countDocuments([
+            'status' => 'completed'
+        ]);
 
         jsonResponse([
-
-            'success' => false,
-
-            'message' =>
-                'Unable to load investments.'
-
-        ], 500);
+            'success' => true,
+            'investments' => $items,
+            'data' => $items,
+            'stats' => [
+                'pending' => $pendingCount,
+                'active' => $activeCount,
+                'completed' => $completedCount
+            ]
+        ]);
     }
-}
 
+    /*
+    |--------------------------------------------------------------------------
+    | POST - Approve / Reject
+    |--------------------------------------------------------------------------
+    */
 
-/* =========================================================
-   ONLY POST IS ALLOWED BELOW
-========================================================= */
+    $rawBody = file_get_contents('php://input');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    $input = json_decode(
+        $rawBody ?: '{}',
+        true
+    );
 
-    jsonResponse([
+    if (!is_array($input)) {
+        $input = $_POST;
+    }
 
-        'success' => false,
+    $action = strtolower(
+        trim((string)($input['action'] ?? ''))
+    );
 
-        'message' =>
-            'Method not allowed.'
-
-    ], 405);
-}
-
-
-/* =========================================================
-   READ POST DATA
-========================================================= */
-
-$rawInput = file_get_contents(
-    'php://input'
-);
-
-$input = json_decode(
-    $rawInput,
-    true
-);
-
-if (!is_array($input)) {
-    $input = $_POST;
-}
-
-
-/* =========================================================
-   GET REQUEST PARAMETERS
-========================================================= */
-
-$investmentId = trim(
-    (string)(
-        $input['investmentId']
-        ?? $input['investment_id']
-        ?? $input['id']
-        ?? ''
-    )
-);
-
-$action = strtolower(
-    trim(
+    $investmentId = trim(
         (string)(
-            $input['action']
+            $input['investmentId']
+            ?? $input['investment_id']
+            ?? $input['id']
             ?? ''
         )
-    )
-);
-
-$reason = trim(
-    (string)(
-        $input['reason']
-        ?? $input['rejection_reason']
-        ?? ''
-    )
-);
-
-
-/* =========================================================
-   VALIDATE REQUEST
-========================================================= */
-
-if (
-    !isValidObjectId($investmentId)
-    ||
-    !in_array(
-        $action,
-        ['approve', 'reject'],
-        true
-    )
-) {
-
-    jsonResponse([
-
-        'success' => false,
-
-        'message' =>
-            'Invalid investment ID or action.'
-
-    ], 400);
-}
-
-
-$investmentObjectId =
-    new MongoDB\BSON\ObjectId(
-        $investmentId
     );
 
+    $reason = trim(
+        (string)($input['reason'] ?? '')
+    );
 
-/* =========================================================
-   PROCESS APPROVAL / REJECTION
-========================================================= */
+    if (!in_array($action, ['approve', 'reject'], true)) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Invalid investment action.'
+        ], 422);
+    }
 
-try {
+    if (!isValidObjectId($investmentId)) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Invalid investment ID.'
+        ], 422);
+    }
 
-    $session = $client->startSession();
+    $investmentObjectId = objectIdOrNull($investmentId);
 
-    $session->startTransaction();
-
-
-    /* -----------------------------------------------------
-       FIND INVESTMENT
-    ----------------------------------------------------- */
-
-    $investment =
-        $investments->findOne(
-            [
-                '_id' =>
-                    $investmentObjectId
-            ],
-            [
-                'session' =>
-                    $session
-            ]
-        );
-
+    $investment = $investments->findOne([
+        '_id' => $investmentObjectId
+    ]);
 
     if (!$investment) {
-
-        throw new RuntimeException(
-            'Investment not found.'
-        );
+        jsonResponse([
+            'success' => false,
+            'message' => 'Investment not found.'
+        ], 404);
     }
 
-
-    /* -----------------------------------------------------
-       ONLY PENDING INVESTMENTS CAN BE PROCESSED
-    ----------------------------------------------------- */
-
-    $currentStatus = strtolower(
-        (string)(
-            $investment['status']
-            ?? 'pending'
-        )
+    $status = strtolower(
+        trim((string)($investment->status ?? ''))
     );
 
-
-    if ($currentStatus !== 'pending') {
-
-        throw new RuntimeException(
-            'Only pending investments can be processed.'
-        );
+    if ($status !== 'pending') {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Only pending investments can be processed.'
+        ], 409);
     }
 
-
-    /* -----------------------------------------------------
-       GET USER
-    ----------------------------------------------------- */
-
-    $userId =
-        objectIdOrNull(
-            $investment['user_id']
-            ?? null
-        );
-
-
-    if (!$userId) {
-
-        throw new RuntimeException(
-            'Investment has no valid user.'
-        );
-    }
-
+    $userId = (string)($investment->user_id ?? '');
 
     $amount = moneyInt(
-        $investment['amount']
+        $investment->amount
+        ?? $investment->principal
+        ?? $investment->reserved_amount
         ?? 0
     );
 
-
     if ($amount <= 0) {
-
-        throw new RuntimeException(
-            'Invalid investment amount.'
-        );
+        jsonResponse([
+            'success' => false,
+            'message' => 'Invalid investment amount.'
+        ], 422);
     }
 
+    $session = null;
 
-    $now = nowUtc();
+    try {
 
+        $session = $mongoClient->startSession();
 
-    /* =====================================================
-       REJECT INVESTMENT
-    ===================================================== */
+        $session->startTransaction();
 
-    if ($action === 'reject') {
+        $now = nowUtc();
 
-        $rejectionReason =
-            $reason !== ''
-                ? $reason
-                : 'Investment rejected by administrator.';
+        /*
+        |--------------------------------------------------------------------------
+        | APPROVE
+        |--------------------------------------------------------------------------
+        |
+        | The money was already deducted/reserved when the user created
+        | the investment.
+        |
+        | Therefore DO NOT deduct the wallet again.
+        |--------------------------------------------------------------------------
+        */
 
+        if ($action === 'approve') {
 
-        $result =
+            $startDate = $now;
+
+            $endDate = (clone $now);
+
+            $durationDays = (int)(
+                $investment->duration_days
+                ?? 30
+            );
+
+            $endDate->modify(
+                '+' . $durationDays . ' days'
+            );
+
             $investments->updateOne(
                 [
-                    '_id' =>
-                        $investmentObjectId,
-
-                    'status' =>
-                        'pending'
+                    '_id' => $investmentObjectId,
+                    'status' => 'pending'
                 ],
                 [
                     '$set' => [
-
-                        'status' =>
-                            'rejected',
-
-                        'approved' =>
-                            false,
-
-                        'rejected_by' =>
-                            $adminId,
-
-                        'rejection_reason' =>
-                            $rejectionReason,
-
-                        'updated_at' =>
-                            $now
-
+                        'status' => 'active',
+                        'approved_at' => $now,
+                        'activation_date' => $startDate,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'updated_at' => $now,
+                        'balance_reserved' => true,
+                        'reserved_amount' => $amount
                     ]
                 ],
                 [
-                    'session' =>
-                        $session
+                    'session' => $session
                 ]
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Update pending transaction
+            |--------------------------------------------------------------------------
+            */
 
-        if ($result->getModifiedCount() !== 1) {
-
-            throw new RuntimeException(
-                'Investment could not be rejected.'
+            $transactions->updateMany(
+                [
+                    'investment_id' => $investmentId,
+                    'status' => 'pending'
+                ],
+                [
+                    '$set' => [
+                        'status' => 'approved',
+                        'approved_at' => $now,
+                        'updated_at' => $now,
+                        'description' => 'Investment approved - ' .
+                            (string)($investment->plan_name ?? 'Investment')
+                    ]
+                ],
+                [
+                    'session' => $session
+                ]
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Audit
+            |--------------------------------------------------------------------------
+            */
+
+            if (function_exists('audit')) {
+                audit(
+                    'investment_approved',
+                    (string)$adminId,
+                    [
+                        'investment_id' => $investmentId,
+                        'user_id' => $userId,
+                        'amount' => $amount
+                    ]
+                );
+            }
+
+            $session->commitTransaction();
+
+            jsonResponse([
+                'success' => true,
+                'message' => 'Investment approved successfully.',
+                'investment_id' => $investmentId,
+                'amount' => $amount,
+                'balance_action' => 'already_reserved'
+            ]);
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | REJECT
+        |--------------------------------------------------------------------------
+        |
+        | Because the money was reserved when the investment was created,
+        | rejection MUST return it to the wallet.
+        |--------------------------------------------------------------------------
+        */
 
-        /* -------------------------------------------------
-           UPDATE RELATED TRANSACTION
-        ------------------------------------------------- */
+        if ($action === 'reject') {
 
-        $transactions->updateMany(
-            [
-                'investment_id' =>
-                    $investmentObjectId,
+            $user = null;
 
-                'status' =>
-                    'pending'
-            ],
-            [
-                '$set' => [
+            if (isValidObjectId($userId)) {
+                $user = $users->findOne([
+                    '_id' => objectIdOrNull($userId)
+                ]);
+            }
 
-                    'status' =>
-                        'rejected',
+            if (!$user) {
+                $user = $users->findOne([
+                    'id' => $userId
+                ]);
+            }
 
-                    'rejected_by' =>
-                        $adminId,
+            if (!$user) {
+                throw new RuntimeException(
+                    'Investment owner could not be found.'
+                );
+            }
 
-                    'rejection_reason' =>
-                        $rejectionReason,
+            $currentBalance = moneyInt(
+                $user->balance
+                ?? $user->wallet_balance
+                ?? 0
+            );
 
-                    'updated_at' =>
-                        $now
+            $restoredBalance = $currentBalance + $amount;
 
+            $users->updateOne(
+                [
+                    '_id' => $user->_id
+                ],
+                [
+                    '$set' => [
+                        'balance' => $restoredBalance,
+                        'wallet_balance' => $restoredBalance,
+                        'updated_at' => $now
+                    ]
+                ],
+                [
+                    'session' => $session
                 ]
-            ],
-            [
-                'session' =>
-                    $session
-            ]
+            );
+
+            $investments->updateOne(
+                [
+                    '_id' => $investmentObjectId,
+                    'status' => 'pending'
+                ],
+                [
+                    '$set' => [
+                        'status' => 'rejected',
+                        'rejected_at' => $now,
+                        'rejection_reason' => $reason !== ''
+                            ? $reason
+                            : 'Investment rejected by administrator.',
+                        'updated_at' => $now,
+                        'balance_reserved' => false,
+                        'reserved_amount' => 0
+                    ]
+                ],
+                [
+                    'session' => $session
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Mark original transaction rejected
+            |--------------------------------------------------------------------------
+            */
+
+            $transactions->updateMany(
+                [
+                    'investment_id' => $investmentId,
+                    'status' => 'pending'
+                ],
+                [
+                    '$set' => [
+                        'status' => 'rejected',
+                        'rejected_at' => $now,
+                        'rejection_reason' => $reason !== ''
+                            ? $reason
+                            : 'Investment rejected by administrator.',
+                        'updated_at' => $now
+                    ]
+                ],
+                [
+                    'session' => $session
+                ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Record refund
+            |--------------------------------------------------------------------------
+            */
+
+            $transactions->insertOne(
+                [
+                    'user_id' => $userId,
+                    'investment_id' => $investmentId,
+                    'type' => 'investment_refund',
+                    'transaction_type' => 'investment_refund',
+                    'category' => 'investment',
+                    'amount' => $amount,
+                    'direction' => 'credit',
+                    'status' => 'completed',
+                    'description' => 'Investment amount refunded after rejection.',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ],
+                [
+                    'session' => $session
+                ]
+            );
+
+            if (function_exists('audit')) {
+                audit(
+                    'investment_rejected',
+                    (string)$adminId,
+                    [
+                        'investment_id' => $investmentId,
+                        'user_id' => $userId,
+                        'amount' => $amount,
+                        'reason' => $reason
+                    ]
+                );
+            }
+
+            $session->commitTransaction();
+
+            jsonResponse([
+                'success' => true,
+                'message' => 'Investment rejected and the reserved amount has been returned to the user.',
+                'investment_id' => $investmentId,
+                'amount_refunded' => $amount,
+                'new_balance' => $restoredBalance
+            ]);
+        }
+
+    } catch (Throwable $e) {
+
+        if ($session) {
+            try {
+                $session->abortTransaction();
+            } catch (Throwable $ignore) {
+            }
+        }
+
+        error_log(
+            'Crown Cash admin_investments.php error: ' .
+            $e->getMessage()
         );
-
-
-        $session->commitTransaction();
-
-
-        audit(
-            'investment_rejected',
-            $adminId,
-            [
-                'investment_id' =>
-                    $investmentId,
-
-                'reason' =>
-                    $rejectionReason
-            ]
-        );
-
 
         jsonResponse([
+            'success' => false,
+            'message' => 'Investment processing failed.'
+        ], 500);
 
-            'success' =>
-                true,
+    } finally {
 
-            'message' =>
-                'Investment rejected.'
-
-        ]);
+        if ($session) {
+            $session->endSession();
+        }
     }
-
-
-    /* =====================================================
-       APPROVE INVESTMENT
-    ===================================================== */
-
-    $user =
-        $users->findOne(
-            [
-                '_id' =>
-                    $userId
-            ],
-            [
-                'session' =>
-                    $session
-            ]
-        );
-
-
-    if (!$user) {
-
-        throw new RuntimeException(
-            'Investment owner not found.'
-        );
-    }
-
-
-    /* -----------------------------------------------------
-       GET CURRENT BALANCE
-    ----------------------------------------------------- */
-
-    $balance = moneyInt(
-        $user['balance']
-        ?? $user['wallet_balance']
-        ?? 0
-    );
-
-
-    /* -----------------------------------------------------
-       CHECK AVAILABLE BALANCE
-    ----------------------------------------------------- */
-
-    if ($balance < $amount) {
-
-        throw new RuntimeException(
-            'User does not have enough available balance to activate this investment.'
-        );
-    }
-
-
-    $newBalance =
-        $balance - $amount;
-
-
-    /* -----------------------------------------------------
-       DEDUCT INVESTMENT PRINCIPAL
-    ----------------------------------------------------- */
-
-    $balanceUpdate =
-        $users->updateOne(
-            [
-                '_id' =>
-                    $userId,
-
-                'balance' =>
-                    [
-                        '$gte' =>
-                            $amount
-                    ]
-            ],
-            [
-                '$inc' => [
-
-                    'balance' =>
-                        -$amount
-
-                ],
-
-                '$set' => [
-
-                    'updated_at' =>
-                        $now
-
-                ]
-            ],
-            [
-                'session' =>
-                    $session
-            ]
-        );
-
-
-    if (
-        $balanceUpdate->getMatchedCount() !== 1
-        ||
-        $balanceUpdate->getModifiedCount() !== 1
-    ) {
-
-        throw new RuntimeException(
-            'Unable to deduct the investment amount from the wallet.'
-        );
-    }
-
-
-    /* -----------------------------------------------------
-       GET DURATION
-    ----------------------------------------------------- */
-
-    $duration =
-        (int)(
-            $investment['duration_days']
-            ?? 30
-        );
-
-
-    if ($duration <= 0) {
-        $duration = 30;
-    }
-
-
-    /* -----------------------------------------------------
-       ACTIVATE INVESTMENT
-    ----------------------------------------------------- */
-
-    $investmentUpdate =
-        $investments->updateOne(
-            [
-                '_id' =>
-                    $investmentObjectId,
-
-                'status' =>
-                    'pending'
-            ],
-            [
-                '$set' => [
-
-                    'status' =>
-                        'active',
-
-                    'approved' =>
-                        true,
-
-                    'approved_by' =>
-                        $adminId,
-
-                    'approved_at' =>
-                        $now,
-
-                    'activated_at' =>
-                        $now,
-
-                    'duration_days' =>
-                        $duration,
-
-                    'updated_at' =>
-                        $now
-
-                ]
-            ],
-            [
-                'session' =>
-                    $session
-            ]
-        );
-
-
-    if (
-        $investmentUpdate->getModifiedCount() !== 1
-    ) {
-
-        throw new RuntimeException(
-            'Investment could not be activated.'
-        );
-    }
-
-
-    /* =====================================================
-       UPDATE ORIGINAL PENDING TRANSACTION
-    ===================================================== */
-
-    $transactions->updateMany(
-        [
-            'investment_id' =>
-                $investmentObjectId,
-
-            'status' =>
-                'pending'
-        ],
-        [
-            '$set' => [
-
-                'status' =>
-                    'approved',
-
-                'payment_status' =>
-                    'approved',
-
-                'principal_deducted' =>
-                    true,
-
-                'approved_by' =>
-                    $adminId,
-
-                'approved_at' =>
-                    $now,
-
-                'updated_at' =>
-                    $now
-
-            ]
-        ],
-        [
-            'session' =>
-                $session
-        ]
-    );
-
-
-    /* =====================================================
-       CREATE PRINCIPAL DEBIT TRANSACTION
-    ===================================================== */
-
-    $transactions->insertOne(
-
-        [
-
-            'user_id' =>
-                $userId,
-
-            'type' =>
-                'investment_principal_debit',
-
-            'transaction_type' =>
-                'investment_principal_debit',
-
-            'title' =>
-                'Investment activated',
-
-            'description' =>
-                'Investment principal deducted from wallet.',
-
-            'amount' =>
-                $amount,
-
-            'currency' =>
-                'UGX',
-
-            'status' =>
-                'approved',
-
-            'reference' =>
-                'INV-DEBIT-' .
-                strtoupper(
-                    bin2hex(
-                        random_bytes(5)
-                    )
-                ),
-
-            'investment_id' =>
-                $investmentObjectId,
-
-            'created_at' =>
-                $now,
-
-            'updated_at' =>
-                $now
-
-        ],
-
-        [
-            'session' =>
-                $session
-        ]
-    );
-
-
-    /* =====================================================
-       COMPLETE TRANSACTION
-    ===================================================== */
-
-    $session->commitTransaction();
-
-
-    /* =====================================================
-       AUDIT
-    ===================================================== */
-
-    audit(
-        'investment_approved',
-        $adminId,
-        [
-
-            'investment_id' =>
-                $investmentId,
-
-            'amount' =>
-                $amount,
-
-            'user_id' =>
-                (string)$userId
-
-        ]
-    );
-
-
-    /* =====================================================
-       RESPONSE
-    ===================================================== */
-
-    jsonResponse([
-
-        'success' =>
-            true,
-
-        'message' =>
-            'Investment approved and activated.',
-
-        'investment_id' =>
-            $investmentId,
-
-        'amount' =>
-            $amount,
-
-        'new_balance' =>
-            $newBalance
-
-    ]);
-
 
 } catch (Throwable $e) {
 
-    if (isset($session)) {
-
-        try {
-
-            $session->abortTransaction();
-
-        } catch (Throwable $ignored) {
-            // Transaction may already have ended.
-        }
-    }
-
-
     error_log(
-        'Admin investment processing error: ' .
+        'Crown Cash admin_investments.php fatal error: ' .
         $e->getMessage()
     );
 
-
     jsonResponse([
-
-        'success' =>
-            false,
-
-        'message' =>
-            $e->getMessage()
-
-    ], 400);
+        'success' => false,
+        'message' => 'Unable to process investment request.'
+    ], 500);
 }

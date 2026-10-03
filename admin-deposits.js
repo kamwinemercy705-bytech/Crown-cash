@@ -1,10 +1,14 @@
 /* =========================================================
    CROWN CASH — ADMIN DEPOSITS
-   Clean Deposit Management
+   Complete Production Deposit Management
    ========================================================= */
 
 "use strict";
 
+
+/* =========================================================
+   API CONFIGURATION
+   ========================================================= */
 
 const API_BASE =
     "https://crown-cash1.onrender.com";
@@ -15,8 +19,12 @@ const ADMIN_AUTH_API =
 const PROFILE_API =
     `${API_BASE}/profile.php`;
 
+/*
+ * IMPORTANT:
+ * Backend file is admin_deposit.php
+ */
 const DEPOSITS_API =
-    `${API_BASE}/admin-deposits.php`;
+    `${API_BASE}/admin_deposit.php`;
 
 const LOGOUT_API =
     `${API_BASE}/logout.php`;
@@ -40,7 +48,7 @@ let selectedDeposit = null;
 
 
 /* =========================================================
-   ELEMENTS
+   ELEMENT HELPER
    ========================================================= */
 
 const $ = (id) =>
@@ -56,15 +64,22 @@ async function fetchJson(
     options = {}
 ) {
 
-    const response = await fetch(url, {
-        credentials: "include",
-        cache: "no-store",
-        ...options,
-        headers: {
-            Accept: "application/json",
-            ...(options.headers || {})
-        }
-    });
+    const response =
+        await fetch(
+            url,
+            {
+                credentials: "include",
+                cache: "no-store",
+                ...options,
+
+                headers: {
+                    Accept:
+                        "application/json",
+
+                    ...(options.headers || {})
+                }
+            }
+        );
 
     const text =
         await response.text();
@@ -72,9 +87,12 @@ async function fetchJson(
     let data = null;
 
     try {
-        data = text
-            ? JSON.parse(text)
-            : {};
+
+        data =
+            text
+                ? JSON.parse(text)
+                : {};
+
     } catch (error) {
 
         throw new Error(
@@ -82,11 +100,12 @@ async function fetchJson(
         );
     }
 
+
     if (!response.ok) {
 
         const error =
             new Error(
-                data.message ||
+                data?.message ||
                 `Request failed (${response.status})`
             );
 
@@ -98,6 +117,7 @@ async function fetchJson(
 
         throw error;
     }
+
 
     return data;
 }
@@ -119,26 +139,34 @@ function showMessage(
         return;
     }
 
+
     element.textContent =
         message;
+
 
     element.className =
         `deposit-message ${type}`;
 
+
     element.hidden =
         false;
+
 
     window.clearTimeout(
         showMessage.timer
     );
 
+
     showMessage.timer =
-        window.setTimeout(() => {
+        window.setTimeout(
+            () => {
 
-            element.hidden =
-                true;
+                element.hidden =
+                    true;
 
-        }, 5000);
+            },
+            5000
+        );
 }
 
 
@@ -158,6 +186,7 @@ async function verifyAdministrator() {
                 }
             );
 
+
         if (
             !data ||
             data.success !== true ||
@@ -170,11 +199,20 @@ async function verifyAdministrator() {
             );
         }
 
+
         return true;
 
     } catch (error) {
 
-        if (error.status === 401) {
+        console.error(
+            "Administrator verification failed:",
+            error
+        );
+
+
+        if (
+            error.status === 401
+        ) {
 
             window.location.href =
                 "login.html";
@@ -182,11 +220,13 @@ async function verifyAdministrator() {
             return false;
         }
 
+
         showMessage(
             error.message ||
             "Administrator verification failed.",
             "error"
         );
+
 
         return false;
     }
@@ -194,7 +234,7 @@ async function verifyAdministrator() {
 
 
 /* =========================================================
-   PROFILE
+   ADMIN PROFILE
    ========================================================= */
 
 async function loadAdminProfile() {
@@ -209,15 +249,19 @@ async function loadAdminProfile() {
                 }
             );
 
+
         if (
             !data ||
             data.success !== true
         ) {
+
             return;
         }
 
+
         const user =
             data.user || {};
+
 
         const name =
             user.full_name ||
@@ -229,16 +273,21 @@ async function loadAdminProfile() {
                 .join(" ") ||
             "Administrator";
 
+
         const email =
             user.email ||
             "";
 
+
         if ($("adminName")) {
+
             $("adminName").textContent =
                 name;
         }
 
+
         if ($("adminEmail")) {
+
             $("adminEmail").textContent =
                 email;
         }
@@ -257,19 +306,24 @@ async function loadAdminProfile() {
    NORMALIZE DEPOSIT
    ========================================================= */
 
-function normalizeDeposit(deposit) {
+function normalizeDeposit(
+    deposit
+) {
 
     if (!deposit) {
         return null;
     }
 
+
     const customer =
         deposit.customer ||
         {};
 
+
     return {
 
         ...deposit,
+
 
         id:
             String(
@@ -279,12 +333,14 @@ function normalizeDeposit(deposit) {
                 ""
             ),
 
+
         customerName:
             deposit.customer_name ||
             deposit.full_name ||
             customer.full_name ||
             customer.name ||
             "Customer",
+
 
         phone:
             deposit.phone ||
@@ -293,10 +349,12 @@ function normalizeDeposit(deposit) {
             customer.phone ||
             "",
 
+
         email:
             deposit.email ||
             customer.email ||
             "",
+
 
         amount:
             Number(
@@ -304,11 +362,13 @@ function normalizeDeposit(deposit) {
                 0
             ),
 
+
         method:
             deposit.payment_method ||
             deposit.method ||
             deposit.network ||
             "Unknown",
+
 
         reference:
             deposit.transaction_reference ||
@@ -316,10 +376,12 @@ function normalizeDeposit(deposit) {
             deposit.payment_reference ||
             "",
 
+
         merchantCode:
             deposit.merchant_code ||
             deposit.merchantCode ||
             "",
+
 
         network:
             deposit.network ||
@@ -327,11 +389,14 @@ function normalizeDeposit(deposit) {
             deposit.method ||
             "",
 
+
         status:
             String(
                 deposit.status ||
                 "pending"
-            ).toLowerCase(),
+            )
+                .toLowerCase(),
+
 
         createdAt:
             deposit.created_at ||
@@ -351,6 +416,7 @@ async function loadDeposits() {
     const list =
         $("depositsMobileList");
 
+
     if (list) {
 
         list.innerHTML = `
@@ -361,6 +427,7 @@ async function loadDeposits() {
         `;
     }
 
+
     try {
 
         const data =
@@ -370,6 +437,7 @@ async function loadDeposits() {
                     method: "GET"
                 }
             );
+
 
         if (
             !data ||
@@ -382,17 +450,45 @@ async function loadDeposits() {
             );
         }
 
+
+        /*
+         * Support both:
+         *
+         * {
+         *   deposits: [...]
+         * }
+         *
+         * and:
+         *
+         * {
+         *   data: [...]
+         * }
+         */
+
         const rawDeposits =
-            Array.isArray(data.deposits)
+            Array.isArray(
+                data.deposits
+            )
                 ? data.deposits
-                : [];
+
+                : Array.isArray(
+                    data.data
+                )
+                    ? data.data
+
+                    : [];
+
 
         deposits =
             rawDeposits
-                .map(normalizeDeposit)
+                .map(
+                    normalizeDeposit
+                )
                 .filter(Boolean);
 
+
         applyFilters();
+
 
     } catch (error) {
 
@@ -401,18 +497,27 @@ async function loadDeposits() {
             error
         );
 
+
         if (list) {
 
             list.innerHTML = `
                 <div class="deposit-empty">
-                    <h3>Unable to load deposits</h3>
-                    <p>${escapeHtml(
-                        error.message ||
-                        "Please try again."
-                    )}</p>
+
+                    <h3>
+                        Unable to load deposits
+                    </h3>
+
+                    <p>
+                        ${escapeHtml(
+                            error.message ||
+                            "Please try again."
+                        )}
+                    </p>
+
                 </div>
             `;
         }
+
 
         showMessage(
             error.message ||
@@ -437,6 +542,7 @@ function applyFilters() {
             .trim()
             .toLowerCase();
 
+
     filteredDeposits =
         deposits.filter(
             (deposit) => {
@@ -444,15 +550,20 @@ function applyFilters() {
                 const statusMatches =
                     currentStatus === "all" ||
                     deposit.status ===
-                    currentStatus;
+                        currentStatus;
+
 
                 if (!statusMatches) {
+
                     return false;
                 }
 
+
                 if (!search) {
+
                     return true;
                 }
+
 
                 const searchable = [
 
@@ -474,20 +585,23 @@ function applyFilters() {
                     .join(" ")
                     .toLowerCase();
 
+
                 return searchable.includes(
                     search
                 );
             }
         );
 
+
     currentPage = 1;
+
 
     renderDeposits();
 }
 
 
 /* =========================================================
-   RENDER
+   RENDER DEPOSITS
    ========================================================= */
 
 function renderDeposits() {
@@ -495,28 +609,42 @@ function renderDeposits() {
     const list =
         $("depositsMobileList");
 
+
     const empty =
         $("depositEmpty");
+
 
     const count =
         $("depositCount");
 
+
     if (!list) {
+
         return;
     }
+
 
     if (count) {
 
         const total =
             filteredDeposits.length;
 
+
         count.textContent =
-            `${total} ${total === 1 ? "deposit" : "deposits"}`;
+            `${total} ${
+                total === 1
+                    ? "deposit"
+                    : "deposits"
+            }`;
     }
 
+
     const start =
-        (currentPage - 1) *
+        (
+            currentPage - 1
+        ) *
         ITEMS_PER_PAGE;
+
 
     const pageItems =
         filteredDeposits.slice(
@@ -524,27 +652,41 @@ function renderDeposits() {
             start + ITEMS_PER_PAGE
         );
 
+
     if (!pageItems.length) {
 
-        list.innerHTML = "";
+        list.innerHTML =
+            "";
+
 
         if (empty) {
-            empty.hidden = false;
+
+            empty.hidden =
+                false;
         }
 
+
         renderPagination();
+
 
         return;
     }
 
+
     if (empty) {
-        empty.hidden = true;
+
+        empty.hidden =
+            true;
     }
+
 
     list.innerHTML =
         pageItems
-            .map(renderDepositCard)
+            .map(
+                renderDepositCard
+            )
             .join("");
+
 
     renderPagination();
 }
@@ -563,45 +705,56 @@ function renderDepositCard(
             deposit.status
         );
 
+
     const method =
         formatMethod(
             deposit.method
         );
+
 
     const amount =
         formatCurrency(
             deposit.amount
         );
 
+
     const date =
         formatDate(
             deposit.createdAt
         );
 
+
     const pending =
         deposit.status ===
         "pending";
+
 
     const phone =
         deposit.phone ||
         "Not provided";
 
+
     const email =
         deposit.email ||
         "No email provided";
+
 
     const merchantCode =
         deposit.merchantCode ||
         "Not provided";
 
+
     const reference =
         deposit.reference ||
         "Not provided";
 
+
     return `
         <article
             class="deposit-card"
-            data-deposit-id="${escapeAttr(deposit.id)}"
+            data-deposit-id="${escapeAttr(
+                deposit.id
+            )}"
         >
 
             <div class="deposit-card-header">
@@ -615,17 +768,24 @@ function renderDepositCard(
                     </h3>
 
                     <p class="deposit-phone">
-                        ${escapeHtml(phone)}
+                        ${escapeHtml(
+                            phone
+                        )}
                     </p>
 
                     <p class="deposit-email">
-                        ${escapeHtml(email)}
+                        ${escapeHtml(
+                            email
+                        )}
                     </p>
 
                 </div>
 
+
                 <span class="deposit-status">
-                    ${escapeHtml(status)}
+                    ${escapeHtml(
+                        status
+                    )}
                 </span>
 
             </div>
@@ -647,19 +807,25 @@ function renderDepositCard(
                         </span>
 
                         <strong class="deposit-amount">
-                            ${escapeHtml(amount)}
+                            ${escapeHtml(
+                                amount
+                            )}
                         </strong>
 
                     </div>
 
+
                     <span class="payment-method">
-                        ${escapeHtml(method)}
+                        ${escapeHtml(
+                            method
+                        )}
                     </span>
 
                 </div>
 
 
                 <div class="deposit-details">
+
 
                     <div class="deposit-detail">
 
@@ -683,7 +849,9 @@ function renderDepositCard(
                         </span>
 
                         <span class="deposit-detail-value">
-                            ${escapeHtml(date)}
+                            ${escapeHtml(
+                                date
+                            )}
                         </span>
 
                     </div>
@@ -696,7 +864,9 @@ function renderDepositCard(
                         </span>
 
                         <span class="deposit-detail-value">
-                            ${escapeHtml(reference)}
+                            ${escapeHtml(
+                                reference
+                            )}
                         </span>
 
                     </div>
@@ -726,40 +896,48 @@ function renderDepositCard(
                         </span>
 
                         <span class="deposit-detail-value">
-                            ${escapeHtml(status)}
+                            ${escapeHtml(
+                                status
+                            )}
                         </span>
 
                     </div>
+
 
                 </div>
 
 
                 ${
                     pending
-                    ? `
+                        ? `
                         <div class="deposit-actions">
 
                             <button
                                 type="button"
                                 class="deposit-action approve"
                                 data-action="approve"
-                                data-id="${escapeAttr(deposit.id)}"
+                                data-id="${escapeAttr(
+                                    deposit.id
+                                )}"
                             >
                                 Approve
                             </button>
+
 
                             <button
                                 type="button"
                                 class="deposit-action reject"
                                 data-action="reject"
-                                data-id="${escapeAttr(deposit.id)}"
+                                data-id="${escapeAttr(
+                                    deposit.id
+                                )}"
                             >
                                 Reject
                             </button>
 
                         </div>
-                    `
-                    : ""
+                        `
+                        : ""
                 }
 
             </div>
@@ -778,15 +956,19 @@ function renderPagination() {
     const container =
         $("depositPagination");
 
+
     if (!container) {
+
         return;
     }
+
 
     const totalPages =
         Math.ceil(
             filteredDeposits.length /
             ITEMS_PER_PAGE
         );
+
 
     if (totalPages <= 1) {
 
@@ -796,7 +978,10 @@ function renderPagination() {
         return;
     }
 
-    let html = "";
+
+    let html =
+        "";
+
 
     for (
         let page = 1;
@@ -819,6 +1004,7 @@ function renderPagination() {
         `;
     }
 
+
     container.innerHTML =
         html;
 }
@@ -835,107 +1021,204 @@ function openReviewModal(
     selectedDeposit =
         deposit;
 
+
     const modal =
         $("depositModal");
+
 
     const details =
         $("depositReviewDetails");
 
+
     const checkbox =
         $("paymentVerified");
 
-    if (!modal || !details) {
+
+    if (
+        !modal ||
+        !details
+    ) {
+
         return;
     }
+
 
     details.innerHTML = `
 
         <div class="review-row">
-            <span>Customer</span>
-            <span>${escapeHtml(
-                deposit.customerName
-            )}</span>
+
+            <span>
+                Customer
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    deposit.customerName
+                )}
+            </span>
+
         </div>
 
-        <div class="review-row">
-            <span>Email</span>
-            <span>${escapeHtml(
-                deposit.email || "Not provided"
-            )}</span>
-        </div>
 
         <div class="review-row">
-            <span>Phone</span>
-            <span>${escapeHtml(
-                deposit.phone || "Not provided"
-            )}</span>
+
+            <span>
+                Email
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    deposit.email ||
+                    "Not provided"
+                )}
+            </span>
+
         </div>
 
-        <div class="review-row">
-            <span>Amount</span>
-            <span>${escapeHtml(
-                formatCurrency(
-                    deposit.amount
-                )
-            )}</span>
-        </div>
 
         <div class="review-row">
-            <span>Payment Method</span>
-            <span>${escapeHtml(
-                formatMethod(
-                    deposit.method
-                )
-            )}</span>
+
+            <span>
+                Phone
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    deposit.phone ||
+                    "Not provided"
+                )}
+            </span>
+
         </div>
 
-        <div class="review-row">
-            <span>Merchant Code</span>
-            <span>${escapeHtml(
-                deposit.merchantCode ||
-                "Not provided"
-            )}</span>
-        </div>
 
         <div class="review-row">
-            <span>Reference</span>
-            <span>${escapeHtml(
-                deposit.reference ||
-                "Not provided"
-            )}</span>
+
+            <span>
+                Amount
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    formatCurrency(
+                        deposit.amount
+                    )
+                )}
+            </span>
+
         </div>
 
-        <div class="review-row">
-            <span>Status</span>
-            <span>${escapeHtml(
-                capitalize(
-                    deposit.status
-                )
-            )}</span>
-        </div>
 
         <div class="review-row">
-            <span>Submitted</span>
-            <span>${escapeHtml(
-                formatDate(
-                    deposit.createdAt
-                )
-            )}</span>
+
+            <span>
+                Payment Method
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    formatMethod(
+                        deposit.method
+                    )
+                )}
+            </span>
+
         </div>
+
+
+        <div class="review-row">
+
+            <span>
+                Merchant Code
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    deposit.merchantCode ||
+                    "Not provided"
+                )}
+            </span>
+
+        </div>
+
+
+        <div class="review-row">
+
+            <span>
+                Reference
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    deposit.reference ||
+                    "Not provided"
+                )}
+            </span>
+
+        </div>
+
+
+        <div class="review-row">
+
+            <span>
+                Status
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    capitalize(
+                        deposit.status
+                    )
+                )}
+            </span>
+
+        </div>
+
+
+        <div class="review-row">
+
+            <span>
+                Submitted
+            </span>
+
+            <span>
+                ${escapeHtml(
+                    formatDate(
+                        deposit.createdAt
+                    )
+                )}
+            </span>
+
+        </div>
+
     `;
 
+
     if (checkbox) {
-        checkbox.checked = false;
+
+        checkbox.checked =
+            false;
     }
+
 
     const approve =
         $("approveDepositButton");
 
+
     if (approve) {
-        approve.disabled = false;
+
+        approve.disabled =
+            false;
+
+        approve.textContent =
+            "Approve Deposit";
     }
 
-    modal.classList.add("show");
+
+    modal.classList.add(
+        "show"
+    );
+
 
     modal.setAttribute(
         "aria-hidden",
@@ -945,7 +1228,7 @@ function openReviewModal(
 
 
 /* =========================================================
-   CLOSE MODAL
+   CLOSE REVIEW MODAL
    ========================================================= */
 
 function closeReviewModal() {
@@ -953,18 +1236,23 @@ function closeReviewModal() {
     const modal =
         $("depositModal");
 
+
     if (!modal) {
+
         return;
     }
+
 
     modal.classList.remove(
         "show"
     );
 
+
     modal.setAttribute(
         "aria-hidden",
         "true"
     );
+
 
     selectedDeposit =
         null;
@@ -982,8 +1270,10 @@ async function processDeposit(
 ) {
 
     if (!deposit) {
+
         return;
     }
+
 
     if (
         action === "approve" &&
@@ -998,19 +1288,26 @@ async function processDeposit(
         return;
     }
 
+
     const actionText =
         action === "approve"
             ? "approve"
             : "reject";
 
+
     const confirmed =
         window.confirm(
-            `Are you sure you want to ${actionText} this deposit of ${formatCurrency(deposit.amount)}?`
+            `Are you sure you want to ${actionText} this deposit of ${formatCurrency(
+                deposit.amount
+            )}?`
         );
 
+
     if (!confirmed) {
+
         return;
     }
+
 
     try {
 
@@ -1025,22 +1322,25 @@ async function processDeposit(
                             "application/json"
                     },
 
-                    body: JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                        deposit_id:
-                            deposit.id,
+                            deposit_id:
+                                deposit.id,
 
-                        action:
-                            action,
+                            action:
+                                action,
 
-                        payment_verified:
-                            action === "approve"
-                                ? true
-                                : false
+                            payment_verified:
+                                action ===
+                                "approve"
+                                    ? true
+                                    : false
 
-                    })
+                        })
                 }
             );
+
 
         if (
             !response ||
@@ -1053,15 +1353,19 @@ async function processDeposit(
             );
         }
 
+
         showMessage(
             response.message ||
             `Deposit ${actionText}d successfully.`,
             "success"
         );
 
+
         closeReviewModal();
 
+
         await loadDeposits();
+
 
     } catch (error) {
 
@@ -1069,6 +1373,7 @@ async function processDeposit(
             "Deposit action error:",
             error
         );
+
 
         showMessage(
             error.message ||
@@ -1085,10 +1390,14 @@ async function processDeposit(
 
 function setupEvents() {
 
-    /* Search */
+
+    /* -----------------------------------------------------
+       SEARCH
+       ----------------------------------------------------- */
 
     const search =
         $("depositSearch");
+
 
     if (search) {
 
@@ -1099,7 +1408,9 @@ function setupEvents() {
     }
 
 
-    /* Status tabs */
+    /* -----------------------------------------------------
+       STATUS TABS
+       ----------------------------------------------------- */
 
     document
         .querySelectorAll(
@@ -1117,19 +1428,24 @@ function setupEvents() {
                                 ".deposit-tab"
                             )
                             .forEach(
-                                (tab) =>
+                                (tab) => {
+
                                     tab.classList.remove(
                                         "active"
-                                    )
+                                    );
+                                }
                             );
+
 
                         button.classList.add(
                             "active"
                         );
 
+
                         currentStatus =
                             button.dataset.status ||
                             "pending";
+
 
                         applyFilters();
                     }
@@ -1138,10 +1454,13 @@ function setupEvents() {
         );
 
 
-    /* Refresh */
+    /* -----------------------------------------------------
+       REFRESH
+       ----------------------------------------------------- */
 
     const refresh =
         $("refreshDepositsBtn");
+
 
     if (refresh) {
 
@@ -1152,10 +1471,13 @@ function setupEvents() {
     }
 
 
-    /* Deposit actions */
+    /* -----------------------------------------------------
+       DEPOSIT ACTIONS
+       ----------------------------------------------------- */
 
     const list =
         $("depositsMobileList");
+
 
     if (list) {
 
@@ -1168,25 +1490,38 @@ function setupEvents() {
                         "[data-action]"
                     );
 
+
                 if (!button) {
+
                     return;
                 }
+
 
                 const id =
                     button.dataset.id;
 
+
                 const deposit =
                     deposits.find(
-                        item =>
+                        (item) =>
                             item.id === id
                     );
 
+
                 if (!deposit) {
+
+                    showMessage(
+                        "Deposit could not be found.",
+                        "error"
+                    );
+
                     return;
                 }
 
+
                 const action =
                     button.dataset.action;
+
 
                 if (
                     action ===
@@ -1213,10 +1548,13 @@ function setupEvents() {
     }
 
 
-    /* Pagination */
+    /* -----------------------------------------------------
+       PAGINATION
+       ----------------------------------------------------- */
 
     const pagination =
         $("depositPagination");
+
 
     if (pagination) {
 
@@ -1229,16 +1567,21 @@ function setupEvents() {
                         "[data-page]"
                     );
 
+
                 if (!button) {
+
                     return;
                 }
+
 
                 currentPage =
                     Number(
                         button.dataset.page
                     ) || 1;
 
+
                 renderDeposits();
+
 
                 window.scrollTo({
                     top: 0,
@@ -1249,7 +1592,9 @@ function setupEvents() {
     }
 
 
-    /* Modal close */
+    /* -----------------------------------------------------
+       MODAL CLOSE
+       ----------------------------------------------------- */
 
     $("closeDepositModal")
         ?.addEventListener(
@@ -1265,24 +1610,34 @@ function setupEvents() {
         );
 
 
-    /* Click outside modal */
+    /* -----------------------------------------------------
+       CLICK OUTSIDE MODAL
+       ----------------------------------------------------- */
 
     $("depositModal")
         ?.addEventListener(
             "click",
             (event) => {
 
+                const modal =
+                    $("depositModal");
+
+
                 if (
+                    modal &&
                     event.target ===
-                    $("depositModal")
+                    modal
                 ) {
+
                     closeReviewModal();
                 }
             }
         );
 
 
-    /* Approve */
+    /* -----------------------------------------------------
+       APPROVE DEPOSIT
+       ----------------------------------------------------- */
 
     $("approveDepositButton")
         ?.addEventListener(
@@ -1290,14 +1645,18 @@ function setupEvents() {
             async () => {
 
                 if (!selectedDeposit) {
+
                     return;
                 }
+
 
                 const checkbox =
                     $("paymentVerified");
 
+
                 const verified =
                     checkbox?.checked === true;
+
 
                 if (!verified) {
 
@@ -1309,8 +1668,10 @@ function setupEvents() {
                     return;
                 }
 
+
                 const button =
                     $("approveDepositButton");
+
 
                 if (button) {
 
@@ -1321,11 +1682,21 @@ function setupEvents() {
                         "Approving...";
                 }
 
+
                 await processDeposit(
                     selectedDeposit,
                     "approve",
                     true
                 );
+
+
+                /*
+                 * If processDeposit succeeded,
+                 * the modal is closed.
+                 *
+                 * If it failed, restore the
+                 * button so the admin can retry.
+                 */
 
                 if (button) {
 
@@ -1339,7 +1710,9 @@ function setupEvents() {
         );
 
 
-    /* Escape key */
+    /* -----------------------------------------------------
+       ESCAPE KEY
+       ----------------------------------------------------- */
 
     document.addEventListener(
         "keydown",
@@ -1349,22 +1722,28 @@ function setupEvents() {
                 event.key ===
                 "Escape"
             ) {
+
                 closeReviewModal();
             }
         }
     );
 
 
-    /* Sidebar */
+    /* -----------------------------------------------------
+       SIDEBAR
+       ----------------------------------------------------- */
 
     const sidebar =
         $("sidebar");
 
+
     const overlay =
         $("sidebarOverlay");
 
+
     const menuButton =
         $("menuButton");
+
 
     const closeButton =
         $("sidebarClose");
@@ -1376,9 +1755,11 @@ function setupEvents() {
             "active"
         );
 
+
         overlay?.classList.add(
             "active"
         );
+
 
         document.body.classList.add(
             "sidebar-open"
@@ -1392,9 +1773,11 @@ function setupEvents() {
             "active"
         );
 
+
         overlay?.classList.remove(
             "active"
         );
+
 
         document.body.classList.remove(
             "sidebar-open"
@@ -1407,10 +1790,12 @@ function setupEvents() {
         openSidebar
     );
 
+
     closeButton?.addEventListener(
         "click",
         closeSidebar
     );
+
 
     overlay?.addEventListener(
         "click",
@@ -1418,7 +1803,9 @@ function setupEvents() {
     );
 
 
-    /* Close sidebar after navigation */
+    /* -----------------------------------------------------
+       CLOSE SIDEBAR AFTER NAVIGATION
+       ----------------------------------------------------- */
 
     document
         .querySelectorAll(
@@ -1435,7 +1822,9 @@ function setupEvents() {
         );
 
 
-    /* Logout */
+    /* -----------------------------------------------------
+       LOGOUT
+       ----------------------------------------------------- */
 
     $("logoutButton")
         ?.addEventListener(
@@ -1447,9 +1836,12 @@ function setupEvents() {
                         "Are you sure you want to logout?"
                     );
 
+
                 if (!confirmed) {
+
                     return;
                 }
+
 
                 try {
 
@@ -1488,6 +1880,7 @@ function formatCurrency(
     const value =
         Number(amount) || 0;
 
+
     return (
         "UGX " +
         value.toLocaleString(
@@ -1496,6 +1889,10 @@ function formatCurrency(
     );
 }
 
+
+/* =========================================================
+   FORMAT PAYMENT METHOD
+   ========================================================= */
 
 function formatMethod(
     method
@@ -1507,38 +1904,52 @@ function formatMethod(
         )
             .toLowerCase();
 
+
     if (
         value.includes("mtn")
     ) {
+
         return "MTN";
     }
+
 
     if (
         value.includes("airtel")
     ) {
+
         return "Airtel";
     }
 
-    return method ||
-        "Unknown";
+
+    return (
+        method ||
+        "Unknown"
+    );
 }
 
+
+/* =========================================================
+   FORMAT DATE
+   ========================================================= */
 
 function formatDate(
     value
 ) {
 
     if (!value) {
+
         return "Not available";
     }
+
 
     try {
 
         let date;
 
+
         if (
             typeof value ===
-            "object" &&
+                "object" &&
             value.$date
         ) {
 
@@ -1550,34 +1961,56 @@ function formatDate(
         } else {
 
             date =
-                new Date(value);
+                new Date(
+                    value
+                );
         }
+
 
         if (
             Number.isNaN(
                 date.getTime()
             )
         ) {
-            return String(value);
+
+            return String(
+                value
+            );
         }
+
 
         return date.toLocaleString(
             "en-GB",
             {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
+                day:
+                    "2-digit",
+
+                month:
+                    "short",
+
+                year:
+                    "numeric",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
             }
         );
 
     } catch (error) {
 
-        return String(value);
+        return String(
+            value
+        );
     }
 }
 
+
+/* =========================================================
+   CAPITALIZE
+   ========================================================= */
 
 function capitalize(
     value
@@ -1588,12 +2021,18 @@ function capitalize(
             value || ""
         );
 
+
     return text
         ? text.charAt(0).toUpperCase() +
           text.slice(1)
+
         : "";
 }
 
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
 
 function escapeHtml(
     value
@@ -1602,19 +2041,40 @@ function escapeHtml(
     return String(
         value ?? ""
     )
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 }
 
+
+/* =========================================================
+   ESCAPE ATTRIBUTE
+   ========================================================= */
 
 function escapeAttr(
     value
 ) {
 
-    return escapeHtml(value);
+    return escapeHtml(
+        value
+    );
 }
 
 
@@ -1627,20 +2087,25 @@ async function initializeDepositsPage() {
     const authorized =
         await verifyAdministrator();
 
+
     if (!authorized) {
+
         return;
     }
 
+
     await loadAdminProfile();
 
+
     setupEvents();
+
 
     await loadDeposits();
 }
 
 
 /* =========================================================
-   GLOBAL
+   GLOBAL API
    ========================================================= */
 
 window.CrownCashAdminDeposits = {

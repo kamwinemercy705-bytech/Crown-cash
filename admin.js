@@ -1,21 +1,25 @@
 /* =========================================================
    CROWN CASH — ADMIN PANEL
    Production Admin Controller
-   FIXED:
-   - Admin loading screen
+
+   INCLUDES:
    - Admin authentication
    - Profile
    - Dashboard statistics
    - Recent transactions
    - Recent users
+   - Deposit management
+   - Withdrawal management
+   - Investment management
+   - Approve / Reject actions
    - Maintenance controls
    - Earnings monitor
-   - Approval actions
    - Logout
    - Mobile navigation
 ========================================================= */
 
 "use strict";
+
 
 /* =========================================================
    API CONFIGURATION
@@ -126,7 +130,7 @@ function $all(selector) {
 
 
 /* =========================================================
-   ADMIN LOADING SCREEN FIX
+   LOADING SCREEN
 ========================================================= */
 
 function hideAdminLoader() {
@@ -134,31 +138,18 @@ function hideAdminLoader() {
     const selectors = [
 
         "#adminLoader",
-
         "#adminLoading",
-
         "#loadingScreen",
-
         "#loadingOverlay",
-
         "#pageLoader",
-
         "#adminPageLoader",
-
         ".admin-loader",
-
         ".admin-loading",
-
         ".admin-loading-screen",
-
         ".loading-screen",
-
         ".loading-overlay",
-
         ".page-loader",
-
         "[data-admin-loader]",
-
         "[data-loading-screen]"
     ];
 
@@ -167,11 +158,8 @@ function hideAdminLoader() {
         $all(selector).forEach(element => {
 
             element.style.display = "none";
-
             element.style.visibility = "hidden";
-
             element.style.opacity = "0";
-
             element.style.pointerEvents = "none";
 
             element.setAttribute(
@@ -180,10 +168,6 @@ function hideAdminLoader() {
             );
         });
     });
-
-    /*
-       Also remove common body loading classes.
-    */
 
     document.body.classList.remove(
         "loading",
@@ -200,14 +184,6 @@ function hideAdminLoader() {
     );
 }
 
-
-/*
-   Safety fallback.
-
-   Even if an unexpected API request hangs,
-   the page must not remain covered by the
-   loading screen forever.
-*/
 
 function forceHideAdminLoader() {
 
@@ -278,13 +254,8 @@ function formatNumber(value) {
 function formatDate(value) {
 
     if (!value) {
-
         return "Not available";
     }
-
-    /*
-       Support MongoDB-style date objects.
-    */
 
     if (
         typeof value === "object" &&
@@ -292,11 +263,11 @@ function formatDate(value) {
     ) {
 
         if (value.$date) {
-
             value = value.$date;
         } else if (value.date) {
-
             value = value.date;
+        } else if (value.timestamp) {
+            value = value.timestamp;
         }
     }
 
@@ -308,7 +279,6 @@ function formatDate(value) {
             date.getTime()
         )
     ) {
-
         return "Not available";
     }
 
@@ -338,7 +308,6 @@ function normalizeBoolean(
         value === "TRUE" ||
         value === "on"
     ) {
-
         return true;
     }
 
@@ -350,13 +319,148 @@ function normalizeBoolean(
         value === "FALSE" ||
         value === "off"
     ) {
-
         return false;
     }
 
     return fallback;
 }
 
+
+function normalizeArray(data) {
+
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+    if (
+        Array.isArray(data?.data)
+    ) {
+        return data.data;
+    }
+
+    if (
+        Array.isArray(data?.items)
+    ) {
+        return data.items;
+    }
+
+    if (
+        Array.isArray(data?.results)
+    ) {
+        return data.results;
+    }
+
+    return [];
+}
+
+
+function getRecordId(record) {
+
+    if (!record) {
+        return "";
+    }
+
+    const id =
+        record.id ??
+        record._id ??
+        record.deposit_id ??
+        record.depositId ??
+        record.withdrawal_id ??
+        record.withdrawalId ??
+        record.investment_id ??
+        record.investmentId ??
+        "";
+
+    if (
+        typeof id === "object" &&
+        id !== null
+    ) {
+
+        return String(
+            id.$oid ??
+            id.oid ??
+            ""
+        );
+    }
+
+    return String(id);
+}
+
+
+function getCustomerName(record) {
+
+    if (!record) {
+        return "Unknown Customer";
+    }
+
+    const direct =
+        record.user_name ||
+        record.customer_name ||
+        record.customerName ||
+        record.name ||
+        record.full_name ||
+        record.fullName;
+
+    if (direct) {
+        return String(direct);
+    }
+
+    const first =
+        record.first_name ||
+        record.firstName ||
+        "";
+
+    const last =
+        record.last_name ||
+        record.lastName ||
+        "";
+
+    const combined =
+        `${first} ${last}`.trim();
+
+    if (combined) {
+        return combined;
+    }
+
+    return (
+        record.email ||
+        "Unknown Customer"
+    );
+}
+
+
+function getStatusClass(status) {
+
+    const value =
+        String(status || "")
+            .toLowerCase();
+
+    if (
+        value === "approved" ||
+        value === "completed" ||
+        value === "active" ||
+        value === "success" ||
+        value === "successful"
+    ) {
+        return "approved";
+    }
+
+    if (
+        value === "rejected" ||
+        value === "failed" ||
+        value === "cancelled" ||
+        value === "canceled"
+    ) {
+        return "rejected";
+    }
+
+    return "pending";
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
 
 function showMessage(
     message,
@@ -369,7 +473,6 @@ function showMessage(
         );
 
     if (existing) {
-
         existing.remove();
     }
 
@@ -412,7 +515,6 @@ function showMessage(
         () => {
 
             if (box.parentNode) {
-
                 box.remove();
             }
 
@@ -438,9 +540,7 @@ async function apiRequest(
     const timeout =
         setTimeout(
             () => {
-
                 controller.abort();
-
             },
             REQUEST_TIMEOUT
         );
@@ -568,7 +668,6 @@ async function authenticateAdmin() {
             );
 
         if (!response) {
-
             return false;
         }
 
@@ -595,15 +694,6 @@ async function authenticateAdmin() {
 
         AdminDashboard.authorized =
             authorized;
-
-        /*
-           IMPORTANT:
-           Both conditions must be true.
-
-           A normal user must never be treated
-           as an administrator just because the
-           authentication endpoint returned success.
-        */
 
         if (
             !authenticated ||
@@ -633,10 +723,6 @@ async function authenticateAdmin() {
             error
         );
 
-        /*
-           Do not leave the loading screen stuck.
-        */
-
         forceHideAdminLoader();
 
         showMessage(
@@ -645,18 +731,10 @@ async function authenticateAdmin() {
             "error"
         );
 
-        /*
-           Give the message a moment to display
-           instead of instantly trapping the user
-           on the loading screen.
-        */
-
         setTimeout(
             () => {
-
                 window.location.href =
                     "login.html";
-
             },
             1200
         );
@@ -667,7 +745,7 @@ async function authenticateAdmin() {
 
 
 /* =========================================================
-   LOAD PROFILE
+   PROFILE
 ========================================================= */
 
 async function loadProfile() {
@@ -684,7 +762,6 @@ async function loadProfile() {
             );
 
         if (!response) {
-
             return null;
         }
 
@@ -713,14 +790,9 @@ async function loadProfile() {
 }
 
 
-/* =========================================================
-   RENDER PROFILE
-========================================================= */
-
 function renderProfile(profile) {
 
     if (!profile) {
-
         return;
     }
 
@@ -753,7 +825,6 @@ function renderProfile(profile) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     name;
             }
@@ -764,7 +835,6 @@ function renderProfile(profile) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     email;
             }
@@ -775,7 +845,6 @@ function renderProfile(profile) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     role;
             }
@@ -784,7 +853,7 @@ function renderProfile(profile) {
 
 
 /* =========================================================
-   LOAD ADMIN DASHBOARD
+   DASHBOARD
 ========================================================= */
 
 async function loadAdminDashboard() {
@@ -801,7 +870,6 @@ async function loadAdminDashboard() {
             );
 
         if (!response) {
-
             return null;
         }
 
@@ -833,14 +901,9 @@ async function loadAdminDashboard() {
 }
 
 
-/* =========================================================
-   DASHBOARD STATS
-========================================================= */
-
 function renderDashboardStats(data) {
 
     if (!data) {
-
         return;
     }
 
@@ -928,7 +991,6 @@ function renderDashboardStats(data) {
                 if (
                     value === undefined
                 ) {
-
                     return;
                 }
 
@@ -979,10 +1041,6 @@ function renderDashboardStats(data) {
 }
 
 
-/* =========================================================
-   PENDING ACTIONS
-========================================================= */
-
 function renderPendingActions(stats) {
 
     const pendingDeposits =
@@ -1016,7 +1074,6 @@ function renderPendingActions(stats) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     formatNumber(total);
             }
@@ -1027,7 +1084,6 @@ function renderPendingActions(stats) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     formatNumber(
                         pendingDeposits
@@ -1040,7 +1096,6 @@ function renderPendingActions(stats) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     formatNumber(
                         pendingWithdrawals
@@ -1053,7 +1108,6 @@ function renderPendingActions(stats) {
     )
         .forEach(
             element => {
-
                 element.textContent =
                     formatNumber(
                         pendingInvestments
@@ -1073,7 +1127,6 @@ function renderRecentTransactions(data) {
         $("#recentTransactions");
 
     if (!container) {
-
         return;
     }
 
@@ -1109,8 +1162,7 @@ function renderRecentTransactions(data) {
 
                     const amount =
                         Number(
-                            transaction.amount ||
-                            0
+                            transaction.amount || 0
                         );
 
                     const status =
@@ -1173,7 +1225,6 @@ function renderRecentUsers(data) {
         $("#recentUsers");
 
     if (!container) {
-
         return;
     }
 
@@ -1246,7 +1297,1605 @@ function renderRecentUsers(data) {
 
 
 /* =========================================================
-   LOAD MAINTENANCE SETTINGS
+   MANAGEMENT SECTION FINDER
+========================================================= */
+
+function findManagementContainer(
+    type
+) {
+
+    const selectors = {
+
+        deposits: [
+            "#deposits",
+            "#depositManagement",
+            "#deposit-management",
+            "[data-section='deposits']",
+            "[data-management='deposits']"
+        ],
+
+        withdrawals: [
+            "#withdrawals",
+            "#withdrawalManagement",
+            "#withdrawal-management",
+            "[data-section='withdrawals']",
+            "[data-management='withdrawals']"
+        ],
+
+        investments: [
+            "#investments",
+            "#investmentManagement",
+            "#investment-management",
+            "[data-section='investments']",
+            "[data-management='investments']"
+        ]
+    };
+
+    const list =
+        selectors[type] || [];
+
+    for (
+        const selector of list
+    ) {
+
+        const element =
+            $(selector);
+
+        if (element) {
+            return element;
+        }
+    }
+
+    return null;
+}
+
+
+/* =========================================================
+   MANAGEMENT STYLE
+========================================================= */
+
+function injectManagementStyles() {
+
+    if (
+        document.getElementById(
+            "crownCashManagementStyles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "crownCashManagementStyles";
+
+    style.textContent = `
+
+        .cc-management-wrapper {
+            width: 100%;
+            margin-top: 18px;
+        }
+
+        .cc-management-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .cc-management-title {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .cc-management-count {
+            font-size: 12px;
+            opacity: .7;
+        }
+
+        .cc-management-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 14px;
+        }
+
+        .cc-management-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        .cc-management-table th,
+        .cc-management-table td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .cc-management-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            opacity: .65;
+        }
+
+        .cc-customer {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .cc-customer strong {
+            font-size: 12px;
+        }
+
+        .cc-customer span {
+            font-size: 10px;
+            opacity: .6;
+        }
+
+        .cc-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: capitalize;
+        }
+
+        .cc-status.pending {
+            background: rgba(255,193,7,.12);
+            color: #ffd05a;
+        }
+
+        .cc-status.approved {
+            background: rgba(72,210,125,.12);
+            color: #72dda0;
+        }
+
+        .cc-status.rejected {
+            background: rgba(255,80,110,.12);
+            color: #ff809c;
+        }
+
+        .cc-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .cc-action-btn {
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 11px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .cc-action-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .cc-approve {
+            background: #197a4d;
+        }
+
+        .cc-reject {
+            background: #a82d4f;
+        }
+
+        .cc-refresh {
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.05);
+            color: #fff;
+            border-radius: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .cc-empty {
+            padding: 25px;
+            text-align: center;
+            opacity: .6;
+            font-size: 12px;
+        }
+
+        .cc-loading {
+            padding: 25px;
+            text-align: center;
+            opacity: .7;
+            font-size: 12px;
+        }
+
+        @media (max-width: 700px) {
+
+            .cc-management-table {
+                min-width: 760px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/* =========================================================
+   LOAD DEPOSITS
+========================================================= */
+
+async function loadDeposits() {
+
+    const container =
+        findManagementContainer(
+            "deposits"
+        );
+
+    if (!container) {
+        return [];
+    }
+
+    const management =
+        ensureManagementArea(
+            container,
+            "deposits"
+        );
+
+    if (!management) {
+        return [];
+    }
+
+    management.body.innerHTML =
+        `<div class="cc-loading">
+            Loading deposits...
+        </div>`;
+
+    try {
+
+        const response =
+            await apiRequest(
+                ADMIN_DEPOSITS_API,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+        const deposits =
+            normalizeArray(
+                response?.deposits ??
+                response?.data ??
+                response?.items ??
+                response
+            );
+
+        AdminDashboard.deposits =
+            deposits;
+
+        renderDeposits(
+            management.body,
+            deposits
+        );
+
+        return deposits;
+
+    } catch (error) {
+
+        console.error(
+            "Load deposits error:",
+            error
+        );
+
+        management.body.innerHTML =
+            `<div class="cc-empty">
+                Unable to load deposits.
+                <br>
+                <small>${escapeHtml(
+                    error.message
+                )}</small>
+            </div>`;
+
+        return [];
+    }
+}
+
+
+/* =========================================================
+   RENDER DEPOSITS
+========================================================= */
+
+function renderDeposits(
+    container,
+    deposits
+) {
+
+    if (
+        !Array.isArray(deposits) ||
+        deposits.length === 0
+    ) {
+
+        container.innerHTML =
+            `<div class="cc-empty">
+                No deposit requests found.
+            </div>`;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="cc-management-table-wrap">
+
+            <table class="cc-management-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${deposits.map(
+                        deposit => {
+
+                            const id =
+                                getRecordId(
+                                    deposit
+                                );
+
+                            const status =
+                                deposit.status ||
+                                "pending";
+
+                            const method =
+                                deposit.payment_method ||
+                                deposit.paymentMethod ||
+                                "-";
+
+                            const reference =
+                                deposit.transaction_reference ||
+                                deposit.transactionReference ||
+                                "-";
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+
+                                        <div class="cc-customer">
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    getCustomerName(
+                                                        deposit
+                                                    )
+                                                )}
+                                            </strong>
+
+                                            <span>
+                                                ${escapeHtml(
+                                                    deposit.email ||
+                                                    deposit.phone ||
+                                                    ""
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${formatCurrency(
+                                                deposit.amount
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            method
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            reference
+                                        )}
+                                    </td>
+
+                                    <td>
+
+                                        <span class="cc-status ${getStatusClass(status)}">
+                                            ${escapeHtml(
+                                                status
+                                            )}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            formatDate(
+                                                deposit.created_at ||
+                                                deposit.createdAt ||
+                                                deposit.date
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+
+                                        ${renderActionButtons(
+                                            "deposit",
+                                            id,
+                                            status
+                                        )}
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+                        }
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   LOAD WITHDRAWALS
+========================================================= */
+
+async function loadWithdrawals() {
+
+    const container =
+        findManagementContainer(
+            "withdrawals"
+        );
+
+    if (!container) {
+        return [];
+    }
+
+    const management =
+        ensureManagementArea(
+            container,
+            "withdrawals"
+        );
+
+    if (!management) {
+        return [];
+    }
+
+    management.body.innerHTML =
+        `<div class="cc-loading">
+            Loading withdrawals...
+        </div>`;
+
+    try {
+
+        const response =
+            await apiRequest(
+                ADMIN_WITHDRAWALS_API,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+        const withdrawals =
+            normalizeArray(
+                response?.withdrawals ??
+                response?.data ??
+                response?.items ??
+                response
+            );
+
+        AdminDashboard.withdrawals =
+            withdrawals;
+
+        renderWithdrawals(
+            management.body,
+            withdrawals
+        );
+
+        return withdrawals;
+
+    } catch (error) {
+
+        console.error(
+            "Load withdrawals error:",
+            error
+        );
+
+        management.body.innerHTML =
+            `<div class="cc-empty">
+                Unable to load withdrawals.
+                <br>
+                <small>${escapeHtml(
+                    error.message
+                )}</small>
+            </div>`;
+
+        return [];
+    }
+}
+
+
+/* =========================================================
+   RENDER WITHDRAWALS
+========================================================= */
+
+function renderWithdrawals(
+    container,
+    withdrawals
+) {
+
+    if (
+        !Array.isArray(withdrawals) ||
+        withdrawals.length === 0
+    ) {
+
+        container.innerHTML =
+            `<div class="cc-empty">
+                No withdrawal requests found.
+            </div>`;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="cc-management-table-wrap">
+
+            <table class="cc-management-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${withdrawals.map(
+                        withdrawal => {
+
+                            const id =
+                                getRecordId(
+                                    withdrawal
+                                );
+
+                            const status =
+                                withdrawal.status ||
+                                "pending";
+
+                            const method =
+                                withdrawal.payment_method ||
+                                withdrawal.paymentMethod ||
+                                withdrawal.method ||
+                                "-";
+
+                            const reference =
+                                withdrawal.transaction_reference ||
+                                withdrawal.transactionReference ||
+                                withdrawal.reference ||
+                                "-";
+
+                            const userId =
+                                withdrawal.user_id ||
+                                withdrawal.userId ||
+                                "";
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+
+                                        <div class="cc-customer">
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    getCustomerName(
+                                                        withdrawal
+                                                    )
+                                                )}
+                                            </strong>
+
+                                            <span>
+                                                ${escapeHtml(
+                                                    withdrawal.email ||
+                                                    withdrawal.phone ||
+                                                    ""
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${formatCurrency(
+                                                withdrawal.amount
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            method
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            reference
+                                        )}
+                                    </td>
+
+                                    <td>
+
+                                        <span class="cc-status ${getStatusClass(status)}">
+                                            ${escapeHtml(
+                                                status
+                                            )}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            formatDate(
+                                                withdrawal.created_at ||
+                                                withdrawal.createdAt ||
+                                                withdrawal.date
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+
+                                        ${renderActionButtons(
+                                            "withdrawal",
+                                            id,
+                                            status,
+                                            userId
+                                        )}
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+                        }
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   LOAD INVESTMENTS
+========================================================= */
+
+async function loadInvestments() {
+
+    const container =
+        findManagementContainer(
+            "investments"
+        );
+
+    if (!container) {
+        return [];
+    }
+
+    const management =
+        ensureManagementArea(
+            container,
+            "investments"
+        );
+
+    if (!management) {
+        return [];
+    }
+
+    management.body.innerHTML =
+        `<div class="cc-loading">
+            Loading investments...
+        </div>`;
+
+    try {
+
+        const response =
+            await apiRequest(
+                ADMIN_INVESTMENTS_API,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+        const investments =
+            normalizeArray(
+                response?.investments ??
+                response?.data ??
+                response?.items ??
+                response
+            );
+
+        AdminDashboard.investments =
+            investments;
+
+        renderInvestments(
+            management.body,
+            investments
+        );
+
+        return investments;
+
+    } catch (error) {
+
+        console.error(
+            "Load investments error:",
+            error
+        );
+
+        management.body.innerHTML =
+            `<div class="cc-empty">
+                Unable to load investments.
+                <br>
+                <small>${escapeHtml(
+                    error.message
+                )}</small>
+            </div>`;
+
+        return [];
+    }
+}
+
+
+/* =========================================================
+   RENDER INVESTMENTS
+========================================================= */
+
+function renderInvestments(
+    container,
+    investments
+) {
+
+    if (
+        !Array.isArray(investments) ||
+        investments.length === 0
+    ) {
+
+        container.innerHTML =
+            `<div class="cc-empty">
+                No investment requests found.
+            </div>`;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="cc-management-table-wrap">
+
+            <table class="cc-management-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Customer</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${investments.map(
+                        investment => {
+
+                            const id =
+                                getRecordId(
+                                    investment
+                                );
+
+                            const status =
+                                investment.status ||
+                                "pending";
+
+                            const plan =
+                                investment.plan_name ||
+                                investment.planName ||
+                                investment.plan ||
+                                investment.package ||
+                                "Investment";
+
+                            const duration =
+                                investment.duration_days ??
+                                investment.duration ??
+                                30;
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+
+                                        <div class="cc-customer">
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    getCustomerName(
+                                                        investment
+                                                    )
+                                                )}
+                                            </strong>
+
+                                            <span>
+                                                ${escapeHtml(
+                                                    investment.email ||
+                                                    ""
+                                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            plan
+                                        )}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            ${formatCurrency(
+                                                investment.amount
+                                            )}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            String(duration)
+                                        )} days
+                                    </td>
+
+                                    <td>
+
+                                        <span class="cc-status ${getStatusClass(status)}">
+                                            ${escapeHtml(
+                                                status
+                                            )}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(
+                                            formatDate(
+                                                investment.created_at ||
+                                                investment.createdAt ||
+                                                investment.date
+                                            )
+                                        )}
+                                    </td>
+
+                                    <td>
+
+                                        ${renderActionButtons(
+                                            "investment",
+                                            id,
+                                            status
+                                        )}
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+                        }
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   ENSURE MANAGEMENT AREA
+========================================================= */
+
+function ensureManagementArea(
+    container,
+    type
+) {
+
+    injectManagementStyles();
+
+    let wrapper =
+        container.querySelector(
+            ".cc-management-wrapper"
+        );
+
+    if (!wrapper) {
+
+        wrapper =
+            document.createElement(
+                "div"
+            );
+
+        wrapper.className =
+            "cc-management-wrapper";
+
+        wrapper.innerHTML = `
+
+            <div class="cc-management-header">
+
+                <div>
+
+                    <div class="cc-management-title">
+                        ${type.charAt(0).toUpperCase() + type.slice(1)}
+                        Management
+                    </div>
+
+                    <div class="cc-management-count"
+                         data-management-count="${type}">
+                        Loading...
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="cc-refresh"
+                    data-management-refresh="${type}">
+                    Refresh
+                </button>
+
+            </div>
+
+            <div
+                class="cc-management-body"
+                data-management-body="${type}">
+            </div>
+        `;
+
+        container.appendChild(
+            wrapper
+        );
+    }
+
+    const body =
+        wrapper.querySelector(
+            ".cc-management-body"
+        );
+
+    const count =
+        wrapper.querySelector(
+            `[data-management-count="${type}"]`
+        );
+
+    const refresh =
+        wrapper.querySelector(
+            `[data-management-refresh="${type}"]`
+        );
+
+    if (
+        refresh &&
+        !refresh.dataset.bound
+    ) {
+
+        refresh.dataset.bound =
+            "1";
+
+        refresh.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    type === "deposits"
+                ) {
+                    loadDeposits();
+                }
+
+                if (
+                    type === "withdrawals"
+                ) {
+                    loadWithdrawals();
+                }
+
+                if (
+                    type === "investments"
+                ) {
+                    loadInvestments();
+                }
+            }
+        );
+    }
+
+    if (count) {
+
+        let length = 0;
+
+        if (
+            type === "deposits"
+        ) {
+            length =
+                AdminDashboard.deposits.length;
+        }
+
+        if (
+            type === "withdrawals"
+        ) {
+            length =
+                AdminDashboard.withdrawals.length;
+        }
+
+        if (
+            type === "investments"
+        ) {
+            length =
+                AdminDashboard.investments.length;
+        }
+
+        count.textContent =
+            `${formatNumber(length)} request${length === 1 ? "" : "s"}`;
+    }
+
+    return {
+        wrapper,
+        body,
+        count,
+        refresh
+    };
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+function renderActionButtons(
+    type,
+    id,
+    status,
+    userId = ""
+) {
+
+    const normalized =
+        String(status || "")
+            .toLowerCase();
+
+    const pending =
+        [
+            "pending",
+            "submitted",
+            "processing"
+        ].includes(
+            normalized
+        );
+
+    if (!pending) {
+
+        return `
+            <span class="cc-status ${getStatusClass(status)}">
+                ${escapeHtml(status)}
+            </span>
+        `;
+    }
+
+    const safeId =
+        escapeHtml(id);
+
+    const safeUserId =
+        escapeHtml(userId);
+
+    return `
+
+        <div class="cc-actions">
+
+            <button
+                type="button"
+                class="cc-action-btn cc-approve"
+                data-cc-action="approve"
+                data-cc-type="${escapeHtml(type)}"
+                data-cc-id="${safeId}"
+                data-cc-user-id="${safeUserId}">
+                Approve
+            </button>
+
+            <button
+                type="button"
+                class="cc-action-btn cc-reject"
+                data-cc-action="reject"
+                data-cc-type="${escapeHtml(type)}"
+                data-cc-id="${safeId}"
+                data-cc-user-id="${safeUserId}">
+                Reject
+            </button>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   MANAGEMENT ACTION EVENT DELEGATION
+========================================================= */
+
+function setupManagementActions() {
+
+    if (
+        document.body.dataset.ccManagementActions
+        === "1"
+    ) {
+        return;
+    }
+
+    document.body.dataset.ccManagementActions =
+        "1";
+
+    document.addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "[data-cc-action]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (
+                button.disabled
+            ) {
+                return;
+            }
+
+            const action =
+                button.dataset.ccAction;
+
+            const type =
+                button.dataset.ccType;
+
+            const id =
+                button.dataset.ccId;
+
+            const userId =
+                button.dataset.ccUserId ||
+                "";
+
+            if (
+                !id ||
+                !type
+            ) {
+                return;
+            }
+
+
+            /* -------------------------------------------------
+               CONFIRM APPROVAL
+            ------------------------------------------------- */
+
+            if (
+                action === "approve"
+            ) {
+
+                const confirmed =
+                    window.confirm(
+                        `Are you sure you want to approve this ${type}?`
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+
+            /* -------------------------------------------------
+               REJECTION REASON
+            ------------------------------------------------- */
+
+            let note = "";
+
+            if (
+                action === "reject"
+            ) {
+
+                note =
+                    window.prompt(
+                        `Enter a reason for rejecting this ${type}:`,
+                        ""
+                    );
+
+                if (
+                    note === null
+                ) {
+                    return;
+                }
+
+                note =
+                    note.trim();
+
+                if (!note) {
+
+                    note =
+                        "Rejected by administrator.";
+                }
+            }
+
+
+            button.disabled =
+                true;
+
+            const originalText =
+                button.textContent;
+
+            button.textContent =
+                action === "approve"
+                    ? "Approving..."
+                    : "Rejecting...";
+
+
+            try {
+
+                let response = null;
+
+                if (
+                    type === "deposit"
+                ) {
+
+                    response =
+                        await processDepositAction(
+                            id,
+                            action,
+                            note
+                        );
+                }
+
+                if (
+                    type === "withdrawal"
+                ) {
+
+                    response =
+                        await processWithdrawalAction(
+                            id,
+                            userId,
+                            action,
+                            note
+                        );
+                }
+
+                if (
+                    type === "investment"
+                ) {
+
+                    response =
+                        await processInvestmentAction(
+                            id,
+                            action,
+                            note
+                        );
+                }
+
+                if (!response) {
+                    return;
+                }
+
+                /*
+                 * Refresh the affected management
+                 * section immediately.
+                 */
+
+                if (
+                    type === "deposit"
+                ) {
+                    await loadDeposits();
+                }
+
+                if (
+                    type === "withdrawal"
+                ) {
+                    await loadWithdrawals();
+                }
+
+                if (
+                    type === "investment"
+                ) {
+                    await loadInvestments();
+                }
+
+                /*
+                 * Refresh dashboard numbers.
+                 */
+
+                await loadAdminDashboard();
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    originalText;
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   DEPOSIT ACTION
+========================================================= */
+
+async function processDepositAction(
+    depositId,
+    action,
+    note = ""
+) {
+
+    return processAdminAction(
+        ADMIN_DEPOSITS_API,
+        {
+            deposit_id:
+                depositId,
+
+            depositId:
+                depositId,
+
+            id:
+                depositId,
+
+            action,
+
+            reason:
+                note,
+
+            rejection_reason:
+                note,
+
+            status:
+                action === "approve"
+                    ? "approved"
+                    : action === "reject"
+                        ? "rejected"
+                        : action
+        },
+        `Deposit ${action === "approve" ? "approved" : "rejected"} successfully.`
+    );
+}
+
+
+/* =========================================================
+   WITHDRAWAL ACTION
+========================================================= */
+
+async function processWithdrawalAction(
+    withdrawalId,
+    userId,
+    action,
+    note = ""
+) {
+
+    return processAdminAction(
+        ADMIN_WITHDRAWALS_API,
+        {
+            withdrawal_id:
+                withdrawalId,
+
+            withdrawalId:
+                withdrawalId,
+
+            id:
+                withdrawalId,
+
+            user_id:
+                userId,
+
+            userId,
+
+            action,
+
+            reason:
+                note,
+
+            rejection_reason:
+                note,
+
+            note,
+
+            status:
+                action === "approve"
+                    ? "approved"
+                    : action === "reject"
+                        ? "rejected"
+                        : action
+        },
+        `Withdrawal ${action === "approve" ? "approved" : "rejected"} successfully.`
+    );
+}
+
+
+/* =========================================================
+   INVESTMENT ACTION
+========================================================= */
+
+async function processInvestmentAction(
+    investmentId,
+    action,
+    note = ""
+) {
+
+    return processAdminAction(
+        ADMIN_INVESTMENTS_API,
+        {
+            investment_id:
+                investmentId,
+
+            investmentId:
+                investmentId,
+
+            id:
+                investmentId,
+
+            action,
+
+            reason:
+                note,
+
+            rejection_reason:
+                note,
+
+            note,
+
+            status:
+                action === "approve"
+                    ? "approved"
+                    : action === "reject"
+                        ? "rejected"
+                        : action
+        },
+        `Investment ${action === "approve" ? "approved" : "rejected"} successfully.`
+    );
+}
+
+
+/* =========================================================
+   GENERIC ADMIN ACTION
+========================================================= */
+
+async function processAdminAction(
+    endpoint,
+    payload,
+    successMessage
+) {
+
+    try {
+
+        const response =
+            await apiRequest(
+                endpoint,
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        )
+                },
+                false
+            );
+
+        if (!response) {
+            return null;
+        }
+
+        showMessage(
+            response.message ||
+            successMessage ||
+            "Action completed successfully."
+        );
+
+        return response;
+
+    } catch (error) {
+
+        console.error(
+            "Admin action failed:",
+            error
+        );
+
+        showMessage(
+            error.message ||
+            "Unable to complete administrator action.",
+            "error"
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   LOAD ALL MANAGEMENT DATA
+========================================================= */
+
+async function loadManagementData() {
+
+    await Promise.allSettled([
+
+        loadDeposits(),
+
+        loadWithdrawals(),
+
+        loadInvestments()
+
+    ]);
+}
+
+
+/* =========================================================
+   MAINTENANCE
 ========================================================= */
 
 async function loadMaintenanceSettings() {
@@ -1263,7 +2912,6 @@ async function loadMaintenanceSettings() {
             );
 
         if (!response) {
-
             return null;
         }
 
@@ -1378,10 +3026,6 @@ async function loadMaintenanceSettings() {
 }
 
 
-/* =========================================================
-   RENDER MAINTENANCE
-========================================================= */
-
 function renderMaintenanceSettings(
     settings,
     monitor
@@ -1409,43 +3053,36 @@ function renderMaintenanceSettings(
         $("#maintenanceMessage");
 
     if (maintenanceToggle) {
-
         maintenanceToggle.checked =
             !!settings.maintenance_mode;
     }
 
     if (investmentsToggle) {
-
         investmentsToggle.checked =
             !!settings.new_investments;
     }
 
     if (depositsToggle) {
-
         depositsToggle.checked =
             !!settings.deposits;
     }
 
     if (withdrawalsToggle) {
-
         withdrawalsToggle.checked =
             !!settings.withdrawals;
     }
 
     if (earningsToggle) {
-
         earningsToggle.checked =
             !!settings.daily_earnings;
     }
 
     if (registrationToggle) {
-
         registrationToggle.checked =
             !!settings.user_registration;
     }
 
     if (message) {
-
         message.value =
             settings.maintenance_message ||
             "";
@@ -1511,10 +3148,6 @@ function renderMaintenanceSettings(
 }
 
 
-/* =========================================================
-   MAINTENANCE STATUS
-========================================================= */
-
 function updateMaintenanceStatus(
     enabled
 ) {
@@ -1532,7 +3165,6 @@ function updateMaintenanceStatus(
         $("#maintenanceDescription");
 
     if (!statusText) {
-
         return;
     }
 
@@ -1603,17 +3235,12 @@ function updateMaintenanceStatus(
 }
 
 
-/* =========================================================
-   EARNINGS ENGINE STATUS
-========================================================= */
-
 function setMaintenanceEngineStatus(text) {
 
     const element =
         $("#earningsEngineStatus");
 
     if (!element) {
-
         return;
     }
 
@@ -1655,10 +3282,6 @@ function setMaintenanceEngineStatus(text) {
 }
 
 
-/* =========================================================
-   COLLECT MAINTENANCE FORM
-========================================================= */
-
 function collectMaintenanceSettings() {
 
     return {
@@ -1688,10 +3311,6 @@ function collectMaintenanceSettings() {
     };
 }
 
-
-/* =========================================================
-   SAVE MAINTENANCE SETTINGS
-========================================================= */
 
 async function saveMaintenanceSettings() {
 
@@ -1812,10 +3431,6 @@ async function saveMaintenanceSettings() {
 }
 
 
-/* =========================================================
-   MAINTENANCE CONTROL EVENTS
-========================================================= */
-
 function setupMaintenanceControls() {
 
     const maintenanceToggle =
@@ -1848,249 +3463,6 @@ function setupMaintenanceControls() {
 
 
 /* =========================================================
-   ADMIN ACTION
-========================================================= */
-
-async function processAdminAction(
-    endpoint,
-    payload,
-    successMessage
-) {
-
-    try {
-
-        const response =
-            await apiRequest(
-                endpoint,
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
-                },
-                false
-            );
-
-        if (!response) {
-
-            return null;
-        }
-
-        showMessage(
-            response.message ||
-            successMessage ||
-            "Action completed successfully."
-        );
-
-        await Promise.allSettled([
-
-            loadAdminDashboard(),
-
-            loadMaintenanceSettings()
-
-        ]);
-
-        return response;
-
-    } catch (error) {
-
-        console.error(
-            "Admin action failed:",
-            error
-        );
-
-        showMessage(
-            error.message ||
-            "Unable to complete administrator action.",
-            "error"
-        );
-
-        return null;
-    }
-}
-
-
-/* =========================================================
-   DEPOSIT ACTION
-========================================================= */
-
-async function processDepositAction(
-    depositId,
-    action,
-    note = ""
-) {
-
-    return processAdminAction(
-        ADMIN_DEPOSITS_API,
-        {
-            deposit_id: depositId,
-
-            id: depositId,
-
-            action,
-
-            status:
-                action === "approve"
-                    ? "approved"
-                    : action === "reject"
-                        ? "rejected"
-                        : action,
-
-            note
-        },
-        `Deposit ${action}d successfully.`
-    );
-}
-
-
-/* =========================================================
-   WITHDRAWAL ACTION
-========================================================= */
-
-async function processWithdrawalAction(
-    withdrawalId,
-    userId,
-    action,
-    note = ""
-) {
-
-    return processAdminAction(
-        ADMIN_WITHDRAWALS_API,
-        {
-            withdrawal_id:
-                withdrawalId,
-
-            id:
-                withdrawalId,
-
-            user_id:
-                userId,
-
-            userId,
-
-            action,
-
-            note
-        },
-        `Withdrawal ${action}d successfully.`
-    );
-}
-
-
-/* =========================================================
-   INVESTMENT ACTION
-========================================================= */
-
-async function processInvestmentAction(
-    investmentId,
-    action,
-    note = ""
-) {
-
-    return processAdminAction(
-        ADMIN_INVESTMENTS_API,
-        {
-            investment_id:
-                investmentId,
-
-            id:
-                investmentId,
-
-            action,
-
-            status:
-                action === "approve"
-                    ? "approved"
-                    : action === "reject"
-                        ? "rejected"
-                        : action,
-
-            note
-        },
-        `Investment ${action}d successfully.`
-    );
-}
-
-
-/* =========================================================
-   GLOBAL ADMIN API
-========================================================= */
-
-window.CrownCashAdmin = {
-
-    state:
-        AdminDashboard,
-
-    authenticate:
-        authenticateAdmin,
-
-    loadProfile:
-        loadProfile,
-
-    loadDashboard:
-        loadAdminDashboard,
-
-    loadMaintenance:
-        loadMaintenanceSettings,
-
-    saveMaintenance:
-        saveMaintenanceSettings,
-
-    approveDeposit:
-        depositId =>
-            processDepositAction(
-                depositId,
-                "approve"
-            ),
-
-    rejectDeposit:
-        depositId =>
-            processDepositAction(
-                depositId,
-                "reject"
-            ),
-
-    approveWithdrawal:
-        (
-            withdrawalId,
-            userId
-        ) =>
-            processWithdrawalAction(
-                withdrawalId,
-                userId,
-                "approve"
-            ),
-
-    rejectWithdrawal:
-        (
-            withdrawalId,
-            userId
-        ) =>
-            processWithdrawalAction(
-                withdrawalId,
-                userId,
-                "reject"
-            ),
-
-    approveInvestment:
-        investmentId =>
-            processInvestmentAction(
-                investmentId,
-                "approve"
-            ),
-
-    rejectInvestment:
-        investmentId =>
-            processInvestmentAction(
-                investmentId,
-                "reject"
-            )
-};
-
-
-/* =========================================================
    LOGOUT
 ========================================================= */
 
@@ -2120,10 +3492,6 @@ async function logoutAdmin() {
     }
 }
 
-
-/* =========================================================
-   LOGOUT EVENTS
-========================================================= */
 
 function setupLogout() {
 
@@ -2172,7 +3540,6 @@ function setupMobileMenu() {
         !menuButton ||
         !sidebar
     ) {
-
         return;
     }
 
@@ -2243,7 +3610,7 @@ function setupMobileMenu() {
 
 
 /* =========================================================
-   ACTIVE NAVIGATION
+   NAVIGATION
 ========================================================= */
 
 function setupNavigation() {
@@ -2270,6 +3637,38 @@ function setupNavigation() {
                     link.classList.add(
                         "active"
                     );
+
+                    /*
+                     * Load the relevant management
+                     * section when its navigation
+                     * link is selected.
+                     */
+
+                    const href =
+                        link.getAttribute(
+                            "href"
+                        ) || "";
+
+                    const hash =
+                        href.split("#")[1];
+
+                    if (
+                        hash === "deposits"
+                    ) {
+                        loadDeposits();
+                    }
+
+                    if (
+                        hash === "withdrawals"
+                    ) {
+                        loadWithdrawals();
+                    }
+
+                    if (
+                        hash === "investments"
+                    ) {
+                        loadInvestments();
+                    }
                 }
             );
         }
@@ -2300,7 +3699,7 @@ function updateCurrentYear() {
 
 
 /* =========================================================
-   INITIALIZE ADMIN PANEL
+   INITIALIZE
 ========================================================= */
 
 async function initializeAdmin() {
@@ -2308,26 +3707,16 @@ async function initializeAdmin() {
     if (
         AdminDashboard.initialized
     ) {
-
         return;
     }
 
     AdminDashboard.initialized =
         true;
 
-    /*
-       Safety timer.
-
-       The admin panel must NEVER remain on
-       the loading screen permanently.
-    */
-
     const safetyLoaderTimer =
         setTimeout(
             () => {
-
                 forceHideAdminLoader();
-
             },
             22000
         );
@@ -2342,14 +3731,17 @@ async function initializeAdmin() {
 
         setupMaintenanceControls();
 
+        setupManagementActions();
+
         updateCurrentYear();
 
         AdminDashboard.loading =
             true;
 
-        /*
-           Authenticate first.
-        */
+
+        /* -------------------------------------------------
+           AUTHENTICATE FIRST
+        ------------------------------------------------- */
 
         const authenticated =
             await authenticateAdmin();
@@ -2364,23 +3756,18 @@ async function initializeAdmin() {
             return;
         }
 
-        /*
-           IMPORTANT FIX:
-           Release the page immediately after
-           successful admin authentication.
 
-           The other API requests can continue
-           loading in the background.
-        */
+        /*
+         * Release the page immediately after
+         * successful authentication.
+         */
 
         forceHideAdminLoader();
 
-        /*
-           Load all secondary information
-           independently.
 
-           One failure cannot block the page.
-        */
+        /* -------------------------------------------------
+           LOAD ADMIN DATA
+        ------------------------------------------------- */
 
         await Promise.allSettled([
 
@@ -2388,9 +3775,12 @@ async function initializeAdmin() {
 
             loadAdminDashboard(),
 
-            loadMaintenanceSettings()
+            loadMaintenanceSettings(),
+
+            loadManagementData()
 
         ]);
+
 
         AdminDashboard.loading =
             false;
@@ -2421,11 +3811,6 @@ async function initializeAdmin() {
             safetyLoaderTimer
         );
 
-        /*
-           Final guarantee that the loading
-           overlay is removed.
-        */
-
         forceHideAdminLoader();
     }
 }
@@ -2455,18 +3840,110 @@ if (
 
 
 /* =========================================================
-   GLOBAL SAFETY LOADER
+   GLOBAL API
+========================================================= */
+
+window.CrownCashAdmin = {
+
+    state:
+        AdminDashboard,
+
+    authenticate:
+        authenticateAdmin,
+
+    loadProfile:
+        loadProfile,
+
+    loadDashboard:
+        loadAdminDashboard,
+
+    loadDeposits:
+        loadDeposits,
+
+    loadWithdrawals:
+        loadWithdrawals,
+
+    loadInvestments:
+        loadInvestments,
+
+    loadManagement:
+        loadManagementData,
+
+    loadMaintenance:
+        loadMaintenanceSettings,
+
+    saveMaintenance:
+        saveMaintenanceSettings,
+
+    approveDeposit:
+        depositId =>
+            processDepositAction(
+                depositId,
+                "approve"
+            ),
+
+    rejectDeposit:
+        (
+            depositId,
+            reason = ""
+        ) =>
+            processDepositAction(
+                depositId,
+                "reject",
+                reason
+            ),
+
+    approveWithdrawal:
+        (
+            withdrawalId,
+            userId
+        ) =>
+            processWithdrawalAction(
+                withdrawalId,
+                userId,
+                "approve"
+            ),
+
+    rejectWithdrawal:
+        (
+            withdrawalId,
+            userId,
+            reason = ""
+        ) =>
+            processWithdrawalAction(
+                withdrawalId,
+                userId,
+                "reject",
+                reason
+            ),
+
+    approveInvestment:
+        investmentId =>
+            processInvestmentAction(
+                investmentId,
+                "approve"
+            ),
+
+    rejectInvestment:
+        (
+            investmentId,
+            reason = ""
+        ) =>
+            processInvestmentAction(
+                investmentId,
+                "reject",
+                reason
+            )
+};
+
+
+/* =========================================================
+   FINAL LOADER SAFETY
 ========================================================= */
 
 window.addEventListener(
     "load",
     () => {
-
-        /*
-           Do not hide before authentication.
-           This only acts as a final visual safeguard
-           after the page itself has finished loading.
-        */
 
         if (
             AdminDashboard.authenticated

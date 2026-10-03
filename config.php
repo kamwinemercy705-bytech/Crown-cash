@@ -7,37 +7,37 @@ use MongoDB\Client;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
 
-/*
-|--------------------------------------------------------------------------
-| CROWN CASH - GLOBAL CONFIGURATION
-|--------------------------------------------------------------------------
-| Frontend:
-| https://crown-cash.vercel.app
-|
-| Backend:
-| https://crown-cash1.onrender.com
-|--------------------------------------------------------------------------
-*/
-
 
 /*
 |--------------------------------------------------------------------------
-| CORS
+| CROWN CASH GLOBAL CONFIG
 |--------------------------------------------------------------------------
 */
 
-$allowedOrigin = 'https://crown-cash.vercel.app';
+$allowedOrigins = [
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
+];
+
+$requestOrigin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (
-    isset($_SERVER['HTTP_ORIGIN']) &&
-    $_SERVER['HTTP_ORIGIN'] === $allowedOrigin
+    in_array(
+        $requestOrigin,
+        $allowedOrigins,
+        true
+    )
 ) {
     header(
-        'Access-Control-Allow-Origin: ' . $allowedOrigin
+        'Access-Control-Allow-Origin: ' .
+        $requestOrigin
     );
 }
 
-header('Access-Control-Allow-Credentials: true');
+header(
+    'Access-Control-Allow-Credentials: true'
+);
 
 header(
     'Access-Control-Allow-Headers: ' .
@@ -45,10 +45,17 @@ header(
 );
 
 header(
-    'Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods: ' .
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
 );
 
-header('Access-Control-Max-Age: 86400');
+header(
+    'Access-Control-Max-Age: 86400'
+);
+
+header(
+    'Vary: Origin'
+);
 
 header(
     'Content-Type: application/json; charset=utf-8'
@@ -57,35 +64,40 @@ header(
 
 /*
 |--------------------------------------------------------------------------
-| OPTIONS / PREFLIGHT REQUEST
+| CORS PREFLIGHT
 |--------------------------------------------------------------------------
 */
 
 if (
     ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS'
 ) {
+
     http_response_code(204);
+
     exit;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| MONGODB CONNECTION
+| MONGODB
 |--------------------------------------------------------------------------
 */
 
-$mongoUri = getenv('MONGODB_URI');
+$mongoUri =
+    getenv('MONGODB_URI');
 
 if (
     !$mongoUri ||
     trim($mongoUri) === ''
 ) {
+
     http_response_code(500);
 
     echo json_encode([
         'success' => false,
-        'message' => 'MONGODB_URI is not configured.'
+        'message' =>
+            'MONGODB_URI is not configured.'
     ]);
 
     exit;
@@ -94,48 +106,58 @@ if (
 
 try {
 
-    $mongoClient = new Client(
-        $mongoUri
-    );
+    $mongoClient =
+        new Client($mongoUri);
 
     $databaseName =
         getenv('MONGODB_DATABASE')
         ?: 'crowncash';
 
-    $db = $mongoClient->selectDatabase(
-        $databaseName
-    );
+    $db =
+        $mongoClient->selectDatabase(
+            $databaseName
+        );
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | COLLECTIONS
-    |--------------------------------------------------------------------------
-    */
 
     $users =
-        $db->selectCollection('users');
+        $db->selectCollection(
+            'users'
+        );
 
     $deposits =
-        $db->selectCollection('deposits');
+        $db->selectCollection(
+            'deposits'
+        );
 
     $withdrawals =
-        $db->selectCollection('withdrawals');
+        $db->selectCollection(
+            'withdrawals'
+        );
 
     $investments =
-        $db->selectCollection('investments');
+        $db->selectCollection(
+            'investments'
+        );
 
     $transactions =
-        $db->selectCollection('transactions');
+        $db->selectCollection(
+            'transactions'
+        );
 
     $referrals =
-        $db->selectCollection('referrals');
+        $db->selectCollection(
+            'referrals'
+        );
 
     $auditLogs =
-        $db->selectCollection('audit_logs');
+        $db->selectCollection(
+            'audit_logs'
+        );
 
     $earnings =
-        $db->selectCollection('earnings');
+        $db->selectCollection(
+            'earnings'
+        );
 
 
 } catch (Throwable $e) {
@@ -144,7 +166,8 @@ try {
 
     echo json_encode([
         'success' => false,
-        'message' => 'Database connection failed.'
+        'message' =>
+            'Database connection failed.'
     ]);
 
     exit;
@@ -155,12 +178,10 @@ try {
 |--------------------------------------------------------------------------
 | COMPATIBILITY ALIAS
 |--------------------------------------------------------------------------
-|
-| Some existing Crown Cash files use $client.
-|
 */
 
-$client = $mongoClient;
+$client =
+    $mongoClient;
 
 
 /*
@@ -190,19 +211,6 @@ function jsonResponse(
 |--------------------------------------------------------------------------
 | SECURE CROSS-SITE SESSION
 |--------------------------------------------------------------------------
-|
-| The frontend is on Vercel and the API is on Render.
-|
-| Therefore the browser must be allowed to send the PHP
-| session cookie cross-site.
-|
-| Required:
-|
-| SameSite=None
-| Secure=true
-| HttpOnly=true
-|
-|--------------------------------------------------------------------------
 */
 
 function startSecureSession(): void
@@ -213,12 +221,6 @@ function startSecureSession(): void
         return;
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Prevent PHP from changing the session ID unnecessarily
-    |--------------------------------------------------------------------------
-    */
 
     ini_set(
         'session.use_only_cookies',
@@ -241,13 +243,10 @@ function startSecureSession(): void
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Explicit session cookie configuration
-    |--------------------------------------------------------------------------
-    */
+    session_name(
+        'CROWN_CASH_SESSION'
+    );
 
-    session_name('CROWN_CASH_SESSION');
 
     session_set_cookie_params([
         'lifetime' => 0,
@@ -259,19 +258,13 @@ function startSecureSession(): void
     ]);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Start session
-    |--------------------------------------------------------------------------
-    */
-
     session_start();
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| OBJECT ID VALIDATION
+| OBJECT ID
 |--------------------------------------------------------------------------
 */
 
@@ -285,12 +278,6 @@ function isValidObjectId(
     ) === 1;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| OBJECT ID CONVERSION
-|--------------------------------------------------------------------------
-*/
 
 function objectIdOrNull(
     mixed $value
@@ -307,6 +294,7 @@ function objectIdOrNull(
         is_string($value) &&
         isValidObjectId($value)
     ) {
+
         return new ObjectId($value);
     }
 
@@ -317,7 +305,7 @@ function objectIdOrNull(
 
 /*
 |--------------------------------------------------------------------------
-| MONGODB DATE → ISO DATE
+| DATE HELPERS
 |--------------------------------------------------------------------------
 */
 
@@ -360,7 +348,7 @@ function toIsoDate(
 
 /*
 |--------------------------------------------------------------------------
-| MONGODB → JSON SAFE
+| JSON SAFE
 |--------------------------------------------------------------------------
 */
 
@@ -371,6 +359,7 @@ function jsonSafe(
     if (
         $value instanceof ObjectId
     ) {
+
         return (string)$value;
     }
 
@@ -434,7 +423,7 @@ function jsonSafe(
 
 /*
 |--------------------------------------------------------------------------
-| CURRENT LOGGED-IN USER ID
+| CURRENT USER
 |--------------------------------------------------------------------------
 */
 
@@ -460,12 +449,16 @@ function currentUserId(): ?ObjectId
             $_SESSION[$key] !== ''
         ) {
 
-            $id = objectIdOrNull(
-                (string)$_SESSION[$key]
-            );
+            $id =
+                objectIdOrNull(
+                    (string)$_SESSION[$key]
+                );
 
 
-            if ($id instanceof ObjectId) {
+            if (
+                $id instanceof ObjectId
+            ) {
+
                 return $id;
             }
         }
@@ -478,29 +471,7 @@ function currentUserId(): ?ObjectId
 
 /*
 |--------------------------------------------------------------------------
-| CHECK LOGIN STATUS
-|--------------------------------------------------------------------------
-*/
-
-function isLoggedIn(): bool
-{
-    startSecureSession();
-
-
-    if (
-        empty($_SESSION['logged_in'])
-    ) {
-        return false;
-    }
-
-
-    return currentUserId() !== null;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| REQUIRE LOGIN
+| LOGIN REQUIRED
 |--------------------------------------------------------------------------
 */
 
@@ -509,7 +480,8 @@ function requireLogin(): ObjectId
     startSecureSession();
 
 
-    $userId = currentUserId();
+    $userId =
+        currentUserId();
 
 
     if (
@@ -521,7 +493,8 @@ function requireLogin(): ObjectId
             'success' => false,
             'authenticated' => false,
             'authorized' => false,
-            'message' => 'Authentication required.'
+            'message' =>
+                'Authentication required.'
         ], 401);
     }
 
@@ -532,27 +505,31 @@ function requireLogin(): ObjectId
 
 /*
 |--------------------------------------------------------------------------
-| REQUIRE ADMINISTRATOR
+| ADMIN REQUIRED
 |--------------------------------------------------------------------------
 */
 
 function requireAdmin(): ObjectId
 {
-    $userId = requireLogin();
+    $userId =
+        requireLogin();
+
 
     global $users;
 
 
-    $user = $users->findOne([
-        '_id' => $userId
-    ]);
+    $user =
+        $users->findOne([
+            '_id' => $userId
+        ]);
 
 
     if (!$user) {
 
         jsonResponse([
             'success' => false,
-            'message' => 'Administrator account not found.'
+            'message' =>
+                'Administrator account not found.'
         ], 403);
     }
 
@@ -561,9 +538,9 @@ function requireAdmin(): ObjectId
         strtolower(
             trim(
                 (string)(
-                    $user['role']
-                    ?? $user['account_type']
-                    ?? ''
+                    $user['role'] ??
+                    $user['account_type'] ??
+                    ''
                 )
             )
         );
@@ -587,7 +564,8 @@ function requireAdmin(): ObjectId
 
         jsonResponse([
             'success' => false,
-            'message' => 'Administrator access required.'
+            'message' =>
+                'Administrator access required.'
         ], 403);
     }
 
@@ -598,7 +576,7 @@ function requireAdmin(): ObjectId
 
 /*
 |--------------------------------------------------------------------------
-| CURRENT UTC TIME
+| TIME
 |--------------------------------------------------------------------------
 */
 
@@ -610,7 +588,7 @@ function nowUtc(): UTCDateTime
 
 /*
 |--------------------------------------------------------------------------
-| MONEY TO WHOLE UGX
+| MONEY
 |--------------------------------------------------------------------------
 */
 
@@ -626,7 +604,7 @@ function moneyInt(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN AUDIT LOG
+| AUDIT
 |--------------------------------------------------------------------------
 */
 
@@ -661,7 +639,7 @@ function audit(
 
         /*
         |--------------------------------------------------------------------------
-        | Audit failure must not stop the main operation.
+        | Audit failure must never break the main operation.
         |--------------------------------------------------------------------------
         */
     }

@@ -52,7 +52,8 @@
         withdrawals: [],
         investments: [],
 
-        initialized: false
+        initialized: false,
+        redirecting: false
     };
 
 
@@ -117,6 +118,7 @@
         if (!loader) return;
 
         loader.classList.remove("hidden");
+        loader.style.display = "";
     }
 
 
@@ -206,7 +208,7 @@
 
 
     /* ----------------------------------------------------------------------
-       FETCH
+       FETCH WITH TIMEOUT
     ---------------------------------------------------------------------- */
 
     async function fetchWithTimeout(
@@ -272,9 +274,6 @@
             }
         }
 
-        /*
-         * Keep the HTTP status available.
-         */
         data._httpStatus =
             response.status;
 
@@ -287,6 +286,15 @@
 
     /* ----------------------------------------------------------------------
        API REQUEST
+       
+       IMPORTANT:
+       redirectOnAuth defaults to FALSE.
+
+       This prevents profile/dashboard/deposit/withdrawal/investment
+       endpoints from unexpectedly sending the administrator back to
+       login.html a few seconds after the admin page loads.
+
+       ONLY authenticateAdmin() explicitly enables redirectOnAuth.
     ---------------------------------------------------------------------- */
 
     async function apiRequest(
@@ -295,7 +303,7 @@
         config = {}
     ) {
         const {
-            redirectOnAuth = true,
+            redirectOnAuth = false,
             timeout = REQUEST_TIMEOUT
         } = config;
 
@@ -351,10 +359,6 @@
             );
 
 
-        /*
-         * Log non-success responses so the browser console
-         * shows the real backend response.
-         */
         if (!response.ok) {
 
             console.error(
@@ -379,20 +383,28 @@
             401
         ) {
 
-            AdminDashboard.authenticated =
-                false;
-
-            AdminDashboard.authorized =
-                false;
+            /*
+             * Do NOT automatically destroy the whole admin page state.
+             *
+             * A secondary endpoint may have a session problem while the
+             * main administrator authentication is still valid.
+             */
 
             if (redirectOnAuth) {
+
+                AdminDashboard.authenticated =
+                    false;
+
+                AdminDashboard.authorized =
+                    false;
+
                 redirectToLogin();
             }
 
             throw new Error(
                 data.message ||
                 data.error ||
-                "Your administrator session has expired."
+                "Administrator authentication is required for this request."
             );
         }
 
@@ -405,9 +417,6 @@
             response.status ===
             403
         ) {
-
-            AdminDashboard.authorized =
-                false;
 
             throw new Error(
                 data.message ||
@@ -480,6 +489,12 @@
 
     function redirectToLogin() {
 
+        if (AdminDashboard.redirecting) {
+            return;
+        }
+
+        AdminDashboard.redirecting = true;
+
         const loginPage =
             "login.html";
 
@@ -488,6 +503,7 @@
                 loginPage
             )
         ) {
+
             window.location.href =
                 loginPage;
         }
@@ -496,6 +512,8 @@
 
     /* ----------------------------------------------------------------------
        ADMIN AUTHENTICATION
+       
+       This is the ONLY initial request allowed to redirect to login.
     ---------------------------------------------------------------------- */
 
     async function authenticateAdmin() {
@@ -509,7 +527,7 @@
                         method: "GET"
                     },
                     {
-                        redirectOnAuth: false
+                        redirectOnAuth: true
                     }
                 );
 
@@ -590,6 +608,9 @@
                     PROFILE_API,
                     {
                         method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
                     }
                 );
 
@@ -745,6 +766,9 @@
                     ADMIN_DASHBOARD_API,
                     {
                         method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
                     }
                 );
 
@@ -799,9 +823,7 @@
             {};
 
 
-        /* --------------------------------------------------------------
-           USERS
-        -------------------------------------------------------------- */
+        /* USERS */
 
         setText(
             "#totalUsers",
@@ -841,9 +863,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           DEPOSITS
-        -------------------------------------------------------------- */
+        /* DEPOSITS */
 
         setText(
             "#totalDeposits",
@@ -871,9 +891,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           WITHDRAWALS
-        -------------------------------------------------------------- */
+        /* WITHDRAWALS */
 
         setText(
             "#totalWithdrawals",
@@ -901,9 +919,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           INVESTMENTS
-        -------------------------------------------------------------- */
+        /* INVESTMENTS */
 
         setText(
             "#totalInvestments",
@@ -918,9 +934,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           REFERRALS
-        -------------------------------------------------------------- */
+        /* REFERRALS */
 
         setText(
             "#totalReferrals",
@@ -935,9 +949,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           TRANSACTIONS
-        -------------------------------------------------------------- */
+        /* TRANSACTIONS */
 
         setText(
             "#totalTransactions",
@@ -952,9 +964,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           SUPPORT
-        -------------------------------------------------------------- */
+        /* SUPPORT */
 
         setText(
             "#openTickets",
@@ -968,9 +978,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           RECENT TRANSACTIONS
-        -------------------------------------------------------------- */
+        /* RECENT TRANSACTIONS */
 
         renderRecentTransactions(
             data.recent_transactions ||
@@ -979,9 +987,7 @@
         );
 
 
-        /* --------------------------------------------------------------
-           RECENT USERS
-        -------------------------------------------------------------- */
+        /* RECENT USERS */
 
         renderRecentUsers(
             data.recent_users ||
@@ -1683,6 +1689,9 @@
                     ADMIN_DEPOSITS_API,
                     {
                         method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
                     }
                 ),
 
@@ -1690,6 +1699,9 @@
                     ADMIN_WITHDRAWALS_API,
                     {
                         method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
                     }
                 ),
 
@@ -1697,6 +1709,9 @@
                     ADMIN_INVESTMENTS_API,
                     {
                         method: "GET"
+                    },
+                    {
+                        redirectOnAuth: false
                     }
                 )
             ]);
@@ -1709,9 +1724,7 @@
         ] = results;
 
 
-        /* --------------------------------------------------------------
-           DEPOSITS
-        -------------------------------------------------------------- */
+        /* DEPOSITS */
 
         if (
             depositResult.status ===
@@ -1741,9 +1754,7 @@
         }
 
 
-        /* --------------------------------------------------------------
-           WITHDRAWALS
-        -------------------------------------------------------------- */
+        /* WITHDRAWALS */
 
         if (
             withdrawalResult.status ===
@@ -1772,12 +1783,6 @@
             );
 
 
-            /*
-             * IMPORTANT:
-             * The backend is currently returning HTTP 500.
-             *
-             * Show the actual backend message instead of hiding it.
-             */
             const withdrawalPanel =
                 $("#approvalWithdrawals");
 
@@ -1804,9 +1809,7 @@
         }
 
 
-        /* --------------------------------------------------------------
-           INVESTMENTS
-        -------------------------------------------------------------- */
+        /* INVESTMENTS */
 
         if (
             investmentResult.status ===
@@ -2139,1899 +2142,4 @@
                         const fee =
                             getNumericValue(
                                 item.fee,
-                                item.withdrawal_fee,
-                                0
-                            );
-
-
-                        const name =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "user_name",
-                                        "userName",
-                                        "name",
-                                        "full_name"
-                                    ],
-                                    "Crown Cash User"
-                                )
-                            );
-
-
-                        const phone =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "phone",
-                                        "phone_number",
-                                        "mobile"
-                                    ],
-                                    ""
-                                )
-                            );
-
-
-                        const method =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "method",
-                                        "payment_method"
-                                    ],
-                                    ""
-                                )
-                            );
-
-
-                        const account =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "account",
-                                        "account_number",
-                                        "phone_number",
-                                        "mobile"
-                                    ],
-                                    ""
-                                )
-                            );
-
-
-                        return `
-                            <div
-                                class="approval-item"
-                                data-approval-id="${escapeHtml(id)}"
-                            >
-
-                                <div class="approval-info">
-
-                                    <strong>
-                                        ${name}
-                                    </strong>
-
-                                    <span>
-                                        ${phone}
-                                    </span>
-
-                                    ${
-                                        method
-                                            ? `<span>Method: ${method}</span>`
-                                            : ""
-                                    }
-
-                                    ${
-                                        account
-                                            ? `<span>Payment: ${account}</span>`
-                                            : ""
-                                    }
-
-                                    <span>
-                                        Requested:
-                                        ${formatCurrency(amount)}
-                                    </span>
-
-                                    <span>
-                                        Fee:
-                                        ${formatCurrency(fee)}
-                                    </span>
-
-                                    <span>
-                                        Net payout:
-                                        ${formatCurrency(netAmount)}
-                                    </span>
-
-                                </div>
-
-                                <div class="approval-amount">
-                                    ${formatCurrency(amount)}
-                                </div>
-
-                                <div class="approval-actions">
-
-                                    <button
-                                        type="button"
-                                        class="approve-btn"
-                                        data-approval-action="approve"
-                                        data-approval-type="withdrawal"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Approve
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="reject-btn"
-                                        data-approval-action="reject"
-                                        data-approval-type="withdrawal"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-
-                            </div>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        attachApprovalListeners(
-            container
-        );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       INVESTMENT APPROVALS
-    ---------------------------------------------------------------------- */
-
-    function renderInvestmentApprovals(
-        items
-    ) {
-
-        const container =
-            $("#approvalInvestments");
-
-        if (!container) return;
-
-
-        if (
-            !Array.isArray(items) ||
-            items.length === 0
-        ) {
-
-            container.innerHTML = `
-                <div class="approval-empty">
-                    No pending investments.
-                </div>
-            `;
-
-            return;
-        }
-
-
-        container.innerHTML =
-            items
-                .map(
-                    item => {
-
-                        const id =
-                            getItemId(item);
-
-
-                        const amount =
-                            getNumericValue(
-                                item.amount,
-                                item.principal,
-                                item.investment_amount,
-                                0
-                            );
-
-
-                        const plan =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "plan",
-                                        "plan_name",
-                                        "package",
-                                        "package_name"
-                                    ],
-                                    "Investment"
-                                )
-                            );
-
-
-                        const name =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "user_name",
-                                        "userName",
-                                        "name",
-                                        "full_name"
-                                    ],
-                                    "Crown Cash User"
-                                )
-                            );
-
-
-                        const duration =
-                            getNumericValue(
-                                item.duration,
-                                item.duration_days,
-                                0
-                            );
-
-
-                        return `
-                            <div
-                                class="approval-item"
-                                data-approval-id="${escapeHtml(id)}"
-                            >
-
-                                <div class="approval-info">
-
-                                    <strong>
-                                        ${name}
-                                    </strong>
-
-                                    <span>
-                                        Plan: ${plan}
-                                    </span>
-
-                                    <span>
-                                        ${
-                                            duration > 0
-                                                ? `${duration} days`
-                                                : "Investment awaiting approval"
-                                        }
-                                    </span>
-
-                                </div>
-
-                                <div class="approval-amount">
-                                    ${formatCurrency(amount)}
-                                </div>
-
-                                <div class="approval-actions">
-
-                                    <button
-                                        type="button"
-                                        class="approve-btn"
-                                        data-approval-action="approve"
-                                        data-approval-type="investment"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Approve
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="reject-btn"
-                                        data-approval-action="reject"
-                                        data-approval-type="investment"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-
-                            </div>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        attachApprovalListeners(
-            container
-        );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       APPROVAL LISTENERS
-    ---------------------------------------------------------------------- */
-
-    function attachApprovalListeners(
-        container
-    ) {
-
-        container
-            .querySelectorAll(
-                "[data-approval-action]"
-            )
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        async () => {
-
-                            const action =
-                                button.dataset.approvalAction;
-
-                            const type =
-                                button.dataset.approvalType;
-
-                            const id =
-                                button.dataset.approvalId;
-
-
-                            if (
-                                !id ||
-                                !type ||
-                                !action
-                            ) {
-
-                                showAdminMessage(
-                                    "Invalid approval request.",
-                                    "error"
-                                );
-
-                                return;
-                            }
-
-
-                            let reason =
-                                "";
-
-
-                            if (
-                                action ===
-                                "reject"
-                            ) {
-
-                                reason =
-                                    window.prompt(
-                                        "Enter the reason for rejecting this request:"
-                                    );
-
-
-                                if (
-                                    reason ===
-                                    null
-                                ) {
-                                    return;
-                                }
-
-
-                                reason =
-                                    reason.trim();
-
-
-                                if (!reason) {
-
-                                    showAdminMessage(
-                                        "A rejection reason is required.",
-                                        "warning"
-                                    );
-
-                                    return;
-                                }
-                            }
-
-
-                            const message =
-                                action ===
-                                "approve"
-                                    ? `Approve this ${type}?`
-                                    : `Reject this ${type}?`;
-
-
-                            if (
-                                !window.confirm(
-                                    message
-                                )
-                            ) {
-                                return;
-                            }
-
-
-                            await processApproval(
-                                type,
-                                action,
-                                id,
-                                reason,
-                                button
-                            );
-                        }
-                    );
-                }
-            );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       PROCESS APPROVAL
-    ---------------------------------------------------------------------- */
-
-    async function processApproval(
-        type,
-        action,
-        id,
-        reason = "",
-        button = null
-    ) {
-
-        if (!id) {
-
-            showAdminMessage(
-                "Invalid approval ID.",
-                "error"
-            );
-
-            return false;
-        }
-
-
-        if (button) {
-
-            button.disabled =
-                true;
-
-            button.textContent =
-                action === "approve"
-                    ? "Approving..."
-                    : "Rejecting...";
-        }
-
-
-        let endpoint;
-
-
-        switch (type) {
-
-            case "deposit":
-
-                endpoint =
-                    ADMIN_DEPOSITS_API;
-
-                break;
-
-
-            case "withdrawal":
-
-                endpoint =
-                    ADMIN_WITHDRAWALS_API;
-
-                break;
-
-
-            case "investment":
-
-                endpoint =
-                    ADMIN_INVESTMENTS_API;
-
-                break;
-
-
-            default:
-
-                showAdminMessage(
-                    "Unknown approval type.",
-                    "error"
-                );
-
-                if (button) {
-                    button.disabled =
-                        false;
-                }
-
-                return false;
-        }
-
-
-        const payload = {
-            action,
-            reason
-        };
-
-
-        if (
-            type ===
-            "deposit"
-        ) {
-
-            payload.depositId =
-                id;
-        }
-
-
-        if (
-            type ===
-            "withdrawal"
-        ) {
-
-            payload.withdrawalId =
-                id;
-        }
-
-
-        if (
-            type ===
-            "investment"
-        ) {
-
-            payload.investmentId =
-                id;
-        }
-
-
-        try {
-
-            const data =
-                await apiRequest(
-                    endpoint,
-                    {
-                        method: "POST",
-
-                        body:
-                            JSON.stringify(
-                                payload
-                            )
-                    }
-                );
-
-
-            showAdminMessage(
-                data.message ||
-                `${capitalize(type)} ${action}d successfully.`,
-                "success"
-            );
-
-
-            await Promise.allSettled([
-                loadDashboardData(),
-                loadApprovalData()
-            ]);
-
-
-            return true;
-
-        } catch (error) {
-
-            console.error(
-                "Approval operation failed:",
-                {
-                    type,
-                    action,
-                    id,
-                    error
-                }
-            );
-
-
-            showAdminMessage(
-                error.message ||
-                "Approval operation failed.",
-                "error"
-            );
-
-
-            if (button) {
-
-                button.disabled =
-                    false;
-
-                button.textContent =
-                    action === "approve"
-                        ? "Approve"
-                        : "Reject";
-            }
-
-
-            return false;
-        }
-    }
-
-
-    /* ----------------------------------------------------------------------
-       PENDING BADGES
-    ---------------------------------------------------------------------- */
-
-    function updatePendingBadges() {
-
-        updateBadge(
-            "#navPendingDeposits",
-            AdminDashboard.deposits.length
-        );
-
-
-        updateBadge(
-            "#navPendingWithdrawals",
-            AdminDashboard.withdrawals.length
-        );
-
-
-        let investmentLink =
-            document.querySelector(
-                'a[href="admin-investments.html"]'
-            );
-
-
-        if (investmentLink) {
-
-            let badge =
-                investmentLink.querySelector(
-                    ".nav-badge"
-                );
-
-
-            if (!badge) {
-
-                badge =
-                    document.createElement(
-                        "span"
-                    );
-
-                badge.className =
-                    "nav-badge";
-
-                badge.id =
-                    "navPendingInvestments";
-
-                investmentLink.appendChild(
-                    badge
-                );
-            }
-
-
-            updateBadgeElement(
-                badge,
-                AdminDashboard.investments.length
-            );
-        }
-    }
-
-
-    function updateBadge(
-        selector,
-        count
-    ) {
-
-        const badge =
-            $(selector);
-
-        if (!badge) return;
-
-
-        updateBadgeElement(
-            badge,
-            count
-        );
-    }
-
-
-    function updateBadgeElement(
-        badge,
-        count
-    ) {
-
-        const safeCount =
-            Number.isFinite(
-                Number(count)
-            )
-                ? Number(count)
-                : 0;
-
-
-        badge.textContent =
-            String(safeCount);
-
-
-        badge.style.display =
-            safeCount <= 0
-                ? "none"
-                : "inline-flex";
-    }
-
-
-    /* ----------------------------------------------------------------------
-       SIDEBAR
-    ---------------------------------------------------------------------- */
-
-    function setupSidebar() {
-
-        const sidebar =
-            $("#sidebar");
-
-        const overlay =
-            $("#sidebarOverlay");
-
-        const menuButton =
-            $("#menuButton");
-
-        const sidebarClose =
-            $("#sidebarClose");
-
-
-        function openSidebar() {
-
-            if (sidebar) {
-                sidebar.classList.add(
-                    "open"
-                );
-            }
-
-
-            if (overlay) {
-                overlay.classList.add(
-                    "open"
-                );
-            }
-
-
-            document.body.style.overflow =
-                "hidden";
-        }
-
-
-        function closeSidebar() {
-
-            if (sidebar) {
-                sidebar.classList.remove(
-                    "open"
-                );
-            }
-
-
-            if (overlay) {
-                overlay.classList.remove(
-                    "open"
-                );
-            }
-
-
-            document.body.style.overflow =
-                "";
-        }
-
-
-        if (
-            menuButton &&
-            !menuButton.dataset.ccAdminHandler
-        ) {
-
-            menuButton.dataset.ccAdminHandler =
-                "true";
-
-
-            menuButton.addEventListener(
-                "click",
-                event => {
-
-                    event.stopPropagation();
-
-
-                    if (
-                        sidebar &&
-                        sidebar.classList.contains(
-                            "open"
-                        )
-                    ) {
-
-                        closeSidebar();
-
-                    } else {
-
-                        openSidebar();
-                    }
-                }
-            );
-        }
-
-
-        if (
-            sidebarClose &&
-            !sidebarClose.dataset.ccAdminHandler
-        ) {
-
-            sidebarClose.dataset.ccAdminHandler =
-                "true";
-
-
-            sidebarClose.addEventListener(
-                "click",
-                event => {
-
-                    event.stopPropagation();
-
-                    closeSidebar();
-                }
-            );
-        }
-
-
-        if (
-            overlay &&
-            !overlay.dataset.ccAdminHandler
-        ) {
-
-            overlay.dataset.ccAdminHandler =
-                "true";
-
-
-            overlay.addEventListener(
-                "click",
-                closeSidebar
-            );
-        }
-
-
-        $$("#sidebar a")
-            .forEach(
-                link => {
-
-                    if (
-                        link.dataset.ccAdminHandler
-                    ) {
-                        return;
-                    }
-
-
-                    link.dataset.ccAdminHandler =
-                        "true";
-
-
-                    link.addEventListener(
-                        "click",
-                        () => {
-
-                            if (
-                                window.innerWidth <=
-                                1050
-                            ) {
-                                closeSidebar();
-                            }
-                        }
-                    );
-                }
-            );
-
-
-        window.addEventListener(
-            "resize",
-            () => {
-
-                if (
-                    window.innerWidth >
-                    1050
-                ) {
-                    closeSidebar();
-                }
-            }
-        );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       LOGOUT
-    ---------------------------------------------------------------------- */
-
-    function setupLogout() {
-
-        const logoutButton =
-            $("#logoutBtn");
-
-
-        if (!logoutButton) {
-            return;
-        }
-
-
-        if (
-            logoutButton.dataset.ccLogoutReady
-        ) {
-            return;
-        }
-
-
-        logoutButton.dataset.ccLogoutReady =
-            "true";
-
-
-        logoutButton.addEventListener(
-            "click",
-            async event => {
-
-                event.preventDefault();
-
-
-                if (
-                    !window.confirm(
-                        "Are you sure you want to logout?"
-                    )
-                ) {
-                    return;
-                }
-
-
-                logoutButton.disabled =
-                    true;
-
-
-                logoutButton.textContent =
-                    "Logging out...";
-
-
-                await logoutAdmin(
-                    logoutButton
-                );
-            }
-        );
-    }
-
-
-    async function logoutAdmin(
-        button = null
-    ) {
-
-        try {
-
-            await fetchWithTimeout(
-                LOGOUT_API,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({})
-                },
-                10000
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "Logout request failed:",
-                error.message
-            );
-
-        } finally {
-
-            AdminDashboard.authenticated =
-                false;
-
-            AdminDashboard.authorized =
-                false;
-
-            window.location.href =
-                "login.html";
-        }
-    }
-
-
-    /* ----------------------------------------------------------------------
-       FORMATTING
-    ---------------------------------------------------------------------- */
-
-    function formatCurrency(
-        value
-    ) {
-
-        const number =
-            Number(value) || 0;
-
-
-        return new Intl.NumberFormat(
-            "en-UG",
-            {
-                style: "currency",
-                currency: "UGX",
-                maximumFractionDigits: 0
-            }
-        ).format(number);
-    }
-
-
-    function formatNumber(
-        value
-    ) {
-
-        const number =
-            Number(value) || 0;
-
-
-        return new Intl.NumberFormat(
-            "en-UG"
-        ).format(number);
-    }
-
-
-    function formatDate(
-        value
-    ) {
-
-        if (!value) {
-            return "Date unavailable";
-        }
-
-
-        let date;
-
-
-        if (
-            typeof value ===
-            "object" &&
-            value !== null &&
-            "$date" in value
-        ) {
-
-            date =
-                new Date(
-                    value.$date
-                );
-
-        } else {
-
-            date =
-                new Date(value);
-        }
-
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "Date unavailable";
-        }
-
-
-        return new Intl.DateTimeFormat(
-            "en-UG",
-            {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        ).format(date);
-    }
-
-
-    function formatStatus(
-        status
-    ) {
-
-        if (!status) {
-            return "Unknown";
-        }
-
-
-        return String(status)
-            .replace(
-                /[_-]+/g,
-                " "
-            )
-            .replace(
-                /\s+/g,
-                " "
-            )
-            .trim()
-            .replace(
-                /\b\w/g,
-                letter =>
-                    letter.toUpperCase()
-            );
-    }
-
-
-    function formatTransactionType(
-        type
-    ) {
-
-        if (!type) {
-            return "Transaction";
-        }
-
-
-        const map = {
-
-            deposit:
-                "Deposit",
-
-            withdrawal:
-                "Withdrawal",
-
-            investment:
-                "Investment",
-
-            investment_principal:
-                "Investment",
-
-            daily_earning:
-                "Daily Earning",
-
-            referral_bonus:
-                "Referral Bonus",
-
-            referral_commission:
-                "Referral Commission",
-
-            refund:
-                "Refund",
-
-            fee:
-                "Fee",
-
-            debit:
-                "Debit",
-
-            credit:
-                "Credit"
-        };
-
-
-        const key =
-            String(type)
-                .toLowerCase();
-
-
-        return (
-            map[key] ||
-            formatStatus(type)
-        );
-    }
-
-
-    function formatAccountType(
-        type
-    ) {
-
-        if (!type) {
-            return "Administrator";
-        }
-
-
-        return String(type)
-            .replace(
-                /[_-]+/g,
-                " "
-            )
-            .replace(
-                /\b\w/g,
-                letter =>
-                    letter.toUpperCase()
-            );
-    }
-
-
-    function getTransactionIcon(
-        type
-    ) {
-
-        const key =
-            String(type || "")
-                .toLowerCase();
-
-
-        const icons = {
-
-            deposit:
-                "↓",
-
-            withdrawal:
-                "↑",
-
-            investment:
-                "◆",
-
-            investment_principal:
-                "◆",
-
-            daily_earning:
-                "✦",
-
-            referral_bonus:
-                "★",
-
-            referral_commission:
-                "★",
-
-            refund:
-                "↩",
-
-            fee:
-                "−",
-
-            debit:
-                "−",
-
-            credit:
-                "+"
-        };
-
-
-        return (
-            icons[key] ||
-            "•"
-        );
-    }
-
-
-    function getTypeClass(
-        type
-    ) {
-
-        const key =
-            String(type || "")
-                .toLowerCase();
-
-
-        if (
-            key.includes(
-                "deposit"
-            )
-        ) {
-            return "deposit";
-        }
-
-
-        if (
-            key.includes(
-                "withdraw"
-            )
-        ) {
-            return "withdrawal";
-        }
-
-
-        if (
-            key.includes(
-                "earning"
-            )
-        ) {
-            return "earning";
-        }
-
-
-        if (
-            key.includes(
-                "referral"
-            )
-        ) {
-            return "referral";
-        }
-
-
-        if (
-            key.includes(
-                "investment"
-            )
-        ) {
-            return "investment";
-        }
-
-
-        return "transaction";
-    }
-
-
-    function getStatusClass(
-        status
-    ) {
-
-        const key =
-            String(status || "")
-                .toLowerCase();
-
-
-        if (
-            [
-                "approved",
-                "active",
-                "completed",
-                "verified",
-                "paid",
-                "processed",
-                "success",
-                "successful"
-            ].includes(key)
-        ) {
-            return "status-success";
-        }
-
-
-        if (
-            [
-                "pending",
-                "processing",
-                "submitted",
-                "running"
-            ].includes(key)
-        ) {
-            return "status-pending";
-        }
-
-
-        if (
-            [
-                "rejected",
-                "declined",
-                "cancelled",
-                "canceled",
-                "failed",
-                "blocked",
-                "suspended"
-            ].includes(key)
-        ) {
-            return "status-danger";
-        }
-
-
-        return "status-neutral";
-    }
-
-
-    /* ----------------------------------------------------------------------
-       VALUE HELPERS
-    ---------------------------------------------------------------------- */
-
-    function getNumericValue(
-        ...values
-    ) {
-
-        for (
-            const value of values
-        ) {
-
-            if (
-                value === null ||
-                value === undefined ||
-                value === ""
-            ) {
-                continue;
-            }
-
-
-            if (
-                typeof value ===
-                "object" &&
-                value !== null
-            ) {
-
-                if (
-                    value.$numberInt !==
-                    undefined
-                ) {
-
-                    const n =
-                        Number(
-                            value.$numberInt
-                        );
-
-                    if (
-                        Number.isFinite(n)
-                    ) {
-                        return n;
-                    }
-                }
-
-
-                if (
-                    value.$numberLong !==
-                    undefined
-                ) {
-
-                    const n =
-                        Number(
-                            value.$numberLong
-                        );
-
-                    if (
-                        Number.isFinite(n)
-                    ) {
-                        return n;
-                    }
-                }
-
-
-                if (
-                    value.$numberDecimal !==
-                    undefined
-                ) {
-
-                    const n =
-                        Number(
-                            value.$numberDecimal
-                        );
-
-                    if (
-                        Number.isFinite(n)
-                    ) {
-                        return n;
-                    }
-                }
-            }
-
-
-            const number =
-                Number(
-                    String(value)
-                        .replace(
-                            /,/g,
-                            ""
-                        )
-                        .replace(
-                            /UGX/gi,
-                            ""
-                        )
-                        .trim()
-                );
-
-
-            if (
-                Number.isFinite(number)
-            ) {
-                return number;
-            }
-        }
-
-
-        return 0;
-    }
-
-
-    function getValue(
-        object,
-        keys,
-        fallback = ""
-    ) {
-
-        if (!object) {
-            return fallback;
-        }
-
-
-        for (
-            const key of keys
-        ) {
-
-            if (
-                object[key] !==
-                    undefined &&
-                object[key] !==
-                    null &&
-                object[key] !==
-                    ""
-            ) {
-                return object[key];
-            }
-        }
-
-
-        return fallback;
-    }
-
-
-    function getItemId(
-        item
-    ) {
-
-        if (!item) {
-            return "";
-        }
-
-
-        const value =
-            getValue(
-                item,
-                [
-                    "_id",
-                    "id",
-                    "depositId",
-                    "withdrawalId",
-                    "investmentId",
-                    "reference"
-                ],
-                ""
-            );
-
-
-        /*
-         * MongoDB ObjectId serialized as:
-         * { "$oid": "..." }
-         */
-        if (
-            typeof value ===
-                "object" &&
-            value !== null &&
-            value.$oid
-        ) {
-            return String(
-                value.$oid
-            );
-        }
-
-
-        return String(value);
-    }
-
-
-    function getInitials(
-        name
-    ) {
-
-        if (!name) {
-            return "CC";
-        }
-
-
-        const parts =
-            String(name)
-                .trim()
-                .split(/\s+/)
-                .filter(Boolean);
-
-
-        if (
-            parts.length === 1
-        ) {
-
-            return parts[0]
-                .substring(0, 2)
-                .toUpperCase();
-        }
-
-
-        return (
-            parts[0][0] +
-            parts[
-                parts.length - 1
-            ][0]
-        ).toUpperCase();
-    }
-
-
-    function capitalize(
-        value
-    ) {
-
-        if (!value) {
-            return "";
-        }
-
-
-        return (
-            String(value)
-                .charAt(0)
-                .toUpperCase() +
-            String(value)
-                .slice(1)
-        );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       HTML ESCAPING
-    ---------------------------------------------------------------------- */
-
-    function escapeHtml(
-        value
-    ) {
-
-        return String(
-            value === null ||
-            value === undefined
-                ? ""
-                : value
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-    }
-
-
-    /* ----------------------------------------------------------------------
-       GLOBAL ADMIN API
-    ---------------------------------------------------------------------- */
-
-    window.CrownCashAdmin = {
-
-        reload:
-            async () => {
-
-                await Promise.allSettled([
-                    loadDashboardData(),
-                    loadApprovalData()
-                ]);
-            },
-
-
-        loadDashboard:
-            loadDashboardData,
-
-
-        loadApprovals:
-            loadApprovalData,
-
-
-        refresh:
-            async () => {
-
-                await Promise.allSettled([
-                    loadDashboardData(),
-                    loadApprovalData()
-                ]);
-            },
-
-
-        approveDeposit:
-            id =>
-                processApproval(
-                    "deposit",
-                    "approve",
-                    id
-                ),
-
-
-        rejectDeposit:
-            async id => {
-
-                const reason =
-                    window.prompt(
-                        "Enter the reason for rejecting this deposit:"
-                    );
-
-
-                if (
-                    reason === null ||
-                    !reason.trim()
-                ) {
-                    return false;
-                }
-
-
-                return processApproval(
-                    "deposit",
-                    "reject",
-                    id,
-                    reason.trim()
-                );
-            },
-
-
-        approveWithdrawal:
-            id =>
-                processApproval(
-                    "withdrawal",
-                    "approve",
-                    id
-                ),
-
-
-        rejectWithdrawal:
-            async id => {
-
-                const reason =
-                    window.prompt(
-                        "Enter the reason for rejecting this withdrawal:"
-                    );
-
-
-                if (
-                    reason === null ||
-                    !reason.trim()
-                ) {
-                    return false;
-                }
-
-
-                return processApproval(
-                    "withdrawal",
-                    "reject",
-                    id,
-                    reason.trim()
-                );
-            },
-
-
-        approveInvestment:
-            id =>
-                processApproval(
-                    "investment",
-                    "approve",
-                    id
-                ),
-
-
-        rejectInvestment:
-            async id => {
-
-                const reason =
-                    window.prompt(
-                        "Enter the reason for rejecting this investment:"
-                    );
-
-
-                if (
-                    reason === null ||
-                    !reason.trim()
-                ) {
-                    return false;
-                }
-
-
-                return processApproval(
-                    "investment",
-                    "reject",
-                    id,
-                    reason.trim()
-                );
-            },
-
-
-        logout:
-            logoutAdmin
-    };
-
-
-    /* ----------------------------------------------------------------------
-       INITIALIZATION
-    ---------------------------------------------------------------------- */
-
-    async function initializeAdminDashboard() {
-
-        if (
-            AdminDashboard.initialized
-        ) {
-            return;
-        }
-
-
-        AdminDashboard.initialized =
-            true;
-
-
-        AdminDashboard.loading =
-            true;
-
-
-        showLoader();
-
-
-        try {
-
-            /*
-             * Verify administrator privileges first.
-             */
-            const authenticated =
-                await authenticateAdmin();
-
-
-            if (!authenticated) {
-                return;
-            }
-
-
-            /*
-             * Setup page controls.
-             */
-            setupSidebar();
-
-            setupLogout();
-
-
-            /*
-             * Create approval center.
-             */
-            createApprovalCenter();
-
-
-            /*
-             * Load dashboard information.
-             *
-             * We use Promise.allSettled so one broken endpoint,
-             * such as withdrawals, does not stop the whole dashboard.
-             */
-            const results =
-                await Promise.allSettled([
-
-                    loadAdminProfile(),
-
-                    loadDashboardData(),
-
-                    loadApprovalData()
-                ]);
-
-
-            const failures =
-                results.filter(
-                    result =>
-                        result.status ===
-                        "rejected"
-                );
-
-
-            if (
-                failures.length > 0
-            ) {
-
-                console.warn(
-                    "Some admin dashboard resources failed:",
-                    failures
-                );
-            }
-
-
-        } catch (error) {
-
-            console.error(
-                "Admin initialization error:",
-                error
-            );
-
-
-            showAdminMessage(
-                error.message ||
-                "Unable to initialize administrator dashboard.",
-                "error"
-            );
-
-        } finally {
-
-            AdminDashboard.loading =
-                false;
-
-            hideLoader();
-        }
-    }
-
-
-    /* ----------------------------------------------------------------------
-       START
-    ---------------------------------------------------------------------- */
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeAdminDashboard,
-            {
-                once: true
-            }
-        );
-
-    } else {
-
-        initializeAdminDashboard();
-    }
-
-})();
+                                item.withdrawal_fee

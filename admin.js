@@ -1,106 +1,68 @@
-/* =========================================================
-   CROWN CASH — ADMIN CONTROLLER
+/* ============================================================
+   CROWN CASH - ADMIN PANEL
    Production Admin Controller
    Version: 20261003ADMIN06
-
-   FEATURES:
-   - Secure admin authentication
-   - Loader cannot remain stuck on data endpoints
-   - Dashboard statistics
-   - Deposits management
-   - Withdrawals management
-   - Investments management
-   - Approve / Reject actions
-   - Rejection reasons
-   - MongoDB date parsing
-   - MongoDB ObjectId parsing
-   - Flexible API response parsing
-   - Customer resolution
-   - Refresh after actions
-   - Maintenance controls
-   - Secure logout
-   ========================================================= */
+   ============================================================ */
 
 (() => {
     "use strict";
 
-    /* =====================================================
+    /* ============================================================
        CONFIGURATION
-       ===================================================== */
+       ============================================================ */
 
     const API_BASE = "https://crown-cash1.onrender.com";
 
     const ENDPOINTS = {
-        auth: `${API_BASE}/admin-auth.php`,
-        profile: `${API_BASE}/profile.php`,
-        dashboard: `${API_BASE}/admin-dashboard.php`,
-        deposits: `${API_BASE}/admin_deposit.php`,
-        withdrawals: `${API_BASE}/admin_withdrawal.php`,
-        investments: `${API_BASE}/admin_investments.php`,
-        maintenance: `${API_BASE}/admin-maintenance.php`,
-        logout: `${API_BASE}/logout.php`
+        auth: "/admin-auth.php",
+        profile: "/profile.php",
+        dashboard: "/admin-dashboard.php",
+        deposits: "/admin_deposit.php",
+        withdrawals: "/admin_withdrawal.php",
+        investments: "/admin_investments.php",
+        maintenance: "/admin-maintenance.php",
+        logout: "/logout.php"
     };
+
+    const REQUEST_TIMEOUT = 20000;
 
     const state = {
         authenticated: false,
         authorized: false,
-
-        admin: null,
+        isAdmin: false,
         profile: null,
         dashboard: null,
-
-        users: [],
-
         deposits: [],
         withdrawals: [],
         investments: [],
-
         maintenance: null,
-
-        loading: {
-            dashboard: false,
-            deposits: false,
-            withdrawals: false,
-            investments: false,
-            maintenance: false
-        }
+        initialized: false,
+        loading: false
     };
 
 
-    /* =====================================================
-       DOM HELPERS
-       ===================================================== */
+    /* ============================================================
+       BASIC HELPERS
+       ============================================================ */
 
-    function byId(id) {
-        return document.getElementById(id);
-    }
-
-    function qs(selector, root = document) {
+    function $(selector, root = document) {
         try {
             return root.querySelector(selector);
-        } catch {
+        } catch (error) {
             return null;
         }
     }
 
-    function qsa(selector, root = document) {
+    function $$(selector, root = document) {
         try {
             return Array.from(root.querySelectorAll(selector));
-        } catch {
+        } catch (error) {
             return [];
         }
     }
 
-
-    /* =====================================================
-       HTML ESCAPING
-       ===================================================== */
-
-    function escapeHtml(value) {
-        if (
-            value === null ||
-            value === undefined
-        ) {
+    function escapeHTML(value) {
+        if (value === null || value === undefined) {
             return "";
         }
 
@@ -112,191 +74,62 @@
             .replace(/'/g, "&#039;");
     }
 
+    function formatUGX(value) {
+        const number = Number(value || 0);
 
-    /* =====================================================
-       MONEY
-       ===================================================== */
-
-    function money(value) {
-        const amount = Number(value || 0);
-
-        return new Intl.NumberFormat("en-UG", {
-            style: "currency",
-            currency: "UGX",
-            maximumFractionDigits: 0
-        }).format(
-            Number.isFinite(amount) ? amount : 0
-        );
-    }
-
-    function number(value) {
-        const amount = Number(value || 0);
-
-        return new Intl.NumberFormat("en-UG", {
-            maximumFractionDigits: 0
-        }).format(
-            Number.isFinite(amount) ? amount : 0
-        );
-    }
-
-
-    /* =====================================================
-       DATE HELPERS
-       ===================================================== */
-
-    function extractDateValue(value) {
-        if (
-            value === null ||
-            value === undefined ||
-            value === ""
-        ) {
-            return null;
+        if (!Number.isFinite(number)) {
+            return "UGX 0";
         }
 
-        if (value instanceof Date) {
-            return Number.isNaN(value.getTime())
-                ? null
-                : value;
+        return "UGX " + Math.round(number).toLocaleString("en-UG");
+    }
+
+    function formatNumber(value) {
+        const number = Number(value || 0);
+
+        if (!Number.isFinite(number)) {
+            return "0";
         }
 
-        if (typeof value === "number") {
-            const milliseconds =
-                value < 100000000000
-                    ? value * 1000
-                    : value;
+        return Math.round(number).toLocaleString("en-UG");
+    }
 
-            const date = new Date(milliseconds);
-
-            return Number.isNaN(date.getTime())
-                ? null
-                : date;
+    function normalizeId(value) {
+        if (value === null || value === undefined) {
+            return "";
         }
 
         if (typeof value === "string") {
-            const trimmed = value.trim();
+            return value;
+        }
 
-            if (!trimmed) {
-                return null;
-            }
-
-            if (/^\d+$/.test(trimmed)) {
-                const numeric = Number(trimmed);
-
-                const milliseconds =
-                    numeric < 100000000000
-                        ? numeric * 1000
-                        : numeric;
-
-                const date = new Date(milliseconds);
-
-                if (!Number.isNaN(date.getTime())) {
-                    return date;
-                }
-            }
-
-            const date = new Date(trimmed);
-
-            return Number.isNaN(date.getTime())
-                ? null
-                : date;
+        if (typeof value === "number") {
+            return String(value);
         }
 
         if (typeof value === "object") {
-            if (value.$date !== undefined) {
-                return extractDateValue(value.$date);
+            if (value.$oid) {
+                return String(value.$oid);
             }
 
-            if (value.$numberLong !== undefined) {
-                return extractDateValue(value.$numberLong);
+            if (value.oid) {
+                return String(value.oid);
             }
 
-            if (value.$numberInt !== undefined) {
-                return extractDateValue(value.$numberInt);
+            if (value._id) {
+                return normalizeId(value._id);
             }
 
-            if (value.date !== undefined) {
-                return extractDateValue(value.date);
-            }
-
-            if (value.datetime !== undefined) {
-                return extractDateValue(value.datetime);
-            }
-
-            if (value.created_at !== undefined) {
-                return extractDateValue(value.created_at);
-            }
-
-            if (value.createdAt !== undefined) {
-                return extractDateValue(value.createdAt);
-            }
-
-            if (value.updated_at !== undefined) {
-                return extractDateValue(value.updated_at);
-            }
-
-            if (value.updatedAt !== undefined) {
-                return extractDateValue(value.updatedAt);
-            }
-
-            if (value.timestamp !== undefined) {
-                return extractDateValue(value.timestamp);
-            }
-
-            if (value.time !== undefined) {
-                return extractDateValue(value.time);
-            }
-
-            if (value.milliseconds !== undefined) {
-                return extractDateValue(value.milliseconds);
-            }
-
-            if (value.seconds !== undefined) {
-                return extractDateValue(
-                    Number(value.seconds)
-                );
+            if (value.id) {
+                return normalizeId(value.id);
             }
         }
 
-        return null;
+        return String(value);
     }
 
-    function formatDate(value) {
-        const date = extractDateValue(value);
-
-        if (!date) {
-            return "Not available";
-        }
-
-        try {
-            return new Intl.DateTimeFormat(
-                "en-GB",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            ).format(date);
-        } catch {
-            return date.toLocaleString();
-        }
-    }
-
-
-    /* =====================================================
-       GENERIC HELPERS
-       ===================================================== */
-
-    function firstValue(
-        object,
-        keys,
-        fallback = ""
-    ) {
-        if (
-            !object ||
-            typeof object !== "object"
-        ) {
+    function getValue(object, keys, fallback = "") {
+        if (!object || typeof object !== "object") {
             return fallback;
         }
 
@@ -313,123 +146,36 @@
         return fallback;
     }
 
-    function normalizeId(value) {
-        if (
-            value === null ||
-            value === undefined ||
-            value === ""
-        ) {
-            return "";
+    function extractArray(payload, possibleKeys = []) {
+        if (Array.isArray(payload)) {
+            return payload;
         }
 
-        if (typeof value === "object") {
-            if (value.$oid) {
-                return String(value.$oid);
-            }
-
-            if (value.id) {
-                return String(value.id);
-            }
-
-            if (value._id) {
-                return normalizeId(value._id);
-            }
-        }
-
-        return String(value);
-    }
-
-    function getId(item, extraKeys = []) {
-        const value = firstValue(
-            item,
-            [
-                ...extraKeys,
-                "_id",
-                "id",
-                "deposit_id",
-                "withdrawal_id",
-                "investment_id",
-                "request_id"
-            ],
-            ""
-        );
-
-        return normalizeId(value);
-    }
-
-
-    /* =====================================================
-       ARRAY EXTRACTION
-       ===================================================== */
-
-    function extractArray(
-        response,
-        possibleKeys = []
-    ) {
-        if (!response) {
+        if (!payload || typeof payload !== "object") {
             return [];
         }
 
-        if (Array.isArray(response)) {
-            return response;
+        for (const key of possibleKeys) {
+            if (Array.isArray(payload[key])) {
+                return payload[key];
+            }
         }
 
-        if (typeof response !== "object") {
-            return [];
-        }
-
-        const keys = [
-            ...possibleKeys,
+        const commonKeys = [
+            "data",
+            "results",
             "items",
             "records",
-            "results",
-            "requests",
-            "data",
-            "payload",
-            "result"
+            "transactions",
+            "users",
+            "deposits",
+            "withdrawals",
+            "investments"
         ];
 
-        for (const key of keys) {
-            const value = response[key];
-
-            if (Array.isArray(value)) {
-                return value;
-            }
-
-            if (
-                value &&
-                typeof value === "object"
-            ) {
-                const nested = extractArray(
-                    value,
-                    possibleKeys
-                );
-
-                if (nested.length) {
-                    return nested;
-                }
-            }
-        }
-
-        for (const key of Object.keys(response)) {
-            const value = response[key];
-
-            if (Array.isArray(value)) {
-                return value;
-            }
-
-            if (
-                value &&
-                typeof value === "object"
-            ) {
-                const nested = extractArray(
-                    value,
-                    []
-                );
-
-                if (nested.length) {
-                    return nested;
-                }
+        for (const key of commonKeys) {
+            if (Array.isArray(payload[key])) {
+                return payload[key];
             }
         }
 
@@ -437,58 +183,215 @@
     }
 
 
-    /* =====================================================
+    /* ============================================================
+       DATE HELPERS
+       ============================================================ */
+
+    function parseDate(value) {
+        if (!value) {
+            return null;
+        }
+
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? null : value;
+        }
+
+        if (typeof value === "object") {
+            if (value.$date) {
+                return parseDate(value.$date);
+            }
+
+            if (value.date) {
+                return parseDate(value.date);
+            }
+
+            if (value.createdAt) {
+                return parseDate(value.createdAt);
+            }
+        }
+
+        if (typeof value === "number") {
+            const date = new Date(
+                value < 100000000000
+                    ? value * 1000
+                    : value
+            );
+
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        const stringValue = String(value).trim();
+
+        if (!stringValue) {
+            return null;
+        }
+
+        const date = new Date(stringValue);
+
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
+
+        return null;
+    }
+
+    function formatDate(value) {
+        const date = parseDate(value);
+
+        if (!date) {
+            return "Not available";
+        }
+
+        try {
+            return date.toLocaleString("en-UG", {
+                year: "numeric",
+                month: "short",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        } catch (error) {
+            return date.toLocaleString();
+        }
+    }
+
+
+    /* ============================================================
+       LOADER CONTROL
+       ============================================================ */
+
+    function findLoaderElements() {
+        const selectors = [
+            "#adminLoader",
+            "#admin-loader",
+            "#pageLoader",
+            "#page-loader",
+            "#loadingScreen",
+            "#loading-screen",
+            ".admin-loader",
+            ".admin-loading",
+            ".loading-screen",
+            ".loading-overlay",
+            ".page-loader",
+            ".loader-overlay",
+            "[data-admin-loader]"
+        ];
+
+        const elements = [];
+
+        selectors.forEach(selector => {
+            $$(selector).forEach(element => {
+                if (!elements.includes(element)) {
+                    elements.push(element);
+                }
+            });
+        });
+
+        return elements;
+    }
+
+    function showAdminLoader() {
+        const loaders = findLoaderElements();
+
+        loaders.forEach(loader => {
+            loader.style.display = "flex";
+            loader.style.visibility = "visible";
+            loader.style.opacity = "1";
+            loader.removeAttribute("aria-hidden");
+        });
+
+        document.documentElement.classList.add("admin-loading");
+        document.body.classList.add("admin-loading");
+    }
+
+    function hideAdminLoader() {
+        const loaders = findLoaderElements();
+
+        loaders.forEach(loader => {
+            loader.style.display = "none";
+            loader.style.visibility = "hidden";
+            loader.style.opacity = "0";
+            loader.setAttribute("aria-hidden", "true");
+        });
+
+        document.documentElement.classList.remove("admin-loading");
+        document.body.classList.remove("admin-loading");
+
+        /*
+         * Some loading screens are positioned above the page with
+         * z-index. Force them out of the visual layer as well.
+         */
+        loaders.forEach(loader => {
+            loader.style.pointerEvents = "none";
+        });
+
+        state.loading = false;
+    }
+
+    /*
+     * Emergency failsafe.
+     *
+     * If the page itself is already available but a loader element
+     * gets stuck because of a frontend error, it will not remain
+     * covering the admin panel forever.
+     */
+    function startLoaderFailsafe() {
+        setTimeout(() => {
+            if (state.authenticated && state.authorized) {
+                hideAdminLoader();
+            }
+        }, 7000);
+    }
+
+
+    /* ============================================================
        API REQUEST
-       ===================================================== */
+       ============================================================ */
 
-    async function apiRequest(
-        url,
-        options = {},
-        redirectOnAuth = false
-    ) {
-        const controller =
-            new AbortController();
+    async function apiRequest(path, options = {}, redirectOnAuth = false) {
+        const controller = new AbortController();
 
-        const timeout =
-            setTimeout(() => {
-                controller.abort();
-            }, 20000);
+        const timeout = setTimeout(() => {
+            controller.abort();
+        }, REQUEST_TIMEOUT);
 
         const requestOptions = {
+            method: options.method || "GET",
             credentials: "include",
-            ...options,
+            cache: "no-store",
             signal: controller.signal,
-
             headers: {
-                Accept: "application/json",
-
+                "Accept": "application/json",
                 ...(options.body
                     ? {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json"
                     }
                     : {}),
-
                 ...(options.headers || {})
             }
         };
 
-        try {
-            const response =
-                await fetch(
-                    url,
-                    requestOptions
-                );
+        if (options.body !== undefined) {
+            requestOptions.body =
+                typeof options.body === "string"
+                    ? options.body
+                    : JSON.stringify(options.body);
+        }
 
-            const text =
-                await response.text();
+        try {
+            const response = await fetch(
+                API_BASE + path,
+                requestOptions
+            );
+
+            const text = await response.text();
 
             let data = {};
 
             if (text) {
                 try {
                     data = JSON.parse(text);
-                } catch {
+                } catch (parseError) {
                     data = {
                         success: false,
                         message: text
@@ -496,39 +399,45 @@
                 }
             }
 
-            if (
-                response.status === 401 ||
-                response.status === 403
-            ) {
+            if (response.status === 401) {
+                state.authenticated = false;
+                state.authorized = false;
+                state.isAdmin = false;
+
                 if (redirectOnAuth) {
-                    window.location.href =
-                        "login.html?redirect=admin.html";
+                    window.location.href = "login.html";
                 }
 
                 throw new Error(
-                    data?.message ||
-                    data?.error ||
-                    "Administrator authorization required."
+                    data.message ||
+                    "Your administrator session has expired."
+                );
+            }
+
+            if (response.status === 403) {
+                state.authorized = false;
+                state.isAdmin = false;
+
+                throw new Error(
+                    data.message ||
+                    "Administrator access is required."
                 );
             }
 
             if (!response.ok) {
                 throw new Error(
-                    data?.message ||
-                    data?.error ||
-                    `Request failed (${response.status})`
+                    data.message ||
+                    data.error ||
+                    `Request failed with HTTP ${response.status}`
                 );
             }
 
             return data;
 
         } catch (error) {
-            if (
-                error?.name ===
-                "AbortError"
-            ) {
+            if (error.name === "AbortError") {
                 throw new Error(
-                    "Request timed out. Please try again."
+                    "The server took too long to respond."
                 );
             }
 
@@ -540,655 +449,835 @@
     }
 
 
-    /* =====================================================
-       ADMIN LOADER
-       ===================================================== */
-
-    function hideAdminLoader() {
-        const loader =
-            byId("adminLoader");
-
-        if (!loader) {
-            return;
-        }
-
-        loader.classList.add("hidden");
-
-        loader.style.display = "none";
-        loader.style.opacity = "0";
-        loader.style.visibility = "hidden";
-        loader.style.pointerEvents = "none";
-
-        loader.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-    }
-
-    function showAdminLoader(
-        message = "Loading Crown Cash Admin..."
-    ) {
-        const loader =
-            byId("adminLoader");
-
-        if (!loader) {
-            return;
-        }
-
-        loader.classList.remove("hidden");
-
-        loader.style.display = "";
-        loader.style.opacity = "1";
-        loader.style.visibility = "visible";
-        loader.style.pointerEvents = "auto";
-
-        const textElement =
-            qs(".loader-text", loader) ||
-            qs("[data-loader-text]", loader);
-
-        if (textElement) {
-            textElement.textContent = message;
-        }
-    }
-
-
-    /* =====================================================
-       AUTHENTICATION
-       ===================================================== */
+    /* ============================================================
+       ADMIN AUTHENTICATION
+       ============================================================ */
 
     async function authenticateAdmin() {
-        const data =
-            await apiRequest(
+        try {
+            const data = await apiRequest(
                 ENDPOINTS.auth,
                 {
                     method: "GET"
                 },
-                true
+                false
             );
 
-        const authenticated =
-            Boolean(
-                data?.authenticated ??
-                data?.data?.authenticated
-            );
+            const authorized =
+                data.authorized === true ||
+                data.is_admin === true ||
+                data.isAdmin === true ||
+                data.admin === true ||
+                data.role === "admin" ||
+                data.role === "administrator" ||
+                data.account_type === "admin" ||
+                data.account_type === "administrator";
 
-        const authorized =
-            Boolean(
-                data?.authorized ??
-                data?.data?.authorized ??
-                data?.is_admin ??
-                data?.data?.is_admin
-            );
+            if (!authorized) {
+                state.authenticated = true;
+                state.authorized = false;
+                state.isAdmin = false;
 
-        if (
-            !authenticated ||
-            !authorized
-        ) {
-            throw new Error(
-                "Administrator authorization required."
-            );
+                throw new Error(
+                    "Administrator authorization was not confirmed."
+                );
+            }
+
+            state.authenticated = true;
+            state.authorized = true;
+            state.isAdmin = true;
+
+            /*
+             * VERY IMPORTANT:
+             *
+             * Authentication is the only operation that should block
+             * the administrator from seeing the page.
+             *
+             * Once authenticated, remove the full-screen loader NOW.
+             * Other API requests are allowed to continue in background.
+             */
+            hideAdminLoader();
+
+            return data;
+
+        } catch (error) {
+            state.authenticated = false;
+            state.authorized = false;
+            state.isAdmin = false;
+
+            hideAdminLoader();
+
+            /*
+             * If the backend explicitly says unauthorized, send the
+             * user back to login.
+             */
+            if (
+                error.message &&
+                (
+                    error.message.toLowerCase().includes("unauthorized") ||
+                    error.message.toLowerCase().includes("administrator") ||
+                    error.message.toLowerCase().includes("session")
+                )
+            ) {
+                window.location.href = "login.html";
+            }
+
+            throw error;
         }
-
-        state.authenticated = true;
-        state.authorized = true;
-
-        state.admin =
-            data?.admin ||
-            data?.data?.admin ||
-            data?.user ||
-            data?.data?.user ||
-            null;
-
-        return true;
     }
 
 
-    /* =====================================================
+    /* ============================================================
        PROFILE
-       ===================================================== */
+       ============================================================ */
 
     async function loadProfile() {
         try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.profile,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
+            const data = await apiRequest(
+                ENDPOINTS.profile,
+                {
+                    method: "GET"
+                },
+                false
+            );
 
-            state.profile =
-                data?.user ||
-                data?.data?.user ||
-                data?.profile ||
-                data?.data?.profile ||
-                null;
+            state.profile = data;
 
-            renderAdminProfile();
+            renderProfile(data);
+
+            return data;
 
         } catch (error) {
             console.warn(
-                "Profile could not be loaded:",
+                "Crown Cash Admin: profile request failed:",
                 error.message
             );
+
+            return null;
         }
     }
 
-    function renderAdminProfile() {
-        const profile =
-            state.profile ||
-            state.admin ||
-            {};
+    function renderProfile(data) {
+        if (!data) {
+            return;
+        }
+
+        const user =
+            data.user ||
+            data.profile ||
+            data.data ||
+            data;
 
         const name =
-            firstValue(
-                profile,
+            getValue(
+                user,
                 [
                     "full_name",
-                    "fullname",
+                    "fullName",
                     "name",
-                    "username"
+                    "username",
+                    "display_name",
+                    "displayName"
                 ],
                 "Administrator"
             );
 
         const email =
-            firstValue(
-                profile,
-                [
-                    "email",
-                    "email_address"
-                ],
+            getValue(
+                user,
+                ["email"],
                 ""
             );
 
-        qsa("[data-admin-name]")
-            .forEach(element => {
+        const nameElements = [
+            "#adminName",
+            "#administratorName",
+            "#profileName",
+            ".admin-name",
+            "[data-admin-name]"
+        ];
+
+        nameElements.forEach(selector => {
+            $$(selector).forEach(element => {
                 element.textContent = name;
             });
+        });
 
-        qsa("[data-admin-email]")
-            .forEach(element => {
-                element.textContent = email;
+        const emailElements = [
+            "#adminEmail",
+            "#administratorEmail",
+            ".admin-email",
+            "[data-admin-email]"
+        ];
+
+        emailElements.forEach(selector => {
+            $$(selector).forEach(element => {
+                if (email) {
+                    element.textContent = email;
+                }
             });
-
-        [
-            "adminName",
-            "administratorName",
-            "welcomeAdminName"
-        ].forEach(id => {
-            const element = byId(id);
-
-            if (element) {
-                element.textContent = name;
-            }
         });
     }
 
 
-    /* =====================================================
-       TEXT HELPER
-       ===================================================== */
-
-    function setText(ids, value) {
-        if (!Array.isArray(ids)) {
-            ids = [ids];
-        }
-
-        ids.forEach(id => {
-            const element = byId(id);
-
-            if (element) {
-                element.textContent = value;
-            }
-        });
-    }
-
-
-    /* =====================================================
+    /* ============================================================
        DASHBOARD
-       ===================================================== */
+       ============================================================ */
 
     async function loadDashboard() {
-        state.loading.dashboard = true;
-
         try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.dashboard,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
+            const data = await apiRequest(
+                ENDPOINTS.dashboard,
+                {
+                    method: "GET"
+                },
+                false
+            );
 
             state.dashboard = data;
-
-            state.users =
-                extractArray(
-                    data,
-                    [
-                        "users",
-                        "recent_users",
-                        "recentUsers",
-                        "all_users",
-                        "allUsers"
-                    ]
-                );
 
             renderDashboard(data);
 
             return data;
 
         } catch (error) {
-            console.error(
-                "Dashboard loading failed:",
-                error
+            console.warn(
+                "Crown Cash Admin: dashboard request failed:",
+                error.message
             );
 
             return null;
+        }
+    }
 
-        } finally {
-            state.loading.dashboard = false;
+    function findNumber(data, keys, fallback = 0) {
+        if (!data || typeof data !== "object") {
+            return fallback;
+        }
+
+        for (const key of keys) {
+            if (
+                data[key] !== undefined &&
+                data[key] !== null
+            ) {
+                const number = Number(data[key]);
+
+                if (Number.isFinite(number)) {
+                    return number;
+                }
+            }
+        }
+
+        return fallback;
+    }
+
+    function renderDashboard(data) {
+        if (!data) {
+            return;
+        }
+
+        const root =
+            data.data ||
+            data.dashboard ||
+            data;
+
+        const stats =
+            root.stats ||
+            root.statistics ||
+            root.overview ||
+            root;
+
+        const totalUsers = findNumber(
+            stats,
+            [
+                "total_users",
+                "totalUsers",
+                "users_count",
+                "user_count"
+            ]
+        );
+
+        const totalDeposits = findNumber(
+            stats,
+            [
+                "total_deposits",
+                "totalDeposits",
+                "deposits_total"
+            ]
+        );
+
+        const totalWithdrawals = findNumber(
+            stats,
+            [
+                "total_withdrawals",
+                "totalWithdrawals",
+                "withdrawals_total"
+            ]
+        );
+
+        const totalInvestments = findNumber(
+            stats,
+            [
+                "total_investments",
+                "totalInvestments",
+                "investments_total"
+            ]
+        );
+
+        const pendingDeposits = findNumber(
+            stats,
+            [
+                "pending_deposits",
+                "pendingDeposits"
+            ]
+        );
+
+        const pendingWithdrawals = findNumber(
+            stats,
+            [
+                "pending_withdrawals",
+                "pendingWithdrawals"
+            ]
+        );
+
+        const pendingInvestments = findNumber(
+            stats,
+            [
+                "pending_investments",
+                "pendingInvestments"
+            ]
+        );
+
+        setText(
+            [
+                "#totalUsers",
+                "#total-users",
+                "[data-stat='total-users']"
+            ],
+            formatNumber(totalUsers)
+        );
+
+        setText(
+            [
+                "#totalDeposits",
+                "#total-deposits",
+                "[data-stat='total-deposits']"
+            ],
+            formatUGX(totalDeposits)
+        );
+
+        setText(
+            [
+                "#totalWithdrawals",
+                "#total-withdrawals",
+                "[data-stat='total-withdrawals']"
+            ],
+            formatUGX(totalWithdrawals)
+        );
+
+        setText(
+            [
+                "#totalInvestments",
+                "#total-investments",
+                "[data-stat='total-investments']"
+            ],
+            formatUGX(totalInvestments)
+        );
+
+        setText(
+            [
+                "#pendingDeposits",
+                "#pending-deposits",
+                "[data-stat='pending-deposits']"
+            ],
+            formatNumber(pendingDeposits)
+        );
+
+        setText(
+            [
+                "#pendingWithdrawals",
+                "#pending-withdrawals",
+                "[data-stat='pending-withdrawals']"
+            ],
+            formatNumber(pendingWithdrawals)
+        );
+
+        setText(
+            [
+                "#pendingInvestments",
+                "#pending-investments",
+                "[data-stat='pending-investments']"
+            ],
+            formatNumber(pendingInvestments)
+        );
+
+        renderRecentTransactions(root);
+        renderRecentUsers(root);
+    }
+
+
+    /* ============================================================
+       GENERIC TEXT SETTER
+       ============================================================ */
+
+    function setText(selectors, value) {
+        if (!Array.isArray(selectors)) {
+            selectors = [selectors];
+        }
+
+        for (const selector of selectors) {
+            const elements = $$(selector);
+
+            if (elements.length) {
+                elements.forEach(element => {
+                    element.textContent = value;
+                });
+
+                return;
+            }
         }
     }
 
 
-    function renderDashboard(data) {
-        const stats =
-            data?.stats ||
-            data?.statistics ||
-            data?.data?.stats ||
-            data?.data?.statistics ||
-            {};
+    /* ============================================================
+       RECENT TRANSACTIONS
+       ============================================================ */
 
-        const pending =
-            data?.pending ||
-            data?.pending_actions ||
-            data?.data?.pending ||
-            data?.data?.pending_actions ||
-            {};
-
-        setText(
-            [
-                "totalUsers",
-                "usersCount"
-            ],
-            firstValue(
-                stats,
-                [
-                    "total_users",
-                    "users",
-                    "totalUsers"
-                ],
-                0
-            )
-        );
-
-        setText(
-            [
-                "totalDeposits",
-                "depositsCount"
-            ],
-            money(
-                firstValue(
-                    stats,
-                    [
-                        "total_deposits",
-                        "deposits",
-                        "totalDeposits"
-                    ],
-                    0
-                )
-            )
-        );
-
-        setText(
-            [
-                "totalWithdrawals",
-                "withdrawalsCount"
-            ],
-            money(
-                firstValue(
-                    stats,
-                    [
-                        "total_withdrawals",
-                        "withdrawals",
-                        "totalWithdrawals"
-                    ],
-                    0
-                )
-            )
-        );
-
-        setText(
-            [
-                "totalInvestments",
-                "investmentsCount"
-            ],
-            money(
-                firstValue(
-                    stats,
-                    [
-                        "total_investments",
-                        "investments",
-                        "totalInvestments"
-                    ],
-                    0
-                )
-            )
-        );
-
-        setText(
-            [
-                "pendingDeposits",
-                "pendingDepositsCount"
-            ],
-            number(
-                firstValue(
-                    pending,
-                    [
-                        "deposits",
-                        "pending_deposits",
-                        "pendingDeposits"
-                    ],
-                    0
-                )
-            )
-        );
-
-        setText(
-            [
-                "pendingWithdrawals",
-                "pendingWithdrawalsCount"
-            ],
-            number(
-                firstValue(
-                    pending,
-                    [
-                        "withdrawals",
-                        "pending_withdrawals",
-                        "pendingWithdrawals"
-                    ],
-                    0
-                )
-            )
-        );
-
-        setText(
-            [
-                "pendingInvestments",
-                "pendingInvestmentsCount"
-            ],
-            number(
-                firstValue(
-                    pending,
-                    [
-                        "investments",
-                        "pending_investments",
-                        "pendingInvestments"
-                    ],
-                    0
-                )
-            )
-        );
-
+    function renderRecentTransactions(root) {
         const transactions =
             extractArray(
-                data,
+                root.recent_transactions ||
+                root.recentTransactions ||
+                root.transactions ||
+                [],
                 [
+                    "transactions",
                     "recent_transactions",
-                    "recentTransactions",
-                    "transactions"
+                    "recentTransactions"
                 ]
             );
 
-        renderRecentTransactions(
-            transactions
-        );
+        const container =
+            $(
+                "#recentTransactionsList"
+            ) ||
+            $(
+                "#recentTransactions"
+            ) ||
+            $(
+                ".recent-transactions-list"
+            );
 
-        renderRecentUsers(
-            state.users
-        );
-    }
-
-
-    /* =====================================================
-       RECENT TRANSACTIONS
-       ===================================================== */
-
-    function renderRecentTransactions(
-        transactions
-    ) {
-        const containers = [
-            byId("recentTransactions"),
-            byId("recentTransactionsList")
-        ].filter(Boolean);
-
-        if (!containers.length) {
+        if (!container) {
             return;
         }
 
         if (!transactions.length) {
-            containers.forEach(container => {
-                container.innerHTML =
-                    `<div class="empty-state">
-                        No recent transactions found.
-                    </div>`;
-            });
+            container.innerHTML = `
+                <div class="empty-state">
+                    No recent transactions found.
+                </div>
+            `;
 
             return;
         }
 
-        const html =
-            transactions
-                .slice(0, 20)
-                .map(transaction => {
-                    const type =
-                        firstValue(
-                            transaction,
-                            [
-                                "type",
-                                "transaction_type",
-                                "transactionType"
-                            ],
-                            "transaction"
-                        );
+        container.innerHTML = transactions
+            .slice(0, 10)
+            .map(transaction => {
+                const type = getValue(
+                    transaction,
+                    ["type", "transaction_type", "transactionType"],
+                    "Transaction"
+                );
 
-                    const amount =
-                        firstValue(
-                            transaction,
-                            [
-                                "amount",
-                                "value"
-                            ],
-                            0
-                        );
+                const status = getValue(
+                    transaction,
+                    ["status"],
+                    "unknown"
+                );
 
-                    const status =
-                        firstValue(
-                            transaction,
-                            [
-                                "status",
-                                "state"
-                            ],
-                            "unknown"
-                        );
+                const amount = Number(
+                    getValue(
+                        transaction,
+                        ["amount", "value"],
+                        0
+                    )
+                );
 
-                    const date =
-                        firstValue(
-                            transaction,
-                            [
-                                "created_at",
-                                "createdAt",
-                                "date",
-                                "timestamp",
-                                "time",
-                                "updated_at",
-                                "updatedAt"
-                            ],
-                            null
-                        );
+                const date = getValue(
+                    transaction,
+                    [
+                        "created_at",
+                        "createdAt",
+                        "date",
+                        "timestamp",
+                        "updated_at",
+                        "updatedAt"
+                    ],
+                    null
+                );
 
-                    return `
-                        <div class="transaction-item">
+                const reference = getValue(
+                    transaction,
+                    [
+                        "reference",
+                        "transaction_id",
+                        "transactionId"
+                    ],
+                    ""
+                );
 
-                            <div>
-                                <strong>
-                                    ${escapeHtml(type)}
-                                </strong>
+                return `
+                    <div class="transaction-row">
+                        <div class="transaction-main">
+                            <strong>
+                                ${escapeHTML(type)}
+                            </strong>
 
-                                <div>
-                                    ${formatDate(date)}
-                                </div>
-                            </div>
-
-                            <div>
-                                <strong>
-                                    ${money(amount)}
-                                </strong>
-
-                                <div>
-                                    ${escapeHtml(status)}
-                                </div>
-                            </div>
-
+                            ${
+                                reference
+                                    ? `
+                                    <small>
+                                        ${escapeHTML(reference)}
+                                    </small>
+                                    `
+                                    : ""
+                            }
                         </div>
-                    `;
-                })
-                .join("");
 
-        containers.forEach(container => {
-            container.innerHTML = html;
-        });
+                        <div class="transaction-amount">
+                            ${formatUGX(amount)}
+                        </div>
+
+                        <div class="transaction-status">
+                            <span class="status-badge ${statusClass(status)}">
+                                ${escapeHTML(status)}
+                            </span>
+                        </div>
+
+                        <div class="transaction-date">
+                            ${escapeHTML(formatDate(date))}
+                        </div>
+                    </div>
+                `;
+            })
+            .join("");
     }
 
 
-    /* =====================================================
+    /* ============================================================
        RECENT USERS
-       ===================================================== */
+       ============================================================ */
 
-    function renderRecentUsers(users) {
+    function renderRecentUsers(root) {
+        const users =
+            extractArray(
+                root.recent_users ||
+                root.recentUsers ||
+                root.users ||
+                [],
+                [
+                    "users",
+                    "recent_users",
+                    "recentUsers"
+                ]
+            );
+
         const container =
-            byId("recentUsers") ||
-            byId("recentUsersList");
+            $(
+                "#recentUsersList"
+            ) ||
+            $(
+                "#recentUsers"
+            ) ||
+            $(
+                ".recent-users-list"
+            );
 
         if (!container) {
             return;
         }
 
         if (!users.length) {
-            container.innerHTML =
-                `<div class="empty-state">
+            container.innerHTML = `
+                <div class="empty-state">
                     No recent users found.
-                </div>`;
+                </div>
+            `;
 
             return;
         }
 
-        container.innerHTML =
-            users
-                .slice(0, 20)
-                .map(user => {
-                    const name =
-                        firstValue(
-                            user,
-                            [
-                                "full_name",
-                                "fullname",
-                                "name",
-                                "username"
-                            ],
-                            "Unknown User"
-                        );
+        container.innerHTML = users
+            .slice(0, 10)
+            .map(user => {
+                const name = getValue(
+                    user,
+                    [
+                        "full_name",
+                        "fullName",
+                        "name",
+                        "username"
+                    ],
+                    "Unknown User"
+                );
 
-                    const email =
-                        firstValue(
-                            user,
-                            [
-                                "email",
-                                "email_address"
-                            ],
-                            ""
-                        );
+                const email = getValue(
+                    user,
+                    ["email"],
+                    ""
+                );
 
-                    const status =
-                        firstValue(
-                            user,
-                            [
-                                "status",
-                                "account_status"
-                            ],
-                            "active"
-                        );
+                const date = getValue(
+                    user,
+                    [
+                        "created_at",
+                        "createdAt",
+                        "date",
+                        "registered_at"
+                    ],
+                    null
+                );
 
-                    return `
-                        <div class="user-item">
+                const status = getValue(
+                    user,
+                    ["status", "account_status"],
+                    "active"
+                );
 
-                            <div>
-                                <strong>
-                                    ${escapeHtml(name)}
-                                </strong>
+                return `
+                    <div class="user-row">
+                        <div class="user-main">
+                            <strong>
+                                ${escapeHTML(name)}
+                            </strong>
 
-                                <div>
-                                    ${escapeHtml(email)}
-                                </div>
-                            </div>
-
-                            <span>
-                                ${escapeHtml(status)}
-                            </span>
-
+                            ${
+                                email
+                                    ? `
+                                    <small>
+                                        ${escapeHTML(email)}
+                                    </small>
+                                    `
+                                    : ""
+                            }
                         </div>
-                    `;
-                })
-                .join("");
+
+                        <div class="user-status">
+                            <span class="status-badge ${statusClass(status)}">
+                                ${escapeHTML(status)}
+                            </span>
+                        </div>
+
+                        <div class="user-date">
+                            ${escapeHTML(formatDate(date))}
+                        </div>
+                    </div>
+                `;
+            })
+            .join("");
     }
 
 
-    /* =====================================================
-       MANAGEMENT CONTAINERS
-       ===================================================== */
+    /* ============================================================
+       DEPOSITS
+       ============================================================ */
+
+    async function loadDeposits() {
+        try {
+            const data = await apiRequest(
+                ENDPOINTS.deposits,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+            state.deposits = extractArray(
+                data,
+                [
+                    "deposits",
+                    "data",
+                    "results",
+                    "items"
+                ]
+            );
+
+            renderDeposits(state.deposits);
+
+            return state.deposits;
+
+        } catch (error) {
+            console.warn(
+                "Crown Cash Admin: deposits request failed:",
+                error.message
+            );
+
+            return [];
+        }
+    }
+
+    function renderDeposits(items) {
+        const container = findManagementContainer(
+            "deposits"
+        );
+
+        if (!container) {
+            return;
+        }
+
+        renderManagementTable(
+            container,
+            "Deposit Requests",
+            items,
+            "deposit"
+        );
+    }
+
+
+    /* ============================================================
+       WITHDRAWALS
+       ============================================================ */
+
+    async function loadWithdrawals() {
+        try {
+            const data = await apiRequest(
+                ENDPOINTS.withdrawals,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+            state.withdrawals = extractArray(
+                data,
+                [
+                    "withdrawals",
+                    "data",
+                    "results",
+                    "items"
+                ]
+            );
+
+            renderWithdrawals(state.withdrawals);
+
+            return state.withdrawals;
+
+        } catch (error) {
+            console.warn(
+                "Crown Cash Admin: withdrawals request failed:",
+                error.message
+            );
+
+            return [];
+        }
+    }
+
+    function renderWithdrawals(items) {
+        const container = findManagementContainer(
+            "withdrawals"
+        );
+
+        if (!container) {
+            return;
+        }
+
+        renderManagementTable(
+            container,
+            "Withdrawal Requests",
+            items,
+            "withdrawal"
+        );
+    }
+
+
+    /* ============================================================
+       INVESTMENTS
+       ============================================================ */
+
+    async function loadInvestments() {
+        try {
+            const data = await apiRequest(
+                ENDPOINTS.investments,
+                {
+                    method: "GET"
+                },
+                false
+            );
+
+            state.investments = extractArray(
+                data,
+                [
+                    "investments",
+                    "data",
+                    "results",
+                    "items"
+                ]
+            );
+
+            renderInvestments(state.investments);
+
+            return state.investments;
+
+        } catch (error) {
+            console.warn(
+                "Crown Cash Admin: investments request failed:",
+                error.message
+            );
+
+            return [];
+        }
+    }
+
+    function renderInvestments(items) {
+        const container = findManagementContainer(
+            "investments"
+        );
+
+        if (!container) {
+            return;
+        }
+
+        renderManagementTable(
+            container,
+            "Investment Requests",
+            items,
+            "investment"
+        );
+    }
+
+
+    /* ============================================================
+       MANAGEMENT CONTAINER
+       ============================================================ */
 
     function findManagementContainer(type) {
         const selectors = {
             deposits: [
-                "#depositsManagement",
+                "#deposits",
                 "#depositManagement",
-                "#depositsList",
-                "#depositList",
-                "[data-management='deposits']",
-                "#deposits .management-content",
-                "#deposits"
+                "#depositsManagement",
+                "[data-management='deposits']"
             ],
 
             withdrawals: [
-                "#withdrawalsManagement",
+                "#withdrawals",
                 "#withdrawalManagement",
-                "#withdrawalsList",
-                "#withdrawalList",
-                "[data-management='withdrawals']",
-                "#withdrawals .management-content",
-                "#withdrawals"
+                "#withdrawalsManagement",
+                "[data-management='withdrawals']"
             ],
 
             investments: [
-                "#investmentsManagement",
+                "#investments",
                 "#investmentManagement",
-                "#investmentsList",
-                "#investmentList",
-                "[data-management='investments']",
-                "#investments .management-content",
-                "#investments"
+                "#investmentsManagement",
+                "[data-management='investments']"
             ]
         };
 
-        for (
-            const selector of
-            selectors[type] || []
-        ) {
-            const element = qs(selector);
+        for (const selector of selectors[type] || []) {
+            const element = $(selector);
 
             if (element) {
                 return element;
@@ -1199,1964 +1288,869 @@
     }
 
 
-    /* =====================================================
-       DEPOSITS
-       ===================================================== */
+    /* ============================================================
+       MANAGEMENT TABLE
+       ============================================================ */
 
-    async function loadDeposits() {
-        state.loading.deposits = true;
-
-        const container =
-            findManagementContainer(
-                "deposits"
-            );
-
-        if (container) {
-            showManagementLoading(
-                container,
-                "Loading deposit requests..."
-            );
-        }
-
-        try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.deposits,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
-
-            state.deposits =
-                extractArray(
-                    data,
-                    [
-                        "deposits",
-                        "deposit_requests",
-                        "pending_deposits",
-                        "pendingDeposits"
-                    ]
-                );
-
-            renderDeposits();
-
-            return state.deposits;
-
-        } catch (error) {
-            console.error(
-                "Deposits loading failed:",
-                error
-            );
-
-            if (container) {
-                showManagementError(
-                    container,
-                    error.message
-                );
-            }
-
-            return [];
-
-        } finally {
-            state.loading.deposits = false;
-        }
-    }
-
-
-    function renderDeposits() {
-        const container =
-            findManagementContainer(
-                "deposits"
-            );
-
+    function renderManagementTable(
+        container,
+        title,
+        items,
+        type
+    ) {
         if (!container) {
             return;
         }
 
-        if (!state.deposits.length) {
-            container.innerHTML = `
-                <div class="management-toolbar">
-
-                    <strong>
-                        Deposits Management
-                    </strong>
-
-                    <button
-                        type="button"
-                        class="admin-refresh-btn"
-                        data-refresh="deposits">
-                        Refresh
-                    </button>
-
-                </div>
-
-                <div class="empty-state">
-                    No deposit requests found.
-                </div>
-            `;
-
-            bindManagementEvents();
-            return;
+        if (!Array.isArray(items)) {
+            items = [];
         }
 
-        container.innerHTML = `
-            <div class="management-toolbar">
-
-                <strong>
-                    Deposits Management
-                </strong>
-
-                <button
-                    type="button"
-                    class="admin-refresh-btn"
-                    data-refresh="deposits">
-                    Refresh
-                </button>
-
-            </div>
-
-            <div class="admin-table-wrap">
-
-                <table class="admin-table">
-
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Reference</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        ${state.deposits
-                            .map(renderDepositRow)
-                            .join("")}
-                    </tbody>
-
-                </table>
-
-            </div>
-        `;
-
-        bindManagementEvents();
-    }
-
-
-    function renderDepositRow(deposit) {
-        const id =
-            getId(
-                deposit,
-                ["deposit_id"]
-            );
-
-        const user =
-            getUserFromRecord(
-                deposit
-            );
-
-        const name =
-            firstValue(
-                user,
-                [
-                    "full_name",
-                    "fullname",
-                    "name",
-                    "username"
-                ],
-                firstValue(
-                    deposit,
+        const rows = items.map(item => {
+            const id = normalizeId(
+                getValue(
+                    item,
                     [
-                        "user_name",
-                        "customer_name",
-                        "name",
-                        "username",
-                        "full_name"
-                    ],
-                    "Unknown Customer"
-                )
-            );
-
-        const email =
-            firstValue(
-                user,
-                [
-                    "email",
-                    "email_address"
-                ],
-                firstValue(
-                    deposit,
-                    [
-                        "user_email",
-                        "email"
+                        "_id",
+                        "id",
+                        "deposit_id",
+                        "withdrawal_id",
+                        "investment_id"
                     ],
                     ""
                 )
             );
 
-        const amount =
-            firstValue(
-                deposit,
-                [
-                    "amount",
-                    "deposit_amount"
-                ],
-                0
-            );
+            const customer = resolveCustomer(item);
 
-        const method =
-            firstValue(
-                deposit,
-                [
-                    "method",
-                    "payment_method",
-                    "network"
-                ],
-                "—"
-            );
-
-        const reference =
-            firstValue(
-                deposit,
-                [
-                    "reference",
-                    "transaction_id",
-                    "transactionId"
-                ],
-                "—"
-            );
-
-        const status =
-            String(
-                firstValue(
-                    deposit,
+            const amount = Number(
+                getValue(
+                    item,
                     [
-                        "status",
-                        "state"
+                        "amount",
+                        "principal",
+                        "investment_amount",
+                        "value"
                     ],
-                    "pending"
+                    0
                 )
-            ).toLowerCase();
+            );
 
-        const date =
-            firstValue(
-                deposit,
+            const status = getValue(
+                item,
+                ["status"],
+                "pending"
+            );
+
+            const date = getValue(
+                item,
                 [
                     "created_at",
                     "createdAt",
                     "date",
-                    "timestamp",
-                    "submitted_at",
-                    "submittedAt"
+                    "timestamp"
                 ],
                 null
             );
 
-        return `
-            <tr>
-
-                <td>
-                    <strong>
-                        ${escapeHtml(name)}
-                    </strong>
-
-                    ${
-                        email
-                            ? `<small>
-                                ${escapeHtml(email)}
-                               </small>`
-                            : ""
-                    }
-                </td>
-
-                <td>
-                    <strong>
-                        ${money(amount)}
-                    </strong>
-                </td>
-
-                <td>
-                    ${escapeHtml(method)}
-                </td>
-
-                <td>
-                    ${escapeHtml(reference)}
-                </td>
-
-                <td>
-                    ${statusBadge(status)}
-                </td>
-
-                <td>
-                    ${formatDate(date)}
-                </td>
-
-                <td>
-                    ${managementActions(
-                        "deposit",
-                        id,
-                        status
-                    )}
-                </td>
-
-            </tr>
-        `;
-    }
-
-
-    /* =====================================================
-       WITHDRAWALS
-       ===================================================== */
-
-    async function loadWithdrawals() {
-        state.loading.withdrawals = true;
-
-        const container =
-            findManagementContainer(
-                "withdrawals"
-            );
-
-        if (container) {
-            showManagementLoading(
-                container,
-                "Loading withdrawal requests..."
-            );
-        }
-
-        try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.withdrawals,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
-
-            state.withdrawals =
-                extractArray(
-                    data,
-                    [
-                        "withdrawals",
-                        "withdrawal_requests",
-                        "pending_withdrawals",
-                        "pendingWithdrawals",
-                        "requests"
-                    ]
-                );
-
-            renderWithdrawals();
-
-            return state.withdrawals;
-
-        } catch (error) {
-            console.error(
-                "Withdrawals loading failed:",
-                error
-            );
-
-            if (container) {
-                showManagementError(
-                    container,
-                    error.message
-                );
-            }
-
-            return [];
-
-        } finally {
-            state.loading.withdrawals = false;
-        }
-    }
-
-
-    function renderWithdrawals() {
-        const container =
-            findManagementContainer(
-                "withdrawals"
-            );
-
-        if (!container) {
-            return;
-        }
-
-        if (!state.withdrawals.length) {
-            container.innerHTML = `
-                <div class="management-toolbar">
-
-                    <strong>
-                        Withdrawals Management
-                    </strong>
-
-                    <button
-                        type="button"
-                        class="admin-refresh-btn"
-                        data-refresh="withdrawals">
-                        Refresh
-                    </button>
-
-                </div>
-
-                <div class="empty-state">
-                    No withdrawal requests found.
-                </div>
-            `;
-
-            bindManagementEvents();
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="management-toolbar">
-
-                <strong>
-                    Withdrawals Management
-                </strong>
-
-                <button
-                    type="button"
-                    class="admin-refresh-btn"
-                    data-refresh="withdrawals">
-                    Refresh
-                </button>
-
-            </div>
-
-            <div class="admin-table-wrap">
-
-                <table class="admin-table">
-
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Account</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        ${state.withdrawals
-                            .map(renderWithdrawalRow)
-                            .join("")}
-                    </tbody>
-
-                </table>
-
-            </div>
-        `;
-
-        bindManagementEvents();
-    }
-
-
-    function renderWithdrawalRow(
-        withdrawal
-    ) {
-        const id =
-            getId(
-                withdrawal,
-                ["withdrawal_id"]
-            );
-
-        const user =
-            getUserFromRecord(
-                withdrawal
-            );
-
-        const name =
-            firstValue(
-                user,
-                [
-                    "full_name",
-                    "fullname",
-                    "name",
-                    "username"
-                ],
-                firstValue(
-                    withdrawal,
-                    [
-                        "user_name",
-                        "customer_name",
-                        "name",
-                        "username",
-                        "full_name"
-                    ],
-                    "Unknown Customer"
-                )
-            );
-
-        const email =
-            firstValue(
-                user,
-                [
-                    "email",
-                    "email_address"
-                ],
-                firstValue(
-                    withdrawal,
-                    [
-                        "user_email",
-                        "email"
-                    ],
-                    ""
-                )
-            );
-
-        const amount =
-            firstValue(
-                withdrawal,
-                [
-                    "amount",
-                    "withdrawal_amount"
-                ],
-                0
-            );
-
-        const method =
-            firstValue(
-                withdrawal,
-                [
-                    "method",
-                    "payment_method",
-                    "network"
-                ],
-                "—"
-            );
-
-        const account =
-            firstValue(
-                withdrawal,
-                [
-                    "phone",
-                    "phone_number",
-                    "mobile",
-                    "account_number",
-                    "destination",
-                    "recipient",
-                    "account"
-                ],
-                "—"
-            );
-
-        const status =
-            String(
-                firstValue(
-                    withdrawal,
-                    [
-                        "status",
-                        "state"
-                    ],
-                    "pending"
-                )
-            ).toLowerCase();
-
-        const date =
-            firstValue(
-                withdrawal,
-                [
-                    "created_at",
-                    "createdAt",
-                    "date",
-                    "timestamp",
-                    "submitted_at",
-                    "submittedAt"
-                ],
-                null
-            );
-
-        const userId =
-            normalizeId(
-                firstValue(
-                    withdrawal,
-                    [
-                        "user_id",
-                        "userId",
-                        "customer_id",
-                        "customerId"
-                    ],
-                    firstValue(
-                        user,
-                        [
-                            "_id",
-                            "id",
-                            "user_id",
-                            "userId"
-                        ],
-                        ""
-                    )
-                )
-            );
-
-        return `
-            <tr>
-
-                <td>
-
-                    <strong>
-                        ${escapeHtml(name)}
-                    </strong>
-
-                    ${
-                        email
-                            ? `<small>
-                                ${escapeHtml(email)}
-                               </small>`
-                            : ""
-                    }
-
-                </td>
-
-                <td>
-                    <strong>
-                        ${money(amount)}
-                    </strong>
-                </td>
-
-                <td>
-                    ${escapeHtml(method)}
-                </td>
-
-                <td>
-                    ${escapeHtml(account)}
-                </td>
-
-                <td>
-                    ${statusBadge(status)}
-                </td>
-
-                <td>
-                    ${formatDate(date)}
-                </td>
-
-                <td>
-                    ${managementActions(
-                        "withdrawal",
-                        id,
-                        status,
-                        userId
-                    )}
-                </td>
-
-            </tr>
-        `;
-    }
-
-
-    /* =====================================================
-       INVESTMENTS
-       ===================================================== */
-
-    async function loadInvestments() {
-        state.loading.investments = true;
-
-        const container =
-            findManagementContainer(
-                "investments"
-            );
-
-        if (container) {
-            showManagementLoading(
-                container,
-                "Loading investment requests..."
-            );
-        }
-
-        try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.investments,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
-
-            state.investments =
-                extractArray(
-                    data,
-                    [
-                        "investments",
-                        "investment_requests",
-                        "pending_investments",
-                        "pendingInvestments",
-                        "requests"
-                    ]
-                );
-
-            enrichInvestmentUsers();
-
-            renderInvestments();
-
-            return state.investments;
-
-        } catch (error) {
-            console.error(
-                "Investments loading failed:",
-                error
-            );
-
-            if (container) {
-                showManagementError(
-                    container,
-                    error.message
-                );
-            }
-
-            return [];
-
-        } finally {
-            state.loading.investments = false;
-        }
-    }
-
-
-    function enrichInvestmentUsers() {
-        state.investments =
-            state.investments.map(
-                investment => {
-                    if (
-                        investment.user &&
-                        typeof investment.user ===
-                        "object"
-                    ) {
-                        return investment;
-                    }
-
-                    const userId =
-                        firstValue(
-                            investment,
-                            [
-                                "user_id",
-                                "userId",
-                                "customer_id",
-                                "customerId"
-                            ],
-                            ""
-                        );
-
-                    if (!userId) {
-                        return investment;
-                    }
-
-                    const user =
-                        findUserById(
-                            userId
-                        );
-
-                    if (!user) {
-                        return investment;
-                    }
-
-                    return {
-                        ...investment,
-                        user
-                    };
-                }
-            );
-    }
-
-
-    function renderInvestments() {
-        const container =
-            findManagementContainer(
-                "investments"
-            );
-
-        if (!container) {
-            return;
-        }
-
-        if (!state.investments.length) {
-            container.innerHTML = `
-                <div class="management-toolbar">
-
-                    <strong>
-                        Investments Management
-                    </strong>
-
-                    <button
-                        type="button"
-                        class="admin-refresh-btn"
-                        data-refresh="investments">
-                        Refresh
-                    </button>
-
-                </div>
-
-                <div class="empty-state">
-                    No investment requests found.
-                </div>
-            `;
-
-            bindManagementEvents();
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="management-toolbar">
-
-                <strong>
-                    Investments Management
-                </strong>
-
-                <button
-                    type="button"
-                    class="admin-refresh-btn"
-                    data-refresh="investments">
-                    Refresh
-                </button>
-
-            </div>
-
-            <div class="admin-table-wrap">
-
-                <table class="admin-table">
-
-                    <thead>
-                        <tr>
-                            <th>Customer</th>
-                            <th>Plan</th>
-                            <th>Amount</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        ${state.investments
-                            .map(renderInvestmentRow)
-                            .join("")}
-                    </tbody>
-
-                </table>
-
-            </div>
-        `;
-
-        bindManagementEvents();
-    }
-
-
-    function renderInvestmentRow(
-        investment
-    ) {
-        const id =
-            getId(
-                investment,
-                ["investment_id"]
-            );
-
-        const user =
-            getUserFromRecord(
-                investment
-            );
-
-        const userId =
-            firstValue(
-                investment,
-                [
-                    "user_id",
-                    "userId",
-                    "customer_id",
-                    "customerId"
-                ],
-                ""
-            );
-
-        let name =
-            firstValue(
-                user,
-                [
-                    "full_name",
-                    "fullname",
-                    "name",
-                    "username"
-                ],
-                ""
-            );
-
-        if (!name) {
-            name =
-                firstValue(
-                    investment,
-                    [
-                        "user_name",
-                        "customer_name",
-                        "customer",
-                        "name",
-                        "username",
-                        "full_name"
-                    ],
-                    ""
-                );
-        }
-
-        if (!name && userId) {
-            name =
-                resolveUserName(
-                    userId
-                );
-        }
-
-        if (!name) {
-            name = "Unknown Customer";
-        }
-
-        let email =
-            firstValue(
-                user,
-                [
-                    "email",
-                    "email_address"
-                ],
-                ""
-            );
-
-        if (!email) {
-            email =
-                firstValue(
-                    investment,
-                    [
-                        "user_email",
-                        "email"
-                    ],
-                    ""
-                );
-        }
-
-        const plan =
-            firstValue(
-                investment,
-                [
-                    "plan_name",
-                    "plan",
-                    "investment_plan",
-                    "package",
-                    "planName"
-                ],
-                "Investment Plan"
-            );
-
-        const amount =
-            firstValue(
-                investment,
-                [
-                    "amount",
-                    "investment_amount",
-                    "principal"
-                ],
-                0
-            );
-
-        const duration =
-            firstValue(
-                investment,
-                [
-                    "duration",
-                    "duration_days",
-                    "days",
-                    "term"
-                ],
-                30
-            );
-
-        const status =
-            String(
-                firstValue(
-                    investment,
-                    [
-                        "status",
-                        "state"
-                    ],
-                    "pending"
-                )
-            ).toLowerCase();
-
-        const date =
-            firstValue(
-                investment,
-                [
-                    "created_at",
-                    "createdAt",
-                    "date",
-                    "timestamp",
-                    "started_at",
-                    "submitted_at",
-                    "submittedAt",
-                    "investment_date"
-                ],
-                null
-            );
-
-        return `
-            <tr>
-
-                <td>
-
-                    <strong>
-                        ${escapeHtml(name)}
-                    </strong>
-
-                    ${
-                        email
-                            ? `<small>
-                                ${escapeHtml(email)}
-                               </small>`
-                            : ""
-                    }
-
-                </td>
-
-                <td>
-                    ${escapeHtml(plan)}
-                </td>
-
-                <td>
-                    <strong>
-                        ${money(amount)}
-                    </strong>
-                </td>
-
-                <td>
-                    ${escapeHtml(duration)}
-                    days
-                </td>
-
-                <td>
-                    ${statusBadge(status)}
-                </td>
-
-                <td>
-                    ${formatDate(date)}
-                </td>
-
-                <td>
-                    ${managementActions(
-                        "investment",
-                        id,
-                        status
-                    )}
-                </td>
-
-            </tr>
-        `;
-    }
-
-
-    /* =====================================================
-       USER RESOLUTION
-       ===================================================== */
-
-    function getUserFromRecord(record) {
-        if (
-            !record ||
-            typeof record !== "object"
-        ) {
-            return {};
-        }
-
-        const objects = [
-            record.user,
-            record.customer,
-            record.account,
-            record.user_data,
-            record.userData,
-            record.owner
-        ];
-
-        for (const object of objects) {
-            if (
-                object &&
-                typeof object === "object"
-            ) {
-                return object;
-            }
-        }
-
-        const userId =
-            firstValue(
-                record,
-                [
-                    "user_id",
-                    "userId",
-                    "customer_id",
-                    "customerId"
-                ],
-                ""
-            );
-
-        if (!userId) {
-            return {};
-        }
-
-        return findUserById(userId) || {};
-    }
-
-    function findUserById(userId) {
-        const normalized =
-            normalizeId(userId);
-
-        if (!normalized) {
-            return null;
-        }
-
-        return (
-            state.users.find(user => {
-                const ids = [
-                    user?._id,
-                    user?.id,
-                    user?.user_id,
-                    user?.userId
-                ];
-
-                return ids.some(
-                    id =>
-                        normalizeId(id) ===
-                        normalized
-                );
-            }) || null
-        );
-    }
-
-    function resolveUserName(userId) {
-        const user =
-            findUserById(userId);
-
-        if (!user) {
-            return "";
-        }
-
-        return firstValue(
-            user,
-            [
-                "full_name",
-                "fullname",
-                "name",
-                "username"
-            ],
-            ""
-        );
-    }
-
-
-    /* =====================================================
-       STATUS BADGE
-       ===================================================== */
-
-    function statusBadge(status) {
-        const normalized =
-            String(
-                status || "unknown"
-            ).toLowerCase();
-
-        return `
-            <span
-                class="status-badge status-${escapeHtml(normalized)}">
-                ${escapeHtml(normalized)}
-            </span>
-        `;
-    }
-
-
-    /* =====================================================
-       ACTION BUTTONS
-       ===================================================== */
-
-    function managementActions(
-        type,
-        id,
-        status,
-        userId = ""
-    ) {
-        const normalized =
-            String(
-                status || ""
-            ).toLowerCase();
-
-        if (!id) {
-            return "—";
-        }
-
-        if (
-            normalized === "approved" ||
-            normalized === "rejected" ||
-            normalized === "completed" ||
-            normalized === "active"
-        ) {
             return `
-                <span class="action-status">
-                    ${escapeHtml(normalized)}
-                </span>
+                <tr>
+                    <td>
+                        ${escapeHTML(
+                            customer.name
+                        )}
+                        ${
+                            customer.email
+                                ? `
+                                <br>
+                                <small>
+                                    ${escapeHTML(
+                                        customer.email
+                                    )}
+                                </small>
+                                `
+                                : ""
+                        }
+                    </td>
+
+                    <td>
+                        ${formatUGX(amount)}
+                    </td>
+
+                    <td>
+                        <span class="status-badge ${statusClass(status)}">
+                            ${escapeHTML(status)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            formatDate(date)
+                        )}
+                    </td>
+
+                    <td>
+                        <div class="admin-actions">
+                            ${
+                                String(status).toLowerCase() === "pending"
+                                    ? `
+                                    <button
+                                        type="button"
+                                        class="admin-action-btn approve-btn"
+                                        data-action="approve"
+                                        data-type="${escapeHTML(type)}"
+                                        data-id="${escapeHTML(id)}"
+                                    >
+                                        Approve
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="admin-action-btn reject-btn"
+                                        data-action="reject"
+                                        data-type="${escapeHTML(type)}"
+                                        data-id="${escapeHTML(id)}"
+                                    >
+                                        Reject
+                                    </button>
+                                    `
+                                    : `
+                                    <span class="action-complete">
+                                        No action
+                                    </span>
+                                    `
+                            }
+                        </div>
+                    </td>
+                </tr>
             `;
-        }
+        }).join("");
 
-        if (normalized === "pending") {
-            if (type === "deposit") {
-                return `
-                    <div class="action-buttons">
+        container.innerHTML = `
+            <div class="management-panel">
+                <div class="management-header">
+                    <div>
+                        <h2>
+                            ${escapeHTML(title)}
+                        </h2>
 
-                        <button
-                            type="button"
-                            class="approve-btn"
-                            data-action="approve-deposit"
-                            data-id="${escapeHtml(id)}">
-                            Approve
-                        </button>
-
-                        <button
-                            type="button"
-                            class="reject-btn"
-                            data-action="reject-deposit"
-                            data-id="${escapeHtml(id)}">
-                            Reject
-                        </button>
-
+                        <p>
+                            Review and manage ${escapeHTML(type)} requests.
+                        </p>
                     </div>
-                `;
-            }
 
-            if (type === "withdrawal") {
-                return `
-                    <div class="action-buttons">
-
-                        <button
-                            type="button"
-                            class="approve-btn"
-                            data-action="approve-withdrawal"
-                            data-id="${escapeHtml(id)}"
-                            data-user-id="${escapeHtml(userId)}">
-                            Approve
-                        </button>
-
-                        <button
-                            type="button"
-                            class="reject-btn"
-                            data-action="reject-withdrawal"
-                            data-id="${escapeHtml(id)}"
-                            data-user-id="${escapeHtml(userId)}">
-                            Reject
-                        </button>
-
+                    <div>
+                        <span class="management-count">
+                            ${formatNumber(items.length)}
+                        </span>
                     </div>
-                `;
-            }
+                </div>
 
-            if (type === "investment") {
-                return `
-                    <div class="action-buttons">
+                ${
+                    items.length
+                        ? `
+                        <div class="table-wrapper">
+                            <table class="admin-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
 
-                        <button
-                            type="button"
-                            class="approve-btn"
-                            data-action="approve-investment"
-                            data-id="${escapeHtml(id)}">
-                            Approve
-                        </button>
-
-                        <button
-                            type="button"
-                            class="reject-btn"
-                            data-action="reject-investment"
-                            data-id="${escapeHtml(id)}">
-                            Reject
-                        </button>
-
-                    </div>
-                `;
-            }
-        }
-
-        return `
-            <span class="action-status">
-                ${escapeHtml(normalized)}
-            </span>
+                                <tbody>
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                        `
+                        : `
+                        <div class="empty-state">
+                            No ${escapeHTML(type)} requests found.
+                        </div>
+                        `
+                }
+            </div>
         `;
     }
 
 
-    /* =====================================================
-       ACTION REQUESTS
-       ===================================================== */
+    /* ============================================================
+       CUSTOMER RESOLUTION
+       ============================================================ */
 
-    async function processDepositAction(
-        depositId,
-        action,
-        note = ""
-    ) {
-        if (!depositId) {
-            throw new Error(
-                "Deposit ID is missing."
+    function resolveCustomer(item) {
+        const customer =
+            item.user ||
+            item.customer ||
+            item.account ||
+            item.member ||
+            {};
+
+        const name =
+            getValue(
+                customer,
+                [
+                    "full_name",
+                    "fullName",
+                    "name",
+                    "username"
+                ],
+                ""
+            ) ||
+            getValue(
+                item,
+                [
+                    "user_name",
+                    "userName",
+                    "customer_name",
+                    "customerName",
+                    "username",
+                    "name"
+                ],
+                "Unknown User"
             );
-        }
 
-        return apiRequest(
-            ENDPOINTS.deposits,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    deposit_id: depositId,
-                    id: depositId,
-                    action,
-                    status: action,
-                    note,
-                    reason: note,
-                    rejection_reason: note
-                })
-            },
-            false
-        );
+        const email =
+            getValue(
+                customer,
+                ["email"],
+                ""
+            ) ||
+            getValue(
+                item,
+                ["email", "user_email"],
+                ""
+            );
+
+        return {
+            name,
+            email
+        };
     }
 
 
-    async function processWithdrawalAction(
-        withdrawalId,
-        userId,
-        action,
-        note = ""
-    ) {
-        if (!withdrawalId) {
-            throw new Error(
-                "Withdrawal ID is missing."
-            );
+    /* ============================================================
+       STATUS
+       ============================================================ */
+
+    function statusClass(status) {
+        const value = String(
+            status || ""
+        ).toLowerCase();
+
+        if (
+            value === "approved" ||
+            value === "completed" ||
+            value === "active" ||
+            value === "success" ||
+            value === "successful"
+        ) {
+            return "status-approved";
         }
 
-        return apiRequest(
-            ENDPOINTS.withdrawals,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    withdrawal_id: withdrawalId,
-                    id: withdrawalId,
-                    user_id: userId || "",
-                    action,
-                    status: action,
-                    note,
-                    reason: note,
-                    rejection_reason: note
-                })
-            },
-            false
-        );
+        if (
+            value === "rejected" ||
+            value === "failed" ||
+            value === "cancelled" ||
+            value === "canceled"
+        ) {
+            return "status-rejected";
+        }
+
+        if (
+            value === "processing" ||
+            value === "pending"
+        ) {
+            return "status-pending";
+        }
+
+        return "status-neutral";
     }
 
 
-    async function processInvestmentAction(
-        investmentId,
-        action,
-        note = ""
-    ) {
-        if (!investmentId) {
-            throw new Error(
-                "Investment ID is missing."
-            );
-        }
-
-        return apiRequest(
-            ENDPOINTS.investments,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    investment_id: investmentId,
-                    id: investmentId,
-                    action,
-                    status: action,
-                    note,
-                    reason: note,
-                    rejection_reason: note
-                })
-            },
-            false
-        );
-    }
-
-
-    /* =====================================================
-       ACTION HANDLER
-       ===================================================== */
+    /* ============================================================
+       ACTION HANDLING
+       ============================================================ */
 
     async function handleAction(
         type,
-        action,
         id,
-        userId = ""
+        action
     ) {
-        let note = "";
+        if (!id) {
+            alert("The request ID is missing.");
+            return;
+        }
+
+        if (
+            action !== "approve" &&
+            action !== "reject"
+        ) {
+            return;
+        }
+
+        let reason = "";
 
         if (action === "reject") {
-            note =
-                window.prompt(
-                    "Enter the reason for rejecting this request:"
-                );
+            reason = window.prompt(
+                "Enter the reason for rejection:"
+            );
 
-            if (note === null) {
+            if (reason === null) {
                 return;
             }
 
-            note = note.trim();
+            reason = reason.trim();
 
-            if (!note) {
+            if (!reason) {
                 alert(
-                    "Please provide a rejection reason."
+                    "A rejection reason is required."
                 );
+
                 return;
             }
         }
 
         if (action === "approve") {
-            const confirmed =
-                window.confirm(
-                    `Are you sure you want to approve this ${type}?`
-                );
+            const confirmed = window.confirm(
+                `Are you sure you want to approve this ${type}?`
+            );
 
             if (!confirmed) {
                 return;
             }
         }
 
+        const endpoints = {
+            deposit: ENDPOINTS.deposits,
+            withdrawal: ENDPOINTS.withdrawals,
+            investment: ENDPOINTS.investments
+        };
+
+        const endpoint = endpoints[type];
+
+        if (!endpoint) {
+            alert("Unknown management type.");
+            return;
+        }
+
+        const payload = {
+            action,
+            id
+        };
+
+        if (action === "reject") {
+            payload.reason = reason;
+            payload.rejection_reason = reason;
+        }
+
         try {
-            const selector =
-                `[data-action="${action === "approve"
-                    ? "approve"
-                    : "reject"
-                }-${type}"]`;
+            showActionBusy(type, id);
 
-            const buttons =
-                qsa(selector)
-                    .filter(
-                        button =>
-                            String(
-                                button.dataset.id
-                            ) === String(id)
-                    );
-
-            buttons.forEach(button => {
-                button.disabled = true;
-                button.dataset.originalText =
-                    button.textContent;
-                button.textContent =
-                    "Processing...";
-            });
-
-            if (type === "deposit") {
-                await processDepositAction(
-                    id,
-                    action,
-                    note
-                );
-            }
-
-            if (type === "withdrawal") {
-                await processWithdrawalAction(
-                    id,
-                    userId,
-                    action,
-                    note
-                );
-            }
-
-            if (type === "investment") {
-                await processInvestmentAction(
-                    id,
-                    action,
-                    note
-                );
-            }
-
-            /*
-             * Refresh the affected section first.
-             */
-            if (type === "deposit") {
-                await loadDeposits();
-            }
-
-            if (type === "withdrawal") {
-                await loadWithdrawals();
-            }
-
-            if (type === "investment") {
-                await loadInvestments();
-            }
-
-            /*
-             * Refresh dashboard counters.
-             */
-            await loadDashboard();
+            await apiRequest(
+                endpoint,
+                {
+                    method: "POST",
+                    body: payload
+                },
+                false
+            );
 
             alert(
-                `${capitalize(type)} ${action}d successfully.`
+                `${capitalize(action)} successful.`
             );
+
+            await refreshEverything();
 
         } catch (error) {
             console.error(
-                "Admin action failed:",
+                "Crown Cash Admin action error:",
                 error
             );
 
             alert(
-                error?.message ||
-                `Unable to ${action} ${type}.`
+                error.message ||
+                "The requested action could not be completed."
             );
 
-            qsa(
-                `[data-id="${escapeSelector(
-                    String(id)
-                )}"]`
-            ).forEach(button => {
-                if (
-                    button.dataset.originalText
-                ) {
-                    button.disabled = false;
-
-                    button.textContent =
-                        button.dataset.originalText;
-                }
-            });
+        } finally {
+            hideActionBusy(type, id);
         }
     }
 
-
-    /* =====================================================
-       SAFE SELECTOR
-       ===================================================== */
-
-    function escapeSelector(value) {
-        if (
-            window.CSS &&
-            typeof window.CSS.escape ===
-            "function"
-        ) {
-            return window.CSS.escape(value);
+    function capitalize(value) {
+        if (!value) {
+            return "";
         }
 
-        return String(value)
-            .replace(
-                /["\\]/g,
-                "\\$&"
-            );
+        return (
+            String(value).charAt(0).toUpperCase() +
+            String(value).slice(1)
+        );
+    }
+
+    function showActionBusy(type, id) {
+        const selector =
+            `[data-action][data-type="${escapeAttribute(type)}"][data-id="${escapeAttribute(id)}"]`;
+
+        $$(selector).forEach(button => {
+            button.disabled = true;
+            button.dataset.originalText =
+                button.textContent;
+
+            button.textContent = "Processing...";
+        });
+    }
+
+    function hideActionBusy(type, id) {
+        const selector =
+            `[data-action][data-type="${escapeAttribute(type)}"][data-id="${escapeAttribute(id)}"]`;
+
+        $$(selector).forEach(button => {
+            button.disabled = false;
+
+            if (button.dataset.originalText) {
+                button.textContent =
+                    button.dataset.originalText;
+            }
+        });
+    }
+
+    function escapeAttribute(value) {
+        return String(value || "")
+            .replace(/\\/g, "\\\\")
+            .replace(/"/g, '\\"')
+            .replace(/'/g, "\\'")
+            .replace(/\]/g, "\\]");
     }
 
 
-    /* =====================================================
-       MANAGEMENT EVENTS
-       ===================================================== */
-
-    function bindManagementEvents() {
-
-        qsa("[data-refresh]")
-            .forEach(button => {
-
-                if (
-                    button.dataset.eventBound ===
-                    "true"
-                ) {
-                    return;
-                }
-
-                button.dataset.eventBound =
-                    "true";
-
-                button.addEventListener(
-                    "click",
-                    async () => {
-                        const type =
-                            button.dataset.refresh;
-
-                        if (
-                            type ===
-                            "deposits"
-                        ) {
-                            await loadDeposits();
-                        }
-
-                        if (
-                            type ===
-                            "withdrawals"
-                        ) {
-                            await loadWithdrawals();
-                        }
-
-                        if (
-                            type ===
-                            "investments"
-                        ) {
-                            await loadInvestments();
-                        }
-                    }
-                );
-            });
-
-
-        qsa("[data-action]")
-            .forEach(button => {
-
-                if (
-                    button.dataset.eventBound ===
-                    "true"
-                ) {
-                    return;
-                }
-
-                button.dataset.eventBound =
-                    "true";
-
-                button.addEventListener(
-                    "click",
-                    async () => {
-
-                        const actionType =
-                            button.dataset.action;
-
-                        const id =
-                            button.dataset.id;
-
-                        const userId =
-                            button.dataset.userId ||
-                            "";
-
-                        if (
-                            actionType ===
-                            "approve-deposit"
-                        ) {
-                            await handleAction(
-                                "deposit",
-                                "approve",
-                                id
-                            );
-                        }
-
-                        else if (
-                            actionType ===
-                            "reject-deposit"
-                        ) {
-                            await handleAction(
-                                "deposit",
-                                "reject",
-                                id
-                            );
-                        }
-
-                        else if (
-                            actionType ===
-                            "approve-withdrawal"
-                        ) {
-                            await handleAction(
-                                "withdrawal",
-                                "approve",
-                                id,
-                                userId
-                            );
-                        }
-
-                        else if (
-                            actionType ===
-                            "reject-withdrawal"
-                        ) {
-                            await handleAction(
-                                "withdrawal",
-                                "reject",
-                                id,
-                                userId
-                            );
-                        }
-
-                        else if (
-                            actionType ===
-                            "approve-investment"
-                        ) {
-                            await handleAction(
-                                "investment",
-                                "approve",
-                                id
-                            );
-                        }
-
-                        else if (
-                            actionType ===
-                            "reject-investment"
-                        ) {
-                            await handleAction(
-                                "investment",
-                                "reject",
-                                id
-                            );
-                        }
-                    }
-                );
-            });
-    }
-
-
-    /* =====================================================
+    /* ============================================================
        MAINTENANCE
-       ===================================================== */
+       ============================================================ */
 
     async function loadMaintenance() {
-        state.loading.maintenance = true;
-
         try {
-            const data =
-                await apiRequest(
-                    ENDPOINTS.maintenance,
-                    {
-                        method: "GET"
-                    },
-                    false
-                );
+            const data = await apiRequest(
+                ENDPOINTS.maintenance,
+                {
+                    method: "GET"
+                },
+                false
+            );
 
             state.maintenance =
-                data?.settings ||
-                data?.maintenance ||
-                data?.data?.settings ||
-                data?.data?.maintenance ||
+                data.data ||
+                data.maintenance ||
                 data;
 
-            renderMaintenance();
+            renderMaintenance(
+                state.maintenance
+            );
 
             return state.maintenance;
 
         } catch (error) {
-            console.error(
-                "Maintenance loading failed:",
-                error
+            console.warn(
+                "Crown Cash Admin: maintenance request failed:",
+                error.message
             );
 
             return null;
-
-        } finally {
-            state.loading.maintenance = false;
         }
     }
 
+    function renderMaintenance(data) {
+        if (!data || typeof data !== "object") {
+            return;
+        }
 
-    function renderMaintenance() {
         const settings =
-            state.maintenance || {};
+            data.settings ||
+            data.controls ||
+            data;
 
-        const controls = [
+        setCheckbox(
             [
-                "maintenance_mode",
-                [
-                    "maintenanceMode",
-                    "maintenanceToggle"
-                ]
+                "#maintenanceMode",
+                "#maintenance",
+                "[data-setting='maintenance_mode']"
             ],
-            [
-                "new_investments",
+            readBoolean(
+                settings,
                 [
+                    "maintenance_mode",
+                    "maintenanceMode"
+                ]
+            )
+        );
+
+        setCheckbox(
+            [
+                "#newInvestments",
+                "#allowInvestments",
+                "[data-setting='new_investments']"
+            ],
+            readBoolean(
+                settings,
+                [
+                    "new_investments",
                     "newInvestments",
-                    "newInvestmentsToggle"
-                ]
-            ],
+                    "investments_enabled"
+                ],
+                true
+            )
+        );
+
+        setCheckbox(
             [
-                "deposits_enabled",
-                [
-                    "depositsEnabled",
-                    "depositsToggle"
-                ]
+                "#depositsEnabled",
+                "#allowDeposits",
+                "[data-setting='deposits']"
             ],
-            [
-                "withdrawals_enabled",
+            readBoolean(
+                settings,
                 [
-                    "withdrawalsEnabled",
-                    "withdrawalsToggle"
-                ]
+                    "deposits",
+                    "deposits_enabled",
+                    "depositsEnabled"
+                ],
+                true
+            )
+        );
+
+        setCheckbox(
+            [
+                "#withdrawalsEnabled",
+                "#allowWithdrawals",
+                "[data-setting='withdrawals']"
             ],
-            [
-                "daily_earnings_enabled",
+            readBoolean(
+                settings,
                 [
+                    "withdrawals",
+                    "withdrawals_enabled",
+                    "withdrawalsEnabled"
+                ],
+                true
+            )
+        );
+
+        setCheckbox(
+            [
+                "#dailyEarnings",
+                "#dailyEarningsEnabled",
+                "[data-setting='daily_earnings']"
+            ],
+            readBoolean(
+                settings,
+                [
+                    "daily_earnings",
                     "dailyEarnings",
-                    "dailyEarningsToggle"
-                ]
-            ],
+                    "daily_earnings_enabled"
+                ],
+                true
+            )
+        );
+
+        setCheckbox(
             [
-                "registration_enabled",
+                "#userRegistration",
+                "#registrationEnabled",
+                "[data-setting='user_registration']"
+            ],
+            readBoolean(
+                settings,
                 [
+                    "user_registration",
                     "userRegistration",
-                    "registrationToggle"
-                ]
-            ]
-        ];
+                    "registration_enabled"
+                ],
+                true
+            )
+        );
 
-        controls.forEach(
-            ([key, ids]) => {
+        const message = getValue(
+            settings,
+            [
+                "maintenance_message",
+                "maintenanceMessage",
+                "message"
+            ],
+            ""
+        );
 
-                const value =
-                    Boolean(
-                        settings[key] ??
-                        settings[camelCase(key)]
-                    );
+        setValue(
+            [
+                "#maintenanceMessage",
+                "#maintenanceMessageText",
+                "textarea[name='maintenance_message']"
+            ],
+            message
+        );
 
-                ids.forEach(id => {
-                    const element =
-                        byId(id);
+        const monitor =
+            data.monitor ||
+            data.earnings_engine ||
+            data.earningsEngine ||
+            {};
 
+        setText(
+            [
+                "#earningsLastRun",
+                "#lastEarningsRun",
+                "[data-monitor='last-run']"
+            ],
+            formatDate(
+                getValue(
+                    monitor,
+                    [
+                        "last_run",
+                        "lastRun",
+                        "last_processed_at",
+                        "lastProcessedAt"
+                    ],
+                    null
+                )
+            )
+        );
+
+        setText(
+            [
+                "#earningsProcessedToday",
+                "#processedToday",
+                "[data-monitor='processed-today']"
+            ],
+            formatUGX(
+                getValue(
+                    monitor,
+                    [
+                        "processed_today",
+                        "processedToday",
+                        "today"
+                    ],
+                    0
+                )
+            )
+        );
+
+        setText(
+            [
+                "#activeInvestments",
+                "[data-monitor='active-investments']"
+            ],
+            formatNumber(
+                getValue(
+                    monitor,
+                    [
+                        "active_investments",
+                        "activeInvestments"
+                    ],
+                    0
+                )
+            )
+        );
+
+        setText(
+            [
+                "#pendingInvestmentsMonitor",
+                "#maintenancePendingInvestments",
+                "[data-monitor='pending-investments']"
+            ],
+            formatNumber(
+                getValue(
+                    monitor,
+                    [
+                        "pending_investments",
+                        "pendingInvestments"
+                    ],
+                    0
+                )
+            )
+        );
+
+        setText(
+            [
+                "#earningsEngineStatus",
+                "[data-monitor='engine-status']"
+            ],
+            readBoolean(
+                monitor,
+                [
+                    "enabled",
+                    "active",
+                    "running"
+                ],
+                false
+            )
+                ? "Enabled"
+                : "Disabled"
+        );
+    }
+
+    function readBoolean(
+        object,
+        keys,
+        fallback = false
+    ) {
+        if (!object || typeof object !== "object") {
+            return fallback;
+        }
+
+        for (const key of keys) {
+            if (
+                object[key] !== undefined &&
+                object[key] !== null
+            ) {
+                const value = object[key];
+
+                if (typeof value === "boolean") {
+                    return value;
+                }
+
+                if (
+                    value === 1 ||
+                    value === "1" ||
+                    String(value).toLowerCase() === "true" ||
+                    String(value).toLowerCase() === "enabled" ||
+                    String(value).toLowerCase() === "on"
+                ) {
+                    return true;
+                }
+
+                if (
+                    value === 0 ||
+                    value === "0" ||
+                    String(value).toLowerCase() === "false" ||
+                    String(value).toLowerCase() === "disabled" ||
+                    String(value).toLowerCase() === "off"
+                ) {
+                    return false;
+                }
+            }
+        }
+
+        return fallback;
+    }
+
+    function setCheckbox(
+        selectors,
+        checked
+    ) {
+        if (!Array.isArray(selectors)) {
+            selectors = [selectors];
+        }
+
+        for (const selector of selectors) {
+            const elements = $$(selector);
+
+            if (elements.length) {
+                elements.forEach(element => {
                     if (
-                        element &&
-                        element.type ===
-                        "checkbox"
+                        element instanceof HTMLInputElement &&
+                        (
+                            element.type === "checkbox" ||
+                            element.type === "radio"
+                        )
                     ) {
-                        element.checked =
-                            value;
+                        element.checked = Boolean(
+                            checked
+                        );
                     }
                 });
+
+                return;
             }
-        );
+        }
+    }
 
-        const message =
-            firstValue(
-                settings,
-                [
-                    "maintenance_message",
-                    "message"
-                ],
-                ""
-            );
-
-        const messageElement =
-            byId(
-                "maintenanceMessage"
-            );
-
-        if (messageElement) {
-            messageElement.value =
-                message;
+    function setValue(
+        selectors,
+        value
+    ) {
+        if (!Array.isArray(selectors)) {
+            selectors = [selectors];
         }
 
-        const active =
-            firstValue(
-                settings,
-                [
-                    "active_investments",
-                    "activeInvestments"
-                ],
-                0
-            );
+        for (const selector of selectors) {
+            const elements = $$(selector);
 
-        const pending =
-            firstValue(
-                settings,
-                [
-                    "pending_investments",
-                    "pendingInvestments"
-                ],
-                0
-            );
+            if (elements.length) {
+                elements.forEach(element => {
+                    if (
+                        "value" in element
+                    ) {
+                        element.value =
+                            value ?? "";
+                    }
+                });
 
-        setText(
-            ["activeInvestments"],
-            number(active)
-        );
-
-        setText(
-            ["pendingInvestments"],
-            number(pending)
-        );
-
-        const lastRun =
-            firstValue(
-                settings,
-                [
-                    "last_run",
-                    "lastRun",
-                    "last_earnings_run",
-                    "lastEarningsRun",
-                    "last_daily_earnings_run"
-                ],
-                null
-            );
-
-        setText(
-            [
-                "lastRun",
-                "lastEarningsRun"
-            ],
-            lastRun
-                ? formatDate(lastRun)
-                : "Not available"
-        );
-
-        const processed =
-            firstValue(
-                settings,
-                [
-                    "processed_today",
-                    "processedToday",
-                    "today_processed"
-                ],
-                0
-            );
-
-        setText(
-            ["processedToday"],
-            money(processed)
-        );
+                return;
+            }
+        }
     }
 
 
-    async function saveMaintenance() {
+    /* ============================================================
+       SAVE MAINTENANCE SETTINGS
+       ============================================================ */
+
+    async function saveMaintenanceSettings() {
         const payload = {
+            action: "update_settings",
+
             maintenance_mode:
-                getCheckboxValue(
-                    [
-                        "maintenanceMode",
-                        "maintenanceToggle"
-                    ]
-                ),
+                readCheckbox([
+                    "#maintenanceMode",
+                    "#maintenance",
+                    "[data-setting='maintenance_mode']"
+                ]),
 
             new_investments:
-                getCheckboxValue(
-                    [
-                        "newInvestments",
-                        "newInvestmentsToggle"
-                    ]
-                ),
+                readCheckbox([
+                    "#newInvestments",
+                    "#allowInvestments",
+                    "[data-setting='new_investments']"
+                ]),
 
-            deposits_enabled:
-                getCheckboxValue(
-                    [
-                        "depositsEnabled",
-                        "depositsToggle"
-                    ]
-                ),
+            deposits:
+                readCheckbox([
+                    "#depositsEnabled",
+                    "#allowDeposits",
+                    "[data-setting='deposits']"
+                ]),
 
-            withdrawals_enabled:
-                getCheckboxValue(
-                    [
-                        "withdrawalsEnabled",
-                        "withdrawalsToggle"
-                    ]
-                ),
+            withdrawals:
+                readCheckbox([
+                    "#withdrawalsEnabled",
+                    "#allowWithdrawals",
+                    "[data-setting='withdrawals']"
+                ]),
 
-            daily_earnings_enabled:
-                getCheckboxValue(
-                    [
-                        "dailyEarnings",
-                        "dailyEarningsToggle"
-                    ]
-                ),
+            daily_earnings:
+                readCheckbox([
+                    "#dailyEarnings",
+                    "#dailyEarningsEnabled",
+                    "[data-setting='daily_earnings']"
+                ]),
 
-            registration_enabled:
-                getCheckboxValue(
-                    [
-                        "userRegistration",
-                        "registrationToggle"
-                    ]
-                ),
+            user_registration:
+                readCheckbox([
+                    "#userRegistration",
+                    "#registrationEnabled",
+                    "[data-setting='user_registration']"
+                ]),
 
             maintenance_message:
-                byId(
-                    "maintenanceMessage"
-                )?.value || ""
+                readInput([
+                    "#maintenanceMessage",
+                    "#maintenanceMessageText",
+                    "textarea[name='maintenance_message']"
+                ])
         };
 
         try {
@@ -3164,37 +2158,37 @@
                 ENDPOINTS.maintenance,
                 {
                     method: "POST",
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
+                    body: payload
                 },
                 false
             );
-
-            await loadMaintenance();
 
             alert(
                 "Platform settings saved successfully."
             );
 
+            await loadMaintenance();
+
         } catch (error) {
             console.error(
-                "Maintenance save failed:",
+                "Crown Cash Admin: maintenance save error:",
                 error
             );
 
             alert(
-                error?.message ||
+                error.message ||
                 "Unable to save platform settings."
             );
         }
     }
 
+    function readCheckbox(selectors) {
+        if (!Array.isArray(selectors)) {
+            selectors = [selectors];
+        }
 
-    function getCheckboxValue(ids) {
-        for (const id of ids) {
-            const element = byId(id);
+        for (const selector of selectors) {
+            const element = $(selector);
 
             if (element) {
                 return Boolean(
@@ -3206,83 +2200,34 @@
         return false;
     }
 
-
-    function camelCase(value) {
-        return String(value)
-            .replace(
-                /_([a-z])/g,
-                (_, letter) =>
-                    letter.toUpperCase()
-            );
-    }
-
-
-    /* =====================================================
-       MANAGEMENT UI
-       ===================================================== */
-
-    function showManagementLoading(
-        container,
-        message
-    ) {
-        container.innerHTML = `
-            <div class="loading-state">
-                ${escapeHtml(message)}
-            </div>
-        `;
-    }
-
-
-    function showManagementError(
-        container,
-        message
-    ) {
-        container.innerHTML = `
-            <div class="error-state">
-
-                <strong>
-                    Unable to load records
-                </strong>
-
-                <div>
-                    ${escapeHtml(
-                        message ||
-                        "Please try again."
-                    )}
-                </div>
-
-                <br>
-
-                <button
-                    type="button"
-                    class="admin-refresh-btn"
-                    onclick="location.reload()">
-                    Reload Admin Panel
-                </button>
-
-            </div>
-        `;
-    }
-
-
-    function capitalize(value) {
-        if (!value) {
-            return "";
+    function readInput(selectors) {
+        if (!Array.isArray(selectors)) {
+            selectors = [selectors];
         }
 
-        return (
-            value.charAt(0).toUpperCase() +
-            value.slice(1)
-        );
+        for (const selector of selectors) {
+            const element = $(selector);
+
+            if (element) {
+                return element.value || "";
+            }
+        }
+
+        return "";
     }
 
 
-    /* =====================================================
+    /* ============================================================
        REFRESH
-       ===================================================== */
+       ============================================================ */
 
     async function refreshEverything() {
+        if (!state.authenticated || !state.authorized) {
+            return;
+        }
+
         await Promise.allSettled([
+            loadProfile(),
             loadDashboard(),
             loadDeposits(),
             loadWithdrawals(),
@@ -3292,19 +2237,364 @@
     }
 
 
-    /* =====================================================
-       HASH NAVIGATION
-       ===================================================== */
+    /* ============================================================
+       GENERAL EVENTS
+       ============================================================ */
 
-    function handleHashNavigation() {
-        let hash =
-            window.location.hash
-                .replace("#", "")
-                .trim()
-                .toLowerCase();
+    function bindGeneralEvents() {
+        /*
+         * Approve / reject buttons
+         */
+        document.addEventListener(
+            "click",
+            event => {
+                const button =
+                    event.target.closest(
+                        "[data-action][data-type][data-id]"
+                    );
 
-        if (!hash) {
-            hash = "dashboard";
+                if (!button) {
+                    return;
+                }
+
+                const action =
+                    button.getAttribute(
+                        "data-action"
+                    );
+
+                const type =
+                    button.getAttribute(
+                        "data-type"
+                    );
+
+                const id =
+                    button.getAttribute(
+                        "data-id"
+                    );
+
+                handleAction(
+                    type,
+                    id,
+                    action
+                );
+            }
+        );
+
+        /*
+         * Save maintenance settings
+         */
+        const saveButtons = [
+            "#savePlatformSettings",
+            "#saveMaintenance",
+            "#saveMaintenanceSettings",
+            "[data-save-maintenance]"
+        ];
+
+        saveButtons.forEach(selector => {
+            $$(selector).forEach(button => {
+                button.addEventListener(
+                    "click",
+                    event => {
+                        event.preventDefault();
+
+                        saveMaintenanceSettings();
+                    }
+                );
+            });
+        });
+
+        /*
+         * Logout
+         */
+        const logoutButtons = [
+            "#adminLogout",
+            "#logout",
+            "[data-admin-logout]"
+        ];
+
+        logoutButtons.forEach(selector => {
+            $$(selector).forEach(button => {
+                button.addEventListener(
+                    "click",
+                    event => {
+                        event.preventDefault();
+
+                        logoutAdmin();
+                    }
+                );
+            });
+        });
+    }
+
+
+    /* ============================================================
+       MOBILE NAVIGATION
+       ============================================================ */
+
+    function initMobileNavigation() {
+        const buttons = [
+            "#mobileMenuButton",
+            "#menuToggle",
+            ".mobile-menu-toggle",
+            "[data-mobile-menu]"
+        ];
+
+        let toggleButton = null;
+
+        for (const selector of buttons) {
+            toggleButton = $(selector);
+
+            if (toggleButton) {
+                break;
+            }
         }
 
-        if (hash === "deposits
+        const sidebar =
+            $("#adminSidebar") ||
+            $(".admin-sidebar") ||
+            $(".sidebar");
+
+        if (!toggleButton || !sidebar) {
+            return;
+        }
+
+        toggleButton.addEventListener(
+            "click",
+            event => {
+                event.preventDefault();
+
+                sidebar.classList.toggle(
+                    "open"
+                );
+
+                document.body.classList.toggle(
+                    "sidebar-open"
+                );
+            }
+        );
+
+        $$(".admin-sidebar a, .sidebar a").forEach(
+            link => {
+                link.addEventListener(
+                    "click",
+                    () => {
+                        sidebar.classList.remove(
+                            "open"
+                        );
+
+                        document.body.classList.remove(
+                            "sidebar-open"
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    /* ============================================================
+       HASH NAVIGATION
+       ============================================================ */
+
+    function handleHashNavigation() {
+        const hash =
+            window.location.hash;
+
+        if (!hash) {
+            return;
+        }
+
+        const id =
+            hash.substring(1);
+
+        if (!id) {
+            return;
+        }
+
+        setTimeout(() => {
+            const target =
+                document.getElementById(id);
+
+            if (target) {
+                try {
+                    target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                } catch (error) {
+                    target.scrollIntoView();
+                }
+            }
+        }, 100);
+    }
+
+
+    /* ============================================================
+       LOGOUT
+       ============================================================ */
+
+    async function logoutAdmin() {
+        try {
+            await apiRequest(
+                ENDPOINTS.logout,
+                {
+                    method: "POST"
+                },
+                false
+            );
+        } catch (error) {
+            console.warn(
+                "Logout request failed:",
+                error.message
+            );
+        } finally {
+            window.location.href =
+                "login.html";
+        }
+    }
+
+
+    /* ============================================================
+       CURRENT YEAR
+       ============================================================ */
+
+    function updateCurrentYear() {
+        const year =
+            new Date().getFullYear();
+
+        $$("#currentYear").forEach(
+            element => {
+                element.textContent =
+                    year;
+            }
+        );
+
+        $$("[data-current-year]").forEach(
+            element => {
+                element.textContent =
+                    year;
+            }
+        );
+    }
+
+
+    /* ============================================================
+       GLOBAL API
+       ============================================================ */
+
+    window.CrownCashAdmin = {
+        state,
+
+        authenticateAdmin,
+        loadProfile,
+        loadDashboard,
+        loadDeposits,
+        loadWithdrawals,
+        loadInvestments,
+        loadMaintenance,
+        refreshEverything,
+        saveMaintenanceSettings,
+        logoutAdmin,
+
+        showLoader: showAdminLoader,
+        hideLoader: hideAdminLoader
+    };
+
+
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
+
+    async function initializeAdmin() {
+        if (state.initialized) {
+            return;
+        }
+
+        state.initialized = true;
+        state.loading = true;
+
+        showAdminLoader();
+        startLoaderFailsafe();
+
+        /*
+         * AUTHENTICATION IS THE ONLY BLOCKING OPERATION.
+         */
+        try {
+            await authenticateAdmin();
+
+        } catch (error) {
+            console.error(
+                "Crown Cash Admin authentication failed:",
+                error
+            );
+
+            hideAdminLoader();
+
+            return;
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * Authentication succeeded.
+         *
+         * The loader has already been hidden inside
+         * authenticateAdmin().
+         *
+         * The following requests are NON-BLOCKING from
+         * the user's point of view.
+         */
+        try {
+            bindGeneralEvents();
+            initMobileNavigation();
+            handleHashNavigation();
+            updateCurrentYear();
+
+            /*
+             * Load all admin data in parallel.
+             * A slow endpoint cannot keep the loader visible.
+             */
+            await Promise.allSettled([
+                loadProfile(),
+                loadDashboard(),
+                loadDeposits(),
+                loadWithdrawals(),
+                loadInvestments(),
+                loadMaintenance()
+            ]);
+
+        } catch (error) {
+            console.error(
+                "Crown Cash Admin initialization error:",
+                error
+            );
+
+        } finally {
+            /*
+             * FINAL GUARANTEE:
+             * The loader is always removed after initialization.
+             */
+            hideAdminLoader();
+        }
+    }
+
+
+    /* ============================================================
+       START
+       ============================================================ */
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializeAdmin,
+            {
+                once: true
+            }
+        );
+    } else {
+        initializeAdmin();
+    }
+
+})();

@@ -1,152 +1,127 @@
 <?php
-/**
- * Crown Cash
- * dashboard.php
- *
- * Dashboard data endpoint.
- *
- * Accounting:
- * - Deposits increase wallet balance.
- * - Investment creation deducts wallet once.
- * - Admin approval does NOT deduct again.
- * - Daily earnings increase wallet.
- * - Referral commissions increase wallet.
- * - Completed investments return principal once.
- */
-
 declare(strict_types=1);
+
+/*
+=========================================================
+CROWN CASH - DASHBOARD API
+=========================================================
+Endpoint:
+https://crown-cash1.onrender.com/dashboard.php
+
+Purpose:
+- Authenticate logged-in user
+- Load user profile
+- Load wallet balance
+- Load investment statistics
+- Load earnings
+- Load referral team count
+- Load transaction count
+- Detect administrator
+=========================================================
+*/
 
 require_once __DIR__ . '/config.php';
 
 use MongoDB\BSON\ObjectId;
-use MongoDB\BSON\UTCDateTime;
 
-/* =========================================================
+/* ======================================================
    CORS
-   ========================================================= */
-
-$allowedOrigins = [
-    'https://crown-cash.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-];
+====================================================== */
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
+$allowedOrigins = [
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app',
+];
+
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: {$origin}");
-    header('Access-Control-Allow-Credentials: true');
-    header('Vary: Origin');
+    header("Vary: Origin");
+} else {
+    header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
 }
 
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-/* =========================================================
-   SESSION
-   ========================================================= */
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
 
-try {
-    if (function_exists('startSecureSession')) {
-        startSecureSession();
-    } elseif (session_status() !== PHP_SESSION_ACTIVE) {
-        session_set_cookie_params([
-            'httponly' => true,
-            'secure' => true,
-            'samesite' => 'None'
-        ]);
 
-        session_start();
-    }
-} catch (Throwable $e) {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        @session_start();
-    }
-}
+/* ======================================================
+   BASIC HELPERS
+====================================================== */
 
-/* =========================================================
-   RESPONSE
-   ========================================================= */
-
-function dashboardResponse(
-    bool $success,
-    string $message,
-    array $data = [],
-    int $status = 200
-): void {
+function dashboardResponse(array $data, int $status = 200): void
+{
     http_response_code($status);
 
     echo json_encode(
-        [
-            'success' => $success,
-            'message' => $message,
-            ...$data
-        ],
-        JSON_UNESCAPED_UNICODE
-        | JSON_UNESCAPED_SLASHES
-        | JSON_PARTIAL_OUTPUT_ON_ERROR
+        $data,
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     );
 
     exit;
 }
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
 
-function dashString($value, string $default = ''): string
+function dashboardString(mixed $value): string
 {
-    if ($value === null) {
-        return $default;
-    }
-
     if ($value instanceof ObjectId) {
-        return (string) $value;
+        return (string)$value;
     }
 
-    if ($value instanceof UTCDateTime) {
-        return $value->toDateTime()->format('c');
+    if (is_string($value)) {
+        return trim($value);
     }
 
-    if (is_scalar($value)) {
-        return trim((string) $value);
+    if (is_numeric($value)) {
+        return (string)$value;
     }
 
-    return $default;
+    return '';
 }
 
-function dashMoney($value, float $default = 0.0): float
+
+function dashboardMoney(mixed $value): float
 {
-    if ($value === null || $value === '') {
-        return $default;
+    if (is_numeric($value)) {
+        return (float)$value;
     }
 
-    return is_numeric($value)
-        ? round((float) $value, 2)
-        : $default;
+    if (is_string($value)) {
+        $value = str_replace(
+            [',', 'UGX', 'ugx', ' '],
+            '',
+            trim($value)
+        );
+
+        if (is_numeric($value)) {
+            return (float)$value;
+        }
+    }
+
+    return 0.0;
 }
 
-function dashObjectId($value): ?ObjectId
+
+function dashboardObjectId(mixed $value): ?ObjectId
 {
     if ($value instanceof ObjectId) {
         return $value;
     }
 
-    $value = dashString($value);
-
-    if (
-        $value !== ''
-        && preg_match('/^[a-f0-9]{24}$/i', $value)
-    ) {
+    if (is_string($value) && preg_match('/^[a-f0-9]{24}$/i', trim($value))) {
         try {
-            return new ObjectId($value);
+            return new ObjectId(trim($value));
         } catch (Throwable $e) {
             return null;
         }
@@ -155,1597 +130,1163 @@ function dashObjectId($value): ?ObjectId
     return null;
 }
 
-function dashUserId($user): string
+
+function dashboardDate(mixed $value): ?DateTimeImmutable
 {
-    if (!$user) {
-        return '';
-    }
-
-    foreach (
-        [
-            $user['_id'] ?? null,
-            $user['id'] ?? null,
-            $user['user_id'] ?? null
-        ] as $value
-    ) {
-        $id = dashString($value);
-
-        if ($id !== '') {
-            return $id;
-        }
-    }
-
-    return '';
-}
-
-/* =========================================================
-   SESSION USER
-   ========================================================= */
-
-function dashSessionUserId(): string
-{
-    foreach (
-        [
-            $_SESSION['user_id'] ?? null,
-            $_SESSION['userId'] ?? null,
-            $_SESSION['uid'] ?? null,
-            $_SESSION['user']['id'] ?? null,
-            $_SESSION['user']['_id'] ?? null
-        ] as $value
-    ) {
-        $id = dashString($value);
-
-        if ($id !== '') {
-            return $id;
-        }
-    }
-
-    return '';
-}
-
-function dashSessionEmail(): string
-{
-    foreach (
-        [
-            $_SESSION['email'] ?? null,
-            $_SESSION['user_email'] ?? null,
-            $_SESSION['user']['email'] ?? null
-        ] as $value
-    ) {
-        $email = dashString($value);
-
-        if ($email !== '') {
-            return strtolower($email);
-        }
-    }
-
-    return '';
-}
-
-/* =========================================================
-   FIND USER
-   ========================================================= */
-
-function dashFindUser(
-    $users,
-    string $userId = '',
-    string $email = ''
-) {
-    $or = [];
-
-    if ($userId !== '') {
-        $oid = dashObjectId($userId);
-
-        if ($oid !== null) {
-            $or[] = ['_id' => $oid];
-        }
-
-        $or[] = ['id' => $userId];
-        $or[] = ['user_id' => $userId];
-    }
-
-    if ($email !== '') {
-        $or[] = ['email' => $email];
-        $or[] = ['email' => strtolower($email)];
-    }
-
-    if (!$or) {
-        return null;
-    }
-
     try {
-        return $users->findOne([
-            '$or' => $or
-        ]);
+        if ($value instanceof MongoDB\BSON\UTCDateTime) {
+            return $value->toDateTime()->setTimezone(
+                new DateTimeZone('UTC')
+            );
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return new DateTimeImmutable(
+                $value->format('Y-m-d H:i:s'),
+                new DateTimeZone('UTC')
+            );
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            return new DateTimeImmutable(
+                trim($value),
+                new DateTimeZone('UTC')
+            );
+        }
     } catch (Throwable $e) {
         return null;
     }
+
+    return null;
 }
 
-/* =========================================================
-   WALLET
-   ========================================================= */
 
-function dashWalletBalance($user): float
-{
-    if (!$user) {
-        return 0.0;
+/* ======================================================
+   START SESSION
+====================================================== */
+
+try {
+    startSecureSession();
+} catch (Throwable $e) {
+    session_start();
+}
+
+
+/* ======================================================
+   REQUIRE LOGIN
+====================================================== */
+
+try {
+    requireLogin();
+} catch (Throwable $e) {
+
+    dashboardResponse([
+        'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
+        'message' => 'Authentication required.'
+    ], 401);
+}
+
+
+/* ======================================================
+   CURRENT USER ID
+====================================================== */
+
+try {
+    $sessionUserId = currentUserId();
+} catch (Throwable $e) {
+    $sessionUserId = null;
+}
+
+
+if (
+    $sessionUserId === null ||
+    $sessionUserId === ''
+) {
+    dashboardResponse([
+        'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
+        'message' => 'User session not found.'
+    ], 401);
+}
+
+
+/* ======================================================
+   DATABASE COLLECTIONS
+====================================================== */
+
+try {
+
+    /*
+     * config.php normally provides these collections.
+     * If one is missing, create the reference here.
+     */
+
+    if (!isset($users)) {
+        $users = $db->selectCollection('users');
     }
+
+    if (!isset($investments)) {
+        $investments = $db->selectCollection('investments');
+    }
+
+    if (!isset($transactions)) {
+        $transactions = $db->selectCollection('transactions');
+    }
+
+    if (!isset($earnings)) {
+        $earnings = $db->selectCollection('earnings');
+    }
+
+    if (!isset($referrals)) {
+        $referrals = $db->selectCollection('referrals');
+    }
+
+} catch (Throwable $e) {
+
+    dashboardResponse([
+        'success' => false,
+        'message' => 'Database configuration error.'
+    ], 500);
+}
+
+
+/* ======================================================
+   FIND CURRENT USER
+====================================================== */
+
+$user = null;
+
+try {
+
+    $userIdString = dashboardString($sessionUserId);
+    $userObjectId = dashboardObjectId($sessionUserId);
+
+    $queries = [];
+
+    if ($userObjectId !== null) {
+        $queries[] = [
+            '_id' => $userObjectId
+        ];
+    }
+
+    if ($userIdString !== '') {
+
+        $queries[] = [
+            'user_id' => $userIdString
+        ];
+
+        $queries[] = [
+            'id' => $userIdString
+        ];
+
+        $queries[] = [
+            'userId' => $userIdString
+        ];
+    }
+
+
+    /*
+     * Some sessions store the user's email instead
+     * of the MongoDB ID.
+     */
+    $sessionEmail = '';
+
+    if (isset($_SESSION['email'])) {
+        $sessionEmail = trim((string)$_SESSION['email']);
+    }
+
+    if ($sessionEmail !== '') {
+
+        $queries[] = [
+            'email' => $sessionEmail
+        ];
+
+        $queries[] = [
+            'email_address' => $sessionEmail
+        ];
+    }
+
+
+    foreach ($queries as $query) {
+
+        try {
+
+            $found = $users->findOne($query);
+
+            if ($found !== null) {
+                $user = $found;
+                break;
+            }
+
+        } catch (Throwable $e) {
+            continue;
+        }
+    }
+
+
+    /*
+     * Last fallback:
+     * if session stores an email directly as the user ID.
+     */
+    if ($user === null && filter_var($userIdString, FILTER_VALIDATE_EMAIL)) {
+
+        try {
+            $user = $users->findOne([
+                'email' => $userIdString
+            ]);
+        } catch (Throwable $e) {
+            $user = null;
+        }
+    }
+
+} catch (Throwable $e) {
+
+    dashboardResponse([
+        'success' => false,
+        'message' => 'Unable to resolve user account.'
+    ], 500);
+}
+
+
+if ($user === null) {
+
+    dashboardResponse([
+        'success' => false,
+        'authenticated' => true,
+        'authorized' => false,
+        'message' => 'User account was not found.'
+    ], 404);
+}
+
+
+/* ======================================================
+   USER ID
+====================================================== */
+
+$dbUserId = '';
+
+if (isset($user['_id'])) {
+    $dbUserId = dashboardString($user['_id']);
+}
+
+if ($dbUserId === '') {
+    $dbUserId = dashboardString($sessionUserId);
+}
+
+$userObjectId = dashboardObjectId($user['_id'] ?? null);
+
+
+/* ======================================================
+   USER NAME
+====================================================== */
+
+$firstName = trim(
+    (string)($user['first_name'] ??
+    $user['firstName'] ??
+    '')
+);
+
+$lastName = trim(
+    (string)($user['last_name'] ??
+    $user['lastName'] ??
+    '')
+);
+
+$fullName = trim(
+    (string)($user['name'] ??
+    $user['full_name'] ??
+    $user['fullName'] ??
+    $user['username'] ??
+    '')
+);
+
+
+if ($fullName === '') {
+
+    $fullName = trim(
+        $firstName . ' ' . $lastName
+    );
+}
+
+
+if ($fullName === '') {
+
+    $fullName =
+        (string)($user['email'] ??
+        $user['phone'] ??
+        'Member');
+}
+
+
+/* ======================================================
+   ACCOUNT TYPE / ROLE
+====================================================== */
+
+$role = strtolower(
+    trim(
+        (string)($user['role'] ??
+        $user['account_type'] ??
+        $user['accountType'] ??
+        $user['user_role'] ??
+        '')
+    )
+);
+
+
+$email = strtolower(
+    trim(
+        (string)($user['email'] ?? '')
+    )
+);
+
+
+$isAdmin = false;
+
+
+/*
+ * Explicit admin flags.
+ */
+$adminFlags = [
+    $user['is_admin'] ?? false,
+    $user['isAdmin'] ?? false,
+    $user['admin'] ?? false,
+    $user['administrator'] ?? false,
+];
+
+foreach ($adminFlags as $flag) {
+
+    if (
+        $flag === true ||
+        $flag === 1 ||
+        $flag === '1' ||
+        strtolower((string)$flag) === 'true'
+    ) {
+        $isAdmin = true;
+        break;
+    }
+}
+
+
+/*
+ * Role-based admin.
+ */
+if (in_array(
+    $role,
+    [
+        'admin',
+        'administrator',
+        'superadmin',
+        'super_admin',
+        'super-admin'
+    ],
+    true
+)) {
+    $isAdmin = true;
+}
+
+
+/*
+ * Environment-configured admin.
+ */
+$adminEmail = strtolower(
+    trim((string)(getenv('ADMIN_EMAIL') ?: ''))
+);
+
+$adminUserId = trim(
+    (string)(getenv('ADMIN_USER_ID') ?: '')
+);
+
+
+if (
+    $adminEmail !== '' &&
+    $email !== '' &&
+    $email === $adminEmail
+) {
+    $isAdmin = true;
+}
+
+
+if (
+    $adminUserId !== '' &&
+    $dbUserId !== '' &&
+    $dbUserId === $adminUserId
+) {
+    $isAdmin = true;
+}
+
+
+/* ======================================================
+   WALLET BALANCE
+====================================================== */
+
+$balance = 0.0;
+
+
+/*
+ * Direct wallet fields.
+ */
+$walletFields = [
+    'balance',
+    'wallet_balance',
+    'walletBalance',
+    'available_balance',
+    'availableBalance'
+];
+
+
+foreach ($walletFields as $field) {
+
+    if (isset($user[$field]) && is_numeric($user[$field])) {
+
+        $balance = dashboardMoney($user[$field]);
+
+        break;
+    }
+}
+
+
+/*
+ * Nested wallet object.
+ */
+if (
+    $balance == 0.0 &&
+    isset($user['wallet']) &&
+    is_array($user['wallet'])
+) {
 
     foreach (
         [
             'balance',
-            'wallet_balance',
-            'walletBalance'
+            'available_balance',
+            'availableBalance',
+            'wallet_balance'
         ] as $field
     ) {
+
         if (
-            array_key_exists($field, $user)
-            && is_numeric($user[$field])
+            isset($user['wallet'][$field]) &&
+            is_numeric($user['wallet'][$field])
         ) {
-            return round(
-                (float) $user[$field],
-                2
+
+            $balance = dashboardMoney(
+                $user['wallet'][$field]
             );
+
+            break;
         }
     }
+}
 
-    if (
-        isset($user['wallet'])
-        && is_array($user['wallet'])
-        && isset($user['wallet']['balance'])
-        && is_numeric($user['wallet']['balance'])
-    ) {
-        return round(
-            (float) $user['wallet']['balance'],
-            2
+
+/* ======================================================
+   INVESTMENT STATISTICS
+====================================================== */
+
+$totalInvested = 0.0;
+$totalEarnings = 0.0;
+$investmentCount = 0;
+
+
+/*
+ * Investment statuses that represent actual investments.
+ */
+$validInvestmentStatuses = [
+    'pending',
+    'approved',
+    'active',
+    'running',
+    'completed'
+];
+
+
+try {
+
+    $investmentQuery = [];
+
+    if ($userObjectId !== null) {
+
+        $investmentQuery = [
+            '$or' => [
+                ['user_id' => $userObjectId],
+                ['userId' => $userObjectId],
+                ['user' => $userObjectId]
+            ]
+        ];
+
+    } else {
+
+        $investmentQuery = [
+            '$or' => [
+                ['user_id' => $dbUserId],
+                ['userId' => $dbUserId],
+                ['user' => $dbUserId]
+            ]
+        ];
+    }
+
+
+    $cursor = $investments->find(
+        $investmentQuery,
+        [
+            'sort' => [
+                'created_at' => -1,
+                '_id' => -1
+            ]
+        ]
+    );
+
+
+    foreach ($cursor as $investment) {
+
+        $status = strtolower(
+            trim(
+                (string)($investment['status'] ?? '')
+            )
         );
-    }
 
-    return 0.0;
-}
 
-/* =========================================================
-   USER NAME
-   ========================================================= */
-
-function dashUserName($user): string
-{
-    if (!$user) {
-        return 'Crown Cash User';
-    }
-
-    $fullName = dashString(
-        $user['full_name']
-        ?? $user['fullName']
-        ?? $user['name']
-        ?? ''
-    );
-
-    if ($fullName !== '') {
-        return $fullName;
-    }
-
-    $first = dashString(
-        $user['first_name']
-        ?? $user['firstName']
-        ?? ''
-    );
-
-    $last = dashString(
-        $user['last_name']
-        ?? $user['lastName']
-        ?? ''
-    );
-
-    $name = trim(
-        $first . ' ' . $last
-    );
-
-    return $name !== ''
-        ? $name
-        : 'Crown Cash User';
-}
-
-/* =========================================================
-   ADMIN DETECTION
-   ========================================================= */
-
-function dashboardIsAdmin($user): bool
-{
-    if (!$user) {
-        return false;
-    }
-
-    if (
-        isset($user['is_admin'])
-        && filter_var(
-            $user['is_admin'],
-            FILTER_VALIDATE_BOOLEAN
-        )
-    ) {
-        return true;
-    }
-
-    $roles = [
-        strtolower(
-            dashString($user['role'] ?? '')
-        ),
-        strtolower(
-            dashString($user['account_type'] ?? '')
-        ),
-        strtolower(
-            dashString($user['accountType'] ?? '')
-        ),
-        strtolower(
-            dashString($user['user_type'] ?? '')
-        ),
-        strtolower(
-            dashString($user['userType'] ?? '')
-        )
-    ];
-
-    foreach ($roles as $role) {
         if (
-            in_array(
-                $role,
-                [
-                    'admin',
-                    'administrator',
-                    'super_admin',
-                    'superadmin'
-                ],
+            $status !== '' &&
+            !in_array(
+                $status,
+                $validInvestmentStatuses,
                 true
             )
         ) {
-            return true;
+            continue;
         }
-    }
 
-    $configuredAdminId =
-        dashString(
-            getenv('ADMIN_USER_ID') ?: ''
+
+        $principal = dashboardMoney(
+            $investment['amount'] ??
+            $investment['principal'] ??
+            $investment['investment_amount'] ??
+            $investment['investmentAmount'] ??
+            0
         );
 
-    $configuredAdminEmail =
-        strtolower(
-            dashString(
-                getenv('ADMIN_EMAIL') ?: ''
-            )
-        );
 
-    $currentId =
-        dashUserId($user);
-
-    $currentEmail =
-        strtolower(
-            dashString(
-                $user['email'] ?? ''
-            )
-        );
-
-    if (
-        $configuredAdminId !== ''
-        && $currentId !== ''
-        && strtolower($configuredAdminId)
-            === strtolower($currentId)
-    ) {
-        return true;
-    }
-
-    if (
-        $configuredAdminEmail !== ''
-        && $currentEmail !== ''
-        && $configuredAdminEmail
-            === $currentEmail
-    ) {
-        return true;
-    }
-
-    return false;
-}
-
-/* =========================================================
-   INVESTMENT USER FILTER
-   ========================================================= */
-
-function dashUserInvestmentFilter(
-    string $userId
-): array {
-    $or = [];
-
-    $oid = dashObjectId($userId);
-
-    if ($oid !== null) {
-        $or[] = ['user_id' => $oid];
-        $or[] = ['userId' => $oid];
-        $or[] = ['owner_id' => $oid];
-    }
-
-    $or[] = ['user_id' => $userId];
-    $or[] = ['userId' => $userId];
-    $or[] = ['owner_id' => $userId];
-
-    return [
-        '$or' => $or
-    ];
-}
-
-/* =========================================================
-   INVESTMENT AMOUNT
-   ========================================================= */
-
-function dashInvestmentAmount($investment): float
-{
-    foreach (
-        [
-            'amount',
-            'principal',
-            'investment_amount',
-            'investmentAmount',
-            'capital'
-        ] as $field
-    ) {
-        if (isset($investment[$field])) {
-            $amount =
-                dashMoney(
-                    $investment[$field]
-                );
-
-            if ($amount > 0) {
-                return $amount;
-            }
-        }
-    }
-
-    return 0.0;
-}
-
-/* =========================================================
-   TOTAL INVESTMENTS
-   ========================================================= */
-
-function dashboardInvestmentStats(
-    $investments,
-    string $userId
-): array {
-    $stats = [
-        'total_invested' => 0.0,
-        'active_invested' => 0.0,
-        'pending_invested' => 0.0,
-        'completed_invested' => 0.0,
-        'investment_count' => 0,
-        'active_count' => 0,
-        'pending_count' => 0,
-        'completed_count' => 0
-    ];
-
-    try {
-        $cursor = $investments->find(
-            dashUserInvestmentFilter($userId),
-            [
-                'limit' => 5000,
-                'sort' => [
-                    'created_at' => -1
-                ]
-            ]
-        );
-
-        foreach ($cursor as $investment) {
-            $amount =
-                dashInvestmentAmount(
-                    $investment
-                );
-
-            if ($amount <= 0) {
-                continue;
-            }
-
-            $status =
-                strtolower(
-                    dashString(
-                        $investment['status']
-                        ?? $investment['state']
-                        ?? ''
-                    )
-                );
+        if ($principal > 0) {
 
             /*
-             * Total investment value includes investments that
-             * are currently active, approved, running or completed.
-             *
-             * Pending investments are kept separate so the
-             * dashboard can show the user's actual active capital.
+             * Total invested represents the principal
+             * put into investments.
              */
-            if (
-                in_array(
-                    $status,
-                    [
-                        'approved',
-                        'active',
-                        'running',
-                        'in_progress',
-                        'in-progress',
-                        'completed'
-                    ],
-                    true
-                )
-            ) {
-                $stats['total_invested'] +=
-                    $amount;
+            $totalInvested += $principal;
 
-                $stats['investment_count']++;
-
-                if ($status === 'completed') {
-                    $stats['completed_invested'] +=
-                        $amount;
-
-                    $stats['completed_count']++;
-                } else {
-                    $stats['active_invested'] +=
-                        $amount;
-
-                    $stats['active_count']++;
-                }
-            } elseif (
-                in_array(
-                    $status,
-                    [
-                        'pending',
-                        'awaiting_approval',
-                        'awaiting approval'
-                    ],
-                    true
-                )
-            ) {
-                $stats['pending_invested'] +=
-                    $amount;
-
-                $stats['pending_count']++;
-            }
-        }
-    } catch (Throwable $e) {
-        /*
-         * Keep dashboard available even if investment statistics
-         * cannot be read.
-         */
-    }
-
-    foreach ($stats as $key => $value) {
-        if (is_float($value)) {
-            $stats[$key] =
-                round($value, 2);
+            $investmentCount++;
         }
     }
 
-    return $stats;
-}
-
-/* =========================================================
-   EARNINGS
-   ========================================================= */
-
-function dashboardEarnings(
-    $earnings,
-    $user
-): array {
-    $userId =
-        dashUserId($user);
-
-    $stats = [
-        'investment_earnings' => 0.0,
-        'referral_earnings' => 0.0,
-        'total_earnings' => 0.0,
-        'daily_earnings' => 0.0,
-        'earning_count' => 0
-    ];
-
-    if ($userId === '') {
-        return $stats;
-    }
-
-    $or = [];
-
-    $oid =
-        dashObjectId($userId);
-
-    if ($oid !== null) {
-        $or[] = [
-            'user_id' => $oid
-        ];
-    }
-
-    $or[] = [
-        'user_id' => $userId
-    ];
-
-    $or[] = [
-        'userId' => $userId
-    ];
-
-    try {
-        $cursor = $earnings->find(
-            [
-                '$and' => [
-                    [
-                        '$or' => $or
-                    ],
-                    [
-                        'status' => [
-                            '$in' => [
-                                'credited',
-                                'completed',
-                                'success'
-                            ]
-                        ]
-                    ]
-                ],
-            ],
-            [
-                'limit' => 10000,
-                'sort' => [
-                    'created_at' => -1
-                ]
-            ]
-        );
-
-        foreach ($cursor as $entry) {
-            $amount =
-                dashMoney(
-                    $entry['amount']
-                    ?? $entry['earning']
-                    ?? $entry['credit']
-                    ?? 0
-                );
-
-            if ($amount <= 0) {
-                continue;
-            }
-
-            $type =
-                strtolower(
-                    dashString(
-                        $entry['type']
-                        ?? $entry['earning_type']
-                        ?? $entry['category']
-                        ?? ''
-                    )
-                );
-
-            if (
-                str_contains(
-                    $type,
-                    'referral'
-                )
-                || str_contains(
-                    $type,
-                    'commission'
-                )
-            ) {
-                $stats['referral_earnings'] +=
-                    $amount;
-            } elseif (
-                str_contains(
-                    $type,
-                    'principal'
-                )
-            ) {
-                /*
-                 * Principal return is NOT earnings.
-                 */
-                continue;
-            } else {
-                $stats['investment_earnings'] +=
-                    $amount;
-            }
-
-            $stats['earning_count']++;
-        }
-
-        /*
-         * Daily earnings means investment earnings only.
-         */
-        $stats['daily_earnings'] =
-            $stats['investment_earnings'];
-    } catch (Throwable $e) {
-        /*
-         * Fall back to user totals below.
-         */
-    }
+} catch (Throwable $e) {
 
     /*
-     * Fallback for accounts where the earnings ledger is not
-     * populated but the user document already contains totals.
+     * Do not break the entire dashboard if investment
+     * statistics fail.
      */
-    if (
-        $stats['investment_earnings'] <= 0
-        && $stats['referral_earnings'] <= 0
-    ) {
-        $stats['investment_earnings'] =
-            dashMoney(
-                $user['investment_earnings']
-                ?? $user['investmentEarnings']
-                ?? $user['daily_earnings']
-                ?? $user['dailyEarnings']
-                ?? 0
-            );
-
-        $stats['referral_earnings'] =
-            dashMoney(
-                $user['referral_earnings']
-                ?? $user['referralEarnings']
-                ?? $user['total_referral_earnings']
-                ?? $user['totalReferralEarnings']
-                ?? 0
-            );
-    }
-
-    $stats['total_earnings'] =
-        round(
-            $stats['investment_earnings']
-            + $stats['referral_earnings'],
-            2
-        );
-
-    $stats['investment_earnings'] =
-        round(
-            $stats['investment_earnings'],
-            2
-        );
-
-    $stats['referral_earnings'] =
-        round(
-            $stats['referral_earnings'],
-            2
-        );
-
-    $stats['daily_earnings'] =
-        round(
-            $stats['daily_earnings'],
-            2
-        );
-
-    return $stats;
 }
 
-/* =========================================================
-   REFERRAL TEAM
-   ========================================================= */
 
-function dashboardReferralParentValue($user): string
-{
-    if (!$user) {
-        return '';
-    }
-
-    foreach (
-        [
-            'referrer_id',
-            'referrerId',
-            'referrer',
-            'referred_by_id',
-            'referredById',
-            'referred_by',
-            'parent_id',
-            'parentId',
-            'sponsor_id',
-            'sponsorId',
-            'sponsor'
-        ] as $field
-    ) {
-        if (!array_key_exists($field, $user)) {
-            continue;
-        }
-
-        $value =
-            dashString(
-                $user[$field]
-            );
-
-        if ($value !== '') {
-            return $value;
-        }
-    }
-
-    return '';
-}
-
-function dashboardFindReferrals(
-    $users,
-    string $parentId,
-    string $parentEmail = ''
-): array {
-    $conditions = [];
-
-    if ($parentId !== '') {
-        $oid =
-            dashObjectId($parentId);
-
-        if ($oid !== null) {
-            foreach (
-                [
-                    'referrer_id',
-                    'referrerId',
-                    'referred_by_id',
-                    'referredById',
-                    'parent_id',
-                    'parentId',
-                    'sponsor_id',
-                    'sponsorId'
-                ] as $field
-            ) {
-                $conditions[] = [
-                    $field => $oid
-                ];
-            }
-        }
-
-        foreach (
-            [
-                'referrer_id',
-                'referrerId',
-                'referrer',
-                'referred_by_id',
-                'referredById',
-                'referred_by',
-                'parent_id',
-                'parentId',
-                'sponsor_id',
-                'sponsorId',
-                'sponsor'
-            ] as $field
-        ) {
-            $conditions[] = [
-                $field => $parentId
-            ];
-        }
-    }
-
-    if ($parentEmail !== '') {
-        foreach (
-            [
-                'referrer',
-                'referrer_email',
-                'referrerEmail',
-                'referred_by',
-                'sponsor'
-            ] as $field
-        ) {
-            $conditions[] = [
-                $field => $parentEmail
-            ];
-        }
-    }
-
-    if (!$conditions) {
-        return [];
-    }
-
-    try {
-        $cursor =
-            $users->find(
-                [
-                    '$or' => $conditions
-                ],
-                [
-                    'limit' => 5000
-                ]
-            );
-
-        $result = [];
-        $seen = [];
-
-        foreach ($cursor as $member) {
-            $id =
-                dashUserId($member);
-
-            if ($id === '') {
-                continue;
-            }
-
-            $key =
-                strtolower($id);
-
-            if (isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-            $result[] = $member;
-        }
-
-        return $result;
-    } catch (Throwable $e) {
-        return [];
-    }
-}
-
-function dashboardReferralStats(
-    $users,
-    $user
-): array {
-    $empty = [
-        'level1' => 0,
-        'level2' => 0,
-        'level3' => 0,
-        'total' => 0
-    ];
-
-    if (!$user) {
-        return $empty;
-    }
-
-    $userId =
-        dashUserId($user);
-
-    if ($userId === '') {
-        return $empty;
-    }
-
-    $email =
-        strtolower(
-            dashString(
-                $user['email'] ?? ''
-            )
-        );
-
-    $level1 =
-        dashboardFindReferrals(
-            $users,
-            $userId,
-            $email
-        );
-
-    $level2 = [];
-    $level3 = [];
-
-    $seen2 = [];
-    $seen3 = [];
-
-    foreach ($level1 as $member) {
-        $id =
-            dashUserId($member);
-
-        if ($id === '') {
-            continue;
-        }
-
-        $children =
-            dashboardFindReferrals(
-                $users,
-                $id,
-                strtolower(
-                    dashString(
-                        $member['email'] ?? ''
-                    )
-                )
-            );
-
-        foreach ($children as $child) {
-            $childId =
-                dashUserId($child);
-
-            if ($childId === '') {
-                continue;
-            }
-
-            if (
-                strtolower($childId)
-                === strtolower($userId)
-            ) {
-                continue;
-            }
-
-            $key =
-                strtolower($childId);
-
-            if (isset($seen2[$key])) {
-                continue;
-            }
-
-            $seen2[$key] = true;
-            $level2[] = $child;
-        }
-    }
-
-    foreach ($level2 as $member) {
-        $id =
-            dashUserId($member);
-
-        if ($id === '') {
-            continue;
-        }
-
-        $children =
-            dashboardFindReferrals(
-                $users,
-                $id,
-                strtolower(
-                    dashString(
-                        $member['email'] ?? ''
-                    )
-                )
-            );
-
-        foreach ($children as $child) {
-            $childId =
-                dashUserId($child);
-
-            if ($childId === '') {
-                continue;
-            }
-
-            if (
-                strtolower($childId)
-                === strtolower($userId)
-            ) {
-                continue;
-            }
-
-            $key =
-                strtolower($childId);
-
-            if (isset($seen3[$key])) {
-                continue;
-            }
-
-            $seen3[$key] = true;
-            $level3[] = $child;
-        }
-    }
-
-    return [
-        'level1' => count($level1),
-        'level2' => count($level2),
-        'level3' => count($level3),
-        'total' =>
-            count($level1)
-            + count($level2)
-            + count($level3)
-    ];
-}
-
-/* =========================================================
-   TRANSACTION COUNT
-   ========================================================= */
-
-function dashboardTransactionStats(
-    $transactions,
-    string $userId
-): array {
-    $stats = [
-        'count' => 0,
-        'deposits' => 0.0,
-        'withdrawals' => 0.0,
-        'credits' => 0.0,
-        'debits' => 0.0
-    ];
-
-    if ($userId === '') {
-        return $stats;
-    }
-
-    $or = [];
-
-    $oid =
-        dashObjectId($userId);
-
-    if ($oid !== null) {
-        $or[] = [
-            'user_id' => $oid
-        ];
-        $or[] = [
-            'userId' => $oid
-        ];
-    }
-
-    $or[] = [
-        'user_id' => $userId
-    ];
-
-    $or[] = [
-        'userId' => $userId
-    ];
-
-    try {
-        $cursor =
-            $transactions->find(
-                [
-                    '$or' => $or
-                ],
-                [
-                    'limit' => 10000
-                ]
-            );
-
-        foreach ($cursor as $transaction) {
-            $stats['count']++;
-
-            $amount =
-                dashMoney(
-                    $transaction['amount']
-                    ?? $transaction['value']
-                    ?? 0
-                );
-
-            $type =
-                strtolower(
-                    dashString(
-                        $transaction['type']
-                        ?? $transaction['transaction_type']
-                        ?? $transaction['category']
-                        ?? ''
-                    )
-                );
-
-            if (
-                str_contains(
-                    $type,
-                    'deposit'
-                )
-            ) {
-                $stats['deposits'] +=
-                    $amount;
-            }
-
-            if (
-                str_contains(
-                    $type,
-                    'withdraw'
-                )
-            ) {
-                $stats['withdrawals'] +=
-                    $amount;
-            }
-
-            if (
-                isset($transaction['credit'])
-                && is_numeric(
-                    $transaction['credit']
-                )
-            ) {
-                $stats['credits'] +=
-                    dashMoney(
-                        $transaction['credit']
-                    );
-            }
-
-            if (
-                isset($transaction['debit'])
-                && is_numeric(
-                    $transaction['debit']
-                )
-            ) {
-                $stats['debits'] +=
-                    dashMoney(
-                        $transaction['debit']
-                    );
-            }
-        }
-    } catch (Throwable $e) {
-        /*
-         * Dashboard should still load if transaction history
-         * has a temporary database issue.
-         */
-    }
-
-    $stats['deposits'] =
-        round($stats['deposits'], 2);
-
-    $stats['withdrawals'] =
-        round($stats['withdrawals'], 2);
-
-    $stats['credits'] =
-        round($stats['credits'], 2);
-
-    $stats['debits'] =
-        round($stats['debits'], 2);
-
-    return $stats;
-}
-
-/* =========================================================
-   PENDING WITHDRAWAL
-   ========================================================= */
-
-function dashboardPendingWithdrawal(
-    $transactions,
-    string $userId
-): float {
-    if ($userId === '') {
-        return 0.0;
-    }
-
-    $or = [];
-
-    $oid =
-        dashObjectId($userId);
-
-    if ($oid !== null) {
-        $or[] = [
-            'user_id' => $oid
-        ];
-    }
-
-    $or[] = [
-        'user_id' => $userId
-    ];
-
-    $or[] = [
-        'userId' => $userId
-    ];
-
-    try {
-        $cursor =
-            $transactions->find(
-                [
-                    '$and' => [
-                        [
-                            '$or' => $or
-                        ],
-                        [
-                            'status' => [
-                                '$in' => [
-                                    'pending',
-                                    'Pending',
-                                    'PENDING'
-                                ]
-                            ]
-                        ],
-                        [
-                            '$or' => [
-                                [
-                                    'type' =>
-                                        'withdrawal'
-                                ],
-                                [
-                                    'transaction_type' =>
-                                        'withdrawal'
-                                ],
-                                [
-                                    'category' =>
-                                        'withdrawal'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            );
-
-        $total = 0.0;
-
-        foreach ($cursor as $transaction) {
-            $total +=
-                dashMoney(
-                    $transaction['amount']
-                    ?? 0
-                );
-        }
-
-        return round($total, 2);
-    } catch (Throwable $e) {
-        return 0.0;
-    }
-}
-
-/* =========================================================
-   MAIN
-   ========================================================= */
+/* ======================================================
+   EARNINGS
+====================================================== */
 
 try {
-    $sessionUserId =
-        dashSessionUserId();
 
-    $sessionEmail =
-        dashSessionEmail();
+    $earningQuery = [];
 
-    if (
-        $sessionUserId === ''
-        && $sessionEmail === ''
-    ) {
-        dashboardResponse(
-            false,
-            'Your session has expired. Please log in again.',
-            [],
-            401
-        );
+    if ($userObjectId !== null) {
+
+        $earningQuery = [
+            '$or' => [
+                ['user_id' => $userObjectId],
+                ['userId' => $userObjectId],
+                ['user' => $userObjectId]
+            ]
+        ];
+
+    } else {
+
+        $earningQuery = [
+            '$or' => [
+                ['user_id' => $dbUserId],
+                ['userId' => $dbUserId],
+                ['user' => $dbUserId]
+            ]
+        ];
     }
 
-    $user =
-        dashFindUser(
-            $users,
-            $sessionUserId,
-            $sessionEmail
-        );
 
-    if (!$user) {
-        dashboardResponse(
-            false,
-            'User account could not be found.',
-            [],
-            401
-        );
-    }
-
-    $userId =
-        dashUserId($user);
-
-    if ($userId === '') {
-        dashboardResponse(
-            false,
-            'User account ID is missing.',
-            [],
-            400
-        );
-    }
-
-    /*
-     * ---------------------------------------------------------
-     * BASIC USER INFORMATION
-     * ---------------------------------------------------------
-     */
-
-    $name =
-        dashUserName($user);
-
-    $email =
-        dashString(
-            $user['email'] ?? ''
-        );
-
-    $phone =
-        dashString(
-            $user['phone']
-            ?? $user['phone_number']
-            ?? $user['phoneNumber']
-            ?? ''
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * WALLET
-     * ---------------------------------------------------------
-     */
-
-    $balance =
-        dashWalletBalance($user);
-
-    /*
-     * ---------------------------------------------------------
-     * INVESTMENTS
-     * ---------------------------------------------------------
-     */
-
-    $investmentStats =
-        dashboardInvestmentStats(
-            $investments,
-            $userId
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * EARNINGS
-     * ---------------------------------------------------------
-     */
-
-    $earningStats =
-        dashboardEarnings(
-            $earnings,
-            $user
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * REFERRALS
-     * ---------------------------------------------------------
-     */
-
-    $referralStats =
-        dashboardReferralStats(
-            $users,
-            $user
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * TRANSACTIONS
-     * ---------------------------------------------------------
-     */
-
-    $transactionStats =
-        dashboardTransactionStats(
-            $transactions,
-            $userId
-        );
-
-    $pendingWithdrawal =
-        dashboardPendingWithdrawal(
-            $transactions,
-            $userId
-        );
-
-    /*
-     * ---------------------------------------------------------
-     * ADMIN
-     * ---------------------------------------------------------
-     */
-
-    $isAdmin =
-        dashboardIsAdmin($user);
-
-    /*
-     * ---------------------------------------------------------
-     * USER OBJECT
-     * ---------------------------------------------------------
-     */
-
-    $userData = [
-        'id' => $userId,
-        '_id' => $userId,
-        'user_id' => $userId,
-        'name' => $name,
-        'full_name' => $name,
-        'firstName' =>
-            dashString(
-                $user['first_name']
-                ?? $user['firstName']
-                ?? ''
-            ),
-        'lastName' =>
-            dashString(
-                $user['last_name']
-                ?? $user['lastName']
-                ?? ''
-            ),
-        'email' => $email,
-        'phone' => $phone,
-
-        'balance' => $balance,
-        'wallet_balance' => $balance,
-        'walletBalance' => $balance,
-
-        'role' =>
-            dashString(
-                $user['role'] ?? ''
-            ),
-
-        'account_type' =>
-            dashString(
-                $user['account_type']
-                ?? $user['accountType']
-                ?? ''
-            ),
-
-        'is_admin' => $isAdmin
-    ];
-
-    /*
-     * ---------------------------------------------------------
-     * COMPLETE DASHBOARD DATA
-     * ---------------------------------------------------------
-     */
-
-    dashboardResponse(
-        true,
-        'Dashboard loaded successfully.',
-        [
-            'user' => $userData,
-
-            'wallet' => [
-                'balance' => $balance,
-                'available_balance' => $balance,
-                'availableBalance' => $balance
-            ],
-
-            'balance' => $balance,
-            'available_balance' => $balance,
-            'availableBalance' => $balance,
-
-            'investments' => [
-                'total' =>
-                    $investmentStats[
-                        'total_invested'
-                    ],
-
-                'total_invested' =>
-                    $investmentStats[
-                        'total_invested'
-                    ],
-
-                'active' =>
-                    $investmentStats[
-                        'active_invested'
-                    ],
-
-                'active_invested' =>
-                    $investmentStats[
-                        'active_invested'
-                    ],
-
-                'pending' =>
-                    $investmentStats[
-                        'pending_invested'
-                    ],
-
-                'pending_invested' =>
-                    $investmentStats[
-                        'pending_invested'
-                    ],
-
-                'completed' =>
-                    $investmentStats[
-                        'completed_invested'
-                    ],
-
-                'count' =>
-                    $investmentStats[
-                        'investment_count'
-                    ],
-
-                'active_count' =>
-                    $investmentStats[
-                        'active_count'
-                    ],
-
-                'pending_count' =>
-                    $investmentStats[
-                        'pending_count'
-                    ],
-
-                'completed_count' =>
-                    $investmentStats[
-                        'completed_count'
-                    ]
-            ],
-
-            'total_invested' =>
-                $investmentStats[
-                    'total_invested'
-                ],
-
-            'totalInvested' =>
-                $investmentStats[
-                    'total_invested'
-                ],
-
-            'investment_count' =>
-                $investmentStats[
-                    'investment_count'
-                ],
-
-            'earnings' => [
-                'investment' =>
-                    $earningStats[
-                        'investment_earnings'
-                    ],
-
-                'daily' =>
-                    $earningStats[
-                        'daily_earnings'
-                    ],
-
-                'referral' =>
-                    $earningStats[
-                        'referral_earnings'
-                    ],
-
-                'total' =>
-                    $earningStats[
-                        'total_earnings'
-                    ]
-            ],
-
-            'investment_earnings' =>
-                $earningStats[
-                    'investment_earnings'
-                ],
-
-            'daily_earnings' =>
-                $earningStats[
-                    'daily_earnings'
-                ],
-
-            'referral_earnings' =>
-                $earningStats[
-                    'referral_earnings'
-                ],
-
-            'total_earnings' =>
-                $earningStats[
-                    'total_earnings'
-                ],
-
-            'totalEarnings' =>
-                $earningStats[
-                    'total_earnings'
-                ],
-
-            'referrals' => [
-                'level1' =>
-                    $referralStats['level1'],
-
-                'level2' =>
-                    $referralStats['level2'],
-
-                'level3' =>
-                    $referralStats['level3'],
-
-                'team' =>
-                    $referralStats['total'],
-
-                'total' =>
-                    $referralStats['total']
-            ],
-
-            'referral_team' =>
-                $referralStats['total'],
-
-            'referralTeam' =>
-                $referralStats['total'],
-
-            'transactions' => [
-                'count' =>
-                    $transactionStats['count'],
-
-                'deposits' =>
-                    $transactionStats['deposits'],
-
-                'withdrawals' =>
-                    $transactionStats['withdrawals'],
-
-                'credits' =>
-                    $transactionStats['credits'],
-
-                'debits' =>
-                    $transactionStats['debits']
-            ],
-
-            'transaction_count' =>
-                $transactionStats['count'],
-
-            'transactionCount' =>
-                $transactionStats['count'],
-
-            'pending_withdrawal' =>
-                $pendingWithdrawal,
-
-            'pendingWithdrawal' =>
-                $pendingWithdrawal,
-
-            /*
-             * IMPORTANT:
-             * These two flags are intentionally returned so
-             * dashboard.js can continue showing:
-             *
-             * 1. Sidebar Admin Panel
-             * 2. Admin Panel quick-action card
-             */
-            'admin' => [
-                'is_admin' => $isAdmin,
-                'authorized' => $isAdmin,
-                'role' =>
-                    dashString(
-                        $user['role'] ?? ''
-                    ),
-                'account_type' =>
-                    dashString(
-                        $user['account_type']
-                        ?? $user['accountType']
-                        ?? ''
-                    )
-            ],
-
-            'is_admin' => $isAdmin,
-            'admin_user' => $isAdmin
-        ]
+    $earningCursor = $earnings->find(
+        $earningQuery
     );
+
+
+    foreach ($earningCursor as $earning) {
+
+        $category = strtolower(
+            trim(
+                (string)(
+                    $earning['category'] ??
+                    $earning['type'] ??
+                    $earning['earning_type'] ??
+                    ''
+                )
+            )
+        );
+
+
+        /*
+         * Principal returned is NOT earnings.
+         */
+        if (
+            $category === 'principal' ||
+            $category === 'principal_return' ||
+            $category === 'investment_principal'
+        ) {
+            continue;
+        }
+
+
+        $amount = dashboardMoney(
+            $earning['amount'] ??
+            $earning['earning'] ??
+            $earning['value'] ??
+            0
+        );
+
+
+        if ($amount <= 0) {
+            continue;
+        }
+
+
+        /*
+         * Include investment/daily earnings and
+         * referral/commission earnings.
+         */
+        $investmentCategories = [
+            'investment',
+            'investment_earning',
+            'daily',
+            'daily_earning',
+            'profit',
+            'return'
+        ];
+
+
+        $referralCategories = [
+            'referral',
+            'referral_earning',
+            'commission',
+            'referral_commission'
+        ];
+
+
+        if (
+            in_array($category, $investmentCategories, true) ||
+            in_array($category, $referralCategories, true)
+        ) {
+
+            $totalEarnings += $amount;
+        }
+    }
+
+
+    /*
+     * If the earnings ledger has no entries yet,
+     * use stored user-level totals as a fallback.
+     */
+    if ($totalEarnings <= 0) {
+
+        $storedInvestmentEarnings = dashboardMoney(
+            $user['investment_earnings'] ??
+            $user['investmentEarnings'] ??
+            0
+        );
+
+
+        $storedReferralEarnings = dashboardMoney(
+            $user['referral_earnings'] ??
+            $user['referralEarnings'] ??
+            0
+        );
+
+
+        $totalEarnings =
+            $storedInvestmentEarnings +
+            $storedReferralEarnings;
+    }
+
 } catch (Throwable $e) {
-    dashboardResponse(
-        false,
-        'Unable to load dashboard.',
-        [
-            'error' => $e->getMessage()
-        ],
-        500
+
+    $totalEarnings = dashboardMoney(
+        $user['total_earnings'] ??
+        $user['totalEarnings'] ??
+        0
     );
 }
+
+
+/* ======================================================
+   REFERRAL TEAM
+====================================================== */
+
+$referralTeam = 0;
+
+
+/*
+ * Parent/referrer fields used by different versions
+ * of the Crown Cash database.
+ */
+$parentFields = [
+    'referrer_id',
+    'referrerId',
+    'referrer',
+    'referred_by_id',
+    'referredById',
+    'referred_by',
+    'parent_id',
+    'parentId',
+    'sponsor_id',
+    'sponsorId',
+    'sponsor',
+    'upline_id',
+    'uplineId'
+];
+
+
+try {
+
+    $allReferralIds = [];
+
+
+    /*
+     * First-level members.
+     */
+    foreach ($parentFields as $field) {
+
+        if ($userObjectId !== null) {
+
+            $query = [
+                $field => $userObjectId
+            ];
+
+        } else {
+
+            $query = [
+                $field => $dbUserId
+            ];
+        }
+
+
+        try {
+
+            $cursor = $users->find(
+                $query,
+                [
+                    'projection' => [
+                        '_id' => 1
+                    ]
+                ]
+            );
+
+
+            foreach ($cursor as $member) {
+
+                if (isset($member['_id'])) {
+
+                    $allReferralIds[
+                        dashboardString($member['_id'])
+                    ] = true;
+                }
+            }
+
+        } catch (Throwable $e) {
+            continue;
+        }
+    }
+
+
+    /*
+     * Also check the referrals collection.
+     */
+    try {
+
+        $referralQuery = [];
+
+        if ($userObjectId !== null) {
+
+            $referralQuery = [
+                '$or' => [
+                    ['referrer_id' => $userObjectId],
+                    ['referrerId' => $userObjectId],
+                    ['parent_id' => $userObjectId],
+                    ['parentId' => $userObjectId]
+                ]
+            ];
+
+        } else {
+
+            $referralQuery = [
+                '$or' => [
+                    ['referrer_id' => $dbUserId],
+                    ['referrerId' => $dbUserId],
+                    ['parent_id' => $dbUserId],
+                    ['parentId' => $dbUserId]
+                ]
+            ];
+        }
+
+
+        $referralCursor = $referrals->find(
+            $referralQuery,
+            [
+                'projection' => [
+                    'user_id' => 1,
+                    'userId' => 1,
+                    'referred_user_id' => 1,
+                    'referredUserId' => 1
+                ]
+            ]
+        );
+
+
+        foreach ($referralCursor as $ref) {
+
+            foreach (
+                [
+                    'user_id',
+                    'userId',
+                    'referred_user_id',
+                    'referredUserId'
+                ] as $field
+            ) {
+
+                if (isset($ref[$field])) {
+
+                    $id = dashboardString(
+                        $ref[$field]
+                    );
+
+                    if ($id !== '') {
+                        $allReferralIds[$id] = true;
+                    }
+                }
+            }
+        }
+
+    } catch (Throwable $e) {
+        /* Ignore referral collection errors. */
+    }
+
+
+    $referralTeam = count($allReferralIds);
+
+
+    /*
+     * If user-level stored count exists and our query
+     * found nothing, use it as fallback.
+     */
+    if ($referralTeam === 0) {
+
+        $storedReferralTeam = dashboardMoney(
+            $user['referral_team'] ??
+            $user['referralTeam'] ??
+            $user['team_count'] ??
+            0
+        );
+
+
+        if ($storedReferralTeam > 0) {
+            $referralTeam = (int)$storedReferralTeam;
+        }
+    }
+
+} catch (Throwable $e) {
+
+    $referralTeam = (int)dashboardMoney(
+        $user['referral_team'] ??
+        $user['referralTeam'] ??
+        0
+    );
+}
+
+
+/* ======================================================
+   TRANSACTION COUNT
+====================================================== */
+
+$transactionCount = 0;
+
+
+try {
+
+    if ($userObjectId !== null) {
+
+        $transactionQuery = [
+            '$or' => [
+                ['user_id' => $userObjectId],
+                ['userId' => $userObjectId],
+                ['user' => $userObjectId]
+            ]
+        ];
+
+    } else {
+
+        $transactionQuery = [
+            '$or' => [
+                ['user_id' => $dbUserId],
+                ['userId' => $dbUserId],
+                ['user' => $dbUserId]
+            ]
+        ];
+    }
+
+
+    $transactionCount =
+        $transactions->countDocuments(
+            $transactionQuery
+        );
+
+} catch (Throwable $e) {
+
+    $transactionCount = (int)dashboardMoney(
+        $user['transaction_count'] ??
+        $user['transactionCount'] ??
+        0
+    );
+}
+
+
+/* ======================================================
+   PENDING WITHDRAWALS
+====================================================== */
+
+$pendingWithdrawals = 0;
+
+
+try {
+
+    if (isset($withdrawals)) {
+
+        if ($userObjectId !== null) {
+
+            $withdrawalQuery = [
+                '$or' => [
+                    ['user_id' => $userObjectId],
+                    ['userId' => $userObjectId]
+                ],
+                'status' => [
+                    '$in' => [
+                        'pending',
+                        'processing'
+                    ]
+                ]
+            ];
+
+        } else {
+
+            $withdrawalQuery = [
+                '$or' => [
+                    ['user_id' => $dbUserId],
+                    ['userId' => $dbUserId]
+                ],
+                'status' => [
+                    '$in' => [
+                        'pending',
+                        'processing'
+                    ]
+                ]
+            ];
+        }
+
+
+        $pendingWithdrawals =
+            $withdrawals->countDocuments(
+                $withdrawalQuery
+            );
+    }
+
+} catch (Throwable $e) {
+    $pendingWithdrawals = 0;
+}
+
+
+/* ======================================================
+   ACCOUNT TYPE
+====================================================== */
+
+$accountType =
+    $isAdmin
+        ? 'Administrator'
+        : (
+            $role !== ''
+                ? ucfirst(str_replace('_', ' ', $role))
+                : 'Personal Account'
+        );
+
+
+/* ======================================================
+   USER RESPONSE
+====================================================== */
+
+$userResponse = [
+
+    'id' => $dbUserId,
+
+    '_id' => $dbUserId,
+
+    'name' => $fullName,
+
+    'full_name' => $fullName,
+
+    'fullName' => $fullName,
+
+    'first_name' => $firstName,
+
+    'firstName' => $firstName,
+
+    'last_name' => $lastName,
+
+    'lastName' => $lastName,
+
+    'email' => $email,
+
+    'role' => $role,
+
+    'account_type' => $accountType,
+
+    'accountType' => $accountType,
+
+    'is_admin' => $isAdmin,
+
+    'isAdmin' => $isAdmin,
+
+    'balance' => $balance,
+
+    'wallet_balance' => $balance,
+
+    'walletBalance' => $balance,
+
+    'available_balance' => $balance,
+
+    'availableBalance' => $balance
+
+];
+
+
+/* ======================================================
+   ADMIN RESPONSE
+====================================================== */
+
+$adminResponse = [
+
+    'is_admin' => $isAdmin,
+
+    'isAdmin' => $isAdmin,
+
+    'authorized' => $isAdmin,
+
+    'role' => $role,
+
+    'account_type' => $accountType
+
+];
+
+
+/* ======================================================
+   FINAL RESPONSE
+====================================================== */
+
+dashboardResponse([
+
+    'success' => true,
+
+    'authenticated' => true,
+
+    'authorized' => true,
+
+    'message' => 'Dashboard loaded successfully.',
+
+    /*
+     * USER
+     */
+    'user' => $userResponse,
+
+    /*
+     * ADMIN
+     */
+    'admin' => $adminResponse,
+
+    /*
+     * WALLET
+     */
+    'balance' => $balance,
+
+    'available_balance' => $balance,
+
+    'availableBalance' => $balance,
+
+    /*
+     * INVESTMENTS
+     */
+    'total_invested' => $totalInvested,
+
+    'totalInvested' => $totalInvested,
+
+    'investment_count' => $investmentCount,
+
+    'investmentCount' => $investmentCount,
+
+    /*
+     * EARNINGS
+     */
+    'total_earnings' => $totalEarnings,
+
+    'totalEarnings' => $totalEarnings,
+
+    'daily_earnings' => dashboardMoney(
+        $user['daily_earnings'] ??
+        $user['dailyEarnings'] ??
+        0
+    ),
+
+    'referral_earnings' => dashboardMoney(
+        $user['referral_earnings'] ??
+        $user['referralEarnings'] ??
+        0
+    ),
+
+    /*
+     * REFERRALS
+     */
+    'referral_team' => $referralTeam,
+
+    'referralTeam' => $referralTeam,
+
+    /*
+     * TRANSACTIONS
+     */
+    'transaction_count' => $transactionCount,
+
+    'transactionCount' => $transactionCount,
+
+    /*
+     * WITHDRAWALS
+     */
+    'pending_withdrawals' => $pendingWithdrawals,
+
+    'pendingWithdrawals' => $pendingWithdrawals,
+
+    /*
+     * EXTRA
+     */
+    'server_time' => gmdate('c'),
+
+    'api' => 'dashboard'
+
+]);

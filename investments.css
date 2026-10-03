@@ -1,733 +1,1586 @@
-/* ===============================
-   CROWN CASH INVESTMENTS
-   =============================== */
+/* ================================================================
+   CROWN CASH
+   INVESTMENTS PAGE
+   ================================================================ */
+
+:root {
+    --cc-bg: #08050b;
+    --cc-bg-2: #110813;
+    --cc-card: #15101a;
+    --cc-card-2: #1b1421;
+    --cc-border: rgba(255,255,255,0.08);
+
+    --cc-purple: #8b4dff;
+    --cc-purple-light: #b27aff;
+    --cc-gold: #f5c451;
+    --cc-gold-light: #ffe29a;
+
+    --cc-white: #ffffff;
+    --cc-muted: #a8a0ae;
+    --cc-success: #49d99b;
+
+    --sidebar-width: 260px;
+}
+
+
+/* ================================================================
+   RESET
+   ================================================================ */
 
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #07111f;
-    color: #ffffff;
     min-height: 100vh;
+    background:
+        radial-gradient(
+            circle at 80% 0%,
+            rgba(139,77,255,0.14),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 10% 20%,
+            rgba(245,196,81,0.05),
+            transparent 28%
+        ),
+        var(--cc-bg);
+
+    color: var(--cc-white);
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
 }
 
-
-/* ================= HEADER ================= */
-
-.top-header {
-    height: 75px;
-    width: 100%;
-    background: #0a1626;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 25px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
+body.menu-open {
+    overflow: hidden;
 }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+button,
+input {
+    font: inherit;
 }
 
-.brand-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #b800ff, #ff00d4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 21px;
-}
-
-.brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1;
-}
-
-.brand-text strong {
-    font-size: 18px;
-    letter-spacing: 1px;
-}
-
-.brand-text span {
-    font-size: 18px;
-    font-weight: 800;
-    background: linear-gradient(90deg, #b800ff, #ff00d4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.brand-text small {
-    color: #8290a3;
-    font-size: 7px;
-    letter-spacing: 1px;
-    margin-top: 5px;
-}
-
-.menu-btn {
-    display: none;
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 25px;
+button {
     cursor: pointer;
 }
 
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-/* ================= SIDEBAR ================= */
+
+/* ================================================================
+   SIDEBAR
+   ================================================================ */
 
 .sidebar {
     position: fixed;
-    top: 75px;
+    top: 0;
     left: 0;
-    width: 240px;
-    height: calc(100vh - 75px);
-    background: #091625;
-    border-right: 1px solid rgba(255,255,255,0.07);
-    padding: 25px 15px;
-    z-index: 900;
-    overflow-y: auto;
+    bottom: 0;
+
+    width: var(--sidebar-width);
+
+    padding: 25px 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #120b17 0%,
+            #09060c 100%
+        );
+
+    border-right: 1px solid var(--cc-border);
+
+    z-index: 1000;
+
+    display: flex;
+    flex-direction: column;
 }
+
 
 .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 30px;
-    padding-left: 10px;
+    gap: 12px;
+
+    padding: 4px 12px 30px;
 }
 
-.sidebar-brand .brand-icon {
-    width: 38px;
-    height: 38px;
+
+.brand-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--cc-purple),
+            #5f27c8
+        );
+
+    box-shadow:
+        0 8px 25px rgba(139,77,255,0.25);
+
+    color: white;
+    font-size: 23px;
+}
+
+
+.brand-name {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+
+.brand-subtitle {
+    color: var(--cc-muted);
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+
+.nav-item {
+    min-height: 46px;
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    padding: 0 13px;
+
+    border-radius: 11px;
+
+    color: var(--cc-muted);
+
+    font-size: 14px;
+    font-weight: 600;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+
+
+.nav-item.active {
+    color: white;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(139,77,255,0.25),
+            rgba(139,77,255,0.08)
+        );
+
+    border: 1px solid rgba(139,77,255,0.18);
+}
+
+
+.nav-icon {
+    width: 22px;
+
+    display: flex;
+    justify-content: center;
+
     font-size: 17px;
 }
 
-.sidebar-brand strong {
-    font-size: 14px;
+
+.sidebar-bottom {
+    margin-top: auto;
 }
 
-.sidebar-brand span {
-    color: #d500ff;
-    font-size: 14px;
-    font-weight: bold;
-}
 
-.sidebar nav {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
+.logout-btn {
+    width: 100%;
 
-.sidebar nav a {
-    text-decoration: none;
-    color: #9ba8b8;
-    padding: 13px 14px;
+    min-height: 45px;
+
+    border: 1px solid rgba(255,255,255,0.07);
+
     border-radius: 11px;
-    display: flex;
-    align-items: center;
-    gap: 13px;
-    font-size: 14px;
-    transition: 0.25s;
-}
 
-.sidebar nav a i {
-    width: 20px;
-    text-align: center;
-    font-size: 16px;
-}
+    background: rgba(255,255,255,0.03);
 
-.sidebar nav a:hover,
-.sidebar nav a.active {
-    color: #ffffff;
-    background: linear-gradient(
-        90deg,
-        rgba(184,0,255,0.22),
-        rgba(255,0,212,0.12)
-    );
-}
+    color: var(--cc-muted);
 
-.sidebar nav a.active i {
-    color: #d000ff;
-}
-
-.sidebar .logout {
-    margin-top: 15px;
-    color: #ff758c;
-}
-
-
-/* ================= MAIN ================= */
-
-.main-content {
-    margin-left: 240px;
-    padding: 110px 35px 50px;
-    max-width: 1450px;
-}
-
-
-/* ================= PAGE HEADING ================= */
-
-.page-heading {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 25px;
-}
-
-.heading-icon {
-    width: 58px;
-    height: 58px;
-    border-radius: 17px;
-    background: linear-gradient(135deg, #b800ff, #ff00d4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 10px 30px rgba(184,0,255,0.18);
-}
-
-.page-heading h1 {
-    font-size: 28px;
-    margin-bottom: 5px;
-}
-
-.page-heading p {
-    color: #8d9bad;
-    font-size: 14px;
-}
-
-
-/* ================= SECURITY ================= */
-
-.security-notice {
-    background: rgba(184,0,255,0.08);
-    border: 1px solid rgba(184,0,255,0.20);
-    border-radius: 15px;
-    padding: 17px 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.notice-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
-    background: rgba(184,0,255,0.16);
-    color: #d000ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 19px;
-    flex-shrink: 0;
-}
-
-.security-notice strong {
-    font-size: 14px;
-}
-
-.security-notice p {
-    color: #8795a7;
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-
-/* ================= PLANS ================= */
-
-.plans {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-}
-
-.investment-card {
-    position: relative;
-    background: #0b1929;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 22px;
-    padding: 28px;
-    overflow: hidden;
-    transition: 0.3s;
-}
-
-.investment-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(184,0,255,0.45);
-    box-shadow: 0 15px 45px rgba(0,0,0,0.25);
-}
-
-.investment-card::before {
-    content: "";
-    position: absolute;
-    top: -70px;
-    right: -70px;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: rgba(184,0,255,0.08);
-}
-
-
-/* PLAN ICON */
-
-.plan-icon {
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-    background: linear-gradient(
-        135deg,
-        rgba(184,0,255,0.25),
-        rgba(255,0,212,0.12)
-    );
-    border: 1px solid rgba(184,0,255,0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #e000ff;
-    font-size: 29px;
-    margin-bottom: 20px;
-}
-
-.standard .plan-icon {
-    background: linear-gradient(
-        135deg,
-        rgba(255,0,212,0.25),
-        rgba(184,0,255,0.12)
-    );
-}
-
-.advanced .plan-icon {
-    background: linear-gradient(
-        135deg,
-        rgba(255,0,212,0.30),
-        rgba(184,0,255,0.18)
-    );
-}
-
-
-/* POPULAR */
-
-.popular {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(90deg, #b800ff, #ff00d4);
-    padding: 7px 10px;
-    border-radius: 20px;
-    font-size: 9px;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-}
-
-.popular i {
-    margin-right: 4px;
-}
-
-
-/* PLAN TITLE */
-
-.plan-title h2 {
-    font-size: 21px;
-    margin-bottom: 6px;
-}
-
-.plan-title span {
-    color: #8391a4;
-    font-size: 12px;
-}
-
-
-/* AMOUNT */
-
-.investment-amount {
-    margin: 22px 0;
-}
-
-.investment-amount small {
-    display: block;
-    color: #7e8c9f;
-    font-size: 11px;
-    margin-bottom: 5px;
-}
-
-.investment-amount strong {
-    font-size: 25px;
-    background: linear-gradient(90deg, #ffffff, #e7caff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-
-/* RETURN BOX */
-
-.return-box {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(184,0,255,0.08);
-    border: 1px solid rgba(184,0,255,0.15);
-    border-radius: 13px;
-    padding: 14px;
-    margin-bottom: 20px;
-}
-
-.return-box div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #9ca9ba;
-    font-size: 12px;
-}
-
-.return-box div i {
-    color: #c900ff;
-}
-
-.return-box > strong {
-    color: #df00ff;
-    font-size: 21px;
-}
-
-
-/* PLAN DETAILS */
-
-.plan-details {
-    display: flex;
-    flex-direction: column;
-    gap: 13px;
-    margin-bottom: 22px;
-}
-
-.detail {
     display: flex;
     align-items: center;
     gap: 12px;
+
+    padding: 0 14px;
+
+    font-weight: 600;
+
+    transition: 0.2s ease;
 }
 
-.detail > i {
-    width: 35px;
-    height: 35px;
+
+.logout-btn:hover {
+    background: rgba(255,70,100,0.08);
+    color: #ff8297;
+}
+
+
+/* ================================================================
+   MAIN
+   ================================================================ */
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+}
+
+
+/* ================================================================
+   TOP BAR
+   ================================================================ */
+
+.topbar {
+    height: 76px;
+
+    padding: 0 32px;
+
+    border-bottom: 1px solid var(--cc-border);
+
+    background: rgba(8,5,11,0.82);
+
+    backdrop-filter: blur(15px);
+
+    display: flex;
+    align-items: center;
+
+    position: sticky;
+    top: 0;
+
+    z-index: 500;
+}
+
+
+.menu-btn {
+    display: none;
+
+    width: 42px;
+    height: 42px;
+
+    margin-right: 12px;
+
+    border: 1px solid var(--cc-border);
     border-radius: 10px;
-    background: #111f31;
-    color: #b900ff;
+
+    background: rgba(255,255,255,0.04);
+
+    color: white;
+
+    font-size: 20px;
+}
+
+
+.topbar-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+.topbar-small {
+    color: var(--cc-muted);
+    font-size: 11px;
+}
+
+
+.topbar-title strong {
+    font-size: 17px;
+}
+
+
+.wallet-mini {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 8px 13px;
+
+    border-radius: 11px;
+
+    background: rgba(255,255,255,0.04);
+
+    border: 1px solid var(--cc-border);
+}
+
+
+.wallet-mini-icon {
+    width: 32px;
+    height: 32px;
+
+    border-radius: 9px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    background: rgba(139,77,255,0.18);
+
+    color: var(--cc-purple-light);
+
+    font-weight: 800;
+}
+
+
+.wallet-mini span:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.wallet-mini small {
+    color: var(--cc-muted);
+    font-size: 10px;
+}
+
+
+.wallet-mini strong {
+    font-size: 13px;
+}
+
+
+/* ================================================================
+   PAGE CONTAINER
+   ================================================================ */
+
+.page-container {
+    width: min(1200px, calc(100% - 48px));
+
+    margin: 0 auto;
+
+    padding: 35px 0 50px;
+}
+
+
+/* ================================================================
+   HERO
+   ================================================================ */
+
+.investment-hero {
+    position: relative;
+
+    min-height: 270px;
+
+    overflow: hidden;
+
+    border-radius: 24px;
+
+    padding: 38px 42px;
+
+    background:
+        radial-gradient(
+            circle at 80% 30%,
+            rgba(139,77,255,0.35),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            #1a0d24,
+            #0d0912
+        );
+
+    border: 1px solid rgba(139,77,255,0.18);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.25);
+
+    display: flex;
+    align-items: center;
+}
+
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+
+    max-width: 680px;
+}
+
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 7px 12px;
+
+    border-radius: 30px;
+
+    background: rgba(139,77,255,0.13);
+
+    border: 1px solid rgba(139,77,255,0.2);
+
+    color: var(--cc-purple-light);
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
+}
+
+
+.hero-content h1 {
+    margin-top: 18px;
+
+    font-size: clamp(32px, 4vw, 52px);
+
+    line-height: 1.05;
+
+    letter-spacing: -1.8px;
+}
+
+
+.hero-content h1 span {
+    color: var(--cc-gold);
+}
+
+
+.hero-content p {
+    max-width: 580px;
+
+    margin-top: 15px;
+
+    color: var(--cc-muted);
+
+    line-height: 1.65;
+
     font-size: 14px;
 }
 
-.detail div {
+
+.hero-stats {
+    margin-top: 25px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+}
+
+
+.hero-stat {
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
 
-.detail small {
-    color: #778699;
-    font-size: 10px;
-}
 
-.detail strong {
-    color: #dce3eb;
-    font-size: 12px;
-}
-
-
-/* BUTTON */
-
-.invest-btn {
-    width: 100%;
-    border: none;
-    border-radius: 12px;
-    padding: 14px;
-    background: linear-gradient(90deg, #b800ff, #ff00d4);
+.hero-stat strong {
     color: white;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 13px;
-    transition: 0.25s;
-}
-
-.invest-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(184,0,255,0.25);
-}
-
-.invest-btn i {
-    margin-right: 7px;
-}
-
-
-/* ================= CALCULATOR ================= */
-
-.calculator {
-    margin-top: 35px;
-    background: #0b1929;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 22px;
-    padding: 28px;
-}
-
-.calculator-heading {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.calculator-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 15px;
-    background: rgba(184,0,255,0.14);
-    color: #d000ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     font-size: 20px;
 }
 
-.calculator-heading h2 {
-    font-size: 19px;
-}
 
-.calculator-heading p {
-    color: #7f8da0;
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-.calculator-form label {
-    display: block;
-    color: #aeb9c7;
-    font-size: 12px;
-    margin-bottom: 8px;
-}
-
-.calculator-form label i {
-    color: #c900ff;
-    margin-right: 5px;
-}
-
-.amount-input {
-    display: flex;
-    align-items: center;
-    background: #07111f;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.amount-input span {
-    padding-left: 15px;
-    color: #b800ff;
-    font-weight: bold;
-    font-size: 13px;
-}
-
-.amount-input input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: white;
-    padding: 15px;
-    font-size: 15px;
+.hero-stat span {
+    color: var(--cc-muted);
+    font-size: 10px;
 }
 
 
-/* RESULTS */
+.hero-divider {
+    width: 1px;
+    height: 30px;
 
-.calculation-results {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.result-card {
-    background: #091625;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.result-card i {
-    display: block;
-    color: #bd00ff;
-    font-size: 19px;
-    margin-bottom: 12px;
-}
-
-.result-card span {
-    display: block;
-    color: #7f8da0;
-    font-size: 11px;
-    margin-bottom: 6px;
-}
-
-.result-card strong {
-    font-size: 17px;
-}
-
-.result-card.total {
-    border-color: rgba(184,0,255,0.22);
+    background: var(--cc-border);
 }
 
 
-/* ================= INFO ================= */
+.hero-crown {
+    position: absolute;
 
-.investment-info {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    margin-top: 25px;
-}
+    right: 8%;
 
-.info-item {
-    background: #0b1929;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 17px;
-    padding: 20px;
-    display: flex;
-    gap: 13px;
-}
+    width: 210px;
+    height: 210px;
 
-.info-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: rgba(184,0,255,0.12);
-    color: #c900ff;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 }
 
-.info-item h3 {
-    font-size: 13px;
-    margin-bottom: 5px;
+
+.crown-circle {
+    position: relative;
+    z-index: 2;
+
+    width: 125px;
+    height: 125px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--cc-gold),
+            #b87c18
+        );
+
+    color: #2d1d00;
+
+    font-size: 70px;
+
+    box-shadow:
+        0 0 60px rgba(245,196,81,0.25),
+        inset 0 0 20px rgba(255,255,255,0.2);
 }
 
-.info-item p {
-    color: #7d8b9d;
-    font-size: 11px;
+
+.crown-glow {
+    position: absolute;
+
+    width: 210px;
+    height: 210px;
+
+    border-radius: 50%;
+
+    background: rgba(139,77,255,0.1);
+
+    filter: blur(10px);
+}
+
+
+/* ================================================================
+   SECTION HEADINGS
+   ================================================================ */
+
+.section-heading {
+    margin: 42px 0 20px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+}
+
+
+.section-kicker {
+    color: var(--cc-purple-light);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
+}
+
+
+.section-heading h2 {
+    margin-top: 6px;
+
+    font-size: 25px;
+
+    letter-spacing: -0.5px;
+}
+
+
+.view-investments {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    color: var(--cc-muted);
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition: 0.2s ease;
+}
+
+
+.view-investments:hover {
+    color: white;
+}
+
+
+.view-investments span {
+    font-size: 17px;
+}
+
+
+/* ================================================================
+   PLANS GRID
+   ================================================================ */
+
+.plans-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.investment-card {
+    position: relative;
+
+    padding: 24px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.055),
+            rgba(255,255,255,0.02)
+        );
+
+    border: 1px solid var(--cc-border);
+
+    overflow: hidden;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+.investment-card::before {
+    content: "";
+
+    position: absolute;
+
+    top: -80px;
+    right: -80px;
+
+    width: 160px;
+    height: 160px;
+
+    border-radius: 50%;
+
+    background: rgba(139,77,255,0.08);
+
+    filter: blur(20px);
+}
+
+
+.investment-card:hover {
+    transform: translateY(-5px);
+
+    border-color: rgba(139,77,255,0.35);
+
+    box-shadow:
+        0 18px 45px rgba(0,0,0,0.3);
+}
+
+
+.standard-card {
+    border-color: rgba(245,196,81,0.24);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(245,196,81,0.08),
+            rgba(255,255,255,0.025)
+        );
+}
+
+
+.standard-card:hover {
+    border-color: rgba(245,196,81,0.45);
+}
+
+
+.popular-badge {
+    position: absolute;
+
+    top: 0;
+    right: 20px;
+
+    padding: 6px 10px;
+
+    border-radius: 0 0 8px 8px;
+
+    background: var(--cc-gold);
+
+    color: #261800;
+
+    font-size: 8px;
+    font-weight: 900;
+
+    letter-spacing: 0.8px;
+}
+
+
+.card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 22px;
+}
+
+
+.plan-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(139,77,255,0.13);
+
+    color: var(--cc-purple-light);
+
+    font-size: 22px;
+}
+
+
+.standard-card .plan-icon {
+    background: rgba(245,196,81,0.13);
+    color: var(--cc-gold);
+}
+
+
+.plan-label {
+    color: var(--cc-muted);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+}
+
+
+.investment-card h3 {
+    font-size: 21px;
+
+    margin-bottom: 7px;
+}
+
+
+.plan-description {
+    min-height: 43px;
+
+    color: var(--cc-muted);
+
+    font-size: 12px;
+
     line-height: 1.5;
 }
 
 
-/* ================= MOBILE ================= */
+.investment-price {
+    margin-top: 22px;
+
+    padding: 16px;
+
+    border-radius: 13px;
+
+    background: rgba(0,0,0,0.18);
+
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+
+.investment-price small {
+    display: block;
+
+    color: var(--cc-muted);
+
+    font-size: 10px;
+
+    margin-bottom: 5px;
+}
+
+
+.investment-price strong {
+    display: block;
+
+    color: white;
+
+    font-size: 25px;
+
+    letter-spacing: -0.5px;
+}
+
+
+.plan-features {
+    margin: 18px 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+.plan-features div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid rgba(255,255,255,0.055);
+}
+
+
+.plan-features div:last-child {
+    border-bottom: none;
+}
+
+
+.plan-features span {
+    color: var(--cc-muted);
+
+    font-size: 11px;
+}
+
+
+.plan-features strong {
+    color: white;
+
+    font-size: 12px;
+}
+
+
+.plan-features div:first-child strong {
+    color: var(--cc-success);
+}
+
+
+.invest-btn {
+    width: 100%;
+
+    min-height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 15px;
+
+    border: none;
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--cc-purple),
+            #6530c7
+        );
+
+    color: white;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    box-shadow:
+        0 8px 25px rgba(139,77,255,0.2);
+
+    transition: 0.2s ease;
+}
+
+
+.invest-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px rgba(139,77,255,0.3);
+}
+
+
+.standard-card .invest-btn {
+    background:
+        linear-gradient(
+            135deg,
+            #e7b53e,
+            #b97c17
+        );
+
+    color: #241800;
+
+    box-shadow:
+        0 8px 25px rgba(245,196,81,0.15);
+}
+
+
+.invest-btn b {
+    font-size: 18px;
+}
+
+
+/* ================================================================
+   CALCULATOR
+   ================================================================ */
+
+.calculator-section {
+    margin-top: 20px;
+}
+
+
+.calculator-card {
+    padding: 25px;
+
+    border-radius: 20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.045),
+            rgba(255,255,255,0.018)
+        );
+
+    border: 1px solid var(--cc-border);
+}
+
+
+.calculator-form {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.calculator-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+.calculator-field label {
+    color: var(--cc-muted);
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+.input-wrapper {
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+
+    border-radius: 11px;
+
+    background: rgba(0,0,0,0.2);
+
+    border: 1px solid var(--cc-border);
+
+    overflow: hidden;
+}
+
+
+.input-wrapper span {
+    padding: 0 13px;
+
+    color: var(--cc-muted);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.input-wrapper input {
+    width: 100%;
+    height: 100%;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    padding: 0 12px;
+
+    font-size: 14px;
+}
+
+
+.calculator-results {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+
+.result-box {
+    padding: 18px;
+
+    border-radius: 13px;
+
+    background: rgba(255,255,255,0.035);
+
+    border: 1px solid var(--cc-border);
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+.result-box span {
+    color: var(--cc-muted);
+
+    font-size: 10px;
+}
+
+
+.result-box strong {
+    font-size: 17px;
+}
+
+
+.result-box.highlighted {
+    border-color: rgba(245,196,81,0.2);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245,196,81,0.08),
+            rgba(139,77,255,0.06)
+        );
+}
+
+
+.result-box.highlighted strong {
+    color: var(--cc-gold);
+}
+
+
+/* ================================================================
+   HOW IT WORKS
+   ================================================================ */
+
+.steps-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+
+.step-card {
+    position: relative;
+
+    padding: 22px;
+
+    border-radius: 17px;
+
+    background: rgba(255,255,255,0.025);
+
+    border: 1px solid var(--cc-border);
+}
+
+
+.step-number {
+    position: absolute;
+
+    top: 16px;
+    right: 18px;
+
+    color: rgba(255,255,255,0.12);
+
+    font-size: 20px;
+    font-weight: 900;
+}
+
+
+.step-icon {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(139,77,255,0.12);
+
+    color: var(--cc-purple-light);
+
+    font-weight: 800;
+
+    margin-bottom: 18px;
+}
+
+
+.step-card h3 {
+    font-size: 14px;
+
+    margin-bottom: 8px;
+}
+
+
+.step-card p {
+    color: var(--cc-muted);
+
+    font-size: 11px;
+
+    line-height: 1.6;
+}
+
+
+/* ================================================================
+   NOTICE
+   ================================================================ */
+
+.investment-notice {
+    margin-top: 28px;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+
+    padding: 17px;
+
+    border-radius: 14px;
+
+    background: rgba(245,196,81,0.045);
+
+    border: 1px solid rgba(245,196,81,0.12);
+}
+
+
+.notice-icon {
+    flex: 0 0 auto;
+
+    width: 30px;
+    height: 30px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(245,196,81,0.12);
+
+    color: var(--cc-gold);
+
+    font-weight: 900;
+}
+
+
+.investment-notice strong {
+    font-size: 12px;
+}
+
+
+.investment-notice p {
+    margin-top: 5px;
+
+    color: var(--cc-muted);
+
+    font-size: 10px;
+
+    line-height: 1.6;
+}
+
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+
+.page-footer {
+    margin-top: 45px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid var(--cc-border);
+
+    display: flex;
+    justify-content: space-between;
+
+    color: #6f6875;
+
+    font-size: 10px;
+}
+
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+
+.investment-message {
+    position: fixed;
+
+    left: 50%;
+    bottom: 25px;
+
+    transform:
+        translate(-50%, 20px);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 99999;
+
+    width: min(420px, calc(100% - 30px));
+
+    padding: 14px 17px;
+
+    border-radius: 12px;
+
+    background: #21182a;
+
+    border: 1px solid rgba(255,255,255,0.1);
+
+    color: white;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,0.4);
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+
+.investment-message.show {
+    opacity: 1;
+
+    transform:
+        translate(-50%, 0);
+}
+
+
+/* ================================================================
+   MOBILE OVERLAY
+   ================================================================ */
+
+.menu-overlay {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,0.65);
+
+    backdrop-filter: blur(2px);
+
+    z-index: 900;
+}
+
+
+.menu-overlay.show {
+    display: block;
+}
+
+
+/* ================================================================
+   TABLET
+   ================================================================ */
 
 @media (max-width: 1050px) {
 
-    .plans {
-        grid-template-columns: 1fr;
+    :root {
+        --sidebar-width: 220px;
     }
 
-    .investment-card {
-        max-width: 650px;
-        width: 100%;
-        margin: auto;
+    .plans-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
-    .investment-info {
-        grid-template-columns: 1fr;
+    .advanced-card {
+        grid-column: span 2;
     }
+
+    .steps-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-crown {
+        right: 3%;
+        opacity: 0.65;
+    }
+
 }
 
 
-@media (max-width: 768px) {
+/* ================================================================
+   MOBILE
+   ================================================================ */
 
-    .top-header {
-        padding: 0 18px;
+@media (max-width: 760px) {
+
+    :root {
+        --sidebar-width: 270px;
     }
 
-    .menu-btn {
-        display: block;
-    }
 
     .sidebar {
-        left: -260px;
-        transition: 0.3s;
+        transform: translateX(-100%);
+
+        transition:
+            transform 0.25s ease;
+
+        box-shadow:
+            20px 0 50px rgba(0,0,0,0.4);
     }
 
+
     .sidebar.open {
-        left: 0;
+        transform: translateX(0);
     }
+
 
     .main-content {
         margin-left: 0;
-        padding: 100px 17px 40px;
     }
 
-    .page-heading h1 {
-        font-size: 23px;
+
+    .topbar {
+        height: 64px;
+
+        padding: 0 15px;
     }
 
-    .page-heading p {
-        font-size: 12px;
+
+    .menu-btn {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
     }
 
-    .security-notice {
-        align-items: flex-start;
+
+    .wallet-mini {
+        padding: 6px 9px;
     }
 
-    .calculation-results {
-        grid-template-columns: 1fr;
-    }
 
-    .calculator {
-        padding: 20px;
-    }
-}
-
-
-@media (max-width: 480px) {
-
-    .brand-text small {
+    .wallet-mini-icon {
         display: none;
     }
 
-    .brand-icon {
-        width: 40px;
-        height: 40px;
+
+    .page-container {
+        width: calc(100% - 28px);
+
+        padding-top: 18px;
     }
 
-    .investment-card {
-        padding: 22px;
+
+    .investment-hero {
+        min-height: auto;
+
+        padding: 26px 21px;
+
+        border-radius: 19px;
     }
 
-    .plan-icon {
-        width: 60px;
-        height: 60px;
+
+    .hero-content h1 {
+        font-size: 31px;
+
+        letter-spacing: -1px;
     }
 
-    .investment-amount strong {
+
+    .hero-content p {
+        font-size: 12px;
+    }
+
+
+    .hero-crown {
+        display: none;
+    }
+
+
+    .hero-stats {
+        gap: 13px;
+    }
+
+
+    .hero-stat strong {
+        font-size: 16px;
+    }
+
+
+    .hero-stat span {
+        font-size: 9px;
+    }
+
+
+    .section-heading {
+        margin-top: 30px;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 10px;
+    }
+
+
+    .section-heading h2 {
         font-size: 22px;
     }
 
-    .page-heading {
-        gap: 12px;
+
+    .plans-grid {
+        grid-template-columns: 1fr;
+
+        gap: 13px;
     }
 
-    .heading-icon {
-        width: 50px;
-        height: 50px;
+
+    .advanced-card {
+        grid-column: auto;
     }
+
+
+    .investment-card {
+        padding: 19px;
+    }
+
+
+    .investment-card h3 {
+        font-size: 20px;
+    }
+
+
+    .plan-description {
+        min-height: auto;
+    }
+
+
+    .calculator-form {
+        grid-template-columns: 1fr;
+    }
+
+
+    .calculator-results {
+        grid-template-columns: 1fr;
+    }
+
+
+    .result-box {
+        padding: 14px;
+    }
+
+
+    .steps-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .investment-notice {
+        padding: 14px;
+    }
+
+
+    .page-footer {
+        flex-direction: column;
+
+        gap: 7px;
+    }
+
+}
+
+
+/* ================================================================
+   SMALL PHONES
+   ================================================================ */
+
+@media (max-width: 400px) {
+
+    .page-container {
+        width: calc(100% - 20px);
+    }
+
+
+    .investment-hero {
+        padding: 23px 17px;
+    }
+
+
+    .hero-content h1 {
+        font-size: 27px;
+    }
+
+
+    .hero-stats {
+        gap: 9px;
+    }
+
+
+    .hero-divider {
+        height: 24px;
+    }
+
+
+    .investment-card {
+        padding: 17px;
+    }
+
+
+    .investment-price strong {
+        font-size: 22px;
+    }
+
+
+    .wallet-mini small {
+        display: none;
+    }
+
 }

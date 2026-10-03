@@ -1,17 +1,22 @@
 /* ============================================================
    CROWN CASH
    DEPOSIT PAGE JAVASCRIPT
+   Production Version
    ============================================================ */
 
 "use strict";
+
 
 /* ============================================================
    API CONFIGURATION
    ============================================================ */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_BASE =
+    "https://crown-cash1.onrender.com";
 
-const DEPOSIT_API = `${API_BASE}/deposit.php`;
+
+const DEPOSIT_API =
+    `${API_BASE}/deposit.php`;
 
 
 /* ============================================================
@@ -19,8 +24,13 @@ const DEPOSIT_API = `${API_BASE}/deposit.php`;
    ============================================================ */
 
 const MERCHANT_CODES = {
-    mtn: "80257065",
-    airtel: "7229487"
+
+    mtn:
+        "80257065",
+
+    airtel:
+        "7229487"
+
 };
 
 
@@ -28,104 +38,187 @@ const MERCHANT_CODES = {
    DOM ELEMENTS
    ============================================================ */
 
-const depositForm = document.getElementById("depositForm");
+const depositForm =
+    document.getElementById(
+        "depositForm"
+    );
 
-const amountInput = document.getElementById("amount");
+
+const amountInput =
+    document.getElementById(
+        "amount"
+    );
+
 
 const transactionReferenceInput =
-    document.getElementById("transactionReference");
+    document.getElementById(
+        "transactionReference"
+    );
+
 
 const depositButton =
-    document.getElementById("depositButton");
+    document.getElementById(
+        "depositButton"
+    );
+
 
 const formMessage =
-    document.getElementById("formMessage");
+    document.getElementById(
+        "formMessage"
+    );
+
 
 const merchantCode =
-    document.getElementById("merchantCode");
+    document.getElementById(
+        "merchantCode"
+    );
+
 
 const copyMerchantCode =
-    document.getElementById("copyMerchantCode");
+    document.getElementById(
+        "copyMerchantCode"
+    );
+
 
 const paymentDetailsTitle =
-    document.getElementById("paymentDetailsTitle");
+    document.getElementById(
+        "paymentDetailsTitle"
+    );
+
 
 const paymentDetailsText =
-    document.getElementById("paymentDetailsText");
+    document.getElementById(
+        "paymentDetailsText"
+    );
+
 
 const availableBalance =
-    document.getElementById("availableBalance");
+    document.getElementById(
+        "availableBalance"
+    );
+
 
 const depositHistory =
-    document.getElementById("depositHistory");
+    document.getElementById(
+        "depositHistory"
+    );
+
 
 const mtnRadio =
-    document.getElementById("mtn");
+    document.getElementById(
+        "mtn"
+    );
+
 
 const airtelRadio =
-    document.getElementById("airtel");
+    document.getElementById(
+        "airtel"
+    );
 
 
 /* ============================================================
-   UTILITY FUNCTIONS
+   ESCAPE HTML
    ============================================================ */
 
-/**
- * Safely escape HTML before inserting user/backend data.
- */
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
 
-/**
- * Format UGX.
- */
-function formatUGX(amount) {
+/* ============================================================
+   FORMAT UGX
+   ============================================================ */
 
-    const number = Number(amount);
+function formatUGX(
+    amount
+) {
 
-    if (!Number.isFinite(number)) {
+    const number =
+        Number(amount);
+
+
+    if (
+        !Number.isFinite(
+            number
+        )
+    ) {
+
         return "UGX 0";
     }
 
+
     return (
         "UGX " +
-        number.toLocaleString("en-UG", {
-            maximumFractionDigits: 0
-        })
+        number.toLocaleString(
+            "en-UG",
+            {
+                maximumFractionDigits:
+                    0
+            }
+        )
     );
 }
 
 
-/**
- * Show a message to the user.
- */
-function showMessage(message, type = "error") {
+/* ============================================================
+   MESSAGE
+   ============================================================ */
+
+function showMessage(
+    message,
+    type = "error"
+) {
 
     if (!formMessage) {
+
         return;
     }
 
-    formMessage.textContent = message;
 
-    formMessage.classList.add("show");
+    formMessage.textContent =
+        message;
 
-    formMessage.style.display = "block";
 
-    if (type === "success") {
+    formMessage.classList.add(
+        "show"
+    );
 
-        formMessage.style.color = "#b8f3d1";
+
+    formMessage.style.display =
+        "block";
+
+
+    if (
+        type === "success"
+    ) {
+
+        formMessage.style.color =
+            "#b8f3d1";
 
         formMessage.style.background =
             "rgba(53, 208, 127, 0.10)";
@@ -133,9 +226,13 @@ function showMessage(message, type = "error") {
         formMessage.style.border =
             "1px solid rgba(53, 208, 127, 0.20)";
 
-    } else if (type === "warning") {
 
-        formMessage.style.color = "#ffe5a3";
+    } else if (
+        type === "warning"
+    ) {
+
+        formMessage.style.color =
+            "#ffe5a3";
 
         formMessage.style.background =
             "rgba(245, 185, 66, 0.10)";
@@ -143,9 +240,11 @@ function showMessage(message, type = "error") {
         formMessage.style.border =
             "1px solid rgba(245, 185, 66, 0.20)";
 
+
     } else {
 
-        formMessage.style.color = "#ffd1d8";
+        formMessage.style.color =
+            "#ffd1d8";
 
         formMessage.style.background =
             "rgba(255, 91, 112, 0.10)";
@@ -156,71 +255,97 @@ function showMessage(message, type = "error") {
 }
 
 
-/**
- * Hide form message.
- */
+/* ============================================================
+   HIDE MESSAGE
+   ============================================================ */
+
 function hideMessage() {
 
     if (!formMessage) {
+
         return;
     }
 
-    formMessage.textContent = "";
 
-    formMessage.classList.remove("show");
+    formMessage.textContent =
+        "";
 
-    formMessage.style.display = "none";
+
+    formMessage.classList.remove(
+        "show"
+    );
+
+
+    formMessage.style.display =
+        "none";
 }
 
 
-/**
- * Get selected payment method.
- */
+/* ============================================================
+   SELECTED PAYMENT METHOD
+   ============================================================ */
+
 function getSelectedPaymentMethod() {
 
-    if (mtnRadio && mtnRadio.checked) {
+    if (
+        mtnRadio &&
+        mtnRadio.checked
+    ) {
+
         return "mtn";
     }
 
-    if (airtelRadio && airtelRadio.checked) {
+
+    if (
+        airtelRadio &&
+        airtelRadio.checked
+    ) {
+
         return "airtel";
     }
+
 
     return "";
 }
 
 
 /* ============================================================
-   PAYMENT METHOD DISPLAY
+   PAYMENT DETAILS
    ============================================================ */
 
-function updatePaymentDetails(method) {
+function updatePaymentDetails(
+    method
+) {
 
     if (!method) {
-        method = "mtn";
+
+        method =
+            "mtn";
     }
 
-    const code = MERCHANT_CODES[method];
+
+    const code =
+        MERCHANT_CODES[
+            method
+        ];
+
 
     if (!code) {
+
         return;
     }
 
 
-    /* --------------------------------------------------------
-       Merchant code
-       -------------------------------------------------------- */
-
     if (merchantCode) {
-        merchantCode.textContent = code;
+
+        merchantCode.textContent =
+            code;
     }
 
 
-    /* --------------------------------------------------------
-       MTN
-       -------------------------------------------------------- */
-
-    if (method === "mtn") {
+    if (
+        method === "mtn"
+    ) {
 
         if (paymentDetailsTitle) {
 
@@ -239,15 +364,14 @@ function updatePaymentDetails(method) {
                 '<strong>80257065</strong>, enter the amount and confirm.';
         }
 
+
         return;
     }
 
 
-    /* --------------------------------------------------------
-       AIRTEL
-       -------------------------------------------------------- */
-
-    if (method === "airtel") {
+    if (
+        method === "airtel"
+    ) {
 
         if (paymentDetailsTitle) {
 
@@ -275,11 +399,18 @@ function updatePaymentDetails(method) {
 
 async function copyMerchantCodeToClipboard() {
 
-    const method = getSelectedPaymentMethod();
+    const method =
+        getSelectedPaymentMethod();
 
-    const code = MERCHANT_CODES[method];
+
+    const code =
+        MERCHANT_CODES[
+            method
+        ];
+
 
     if (!code) {
+
         return;
     }
 
@@ -288,29 +419,51 @@ async function copyMerchantCodeToClipboard() {
 
         if (
             navigator.clipboard &&
-            typeof navigator.clipboard.writeText === "function"
+            typeof navigator.clipboard.writeText ===
+                "function"
         ) {
 
-            await navigator.clipboard.writeText(code);
+            await navigator.clipboard.writeText(
+                code
+            );
+
 
         } else {
 
             const temporaryInput =
-                document.createElement("input");
+                document.createElement(
+                    "input"
+                );
 
-            temporaryInput.value = code;
 
-            temporaryInput.style.position = "fixed";
-            temporaryInput.style.opacity = "0";
+            temporaryInput.value =
+                code;
 
-            document.body.appendChild(temporaryInput);
+
+            temporaryInput.style.position =
+                "fixed";
+
+
+            temporaryInput.style.opacity =
+                "0";
+
+
+            document.body.appendChild(
+                temporaryInput
+            );
+
 
             temporaryInput.focus();
+
             temporaryInput.select();
 
-            document.execCommand("copy");
 
-            document.body.removeChild(temporaryInput);
+            document.execCommand(
+                "copy"
+            );
+
+
+            temporaryInput.remove();
         }
 
 
@@ -319,6 +472,7 @@ async function copyMerchantCodeToClipboard() {
             const originalHTML =
                 copyMerchantCode.innerHTML;
 
+
             copyMerchantCode.innerHTML = `
                 <svg viewBox="0 0 24 24"
                      fill="none"
@@ -326,16 +480,22 @@ async function copyMerchantCodeToClipboard() {
                      stroke-width="1.8">
                     <path d="M5 12l4 4L19 6"></path>
                 </svg>
+
                 <span>Copied</span>
             `;
 
-            setTimeout(() => {
 
-                copyMerchantCode.innerHTML =
-                    originalHTML;
+            setTimeout(
+                () => {
 
-            }, 1600);
+                    copyMerchantCode.innerHTML =
+                        originalHTML;
+
+                },
+                1600
+            );
         }
+
 
     } catch (error) {
 
@@ -348,105 +508,128 @@ async function copyMerchantCodeToClipboard() {
 
 
 /* ============================================================
-   BACKEND RESPONSE HANDLING
+   READ API RESPONSE
    ============================================================ */
 
-/**
- * Read backend response safely.
- *
- * This is important because the previous version crashed with:
- *
- * Failed to execute 'json' on 'Response':
- * Unexpected end of JSON input
- *
- * We first read the response as text, then try JSON.parse().
- */
-async function readAPIResponse(response) {
+async function readAPIResponse(
+    response
+) {
 
-    const rawText = await response.text();
-
-    const cleanedText = rawText.trim();
+    const rawText =
+        await response.text();
 
 
-    /* --------------------------------------------------------
-       Empty response
-       -------------------------------------------------------- */
+    const cleanedText =
+        rawText.trim();
 
-    if (!cleanedText) {
+
+    if (
+        !cleanedText
+    ) {
 
         return {
-            ok: response.ok,
-            status: response.status,
-            data: null,
-            raw: "",
+
+            ok:
+                response.ok,
+
+            status:
+                response.status,
+
+            data:
+                null,
+
+            raw:
+                "",
+
             error:
-                `The server returned an empty response ` +
-                `(HTTP ${response.status}).`
+                `The server returned an empty response (HTTP ${response.status}).`
+
         };
     }
 
 
-    /* --------------------------------------------------------
-       JSON response
-       -------------------------------------------------------- */
-
     try {
 
         const data =
-            JSON.parse(cleanedText);
+            JSON.parse(
+                cleanedText
+            );
+
 
         return {
-            ok: response.ok,
-            status: response.status,
-            data,
-            raw: cleanedText,
-            error: null
+
+            ok:
+                response.ok,
+
+            status:
+                response.status,
+
+            data:
+                data,
+
+            raw:
+                cleanedText,
+
+            error:
+                null
+
         };
+
 
     } catch (error) {
 
         console.error(
-            "Backend returned non-JSON response:",
+            "Backend returned invalid JSON:",
             cleanedText
         );
 
+
         return {
-            ok: response.ok,
-            status: response.status,
-            data: null,
-            raw: cleanedText,
+
+            ok:
+                response.ok,
+
+            status:
+                response.status,
+
+            data:
+                null,
+
+            raw:
+                cleanedText,
+
             error:
-                `Server returned an invalid response ` +
-                `(HTTP ${response.status}).`
+                `Server returned an invalid response (HTTP ${response.status}).`
+
         };
     }
 }
 
 
 /* ============================================================
-   SEND DEPOSIT REQUEST
+   SUBMIT DEPOSIT
    ============================================================ */
 
-async function submitDeposit(event) {
+async function submitDeposit(
+    event
+) {
 
     event.preventDefault();
+
 
     hideMessage();
 
 
-    /* --------------------------------------------------------
-       Get values
-       -------------------------------------------------------- */
-
     const amount =
         Number(
-            amountInput
-                ? amountInput.value
-                : 0
+            amountInput?.value ||
+            0
         );
+
 
     const paymentMethod =
         getSelectedPaymentMethod();
+
 
     const transactionReference =
         transactionReferenceInput
@@ -455,110 +638,130 @@ async function submitDeposit(event) {
 
 
     /* --------------------------------------------------------
-       Validate amount
+       Amount validation
        -------------------------------------------------------- */
 
-    if (!Number.isFinite(amount)) {
+    if (
+        !Number.isFinite(
+            amount
+        ) ||
+        amount <= 0
+    ) {
 
         showMessage(
             "Please enter a valid deposit amount."
         );
 
-        if (amountInput) {
-            amountInput.focus();
-        }
+
+        amountInput?.focus();
+
 
         return;
     }
 
 
-    if (amount < 10000) {
+    if (
+        amount < 10000
+    ) {
 
         showMessage(
             "Minimum deposit is UGX 10,000."
         );
 
-        if (amountInput) {
-            amountInput.focus();
-        }
+
+        amountInput?.focus();
+
 
         return;
     }
 
 
-    if (amount % 1000 !== 0) {
+    if (
+        amount % 1000 !== 0
+    ) {
 
         showMessage(
             "Deposit amounts must be in multiples of UGX 1,000."
         );
 
-        if (amountInput) {
-            amountInput.focus();
-        }
+
+        amountInput?.focus();
+
 
         return;
     }
 
 
     /* --------------------------------------------------------
-       Validate payment method
+       Payment method
        -------------------------------------------------------- */
 
     if (
-        paymentMethod !== "mtn" &&
-        paymentMethod !== "airtel"
+        ![
+            "mtn",
+            "airtel"
+        ].includes(
+            paymentMethod
+        )
     ) {
 
         showMessage(
             "Please choose MTN Mobile Money or Airtel Money."
         );
 
+
         return;
     }
 
 
     /* --------------------------------------------------------
-       Validate transaction reference
+       Transaction reference
        -------------------------------------------------------- */
 
-    if (!transactionReference) {
+    if (
+        !transactionReference
+    ) {
 
         showMessage(
             "Please enter the transaction reference you received after payment."
         );
 
-        if (transactionReferenceInput) {
-            transactionReferenceInput.focus();
-        }
+
+        transactionReferenceInput?.focus();
+
 
         return;
     }
 
 
-    if (transactionReference.length < 4) {
+    if (
+        transactionReference.length < 3
+    ) {
 
         showMessage(
             "Please enter the complete transaction reference."
         );
 
-        if (transactionReferenceInput) {
-            transactionReferenceInput.focus();
-        }
+
+        transactionReferenceInput?.focus();
+
 
         return;
     }
 
 
     /* --------------------------------------------------------
-       Merchant code
+       Merchant
        -------------------------------------------------------- */
 
     const merchantCodeValue =
-        MERCHANT_CODES[paymentMethod];
+        MERCHANT_CODES[
+            paymentMethod
+        ];
 
 
     /* --------------------------------------------------------
-       Loading state
+       Button loading
        -------------------------------------------------------- */
 
     const originalButtonHTML =
@@ -569,7 +772,9 @@ async function submitDeposit(event) {
 
     if (depositButton) {
 
-        depositButton.disabled = true;
+        depositButton.disabled =
+            true;
+
 
         depositButton.innerHTML = `
             <span
@@ -583,6 +788,7 @@ async function submitDeposit(event) {
                     animation:ccDepositSpin .8s linear infinite;
                 "
             ></span>
+
             Processing Deposit...
         `;
     }
@@ -590,68 +796,78 @@ async function submitDeposit(event) {
 
     try {
 
-        /* ----------------------------------------------------
-           Request payload
-           ---------------------------------------------------- */
-
         const payload = {
 
-            amount: amount,
+            amount:
+                amount,
 
-            currency: "UGX",
+            currency:
+                "UGX",
 
-            payment_method: paymentMethod,
+            payment_method:
+                paymentMethod,
 
-            paymentMethod: paymentMethod,
+            paymentMethod:
+                paymentMethod,
 
-            merchant_code: merchantCodeValue,
+            merchant_code:
+                merchantCodeValue,
 
             transaction_reference:
                 transactionReference,
 
             transactionReference:
                 transactionReference
+
         };
 
 
         console.log(
-            "Sending Crown Cash deposit request:",
+            "Crown Cash deposit request:",
             payload
         );
 
 
         /* ----------------------------------------------------
-           POST TO BACKEND
+           POST
            ---------------------------------------------------- */
 
         const response =
             await fetch(
                 DEPOSIT_API,
                 {
-                    method: "POST",
 
-                    credentials: "include",
+                    method:
+                        "POST",
+
+                    credentials:
+                        "include",
+
+                    cache:
+                        "no-store",
 
                     headers: {
+
                         "Content-Type":
                             "application/json",
 
                         "Accept":
                             "application/json"
+
                     },
 
                     body:
-                        JSON.stringify(payload)
+                        JSON.stringify(
+                            payload
+                        )
                 }
             );
 
 
-        /* ----------------------------------------------------
-           Safely read response
-           ---------------------------------------------------- */
-
         const result =
-            await readAPIResponse(response);
+            await readAPIResponse(
+                response
+            );
 
 
         console.log(
@@ -661,37 +877,44 @@ async function submitDeposit(event) {
 
 
         /* ----------------------------------------------------
-           HTTP error
+           Authentication error
            ---------------------------------------------------- */
 
-        if (!result.ok) {
+        if (
+            result.status === 401
+        ) {
 
-            let serverMessage =
-                result.error ||
-                `Deposit request failed (HTTP ${result.status}).`;
-
-
-            if (
-                result.data &&
-                typeof result.data === "object"
-            ) {
-
-                serverMessage =
-                    result.data.message ||
-                    result.data.error ||
-                    serverMessage;
-            }
-
-
-            throw new Error(serverMessage);
+            throw new Error(
+                result.data?.message ||
+                "Your login session has expired. Please log in again."
+            );
         }
 
 
         /* ----------------------------------------------------
-           Missing JSON response
+           HTTP error
            ---------------------------------------------------- */
 
-        if (!result.data) {
+        if (
+            !result.ok
+        ) {
+
+            throw new Error(
+                result.data?.message ||
+                result.data?.error ||
+                result.error ||
+                `Deposit request failed (HTTP ${result.status}).`
+            );
+        }
+
+
+        /* ----------------------------------------------------
+           Invalid response
+           ---------------------------------------------------- */
+
+        if (
+            !result.data
+        ) {
 
             throw new Error(
                 result.error ||
@@ -701,12 +924,12 @@ async function submitDeposit(event) {
 
 
         /* ----------------------------------------------------
-           Backend says failure
+           Backend failure
            ---------------------------------------------------- */
 
         if (
-            result.data.success === false ||
-            result.data.status === "error"
+            result.data.success ===
+                false
         ) {
 
             throw new Error(
@@ -718,50 +941,43 @@ async function submitDeposit(event) {
 
 
         /* ----------------------------------------------------
-           Success
+           SUCCESS
            ---------------------------------------------------- */
 
         showMessage(
             result.data.message ||
-            "Deposit request submitted successfully. It is now pending admin verification.",
+            "Deposit submitted successfully. It is now pending admin verification.",
             "success"
         );
 
 
-        /* ----------------------------------------------------
-           Clear transaction reference
-           ---------------------------------------------------- */
+        if (
+            transactionReferenceInput
+        ) {
 
-        if (transactionReferenceInput) {
-            transactionReferenceInput.value = "";
+            transactionReferenceInput.value =
+                "";
         }
 
 
-        /* ----------------------------------------------------
-           Reset amount
-           ---------------------------------------------------- */
+        if (
+            amountInput
+        ) {
 
-        if (amountInput) {
-            amountInput.value = "";
+            amountInput.value =
+                "";
         }
 
-
-        /* ----------------------------------------------------
-           Refresh deposit history
-           ---------------------------------------------------- */
 
         await loadDepositHistory();
 
-
-        /* ----------------------------------------------------
-           Notify other Crown Cash scripts
-           ---------------------------------------------------- */
 
         window.dispatchEvent(
             new CustomEvent(
                 "crowncash:depositSubmitted",
                 {
-                    detail: result.data
+                    detail:
+                        result.data
                 }
             )
         );
@@ -780,37 +996,31 @@ async function submitDeposit(event) {
             "Unable to submit your deposit request. Please try again."
         );
 
+
     } finally {
 
         if (depositButton) {
 
-            depositButton.disabled = false;
+            depositButton.disabled =
+                false;
+
 
             depositButton.innerHTML =
                 originalButtonHTML ||
-                `
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2">
-                        <path d="M12 3v14"></path>
-                        <path d="M7 12l5 5 5-5"></path>
-                        <path d="M4 21h16"></path>
-                    </svg>
-                    Submit Deposit
-                `;
+                "Submit Deposit";
         }
     }
 }
 
 
 /* ============================================================
-   LOAD RECENT DEPOSITS
+   LOAD DEPOSIT HISTORY
    ============================================================ */
 
 async function loadDepositHistory() {
 
     if (!depositHistory) {
+
         return;
     }
 
@@ -828,29 +1038,52 @@ async function loadDepositHistory() {
             await fetch(
                 DEPOSIT_API,
                 {
-                    method: "GET",
 
-                    credentials: "include",
+                    method:
+                        "GET",
+
+                    credentials:
+                        "include",
+
+                    cache:
+                        "no-store",
 
                     headers: {
+
                         "Accept":
                             "application/json"
+
                     }
                 }
             );
 
 
         const result =
-            await readAPIResponse(response);
+            await readAPIResponse(
+                response
+            );
 
 
         console.log(
-            "Deposit history response:",
+            "Crown Cash deposit history:",
             result
         );
 
 
-        if (!result.ok) {
+        if (
+            result.status === 401
+        ) {
+
+            throw new Error(
+                result.data?.message ||
+                "Please log in to view your deposit history."
+            );
+        }
+
+
+        if (
+            !result.ok
+        ) {
 
             throw new Error(
                 result.data?.message ||
@@ -861,7 +1094,9 @@ async function loadDepositHistory() {
         }
 
 
-        if (!result.data) {
+        if (
+            !result.data
+        ) {
 
             throw new Error(
                 "Deposit history server returned no data."
@@ -869,21 +1104,28 @@ async function loadDepositHistory() {
         }
 
 
-        const deposits =
-            Array.isArray(result.data.deposits)
+        const depositArray =
+            Array.isArray(
+                result.data.deposits
+            )
                 ? result.data.deposits
-                : Array.isArray(result.data.data)
+
+                : Array.isArray(
+                    result.data.data
+                )
                     ? result.data.data
+
                     : [];
 
 
         /* ----------------------------------------------------
-           Update balance if backend sends it
+           Balance
            ---------------------------------------------------- */
 
         if (
             availableBalance &&
-            result.data.balance !== undefined
+            result.data.balance !==
+                undefined
         ) {
 
             availableBalance.textContent =
@@ -894,10 +1136,13 @@ async function loadDepositHistory() {
 
 
         /* ----------------------------------------------------
-           Empty state
+           Empty
            ---------------------------------------------------- */
 
-        if (deposits.length === 0) {
+        if (
+            depositArray.length ===
+                0
+        ) {
 
             depositHistory.innerHTML = `
                 <div class="empty-history">
@@ -905,17 +1150,20 @@ async function loadDepositHistory() {
                 </div>
             `;
 
+
             return;
         }
 
 
         /* ----------------------------------------------------
-           Render deposits
+           Render
            ---------------------------------------------------- */
 
         depositHistory.innerHTML =
-            deposits
-                .map(renderDeposit)
+            depositArray
+                .map(
+                    renderDeposit
+                )
                 .join("");
 
 
@@ -929,7 +1177,10 @@ async function loadDepositHistory() {
 
         depositHistory.innerHTML = `
             <div class="empty-history">
-                Unable to load deposit history.
+                ${escapeHTML(
+                    error.message ||
+                    "Unable to load deposit history."
+                )}
             </div>
         `;
     }
@@ -937,10 +1188,12 @@ async function loadDepositHistory() {
 
 
 /* ============================================================
-   RENDER ONE DEPOSIT
+   RENDER DEPOSIT
    ============================================================ */
 
-function renderDeposit(deposit) {
+function renderDeposit(
+    deposit
+) {
 
     const amount =
         Number(
@@ -955,7 +1208,8 @@ function renderDeposit(deposit) {
             deposit.payment_method ||
             deposit.paymentMethod ||
             ""
-        ).toLowerCase();
+        )
+            .toLowerCase();
 
 
     const reference =
@@ -968,7 +1222,8 @@ function renderDeposit(deposit) {
         String(
             deposit.status ||
             "pending"
-        ).toLowerCase();
+        )
+            .toLowerCase();
 
 
     const createdAt =
@@ -978,22 +1233,33 @@ function renderDeposit(deposit) {
         "";
 
 
-    let dateText = "—";
+    let dateText =
+        "—";
 
 
     if (createdAt) {
 
         const date =
-            new Date(createdAt);
+            new Date(
+                createdAt
+            );
 
-        if (!Number.isNaN(date.getTime())) {
+
+        if (
+            !Number.isNaN(
+                date.getTime()
+            )
+        ) {
 
             dateText =
                 date.toLocaleString(
                     "en-UG",
                     {
-                        dateStyle: "medium",
-                        timeStyle: "short"
+                        dateStyle:
+                            "medium",
+
+                        timeStyle:
+                            "short"
                     }
                 );
         }
@@ -1002,6 +1268,7 @@ function renderDeposit(deposit) {
 
     let statusClass =
         "status-pending";
+
 
     let statusLabel =
         "Pending";
@@ -1016,8 +1283,10 @@ function renderDeposit(deposit) {
         statusClass =
             "status-approved";
 
+
         statusLabel =
             "Approved";
+
 
     } else if (
         status === "rejected" ||
@@ -1027,6 +1296,7 @@ function renderDeposit(deposit) {
 
         statusClass =
             "status-rejected";
+
 
         statusLabel =
             "Rejected";
@@ -1064,6 +1334,7 @@ function renderDeposit(deposit) {
                     border:1px solid rgba(244,197,66,.12);
                 "
             >
+
                 <svg
                     viewBox="0 0 24 24"
                     width="18"
@@ -1072,11 +1343,17 @@ function renderDeposit(deposit) {
                     stroke="currentColor"
                     stroke-width="1.8"
                 >
+
                     <path d="M12 3v14"></path>
+
                     <path d="M7 12l5 5 5-5"></path>
+
                     <path d="M4 21h16"></path>
+
                 </svg>
+
             </div>
+
 
             <div>
 
@@ -1087,8 +1364,11 @@ function renderDeposit(deposit) {
                         font-weight:800;
                     "
                 >
-                    ${escapeHTML(network)}
+                    ${escapeHTML(
+                        network
+                    )}
                 </div>
+
 
                 <div
                     style="
@@ -1098,8 +1378,11 @@ function renderDeposit(deposit) {
                     "
                 >
                     Ref:
-                    ${escapeHTML(reference)}
+                    ${escapeHTML(
+                        reference
+                    )}
                 </div>
+
 
                 <div
                     style="
@@ -1108,12 +1391,19 @@ function renderDeposit(deposit) {
                         font-size:9px;
                     "
                 >
-                    ${escapeHTML(dateText)}
+                    ${escapeHTML(
+                        dateText
+                    )}
                 </div>
 
             </div>
 
-            <div style="text-align:right;">
+
+            <div
+                style="
+                    text-align:right;
+                "
+            >
 
                 <div
                     style="
@@ -1122,8 +1412,13 @@ function renderDeposit(deposit) {
                         font-weight:850;
                     "
                 >
-                    ${escapeHTML(formatUGX(amount))}
+                    ${escapeHTML(
+                        formatUGX(
+                            amount
+                        )
+                    )}
                 </div>
+
 
                 <div
                     class="${statusClass}"
@@ -1137,7 +1432,9 @@ function renderDeposit(deposit) {
                         text-transform:uppercase;
                     "
                 >
-                    ${escapeHTML(statusLabel)}
+                    ${escapeHTML(
+                        statusLabel
+                    )}
                 </div>
 
             </div>
@@ -1148,7 +1445,7 @@ function renderDeposit(deposit) {
 
 
 /* ============================================================
-   FORM SUBMISSION
+   FORM EVENT
    ============================================================ */
 
 if (depositForm) {
@@ -1161,7 +1458,7 @@ if (depositForm) {
 
 
 /* ============================================================
-   PAYMENT RADIO BUTTONS
+   PAYMENT METHOD EVENTS
    ============================================================ */
 
 if (mtnRadio) {
@@ -1170,9 +1467,13 @@ if (mtnRadio) {
         "change",
         function () {
 
-            if (this.checked) {
+            if (
+                this.checked
+            ) {
 
-                updatePaymentDetails("mtn");
+                updatePaymentDetails(
+                    "mtn"
+                );
 
                 hideMessage();
             }
@@ -1187,9 +1488,13 @@ if (airtelRadio) {
         "change",
         function () {
 
-            if (this.checked) {
+            if (
+                this.checked
+            ) {
 
-                updatePaymentDetails("airtel");
+                updatePaymentDetails(
+                    "airtel"
+                );
 
                 hideMessage();
             }
@@ -1219,16 +1524,105 @@ const initialMethod =
     getSelectedPaymentMethod() ||
     "mtn";
 
-updatePaymentDetails(initialMethod);
+
+updatePaymentDetails(
+    initialMethod
+);
 
 
 /* ============================================================
-   LOAD INITIAL DEPOSIT HISTORY
+   LOADING ANIMATION
+   ============================================================ */
+
+if (
+    !document.getElementById(
+        "ccDepositAnimation"
+    )
+) {
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "ccDepositAnimation";
+
+
+    style.textContent = `
+
+        @keyframes ccDepositSpin {
+
+            to {
+                transform:
+                    rotate(360deg);
+            }
+
+        }
+
+
+        .status-pending {
+
+            color:#ffe5a3;
+
+            background:
+                rgba(245,185,66,.10);
+
+            border:
+                1px solid
+                rgba(245,185,66,.16);
+        }
+
+
+        .status-approved {
+
+            color:#b8f3d1;
+
+            background:
+                rgba(53,208,127,.10);
+
+            border:
+                1px solid
+                rgba(53,208,127,.16);
+        }
+
+
+        .status-rejected {
+
+            color:#ffd1d8;
+
+            background:
+                rgba(255,91,112,.10);
+
+            border:
+                1px solid
+                rgba(255,91,112,.16);
+        }
+
+
+        .deposit-history-item:last-child {
+
+            border-bottom:
+                none !important;
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
+    );
+}
+
+
+/* ============================================================
+   INITIAL HISTORY LOAD
    ============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    () => {
 
         loadDepositHistory();
 
@@ -1237,12 +1631,12 @@ document.addEventListener(
 
 
 /* ============================================================
-   CUSTOM EVENT
+   AFTER DEPOSIT EVENT
    ============================================================ */
 
 window.addEventListener(
     "crowncash:depositSubmitted",
-    function () {
+    () => {
 
         setTimeout(
             loadDepositHistory,
@@ -1254,53 +1648,25 @@ window.addEventListener(
 
 
 /* ============================================================
-   LOADING ANIMATION
+   GLOBAL API
    ============================================================ */
 
-if (!document.getElementById("ccDepositAnimation")) {
+window.CrownCashDeposit = {
 
-    const style =
-        document.createElement("style");
+    submit:
+        submitDeposit,
 
-    style.id =
-        "ccDepositAnimation";
+    reloadHistory:
+        loadDepositHistory,
 
-    style.textContent = `
-        @keyframes ccDepositSpin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+    updatePayment:
+        updatePaymentDetails
 
-        .status-pending {
-            color:#ffe5a3;
-            background:rgba(245,185,66,.10);
-            border:1px solid rgba(245,185,66,.16);
-        }
-
-        .status-approved {
-            color:#b8f3d1;
-            background:rgba(53,208,127,.10);
-            border:1px solid rgba(53,208,127,.16);
-        }
-
-        .status-rejected {
-            color:#ffd1d8;
-            background:rgba(255,91,112,.10);
-            border:1px solid rgba(255,91,112,.16);
-        }
-
-        .deposit-history-item:last-child {
-            border-bottom:none !important;
-        }
-    `;
-
-    document.head.appendChild(style);
-}
+};
 
 
 /* ============================================================
-   DEBUG INFORMATION
+   CONSOLE
    ============================================================ */
 
 console.log(

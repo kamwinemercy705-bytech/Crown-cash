@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -21,6 +23,7 @@
     >
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -46,6 +49,7 @@
                 );
 
             color: #ffffff;
+
             min-height: 100vh;
         }
 
@@ -59,12 +63,14 @@
             font-family: inherit;
         }
 
+
         /* =====================================================
            SIDEBAR
         ===================================================== */
 
         .sidebar {
             position: fixed;
+
             left: 0;
             top: 0;
             bottom: 0;
@@ -78,9 +84,12 @@
                     #090509
                 );
 
-            border-right: 1px solid rgba(255,255,255,.08);
+            border-right:
+                1px solid
+                rgba(255,255,255,.08);
 
-            padding: 25px 16px;
+            padding:
+                25px 16px;
 
             z-index: 1000;
 
@@ -90,13 +99,18 @@
                 transform .3s ease;
         }
 
+
         .brand {
             display: flex;
+
             align-items: center;
+
             gap: 12px;
 
-            padding: 10px 12px 28px;
+            padding:
+                10px 12px 28px;
         }
+
 
         .brand-logo {
             width: 43px;
@@ -105,6 +119,7 @@
             border-radius: 12px;
 
             display: flex;
+
             align-items: center;
             justify-content: center;
 
@@ -118,37 +133,50 @@
             color: #10040b;
 
             font-size: 21px;
+
             font-weight: 900;
         }
 
+
         .brand-text strong {
             display: block;
+
             font-size: 20px;
         }
 
+
         .brand-text span {
             display: block;
+
             margin-top: 2px;
 
             color: #a9a2a8;
+
             font-size: 12px;
         }
 
+
         .nav {
             display: flex;
+
             flex-direction: column;
+
             gap: 5px;
         }
+
 
         .nav a,
         .logout-btn {
             width: 100%;
 
             display: flex;
+
             align-items: center;
+
             gap: 12px;
 
-            padding: 13px 14px;
+            padding:
+                13px 14px;
 
             border-radius: 10px;
 
@@ -161,6 +189,7 @@
                 color .2s ease;
         }
 
+
         .nav a:hover,
         .nav a.active {
             background:
@@ -169,27 +198,38 @@
             color: #ffffff;
         }
 
+
         .nav a.active {
             box-shadow:
                 inset 3px 0 0 #ffffff;
         }
 
+
         .nav i {
             width: 20px;
+
             text-align: center;
         }
 
+
         .logout-btn {
             border: 0;
+
             background: transparent;
+
             cursor: pointer;
+
             text-align: left;
         }
 
+
         .logout-btn:hover {
-            background: rgba(255,255,255,.08);
+            background:
+                rgba(255,255,255,.08);
+
             color: #ffffff;
         }
+
 
         /* =====================================================
            MAIN
@@ -197,45 +237,61 @@
 
         .main {
             margin-left: 255px;
+
             min-height: 100vh;
-            padding: 28px 30px 60px;
+
+            padding:
+                28px 30px 60px;
         }
+
 
         .topbar {
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             margin-bottom: 28px;
         }
 
+
         .page-title {
             display: flex;
+
             align-items: center;
+
             gap: 12px;
         }
+
 
         .page-title h1 {
             font-size: 24px;
         }
 
+
         .page-title i {
             color: #ffffff;
         }
 
+
         .wallet-link {
             display: flex;
+
             align-items: center;
+
             gap: 8px;
 
-            padding: 11px 15px;
+            padding:
+                11px 15px;
 
             border-radius: 10px;
 
             background:
                 rgba(255,255,255,.07);
 
-            border: 1px solid
+            border:
+                1px solid
                 rgba(255,255,255,.08);
 
             color: #ffffff;
@@ -243,9 +299,11 @@
             font-weight: 700;
         }
 
+
         .wallet-link span {
             color: #ffffff;
         }
+
 
         .menu-btn {
             display: none;
@@ -254,6 +312,7 @@
             height: 44px;
 
             border: 0;
+
             border-radius: 10px;
 
             background:
@@ -262,15 +321,18 @@
             color: #ffffff;
 
             font-size: 20px;
+
             cursor: pointer;
         }
+
 
         /* =====================================================
            HERO
         ===================================================== */
 
         .hero {
-            padding: 35px 28px;
+            padding:
+                35px 28px;
 
             border-radius: 22px;
 
@@ -286,33 +348,43 @@
                     #0e050b
                 );
 
-            border: 1px solid
+            border:
+                1px solid
                 rgba(255,255,255,.08);
 
             margin-bottom: 30px;
         }
 
+
         .hero-label {
             color: #bcb4bb;
+
             font-size: 13px;
+
             font-weight: 700;
 
             text-transform: uppercase;
+
             letter-spacing: 1.5px;
 
             margin-bottom: 12px;
         }
 
+
         .hero h2 {
-            font-size: clamp(32px, 5vw, 50px);
+            font-size:
+                clamp(32px, 5vw, 50px);
+
             line-height: 1.05;
 
             margin-bottom: 15px;
         }
 
+
         .hero h2 span {
             color: #e4dce2;
         }
+
 
         .hero p {
             max-width: 650px;
@@ -320,11 +392,14 @@
             color: #b9b1b8;
 
             font-size: 16px;
+
             line-height: 1.7;
         }
 
+
         .hero-stats {
             display: grid;
+
             grid-template-columns:
                 repeat(3, minmax(0, 1fr));
 
@@ -332,6 +407,7 @@
 
             margin-top: 25px;
         }
+
 
         .hero-stat {
             padding: 17px;
@@ -346,6 +422,7 @@
                 rgba(255,255,255,.07);
         }
 
+
         .hero-stat strong {
             display: block;
 
@@ -354,10 +431,13 @@
             margin-bottom: 4px;
         }
 
+
         .hero-stat span {
             color: #a79fa6;
+
             font-size: 12px;
         }
+
 
         /* =====================================================
            SECTION HEADER
@@ -365,25 +445,33 @@
 
         .section-header {
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             margin-bottom: 18px;
         }
 
+
         .section-header h2 {
             font-size: 23px;
         }
 
+
         .section-header a {
             color: #d8d1d6;
+
             font-size: 14px;
+
             font-weight: 700;
         }
+
 
         .section-header a:hover {
             color: #ffffff;
         }
+
 
         /* =====================================================
            PLANS
@@ -397,6 +485,7 @@
 
             gap: 20px;
         }
+
 
         .plan-card {
             position: relative;
@@ -421,13 +510,16 @@
             overflow: hidden;
         }
 
+
         .plan-card::before {
             content: "";
 
             position: absolute;
 
             top: 0;
+
             left: 0;
+
             right: 0;
 
             height: 4px;
@@ -441,32 +533,40 @@
                 );
         }
 
+
         .plan-card.featured {
-            transform: translateY(-5px);
+            transform:
+                translateY(-5px);
 
             box-shadow:
                 0 20px 55px
                 rgba(0,0,0,.35);
         }
 
+
         .selected-label {
             position: absolute;
 
             top: 14px;
+
             right: 14px;
 
-            padding: 6px 9px;
+            padding:
+                6px 9px;
 
             border-radius: 20px;
 
             background: #150912;
+
             color: #ffffff;
 
             font-size: 9px;
+
             font-weight: 800;
 
             letter-spacing: .8px;
         }
+
 
         .plan-icon {
             width: 48px;
@@ -475,7 +575,9 @@
             border-radius: 14px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             background: #f0eaed;
@@ -487,8 +589,10 @@
             margin-bottom: 17px;
         }
 
+
         .plan-label {
             font-size: 10px;
+
             font-weight: 900;
 
             letter-spacing: 1.5px;
@@ -498,10 +602,13 @@
             margin-bottom: 7px;
         }
 
+
         .plan-card h3 {
             font-size: 23px;
+
             margin-bottom: 9px;
         }
+
 
         .plan-description {
             min-height: 52px;
@@ -509,10 +616,12 @@
             color: #776d74;
 
             font-size: 13px;
+
             line-height: 1.55;
 
             margin-bottom: 20px;
         }
+
 
         .plan-amount {
             padding: 16px;
@@ -524,6 +633,7 @@
             margin-bottom: 14px;
         }
 
+
         .plan-amount span {
             display: block;
 
@@ -534,9 +644,11 @@
             margin-bottom: 4px;
         }
 
+
         .plan-amount strong {
             font-size: 23px;
         }
+
 
         .plan-details {
             display: grid;
@@ -549,6 +661,7 @@
             margin-bottom: 20px;
         }
 
+
         .plan-detail {
             padding: 11px;
 
@@ -556,6 +669,7 @@
 
             background: #f7f5f6;
         }
+
 
         .plan-detail span {
             display: block;
@@ -567,9 +681,11 @@
             margin-bottom: 4px;
         }
 
+
         .plan-detail strong {
             font-size: 14px;
         }
+
 
         .invest-btn {
             width: 100%;
@@ -577,6 +693,7 @@
             padding: 15px;
 
             border: 0;
+
             border-radius: 13px;
 
             background:
@@ -589,6 +706,7 @@
             color: #ffffff;
 
             font-size: 15px;
+
             font-weight: 800;
 
             cursor: pointer;
@@ -598,20 +716,29 @@
                 opacity .2s ease;
         }
 
+
         .invest-btn:hover {
-            transform: translateY(-2px);
+            transform:
+                translateY(-2px);
+
             opacity: .93;
         }
 
+
         .invest-btn:active {
-            transform: translateY(0);
+            transform:
+                translateY(0);
         }
+
 
         .invest-btn:disabled {
             opacity: .55;
+
             cursor: wait;
+
             transform: none;
         }
+
 
         /* =====================================================
            CALCULATOR
@@ -632,9 +759,11 @@
                 rgba(255,255,255,.08);
         }
 
+
         .calculator h2 {
             margin-bottom: 20px;
         }
+
 
         .calculator-grid {
             display: grid;
@@ -645,39 +774,48 @@
             gap: 16px;
         }
 
+
         .input-group label {
             display: block;
 
             color: #aaa1a8;
 
             font-size: 12px;
+
             font-weight: 700;
 
             margin-bottom: 7px;
         }
 
+
         .input-wrap {
             position: relative;
         }
+
 
         .input-wrap span {
             position: absolute;
 
             left: 14px;
+
             top: 50%;
 
-            transform: translateY(-50%);
+            transform:
+                translateY(-50%);
 
             color: #817780;
 
             font-size: 13px;
+
             font-weight: 700;
         }
+
 
         .input-wrap input {
             width: 100%;
 
-            padding: 14px 14px 14px 54px;
+            padding:
+                14px 14px 14px 54px;
 
             border-radius: 11px;
 
@@ -695,10 +833,12 @@
             font-size: 15px;
         }
 
+
         .input-wrap input:focus {
             border-color:
                 rgba(255,255,255,.35);
         }
+
 
         .calculator-results {
             display: grid;
@@ -710,6 +850,7 @@
 
             margin-top: 20px;
         }
+
 
         .result-card {
             padding: 17px;
@@ -724,6 +865,7 @@
                 rgba(255,255,255,.06);
         }
 
+
         .result-card span {
             display: block;
 
@@ -734,9 +876,11 @@
             margin-bottom: 7px;
         }
 
+
         .result-card strong {
             font-size: 19px;
         }
+
 
         /* =====================================================
            HOW IT WORKS
@@ -746,6 +890,7 @@
             margin-top: 35px;
         }
 
+
         .steps {
             display: grid;
 
@@ -754,6 +899,7 @@
 
             gap: 15px;
         }
+
 
         .step {
             padding: 20px;
@@ -768,14 +914,17 @@
                 rgba(255,255,255,.07);
         }
 
+
         .step-number {
             color: #8f8590;
 
             font-size: 11px;
+
             font-weight: 900;
 
             margin-bottom: 12px;
         }
+
 
         .step-icon {
             width: 40px;
@@ -784,7 +933,9 @@
             border-radius: 11px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             background:
@@ -793,17 +944,22 @@
             margin-bottom: 13px;
         }
 
+
         .step h3 {
             font-size: 15px;
+
             margin-bottom: 7px;
         }
+
 
         .step p {
             color: #a79ea5;
 
             font-size: 12px;
+
             line-height: 1.6;
         }
+
 
         /* =====================================================
            INFO
@@ -812,7 +968,8 @@
         .info-box {
             margin-top: 25px;
 
-            padding: 19px 20px;
+            padding:
+                19px 20px;
 
             border-radius: 15px;
 
@@ -826,12 +983,15 @@
             color: #aaa1a8;
 
             font-size: 12px;
+
             line-height: 1.7;
         }
+
 
         .info-box strong {
             color: #ffffff;
         }
+
 
         /* =====================================================
            FOOTER
@@ -857,14 +1017,18 @@
             font-size: 11px;
         }
 
+
         .footer-links {
             display: flex;
+
             gap: 15px;
         }
+
 
         .footer-links a:hover {
             color: #ffffff;
         }
+
 
         /* =====================================================
            OVERLAY
@@ -883,6 +1047,7 @@
             z-index: 999;
         }
 
+
         /* =====================================================
            MESSAGE
         ===================================================== */
@@ -891,6 +1056,7 @@
             position: fixed;
 
             left: 50%;
+
             bottom: 25px;
 
             transform:
@@ -899,7 +1065,8 @@
             width:
                 min(92%, 460px);
 
-            padding: 15px 18px;
+            padding:
+                15px 18px;
 
             border-radius: 13px;
 
@@ -921,6 +1088,7 @@
                 opacity .3s ease;
         }
 
+
         .message-box.show {
             transform:
                 translate(-50%, 0);
@@ -928,24 +1096,34 @@
             opacity: 1;
         }
 
+
         .message-box.success {
-            border-left: 5px solid #20894e;
+            border-left:
+                5px solid #20894e;
         }
 
+
         .message-box.error {
-            border-left: 5px solid #b21e3e;
+            border-left:
+                5px solid #b21e3e;
         }
+
 
         .message-box strong {
             display: block;
+
             margin-bottom: 4px;
         }
 
+
         .message-box span {
             color: #625960;
+
             font-size: 13px;
+
             line-height: 1.5;
         }
+
 
         /* =====================================================
            RESPONSIVE
@@ -958,15 +1136,19 @@
                     1fr 1fr;
             }
 
+
             .plan-card.featured {
                 transform: none;
             }
+
 
             .steps {
                 grid-template-columns:
                     1fr 1fr;
             }
+
         }
+
 
         @media (max-width: 800px) {
 
@@ -975,65 +1157,89 @@
                     translateX(-100%);
             }
 
+
             .sidebar.active {
                 transform:
                     translateX(0);
             }
 
+
             .sidebar-overlay.active {
                 display: block;
             }
 
+
             .main {
                 margin-left: 0;
-                padding: 18px 15px 45px;
+
+                padding:
+                    18px 15px 45px;
             }
+
 
             .menu-btn {
                 display: flex;
 
                 align-items: center;
+
                 justify-content: center;
             }
+
 
             .topbar {
                 gap: 10px;
             }
 
+
             .page-title h1 {
                 font-size: 20px;
             }
 
+
             .wallet-link {
-                padding: 9px 10px;
+                padding:
+                    9px 10px;
+
                 font-size: 12px;
             }
 
+
             .hero {
-                padding: 25px 20px;
+                padding:
+                    25px 20px;
             }
+
 
             .hero-stats {
                 grid-template-columns:
                     repeat(3, 1fr);
             }
 
+
             .hero-stat strong {
                 font-size: 18px;
             }
 
+
             .plans {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
+
 
             .calculator-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
 
+
             .calculator-results {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
+
         }
+
 
         @media (max-width: 520px) {
 
@@ -1041,30 +1247,42 @@
                 font-size: 34px;
             }
 
+
             .hero-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
+
 
             .section-header h2 {
                 font-size: 20px;
             }
 
+
             .steps {
-                grid-template-columns: 1fr;
+                grid-template-columns:
+                    1fr;
             }
+
 
             footer {
                 flex-direction: column;
             }
 
+
             .footer-links {
                 flex-wrap: wrap;
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
 <!-- =========================================================
      SIDEBAR
@@ -1082,8 +1300,15 @@
         </div>
 
         <div class="brand-text">
-            <strong>Crown Cash</strong>
-            <span>Investment Platform</span>
+
+            <strong>
+                Crown Cash
+            </strong>
+
+            <span>
+                Investment Platform
+            </span>
+
         </div>
 
     </div>
@@ -1092,60 +1317,119 @@
     <nav class="nav">
 
         <a href="dashboard.html">
+
             <i class="fa-solid fa-house"></i>
-            <span>Dashboard</span>
+
+            <span>
+                Dashboard
+            </span>
+
         </a>
+
 
         <a
             href="investments.html"
             class="active"
         >
+
             <i class="fa-solid fa-chart-line"></i>
-            <span>Investments</span>
+
+            <span>
+                Investments
+            </span>
+
         </a>
+
 
         <a href="my-investments.html">
+
             <i class="fa-solid fa-briefcase"></i>
-            <span>My Investments</span>
+
+            <span>
+                My Investments
+            </span>
+
         </a>
+
 
         <a href="deposit.html">
+
             <i class="fa-solid fa-plus"></i>
-            <span>Deposit</span>
+
+            <span>
+                Deposit
+            </span>
+
         </a>
+
 
         <a href="withdraw.html">
+
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            <span>Withdraw</span>
+
+            <span>
+                Withdraw
+            </span>
+
         </a>
+
 
         <a href="transactions.html">
+
             <i class="fa-solid fa-list"></i>
-            <span>Transactions</span>
+
+            <span>
+                Transactions
+            </span>
+
         </a>
+
 
         <a href="referrals.html">
+
             <i class="fa-solid fa-users"></i>
-            <span>Referrals</span>
+
+            <span>
+                Referrals
+            </span>
+
         </a>
+
 
         <a href="profile.html">
+
             <i class="fa-solid fa-user"></i>
-            <span>Profile</span>
+
+            <span>
+                Profile
+            </span>
+
         </a>
 
+
         <a href="support.html">
+
             <i class="fa-solid fa-circle-question"></i>
-            <span>Support</span>
+
+            <span>
+                Support
+            </span>
+
         </a>
+
 
         <button
             type="button"
             class="logout-btn"
             id="logoutBtn"
         >
+
             <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Logout</span>
+
+            <span>
+                Logout
+            </span>
+
         </button>
 
     </nav>
@@ -1165,6 +1449,11 @@
 
 <main class="main">
 
+
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
+
     <header class="topbar">
 
         <div class="page-title">
@@ -1175,12 +1464,22 @@
                 id="menuBtn"
                 aria-label="Open menu"
             >
+
                 <i class="fa-solid fa-bars"></i>
+
             </button>
 
+
             <h1>
+
                 <i class="fa-solid fa-crown"></i>
-                Crown Cash <span>Investments</span>
+
+                Crown Cash
+
+                <span>
+                    Investments
+                </span>
+
             </h1>
 
         </div>
@@ -1190,10 +1489,13 @@
             href="dashboard.html"
             class="wallet-link"
         >
+
             <i class="fa-solid fa-wallet"></i>
+
             <span id="walletBalance">
                 UGX 0
             </span>
+
         </a>
 
     </header>
@@ -1209,32 +1511,66 @@
             ✦ Investment Opportunities
         </div>
 
+
         <h2>
-            Grow Your Money<br>
-            <span>With Crown Cash</span>
+
+            Grow Your Money
+
+            <br>
+
+            <span>
+                With Crown Cash
+            </span>
+
         </h2>
 
+
         <p>
+
             Choose an investment plan and earn daily
             returns according to your selected plan.
+
         </p>
 
 
         <div class="hero-stats">
 
             <div class="hero-stat">
-                <strong>10%</strong>
-                <span>Daily Return</span>
+
+                <strong>
+                    10%
+                </strong>
+
+                <span>
+                    Daily Return
+                </span>
+
             </div>
 
-            <div class="hero-stat">
-                <strong>30</strong>
-                <span>Days</span>
-            </div>
 
             <div class="hero-stat">
-                <strong>3</strong>
-                <span>Plans</span>
+
+                <strong>
+                    30
+                </strong>
+
+                <span>
+                    Days
+                </span>
+
+            </div>
+
+
+            <div class="hero-stat">
+
+                <strong>
+                    3
+                </strong>
+
+                <span>
+                    Plans
+                </span>
+
             </div>
 
         </div>
@@ -1252,9 +1588,13 @@
             Choose Your Plan
         </h2>
 
+
         <a href="my-investments.html">
+
             My Investments
+
             <i class="fa-solid fa-arrow-right"></i>
+
         </a>
 
     </div>
@@ -1267,25 +1607,34 @@
     <section class="plans">
 
 
-        <!-- STARTER -->
+        <!-- =================================================
+             STARTER
+        ================================================== -->
 
         <article class="plan-card">
 
             <div class="plan-icon">
+
                 <i class="fa-solid fa-seedling"></i>
+
             </div>
+
 
             <div class="plan-label">
                 STARTER
             </div>
 
+
             <h3>
                 Starter Plan
             </h3>
 
+
             <p class="plan-description">
+
                 Start small and experience Crown Cash
                 investment returns.
+
             </p>
 
 
@@ -1316,6 +1665,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1328,6 +1678,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1339,6 +1690,7 @@
                     </strong>
 
                 </div>
+
 
                 <div class="plan-detail">
 
@@ -1363,14 +1715,19 @@
                 data-rate="10"
                 data-days="30"
             >
+
                 Invest UGX 10,000
+
                 <i class="fa-solid fa-arrow-right"></i>
+
             </button>
 
         </article>
 
 
-        <!-- STANDARD -->
+        <!-- =================================================
+             STANDARD
+        ================================================== -->
 
         <article
             class="plan-card featured"
@@ -1380,21 +1737,29 @@
                 MOST SELECTED
             </div>
 
+
             <div class="plan-icon">
+
                 <i class="fa-solid fa-crown"></i>
+
             </div>
+
 
             <div class="plan-label">
                 STANDARD
             </div>
 
+
             <h3>
                 Standard Plan
             </h3>
 
+
             <p class="plan-description">
+
                 A balanced investment option for
                 consistent daily returns.
+
             </p>
 
 
@@ -1425,6 +1790,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1437,6 +1803,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1448,6 +1815,7 @@
                     </strong>
 
                 </div>
+
 
                 <div class="plan-detail">
 
@@ -1472,32 +1840,44 @@
                 data-rate="10"
                 data-days="30"
             >
+
                 Invest UGX 15,000
+
                 <i class="fa-solid fa-arrow-right"></i>
+
             </button>
 
         </article>
 
 
-        <!-- ADVANCED -->
+        <!-- =================================================
+             ADVANCED
+        ================================================== -->
 
         <article class="plan-card">
 
             <div class="plan-icon">
+
                 <i class="fa-solid fa-gem"></i>
+
             </div>
+
 
             <div class="plan-label">
                 ADVANCED
             </div>
 
+
             <h3>
                 Advanced Plan
             </h3>
 
+
             <p class="plan-description">
+
                 A larger investment option designed
                 for higher daily income.
+
             </p>
 
 
@@ -1528,6 +1908,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1540,6 +1921,7 @@
 
                 </div>
 
+
                 <div class="plan-detail">
 
                     <span>
@@ -1551,6 +1933,7 @@
                     </strong>
 
                 </div>
+
 
                 <div class="plan-detail">
 
@@ -1575,8 +1958,11 @@
                 data-rate="10"
                 data-days="30"
             >
+
                 Invest UGX 25,000
+
                 <i class="fa-solid fa-arrow-right"></i>
+
             </button>
 
         </article>
@@ -1594,7 +1980,9 @@
             Plan Your Earnings
         </h2>
 
+
         <div class="calculator-grid">
+
 
             <div class="input-group">
 
@@ -1602,11 +1990,13 @@
                     Investment Amount
                 </label>
 
+
                 <div class="input-wrap">
 
                     <span>
                         UGX
                     </span>
+
 
                     <input
                         type="number"
@@ -1627,11 +2017,13 @@
                     Daily Return
                 </label>
 
+
                 <div class="input-wrap">
 
                     <span>
                         %
                     </span>
+
 
                     <input
                         type="number"
@@ -1650,11 +2042,13 @@
 
         <div class="calculator-results">
 
+
             <div class="result-card">
 
                 <span>
                     Daily Income
                 </span>
+
 
                 <strong id="dailyIncome">
                     UGX 1,000
@@ -1662,11 +2056,13 @@
 
             </div>
 
+
             <div class="result-card">
 
                 <span>
                     30-Day Income
                 </span>
+
 
                 <strong id="monthlyIncome">
                     UGX 30,000
@@ -1674,11 +2070,13 @@
 
             </div>
 
+
             <div class="result-card">
 
                 <span>
                     Total After 30 Days
                 </span>
+
 
                 <strong id="totalAfter30">
                     UGX 40,000
@@ -1697,6 +2095,7 @@
 
     <section class="how-it-works">
 
+
         <div class="section-header">
 
             <h2>
@@ -1708,23 +2107,31 @@
 
         <div class="steps">
 
+
             <div class="step">
 
                 <div class="step-number">
                     01
                 </div>
 
+
                 <div class="step-icon">
+
                     <i class="fa-solid fa-layer-group"></i>
+
                 </div>
+
 
                 <h3>
                     Choose a Plan
                 </h3>
 
+
                 <p>
+
                     Select the investment plan that
                     matches the amount you want to invest.
+
                 </p>
 
             </div>
@@ -1736,17 +2143,24 @@
                     02
                 </div>
 
+
                 <div class="step-icon">
+
                     <i class="fa-solid fa-check"></i>
+
                 </div>
+
 
                 <h3>
                     Confirm Investment
                 </h3>
 
+
                 <p>
+
                     Confirm your investment. The investment
                     amount is deducted from your wallet.
+
                 </p>
 
             </div>
@@ -1758,17 +2172,24 @@
                     03
                 </div>
 
+
                 <div class="step-icon">
+
                     <i class="fa-solid fa-clock"></i>
+
                 </div>
+
 
                 <h3>
                     Admin Approval
                 </h3>
 
+
                 <p>
+
                     Your investment is submitted for review
                     and approval.
+
                 </p>
 
             </div>
@@ -1780,17 +2201,24 @@
                     04
                 </div>
 
+
                 <div class="step-icon">
+
                     <i class="fa-solid fa-coins"></i>
+
                 </div>
+
 
                 <h3>
                     Earn Daily
                 </h3>
 
+
                 <p>
+
                     Once approved, daily earnings are processed
                     according to your plan.
+
                 </p>
 
             </div>
@@ -1807,11 +2235,16 @@
     <div class="info-box">
 
         <strong>
+
             <i class="fa-solid fa-circle-info"></i>
+
             Investment Information
+
         </strong>
 
+
         <br>
+
 
         Investment amounts are deducted from your
         Crown Cash wallet when an investment is
@@ -1828,12 +2261,17 @@
     <footer>
 
         <div>
+
             ©
+
             <span id="currentYear">
                 2026
             </span>
+
             Crown Cash
+
         </div>
+
 
         <div class="footer-links">
 
@@ -1841,9 +2279,11 @@
                 Terms
             </a>
 
+
             <a href="privacy.html">
                 Privacy
             </a>
+
 
             <a href="support.html">
                 Support
@@ -1869,6 +2309,7 @@
         Crown Cash
     </strong>
 
+
     <span id="messageText">
         Please wait...
     </span>
@@ -1877,878 +2318,12 @@
 
 
 <!-- =========================================================
-     JAVASCRIPT
+     IMPORTANT:
+     ALL INVESTMENT LOGIC IS NOW IN investments.js
 ========================================================= -->
 
-<script>
-
-const API_URL =
-    "https://crown-cash1.onrender.com";
-
-
-let submittingInvestment = false;
-
-
-/* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        setupMobileMenu();
-
-        setupLogout();
-
-        setupInvestmentButtons();
-
-        setupCalculator();
-
-        loadWalletBalance();
-
-        setCurrentYear();
-
-    }
-);
-
-
-/* =========================================================
-   INVESTMENT BUTTONS
-========================================================= */
-
-function setupInvestmentButtons() {
-
-    const buttons =
-        document.querySelectorAll(
-            ".invest-btn"
-        );
-
-
-    buttons.forEach(
-        function (button) {
-
-            button.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    const plan =
-                        button.dataset.plan;
-
-                    const amount =
-                        Number(
-                            button.dataset.amount
-                        );
-
-                    const rate =
-                        Number(
-                            button.dataset.rate ||
-                            10
-                        );
-
-                    const days =
-                        Number(
-                            button.dataset.days ||
-                            30
-                        );
-
-
-                    if (
-                        !plan ||
-                        !amount
-                    ) {
-
-                        showMessage(
-                            "Investment Error",
-                            "The selected investment plan is not configured correctly.",
-                            "error"
-                        );
-
-                        return;
-                    }
-
-
-                    createInvestment(
-                        plan,
-                        amount,
-                        rate,
-                        days,
-                        button
-                    );
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   CREATE INVESTMENT
-========================================================= */
-
-async function createInvestment(
-    plan,
-    amount,
-    rate,
-    days,
-    button
-) {
-
-    if (submittingInvestment) {
-        return;
-    }
-
-
-    const planNames = {
-
-        starter:
-            "Starter Plan",
-
-        standard:
-            "Standard Plan",
-
-        advanced:
-            "Advanced Plan"
-
-    };
-
-
-    const planName =
-        planNames[plan] ||
-        "Investment Plan";
-
-
-    const confirmed =
-        window.confirm(
-            "Confirm Investment\n\n" +
-
-            "Plan: " +
-            planName +
-
-            "\nAmount: UGX " +
-            formatMoney(amount) +
-
-            "\nDaily Return: " +
-            rate +
-            "%" +
-
-            "\nDuration: " +
-            days +
-            " days" +
-
-            "\n\n" +
-
-            "UGX " +
-            formatMoney(amount) +
-            " will be deducted from your wallet when the investment is successfully created." +
-
-            "\n\nDo you want to continue?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    submittingInvestment = true;
-
-
-    const originalText =
-        button.innerHTML;
-
-
-    button.disabled = true;
-
-    button.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/investment.php`,
-                {
-                    method: "POST",
-
-                    credentials: "include",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json"
-                    },
-
-                    cache: "no-store",
-
-                    body:
-                        JSON.stringify({
-
-                            plan:
-                                plan,
-
-                            plan_name:
-                                planName,
-
-                            amount:
-                                amount,
-
-                            currency:
-                                "UGX",
-
-                            duration:
-                                days,
-
-                            duration_days:
-                                days,
-
-                            daily_rate:
-                                rate / 100
-
-                        })
-                }
-            );
-
-
-        let data = null;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch (error) {
-
-            throw new Error(
-                "The investment server returned an invalid response."
-            );
-
-        }
-
-
-        console.log(
-            "Investment response:",
-            data
-        );
-
-
-        if (
-            response.status === 401
-        ) {
-
-            throw new Error(
-                "Your session has expired. Please log in again."
-            );
-
-        }
-
-
-        if (
-            !response.ok ||
-            !data.success
-        ) {
-
-            throw new Error(
-                data.message ||
-                data.error ||
-                "Unable to create the investment."
-            );
-
-        }
-
-
-        /* =================================================
-           IMPORTANT
-
-           The backend has already deducted the investment
-           amount from the wallet.
-
-           We therefore display the backend's new balance.
-        ================================================= */
-
-        const newBalance =
-            data.new_balance ??
-            data.wallet?.new_balance ??
-            data.balance ??
-            data.available_balance;
-
-
-        if (
-            newBalance !== undefined
-        ) {
-
-            updateWalletDisplay(
-                newBalance
-            );
-
-        } else {
-
-            loadWalletBalance();
-
-        }
-
-
-        showMessage(
-            "Investment Submitted",
-            data.message ||
-            `${planName} has been submitted successfully for admin approval.`,
-            "success"
-        );
-
-
-        /*
-         * Give the user time to see the success
-         * message before opening My Investments.
-         */
-
-        setTimeout(
-            function () {
-
-                window.location.href =
-                    "my-investments.html";
-
-            },
-            1600
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Investment error:",
-            error
-        );
-
-
-        showMessage(
-            "Investment Failed",
-            error.message ||
-            "Unable to create the investment. Please try again.",
-            "error"
-        );
-
-
-        button.disabled = false;
-
-        button.innerHTML =
-            originalText;
-
-    } finally {
-
-        submittingInvestment = false;
-
-    }
-
-}
-
-
-/* =========================================================
-   WALLET
-========================================================= */
-
-async function loadWalletBalance() {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/dashboard.php`,
-                {
-                    method: "GET",
-
-                    credentials: "include",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    },
-
-                    cache: "no-store"
-                }
-            );
-
-
-        if (!response.ok) {
-            return;
-        }
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !data ||
-            !data.success
-        ) {
-            return;
-        }
-
-
-        const balance =
-            data.balance ??
-            data.available_balance ??
-            data.wallet_balance ??
-            data.wallet?.balance ??
-            0;
-
-
-        updateWalletDisplay(
-            balance
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Wallet balance error:",
-            error
-        );
-
-    }
-
-}
-
-
-function updateWalletDisplay(
-    balance
-) {
-
-    const element =
-        document.getElementById(
-            "walletBalance"
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    element.textContent =
-        "UGX " +
-        formatMoney(balance);
-
-}
-
-
-/* =========================================================
-   CALCULATOR
-========================================================= */
-
-function setupCalculator() {
-
-    const amountInput =
-        document.getElementById(
-            "investmentAmount"
-        );
-
-    const rateInput =
-        document.getElementById(
-            "dailyReturn"
-        );
-
-
-    if (
-        !amountInput ||
-        !rateInput
-    ) {
-        return;
-    }
-
-
-    amountInput.addEventListener(
-        "input",
-        calculateInvestment
-    );
-
-
-    rateInput.addEventListener(
-        "input",
-        calculateInvestment
-    );
-
-
-    calculateInvestment();
-
-}
-
-
-function calculateInvestment() {
-
-    const amount =
-        Number(
-            document.getElementById(
-                "investmentAmount"
-            )?.value
-        ) || 0;
-
-
-    const rate =
-        Number(
-            document.getElementById(
-                "dailyReturn"
-            )?.value
-        ) || 0;
-
-
-    const daily =
-        amount *
-        (rate / 100);
-
-
-    const monthly =
-        daily * 30;
-
-
-    const total =
-        amount + monthly;
-
-
-    setText(
-        "dailyIncome",
-        "UGX " +
-        formatMoney(daily)
-    );
-
-
-    setText(
-        "monthlyIncome",
-        "UGX " +
-        formatMoney(monthly)
-    );
-
-
-    setText(
-        "totalAfter30",
-        "UGX " +
-        formatMoney(total)
-    );
-
-}
-
-
-/* =========================================================
-   MOBILE MENU
-========================================================= */
-
-function setupMobileMenu() {
-
-    const menuBtn =
-        document.getElementById(
-            "menuBtn"
-        );
-
-    const sidebar =
-        document.getElementById(
-            "sidebar"
-        );
-
-    const overlay =
-        document.getElementById(
-            "sidebarOverlay"
-        );
-
-
-    if (
-        !menuBtn ||
-        !sidebar
-    ) {
-        return;
-    }
-
-
-    menuBtn.addEventListener(
-        "click",
-        function () {
-
-            sidebar.classList.toggle(
-                "active"
-            );
-
-
-            if (overlay) {
-
-                overlay.classList.toggle(
-                    "active"
-                );
-
-            }
-
-        }
-    );
-
-
-    if (overlay) {
-
-        overlay.addEventListener(
-            "click",
-            closeSidebar
-        );
-
-    }
-
-
-    sidebar
-        .querySelectorAll("a")
-        .forEach(
-            function (link) {
-
-                link.addEventListener(
-                    "click",
-                    closeSidebar
-                );
-
-            }
-        );
-
-
-    function closeSidebar() {
-
-        sidebar.classList.remove(
-            "active"
-        );
-
-
-        if (overlay) {
-
-            overlay.classList.remove(
-                "active"
-            );
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-function setupLogout() {
-
-    const logoutBtn =
-        document.getElementById(
-            "logoutBtn"
-        );
-
-
-    if (!logoutBtn) {
-        return;
-    }
-
-
-    logoutBtn.addEventListener(
-        "click",
-        async function () {
-
-            logoutBtn.disabled = true;
-
-
-            try {
-
-                await fetch(
-                    `${API_URL}/logout.php`,
-                    {
-                        method: "POST",
-
-                        credentials: "include",
-
-                        headers: {
-                            "Accept":
-                                "application/json"
-                        }
-                    }
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Logout error:",
-                    error
-                );
-
-            }
-
-
-            localStorage.removeItem(
-                "crownCashUser"
-            );
-
-
-            localStorage.removeItem(
-                "currentUser"
-            );
-
-
-            window.location.href =
-                "/login.html";
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   MESSAGE
-========================================================= */
-
-function showMessage(
-    title,
-    message,
-    type
-) {
-
-    const box =
-        document.getElementById(
-            "messageBox"
-        );
-
-    const titleElement =
-        document.getElementById(
-            "messageTitle"
-        );
-
-    const textElement =
-        document.getElementById(
-            "messageText"
-        );
-
-
-    if (
-        !box ||
-        !titleElement ||
-        !textElement
-    ) {
-        return;
-    }
-
-
-    titleElement.textContent =
-        title;
-
-
-    textElement.textContent =
-        message;
-
-
-    box.classList.remove(
-        "success",
-        "error"
-    );
-
-
-    box.classList.add(
-        type === "success"
-            ? "success"
-            : "error"
-    );
-
-
-    box.classList.add(
-        "show"
-    );
-
-
-    clearTimeout(
-        box._messageTimer
-    );
-
-
-    box._messageTimer =
-        setTimeout(
-            function () {
-
-                box.classList.remove(
-                    "show"
-                );
-
-            },
-            5000
-        );
-
-}
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function setText(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (element) {
-        element.textContent =
-            value;
-    }
-
-}
-
-
-function formatMoney(
-    value
-) {
-
-    let number =
-        Number(value);
-
-
-    if (
-        !Number.isFinite(number)
-    ) {
-        number = 0;
-    }
-
-
-    return number.toLocaleString(
-        "en-UG",
-        {
-            maximumFractionDigits: 0
-        }
-    );
-
-}
-
-
-function setCurrentYear() {
-
-    const element =
-        document.getElementById(
-            "currentYear"
-        );
-
-
-    if (element) {
-
-        element.textContent =
-            new Date()
-                .getFullYear();
-
-    }
-
-}
-
-</script>
+<script src="investments.js?v=20261003PROD03"></script>
 
 </body>
+
 </html>

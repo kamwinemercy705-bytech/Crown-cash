@@ -7,41 +7,56 @@
 
 /* =========================================================
    API
-   ========================================================= */
+========================================================= */
+
+const API_BASE =
+    "https://crown-cash1.onrender.com";
 
 const DASHBOARD_API =
-    "https://crown-cash1.onrender.com/dashboard.php";
+    `${API_BASE}/dashboard.php`;
+
+const PROFILE_API =
+    `${API_BASE}/profile.php`;
 
 const LOGOUT_API =
-    "https://crown-cash1.onrender.com/logout.php";
+    `${API_BASE}/logout.php`;
 
 
 /* =========================================================
    HELPERS
-   ========================================================= */
+========================================================= */
 
 function byId(id) {
+
     return document.getElementById(id);
 }
 
 
 function money(value) {
 
-    const number = Number(value);
+    const number =
+        Number(value);
 
     if (!Number.isFinite(number)) {
+
         return "UGX 0";
     }
 
-    return "UGX " + Math.round(number).toLocaleString("en-UG");
+    return (
+        "UGX " +
+        Math.round(number)
+            .toLocaleString("en-UG")
+    );
 }
 
 
 function numberValue(value) {
 
-    const number = Number(value);
+    const number =
+        Number(value);
 
     if (!Number.isFinite(number)) {
+
         return 0;
     }
 
@@ -49,9 +64,17 @@ function numberValue(value) {
 }
 
 
-function firstValue(object, keys, fallback = null) {
+function firstValue(
+    object,
+    keys,
+    fallback = null
+) {
 
-    if (!object || typeof object !== "object") {
+    if (
+        !object ||
+        typeof object !== "object"
+    ) {
+
         return fallback;
     }
 
@@ -62,6 +85,7 @@ function firstValue(object, keys, fallback = null) {
             object[key] !== null &&
             object[key] !== ""
         ) {
+
             return object[key];
         }
     }
@@ -71,16 +95,50 @@ function firstValue(object, keys, fallback = null) {
 
 
 /* =========================================================
+   NORMALIZE ROLE
+========================================================= */
+
+function normalizeRole(value) {
+
+    if (
+        value === undefined ||
+        value === null
+    ) {
+
+        return "";
+    }
+
+    return String(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, "");
+}
+
+
+/* =========================================================
+   GET USER OBJECT
+========================================================= */
+
+function getUserObject(data) {
+
+    return (
+        data?.user ||
+        data?.data?.user ||
+        data?.account ||
+        data?.data?.account ||
+        {}
+    );
+}
+
+
+/* =========================================================
    UPDATE USER DISPLAY
-   ========================================================= */
+========================================================= */
 
 function updateUserDisplay(data) {
 
     const user =
-        data?.user ||
-        data?.data?.user ||
-        data?.account ||
-        {};
+        getUserObject(data);
 
     const name =
         firstValue(
@@ -109,23 +167,31 @@ function updateUserDisplay(data) {
         );
 
 
-    const welcomeName = byId("welcomeName");
+    const welcomeName =
+        byId("welcomeName");
 
     if (welcomeName) {
-        welcomeName.textContent = String(name);
+
+        welcomeName.textContent =
+            String(name);
     }
 
 
-    const sidebarUserName = byId("sidebarUserName");
+    const sidebarUserName =
+        byId("sidebarUserName");
 
     if (sidebarUserName) {
-        sidebarUserName.textContent = String(name);
+
+        sidebarUserName.textContent =
+            String(name);
     }
 
 
-    const sidebarAccountType = byId("sidebarAccountType");
+    const sidebarAccountType =
+        byId("sidebarAccountType");
 
     if (sidebarAccountType) {
+
         sidebarAccountType.textContent =
             String(accountType);
     }
@@ -134,7 +200,7 @@ function updateUserDisplay(data) {
 
 /* =========================================================
    UPDATE WALLET
-   ========================================================= */
+========================================================= */
 
 function updateWallet(data) {
 
@@ -143,28 +209,29 @@ function updateWallet(data) {
         data?.data?.wallet ||
         {};
 
-    const balance = firstValue(
-        wallet,
-        [
-            "available",
-            "available_balance",
-            "availableBalance",
-            "balance",
-            "wallet_balance",
-            "walletBalance"
-        ],
+    const balance =
         firstValue(
-            data,
+            wallet,
             [
+                "available",
                 "available_balance",
                 "availableBalance",
                 "balance",
                 "wallet_balance",
                 "walletBalance"
             ],
-            0
-        )
-    );
+            firstValue(
+                data,
+                [
+                    "available_balance",
+                    "availableBalance",
+                    "balance",
+                    "wallet_balance",
+                    "walletBalance"
+                ],
+                0
+            )
+        );
 
 
     const walletElement =
@@ -172,18 +239,21 @@ function updateWallet(data) {
 
     if (walletElement) {
 
-        const amount = numberValue(balance);
+        const amount =
+            numberValue(balance);
 
-        walletElement.textContent = money(amount);
+        walletElement.textContent =
+            money(amount);
 
-        walletElement.dataset.value = String(amount);
+        walletElement.dataset.value =
+            String(amount);
     }
 }
 
 
 /* =========================================================
    UPDATE OVERVIEW
-   ========================================================= */
+========================================================= */
 
 function updateOverview(data) {
 
@@ -195,96 +265,101 @@ function updateOverview(data) {
         {};
 
 
-    const totalInvested = numberValue(
-        firstValue(
-            overview,
-            [
-                "total_invested",
-                "totalInvested",
-                "invested",
-                "investment_total"
-            ],
+    const totalInvested =
+        numberValue(
             firstValue(
-                data,
+                overview,
                 [
                     "total_invested",
-                    "totalInvested"
+                    "totalInvested",
+                    "invested",
+                    "investment_total"
                 ],
-                0
+                firstValue(
+                    data,
+                    [
+                        "total_invested",
+                        "totalInvested"
+                    ],
+                    0
+                )
             )
-        )
-    );
+        );
 
 
-    const totalEarnings = numberValue(
-        firstValue(
-            overview,
-            [
-                "total_earnings",
-                "totalEarnings",
-                "earnings",
-                "total_profit"
-            ],
+    const totalEarnings =
+        numberValue(
             firstValue(
-                data,
+                overview,
                 [
                     "total_earnings",
-                    "totalEarnings"
+                    "totalEarnings",
+                    "earnings",
+                    "total_profit"
                 ],
-                0
+                firstValue(
+                    data,
+                    [
+                        "total_earnings",
+                        "totalEarnings"
+                    ],
+                    0
+                )
             )
-        )
-    );
+        );
 
 
-    const referralTeam = numberValue(
-        firstValue(
-            overview,
-            [
-                "referral_team",
-                "referralTeam",
-                "team_count",
-                "teamCount",
-                "total_referrals",
-                "totalReferrals"
-            ],
+    const referralTeam =
+        numberValue(
             firstValue(
-                data,
+                overview,
                 [
                     "referral_team",
-                    "referralTeam"
+                    "referralTeam",
+                    "team_count",
+                    "teamCount",
+                    "total_referrals",
+                    "totalReferrals"
                 ],
-                0
+                firstValue(
+                    data,
+                    [
+                        "referral_team",
+                        "referralTeam"
+                    ],
+                    0
+                )
             )
-        )
-    );
+        );
 
 
-    const transactionCount = numberValue(
-        firstValue(
-            overview,
-            [
-                "transaction_count",
-                "transactionCount",
-                "transactions_count",
-                "transactionsCount"
-            ],
+    const transactionCount =
+        numberValue(
             firstValue(
-                data,
+                overview,
                 [
                     "transaction_count",
-                    "transactionCount"
+                    "transactionCount",
+                    "transactions_count",
+                    "transactionsCount"
                 ],
-                0
+                firstValue(
+                    data,
+                    [
+                        "transaction_count",
+                        "transactionCount"
+                    ],
+                    0
+                )
             )
-        )
-    );
+        );
 
 
     const investedElement =
         byId("totalInvested");
 
     if (investedElement) {
+
         investedElement.textContent =
             money(totalInvested);
     }
@@ -294,6 +369,7 @@ function updateOverview(data) {
         byId("totalEarnings");
 
     if (earningsElement) {
+
         earningsElement.textContent =
             money(totalEarnings);
     }
@@ -303,8 +379,11 @@ function updateOverview(data) {
         byId("referralTeam");
 
     if (referralElement) {
+
         referralElement.textContent =
-            referralTeam.toLocaleString("en-UG");
+            referralTeam.toLocaleString(
+                "en-UG"
+            );
     }
 
 
@@ -312,35 +391,134 @@ function updateOverview(data) {
         byId("transactionCount");
 
     if (transactionElement) {
+
         transactionElement.textContent =
-            transactionCount.toLocaleString("en-UG");
+            transactionCount.toLocaleString(
+                "en-UG"
+            );
     }
 }
 
 
 /* =========================================================
-   ADMIN ACCESS
-   ========================================================= */
+   ADMIN ROLE DETECTION
+========================================================= */
 
-function updateAdminVisibility(data) {
+/*
+   IMPORTANT:
 
-    const admin =
-        data?.admin ||
-        data?.data?.admin ||
+   The Admin Panel is now displayed ONLY when
+   the user's actual role is "admin".
+
+   We do NOT use:
+       authorized
+       success
+       logged_in
+       is_admin = true
+
+   by themselves to display the Admin Panel.
+
+   This prevents a normal account from seeing
+   the administrator controls merely because an
+   authorization flag was returned by the API.
+*/
+
+function isAdminRole(data, profile = null) {
+
+    const user =
+        getUserObject(data);
+
+    const profileUser =
+        profile?.user ||
+        profile?.profile ||
+        profile?.data ||
+        profile ||
         {};
 
 
-    const authorized =
-        Boolean(
-            data?.authorized ||
-            data?.is_admin ||
-            data?.isAdmin ||
-            admin?.authorized ||
-            admin?.is_admin ||
-            admin?.isAdmin ||
-            admin?.role === "admin"
-        );
+    const possibleRoles = [
 
+        user.role,
+
+        user.user_role,
+
+        user.account_type,
+
+        user.accountType,
+
+        user.userType,
+
+        user.type,
+
+        profileUser.role,
+
+        profileUser.user_role,
+
+        profileUser.account_type,
+
+        profileUser.accountType,
+
+        profileUser.userType,
+
+        profileUser.type,
+
+        data?.role,
+
+        data?.user_role,
+
+        data?.account_type,
+
+        data?.accountType,
+
+        data?.data?.role,
+
+        data?.data?.user_role,
+
+        data?.admin?.role
+    ];
+
+
+    /*
+       If we have an explicit role, use it.
+
+       Only "admin" is accepted.
+    */
+
+    for (const role of possibleRoles) {
+
+        if (
+            role !== undefined &&
+            role !== null &&
+            String(role).trim() !== ""
+        ) {
+
+            return (
+                normalizeRole(role) ===
+                "admin"
+            );
+        }
+    }
+
+
+    /*
+       No explicit role means:
+       NOT an administrator.
+
+       This is intentional.
+    */
+
+    return false;
+}
+
+
+/* =========================================================
+   UPDATE ADMIN VISIBILITY
+========================================================= */
+
+function updateAdminVisibility(
+    data,
+    profile = null
+) {
 
     const adminNav =
         byId("adminNavLink");
@@ -349,59 +527,192 @@ function updateAdminVisibility(data) {
         byId("adminActionCard");
 
 
+    const authorized =
+        isAdminRole(
+            data,
+            profile
+        );
+
+
+    /*
+       Admin only.
+    */
+
     if (authorized) {
 
         if (adminNav) {
-            adminNav.style.display = "";
+
+            adminNav.style.display =
+                "";
         }
 
         if (adminCard) {
-            adminCard.style.display = "";
+
+            adminCard.style.display =
+                "";
+        }
+
+    } else {
+
+        /*
+           Hide completely for normal users.
+        */
+
+        if (adminNav) {
+
+            adminNav.style.display =
+                "none";
+        }
+
+        if (adminCard) {
+
+            adminCard.style.display =
+                "none";
+        }
+    }
+
+
+    /*
+       Also protect the elements from being
+       temporarily visible while the API loads.
+    */
+
+    if (!authorized) {
+
+        if (adminNav) {
+
+            adminNav.hidden =
+                true;
+        }
+
+        if (adminCard) {
+
+            adminCard.hidden =
+                true;
         }
 
     } else {
 
         if (adminNav) {
-            adminNav.style.display = "none";
+
+            adminNav.hidden =
+                false;
         }
 
         if (adminCard) {
-            adminCard.style.display = "none";
+
+            adminCard.hidden =
+                false;
         }
     }
 }
 
 
 /* =========================================================
-   FETCH DASHBOARD
-   ========================================================= */
+   LOAD PROFILE
+========================================================= */
 
-async function loadDashboard() {
+async function loadProfile() {
 
     try {
 
-        const response = await fetch(
-            DASHBOARD_API + "?_=" + Date.now(),
-            {
-                method: "GET",
+        const response =
+            await fetch(
+                PROFILE_API +
+                "?_=" +
+                Date.now(),
+                {
+                    method: "GET",
 
-                credentials: "include",
+                    credentials:
+                        "include",
 
-                cache: "no-store",
+                    cache:
+                        "no-store",
 
-                headers: {
-                    "Accept": "application/json"
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
-            }
+            );
+
+
+        if (!response.ok) {
+
+            return null;
+        }
+
+
+        const data =
+            await response.json();
+
+
+        return data;
+
+    } catch (error) {
+
+        console.warn(
+            "Profile API unavailable:",
+            error
         );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   FETCH DASHBOARD
+========================================================= */
+
+async function loadDashboard() {
+
+    /*
+       Hide Admin Panel immediately while
+       authorization is being determined.
+
+       This prevents normal users from seeing
+       it even briefly during page loading.
+    */
+
+    hideAdminControls();
+
+
+    try {
+
+        const response =
+            await fetch(
+                DASHBOARD_API +
+                "?_=" +
+                Date.now(),
+                {
+                    method: "GET",
+
+                    credentials:
+                        "include",
+
+                    cache:
+                        "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
 
 
         /*
          * User is not logged in.
          */
-        if (response.status === 401) {
 
-            window.location.href = "login.html";
+        if (
+            response.status === 401
+        ) {
+
+            window.location.href =
+                "login.html";
 
             return;
         }
@@ -410,7 +721,12 @@ async function loadDashboard() {
         /*
          * User does not have permission.
          */
-        if (response.status === 403) {
+
+        if (
+            response.status === 403
+        ) {
+
+            hideAdminControls();
 
             return;
         }
@@ -419,7 +735,10 @@ async function loadDashboard() {
         /*
          * Other HTTP errors.
          */
+
         if (!response.ok) {
+
+            hideAdminControls();
 
             return;
         }
@@ -430,32 +749,41 @@ async function loadDashboard() {
 
 
         /*
-         * Backend may explicitly say authentication
-         * is required.
+         * Backend may explicitly say
+         * authentication is required.
          */
+
         if (
             data &&
             data.authenticated === false
         ) {
 
-            window.location.href = "login.html";
+            window.location.href =
+                "login.html";
 
             return;
         }
 
 
         /*
-         * Backend returned an unsuccessful response.
+         * Backend returned unsuccessful response.
          */
+
         if (
             data &&
             data.success === false &&
             data.authenticated !== true
         ) {
 
+            hideAdminControls();
+
             return;
         }
 
+
+        /*
+         * Update normal dashboard.
+         */
 
         updateUserDisplay(data);
 
@@ -463,28 +791,88 @@ async function loadDashboard() {
 
         updateOverview(data);
 
-        updateAdminVisibility(data);
+
+        /*
+         * Load profile separately so that
+         * the actual account role is checked.
+         */
+
+        const profile =
+            await loadProfile();
+
+
+        /*
+         * Admin Panel is shown ONLY if
+         * actual role === admin.
+         */
+
+        updateAdminVisibility(
+            data,
+            profile
+        );
+
 
     } catch (error) {
 
         /*
-         * Do NOT display the old diagnostic message.
-         *
-         * The dashboard remains visually usable while
-         * the backend connection is unavailable.
+         * Keep dashboard usable.
+
+         * Never show the old diagnostic box.
          */
 
         console.error(
             "Crown Cash dashboard API error:",
             error
         );
+
+
+        /*
+         * If API fails, hide admin controls
+         * for security.
+         */
+
+        hideAdminControls();
+    }
+}
+
+
+/* =========================================================
+   HIDE ADMIN CONTROLS
+========================================================= */
+
+function hideAdminControls() {
+
+    const adminNav =
+        byId("adminNavLink");
+
+    const adminCard =
+        byId("adminActionCard");
+
+
+    if (adminNav) {
+
+        adminNav.style.display =
+            "none";
+
+        adminNav.hidden =
+            true;
+    }
+
+
+    if (adminCard) {
+
+        adminCard.style.display =
+            "none";
+
+        adminCard.hidden =
+            true;
     }
 }
 
 
 /* =========================================================
    CALCULATOR
-   ========================================================= */
+========================================================= */
 
 function calculateReturns() {
 
@@ -507,6 +895,7 @@ function calculateReturns() {
         !monthlyReturn ||
         !totalAfter30
     ) {
+
         return;
     }
 
@@ -515,12 +904,16 @@ function calculateReturns() {
         Number(input.value);
 
 
-    if (!Number.isFinite(amount)) {
+    if (
+        !Number.isFinite(amount)
+    ) {
+
         amount = 0;
     }
 
 
     if (amount < 0) {
+
         amount = 0;
     }
 
@@ -548,7 +941,7 @@ function calculateReturns() {
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
 async function logout() {
 
@@ -559,16 +952,22 @@ async function logout() {
             {
                 method: "POST",
 
-                credentials: "include",
+                credentials:
+                    "include",
 
-                cache: "no-store",
+                cache:
+                    "no-store",
 
                 headers: {
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
+                    "Accept":
+                        "application/json",
+
+                    "Content-Type":
+                        "application/json"
                 },
 
-                body: JSON.stringify({})
+                body:
+                    JSON.stringify({})
             }
         );
 
@@ -589,7 +988,7 @@ async function logout() {
 
 /* =========================================================
    MOBILE MENU
-   ========================================================= */
+========================================================= */
 
 function setupMobileMenu() {
 
@@ -597,9 +996,16 @@ function setupMobileMenu() {
         byId("menuToggle");
 
     const sidebar =
-        document.querySelector(".sidebar");
+        document.querySelector(
+            ".sidebar"
+        );
 
-    if (!menuToggle || !sidebar) {
+
+    if (
+        !menuToggle ||
+        !sidebar
+    ) {
+
         return;
     }
 
@@ -640,7 +1046,7 @@ function setupMobileMenu() {
 
 /* =========================================================
    YEAR
-   ========================================================= */
+========================================================= */
 
 function setCurrentYear() {
 
@@ -657,11 +1063,20 @@ function setCurrentYear() {
 
 /* =========================================================
    EVENTS
-   ========================================================= */
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     function () {
+
+        /*
+         * SECURITY:
+         * Hide administrator controls before
+         * any API request finishes.
+         */
+
+        hideAdminControls();
+
 
         const investmentInput =
             byId("investmentAmount");
@@ -704,6 +1119,7 @@ document.addEventListener(
         /*
          * Load real account data.
          */
+
         loadDashboard();
     }
 );

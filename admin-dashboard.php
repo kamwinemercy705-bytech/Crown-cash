@@ -1,80 +1,34 @@
 <?php
+
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH - ADMIN DASHBOARD API
+|--------------------------------------------------------------------------
+*/
+
 declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Crown Cash - Admin Dashboard API
-|--------------------------------------------------------------------------
-| Endpoint:
-|   GET /admin-dashboard.php
-|
-| Purpose:
-|   Returns administrator dashboard statistics, pending activity,
-|   recent transactions and recent users.
-|--------------------------------------------------------------------------
-*/
-
-header('Content-Type: application/json; charset=utf-8');
-
-$allowedOrigin = 'https://crown-cash.vercel.app';
-
-if (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] === $allowedOrigin) {
-    header("Access-Control-Allow-Origin: {$allowedOrigin}");
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    header('Access-Control-Allow-Methods: GET, OPTIONS');
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Method not allowed.'
-    ]);
-    exit;
-}
-
 
 /*
 |--------------------------------------------------------------------------
-| Session
-|--------------------------------------------------------------------------
-*/
-
-$secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => '',
-    'secure' => $secure,
-    'httponly' => true,
-    'samesite' => 'None'
-]);
-
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| Configuration
+| LOAD CONFIGURATION FIRST
 |--------------------------------------------------------------------------
 */
 
 try {
+
     require_once __DIR__ . '/config.php';
+
 } catch (Throwable $e) {
+
+    header('Content-Type: application/json; charset=utf-8');
+
     http_response_code(500);
 
     echo json_encode([
         'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
         'message' => 'Server configuration could not be loaded.'
     ]);
 
@@ -84,23 +38,168 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| Helpers
+| HEADERS
 |--------------------------------------------------------------------------
 */
 
-function adminDashboardResponse(
+header('Content-Type: application/json; charset=utf-8');
+
+$allowedOrigins = [
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
+];
+
+$requestOrigin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (
+    $requestOrigin !== '' &&
+    in_array(
+        $requestOrigin,
+        $allowedOrigins,
+        true
+    )
+) {
+
+    header(
+        'Access-Control-Allow-Origin: ' .
+        $requestOrigin
+    );
+
+    header(
+        'Access-Control-Allow-Credentials: true'
+    );
+
+    header(
+        'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With'
+    );
+
+    header(
+        'Access-Control-Allow-Methods: GET, OPTIONS'
+    );
+
+    header('Vary: Origin');
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| OPTIONS
+|--------------------------------------------------------------------------
+*/
+
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? '') ===
+    'OPTIONS'
+) {
+
+    http_response_code(204);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| GET ONLY
+|--------------------------------------------------------------------------
+*/
+
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? '') !==
+    'GET'
+) {
+
+    http_response_code(405);
+
+    echo json_encode([
+        'success' => false,
+        'message' => 'Method not allowed.'
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SESSION
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| Do NOT call session_start() with the default PHPSESSID.
+|
+| config.php is responsible for the Crown Cash session.
+|--------------------------------------------------------------------------
+*/
+
+try {
+
+    if (
+        function_exists('startSecureSession') &&
+        session_status() !== PHP_SESSION_ACTIVE
+    ) {
+
+        startSecureSession();
+
+    } elseif (
+        session_status() !== PHP_SESSION_ACTIVE
+    ) {
+
+        session_name(
+            'CROWN_CASH_SESSION'
+        );
+
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'domain' => '',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'None'
+        ]);
+
+        session_start();
+    }
+
+} catch (Throwable $e) {
+
+    http_response_code(500);
+
+    echo json_encode([
+        'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
+        'message' => 'Unable to initialize session.'
+    ]);
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSE
+|--------------------------------------------------------------------------
+*/
+
+function crownCashDashboardResponse(
     bool $success,
     string $message,
     array $extra = [],
     int $status = 200
 ): void {
+
     http_response_code($status);
 
     echo json_encode(
-        array_merge([
-            'success' => $success,
-            'message' => $message
-        ], $extra),
+        array_merge(
+            [
+                'success' => $success,
+                'message' => $message
+            ],
+            $extra
+        ),
         JSON_UNESCAPED_SLASHES
     );
 
@@ -108,165 +207,31 @@ function adminDashboardResponse(
 }
 
 
-function adminDashboardString(mixed $value, string $default = ''): string
-{
-    if ($value === null) {
-        return $default;
-    }
-
-    if (is_string($value)) {
-        return trim($value);
-    }
-
-    if (is_numeric($value)) {
-        return (string)$value;
-    }
-
-    return $default;
-}
-
-
-function adminDashboardNumber(mixed $value): float
-{
-    if ($value === null) {
-        return 0.0;
-    }
-
-    if (is_int($value) || is_float($value)) {
-        return (float)$value;
-    }
-
-    if (is_string($value)) {
-        $value = trim($value);
-
-        if ($value === '') {
-            return 0.0;
-        }
-
-        $value = str_replace(',', '', $value);
-
-        return is_numeric($value) ? (float)$value : 0.0;
-    }
-
-    /*
-     * MongoDB Decimal128 / BSON numeric objects
-     */
-    if (is_object($value)) {
-        try {
-            if (method_exists($value, '__toString')) {
-                $stringValue = (string)$value;
-
-                return is_numeric($stringValue)
-                    ? (float)$stringValue
-                    : 0.0;
-            }
-        } catch (Throwable $e) {
-            return 0.0;
-        }
-    }
-
-    return 0.0;
-}
-
-
-function adminDashboardDate(mixed $value): ?DateTimeImmutable
-{
-    if ($value instanceof MongoDB\BSON\UTCDateTime) {
-        try {
-            return $value
-                ->toDateTime()
-                ->setTimezone(new DateTimeZone('UTC'));
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    if ($value instanceof DateTimeInterface) {
-        try {
-            return new DateTimeImmutable(
-                $value->format('c')
-            );
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    if (is_string($value) && trim($value) !== '') {
-        try {
-            return new DateTimeImmutable($value);
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    return null;
-}
-
-
-function adminDashboardDateFilter(
-    mixed $value,
-    DateTimeImmutable $start,
-    DateTimeImmutable $end
-): bool {
-    $date = adminDashboardDate($value);
-
-    if (!$date) {
-        return false;
-    }
-
-    return $date >= $start && $date <= $end;
-}
-
-
-function adminDashboardId(mixed $id): string
-{
-    if ($id instanceof MongoDB\BSON\ObjectId) {
-        return (string)$id;
-    }
-
-    if ($id === null) {
-        return '';
-    }
-
-    return trim((string)$id);
-}
-
-
-function adminDashboardDocumentToArray(mixed $document): array
-{
-    if (is_array($document)) {
-        return $document;
-    }
-
-    if (is_object($document)) {
-        return (array)$document;
-    }
-
-    return [];
-}
-
-
-function adminDashboardGetField(
-    array $document,
-    string $field,
-    mixed $default = null
-): mixed {
-    if (array_key_exists($field, $document)) {
-        return $document[$field];
-    }
-
-    return $default;
-}
-
-
 /*
 |--------------------------------------------------------------------------
-| Authentication
+| AUTHENTICATION
 |--------------------------------------------------------------------------
 */
 
-if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
-    adminDashboardResponse(
+$loggedIn =
+    isset($_SESSION['logged_in']) &&
+    $_SESSION['logged_in'] === true;
+
+$sessionUserId =
+    trim(
+        (string)(
+            $_SESSION['user_id']
+            ?? ''
+        )
+    );
+
+
+if (
+    !$loggedIn ||
+    $sessionUserId === ''
+) {
+
+    crownCashDashboardResponse(
         false,
         'Authentication required.',
         [
@@ -280,13 +245,15 @@ if (empty($_SESSION['logged_in']) || empty($_SESSION['user_id'])) {
 
 /*
 |--------------------------------------------------------------------------
-| Collections
+| DATABASE COLLECTIONS
 |--------------------------------------------------------------------------
 */
 
 try {
+
     if (!isset($users)) {
-        adminDashboardResponse(
+
+        crownCashDashboardResponse(
             false,
             'Users collection is unavailable.',
             [],
@@ -295,32 +262,55 @@ try {
     }
 
     if (!isset($deposits)) {
-        $deposits = $db->selectCollection('deposits');
+        $deposits =
+            $db->selectCollection(
+                'deposits'
+            );
     }
 
     if (!isset($withdrawals)) {
-        $withdrawals = $db->selectCollection('withdrawals');
+        $withdrawals =
+            $db->selectCollection(
+                'withdrawals'
+            );
     }
 
     if (!isset($investments)) {
-        $investments = $db->selectCollection('investments');
+        $investments =
+            $db->selectCollection(
+                'investments'
+            );
     }
 
     if (!isset($referrals)) {
-        $referrals = $db->selectCollection('referrals');
+        $referrals =
+            $db->selectCollection(
+                'referrals'
+            );
     }
 
     if (!isset($transactions)) {
-        $transactions = $db->selectCollection('transactions');
+        $transactions =
+            $db->selectCollection(
+                'transactions'
+            );
     }
 
     try {
-        $supportTickets = $db->selectCollection('support_tickets');
+
+        $supportTickets =
+            $db->selectCollection(
+                'support_tickets'
+            );
+
     } catch (Throwable $e) {
+
         $supportTickets = null;
     }
+
 } catch (Throwable $e) {
-    adminDashboardResponse(
+
+    crownCashDashboardResponse(
         false,
         'Database collections could not be loaded.',
         [],
@@ -331,63 +321,112 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| Find current administrator
+| FIND CURRENT ADMIN
 |--------------------------------------------------------------------------
 */
 
 $currentUser = null;
 
+
+/*
+|--------------------------------------------------------------------------
+| BY OBJECT ID
+|--------------------------------------------------------------------------
+*/
+
 try {
-    $sessionUserId = trim((string)$_SESSION['user_id']);
 
-    /*
-     * First try Mongo ObjectId.
-     */
     if (
-        $sessionUserId !== '' &&
-        preg_match('/^[a-f0-9]{24}$/i', $sessionUserId)
+        preg_match(
+            '/^[a-f0-9]{24}$/i',
+            $sessionUserId
+        )
     ) {
-        try {
-            $currentUser = $users->findOne([
-                '_id' => new MongoDB\BSON\ObjectId($sessionUserId)
+
+        $currentUser =
+            $users->findOne([
+                '_id' =>
+                    new MongoDB\BSON\ObjectId(
+                        $sessionUserId
+                    )
             ]);
-        } catch (Throwable $e) {
-            $currentUser = null;
-        }
     }
 
-    /*
-     * Try string ID.
-     */
-    if (!$currentUser && $sessionUserId !== '') {
-        try {
-            $currentUser = $users->findOne([
-                'id' => $sessionUserId
-            ]);
-        } catch (Throwable $e) {
-            $currentUser = null;
-        }
-    }
-
-    /*
-     * Fall back to session email.
-     */
-    if (!$currentUser && !empty($_SESSION['email'])) {
-        try {
-            $currentUser = $users->findOne([
-                'email' => strtolower(trim((string)$_SESSION['email']))
-            ]);
-        } catch (Throwable $e) {
-            $currentUser = null;
-        }
-    }
 } catch (Throwable $e) {
+
     $currentUser = null;
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| BY STRING ID
+|--------------------------------------------------------------------------
+*/
+
 if (!$currentUser) {
-    adminDashboardResponse(
+
+    try {
+
+        $currentUser =
+            $users->findOne([
+                'id' =>
+                    $sessionUserId
+            ]);
+
+    } catch (Throwable $e) {
+
+        $currentUser = null;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| BY EMAIL
+|--------------------------------------------------------------------------
+*/
+
+if (!$currentUser) {
+
+    $sessionEmail =
+        strtolower(
+            trim(
+                (string)(
+                    $_SESSION['user_email']
+                    ?? $_SESSION['email']
+                    ?? ''
+                )
+            )
+        );
+
+    if ($sessionEmail !== '') {
+
+        try {
+
+            $currentUser =
+                $users->findOne([
+                    'email' =>
+                        $sessionEmail
+                ]);
+
+        } catch (Throwable $e) {
+
+            $currentUser = null;
+        }
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USER NOT FOUND
+|--------------------------------------------------------------------------
+*/
+
+if (!$currentUser) {
+
+    crownCashDashboardResponse(
         false,
         'Administrator account could not be found.',
         [
@@ -401,64 +440,125 @@ if (!$currentUser) {
 
 /*
 |--------------------------------------------------------------------------
-| Convert user
+| USER ARRAY
 |--------------------------------------------------------------------------
 */
 
-$currentUserArray = adminDashboardDocumentToArray($currentUser);
-
-$currentUserId = adminDashboardId(
-    adminDashboardGetField($currentUserArray, '_id')
-);
-
-if ($currentUserId === '') {
-    $currentUserId = adminDashboardString(
-        adminDashboardGetField($currentUserArray, 'id')
-    );
-}
-
-$currentUserEmail = strtolower(
-    adminDashboardString(
-        adminDashboardGetField($currentUserArray, 'email')
-    )
-);
-
-$currentUserRole = strtolower(
-    adminDashboardString(
-        adminDashboardGetField($currentUserArray, 'role')
-    )
-);
-
-$currentUserAccountType = strtolower(
-    adminDashboardString(
-        adminDashboardGetField($currentUserArray, 'account_type')
-    )
-);
-
-$currentUserStatus = strtolower(
-    adminDashboardString(
-        adminDashboardGetField($currentUserArray, 'status'),
-        'active'
-    )
-);
+$user =
+    is_array($currentUser)
+        ? $currentUser
+        : (array)$currentUser;
 
 
 /*
 |--------------------------------------------------------------------------
-| Account status
+| ADMIN ID
 |--------------------------------------------------------------------------
 */
 
-$blockedStatuses = [
-    'blocked',
-    'suspended',
-    'disabled',
-    'banned',
-    'inactive'
-];
+$currentUserId = '';
 
-if (in_array($currentUserStatus, $blockedStatuses, true)) {
-    adminDashboardResponse(
+if (
+    isset($user['_id'])
+) {
+
+    if (
+        $user['_id']
+        instanceof MongoDB\BSON\ObjectId
+    ) {
+
+        $currentUserId =
+            (string)$user['_id'];
+
+    } else {
+
+        $currentUserId =
+            trim(
+                (string)$user['_id']
+            );
+    }
+}
+
+if ($currentUserId === '') {
+
+    $currentUserId =
+        trim(
+            (string)(
+                $user['id']
+                ?? $sessionUserId
+            )
+        );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USER DETAILS
+|--------------------------------------------------------------------------
+*/
+
+$email =
+    strtolower(
+        trim(
+            (string)(
+                $user['email']
+                ?? ''
+            )
+        )
+    );
+
+$role =
+    strtolower(
+        trim(
+            (string)(
+                $user['role']
+                ?? ''
+            )
+        )
+    );
+
+$accountType =
+    strtolower(
+        trim(
+            (string)(
+                $user['account_type']
+                ?? ''
+            )
+        )
+    );
+
+$status =
+    strtolower(
+        trim(
+            (string)(
+                $user['status']
+                ?? 'active'
+            )
+        )
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| STATUS CHECK
+|--------------------------------------------------------------------------
+*/
+
+if (
+    in_array(
+        $status,
+        [
+            'blocked',
+            'suspended',
+            'disabled',
+            'banned',
+            'inactive'
+        ],
+        true
+    )
+) {
+
+    crownCashDashboardResponse(
         false,
         'Administrator account is not active.',
         [
@@ -472,23 +572,33 @@ if (in_array($currentUserStatus, $blockedStatuses, true)) {
 
 /*
 |--------------------------------------------------------------------------
-| Administrator role
+| ADMIN CHECK
 |--------------------------------------------------------------------------
 */
 
-$isAdministrator =
-    in_array($currentUserRole, [
-        'admin',
-        'administrator'
-    ], true)
+$isAdmin =
+    in_array(
+        $role,
+        [
+            'admin',
+            'administrator'
+        ],
+        true
+    )
     ||
-    in_array($currentUserAccountType, [
-        'admin',
-        'administrator'
-    ], true);
+    in_array(
+        $accountType,
+        [
+            'admin',
+            'administrator'
+        ],
+        true
+    );
 
-if (!$isAdministrator) {
-    adminDashboardResponse(
+
+if (!$isAdmin) {
+
+    crownCashDashboardResponse(
         false,
         'Administrator privileges are required.',
         [
@@ -502,34 +612,56 @@ if (!$isAdministrator) {
 
 /*
 |--------------------------------------------------------------------------
-| Optional explicit administrator identity restriction
+| ENVIRONMENT ADMIN CHECK
 |--------------------------------------------------------------------------
 */
 
-$configuredAdminId = trim(
-    (string)(getenv('ADMIN_USER_ID') ?: '')
-);
+$configuredAdminId =
+    trim(
+        (string)(
+            getenv('ADMIN_USER_ID')
+            ?: ''
+        )
+    );
 
-$configuredAdminEmail = strtolower(
-    trim((string)(getenv('ADMIN_EMAIL') ?: ''))
-);
+$configuredAdminEmail =
+    strtolower(
+        trim(
+            (string)(
+                getenv('ADMIN_EMAIL')
+                ?: ''
+            )
+        )
+    );
 
-if ($configuredAdminId !== '' || $configuredAdminEmail !== '') {
 
-    $idMatches = false;
-    $emailMatches = false;
+if (
+    $configuredAdminId !== '' ||
+    $configuredAdminEmail !== ''
+) {
 
-    if ($configuredAdminId !== '' && $currentUserId !== '') {
-        $idMatches = strtolower($configuredAdminId) ===
-            strtolower($currentUserId);
-    }
+    $idMatches =
+        $configuredAdminId !== '' &&
+        strtolower(
+            $configuredAdminId
+        ) === strtolower(
+            $currentUserId
+        );
 
-    if ($configuredAdminEmail !== '' && $currentUserEmail !== '') {
-        $emailMatches = $configuredAdminEmail === $currentUserEmail;
-    }
+    $emailMatches =
+        $configuredAdminEmail !== '' &&
+        strtolower(
+            $configuredAdminEmail
+        ) === strtolower(
+            $email
+        );
 
-    if (!$idMatches && !$emailMatches) {
-        adminDashboardResponse(
+    if (
+        !$idMatches &&
+        !$emailMatches
+    ) {
+
+        crownCashDashboardResponse(
             false,
             'This administrator account is not authorized for the dashboard.',
             [
@@ -544,338 +676,603 @@ if ($configuredAdminId !== '' || $configuredAdminEmail !== '') {
 
 /*
 |--------------------------------------------------------------------------
-| Collections
+| NUMBER HELPER
+|--------------------------------------------------------------------------
+*/
+
+function crownCashNumber(
+    mixed $value
+): float {
+
+    if (
+        $value === null
+    ) {
+        return 0.0;
+    }
+
+    if (
+        is_int($value) ||
+        is_float($value)
+    ) {
+        return (float)$value;
+    }
+
+    if (
+        is_string($value)
+    ) {
+
+        $value =
+            str_replace(
+                ',',
+                '',
+                trim($value)
+            );
+
+        return is_numeric($value)
+            ? (float)$value
+            : 0.0;
+    }
+
+    if (
+        is_object($value) &&
+        method_exists(
+            $value,
+            '__toString'
+        )
+    ) {
+
+        try {
+
+            $value =
+                (string)$value;
+
+            return is_numeric($value)
+                ? (float)$value
+                : 0.0;
+
+        } catch (Throwable $e) {
+
+            return 0.0;
+        }
+    }
+
+    return 0.0;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DATE HELPER
+|--------------------------------------------------------------------------
+*/
+
+function crownCashDate(
+    mixed $value
+): ?DateTimeImmutable {
+
+    if (
+        $value instanceof
+        MongoDB\BSON\UTCDateTime
+    ) {
+
+        try {
+
+            return $value
+                ->toDateTime()
+                ->setTimezone(
+                    new DateTimeZone('UTC')
+                );
+
+        } catch (Throwable $e) {
+
+            return null;
+        }
+    }
+
+    if (
+        $value instanceof
+        DateTimeInterface
+    ) {
+
+        try {
+
+            return new DateTimeImmutable(
+                $value->format('c')
+            );
+
+        } catch (Throwable $e) {
+
+            return null;
+        }
+    }
+
+    if (
+        is_string($value) &&
+        trim($value) !== ''
+    ) {
+
+        try {
+
+            return new DateTimeImmutable(
+                $value
+            );
+
+        } catch (Throwable $e) {
+
+            return null;
+        }
+    }
+
+    return null;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USER NAME
+|--------------------------------------------------------------------------
+*/
+
+$firstName =
+    trim(
+        (string)(
+            $user['first_name']
+            ?? $user['firstname']
+            ?? $user['firstName']
+            ?? ''
+        )
+    );
+
+$lastName =
+    trim(
+        (string)(
+            $user['last_name']
+            ?? $user['lastname']
+            ?? $user['lastName']
+            ?? ''
+        )
+    );
+
+$adminName =
+    trim(
+        (string)(
+            $user['full_name']
+            ?? $user['fullName']
+            ?? $user['name']
+            ?? ''
+        )
+    );
+
+if ($adminName === '') {
+
+    $adminName =
+        trim(
+            $firstName .
+            ' ' .
+            $lastName
+        );
+}
+
+if ($adminName === '') {
+
+    $adminName =
+        'Administrator';
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USER STATISTICS
+|--------------------------------------------------------------------------
+*/
+
+$totalUsers = 0;
+$activeUsers = 0;
+$newAccounts = 0;
+
+try {
+
+    $totalUsers =
+        $users->countDocuments([]);
+
+} catch (Throwable $e) {}
+
+
+try {
+
+    $activeUsers =
+        $users->countDocuments([
+            'status' => 'active'
+        ]);
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| NEW ACCOUNTS - LAST 24 HOURS
 |--------------------------------------------------------------------------
 */
 
 try {
 
-    /*
-     * Users
-     */
-    $totalUsers = $users->countDocuments([]);
+    $now =
+        new DateTimeImmutable(
+            'now',
+            new DateTimeZone('UTC')
+        );
 
-    $activeUsers = $users->countDocuments([
-        'status' => 'active'
-    ]);
+    $last24Hours =
+        $now->sub(
+            new DateInterval('PT24H')
+        );
 
+    $newAccounts =
+        $users->countDocuments([
+            'created_at' => [
+                '$gte' =>
+                    new MongoDB\BSON\UTCDateTime(
+                        $last24Hours
+                            ->getTimestamp()
+                        * 1000
+                    ),
 
-    /*
-     * New accounts
-     *
-     * Definition:
-     * accounts created during the last 24 hours.
-     */
-    $now = new DateTimeImmutable(
-        'now',
-        new DateTimeZone('UTC')
-    );
+                '$lte' =>
+                    new MongoDB\BSON\UTCDateTime(
+                        $now
+                            ->getTimestamp()
+                        * 1000
+                    )
+            ]
+        ]);
 
-    $last24Hours = $now->sub(
-        new DateInterval('PT24H')
-    );
+} catch (Throwable $e) {
 
     $newAccounts = 0;
-
-    try {
-        $newAccounts = $users->countDocuments([
-            'created_at' => [
-                '$gte' => new MongoDB\BSON\UTCDateTime(
-                    $last24Hours->getTimestamp() * 1000
-                ),
-                '$lte' => new MongoDB\BSON\UTCDateTime(
-                    $now->getTimestamp() * 1000
-                )
-            ]
-        ]);
-    } catch (Throwable $e) {
-        /*
-         * Fallback for projects storing dates as strings.
-         */
-        try {
-            $newAccounts = $users->countDocuments([
-                'created_at' => [
-                    '$gte' => $last24Hours->format('c'),
-                    '$lte' => $now->format('c')
-                ]
-            ]);
-        } catch (Throwable $ignored) {
-            $newAccounts = 0;
-        }
-    }
+}
 
 
-    /*
-     * Deposits
-     *
-     * Total deposits = approved/verified/credited deposits.
-     * Pending and rejected amounts are kept separately.
-     */
-    $approvedDepositStatuses = [
-        'approved',
-        'verified',
-        'credited',
-        'completed'
-    ];
+/*
+|--------------------------------------------------------------------------
+| DEPOSITS
+|--------------------------------------------------------------------------
+*/
 
-    $pendingDepositStatuses = [
-        'pending',
-        'submitted',
-        'processing'
-    ];
+$totalDeposits = 0.0;
+$pendingDeposits = 0.0;
+$rejectedDeposits = 0.0;
+$pendingDepositCount = 0;
 
-    $rejectedDepositStatuses = [
-        'rejected',
-        'declined',
-        'cancelled',
-        'canceled'
-    ];
 
-    $totalDeposits = 0.0;
-    $pendingDeposits = 0.0;
-    $rejectedDeposits = 0.0;
+try {
 
-    try {
-        $cursor = $deposits->find([]);
+    foreach (
+        $deposits->find([])
+        as $document
+    ) {
 
-        foreach ($cursor as $document) {
-            $doc = adminDashboardDocumentToArray($document);
+        $doc =
+            is_array($document)
+                ? $document
+                : (array)$document;
 
-            $amount = adminDashboardNumber(
-                adminDashboardGetField($doc, 'amount', 0)
+        $amount =
+            crownCashNumber(
+                $doc['amount'] ?? 0
             );
 
-            $status = strtolower(
-                adminDashboardString(
-                    adminDashboardGetField($doc, 'status')
-                )
-            );
-
-            $verified = (bool)adminDashboardGetField(
-                $doc,
-                'verified',
-                false
-            );
-
-            if (
-                in_array($status, $approvedDepositStatuses, true)
-                ||
-                $verified
-            ) {
-                $totalDeposits += $amount;
-            } elseif (
-                in_array($status, $pendingDepositStatuses, true)
-            ) {
-                $pendingDeposits += $amount;
-            } elseif (
-                in_array($status, $rejectedDepositStatuses, true)
-            ) {
-                $rejectedDeposits += $amount;
-            }
-        }
-    } catch (Throwable $e) {
-        $totalDeposits = 0.0;
-        $pendingDeposits = 0.0;
-        $rejectedDeposits = 0.0;
-    }
-
-
-    $pendingDepositCount = 0;
-
-    try {
-        $pendingDepositCount = $deposits->countDocuments([
-            'status' => [
-                '$in' => $pendingDepositStatuses
-            ]
-        ]);
-    } catch (Throwable $e) {
-        $pendingDepositCount = 0;
-    }
-
-
-    /*
-     * Withdrawals
-     *
-     * Total withdrawals = approved/completed withdrawals.
-     * Pending withdrawals are displayed separately.
-     */
-    $approvedWithdrawalStatuses = [
-        'approved',
-        'completed',
-        'paid',
-        'processed'
-    ];
-
-    $pendingWithdrawalStatuses = [
-        'pending',
-        'processing',
-        'submitted'
-    ];
-
-    $rejectedWithdrawalStatuses = [
-        'rejected',
-        'declined',
-        'cancelled',
-        'canceled'
-    ];
-
-    $totalWithdrawals = 0.0;
-    $pendingWithdrawals = 0.0;
-
-    try {
-        $cursor = $withdrawals->find([]);
-
-        foreach ($cursor as $document) {
-            $doc = adminDashboardDocumentToArray($document);
-
-            $amount = adminDashboardNumber(
-                adminDashboardGetField($doc, 'amount', 0)
-            );
-
-            $status = strtolower(
-                adminDashboardString(
-                    adminDashboardGetField($doc, 'status')
-                )
-            );
-
-            if (
-                in_array($status, $approvedWithdrawalStatuses, true)
-            ) {
-                $totalWithdrawals += $amount;
-            } elseif (
-                in_array($status, $pendingWithdrawalStatuses, true)
-            ) {
-                $pendingWithdrawals += $amount;
-            }
-        }
-    } catch (Throwable $e) {
-        $totalWithdrawals = 0.0;
-        $pendingWithdrawals = 0.0;
-    }
-
-
-    $pendingWithdrawalCount = 0;
-
-    try {
-        $pendingWithdrawalCount = $withdrawals->countDocuments([
-            'status' => [
-                '$in' => $pendingWithdrawalStatuses
-            ]
-        ]);
-    } catch (Throwable $e) {
-        $pendingWithdrawalCount = 0;
-    }
-
-
-    /*
-     * Investments
-     */
-    $approvedInvestmentStatuses = [
-        'active',
-        'approved',
-        'running',
-        'completed'
-    ];
-
-    $pendingInvestmentStatuses = [
-        'pending',
-        'submitted',
-        'processing'
-    ];
-
-    $rejectedInvestmentStatuses = [
-        'rejected',
-        'declined',
-        'cancelled',
-        'canceled'
-    ];
-
-    $totalInvestments = 0.0;
-    $activeInvestmentCount = 0;
-    $pendingInvestmentCount = 0;
-    $pendingInvestments = 0.0;
-
-    try {
-        $cursor = $investments->find([]);
-
-        foreach ($cursor as $document) {
-            $doc = adminDashboardDocumentToArray($document);
-
-            $amount = adminDashboardNumber(
-                adminDashboardGetField(
-                    $doc,
-                    'amount',
-                    adminDashboardGetField(
-                        $doc,
-                        'principal',
-                        0
+        $depositStatus =
+            strtolower(
+                trim(
+                    (string)(
+                        $doc['status']
+                        ?? ''
                     )
                 )
             );
 
-            $status = strtolower(
-                adminDashboardString(
-                    adminDashboardGetField($doc, 'status')
+        $verified =
+            !empty(
+                $doc['verified']
+            );
+
+        if (
+            $verified ||
+            in_array(
+                $depositStatus,
+                [
+                    'approved',
+                    'verified',
+                    'credited',
+                    'completed'
+                ],
+                true
+            )
+        ) {
+
+            $totalDeposits +=
+                $amount;
+
+        } elseif (
+            in_array(
+                $depositStatus,
+                [
+                    'pending',
+                    'submitted',
+                    'processing'
+                ],
+                true
+            )
+        ) {
+
+            $pendingDeposits +=
+                $amount;
+
+        } elseif (
+            in_array(
+                $depositStatus,
+                [
+                    'rejected',
+                    'declined',
+                    'cancelled',
+                    'canceled'
+                ],
+                true
+            )
+        ) {
+
+            $rejectedDeposits +=
+                $amount;
+        }
+    }
+
+} catch (Throwable $e) {}
+
+
+try {
+
+    $pendingDepositCount =
+        $deposits->countDocuments([
+            'status' => [
+                '$in' => [
+                    'pending',
+                    'submitted',
+                    'processing'
+                ]
+            ]
+        ]);
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| WITHDRAWALS
+|--------------------------------------------------------------------------
+*/
+
+$totalWithdrawals = 0.0;
+$pendingWithdrawals = 0.0;
+$pendingWithdrawalCount = 0;
+
+
+try {
+
+    foreach (
+        $withdrawals->find([])
+        as $document
+    ) {
+
+        $doc =
+            is_array($document)
+                ? $document
+                : (array)$document;
+
+        $amount =
+            crownCashNumber(
+                $doc['amount'] ?? 0
+            );
+
+        $withdrawalStatus =
+            strtolower(
+                trim(
+                    (string)(
+                        $doc['status']
+                        ?? ''
+                    )
                 )
             );
 
-            if (
-                in_array($status, $approvedInvestmentStatuses, true)
-            ) {
-                $totalInvestments += $amount;
-            }
+        if (
+            in_array(
+                $withdrawalStatus,
+                [
+                    'approved',
+                    'completed',
+                    'paid',
+                    'processed'
+                ],
+                true
+            )
+        ) {
 
-            if ($status === 'active') {
-                $activeInvestmentCount++;
-            }
+            $totalWithdrawals +=
+                $amount;
 
-            if (
-                in_array($status, $pendingInvestmentStatuses, true)
-            ) {
-                $pendingInvestmentCount++;
-                $pendingInvestments += $amount;
-            }
+        } elseif (
+            in_array(
+                $withdrawalStatus,
+                [
+                    'pending',
+                    'processing',
+                    'submitted'
+                ],
+                true
+            )
+        ) {
+
+            $pendingWithdrawals +=
+                $amount;
         }
-    } catch (Throwable $e) {
-        $totalInvestments = 0.0;
-        $activeInvestmentCount = 0;
-        $pendingInvestmentCount = 0;
-        $pendingInvestments = 0.0;
     }
 
+} catch (Throwable $e) {}
 
-    /*
-     * Referrals
-     */
-    $totalReferrals = 0;
+
+try {
+
+    $pendingWithdrawalCount =
+        $withdrawals->countDocuments([
+            'status' => [
+                '$in' => [
+                    'pending',
+                    'processing',
+                    'submitted'
+                ]
+            ]
+        ]);
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| INVESTMENTS
+|--------------------------------------------------------------------------
+*/
+
+$totalInvestments = 0.0;
+$activeInvestmentCount = 0;
+$pendingInvestmentCount = 0;
+$pendingInvestments = 0.0;
+
+
+try {
+
+    foreach (
+        $investments->find([])
+        as $document
+    ) {
+
+        $doc =
+            is_array($document)
+                ? $document
+                : (array)$document;
+
+        $amount =
+            crownCashNumber(
+                $doc['amount']
+                ??
+                $doc['principal']
+                ??
+                0
+            );
+
+        $investmentStatus =
+            strtolower(
+                trim(
+                    (string)(
+                        $doc['status']
+                        ?? ''
+                    )
+                )
+            );
+
+        if (
+            in_array(
+                $investmentStatus,
+                [
+                    'active',
+                    'approved',
+                    'running',
+                    'completed'
+                ],
+                true
+            )
+        ) {
+
+            $totalInvestments +=
+                $amount;
+        }
+
+        if (
+            $investmentStatus ===
+            'active'
+        ) {
+
+            $activeInvestmentCount++;
+        }
+
+        if (
+            in_array(
+                $investmentStatus,
+                [
+                    'pending',
+                    'submitted',
+                    'processing'
+                ],
+                true
+            )
+        ) {
+
+            $pendingInvestmentCount++;
+
+            $pendingInvestments +=
+                $amount;
+        }
+    }
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| REFERRALS
+|--------------------------------------------------------------------------
+*/
+
+$totalReferrals = 0;
+
+try {
+
+    $totalReferrals =
+        $referrals->countDocuments([]);
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| TRANSACTIONS
+|--------------------------------------------------------------------------
+*/
+
+$totalTransactions = 0;
+
+try {
+
+    $totalTransactions =
+        $transactions->countDocuments([]);
+
+} catch (Throwable $e) {}
+
+
+/*
+|--------------------------------------------------------------------------
+| SUPPORT TICKETS
+|--------------------------------------------------------------------------
+*/
+
+$openTickets = 0;
+
+if (
+    $supportTickets !== null
+) {
 
     try {
-        $totalReferrals = $referrals->countDocuments([]);
-    } catch (Throwable $e) {
-        $totalReferrals = 0;
-    }
 
-
-    /*
-     * Transactions
-     */
-    $totalTransactions = 0;
-
-    try {
-        $totalTransactions = $transactions->countDocuments([]);
-    } catch (Throwable $e) {
-        $totalTransactions = 0;
-    }
-
-
-    /*
-     * Support tickets
-     */
-    $openTickets = 0;
-
-    if ($supportTickets !== null) {
-        try {
-            $openTickets = $supportTickets->countDocuments([
+        $openTickets =
+            $supportTickets->countDocuments([
                 'status' => [
                     '$in' => [
                         'open',
@@ -884,22 +1281,24 @@ try {
                     ]
                 ]
             ]);
-        } catch (Throwable $e) {
-            $openTickets = 0;
-        }
-    }
+
+    } catch (Throwable $e) {}
+}
 
 
-    /*
-     |--------------------------------------------------------------------------
-     | Recent Transactions
-     |--------------------------------------------------------------------------
-     */
+/*
+|--------------------------------------------------------------------------
+| RECENT TRANSACTIONS
+|--------------------------------------------------------------------------
+*/
 
-    $recentTransactions = [];
+$recentTransactions = [];
 
-    try {
-        $transactionCursor = $transactions->find(
+
+try {
+
+    $cursor =
+        $transactions->find(
             [],
             [
                 'sort' => [
@@ -909,393 +1308,569 @@ try {
             ]
         );
 
-        foreach ($transactionCursor as $document) {
-            $doc = adminDashboardDocumentToArray($document);
 
-            $transactionId = adminDashboardId(
-                adminDashboardGetField($doc, '_id')
-            );
+    foreach ($cursor as $document) {
 
-            if ($transactionId === '') {
-                $transactionId = adminDashboardString(
-                    adminDashboardGetField($doc, 'id')
-                );
-            }
+        $doc =
+            is_array($document)
+                ? $document
+                : (array)$document;
 
-            $userId = adminDashboardId(
-                adminDashboardGetField($doc, 'user_id')
-            );
+        $id = '';
 
-            if ($userId === '') {
-                $userId = adminDashboardString(
-                    adminDashboardGetField($doc, 'user_id')
-                );
-            }
+        if (
+            isset($doc['_id'])
+        ) {
 
-            $userName =
-                adminDashboardString(
-                    adminDashboardGetField($doc, 'user_name')
-                )
-                ||
-                adminDashboardString(
-                    adminDashboardGetField($doc, 'name')
-                )
-                ||
-                'Crown Cash User';
-
-            /*
-             * Resolve user name when transaction only contains user_id.
-             */
             if (
-                $userName === 'Crown Cash User'
-                &&
-                $userId !== ''
+                $doc['_id']
+                instanceof MongoDB\BSON\ObjectId
             ) {
-                try {
-                    $transactionUser = null;
+
+                $id =
+                    (string)$doc['_id'];
+
+            } else {
+
+                $id =
+                    (string)$doc['_id'];
+            }
+        }
+
+        if ($id === '') {
+
+            $id =
+                (string)(
+                    $doc['id']
+                    ?? ''
+                );
+        }
+
+        $userId = '';
+
+        if (
+            isset($doc['user_id'])
+        ) {
+
+            if (
+                $doc['user_id']
+                instanceof MongoDB\BSON\ObjectId
+            ) {
+
+                $userId =
+                    (string)$doc['user_id'];
+
+            } else {
+
+                $userId =
+                    trim(
+                        (string)$doc['user_id']
+                    );
+            }
+        }
+
+        $userName =
+            trim(
+                (string)(
+                    $doc['user_name']
+                    ??
+                    $doc['name']
+                    ??
+                    ''
+                )
+            );
+
+
+        /*
+         * Resolve user name.
+         */
+        if (
+            $userName === '' &&
+            $userId !== ''
+        ) {
+
+            try {
+
+                $transactionUser = null;
+
+                if (
+                    preg_match(
+                        '/^[a-f0-9]{24}$/i',
+                        $userId
+                    )
+                ) {
+
+                    $transactionUser =
+                        $users->findOne([
+                            '_id' =>
+                                new MongoDB\BSON\ObjectId(
+                                    $userId
+                                )
+                        ]);
+                }
+
+                if (!$transactionUser) {
+
+                    $transactionUser =
+                        $users->findOne([
+                            'id' =>
+                                $userId
+                        ]);
+                }
+
+                if ($transactionUser) {
+
+                    $transactionUser =
+                        is_array($transactionUser)
+                            ? $transactionUser
+                            : (array)$transactionUser;
+
+                    $userName =
+                        trim(
+                            (string)(
+                                $transactionUser['full_name']
+                                ??
+                                $transactionUser['fullName']
+                                ??
+                                $transactionUser['name']
+                                ??
+                                ''
+                            )
+                        );
 
                     if (
-                        preg_match(
-                            '/^[a-f0-9]{24}$/i',
-                            $userId
-                        )
+                        $userName === ''
                     ) {
-                        $transactionUser = $users->findOne([
-                            '_id' => new MongoDB\BSON\ObjectId($userId)
-                        ]);
-                    }
 
-                    if (!$transactionUser) {
-                        $transactionUser = $users->findOne([
-                            'id' => $userId
-                        ]);
-                    }
-
-                    if ($transactionUser) {
-                        $transactionUserArray =
-                            adminDashboardDocumentToArray(
-                                $transactionUser
+                        $userName =
+                            trim(
+                                (string)(
+                                    $transactionUser['first_name']
+                                    ?? ''
+                                )
+                                .
+                                ' '
+                                .
+                                (string)(
+                                    $transactionUser['last_name']
+                                    ?? ''
+                                )
                             );
-
-                        $firstName = adminDashboardString(
-                            adminDashboardGetField(
-                                $transactionUserArray,
-                                'first_name'
-                            )
-                        );
-
-                        $lastName = adminDashboardString(
-                            adminDashboardGetField(
-                                $transactionUserArray,
-                                'last_name'
-                            )
-                        );
-
-                        $fullName = adminDashboardString(
-                            adminDashboardGetField(
-                                $transactionUserArray,
-                                'name'
-                            )
-                        );
-
-                        if ($fullName === '') {
-                            $fullName = trim(
-                                $firstName . ' ' . $lastName
-                            );
-                        }
-
-                        if ($fullName !== '') {
-                            $userName = $fullName;
-                        }
                     }
-                } catch (Throwable $e) {
-                    // Keep fallback name.
                 }
-            }
 
-            $createdAt = adminDashboardDate(
-                adminDashboardGetField(
-                    $doc,
-                    'created_at'
-                )
-            );
-
-            $createdAtIso = $createdAt
-                ? $createdAt->format('c')
-                : null;
-
-            $recentTransactions[] = [
-                'id' => $transactionId,
-                '_id' => $transactionId,
-                'user_id' => $userId,
-                'user_name' => $userName,
-                'name' => $userName,
-                'amount' => adminDashboardNumber(
-                    adminDashboardGetField(
-                        $doc,
-                        'amount',
-                        0
-                    )
-                ),
-                'type' => adminDashboardString(
-                    adminDashboardGetField(
-                        $doc,
-                        'type',
-                        'transaction'
-                    )
-                ),
-                'status' => adminDashboardString(
-                    adminDashboardGetField(
-                        $doc,
-                        'status',
-                        ''
-                    )
-                ),
-                'created_at' => $createdAtIso
-            ];
+            } catch (Throwable $e) {}
         }
-    } catch (Throwable $e) {
-        $recentTransactions = [];
-    }
+
+        if (
+            $userName === ''
+        ) {
+
+            $userName =
+                'Crown Cash User';
+        }
 
 
-    /*
-     |--------------------------------------------------------------------------
-     | Recent Users
-     |--------------------------------------------------------------------------
-     */
-
-    $recentUsers = [];
-
-    try {
-        $userCursor = $users->find(
-            [],
-            [
-                'sort' => [
-                    'created_at' => -1
-                ],
-                'limit' => 8
-            ]
-        );
-
-        foreach ($userCursor as $document) {
-            $doc = adminDashboardDocumentToArray($document);
-
-            $userId = adminDashboardId(
-                adminDashboardGetField($doc, '_id')
+        $created =
+            crownCashDate(
+                $doc['created_at']
+                ?? null
             );
 
-            if ($userId === '') {
-                $userId = adminDashboardString(
-                    adminDashboardGetField($doc, 'id')
-                );
-            }
 
-            $firstName = adminDashboardString(
-                adminDashboardGetField(
-                    $doc,
-                    'first_name'
-                )
-            );
+        $recentTransactions[] = [
 
-            $lastName = adminDashboardString(
-                adminDashboardGetField(
-                    $doc,
-                    'last_name'
-                )
-            );
+            'id' => $id,
 
-            $name = adminDashboardString(
-                adminDashboardGetField(
-                    $doc,
-                    'name'
-                )
-            );
+            '_id' => $id,
 
-            if ($name === '') {
-                $name = trim(
-                    $firstName . ' ' . $lastName
-                );
-            }
+            'user_id' =>
+                $userId,
 
-            if ($name === '') {
-                $name = 'Crown Cash User';
-            }
+            'user_name' =>
+                $userName,
 
-            $createdAt = adminDashboardDate(
-                adminDashboardGetField(
-                    $doc,
-                    'created_at'
-                )
-            );
+            'name' =>
+                $userName,
 
-            $recentUsers[] = [
-                'id' => $userId,
-                '_id' => $userId,
-                'name' => $name,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => adminDashboardString(
-                    adminDashboardGetField(
-                        $doc,
-                        'email'
-                    )
+            'amount' =>
+                crownCashNumber(
+                    $doc['amount']
+                    ?? 0
                 ),
-                'status' => adminDashboardString(
-                    adminDashboardGetField(
-                        $doc,
-                        'status',
-                        'active'
-                    )
+
+            'type' =>
+                (string)(
+                    $doc['type']
+                    ?? 'transaction'
                 ),
-                'created_at' => $createdAt
-                    ? $createdAt->format('c')
+
+            'status' =>
+                (string)(
+                    $doc['status']
+                    ?? ''
+                ),
+
+            'created_at' =>
+                $created
+                    ? $created->format('c')
                     : null
-            ];
-        }
-    } catch (Throwable $e) {
-        $recentUsers = [];
+        ];
     }
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | Admin information
-     |--------------------------------------------------------------------------
-     */
-
-    $adminFirstName = adminDashboardString(
-        adminDashboardGetField(
-            $currentUserArray,
-            'first_name'
-        )
-    );
-
-    $adminLastName = adminDashboardString(
-        adminDashboardGetField(
-            $currentUserArray,
-            'last_name'
-        )
-    );
-
-    $adminName = adminDashboardString(
-        adminDashboardGetField(
-            $currentUserArray,
-            'name'
-        )
-    );
-
-    if ($adminName === '') {
-        $adminName = trim(
-            $adminFirstName . ' ' . $adminLastName
-        );
-    }
-
-    if ($adminName === '') {
-        $adminName = 'Administrator';
-    }
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | Final response
-     |--------------------------------------------------------------------------
-     */
-
-    adminDashboardResponse(
-        true,
-        'Administrator dashboard data loaded successfully.',
-        [
-            'authenticated' => true,
-            'authorized' => true,
-
-            'admin' => [
-                'id' => $currentUserId,
-                'email' => $currentUserEmail,
-                'name' => $adminName,
-                'first_name' => $adminFirstName,
-                'last_name' => $adminLastName,
-                'role' => $currentUserRole,
-                'account_type' => $currentUserAccountType,
-                'status' => $currentUserStatus
-            ],
-
-            'stats' => [
-                'total_users' => $totalUsers,
-                'active_users' => $activeUsers,
-                'new_accounts' => $newAccounts,
-
-                'total_deposits' => $totalDeposits,
-                'pending_deposits' => $pendingDeposits,
-                'approved_deposits' => $totalDeposits,
-                'rejected_deposits' => $rejectedDeposits,
-                'pending_deposit_count' => $pendingDepositCount,
-
-                'total_withdrawals' => $totalWithdrawals,
-                'pending_withdrawals' => $pendingWithdrawals,
-                'pending_withdrawal_count' => $pendingWithdrawalCount,
-
-                'total_investments' => $totalInvestments,
-                'active_investments' => $activeInvestmentCount,
-                'pending_investments' => $pendingInvestments,
-                'pending_investment_count' => $pendingInvestmentCount,
-
-                'total_referrals' => $totalReferrals,
-                'total_transactions' => $totalTransactions,
-                'open_tickets' => $openTickets
-            ],
-
-            'summary' => [
-                'users' => $totalUsers,
-                'active_users' => $activeUsers,
-                'new_accounts' => $newAccounts,
-
-                'deposits' => $totalDeposits,
-                'pending_deposits' => $pendingDeposits,
-
-                'withdrawals' => $totalWithdrawals,
-                'pending_withdrawals' => $pendingWithdrawals,
-
-                'investments' => $totalInvestments,
-                'active_investments' => $activeInvestmentCount,
-                'pending_investments' => $pendingInvestments,
-
-                'referrals' => $totalReferrals,
-                'transactions' => $totalTransactions,
-                'open_tickets' => $openTickets
-            ],
-
-            'pending_activity' => [
-                'deposits' => $pendingDeposits,
-                'deposit_count' => $pendingDepositCount,
-
-                'withdrawals' => $pendingWithdrawals,
-                'withdrawal_count' => $pendingWithdrawalCount,
-
-                'investments' => $pendingInvestments,
-                'investment_count' => $pendingInvestmentCount,
-
-                'new_accounts' => $newAccounts
-            ],
-
-            'recent_transactions' => $recentTransactions,
-            'recent_users' => $recentUsers,
-
-            'generated_at' => $now->format('c')
-        ]
-    );
 
 } catch (Throwable $e) {
 
-    error_log(
-        'Crown Cash admin dashboard error: ' .
-        $e->getMessage()
-    );
-
-    adminDashboardResponse(
-        false,
-        'Unable to load administrator dashboard data.',
-        [],
-        500
-    );
+    $recentTransactions = [];
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| RECENT USERS
+|--------------------------------------------------------------------------
+*/
+
+$recentUsers = [];
+
+
+try {
+
+    $cursor =
+        $users->find(
+            [],
+            [
+                'sort' => [
+                    'created_at' => -1
+                ],
+                'limit' => 8
+            ]
+        );
+
+
+    foreach ($cursor as $document) {
+
+        $doc =
+            is_array($document)
+                ? $document
+                : (array)$document;
+
+        $id = '';
+
+        if (
+            isset($doc['_id'])
+        ) {
+
+            if (
+                $doc['_id']
+                instanceof MongoDB\BSON\ObjectId
+            ) {
+
+                $id =
+                    (string)$doc['_id'];
+
+            } else {
+
+                $id =
+                    (string)$doc['_id'];
+            }
+        }
+
+        if (
+            $id === ''
+        ) {
+
+            $id =
+                (string)(
+                    $doc['id']
+                    ?? ''
+                );
+        }
+
+
+        $first =
+            trim(
+                (string)(
+                    $doc['first_name']
+                    ?? ''
+                )
+            );
+
+        $last =
+            trim(
+                (string)(
+                    $doc['last_name']
+                    ?? ''
+                )
+            );
+
+        $name =
+            trim(
+                (string)(
+                    $doc['full_name']
+                    ??
+                    $doc['fullName']
+                    ??
+                    $doc['name']
+                    ??
+                    ''
+                )
+            );
+
+        if (
+            $name === ''
+        ) {
+
+            $name =
+                trim(
+                    $first .
+                    ' ' .
+                    $last
+                );
+        }
+
+        if (
+            $name === ''
+        ) {
+
+            $name =
+                'Crown Cash User';
+        }
+
+
+        $created =
+            crownCashDate(
+                $doc['created_at']
+                ?? null
+            );
+
+
+        $recentUsers[] = [
+
+            'id' =>
+                $id,
+
+            '_id' =>
+                $id,
+
+            'name' =>
+                $name,
+
+            'first_name' =>
+                $first,
+
+            'last_name' =>
+                $last,
+
+            'email' =>
+                (string)(
+                    $doc['email']
+                    ?? ''
+                ),
+
+            'status' =>
+                (string)(
+                    $doc['status']
+                    ?? 'active'
+                ),
+
+            'created_at' =>
+                $created
+                    ? $created->format('c')
+                    : null
+        ];
+    }
+
+} catch (Throwable $e) {
+
+    $recentUsers = [];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FINAL RESPONSE
+|--------------------------------------------------------------------------
+*/
+
+crownCashDashboardResponse(
+    true,
+    'Administrator dashboard data loaded successfully.',
+    [
+
+        'authenticated' =>
+            true,
+
+        'authorized' =>
+            true,
+
+
+        'admin' => [
+
+            'id' =>
+                $currentUserId,
+
+            'email' =>
+                $email,
+
+            'name' =>
+                $adminName,
+
+            'first_name' =>
+                $firstName,
+
+            'last_name' =>
+                $lastName,
+
+            'role' =>
+                $role,
+
+            'account_type' =>
+                $accountType,
+
+            'status' =>
+                $status
+        ],
+
+
+        'stats' => [
+
+            'total_users' =>
+                $totalUsers,
+
+            'active_users' =>
+                $activeUsers,
+
+            'new_accounts' =>
+                $newAccounts,
+
+            'total_deposits' =>
+                $totalDeposits,
+
+            'pending_deposits' =>
+                $pendingDeposits,
+
+            'approved_deposits' =>
+                $totalDeposits,
+
+            'rejected_deposits' =>
+                $rejectedDeposits,
+
+            'pending_deposit_count' =>
+                $pendingDepositCount,
+
+            'total_withdrawals' =>
+                $totalWithdrawals,
+
+            'pending_withdrawals' =>
+                $pendingWithdrawals,
+
+            'pending_withdrawal_count' =>
+                $pendingWithdrawalCount,
+
+            'total_investments' =>
+                $totalInvestments,
+
+            'active_investments' =>
+                $activeInvestmentCount,
+
+            'pending_investments' =>
+                $pendingInvestments,
+
+            'pending_investment_count' =>
+                $pendingInvestmentCount,
+
+            'total_referrals' =>
+                $totalReferrals,
+
+            'total_transactions' =>
+                $totalTransactions,
+
+            'open_tickets' =>
+                $openTickets
+        ],
+
+
+        'summary' => [
+
+            'users' =>
+                $totalUsers,
+
+            'active_users' =>
+                $activeUsers,
+
+            'new_accounts' =>
+                $newAccounts,
+
+            'deposits' =>
+                $totalDeposits,
+
+            'pending_deposits' =>
+                $pendingDeposits,
+
+            'withdrawals' =>
+                $totalWithdrawals,
+
+            'pending_withdrawals' =>
+                $pendingWithdrawals,
+
+            'investments' =>
+                $totalInvestments,
+
+            'active_investments' =>
+                $activeInvestmentCount,
+
+            'pending_investments' =>
+                $pendingInvestments,
+
+            'referrals' =>
+                $totalReferrals,
+
+            'transactions' =>
+                $totalTransactions,
+
+            'open_tickets' =>
+                $openTickets
+        ],
+
+
+        'pending_activity' => [
+
+            'deposits' =>
+                $pendingDeposits,
+
+            'deposit_count' =>
+                $pendingDepositCount,
+
+            'withdrawals' =>
+                $pendingWithdrawals,
+
+            'withdrawal_count' =>
+                $pendingWithdrawalCount,
+
+            'investments' =>
+                $pendingInvestments,
+
+            'investment_count' =>
+                $pendingInvestmentCount,
+
+            'new_accounts' =>
+                $newAccounts
+        ],
+
+
+        'recent_transactions' =>
+            $recentTransactions,
+
+        'recent_users' =>
+            $recentUsers,
+
+
+        'generated_at' =>
+            (new DateTimeImmutable(
+                'now',
+                new DateTimeZone('UTC')
+            ))->format('c')
+    ]
+);
+
+?>

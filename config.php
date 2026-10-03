@@ -9,30 +9,78 @@ use MongoDB\BSON\UTCDateTime;
 
 /*
 |--------------------------------------------------------------------------
+| CROWN CASH - GLOBAL CONFIGURATION
+|--------------------------------------------------------------------------
+| Frontend:
+| https://crown-cash.vercel.app
+|
+| Backend:
+| https://crown-cash1.onrender.com
+|--------------------------------------------------------------------------
+*/
+
+
+/*
+|--------------------------------------------------------------------------
 | CORS
 |--------------------------------------------------------------------------
 */
 
-header('Access-Control-Allow-Origin: https://crown-cash.vercel.app');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Cron-Secret');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Content-Type: application/json; charset=utf-8');
+$allowedOrigin = 'https://crown-cash.vercel.app';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (
+    isset($_SERVER['HTTP_ORIGIN']) &&
+    $_SERVER['HTTP_ORIGIN'] === $allowedOrigin
+) {
+    header(
+        'Access-Control-Allow-Origin: ' . $allowedOrigin
+    );
+}
+
+header('Access-Control-Allow-Credentials: true');
+
+header(
+    'Access-Control-Allow-Headers: ' .
+    'Content-Type, Authorization, X-Cron-Secret, X-Requested-With'
+);
+
+header(
+    'Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS'
+);
+
+header('Access-Control-Max-Age: 86400');
+
+header(
+    'Content-Type: application/json; charset=utf-8'
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| OPTIONS / PREFLIGHT REQUEST
+|--------------------------------------------------------------------------
+*/
+
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS'
+) {
     http_response_code(204);
     exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| MongoDB connection
+| MONGODB CONNECTION
 |--------------------------------------------------------------------------
 */
 
 $mongoUri = getenv('MONGODB_URI');
 
-if (!$mongoUri) {
+if (
+    !$mongoUri ||
+    trim($mongoUri) === ''
+) {
     http_response_code(500);
 
     echo json_encode([
@@ -43,42 +91,52 @@ if (!$mongoUri) {
     exit;
 }
 
+
 try {
 
-    $mongoClient = new Client($mongoUri);
+    $mongoClient = new Client(
+        $mongoUri
+    );
 
-    $databaseName = getenv('MONGODB_DATABASE') ?: 'crowncash';
+    $databaseName =
+        getenv('MONGODB_DATABASE')
+        ?: 'crowncash';
 
-    $db = $mongoClient->selectDatabase($databaseName);
+    $db = $mongoClient->selectDatabase(
+        $databaseName
+    );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Collections
-    |--------------------------------------------------------------------------
-    */
-
-    $users = $db->selectCollection('users');
-
-    $deposits = $db->selectCollection('deposits');
-
-    $withdrawals = $db->selectCollection('withdrawals');
-
-    $investments = $db->selectCollection('investments');
-
-    $transactions = $db->selectCollection('transactions');
-
-    $referrals = $db->selectCollection('referrals');
-
-    $auditLogs = $db->selectCollection('audit_logs');
 
     /*
     |--------------------------------------------------------------------------
-    | NEW
-    | Daily investment earnings ledger
+    | COLLECTIONS
     |--------------------------------------------------------------------------
     */
 
-    $earnings = $db->selectCollection('earnings');
+    $users =
+        $db->selectCollection('users');
+
+    $deposits =
+        $db->selectCollection('deposits');
+
+    $withdrawals =
+        $db->selectCollection('withdrawals');
+
+    $investments =
+        $db->selectCollection('investments');
+
+    $transactions =
+        $db->selectCollection('transactions');
+
+    $referrals =
+        $db->selectCollection('referrals');
+
+    $auditLogs =
+        $db->selectCollection('audit_logs');
+
+    $earnings =
+        $db->selectCollection('earnings');
+
 
 } catch (Throwable $e) {
 
@@ -92,13 +150,13 @@ try {
     exit;
 }
 
+
 /*
 |--------------------------------------------------------------------------
-| Compatibility alias
+| COMPATIBILITY ALIAS
 |--------------------------------------------------------------------------
 |
-| Some of the older admin files used $client while config.php created
-| $mongoClient. We provide both so the transaction code works.
+| Some existing Crown Cash files use $client.
 |
 */
 
@@ -107,17 +165,21 @@ $client = $mongoClient;
 
 /*
 |--------------------------------------------------------------------------
-| JSON response helper
+| JSON RESPONSE
 |--------------------------------------------------------------------------
 */
 
-function jsonResponse(array $data, int $status = 200): never
-{
+function jsonResponse(
+    array $data,
+    int $status = 200
+): never {
+
     http_response_code($status);
 
     echo json_encode(
         $data,
-        JSON_UNESCAPED_SLASHES
+        JSON_UNESCAPED_SLASHES |
+        JSON_UNESCAPED_UNICODE
     );
 
     exit;
@@ -126,23 +188,82 @@ function jsonResponse(array $data, int $status = 200): never
 
 /*
 |--------------------------------------------------------------------------
-| Secure session
+| SECURE CROSS-SITE SESSION
+|--------------------------------------------------------------------------
+|
+| The frontend is on Vercel and the API is on Render.
+|
+| Therefore the browser must be allowed to send the PHP
+| session cookie cross-site.
+|
+| Required:
+|
+| SameSite=None
+| Secure=true
+| HttpOnly=true
+|
 |--------------------------------------------------------------------------
 */
 
 function startSecureSession(): void
 {
-    if (session_status() === PHP_SESSION_ACTIVE) {
+    if (
+        session_status() === PHP_SESSION_ACTIVE
+    ) {
         return;
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prevent PHP from changing the session ID unnecessarily
+    |--------------------------------------------------------------------------
+    */
+
+    ini_set(
+        'session.use_only_cookies',
+        '1'
+    );
+
+    ini_set(
+        'session.use_strict_mode',
+        '1'
+    );
+
+    ini_set(
+        'session.cookie_httponly',
+        '1'
+    );
+
+    ini_set(
+        'session.cookie_secure',
+        '1'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Explicit session cookie configuration
+    |--------------------------------------------------------------------------
+    */
+
+    session_name('CROWN_CASH_SESSION');
 
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
+        'domain' => '',
         'secure' => true,
         'httponly' => true,
         'samesite' => 'None'
     ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Start session
+    |--------------------------------------------------------------------------
+    */
 
     session_start();
 }
@@ -150,12 +271,14 @@ function startSecureSession(): void
 
 /*
 |--------------------------------------------------------------------------
-| ObjectId validation
+| OBJECT ID VALIDATION
 |--------------------------------------------------------------------------
 */
 
-function isValidObjectId(string $id): bool
-{
+function isValidObjectId(
+    string $id
+): bool {
+
     return preg_match(
         '/^[a-f0-9]{24}$/i',
         $id
@@ -165,15 +288,20 @@ function isValidObjectId(string $id): bool
 
 /*
 |--------------------------------------------------------------------------
-| Convert value to ObjectId
+| OBJECT ID CONVERSION
 |--------------------------------------------------------------------------
 */
 
-function objectIdOrNull(mixed $value): ?ObjectId
-{
-    if ($value instanceof ObjectId) {
+function objectIdOrNull(
+    mixed $value
+): ?ObjectId {
+
+    if (
+        $value instanceof ObjectId
+    ) {
         return $value;
     }
+
 
     if (
         is_string($value) &&
@@ -182,36 +310,49 @@ function objectIdOrNull(mixed $value): ?ObjectId
         return new ObjectId($value);
     }
 
+
     return null;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Convert MongoDB date to ISO string
+| MONGODB DATE → ISO DATE
 |--------------------------------------------------------------------------
 */
 
-function toIsoDate(mixed $value): ?string
-{
-    if ($value instanceof UTCDateTime) {
+function toIsoDate(
+    mixed $value
+): ?string {
+
+    if (
+        $value instanceof UTCDateTime
+    ) {
 
         return $value
             ->toDateTime()
             ->format(DATE_ATOM);
     }
 
-    if ($value instanceof DateTimeInterface) {
 
-        return $value->format(DATE_ATOM);
+    if (
+        $value instanceof DateTimeInterface
+    ) {
+
+        return $value->format(
+            DATE_ATOM
+        );
     }
+
 
     if (
         is_string($value) &&
-        $value !== ''
+        trim($value) !== ''
     ) {
+
         return $value;
     }
+
 
     return null;
 }
@@ -219,47 +360,73 @@ function toIsoDate(mixed $value): ?string
 
 /*
 |--------------------------------------------------------------------------
-| Convert MongoDB values to JSON-safe values
+| MONGODB → JSON SAFE
 |--------------------------------------------------------------------------
 */
 
-function jsonSafe(mixed $value): mixed
-{
-    if ($value instanceof ObjectId) {
+function jsonSafe(
+    mixed $value
+): mixed {
+
+    if (
+        $value instanceof ObjectId
+    ) {
         return (string)$value;
     }
 
-    if ($value instanceof UTCDateTime) {
+
+    if (
+        $value instanceof UTCDateTime
+    ) {
+
         return $value
             ->toDateTime()
             ->format(DATE_ATOM);
     }
 
-    if ($value instanceof DateTimeInterface) {
-        return $value->format(DATE_ATOM);
+
+    if (
+        $value instanceof DateTimeInterface
+    ) {
+
+        return $value->format(
+            DATE_ATOM
+        );
     }
+
 
     if (is_array($value)) {
 
         $output = [];
 
-        foreach ($value as $key => $item) {
-            $output[$key] = jsonSafe($item);
+        foreach (
+            $value as $key => $item
+        ) {
+
+            $output[$key] =
+                jsonSafe($item);
         }
 
         return $output;
     }
+
 
     if (is_object($value)) {
 
         $output = [];
 
-        foreach (get_object_vars($value) as $key => $item) {
-            $output[$key] = jsonSafe($item);
+        foreach (
+            get_object_vars($value)
+            as $key => $item
+        ) {
+
+            $output[$key] =
+                jsonSafe($item);
         }
 
         return $output;
     }
+
 
     return $value;
 }
@@ -267,13 +434,14 @@ function jsonSafe(mixed $value): mixed
 
 /*
 |--------------------------------------------------------------------------
-| Current logged-in user
+| CURRENT LOGGED-IN USER ID
 |--------------------------------------------------------------------------
 */
 
 function currentUserId(): ?ObjectId
 {
     startSecureSession();
+
 
     $possibleKeys = [
         'user_id',
@@ -282,19 +450,27 @@ function currentUserId(): ?ObjectId
         '_id'
     ];
 
-    foreach ($possibleKeys as $key) {
 
-        if (!empty($_SESSION[$key])) {
+    foreach (
+        $possibleKeys as $key
+    ) {
+
+        if (
+            isset($_SESSION[$key]) &&
+            $_SESSION[$key] !== ''
+        ) {
 
             $id = objectIdOrNull(
                 (string)$_SESSION[$key]
             );
 
-            if ($id) {
+
+            if ($id instanceof ObjectId) {
                 return $id;
             }
         }
     }
+
 
     return null;
 }
@@ -302,13 +478,39 @@ function currentUserId(): ?ObjectId
 
 /*
 |--------------------------------------------------------------------------
-| Require login
+| CHECK LOGIN STATUS
+|--------------------------------------------------------------------------
+*/
+
+function isLoggedIn(): bool
+{
+    startSecureSession();
+
+
+    if (
+        empty($_SESSION['logged_in'])
+    ) {
+        return false;
+    }
+
+
+    return currentUserId() !== null;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REQUIRE LOGIN
 |--------------------------------------------------------------------------
 */
 
 function requireLogin(): ObjectId
 {
+    startSecureSession();
+
+
     $userId = currentUserId();
+
 
     if (
         !$userId ||
@@ -317,9 +519,12 @@ function requireLogin(): ObjectId
 
         jsonResponse([
             'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
             'message' => 'Authentication required.'
         ], 401);
     }
+
 
     return $userId;
 }
@@ -327,7 +532,7 @@ function requireLogin(): ObjectId
 
 /*
 |--------------------------------------------------------------------------
-| Require administrator
+| REQUIRE ADMINISTRATOR
 |--------------------------------------------------------------------------
 */
 
@@ -337,15 +542,47 @@ function requireAdmin(): ObjectId
 
     global $users;
 
+
     $user = $users->findOne([
         '_id' => $userId
     ]);
 
-    if (
-        !$user ||
+
+    if (!$user) {
+
+        jsonResponse([
+            'success' => false,
+            'message' => 'Administrator account not found.'
+        ], 403);
+    }
+
+
+    $role =
         strtolower(
-            (string)($user['role'] ?? '')
-        ) !== 'admin'
+            trim(
+                (string)(
+                    $user['role']
+                    ?? $user['account_type']
+                    ?? ''
+                )
+            )
+        );
+
+
+    $adminRoles = [
+        'admin',
+        'administrator',
+        'superadmin',
+        'super_admin'
+    ];
+
+
+    if (
+        !in_array(
+            $role,
+            $adminRoles,
+            true
+        )
     ) {
 
         jsonResponse([
@@ -354,13 +591,14 @@ function requireAdmin(): ObjectId
         ], 403);
     }
 
+
     return $userId;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Current UTC MongoDB date
+| CURRENT UTC TIME
 |--------------------------------------------------------------------------
 */
 
@@ -372,12 +610,14 @@ function nowUtc(): UTCDateTime
 
 /*
 |--------------------------------------------------------------------------
-| Convert money to whole Uganda shillings
+| MONEY TO WHOLE UGX
 |--------------------------------------------------------------------------
 */
 
-function moneyInt(mixed $value): int
-{
+function moneyInt(
+    mixed $value
+): int {
+
     return (int)round(
         (float)$value
     );
@@ -386,7 +626,7 @@ function moneyInt(mixed $value): int
 
 /*
 |--------------------------------------------------------------------------
-| Admin audit logging
+| ADMIN AUDIT LOG
 |--------------------------------------------------------------------------
 */
 
@@ -398,19 +638,31 @@ function audit(
 
     global $auditLogs;
 
+
     try {
 
         $auditLogs->insertOne([
-            'action' => $action,
-            'admin_id' => $adminId,
-            'data' => $data,
-            'created_at' => nowUtc()
+
+            'action' =>
+                $action,
+
+            'admin_id' =>
+                $adminId,
+
+            'data' =>
+                jsonSafe($data),
+
+            'created_at' =>
+                nowUtc()
+
         ]);
 
     } catch (Throwable $e) {
 
         /*
-        | Audit failure should not stop the main transaction.
+        |--------------------------------------------------------------------------
+        | Audit failure must not stop the main operation.
+        |--------------------------------------------------------------------------
         */
     }
 }

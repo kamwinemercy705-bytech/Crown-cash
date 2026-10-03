@@ -1,9 +1,472 @@
 <?php
 declare(strict_types=1);
 
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH - ADMIN DEPOSIT MANAGEMENT
+|--------------------------------------------------------------------------
+| Handles:
+|   GET  = Load deposits for administrators
+|   POST = Approve / Reject deposits
+|
+| Important:
+| Uses the same CROWN_CASH_SESSION session as login.php,
+| admin-auth.php, admin-dashboard.php and profile.php.
+|--------------------------------------------------------------------------
+*/
+
 require_once __DIR__ . '/config.php';
 
-$adminId = requireAdmin();
+
+/* =========================================================
+   CORS
+========================================================= */
+
+$allowedOrigins = [
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
+];
+
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($requestOrigin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $requestOrigin);
+}
+
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Max-Age: 86400');
+header('Vary: Origin');
+header('Content-Type: application/json; charset=utf-8');
+
+
+/* =========================================================
+   OPTIONS / PREFLIGHT
+========================================================= */
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+
+/* =========================================================
+   START THE CANONICAL CROWN CASH SESSION
+========================================================= */
+
+try {
+
+    if (function_exists('startSecureSession')) {
+
+        startSecureSession();
+
+    } else {
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+
+            ini_set(
+                'session.use_only_cookies',
+                '1'
+            );
+
+            ini_set(
+                'session.use_strict_mode',
+                '1'
+            );
+
+            ini_set(
+                'session.cookie_httponly',
+                '1'
+            );
+
+            ini_set(
+                'session.cookie_secure',
+                '1'
+            );
+
+            session_name(
+                'CROWN_CASH_SESSION'
+            );
+
+            session_set_cookie_params([
+                'lifetime' => 0,
+                'path' => '/',
+                'domain' => '',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'None'
+            ]);
+
+            session_start();
+        }
+    }
+
+} catch (Throwable $e) {
+
+    error_log(
+        'Admin deposit session error: '
+        . $e->getMessage()
+    );
+
+    jsonResponse([
+        'success' => false,
+        'message' => 'Unable to start administrator session.'
+    ], 500);
+}
+
+
+/* =========================================================
+   ADMIN AUTHENTICATION
+========================================================= */
+
+try {
+
+    /*
+     * Do NOT rely on a second/default PHP session.
+     * The canonical CROWN_CASH_SESSION has already been started.
+     */
+
+    $loggedIn =
+        (
+            ($_SESSION['logged_in'] ?? false) === true
+            ||
+            ($_SESSION['authenticated'] ?? false) === true
+        );
+
+    $sessionUserId =
+        $_SESSION['user_id']
+        ?? $_SESSION['userId']
+        ?? $_SESSION['id']
+        ?? $_SESSION['_id']
+        ?? null;
+
+
+    if (!$loggedIn || empty($sessionUserId)) {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' => 'Please login first.'
+        ], 401);
+    }
+
+
+    /* -----------------------------------------------------
+       FIND ADMIN USER
+    ----------------------------------------------------- */
+
+    $adminUser = null;
+
+    $adminObjectId =
+        objectIdOrNull(
+            $sessionUserId
+        );
+
+    if ($adminObjectId) {
+
+        $adminUser =
+            $users->findOne([
+                '_id' => $adminObjectId
+            ]);
+    }
+
+
+    /*
+     * Fallback for older sessions where the ID may be stored
+     * as a plain string.
+     */
+    if (!$adminUser) {
+
+        $sessionIdString =
+            trim(
+                (string)$sessionUserId
+            );
+
+        if ($sessionIdString !== '') {
+
+            try {
+
+                $adminUser =
+                    $users->findOne([
+                        'id' => $sessionIdString
+                    ]);
+
+            } catch (Throwable $ignored) {
+            }
+        }
+    }
+
+
+    /*
+     * Final fallback through session email.
+     */
+    if (!$adminUser) {
+
+        $sessionEmail =
+            strtolower(
+                trim(
+                    (string)(
+                        $_SESSION['user_email']
+                        ?? $_SESSION['email']
+                        ?? ''
+                    )
+                )
+            );
+
+        if ($sessionEmail !== '') {
+
+            $adminUser =
+                $users->findOne([
+                    'email' => $sessionEmail
+                ]);
+        }
+    }
+
+
+    if (!$adminUser) {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' => 'Administrator account could not be found.'
+        ], 401);
+    }
+
+
+    /* -----------------------------------------------------
+       ACCOUNT STATUS
+    ----------------------------------------------------- */
+
+    $accountStatus =
+        strtolower(
+            trim(
+                (string)(
+                    $adminUser['status']
+                    ?? 'active'
+                )
+            )
+        );
+
+
+    if (
+        in_array(
+            $accountStatus,
+            [
+                'blocked',
+                'suspended',
+                'disabled',
+                'banned',
+                'inactive'
+            ],
+            true
+        )
+    ) {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' => 'Administrator account is not active.'
+        ], 403);
+    }
+
+
+    /* -----------------------------------------------------
+       ADMIN ROLE
+    ----------------------------------------------------- */
+
+    $role =
+        strtolower(
+            trim(
+                (string)(
+                    $adminUser['role']
+                    ?? $_SESSION['role']
+                    ?? ''
+                )
+            )
+        );
+
+    $accountType =
+        strtolower(
+            trim(
+                (string)(
+                    $adminUser['account_type']
+                    ?? $adminUser['accountType']
+                    ?? $_SESSION['account_type']
+                    ?? ''
+                )
+            )
+        );
+
+
+    $isAdmin =
+        in_array(
+            $role,
+            [
+                'admin',
+                'administrator',
+                'super_admin',
+                'superadmin'
+            ],
+            true
+        )
+        ||
+        in_array(
+            $accountType,
+            [
+                'admin',
+                'administrator',
+                'super_admin',
+                'superadmin'
+            ],
+            true
+        );
+
+
+    /*
+     * If requireAdmin() exists and the account is already
+     * recognized as admin by the application, allow it.
+     */
+    if (!$isAdmin) {
+
+        try {
+
+            $environmentAdminId =
+                trim(
+                    (string)(
+                        $_ENV['ADMIN_USER_ID']
+                        ?? getenv('ADMIN_USER_ID')
+                        ?? ''
+                    )
+                );
+
+            $environmentAdminEmail =
+                strtolower(
+                    trim(
+                        (string)(
+                            $_ENV['ADMIN_EMAIL']
+                            ?? getenv('ADMIN_EMAIL')
+                            ?? ''
+                        )
+                    )
+                );
+
+
+            $currentId =
+                (string)(
+                    $adminUser['_id']
+                    ?? ''
+                );
+
+            $currentEmail =
+                strtolower(
+                    trim(
+                        (string)(
+                            $adminUser['email']
+                            ?? ''
+                        )
+                    )
+                );
+
+
+            if (
+                $environmentAdminId !== ''
+                &&
+                $currentId === $environmentAdminId
+            ) {
+
+                $isAdmin = true;
+            }
+
+
+            if (
+                $environmentAdminEmail !== ''
+                &&
+                $currentEmail === $environmentAdminEmail
+            ) {
+
+                $isAdmin = true;
+            }
+
+        } catch (Throwable $ignored) {
+        }
+    }
+
+
+    if (!$isAdmin) {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => true,
+            'authorized' => false,
+            'message' => 'Administrator access required.'
+        ], 403);
+    }
+
+
+    /*
+     * Keep session values synchronized.
+     */
+    $_SESSION['logged_in'] = true;
+    $_SESSION['authenticated'] = true;
+
+    $_SESSION['user_id'] =
+        $adminUser['_id']
+        ?? $sessionUserId;
+
+    $_SESSION['userId'] =
+        $adminUser['_id']
+        ?? $sessionUserId;
+
+    $_SESSION['id'] =
+        $adminUser['_id']
+        ?? $sessionUserId;
+
+    $_SESSION['role'] =
+        $role !== ''
+            ? $role
+            : 'admin';
+
+    $_SESSION['account_type'] =
+        $accountType !== ''
+            ? $accountType
+            : 'admin';
+
+    if (
+        !isset(
+            $_SESSION['login_time']
+        )
+    ) {
+
+        $_SESSION['login_time'] =
+            time();
+    }
+
+
+} catch (Throwable $e) {
+
+    error_log(
+        'Admin deposit authentication error: '
+        . $e->getMessage()
+    );
+
+    jsonResponse([
+        'success' => false,
+        'message' => 'Administrator authentication failed.'
+    ], 401);
+}
+
+
+/* =========================================================
+   ADMIN ID
+========================================================= */
+
+$adminId =
+    $adminUser['_id']
+    ?? $sessionUserId;
 
 
 /* =========================================================
@@ -17,15 +480,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $items = [];
 
 
-        $cursor = $deposits->find(
-            [],
-            [
-                'sort' => [
-                    'created_at' => -1
-                ],
-                'limit' => 500
-            ]
-        );
+        $cursor =
+            $deposits->find(
+                [],
+                [
+                    'sort' => [
+                        'created_at' => -1
+                    ],
+                    'limit' => 500
+                ]
+            );
 
 
         foreach ($cursor as $deposit) {
@@ -34,13 +498,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                FIND USER
             ------------------------------------------------- */
 
+            $rawUserId =
+                $deposit['user_id']
+                ?? $deposit['userId']
+                ?? null;
+
             $userId =
                 objectIdOrNull(
-                    $deposit['user_id']
-                    ?? $deposit['userId']
-                    ?? null
+                    $rawUserId
                 );
-
 
             $user = null;
 
@@ -49,9 +515,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
                 $user =
                     $users->findOne([
-                        '_id' =>
-                            $userId
+                        '_id' => $userId
                     ]);
+            }
+
+
+            /*
+             * Older deposits may contain a string ID.
+             */
+            if (
+                !$user
+                &&
+                $rawUserId !== null
+                &&
+                trim(
+                    (string)$rawUserId
+                ) !== ''
+            ) {
+
+                try {
+
+                    $user =
+                        $users->findOne([
+                            'id' =>
+                                (string)$rawUserId
+                        ]);
+
+                } catch (Throwable $ignored) {
+                }
             }
 
 
@@ -62,7 +553,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (
                 !$user
                 &&
-                !empty($deposit['email'])
+                !empty(
+                    $deposit['email']
+                )
             ) {
 
                 $user =
@@ -78,13 +571,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ------------------------------------------------- */
 
             $userName =
-                (string)(
-                    $deposit['customer_name']
-                    ?? ''
+                trim(
+                    (string)(
+                        $deposit['customer_name']
+                        ?? ''
+                    )
                 );
 
 
-            if ($userName === '' && $user) {
+            if (
+                $userName === ''
+                &&
+                $user
+            ) {
 
                 $firstName =
                     (string)(
@@ -109,7 +608,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     );
 
 
-                if ($userName === '') {
+                if (
+                    $userName === ''
+                ) {
 
                     $userName =
                         (string)(
@@ -121,100 +622,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
 
 
+            if (
+                $userName === ''
+            ) {
+
+                $userName =
+                    'Unknown Customer';
+            }
+
+
             /* -------------------------------------------------
-               RETURN DEPOSIT
+               SAFE RETURN DATA
             ------------------------------------------------- */
 
-            $items[] = jsonSafe([
+            $items[] =
+                jsonSafe([
 
-                'id' =>
-                    $deposit['_id'],
+                    'id' =>
+                        $deposit['_id'],
 
-                'user_id' =>
-                    $deposit['user_id']
-                    ?? $deposit['userId']
-                    ?? null,
+                    'user_id' =>
+                        $rawUserId,
 
-                'user_name' =>
-                    $userName,
+                    'userId' =>
+                        $rawUserId,
 
-                'email' =>
-                    $deposit['email']
-                    ?? (
-                        $user['email']
+                    'user_name' =>
+                        $userName,
+
+                    'customer_name' =>
+                        $userName,
+
+                    'email' =>
+                        $deposit['email']
+                        ?? (
+                            $user['email']
+                            ?? ''
+                        ),
+
+                    'phone' =>
+                        $deposit['phone']
+                        ?? (
+                            $user['phone']
+                            ?? ''
+                        ),
+
+                    'amount' =>
+                        moneyInt(
+                            $deposit['amount']
+                            ?? 0
+                        ),
+
+                    'currency' =>
+                        $deposit['currency']
+                        ?? 'UGX',
+
+                    'payment_method' =>
+                        $deposit['payment_method']
+                        ?? $deposit['paymentMethod']
+                        ?? '',
+
+                    'paymentMethod' =>
+                        $deposit['payment_method']
+                        ?? $deposit['paymentMethod']
+                        ?? '',
+
+                    'merchant_code' =>
+                        $deposit['merchant_code']
+                        ?? '',
+
+                    'transaction_reference' =>
+                        $deposit['transaction_reference']
+                        ?? $deposit['transactionReference']
+                        ?? '',
+
+                    'transactionReference' =>
+                        $deposit['transaction_reference']
+                        ?? $deposit['transactionReference']
+                        ?? '',
+
+                    'status' =>
+                        $deposit['status']
+                        ?? 'pending',
+
+                    'verified' =>
+                        (bool)(
+                            $deposit['verified']
+                            ?? false
+                        ),
+
+                    'approved' =>
+                        (bool)(
+                            $deposit['approved']
+                            ?? false
+                        ),
+
+                    'balance_credited' =>
+                        (bool)(
+                            $deposit['balance_credited']
+                            ?? false
+                        ),
+
+                    'created_at' =>
+                        $deposit['created_at']
+                        ?? null,
+
+                    'updated_at' =>
+                        $deposit['updated_at']
+                        ?? null,
+
+                    'approved_at' =>
+                        $deposit['approved_at']
+                        ?? null,
+
+                    'rejection_reason' =>
+                        $deposit['rejection_reason']
                         ?? ''
-                    ),
 
-                'phone' =>
-                    $deposit['phone']
-                    ?? (
-                        $user['phone']
-                        ?? ''
-                    ),
-
-                'amount' =>
-                    moneyInt(
-                        $deposit['amount']
-                        ?? 0
-                    ),
-
-                'currency' =>
-                    $deposit['currency']
-                    ?? 'UGX',
-
-                'payment_method' =>
-                    $deposit['payment_method']
-                    ?? $deposit['paymentMethod']
-                    ?? '',
-
-                'merchant_code' =>
-                    $deposit['merchant_code']
-                    ?? '',
-
-                'transaction_reference' =>
-                    $deposit['transaction_reference']
-                    ?? $deposit['transactionReference']
-                    ?? '',
-
-                'status' =>
-                    $deposit['status']
-                    ?? 'pending',
-
-                'verified' =>
-                    (bool)(
-                        $deposit['verified']
-                        ?? false
-                    ),
-
-                'approved' =>
-                    (bool)(
-                        $deposit['approved']
-                        ?? false
-                    ),
-
-                'balance_credited' =>
-                    (bool)(
-                        $deposit['balance_credited']
-                        ?? false
-                    ),
-
-                'created_at' =>
-                    $deposit['created_at']
-                    ?? null,
-
-                'updated_at' =>
-                    $deposit['updated_at']
-                    ?? null,
-
-                'approved_at' =>
-                    $deposit['approved_at']
-                    ?? null,
-
-                'rejection_reason' =>
-                    $deposit['rejection_reason']
-                    ?? ''
-
-            ]);
+                ]);
         }
 
 
@@ -223,8 +748,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'success' =>
                 true,
 
+            'authenticated' =>
+                true,
+
+            'authorized' =>
+                true,
+
             'deposits' =>
-                $items
+                $items,
+
+            'data' =>
+                $items,
+
+            'total' =>
+                count($items)
 
         ]);
 
@@ -237,9 +774,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 
         jsonResponse([
-            'success' => false,
+
+            'success' =>
+                false,
+
             'message' =>
                 'Unable to load deposits.'
+
         ], 500);
     }
 }
@@ -252,8 +793,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
     jsonResponse([
-        'success' => false,
-        'message' => 'Method not allowed.'
+
+        'success' =>
+            false,
+
+        'message' =>
+            'Method not allowed.'
+
     ], 405);
 }
 
@@ -273,8 +819,11 @@ $input =
         true
     );
 
+
 if (!is_array($input)) {
-    $input = $_POST;
+
+    $input =
+        $_POST;
 }
 
 
@@ -282,31 +831,36 @@ if (!is_array($input)) {
    REQUEST VALUES
 ========================================================= */
 
-$id = trim(
-    (string)(
-        $input['depositId']
-        ?? $input['deposit_id']
-        ?? $input['id']
-        ?? ''
-    )
-);
-
-$action = strtolower(
+$id =
     trim(
         (string)(
-            $input['action']
+            $input['depositId']
+            ?? $input['deposit_id']
+            ?? $input['id']
             ?? ''
         )
-    )
-);
+    );
 
-$reason = trim(
-    (string)(
-        $input['reason']
-        ?? $input['rejection_reason']
-        ?? ''
-    )
-);
+
+$action =
+    strtolower(
+        trim(
+            (string)(
+                $input['action']
+                ?? ''
+            )
+        )
+    );
+
+
+$reason =
+    trim(
+        (string)(
+            $input['reason']
+            ?? $input['rejection_reason']
+            ?? ''
+        )
+    );
 
 
 /* =========================================================
@@ -327,9 +881,13 @@ if (
 ) {
 
     jsonResponse([
-        'success' => false,
+
+        'success' =>
+            false,
+
         'message' =>
             'Invalid deposit ID or action.'
+
     ], 400);
 }
 
@@ -343,6 +901,10 @@ $depositId =
 /* =========================================================
    PROCESS DEPOSIT
 ========================================================= */
+
+$session = null;
+$transactionCommitted = false;
+
 
 try {
 
@@ -358,10 +920,12 @@ try {
 
     $deposit =
         $deposits->findOne(
+
             [
                 '_id' =>
                     $depositId
             ],
+
             [
                 'session' =>
                     $session
@@ -431,27 +995,81 @@ try {
        FIND USER
     ===================================================== */
 
+    $rawUserId =
+        $deposit['user_id']
+        ?? $deposit['userId']
+        ?? null;
+
+
     $userId =
         objectIdOrNull(
-            $deposit['user_id']
-            ?? $deposit['userId']
-            ?? null
+            $rawUserId
         );
 
 
     /*
-     * The original deposit.php can store user_id as a string,
-     * so objectIdOrNull handles both ObjectId and string IDs.
+     * If the deposit contains a plain string ID, try the
+     * users.id field.
      */
+    if (
+        !$userId
+        &&
+        $rawUserId !== null
+    ) {
 
-    if (!$userId && !empty($deposit['email'])) {
+        $rawUserIdString =
+            trim(
+                (string)$rawUserId
+            );
+
+
+        if (
+            $rawUserIdString !== ''
+        ) {
+
+            $user =
+                $users->findOne(
+
+                    [
+                        'id' =>
+                            $rawUserIdString
+                    ],
+
+                    [
+                        'session' =>
+                            $session
+                    ]
+                );
+
+
+            if ($user) {
+
+                $userId =
+                    $user['_id'];
+            }
+        }
+    }
+
+
+    /*
+     * Fallback to email.
+     */
+    if (
+        !$userId
+        &&
+        !empty(
+            $deposit['email']
+        )
+    ) {
 
         $user =
             $users->findOne(
+
                 [
                     'email' =>
                         $deposit['email']
                 ],
+
                 [
                     'session' =>
                         $session
@@ -460,6 +1078,7 @@ try {
 
 
         if ($user) {
+
             $userId =
                 $user['_id'];
         }
@@ -474,7 +1093,8 @@ try {
     }
 
 
-    $now = nowUtc();
+    $now =
+        nowUtc();
 
 
     /* =====================================================
@@ -590,18 +1210,39 @@ try {
 
         $session->commitTransaction();
 
+        $transactionCommitted = true;
 
-        audit(
-            'deposit_rejected',
-            $adminId,
-            [
-                'deposit_id' =>
-                    $id,
 
-                'reason' =>
-                    $rejectionReason
-            ]
-        );
+        /* -------------------------------------------------
+           AUDIT AFTER COMMIT
+        ------------------------------------------------- */
+
+        try {
+
+            audit(
+
+                'deposit_rejected',
+
+                $adminId,
+
+                [
+
+                    'deposit_id' =>
+                        $id,
+
+                    'reason' =>
+                        $rejectionReason
+
+                ]
+            );
+
+        } catch (Throwable $auditError) {
+
+            error_log(
+                'Deposit rejection audit error: '
+                . $auditError->getMessage()
+            );
+        }
 
 
         jsonResponse([
@@ -610,7 +1251,10 @@ try {
                 true,
 
             'message' =>
-                'Deposit rejected.'
+                'Deposit rejected.',
+
+            'deposit_id' =>
+                $id
 
         ]);
     }
@@ -697,6 +1341,15 @@ try {
                     [
                         '$ne' =>
                             true
+                    ],
+
+                'status' =>
+                    [
+                        '$in' => [
+                            'pending',
+                            'submitted',
+                            'processing'
+                        ]
                     ]
             ],
 
@@ -765,7 +1418,6 @@ try {
                 'session' =>
                     $session
             ]
-
         );
 
 
@@ -819,7 +1471,6 @@ try {
                 'session' =>
                     $session
             ]
-
         );
 
     } else {
@@ -904,7 +1555,6 @@ try {
                 'session' =>
                     $session
             ]
-
         );
     }
 
@@ -915,27 +1565,42 @@ try {
 
     $session->commitTransaction();
 
+    $transactionCommitted = true;
+
 
     /* =====================================================
        AUDIT
     ===================================================== */
 
-    audit(
-        'deposit_approved',
-        $adminId,
-        [
+    try {
 
-            'deposit_id' =>
-                $id,
+        audit(
 
-            'amount' =>
-                $amount,
+            'deposit_approved',
 
-            'user_id' =>
-                (string)$userId
+            $adminId,
 
-        ]
-    );
+            [
+
+                'deposit_id' =>
+                    $id,
+
+                'amount' =>
+                    $amount,
+
+                'user_id' =>
+                    (string)$userId
+
+            ]
+        );
+
+    } catch (Throwable $auditError) {
+
+        error_log(
+            'Deposit approval audit error: '
+            . $auditError->getMessage()
+        );
+    }
 
 
     /* =====================================================
@@ -961,10 +1626,16 @@ try {
 
 } catch (Throwable $e) {
 
-    if (isset($session)) {
+    if (
+        $session !== null
+        &&
+        !$transactionCommitted
+    ) {
 
         try {
+
             $session->abortTransaction();
+
         } catch (Throwable $ignored) {
         }
     }

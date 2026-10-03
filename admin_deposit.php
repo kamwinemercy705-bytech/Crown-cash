@@ -5,13 +5,15 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 | CROWN CASH - ADMIN DEPOSIT MANAGEMENT
 |--------------------------------------------------------------------------
-| Handles:
-|   GET  = Load deposits for administrators
-|   POST = Approve / Reject deposits
+| GET  = Load deposits for administrators
+| POST = Approve / Reject deposits
 |
-| Important:
-| Uses the same CROWN_CASH_SESSION session as login.php,
-| admin-auth.php, admin-dashboard.php and profile.php.
+| SECURITY:
+| - Uses CROWN_CASH_SESSION
+| - Requires authenticated user
+| - Requires server-side admin role
+| - is_admin === true is accepted
+| - Environment admin IDs/emails NEVER elevate a normal user
 |--------------------------------------------------------------------------
 */
 
@@ -52,7 +54,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 
 /* =========================================================
-   START THE CANONICAL CROWN CASH SESSION
+   START CANONICAL CROWN CASH SESSION
 ========================================================= */
 
 try {
@@ -65,29 +67,12 @@ try {
 
         if (session_status() !== PHP_SESSION_ACTIVE) {
 
-            ini_set(
-                'session.use_only_cookies',
-                '1'
-            );
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.use_strict_mode', '1');
+            ini_set('session.cookie_httponly', '1');
+            ini_set('session.cookie_secure', '1');
 
-            ini_set(
-                'session.use_strict_mode',
-                '1'
-            );
-
-            ini_set(
-                'session.cookie_httponly',
-                '1'
-            );
-
-            ini_set(
-                'session.cookie_secure',
-                '1'
-            );
-
-            session_name(
-                'CROWN_CASH_SESSION'
-            );
+            session_name('CROWN_CASH_SESSION');
 
             session_set_cookie_params([
                 'lifetime' => 0,
@@ -105,12 +90,13 @@ try {
 } catch (Throwable $e) {
 
     error_log(
-        'Admin deposit session error: '
-        . $e->getMessage()
+        'Admin deposit session error: ' . $e->getMessage()
     );
 
     jsonResponse([
         'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
         'message' => 'Unable to start administrator session.'
     ], 500);
 }
@@ -120,13 +106,13 @@ try {
    ADMIN AUTHENTICATION
 ========================================================= */
 
+$adminUser = null;
+
 try {
 
     /*
-     * Do NOT rely on a second/default PHP session.
-     * The canonical CROWN_CASH_SESSION has already been started.
+     * Authentication must come from the canonical session.
      */
-
     $loggedIn =
         (
             ($_SESSION['logged_in'] ?? false) === true
@@ -142,6 +128,10 @@ try {
         ?? null;
 
 
+    /* -----------------------------------------------------
+       NOT LOGGED IN
+    ----------------------------------------------------- */
+
     if (!$loggedIn || empty($sessionUserId)) {
 
         jsonResponse([
@@ -154,15 +144,11 @@ try {
 
 
     /* -----------------------------------------------------
-       FIND ADMIN USER
+       FIND USER BY OBJECT ID
     ----------------------------------------------------- */
 
-    $adminUser = null;
-
     $adminObjectId =
-        objectIdOrNull(
-            $sessionUserId
-        );
+        objectIdOrNull($sessionUserId);
 
     if ($adminObjectId) {
 
@@ -173,16 +159,14 @@ try {
     }
 
 
-    /*
-     * Fallback for older sessions where the ID may be stored
-     * as a plain string.
-     */
+    /* -----------------------------------------------------
+       FIND USER BY STRING ID
+    ----------------------------------------------------- */
+
     if (!$adminUser) {
 
         $sessionIdString =
-            trim(
-                (string)$sessionUserId
-            );
+            trim((string)$sessionUserId);
 
         if ($sessionIdString !== '') {
 
@@ -199,9 +183,10 @@ try {
     }
 
 
-    /*
-     * Final fallback through session email.
-     */
+    /* -----------------------------------------------------
+       FIND USER BY SESSION EMAIL
+    ----------------------------------------------------- */
+
     if (!$adminUser) {
 
         $sessionEmail =
@@ -225,6 +210,10 @@ try {
     }
 
 
+    /* -----------------------------------------------------
+       USER NOT FOUND
+    ----------------------------------------------------- */
+
     if (!$adminUser) {
 
         jsonResponse([
@@ -236,9 +225,9 @@ try {
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        ACCOUNT STATUS
-    ----------------------------------------------------- */
+    ===================================================== */
 
     $accountStatus =
         strtolower(
@@ -274,20 +263,20 @@ try {
     }
 
 
-    /* -----------------------------------------------------
-       ADMIN ROLE
-    ----------------------------------------------------- */
+    /* =====================================================
+       SERVER-SIDE ADMIN ROLE
+    ===================================================== */
 
     $role =
         strtolower(
             trim(
                 (string)(
                     $adminUser['role']
-                    ?? $_SESSION['role']
                     ?? ''
                 )
             )
         );
+
 
     $accountType =
         strtolower(
@@ -295,14 +284,27 @@ try {
                 (string)(
                     $adminUser['account_type']
                     ?? $adminUser['accountType']
-                    ?? $_SESSION['account_type']
                     ?? ''
                 )
             )
         );
 
 
-    $isAdmin =
+    /*
+     * Explicit boolean administrator flag.
+     */
+    $isAdminFlag =
+        (
+            isset($adminUser['is_admin'])
+            &&
+            $adminUser['is_admin'] === true
+        );
+
+
+    /*
+     * Accepted administrator roles.
+     */
+    $isAdminRole =
         in_array(
             $role,
             [
@@ -312,8 +314,13 @@ try {
                 'superadmin'
             ],
             true
-        )
-        ||
+        );
+
+
+    /*
+     * Accepted administrator account types.
+     */
+    $isAdminAccountType =
         in_array(
             $accountType,
             [
@@ -327,76 +334,34 @@ try {
 
 
     /*
-     * If requireAdmin() exists and the account is already
-     * recognized as admin by the application, allow it.
+     * FINAL ADMIN DECISION
+     *
+     * IMPORTANT:
+     * Environment variables do NOT grant administrator
+     * privileges. The actual user record must contain
+     * an administrator role/account type or is_admin=true.
      */
-    if (!$isAdmin) {
-
-        try {
-
-            $environmentAdminId =
-                trim(
-                    (string)(
-                        $_ENV['ADMIN_USER_ID']
-                        ?? getenv('ADMIN_USER_ID')
-                        ?? ''
-                    )
-                );
-
-            $environmentAdminEmail =
-                strtolower(
-                    trim(
-                        (string)(
-                            $_ENV['ADMIN_EMAIL']
-                            ?? getenv('ADMIN_EMAIL')
-                            ?? ''
-                        )
-                    )
-                );
+    $isAdmin =
+        $isAdminFlag
+        ||
+        $isAdminRole
+        ||
+        $isAdminAccountType;
 
 
-            $currentId =
-                (string)(
-                    $adminUser['_id']
-                    ?? ''
-                );
-
-            $currentEmail =
-                strtolower(
-                    trim(
-                        (string)(
-                            $adminUser['email']
-                            ?? ''
-                        )
-                    )
-                );
-
-
-            if (
-                $environmentAdminId !== ''
-                &&
-                $currentId === $environmentAdminId
-            ) {
-
-                $isAdmin = true;
-            }
-
-
-            if (
-                $environmentAdminEmail !== ''
-                &&
-                $currentEmail === $environmentAdminEmail
-            ) {
-
-                $isAdmin = true;
-            }
-
-        } catch (Throwable $ignored) {
-        }
-    }
-
+    /* =====================================================
+       DENY NON-ADMIN
+    ===================================================== */
 
     if (!$isAdmin) {
+
+        error_log(
+            'Unauthorized admin deposit access attempt. User ID: '
+            . (string)(
+                $adminUser['_id']
+                ?? $sessionUserId
+            )
+        );
 
         jsonResponse([
             'success' => false,
@@ -407,9 +372,10 @@ try {
     }
 
 
-    /*
-     * Keep session values synchronized.
-     */
+    /* =====================================================
+       SYNCHRONIZE SECURE ADMIN SESSION
+    ===================================================== */
+
     $_SESSION['logged_in'] = true;
     $_SESSION['authenticated'] = true;
 
@@ -435,14 +401,10 @@ try {
             ? $accountType
             : 'admin';
 
-    if (
-        !isset(
-            $_SESSION['login_time']
-        )
-    ) {
+    $_SESSION['is_admin'] = true;
 
-        $_SESSION['login_time'] =
-            time();
+    if (!isset($_SESSION['login_time'])) {
+        $_SESSION['login_time'] = time();
     }
 
 
@@ -455,6 +417,8 @@ try {
 
     jsonResponse([
         'success' => false,
+        'authenticated' => false,
+        'authorized' => false,
         'message' => 'Administrator authentication failed.'
     ], 401);
 }
@@ -504,9 +468,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 ?? null;
 
             $userId =
-                objectIdOrNull(
-                    $rawUserId
-                );
+                objectIdOrNull($rawUserId);
 
             $user = null;
 
@@ -520,25 +482,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
 
 
-            /*
-             * Older deposits may contain a string ID.
-             */
+            /* -------------------------------------------------
+               STRING USER ID FALLBACK
+            ------------------------------------------------- */
+
             if (
                 !$user
                 &&
                 $rawUserId !== null
                 &&
-                trim(
-                    (string)$rawUserId
-                ) !== ''
+                trim((string)$rawUserId) !== ''
             ) {
 
                 try {
 
                     $user =
                         $users->findOne([
-                            'id' =>
-                                (string)$rawUserId
+                            'id' => (string)$rawUserId
                         ]);
 
                 } catch (Throwable $ignored) {
@@ -546,22 +506,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
 
 
-            /*
-             * Some older deposit records may contain only
-             * the customer's email.
-             */
+            /* -------------------------------------------------
+               EMAIL FALLBACK
+            ------------------------------------------------- */
+
             if (
                 !$user
                 &&
-                !empty(
-                    $deposit['email']
-                )
+                !empty($deposit['email'])
             ) {
 
                 $user =
                     $users->findOne([
-                        'email' =>
-                            $deposit['email']
+                        'email' => $deposit['email']
                     ]);
             }
 
@@ -579,11 +536,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 );
 
 
-            if (
-                $userName === ''
-                &&
-                $user
-            ) {
+            if ($userName === '' && $user) {
 
                 $firstName =
                     (string)(
@@ -599,7 +552,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         ?? ''
                     );
 
-
                 $userName =
                     trim(
                         $firstName
@@ -608,9 +560,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     );
 
 
-                if (
-                    $userName === ''
-                ) {
+                if ($userName === '') {
 
                     $userName =
                         (string)(
@@ -622,9 +572,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
 
 
-            if (
-                $userName === ''
-            ) {
+            if ($userName === '') {
 
                 $userName =
                     'Unknown Customer';
@@ -754,6 +702,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'authorized' =>
                 true,
 
+            'admin' =>
+                true,
+
             'deposits' =>
                 $items,
 
@@ -771,7 +722,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'Admin deposit GET error: '
             . $e->getMessage()
         );
-
 
         jsonResponse([
 
@@ -809,9 +759,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 ========================================================= */
 
 $rawInput =
-    file_get_contents(
-        'php://input'
-    );
+    file_get_contents('php://input');
 
 $input =
     json_decode(
@@ -822,8 +770,7 @@ $input =
 
 if (!is_array($input)) {
 
-    $input =
-        $_POST;
+    $input = $_POST;
 }
 
 
@@ -864,7 +811,7 @@ $reason =
 
 
 /* =========================================================
-   VALIDATE
+   VALIDATE REQUEST
 ========================================================= */
 
 if (
@@ -893,9 +840,7 @@ if (
 
 
 $depositId =
-    new MongoDB\BSON\ObjectId(
-        $id
-    );
+    new MongoDB\BSON\ObjectId($id);
 
 
 /* =========================================================
@@ -914,9 +859,9 @@ try {
     $session->startTransaction();
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        FIND DEPOSIT
-    ----------------------------------------------------- */
+    ===================================================== */
 
     $deposit =
         $deposits->findOne(
@@ -941,9 +886,9 @@ try {
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        CHECK STATUS
-    ----------------------------------------------------- */
+    ===================================================== */
 
     $status =
         strtolower(
@@ -972,9 +917,9 @@ try {
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        AMOUNT
-    ----------------------------------------------------- */
+    ===================================================== */
 
     $amount =
         moneyInt(
@@ -1002,30 +947,20 @@ try {
 
 
     $userId =
-        objectIdOrNull(
-            $rawUserId
-        );
+        objectIdOrNull($rawUserId);
 
 
-    /*
-     * If the deposit contains a plain string ID, try the
-     * users.id field.
-     */
-    if (
-        !$userId
-        &&
-        $rawUserId !== null
-    ) {
+    /* -----------------------------------------------------
+       STRING ID FALLBACK
+    ----------------------------------------------------- */
+
+    if (!$userId && $rawUserId !== null) {
 
         $rawUserIdString =
-            trim(
-                (string)$rawUserId
-            );
+            trim((string)$rawUserId);
 
 
-        if (
-            $rawUserIdString !== ''
-        ) {
+        if ($rawUserIdString !== '') {
 
             $user =
                 $users->findOne(
@@ -1051,15 +986,14 @@ try {
     }
 
 
-    /*
-     * Fallback to email.
-     */
+    /* -----------------------------------------------------
+       EMAIL FALLBACK
+    ----------------------------------------------------- */
+
     if (
         !$userId
         &&
-        !empty(
-            $deposit['email']
-        )
+        !empty($deposit['email'])
     ) {
 
         $user =
@@ -1158,8 +1092,7 @@ try {
 
 
         if (
-            $depositUpdate
-                ->getModifiedCount()
+            $depositUpdate->getModifiedCount()
             !== 1
         ) {
 
@@ -1214,25 +1147,20 @@ try {
 
 
         /* -------------------------------------------------
-           AUDIT AFTER COMMIT
+           AUDIT
         ------------------------------------------------- */
 
         try {
 
             audit(
-
                 'deposit_rejected',
-
                 $adminId,
-
                 [
-
                     'deposit_id' =>
                         $id,
 
                     'reason' =>
                         $rejectionReason
-
                 ]
             );
 
@@ -1265,11 +1193,10 @@ try {
     ===================================================== */
 
     /*
-     * Never credit the wallet twice.
+     * Never credit a deposit twice.
      */
     if (
-        ($deposit['balance_credited']
-        ?? false)
+        ($deposit['balance_credited'] ?? false)
         === true
     ) {
 
@@ -1279,9 +1206,9 @@ try {
     }
 
 
-    /* -----------------------------------------------------
-       CREDIT WALLET
-    ----------------------------------------------------- */
+    /* =====================================================
+       CREDIT USER WALLET
+    ===================================================== */
 
     $balanceUpdate =
         $users->updateOne(
@@ -1326,9 +1253,9 @@ try {
     }
 
 
-    /* -----------------------------------------------------
+    /* =====================================================
        APPROVE DEPOSIT
-    ----------------------------------------------------- */
+    ===================================================== */
 
     $depositUpdate =
         $deposits->updateOne(
@@ -1391,8 +1318,7 @@ try {
 
 
     if (
-        $depositUpdate
-            ->getModifiedCount()
+        $depositUpdate->getModifiedCount()
         !== 1
     ) {
 
@@ -1560,7 +1486,7 @@ try {
 
 
     /* =====================================================
-       COMMIT
+       COMMIT TRANSACTION
     ===================================================== */
 
     $session->commitTransaction();
@@ -1569,17 +1495,14 @@ try {
 
 
     /* =====================================================
-       AUDIT
+       AUDIT AFTER COMMIT
     ===================================================== */
 
     try {
 
         audit(
-
             'deposit_approved',
-
             $adminId,
-
             [
 
                 'deposit_id' =>
@@ -1604,12 +1527,21 @@ try {
 
 
     /* =====================================================
-       RESPONSE
+       SUCCESS RESPONSE
     ===================================================== */
 
     jsonResponse([
 
         'success' =>
+            true,
+
+        'authenticated' =>
+            true,
+
+        'authorized' =>
+            true,
+
+        'admin' =>
             true,
 
         'message' =>
@@ -1647,13 +1579,51 @@ try {
     );
 
 
+    /*
+     * Do not expose internal MongoDB/PHP exception details
+     * to the browser.
+     */
+    $message =
+        'Unable to process deposit request.';
+
+
+    if (
+        $e instanceof RuntimeException
+        &&
+        in_array(
+            $e->getMessage(),
+            [
+                'Deposit not found.',
+                'This deposit has already been processed.',
+                'Invalid deposit amount.',
+                'Deposit owner could not be identified.',
+                'Deposit could not be rejected.',
+                'This deposit has already credited the wallet.',
+                'User wallet could not be credited.',
+                'Deposit could not be approved.'
+            ],
+            true
+        )
+    ) {
+
+        $message =
+            $e->getMessage();
+    }
+
+
     jsonResponse([
 
         'success' =>
             false,
 
+        'authenticated' =>
+            true,
+
+        'authorized' =>
+            true,
+
         'message' =>
-            $e->getMessage()
+            $message
 
     ], 400);
 }

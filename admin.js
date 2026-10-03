@@ -1,14 +1,15 @@
 /* ==========================================================================
    CROWN CASH - ADMIN DASHBOARD
-   Complete replacement admin.js
+   COMPLETE REPLACEMENT admin.js
+   Version: 2026-10-03
    ========================================================================== */
 
 (() => {
     "use strict";
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        CONFIGURATION
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     const API_BASE = "https://crown-cash1.onrender.com";
 
@@ -36,113 +37,114 @@
     const REQUEST_TIMEOUT = 20000;
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        STATE
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     const AdminDashboard = {
+
         authenticated: false,
+
         authorized: false,
+
         loading: false,
 
+        initialized: false,
+
         data: null,
+
         profile: null,
 
         deposits: [],
-        withdrawals: [],
-        investments: [],
 
-        initialized: false,
-        redirecting: false
+        withdrawals: [],
+
+        investments: []
+
     };
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        DOM HELPERS
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
-    const $ = (selector, parent = document) =>
-        parent.querySelector(selector);
+    function $(selector, parent = document) {
+        return parent.querySelector(selector);
+    }
 
-    const $$ = (selector, parent = document) =>
-        Array.from(parent.querySelectorAll(selector));
+
+    function $$(selector, parent = document) {
+        return Array.from(
+            parent.querySelectorAll(selector)
+        );
+    }
 
 
     function setText(selector, value) {
+
         const element = $(selector);
 
-        if (!element) return;
+        if (!element) {
+            return;
+        }
 
         if (
             value === null ||
-            value === undefined ||
-            value === ""
+            value === undefined
         ) {
             element.textContent = "0";
-        } else {
-            element.textContent = String(value);
+            return;
         }
+
+        element.textContent = String(value);
     }
 
 
-    function showElement(selector) {
-        const element = $(selector);
-
-        if (!element) return;
-
-        element.classList.remove("hidden");
-
-        if (element.dataset.previousDisplay) {
-            element.style.display =
-                element.dataset.previousDisplay;
-        }
-    }
-
-
-    function hideElement(selector) {
-        const element = $(selector);
-
-        if (!element) return;
-
-        element.classList.add("hidden");
-    }
-
-
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        LOADER
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     function showLoader() {
+
         const loader = $("#pageLoader");
 
-        if (!loader) return;
+        if (!loader) {
+            return;
+        }
 
         loader.classList.remove("hidden");
-        loader.style.display = "";
+
+        loader.style.display = "flex";
     }
 
 
     function hideLoader() {
+
         const loader = $("#pageLoader");
 
-        if (!loader) return;
+        if (!loader) {
+            return;
+        }
 
         loader.classList.add("hidden");
+
         loader.style.display = "none";
     }
 
 
-    /* ----------------------------------------------------------------------
-       ADMIN MESSAGE
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       MESSAGE
+    ====================================================================== */
 
     function showAdminMessage(
         message,
         type = "info"
     ) {
+
         let box = $("#adminMessage");
 
         if (!box) {
+
             box = document.createElement("div");
 
             box.id = "adminMessage";
@@ -150,7 +152,7 @@
             box.style.position = "fixed";
             box.style.top = "20px";
             box.style.right = "20px";
-            box.style.zIndex = "99999";
+            box.style.zIndex = "999999";
             box.style.maxWidth = "420px";
             box.style.padding = "14px 18px";
             box.style.borderRadius = "12px";
@@ -163,6 +165,7 @@
         }
 
         const colors = {
+
             success: {
                 background: "#e8f8ef",
                 color: "#147a42"
@@ -202,20 +205,23 @@
 
         box._hideTimer =
             setTimeout(() => {
+
                 box.style.display = "none";
+
             }, 7000);
     }
 
 
-    /* ----------------------------------------------------------------------
-       FETCH WITH TIMEOUT
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       FETCH
+    ====================================================================== */
 
     async function fetchWithTimeout(
         url,
         options = {},
         timeout = REQUEST_TIMEOUT
     ) {
+
         const controller =
             new AbortController();
 
@@ -226,6 +232,7 @@
             );
 
         try {
+
             return await fetch(
                 url,
                 {
@@ -233,21 +240,23 @@
 
                     credentials: "include",
 
-                    signal:
-                        controller.signal,
+                    cache: "no-store",
 
-                    cache: "no-store"
+                    signal:
+                        controller.signal
                 }
             );
+
         } finally {
+
             clearTimeout(timer);
         }
     }
 
 
-    /* ----------------------------------------------------------------------
-       READ SERVER RESPONSE
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       READ RESPONSE
+    ====================================================================== */
 
     async function readResponse(response) {
 
@@ -257,12 +266,16 @@
         let data = {};
 
         if (text) {
+
             try {
-                data = JSON.parse(text);
+
+                data =
+                    JSON.parse(text);
+
             } catch (error) {
 
                 console.error(
-                    "Invalid JSON response:",
+                    "Invalid JSON from server:",
                     text
                 );
 
@@ -284,24 +297,19 @@
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        API REQUEST
-       
        IMPORTANT:
-       redirectOnAuth defaults to FALSE.
-
-       This prevents profile/dashboard/deposit/withdrawal/investment
-       endpoints from unexpectedly sending the administrator back to
-       login.html a few seconds after the admin page loads.
-
-       ONLY authenticateAdmin() explicitly enables redirectOnAuth.
-    ---------------------------------------------------------------------- */
+       Secondary admin endpoints DO NOT redirect to login on 401.
+       Only admin-auth.php decides whether the admin can enter the panel.
+    ====================================================================== */
 
     async function apiRequest(
         url,
         options = {},
         config = {}
     ) {
+
         const {
             redirectOnAuth = false,
             timeout = REQUEST_TIMEOUT
@@ -318,11 +326,16 @@
                         ...options,
 
                         headers: {
+
                             "Accept":
                                 "application/json",
 
-                            "Content-Type":
-                                "application/json",
+                            ...(options.body
+                                ? {
+                                    "Content-Type":
+                                        "application/json"
+                                }
+                                : {}),
 
                             ...(options.headers || {})
                         }
@@ -333,7 +346,7 @@
         } catch (error) {
 
             console.error(
-                "Network/API request failed:",
+                "Crown Cash network error:",
                 url,
                 error
             );
@@ -342,6 +355,7 @@
                 error.name ===
                 "AbortError"
             ) {
+
                 throw new Error(
                     "Request timed out. Please try again."
                 );
@@ -375,20 +389,12 @@
 
 
         /* --------------------------------------------------------------
-           UNAUTHORIZED
+           401
         -------------------------------------------------------------- */
 
         if (
-            response.status ===
-            401
+            response.status === 401
         ) {
-
-            /*
-             * Do NOT automatically destroy the whole admin page state.
-             *
-             * A secondary endpoint may have a session problem while the
-             * main administrator authentication is still valid.
-             */
 
             if (redirectOnAuth) {
 
@@ -404,18 +410,17 @@
             throw new Error(
                 data.message ||
                 data.error ||
-                "Administrator authentication is required for this request."
+                "Administrator authentication is required."
             );
         }
 
 
         /* --------------------------------------------------------------
-           FORBIDDEN
+           403
         -------------------------------------------------------------- */
 
         if (
-            response.status ===
-            403
+            response.status === 403
         ) {
 
             throw new Error(
@@ -427,35 +432,19 @@
 
 
         /* --------------------------------------------------------------
-           SERVER ERROR
+           OTHER HTTP ERRORS
         -------------------------------------------------------------- */
 
         if (!response.ok) {
 
-            let message =
+            const message =
                 data.message ||
                 data.error ||
                 data.details ||
                 data.reason ||
-                "";
+                `Server error (${response.status}).`;
 
-            if (!message) {
-
-                if (
-                    response.status ===
-                    500
-                ) {
-                    message =
-                        "Server error (500). Check the Crown Cash backend logs.";
-                } else {
-                    message =
-                        `Server error (${response.status}).`;
-                }
-            }
-
-            throw new Error(
-                message
-            );
+            throw new Error(message);
         }
 
 
@@ -483,38 +472,28 @@
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        LOGIN REDIRECT
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     function redirectToLogin() {
 
-        if (AdminDashboard.redirecting) {
+        if (
+            window.location.pathname.endsWith(
+                "login.html"
+            )
+        ) {
             return;
         }
 
-        AdminDashboard.redirecting = true;
-
-        const loginPage =
+        window.location.href =
             "login.html";
-
-        if (
-            !window.location.pathname.endsWith(
-                loginPage
-            )
-        ) {
-
-            window.location.href =
-                loginPage;
-        }
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        ADMIN AUTHENTICATION
-       
-       This is the ONLY initial request allowed to redirect to login.
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     async function authenticateAdmin() {
 
@@ -527,9 +506,10 @@
                         method: "GET"
                     },
                     {
-                        redirectOnAuth: true
+                        redirectOnAuth: false
                     }
                 );
+
 
             const authenticated =
                 data.authenticated === true;
@@ -537,11 +517,22 @@
             const authorized =
                 data.authorized === true;
 
+
             AdminDashboard.authenticated =
                 authenticated;
 
             AdminDashboard.authorized =
                 authorized;
+
+
+            console.log(
+                "Crown Cash admin authentication:",
+                {
+                    authenticated,
+                    authorized,
+                    response: data
+                }
+            );
 
 
             if (
@@ -568,16 +559,17 @@
 
         } catch (error) {
 
+            console.error(
+                "Admin authentication failed:",
+                error
+            );
+
             AdminDashboard.authenticated =
                 false;
 
             AdminDashboard.authorized =
                 false;
 
-            console.error(
-                "Admin authentication error:",
-                error
-            );
 
             showAdminMessage(
                 error.message ||
@@ -585,19 +577,21 @@
                 "error"
             );
 
+
             setTimeout(
                 redirectToLogin,
                 1500
             );
+
 
             return false;
         }
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        PROFILE
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     async function loadAdminProfile() {
 
@@ -608,28 +602,34 @@
                     PROFILE_API,
                     {
                         method: "GET"
-                    },
-                    {
-                        redirectOnAuth: false
                     }
                 );
 
-            if (data.user) {
+
+            const user =
+                data.user ||
+                data.admin ||
+                data.profile ||
+                null;
+
+
+            if (user) {
 
                 AdminDashboard.profile =
-                    data.user;
+                    user;
 
                 renderAdminProfile(
-                    data.user
+                    user
                 );
             }
+
 
             return data;
 
         } catch (error) {
 
             console.warn(
-                "Admin profile could not be loaded:",
+                "Profile API failed:",
                 error.message
             );
 
@@ -638,9 +638,7 @@
     }
 
 
-    function renderAdminProfile(
-        user
-    ) {
+    function renderAdminProfile(user) {
 
         const firstName =
             getValue(
@@ -652,6 +650,7 @@
                 ""
             );
 
+
         const lastName =
             getValue(
                 user,
@@ -661,6 +660,7 @@
                 ],
                 ""
             );
+
 
         let fullName =
             getValue(
@@ -683,6 +683,7 @@
 
 
         if (!fullName) {
+
             fullName =
                 "Administrator";
         }
@@ -691,7 +692,9 @@
         const email =
             getValue(
                 user,
-                ["email"],
+                [
+                    "email"
+                ],
                 ""
             );
 
@@ -713,26 +716,31 @@
             fullName
         );
 
+
         setText(
             "#adminFirstName",
             firstName ||
             fullName.split(" ")[0]
         );
 
+
         setText(
             "#headerUserName",
             fullName
         );
+
 
         setText(
             "#accountName",
             fullName
         );
 
+
         setText(
             "#adminEmail",
             email
         );
+
 
         setText(
             "#adminAccountType",
@@ -743,19 +751,18 @@
         const avatar =
             $("#adminAvatar");
 
+
         if (avatar) {
 
             avatar.textContent =
-                getInitials(
-                    fullName
-                );
+                getInitials(fullName);
         }
     }
 
 
-    /* ----------------------------------------------------------------------
-       MAIN DASHBOARD
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       DASHBOARD DATA
+    ====================================================================== */
 
     async function loadDashboardData() {
 
@@ -766,20 +773,30 @@
                     ADMIN_DASHBOARD_API,
                     {
                         method: "GET"
-                    },
-                    {
-                        redirectOnAuth: false
                     }
                 );
+
+
+            console.log(
+                "Crown Cash admin dashboard response:",
+                data
+            );
+
 
             AdminDashboard.data =
                 data;
 
 
-            if (data.admin) {
+            const admin =
+                data.admin ||
+                data.user ||
+                null;
+
+
+            if (admin) {
 
                 renderAdminProfile(
-                    data.admin
+                    admin
                 );
             }
 
@@ -794,229 +811,388 @@
         } catch (error) {
 
             console.error(
-                "Dashboard error:",
+                "Admin dashboard API failed:",
                 error
             );
 
-            renderDashboardError(
+
+            showAdminMessage(
+                `Dashboard data could not be loaded: ${error.message}`,
+                "error"
+            );
+
+
+            /*
+             * Do not replace the dashboard with fake zero values.
+             * This makes backend problems visible.
+             */
+
+            showDashboardConnectionError(
                 error.message
             );
 
-            throw error;
+
+            return null;
         }
     }
 
 
-    function renderDashboard(
-        data
-    ) {
+    function renderDashboard(data) {
+
+        if (!data) {
+            return;
+        }
+
 
         const stats =
             data.stats ||
             data.summary ||
+            data.overview ||
+            data.statistics ||
             {};
 
 
         const pending =
             data.pending_activity ||
             data.pending ||
+            data.pending_actions ||
             {};
 
 
-        /* USERS */
+        const users =
+            data.users_summary ||
+            data.user_stats ||
+            {};
+
+
+        /* ==============================================================
+           USERS
+        ============================================================== */
+
+        const totalUsers =
+            getNumericValue(
+                stats.total_users,
+                stats.users,
+                stats.users_count,
+
+                data.total_users,
+                data.totalUsers,
+
+                users.total_users,
+                users.total,
+
+                0
+            );
+
+
+        const activeUsers =
+            getNumericValue(
+                stats.active_users,
+                stats.activeUsers,
+
+                data.active_users,
+                data.activeUsers,
+
+                users.active_users,
+                users.active,
+
+                0
+            );
+
+
+        const newAccounts =
+            getNumericValue(
+                stats.new_accounts,
+                stats.newAccounts,
+
+                pending.new_accounts,
+                pending.newAccounts,
+
+                data.new_accounts,
+                data.newAccounts,
+
+                0
+            );
+
 
         setText(
             "#totalUsers",
-            formatNumber(
-                getNumericValue(
-                    stats.total_users,
-                    stats.users,
-                    data.total_users,
-                    0
-                )
-            )
+            formatNumber(totalUsers)
         );
 
 
         setText(
             "#activeUsers",
-            formatNumber(
-                getNumericValue(
-                    stats.active_users,
-                    data.active_users,
-                    0
-                )
-            )
+            formatNumber(activeUsers)
         );
 
 
         setText(
             "#newAccounts",
-            formatNumber(
-                getNumericValue(
-                    stats.new_accounts,
-                    pending.new_accounts,
-                    data.new_accounts,
-                    0
-                )
-            )
+            formatNumber(newAccounts)
         );
 
 
-        /* DEPOSITS */
+        /* ==============================================================
+           DEPOSITS
+        ============================================================== */
+
+        const totalDeposits =
+            getNumericValue(
+                stats.total_deposits,
+                stats.totalDeposits,
+
+                stats.deposits_total,
+
+                data.total_deposits,
+                data.totalDeposits,
+
+                data.deposits_total,
+
+                data.deposit_total,
+
+                0
+            );
+
+
+        const pendingDeposits =
+            getNumericValue(
+                stats.pending_deposits,
+                stats.pendingDeposits,
+
+                pending.deposits,
+                pending.pending_deposits,
+
+                data.pending_deposits,
+                data.pendingDeposits,
+
+                0
+            );
+
 
         setText(
             "#totalDeposits",
-            formatCurrency(
-                getNumericValue(
-                    stats.total_deposits,
-                    stats.deposits,
-                    data.total_deposits,
-                    0
-                )
-            )
+            formatCurrency(totalDeposits)
         );
 
 
         setText(
             "#pendingDeposits",
-            formatCurrency(
-                getNumericValue(
-                    stats.pending_deposits,
-                    pending.deposits,
-                    data.pending_deposits,
-                    0
-                )
-            )
+            formatCurrency(pendingDeposits)
         );
 
 
-        /* WITHDRAWALS */
+        /* ==============================================================
+           WITHDRAWALS
+        ============================================================== */
+
+        const totalWithdrawals =
+            getNumericValue(
+                stats.total_withdrawals,
+                stats.totalWithdrawals,
+
+                stats.withdrawals_total,
+
+                data.total_withdrawals,
+                data.totalWithdrawals,
+
+                data.withdrawals_total,
+
+                data.withdrawal_total,
+
+                0
+            );
+
+
+        const pendingWithdrawals =
+            getNumericValue(
+                stats.pending_withdrawals,
+                stats.pendingWithdrawals,
+
+                pending.withdrawals,
+                pending.pending_withdrawals,
+
+                data.pending_withdrawals,
+                data.pendingWithdrawals,
+
+                0
+            );
+
 
         setText(
             "#totalWithdrawals",
-            formatCurrency(
-                getNumericValue(
-                    stats.total_withdrawals,
-                    stats.withdrawals,
-                    data.total_withdrawals,
-                    0
-                )
-            )
+            formatCurrency(totalWithdrawals)
         );
 
 
         setText(
             "#pendingWithdrawals",
-            formatCurrency(
-                getNumericValue(
-                    stats.pending_withdrawals,
-                    pending.withdrawals,
-                    data.pending_withdrawals,
-                    0
-                )
-            )
+            formatCurrency(pendingWithdrawals)
         );
 
 
-        /* INVESTMENTS */
+        /* ==============================================================
+           INVESTMENTS
+        ============================================================== */
+
+        const totalInvestments =
+            getNumericValue(
+                stats.total_investments,
+                stats.totalInvestments,
+
+                stats.investments_total,
+
+                data.total_investments,
+                data.totalInvestments,
+
+                data.investments_total,
+
+                data.investment_total,
+
+                0
+            );
+
 
         setText(
             "#totalInvestments",
-            formatCurrency(
-                getNumericValue(
-                    stats.total_investments,
-                    stats.investments,
-                    data.total_investments,
-                    0
-                )
-            )
+            formatCurrency(totalInvestments)
         );
 
 
-        /* REFERRALS */
+        /* ==============================================================
+           REFERRALS
+        ============================================================== */
+
+        const totalReferrals =
+            getNumericValue(
+                stats.total_referrals,
+                stats.totalReferrals,
+
+                data.total_referrals,
+                data.totalReferrals,
+
+                0
+            );
+
 
         setText(
             "#totalReferrals",
-            formatNumber(
-                getNumericValue(
-                    stats.total_referrals,
-                    stats.referrals,
-                    data.total_referrals,
-                    0
-                )
-            )
+            formatNumber(totalReferrals)
         );
 
 
-        /* TRANSACTIONS */
+        /* ==============================================================
+           TRANSACTIONS
+        ============================================================== */
+
+        const totalTransactions =
+            getNumericValue(
+                stats.total_transactions,
+                stats.totalTransactions,
+
+                data.total_transactions,
+                data.totalTransactions,
+
+                0
+            );
+
 
         setText(
             "#totalTransactions",
-            formatNumber(
-                getNumericValue(
-                    stats.total_transactions,
-                    stats.transactions,
-                    data.total_transactions,
-                    0
-                )
-            )
+            formatNumber(totalTransactions)
         );
 
 
-        /* SUPPORT */
+        /* ==============================================================
+           SUPPORT
+        ============================================================== */
+
+        const openTickets =
+            getNumericValue(
+                stats.open_tickets,
+                stats.openTickets,
+
+                data.open_tickets,
+                data.openTickets,
+
+                0
+            );
+
 
         setText(
             "#openTickets",
-            formatNumber(
-                getNumericValue(
-                    stats.open_tickets,
-                    data.open_tickets,
-                    0
-                )
-            )
+            formatNumber(openTickets)
         );
 
 
-        /* RECENT TRANSACTIONS */
+        /* ==============================================================
+           RECENT TRANSACTIONS
+        ============================================================== */
 
         renderRecentTransactions(
             data.recent_transactions ||
+            data.recentTransactions ||
             data.transactions ||
             []
         );
 
 
-        /* RECENT USERS */
+        /* ==============================================================
+           RECENT USERS
+        ============================================================== */
 
         renderRecentUsers(
             data.recent_users ||
+            data.recentUsers ||
             data.users ||
             []
         );
     }
 
 
-    function renderDashboardError(
-        message
-    ) {
+    function showDashboardConnectionError(message) {
 
-        console.error(
-            "Admin dashboard:",
-            message
-        );
+        const transactionBox =
+            $("#recentTransactions");
 
-        showAdminMessage(
-            message ||
-            "Unable to load dashboard data.",
-            "error"
-        );
+        const userBox =
+            $("#recentUsers");
+
+
+        if (transactionBox) {
+
+            transactionBox.innerHTML = `
+                <div class="empty-state">
+                    <p>
+                        Unable to load transactions.
+                    </p>
+                    <small>
+                        ${escapeHtml(message || "")}
+                    </small>
+                </div>
+            `;
+        }
+
+
+        if (userBox) {
+
+            userBox.innerHTML = `
+                <div class="empty-state">
+                    <p>
+                        Unable to load recent users.
+                    </p>
+                    <small>
+                        ${escapeHtml(message || "")}
+                    </small>
+                </div>
+            `;
+        }
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        RECENT TRANSACTIONS
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     function renderRecentTransactions(
         transactions
@@ -1025,7 +1201,9 @@
         const container =
             $("#recentTransactions");
 
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
 
         if (
@@ -1045,117 +1223,116 @@
 
         container.innerHTML =
             transactions
-                .map(
-                    transaction => {
+                .map(transaction => {
 
-                        const amount =
-                            getNumericValue(
-                                transaction.amount,
-                                0
-                            );
-
-
-                        const type =
-                            formatTransactionType(
-                                transaction.type
-                            );
+                    const amount =
+                        getNumericValue(
+                            transaction.amount,
+                            0
+                        );
 
 
-                        const status =
-                            formatStatus(
-                                transaction.status
-                            );
+                    const type =
+                        formatTransactionType(
+                            transaction.type
+                        );
 
 
-                        const date =
-                            formatDate(
-                                transaction.created_at ||
-                                transaction.createdAt
-                            );
+                    const status =
+                        formatStatus(
+                            transaction.status
+                        );
 
 
-                        const name =
-                            escapeHtml(
-                                transaction.user_name ||
-                                transaction.userName ||
-                                transaction.name ||
-                                "Crown Cash User"
-                            );
+                    const date =
+                        formatDate(
+                            transaction.created_at ||
+                            transaction.createdAt ||
+                            transaction.date
+                        );
 
 
-                        const typeClass =
-                            getTypeClass(
-                                transaction.type
-                            );
+                    const name =
+                        escapeHtml(
+                            transaction.user_name ||
+                            transaction.userName ||
+                            transaction.name ||
+                            "Crown Cash User"
+                        );
 
 
-                        const statusClass =
-                            getStatusClass(
-                                transaction.status
-                            );
+                    const typeClass =
+                        getTypeClass(
+                            transaction.type
+                        );
 
 
-                        const icon =
-                            getTransactionIcon(
-                                transaction.type
-                            );
+                    const statusClass =
+                        getStatusClass(
+                            transaction.status
+                        );
 
 
-                        return `
-                            <div class="transaction-item">
+                    const icon =
+                        getTransactionIcon(
+                            transaction.type
+                        );
 
-                                <div class="transaction-icon ${typeClass}">
-                                    ${icon}
-                                </div>
 
-                                <div class="transaction-details">
+                    return `
+                        <div class="transaction-item">
 
-                                    <strong>
-                                        ${name}
-                                    </strong>
+                            <div class="transaction-icon ${typeClass}">
+                                ${icon}
+                            </div>
 
-                                    <span>
-                                        ${escapeHtml(type)}
-                                    </span>
+                            <div class="transaction-details">
 
-                                    <small>
-                                        ${escapeHtml(date)}
-                                    </small>
+                                <strong>
+                                    ${name}
+                                </strong>
 
-                                </div>
+                                <span>
+                                    ${escapeHtml(type)}
+                                </span>
 
-                                <div class="transaction-amount">
-
-                                    <strong>
-                                        ${formatCurrency(amount)}
-                                    </strong>
-
-                                    <span class="${statusClass}">
-                                        ${escapeHtml(status)}
-                                    </span>
-
-                                </div>
+                                <small>
+                                    ${escapeHtml(date)}
+                                </small>
 
                             </div>
-                        `;
-                    }
-                )
+
+                            <div class="transaction-amount">
+
+                                <strong>
+                                    ${formatCurrency(amount)}
+                                </strong>
+
+                                <span class="${statusClass}">
+                                    ${escapeHtml(status)}
+                                </span>
+
+                            </div>
+
+                        </div>
+                    `;
+                })
                 .join("");
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        RECENT USERS
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
-    function renderRecentUsers(
-        users
-    ) {
+    function renderRecentUsers(users) {
 
         const container =
             $("#recentUsers");
 
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
 
         if (
@@ -1175,95 +1352,88 @@
 
         container.innerHTML =
             users
-                .map(
-                    user => {
+                .map(user => {
 
-                        const rawName =
-                            user.name ||
-                            user.full_name ||
-                            `${user.first_name || ""} ${user.last_name || ""}`
-                                .trim() ||
-                            "Crown Cash User";
+                    const rawName =
+                        user.name ||
+                        user.full_name ||
+                        user.fullName ||
+                        `${user.first_name || ""} ${user.last_name || ""}`
+                            .trim() ||
+                        "Crown Cash User";
 
 
-                        const name =
-                            escapeHtml(
+                    const email =
+                        escapeHtml(
+                            user.email ||
+                            ""
+                        );
+
+
+                    const status =
+                        formatStatus(
+                            user.status
+                        );
+
+
+                    const date =
+                        formatDate(
+                            user.created_at ||
+                            user.createdAt
+                        );
+
+
+                    const statusClass =
+                        getStatusClass(
+                            user.status
+                        );
+
+
+                    const initials =
+                        escapeHtml(
+                            getInitials(
                                 rawName
-                            );
+                            )
+                        );
 
 
-                        const email =
-                            escapeHtml(
-                                user.email ||
-                                ""
-                            );
+                    return `
+                        <div class="user-item">
 
+                            <div class="user-avatar">
+                                ${initials}
+                            </div>
 
-                        const status =
-                            formatStatus(
-                                user.status
-                            );
+                            <div class="user-details">
 
+                                <strong>
+                                    ${escapeHtml(rawName)}
+                                </strong>
 
-                        const date =
-                            formatDate(
-                                user.created_at ||
-                                user.createdAt
-                            );
-
-
-                        const statusClass =
-                            getStatusClass(
-                                user.status
-                            );
-
-
-                        const initials =
-                            escapeHtml(
-                                getInitials(
-                                    rawName
-                                )
-                            );
-
-
-                        return `
-                            <div class="user-item">
-
-                                <div class="user-avatar">
-                                    ${initials}
-                                </div>
-
-                                <div class="user-details">
-
-                                    <strong>
-                                        ${name}
-                                    </strong>
-
-                                    <span>
-                                        ${email}
-                                    </span>
-
-                                    <small>
-                                        ${escapeHtml(date)}
-                                    </small>
-
-                                </div>
-
-                                <span class="${statusClass}">
-                                    ${escapeHtml(status)}
+                                <span>
+                                    ${email}
                                 </span>
 
+                                <small>
+                                    ${escapeHtml(date)}
+                                </small>
+
                             </div>
-                        `;
-                    }
-                )
+
+                            <span class="${statusClass}">
+                                ${escapeHtml(status)}
+                            </span>
+
+                        </div>
+                    `;
+                })
                 .join("");
     }
 
 
-    /* ----------------------------------------------------------------------
+    /* ======================================================================
        APPROVAL CENTER
-    ---------------------------------------------------------------------- */
+    ====================================================================== */
 
     function createApprovalCenter() {
 
@@ -1294,15 +1464,20 @@
 
 
         section.innerHTML = `
+
             <div class="approval-header">
 
                 <div>
-                    <h2>Approval Center</h2>
+
+                    <h2>
+                        Approval Center
+                    </h2>
 
                     <p>
                         Review and process pending
                         deposits, withdrawals and investments.
                     </p>
+
                 </div>
 
                 <button
@@ -1315,6 +1490,7 @@
 
             </div>
 
+
             <div class="approval-tabs">
 
                 <button
@@ -1323,8 +1499,11 @@
                     data-approval-tab="deposits"
                 >
                     Deposits
-                    <span id="approvalDepositCount">0</span>
+                    <span id="approvalDepositCount">
+                        0
+                    </span>
                 </button>
+
 
                 <button
                     type="button"
@@ -1332,8 +1511,11 @@
                     data-approval-tab="withdrawals"
                 >
                     Withdrawals
-                    <span id="approvalWithdrawalCount">0</span>
+                    <span id="approvalWithdrawalCount">
+                        0
+                    </span>
                 </button>
+
 
                 <button
                     type="button"
@@ -1341,15 +1523,19 @@
                     data-approval-tab="investments"
                 >
                     Investments
-                    <span id="approvalInvestmentCount">0</span>
+                    <span id="approvalInvestmentCount">
+                        0
+                    </span>
                 </button>
 
             </div>
+
 
             <div
                 id="approvalDeposits"
                 class="approval-panel active"
             ></div>
+
 
             <div
                 id="approvalWithdrawals"
@@ -1357,11 +1543,13 @@
                 style="display:none;"
             ></div>
 
+
             <div
                 id="approvalInvestments"
                 class="approval-panel"
                 style="display:none;"
             ></div>
+
         `;
 
 
@@ -1372,6 +1560,7 @@
 
 
         addApprovalStyles();
+
         setupApprovalTabs();
 
 
@@ -1425,9 +1614,7 @@
 
     function addApprovalStyles() {
 
-        if (
-            $("#approvalCenterStyles")
-        ) {
+        if ($("#approvalCenterStyles")) {
             return;
         }
 
@@ -1441,6 +1628,7 @@
 
 
         style.textContent = `
+
             #approvalCenter {
                 margin-top: 24px;
                 background: #fff;
@@ -1607,6 +1795,7 @@
                     flex: 1;
                 }
             }
+
         `;
 
 
@@ -1625,6 +1814,7 @@
 
                         $$(".approval-tab")
                             .forEach(button => {
+
                                 button.classList.remove(
                                     "active"
                                 );
@@ -1673,9 +1863,9 @@
     }
 
 
-    /* ----------------------------------------------------------------------
-       APPROVAL DATA
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       LOAD APPROVAL DATA
+    ====================================================================== */
 
     async function loadApprovalData() {
 
@@ -1689,9 +1879,6 @@
                     ADMIN_DEPOSITS_API,
                     {
                         method: "GET"
-                    },
-                    {
-                        redirectOnAuth: false
                     }
                 ),
 
@@ -1699,9 +1886,6 @@
                     ADMIN_WITHDRAWALS_API,
                     {
                         method: "GET"
-                    },
-                    {
-                        redirectOnAuth: false
                     }
                 ),
 
@@ -1709,22 +1893,25 @@
                     ADMIN_INVESTMENTS_API,
                     {
                         method: "GET"
-                    },
-                    {
-                        redirectOnAuth: false
                     }
                 )
+
             ]);
 
 
-        const [
-            depositResult,
-            withdrawalResult,
-            investmentResult
-        ] = results;
+        const depositResult =
+            results[0];
+
+        const withdrawalResult =
+            results[1];
+
+        const investmentResult =
+            results[2];
 
 
-        /* DEPOSITS */
+        /* ==============================================================
+           DEPOSITS
+        ============================================================== */
 
         if (
             depositResult.status ===
@@ -1754,7 +1941,9 @@
         }
 
 
-        /* WITHDRAWALS */
+        /* ==============================================================
+           WITHDRAWALS
+        ============================================================== */
 
         if (
             withdrawalResult.status ===
@@ -1790,6 +1979,7 @@
             if (withdrawalPanel) {
 
                 withdrawalPanel.innerHTML = `
+
                     <div class="approval-empty">
 
                         <strong>
@@ -1804,12 +1994,15 @@
                         </p>
 
                     </div>
+
                 `;
             }
         }
 
 
-        /* INVESTMENTS */
+        /* ==============================================================
+           INVESTMENTS
+        ============================================================== */
 
         if (
             investmentResult.status ===
@@ -1845,6 +2038,7 @@
 
 
         return {
+
             deposits:
                 AdminDashboard.deposits,
 
@@ -1853,6 +2047,7 @@
 
             investments:
                 AdminDashboard.investments
+
         };
     }
 
@@ -1887,9 +2082,9 @@
     }
 
 
-    /* ----------------------------------------------------------------------
-       APPROVAL CENTER RENDER
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       APPROVAL RENDER
+    ====================================================================== */
 
     function renderApprovalCenter() {
 
@@ -1927,18 +2122,18 @@
     }
 
 
-    /* ----------------------------------------------------------------------
-       DEPOSIT APPROVALS
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       DEPOSITS
+    ====================================================================== */
 
-    function renderDepositApprovals(
-        items
-    ) {
+    function renderDepositApprovals(items) {
 
         const container =
             $("#approvalDeposits");
 
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
 
         if (
@@ -1958,121 +2153,127 @@
 
         container.innerHTML =
             items
-                .map(
-                    item => {
+                .map(item => {
 
-                        const id =
-                            getItemId(item);
-
-
-                        const amount =
-                            getNumericValue(
-                                item.amount,
-                                0
-                            );
+                    const id =
+                        getItemId(item);
 
 
-                        const name =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "user_name",
-                                        "userName",
-                                        "name",
-                                        "full_name"
-                                    ],
-                                    "Crown Cash User"
-                                )
-                            );
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            item.deposit_amount,
+                            item.depositAmount,
+                            0
+                        );
 
 
-                        const phone =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "phone",
-                                        "phone_number",
-                                        "mobile"
-                                    ],
-                                    ""
-                                )
-                            );
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "userName",
+                                    "name",
+                                    "full_name",
+                                    "fullName"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
 
 
-                        const reference =
-                            escapeHtml(
-                                getValue(
-                                    item,
-                                    [
-                                        "reference",
-                                        "transaction_reference",
-                                        "payment_reference"
-                                    ],
-                                    ""
-                                )
-                            );
+                    const phone =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "phone",
+                                    "phone_number",
+                                    "mobile"
+                                ],
+                                ""
+                            )
+                        );
 
 
-                        return `
-                            <div
-                                class="approval-item"
-                                data-approval-id="${escapeHtml(id)}"
-                            >
+                    const reference =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "reference",
+                                    "transaction_reference",
+                                    "payment_reference"
+                                ],
+                                ""
+                            )
+                        );
 
-                                <div class="approval-info">
 
-                                    <strong>
-                                        ${name}
-                                    </strong>
+                    return `
 
-                                    <span>
-                                        ${phone}
-                                    </span>
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
 
-                                    <span>
-                                        ${
-                                            reference
-                                                ? `Reference: ${reference}`
-                                                : "Deposit awaiting approval"
-                                        }
-                                    </span>
+                            <div class="approval-info">
 
-                                </div>
+                                <strong>
+                                    ${name}
+                                </strong>
 
-                                <div class="approval-amount">
-                                    ${formatCurrency(amount)}
-                                </div>
+                                <span>
+                                    ${phone}
+                                </span>
 
-                                <div class="approval-actions">
-
-                                    <button
-                                        type="button"
-                                        class="approve-btn"
-                                        data-approval-action="approve"
-                                        data-approval-type="deposit"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Approve
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="reject-btn"
-                                        data-approval-action="reject"
-                                        data-approval-type="deposit"
-                                        data-approval-id="${escapeHtml(id)}"
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
+                                <span>
+                                    ${
+                                        reference
+                                            ? `Reference: ${reference}`
+                                            : "Deposit awaiting approval"
+                                    }
+                                </span>
 
                             </div>
-                        `;
-                    }
-                )
+
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="deposit"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="deposit"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+                })
                 .join("");
 
 
@@ -2082,18 +2283,18 @@
     }
 
 
-    /* ----------------------------------------------------------------------
-       WITHDRAWAL APPROVALS
-    ---------------------------------------------------------------------- */
+    /* ======================================================================
+       WITHDRAWALS
+    ====================================================================== */
 
-    function renderWithdrawalApprovals(
-        items
-    ) {
+    function renderWithdrawalApprovals(items) {
 
         const container =
             $("#approvalWithdrawals");
 
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
 
         if (
@@ -2113,33 +2314,1870 @@
 
         container.innerHTML =
             items
-                .map(
-                    item => {
+                .map(item => {
+
+                    const id =
+                        getItemId(item);
+
+
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            item.requested_amount,
+                            item.requestedAmount,
+                            0
+                        );
+
+
+                    const netAmount =
+                        getNumericValue(
+                            item.net_amount,
+                            item.netAmount,
+                            item.payout_amount,
+                            item.payoutAmount,
+                            amount
+                        );
+
+
+                    const fee =
+                        getNumericValue(
+                            item.fee,
+                            item.withdrawal_fee,
+                            0
+                        );
+
+
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "userName",
+                                    "name",
+                                    "full_name",
+                                    "fullName"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
+
+
+                    const phone =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "phone",
+                                    "phone_number",
+                                    "mobile"
+                                ],
+                                ""
+                            )
+                        );
+
+
+                    const method =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "method",
+                                    "payment_method"
+                                ],
+                                ""
+                            )
+                        );
+
+
+                    const account =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "account",
+                                    "account_number",
+                                    "phone_number",
+                                    "mobile"
+                                ],
+                                ""
+                            )
+                        );
+
+
+                    return `
+
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
+
+                            <div class="approval-info">
+
+                                <strong>
+                                    ${name}
+                                </strong>
+
+                                <span>
+                                    ${phone}
+                                </span>
+
+                                ${
+                                    method
+                                        ? `<span>Method: ${method}</span>`
+                                        : ""
+                                }
+
+                                ${
+                                    account
+                                        ? `<span>Payment: ${account}</span>`
+                                        : ""
+                                }
+
+                                <span>
+                                    Requested:
+                                    ${formatCurrency(amount)}
+                                </span>
+
+                                <span>
+                                    Fee:
+                                    ${formatCurrency(fee)}
+                                </span>
+
+                                <span>
+                                    Net payout:
+                                    ${formatCurrency(netAmount)}
+                                </span>
+
+                            </div>
+
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="withdrawal"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="withdrawal"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+                })
+                .join("");
+
+
+        attachApprovalListeners(
+            container
+        );
+    }
+
+
+    /* ======================================================================
+       INVESTMENTS
+    ====================================================================== */
+
+    function renderInvestmentApprovals(items) {
+
+        const container =
+            $("#approvalInvestments");
+
+        if (!container) {
+            return;
+        }
+
+
+        if (
+            !Array.isArray(items) ||
+            items.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="approval-empty">
+                    No pending investments.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        container.innerHTML =
+            items
+                .map(item => {
+
+                    const id =
+                        getItemId(item);
+
+
+                    const amount =
+                        getNumericValue(
+                            item.amount,
+                            item.principal,
+                            item.investment_amount,
+                            item.investmentAmount,
+                            0
+                        );
+
+
+                    const plan =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "plan",
+                                    "plan_name",
+                                    "package",
+                                    "package_name"
+                                ],
+                                "Investment"
+                            )
+                        );
+
+
+                    const name =
+                        escapeHtml(
+                            getValue(
+                                item,
+                                [
+                                    "user_name",
+                                    "userName",
+                                    "name",
+                                    "full_name",
+                                    "fullName"
+                                ],
+                                "Crown Cash User"
+                            )
+                        );
+
+
+                    const duration =
+                        getNumericValue(
+                            item.duration,
+                            item.duration_days,
+                            item.durationDays,
+                            0
+                        );
+
+
+                    return `
+
+                        <div
+                            class="approval-item"
+                            data-approval-id="${escapeHtml(id)}"
+                        >
+
+                            <div class="approval-info">
+
+                                <strong>
+                                    ${name}
+                                </strong>
+
+                                <span>
+                                    Plan: ${plan}
+                                </span>
+
+                                <span>
+                                    ${
+                                        duration > 0
+                                            ? `${duration} days`
+                                            : "Investment awaiting approval"
+                                    }
+                                </span>
+
+                            </div>
+
+
+                            <div class="approval-amount">
+                                ${formatCurrency(amount)}
+                            </div>
+
+
+                            <div class="approval-actions">
+
+                                <button
+                                    type="button"
+                                    class="approve-btn"
+                                    data-approval-action="approve"
+                                    data-approval-type="investment"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Approve
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="reject-btn"
+                                    data-approval-action="reject"
+                                    data-approval-type="investment"
+                                    data-approval-id="${escapeHtml(id)}"
+                                >
+                                    Reject
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+                })
+                .join("");
+
+
+        attachApprovalListeners(
+            container
+        );
+    }
+
+
+    /* ======================================================================
+       APPROVAL LISTENERS
+    ====================================================================== */
+
+    function attachApprovalListeners(container) {
+
+        container
+            .querySelectorAll(
+                "[data-approval-action]"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        const action =
+                            button.dataset.approvalAction;
+
+                        const type =
+                            button.dataset.approvalType;
 
                         const id =
-                            getItemId(item);
+                            button.dataset.approvalId;
 
 
-                        const amount =
-                            getNumericValue(
-                                item.amount,
-                                item.requested_amount,
-                                item.requestedAmount,
-                                0
+                        if (
+                            !id ||
+                            !type ||
+                            !action
+                        ) {
+
+                            showAdminMessage(
+                                "Invalid approval request.",
+                                "error"
+                            );
+
+                            return;
+                        }
+
+
+                        let reason = "";
+
+
+                        if (
+                            action ===
+                            "reject"
+                        ) {
+
+                            reason =
+                                window.prompt(
+                                    "Enter the reason for rejecting this request:"
+                                );
+
+
+                            if (
+                                reason ===
+                                null
+                            ) {
+                                return;
+                            }
+
+
+                            reason =
+                                reason.trim();
+
+
+                            if (!reason) {
+
+                                showAdminMessage(
+                                    "A rejection reason is required.",
+                                    "warning"
+                                );
+
+                                return;
+                            }
+                        }
+
+
+                        const confirmed =
+                            window.confirm(
+                                action === "approve"
+                                    ? `Approve this ${type}?`
+                                    : `Reject this ${type}?`
                             );
 
 
-                        const netAmount =
-                            getNumericValue(
-                                item.net_amount,
-                                item.netAmount,
-                                item.payout_amount,
-                                item.payoutAmount,
-                                amount
+                        if (!confirmed) {
+                            return;
+                        }
+
+
+                        await processApproval(
+                            type,
+                            action,
+                            id,
+                            reason,
+                            button
+                        );
+                    }
+                );
+            });
+    }
+
+
+    /* ======================================================================
+       PROCESS APPROVAL
+    ====================================================================== */
+
+    async function processApproval(
+        type,
+        action,
+        id,
+        reason = "",
+        button = null
+    ) {
+
+        if (!id) {
+
+            showAdminMessage(
+                "Invalid approval ID.",
+                "error"
+            );
+
+            return false;
+        }
+
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.textContent =
+                action === "approve"
+                    ? "Approving..."
+                    : "Rejecting...";
+        }
+
+
+        let endpoint;
+
+
+        if (type === "deposit") {
+
+            endpoint =
+                ADMIN_DEPOSITS_API;
+
+        } else if (type === "withdrawal") {
+
+            endpoint =
+                ADMIN_WITHDRAWALS_API;
+
+        } else if (type === "investment") {
+
+            endpoint =
+                ADMIN_INVESTMENTS_API;
+
+        } else {
+
+            showAdminMessage(
+                "Unknown approval type.",
+                "error"
+            );
+
+            return false;
+        }
+
+
+        const payload = {
+
+            action,
+
+            reason,
+
+            note: reason,
+
+            admin_note: reason
+        };
+
+
+        if (type === "deposit") {
+
+            payload.depositId =
+                id;
+
+            payload.deposit_id =
+                id;
+        }
+
+
+        if (type === "withdrawal") {
+
+            payload.withdrawalId =
+                id;
+
+            payload.withdrawal_id =
+                id;
+        }
+
+
+        if (type === "investment") {
+
+            payload.investmentId =
+                id;
+
+            payload.investment_id =
+                id;
+        }
+
+
+        try {
+
+            const data =
+                await apiRequest(
+                    endpoint,
+                    {
+                        method: "POST",
+
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
+                    }
+                );
+
+
+            showAdminMessage(
+                data.message ||
+                `${capitalize(type)} ${action}d successfully.`,
+                "success"
+            );
+
+
+            await Promise.allSettled([
+
+                loadDashboardData(),
+
+                loadApprovalData()
+
+            ]);
+
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "Approval operation failed:",
+                {
+                    type,
+                    action,
+                    id,
+                    error
+                }
+            );
+
+
+            showAdminMessage(
+                error.message ||
+                "Approval operation failed.",
+                "error"
+            );
+
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    action === "approve"
+                        ? "Approve"
+                        : "Reject";
+            }
+
+
+            return false;
+        }
+    }
+
+
+    /* ======================================================================
+       PENDING BADGES
+    ====================================================================== */
+
+    function updatePendingBadges() {
+
+        updateBadge(
+            "#navPendingDeposits",
+            AdminDashboard.deposits.length
+        );
+
+
+        updateBadge(
+            "#navPendingWithdrawals",
+            AdminDashboard.withdrawals.length
+        );
+
+
+        const investmentLink =
+            document.querySelector(
+                'a[href="admin-investments.html"]'
+            );
+
+
+        if (investmentLink) {
+
+            let badge =
+                investmentLink.querySelector(
+                    ".nav-badge"
+                );
+
+
+            if (!badge) {
+
+                badge =
+                    document.createElement(
+                        "span"
+                    );
+
+                badge.className =
+                    "nav-badge";
+
+                badge.id =
+                    "navPendingInvestments";
+
+                investmentLink.appendChild(
+                    badge
+                );
+            }
+
+
+            updateBadgeElement(
+                badge,
+                AdminDashboard.investments.length
+            );
+        }
+    }
+
+
+    function updateBadge(
+        selector,
+        count
+    ) {
+
+        const badge =
+            $(selector);
+
+        if (!badge) {
+            return;
+        }
+
+
+        updateBadgeElement(
+            badge,
+            count
+        );
+    }
+
+
+    function updateBadgeElement(
+        badge,
+        count
+    ) {
+
+        const number =
+            Number(count);
+
+
+        const safeCount =
+            Number.isFinite(number)
+                ? number
+                : 0;
+
+
+        badge.textContent =
+            String(safeCount);
+
+
+        badge.style.display =
+            safeCount > 0
+                ? "inline-flex"
+                : "none";
+    }
+
+
+    /* ======================================================================
+       SIDEBAR
+    ====================================================================== */
+
+    function setupSidebar() {
+
+        const sidebar =
+            $("#sidebar");
+
+        const overlay =
+            $("#sidebarOverlay");
+
+        const menuButton =
+            $("#menuButton");
+
+        const sidebarClose =
+            $("#sidebarClose");
+
+
+        function openSidebar() {
+
+            if (sidebar) {
+
+                sidebar.classList.add(
+                    "open"
+                );
+            }
+
+
+            if (overlay) {
+
+                overlay.classList.add(
+                    "open"
+                );
+            }
+
+
+            document.body.style.overflow =
+                "hidden";
+        }
+
+
+        function closeSidebar() {
+
+            if (sidebar) {
+
+                sidebar.classList.remove(
+                    "open"
+                );
+            }
+
+
+            if (overlay) {
+
+                overlay.classList.remove(
+                    "open"
+                );
+            }
+
+
+            document.body.style.overflow =
+                "";
+        }
+
+
+        if (
+            menuButton &&
+            !menuButton.dataset.ccAdminHandler
+        ) {
+
+            menuButton.dataset.ccAdminHandler =
+                "true";
+
+
+            menuButton.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+
+                    if (
+                        sidebar &&
+                        sidebar.classList.contains(
+                            "open"
+                        )
+                    ) {
+
+                        closeSidebar();
+
+                    } else {
+
+                        openSidebar();
+                    }
+                }
+            );
+        }
+
+
+        if (
+            sidebarClose &&
+            !sidebarClose.dataset.ccAdminHandler
+        ) {
+
+            sidebarClose.dataset.ccAdminHandler =
+                "true";
+
+
+            sidebarClose.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+                    closeSidebar();
+                }
+            );
+        }
+
+
+        if (
+            overlay &&
+            !overlay.dataset.ccAdminHandler
+        ) {
+
+            overlay.dataset.ccAdminHandler =
+                "true";
+
+
+            overlay.addEventListener(
+                "click",
+                closeSidebar
+            );
+        }
+
+
+        $$("#sidebar a")
+            .forEach(link => {
+
+                if (
+                    link.dataset.ccAdminHandler
+                ) {
+                    return;
+                }
+
+
+                link.dataset.ccAdminHandler =
+                    "true";
+
+
+                link.addEventListener(
+                    "click",
+                    () => {
+
+                        if (
+                            window.innerWidth <=
+                            1050
+                        ) {
+
+                            closeSidebar();
+                        }
+                    }
+                );
+            });
+
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                if (
+                    window.innerWidth >
+                    1050
+                ) {
+
+                    closeSidebar();
+                }
+            }
+        );
+    }
+
+
+    /* ======================================================================
+       LOGOUT
+    ====================================================================== */
+
+    function setupLogout() {
+
+        const logoutButton =
+            $("#logoutBtn");
+
+
+        if (!logoutButton) {
+            return;
+        }
+
+
+        if (
+            logoutButton.dataset.ccLogoutReady
+        ) {
+            return;
+        }
+
+
+        logoutButton.dataset.ccLogoutReady =
+            "true";
+
+
+        logoutButton.addEventListener(
+            "click",
+            async event => {
+
+                event.preventDefault();
+
+
+                if (
+                    !window.confirm(
+                        "Are you sure you want to logout?"
+                    )
+                ) {
+                    return;
+                }
+
+
+                logoutButton.disabled =
+                    true;
+
+
+                logoutButton.textContent =
+                    "Logging out...";
+
+
+                await logoutAdmin(
+                    logoutButton
+                );
+            }
+        );
+    }
+
+
+    async function logoutAdmin() {
+
+        try {
+
+            await fetchWithTimeout(
+                LOGOUT_API,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({})
+                },
+                10000
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Logout request failed:",
+                error.message
+            );
+
+        } finally {
+
+            AdminDashboard.authenticated =
+                false;
+
+            AdminDashboard.authorized =
+                false;
+
+
+            window.location.href =
+                "login.html";
+        }
+    }
+
+
+    /* ======================================================================
+       FORMATTING
+    ====================================================================== */
+
+    function formatCurrency(value) {
+
+        const number =
+            Number(value) || 0;
+
+
+        return new Intl.NumberFormat(
+            "en-UG",
+            {
+                style: "currency",
+                currency: "UGX",
+                maximumFractionDigits: 0
+            }
+        ).format(number);
+    }
+
+
+    function formatNumber(value) {
+
+        const number =
+            Number(value) || 0;
+
+
+        return new Intl.NumberFormat(
+            "en-UG"
+        ).format(number);
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "Date unavailable";
+        }
+
+
+        let date;
+
+
+        if (
+            typeof value === "object" &&
+            value !== null &&
+            "$date" in value
+        ) {
+
+            date =
+                new Date(
+                    value.$date
+                );
+
+        } else {
+
+            date =
+                new Date(value);
+        }
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "Date unavailable";
+        }
+
+
+        return new Intl.DateTimeFormat(
+            "en-UG",
+            {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        ).format(date);
+    }
+
+
+    function formatStatus(status) {
+
+        if (!status) {
+            return "Unknown";
+        }
+
+
+        return String(status)
+            .replace(
+                /[_-]+/g,
+                " "
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim()
+            .replace(
+                /\b\w/g,
+                letter =>
+                    letter.toUpperCase()
+            );
+    }
+
+
+    function formatTransactionType(type) {
+
+        if (!type) {
+            return "Transaction";
+        }
+
+
+        const map = {
+
+            deposit:
+                "Deposit",
+
+            withdrawal:
+                "Withdrawal",
+
+            investment:
+                "Investment",
+
+            investment_principal:
+                "Investment",
+
+            daily_earning:
+                "Daily Earning",
+
+            referral_bonus:
+                "Referral Bonus",
+
+            referral_commission:
+                "Referral Commission",
+
+            refund:
+                "Refund",
+
+            fee:
+                "Fee",
+
+            debit:
+                "Debit",
+
+            credit:
+                "Credit"
+        };
+
+
+        const key =
+            String(type)
+                .toLowerCase();
+
+
+        return (
+            map[key] ||
+            formatStatus(type)
+        );
+    }
+
+
+    function formatAccountType(type) {
+
+        if (!type) {
+            return "Administrator";
+        }
+
+
+        return String(type)
+            .replace(
+                /[_-]+/g,
+                " "
+            )
+            .replace(
+                /\b\w/g,
+                letter =>
+                    letter.toUpperCase()
+            );
+    }
+
+
+    function getTransactionIcon(type) {
+
+        const key =
+            String(type || "")
+                .toLowerCase();
+
+
+        const icons = {
+
+            deposit:
+                "↓",
+
+            withdrawal:
+                "↑",
+
+            investment:
+                "◆",
+
+            investment_principal:
+                "◆",
+
+            daily_earning:
+                "✦",
+
+            referral_bonus:
+                "★",
+
+            referral_commission:
+                "★",
+
+            refund:
+                "↩",
+
+            fee:
+                "−",
+
+            debit:
+                "−",
+
+            credit:
+                "+"
+        };
+
+
+        return (
+            icons[key] ||
+            "•"
+        );
+    }
+
+
+    function getTypeClass(type) {
+
+        const key =
+            String(type || "")
+                .toLowerCase();
+
+
+        if (
+            key.includes("deposit")
+        ) {
+            return "deposit";
+        }
+
+
+        if (
+            key.includes("withdraw")
+        ) {
+            return "withdrawal";
+        }
+
+
+        if (
+            key.includes("earning")
+        ) {
+            return "earning";
+        }
+
+
+        if (
+            key.includes("referral")
+        ) {
+            return "referral";
+        }
+
+
+        if (
+            key.includes("investment")
+        ) {
+            return "investment";
+        }
+
+
+        return "transaction";
+    }
+
+
+    function getStatusClass(status) {
+
+        const key =
+            String(status || "")
+                .toLowerCase();
+
+
+        if (
+            [
+                "approved",
+                "active",
+                "completed",
+                "verified",
+                "paid",
+                "processed",
+                "success",
+                "successful"
+            ].includes(key)
+        ) {
+
+            return "status-success";
+        }
+
+
+        if (
+            [
+                "pending",
+                "processing",
+                "submitted",
+                "running"
+            ].includes(key)
+        ) {
+
+            return "status-pending";
+        }
+
+
+        if (
+            [
+                "rejected",
+                "declined",
+                "cancelled",
+                "canceled",
+                "failed",
+                "blocked",
+                "suspended"
+            ].includes(key)
+        ) {
+
+            return "status-danger";
+        }
+
+
+        return "status-neutral";
+    }
+
+
+    /* ======================================================================
+       VALUE HELPERS
+    ====================================================================== */
+
+    function getNumericValue(...values) {
+
+        for (
+            const value of values
+        ) {
+
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+                continue;
+            }
+
+
+            if (
+                typeof value === "object" &&
+                value !== null
+            ) {
+
+                const mongoNumbers = [
+                    "$numberInt",
+                    "$numberLong",
+                    "$numberDecimal",
+                    "$numberDouble"
+                ];
+
+
+                for (
+                    const key of mongoNumbers
+                ) {
+
+                    if (
+                        value[key] !==
+                        undefined
+                    ) {
+
+                        const number =
+                            Number(
+                                value[key]
                             );
 
 
-                        const fee =
-                            getNumericValue(
-                                item.fee,
-                                item.withdrawal_fee
+                        if (
+                            Number.isFinite(
+                                number
+                            )
+                        ) {
+
+                            return number;
+                        }
+                    }
+                }
+            }
+
+
+            const number =
+                Number(
+                    String(value)
+                        .replace(
+                            /,/g,
+                            ""
+                        )
+                        .replace(
+                            /UGX/gi,
+                            ""
+                        )
+                        .trim()
+                );
+
+
+            if (
+                Number.isFinite(number)
+            ) {
+
+                return number;
+            }
+        }
+
+
+        return 0;
+    }
+
+
+    function getValue(
+        object,
+        keys,
+        fallback = ""
+    ) {
+
+        if (!object) {
+            return fallback;
+        }
+
+
+        for (
+            const key of keys
+        ) {
+
+            if (
+                object[key] !==
+                    undefined &&
+                object[key] !==
+                    null &&
+                object[key] !==
+                    ""
+            ) {
+
+                return object[key];
+            }
+        }
+
+
+        return fallback;
+    }
+
+
+    function getItemId(item) {
+
+        if (!item) {
+            return "";
+        }
+
+
+        const value =
+            getValue(
+                item,
+                [
+                    "_id",
+                    "id",
+                    "depositId",
+                    "deposit_id",
+                    "withdrawalId",
+                    "withdrawal_id",
+                    "investmentId",
+                    "investment_id",
+                    "reference"
+                ],
+                ""
+            );
+
+
+        if (
+            typeof value === "object" &&
+            value !== null
+        ) {
+
+            if (value.$oid) {
+
+                return String(
+                    value.$oid
+                );
+            }
+        }
+
+
+        return String(value);
+    }
+
+
+    function getInitials(name) {
+
+        if (!name) {
+            return "CC";
+        }
+
+
+        const parts =
+            String(name)
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean);
+
+
+        if (
+            parts.length === 1
+        ) {
+
+            return parts[0]
+                .substring(0, 2)
+                .toUpperCase();
+        }
+
+
+        return (
+            parts[0][0] +
+            parts[parts.length - 1][0]
+        ).toUpperCase();
+    }
+
+
+    function capitalize(value) {
+
+        if (!value) {
+            return "";
+        }
+
+
+        return (
+            String(value)
+                .charAt(0)
+                .toUpperCase() +
+            String(value)
+                .slice(1)
+        );
+    }
+
+
+    /* ======================================================================
+       HTML ESCAPING
+    ====================================================================== */
+
+    function escapeHtml(value) {
+
+        return String(
+            value === null ||
+            value === undefined
+                ? ""
+                : value
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
+    /* ======================================================================
+       GLOBAL ADMIN API
+    ====================================================================== */
+
+    window.CrownCashAdmin = {
+
+        reload:
+            async () => {
+
+                await Promise.allSettled([
+
+                    loadDashboardData(),
+
+                    loadApprovalData()
+
+                ]);
+            },
+
+
+        loadDashboard:
+            loadDashboardData,
+
+
+        loadApprovals:
+            loadApprovalData,
+
+
+        refresh:
+            async () => {
+
+                await Promise.allSettled([
+
+                    loadDashboardData(),
+
+                    loadApprovalData()
+
+                ]);
+            },
+
+
+        approveDeposit:
+            id =>
+                processApproval(
+                    "deposit",
+                    "approve",
+                    id
+                ),
+
+
+        rejectDeposit:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this deposit:"
+                    );
+
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+
+                    return false;
+                }
+
+
+                return processApproval(
+                    "deposit",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+
+        approveWithdrawal:
+            id =>
+                processApproval(
+                    "withdrawal",
+                    "approve",
+                    id
+                ),
+
+
+        rejectWithdrawal:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this withdrawal:"
+                    );
+
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+
+                    return false;
+                }
+
+
+                return processApproval(
+                    "withdrawal",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+
+        approveInvestment:
+            id =>
+                processApproval(
+                    "investment",
+                    "approve",
+                    id
+                ),
+
+
+        rejectInvestment:
+            async id => {
+
+                const reason =
+                    window.prompt(
+                        "Enter the reason for rejecting this investment:"
+                    );
+
+
+                if (
+                    reason === null ||
+                    !reason.trim()
+                ) {
+
+                    return false;
+                }
+
+
+                return processApproval(
+                    "investment",
+                    "reject",
+                    id,
+                    reason.trim()
+                );
+            },
+
+
+        logout:
+            logoutAdmin
+    };
+
+
+    /* ======================================================================
+       INITIALIZATION
+    ====================================================================== */
+
+    async function initializeAdminDashboard() {
+
+        if (
+            AdminDashboard.initialized
+        ) {
+            return;
+        }
+
+
+        AdminDashboard.initialized =
+            true;
+
+
+        AdminDashboard.loading =
+            true;
+
+
+        showLoader();
+
+
+        try {
+
+            /* ----------------------------------------------------------
+               STEP 1: VERIFY ADMIN
+            ---------------------------------------------------------- */
+
+            const authenticated =
+                await authenticateAdmin();
+
+
+            if (!authenticated) {
+
+                return;
+            }
+
+
+            /* ----------------------------------------------------------
+               STEP 2: PAGE CONTROLS
+            ---------------------------------------------------------- */
+
+            setupSidebar();
+
+            setupLogout();
+
+            createApprovalCenter();
+
+
+            /* ----------------------------------------------------------
+               STEP 3: LOAD ALL ADMIN DATA
+            ---------------------------------------------------------- */
+
+            const results =
+                await Promise.allSettled([
+
+                    loadAdminProfile(),
+
+                    loadDashboardData(),
+
+                    loadApprovalData()
+
+                ]);
+
+
+            console.log(
+                "Crown Cash admin initialization:",
+                results
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Admin initialization error:",
+                error
+            );
+
+
+            showAdminMessage(
+                error.message ||
+                "Unable to initialize administrator dashboard.",
+                "error"
+            );
+
+        } finally {
+
+            AdminDashboard.loading =
+                false;
+
+            hideLoader();
+        }
+    }
+
+
+    /* ======================================================================
+       START
+    ====================================================================== */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initializeAdminDashboard,
+            {
+                once: true
+            }
+        );
+
+    } else {
+
+        initializeAdminDashboard();
+    }
+
+})();

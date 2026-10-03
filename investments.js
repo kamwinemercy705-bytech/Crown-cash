@@ -1,29 +1,25 @@
 /* =========================================================
-   CROWN CASH — INVESTMENTS.JS
-   Production Investment Version
-   ========================================================= */
+   CROWN CASH - INVESTMENTS PAGE
+   File: investments.js
+========================================================= */
 
 "use strict";
 
-
-/* =========================================================
-   API
-   ========================================================= */
-
-const API_URL =
-    "https://crown-cash1.onrender.com";
-
+const API_URL = "https://crown-cash1.onrender.com";
 
 const INVESTMENT_API =
     `${API_URL}/investment.php`;
 
-const DASHBOARD_API =
-    `${API_URL}/dashboard.php`;
+const PROFILE_API =
+    `${API_URL}/profile.php`;
+
+const LOGOUT_API =
+    `${API_URL}/logout.php`;
 
 
 /* =========================================================
    INVESTMENT PLANS
-   ========================================================= */
+========================================================= */
 
 const PLANS = {
 
@@ -53,45 +49,338 @@ const PLANS = {
 
 /* =========================================================
    DOM READY
-   ========================================================= */
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    () => {
+
+        setupInvestmentButtons();
+
+        setupCalculator();
 
         setupMobileMenu();
 
         setupLogout();
 
-        calculateInvestment();
+        loadWalletBalance();
 
     }
 );
 
 
 /* =========================================================
-   INVESTMENT
-   ========================================================= */
+   FETCH HELPER
+========================================================= */
 
-/*
- * This is the ONLY function that starts an investment.
- *
- * It sends the investment directly to:
- *
- * investment.php
- *
- * The backend is responsible for:
- *
- * 1. Checking login
- * 2. Checking wallet balance
- * 3. Deducting the investment amount
- * 4. Creating the investment
- * 5. Recording the transaction
- * 6. Returning the new wallet balance
- *
- */
+async function fetchJson(
+    url,
+    options = {}
+) {
 
-async function createInvestment(planKey) {
+    const response =
+        await fetch(
+            url,
+            {
+                credentials: "include",
+
+                ...options,
+
+                headers: {
+                    "Accept":
+                        "application/json",
+
+                    "Content-Type":
+                        "application/json",
+
+                    ...(options.headers || {})
+                }
+            }
+        );
+
+
+    let data = null;
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (error) {
+
+        data = null;
+    }
+
+
+    if (!response.ok) {
+
+        const backendMessage =
+            data?.message ||
+            data?.error ||
+            `Server returned HTTP ${response.status}.`;
+
+        throw new Error(
+            backendMessage
+        );
+    }
+
+
+    if (
+        data &&
+        data.success === false
+    ) {
+
+        throw new Error(
+            data.message ||
+            data.error ||
+            "The investment request was rejected."
+        );
+    }
+
+
+    return data;
+}
+
+
+/* =========================================================
+   INVESTMENT BUTTONS
+========================================================= */
+
+function setupInvestmentButtons() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".invest-btn, .investment-btn, [data-plan]"
+        );
+
+
+    buttons.forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    const plan =
+                        getPlanFromButton(
+                            this
+                        );
+
+
+                    if (!plan) {
+
+                        showMessage(
+                            "Investment Failed",
+                            "The selected investment plan could not be identified.",
+                            "error"
+                        );
+
+                        return;
+                    }
+
+
+                    confirmInvestment(
+                        plan
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   GET PLAN FROM BUTTON
+========================================================= */
+
+function getPlanFromButton(
+    button
+) {
+
+    let planKey =
+        button.dataset.plan ||
+        button.dataset.package ||
+        button.dataset.planName ||
+        "";
+
+
+    planKey =
+        String(planKey)
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        PLANS[planKey]
+    ) {
+
+        return planKey;
+    }
+
+
+    const text =
+        button.textContent
+            .toLowerCase();
+
+
+    if (
+        text.includes("starter")
+    ) {
+
+        return "starter";
+    }
+
+
+    if (
+        text.includes("standard")
+    ) {
+
+        return "standard";
+    }
+
+
+    if (
+        text.includes("advanced")
+    ) {
+
+        return "advanced";
+    }
+
+
+    const amount =
+        button.dataset.amount;
+
+
+    if (
+        amount === "10000"
+    ) {
+
+        return "starter";
+    }
+
+
+    if (
+        amount === "15000"
+    ) {
+
+        return "standard";
+    }
+
+
+    if (
+        amount === "25000"
+    ) {
+
+        return "advanced";
+    }
+
+
+    return null;
+}
+
+
+/* =========================================================
+   GLOBAL selectPlan()
+   Supports existing HTML:
+
+   onclick="selectPlan('Starter Plan',10000,10,30)"
+========================================================= */
+
+window.selectPlan =
+function (
+    planName,
+    minimum,
+    rate,
+    duration
+) {
+
+    const name =
+        String(
+            planName || ""
+        )
+        .toLowerCase();
+
+
+    let planKey = null;
+
+
+    if (
+        name.includes("starter")
+    ) {
+
+        planKey =
+            "starter";
+
+    } else if (
+        name.includes("standard")
+    ) {
+
+        planKey =
+            "standard";
+
+    } else if (
+        name.includes("advanced")
+    ) {
+
+        planKey =
+            "advanced";
+
+    } else {
+
+        if (
+            Number(minimum) === 10000
+        ) {
+
+            planKey =
+                "starter";
+
+        } else if (
+            Number(minimum) === 15000
+        ) {
+
+            planKey =
+                "standard";
+
+        } else if (
+            Number(minimum) === 25000
+        ) {
+
+            planKey =
+                "advanced";
+        }
+    }
+
+
+    if (!planKey) {
+
+        showMessage(
+            "Investment Failed",
+            "Invalid investment plan selected.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    confirmInvestment(
+        planKey
+    );
+};
+
+
+/* =========================================================
+   CONFIRM INVESTMENT
+========================================================= */
+
+async function confirmInvestment(
+    planKey
+) {
 
     const plan =
         PLANS[planKey];
@@ -100,6 +389,7 @@ async function createInvestment(planKey) {
     if (!plan) {
 
         showMessage(
+            "Investment Failed",
             "Invalid investment plan.",
             "error"
         );
@@ -108,153 +398,77 @@ async function createInvestment(planKey) {
     }
 
 
-    /*
-     * Confirm with user before submitting.
-     */
-
     const confirmed =
         window.confirm(
-
-            `You selected the ${plan.name}.\n\n` +
-
-            `Investment amount: UGX ${formatMoney(plan.amount)}\n` +
-
-            `Daily return rate: ${plan.rate}%\n` +
-
-            `Investment period: ${plan.days} days\n\n` +
-
+            `Confirm ${plan.name}\n\n` +
+            `Investment Amount: UGX ${formatMoney(plan.amount)}\n` +
+            `Daily Return: ${plan.rate}%\n` +
+            `Duration: ${plan.days} days\n\n` +
+            `UGX ${formatMoney(plan.amount)} will be deducted from your Crown Cash wallet.\n\n` +
             `Do you want to continue?`
         );
 
 
     if (!confirmed) {
+
         return;
     }
 
 
-    /*
-     * Get all investment buttons.
-     */
-
-    const buttons =
-        document.querySelectorAll(
-            ".invest-btn"
-        );
-
-
-    setButtonsLoading(
-        buttons,
-        true
+    await createInvestment(
+        planKey
     );
+
+}
+
+
+/* =========================================================
+   CREATE INVESTMENT
+========================================================= */
+
+async function createInvestment(
+    planKey
+) {
+
+    const plan =
+        PLANS[planKey];
+
+
+    if (!plan) {
+
+        return;
+    }
 
 
     showMessage(
-        "Checking your wallet balance...",
+        "Creating Investment",
+        "Please wait while your investment is being created...",
         "info"
     );
 
 
     try {
 
-        /*
-         * First get the actual current
-         * wallet balance.
-         */
-
-        const wallet =
-            await getWalletBalance();
-
-
-        if (
-            wallet !== null &&
-            plan.amount > wallet
-        ) {
-
-            throw new Error(
-
-                "Insufficient wallet balance.\n\n" +
-
-                `Required: UGX ${formatMoney(plan.amount)}\n` +
-
-                `Available: UGX ${formatMoney(wallet)}`
-            );
-        }
-
-
-        showMessage(
-            "Submitting your investment...",
-            "info"
-        );
-
-
-        /*
-         * IMPORTANT:
-         *
-         * We send the plan key and amount
-         * directly to investment.php.
-         */
-
-        const response =
-            await fetch(
+        const data =
+            await fetchJson(
                 INVESTMENT_API,
                 {
                     method: "POST",
 
-                    credentials: "include",
+                    body: JSON.stringify({
 
-                    cache: "no-store",
+                        plan:
+                            planKey,
 
-                    headers: {
+                        plan_name:
+                            plan.name,
 
-                        "Content-Type":
-                            "application/json",
+                        amount:
+                            plan.amount
 
-                        "Accept":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            plan:
-                                planKey,
-
-                            plan_name:
-                                plan.name,
-
-                            amount:
-                                plan.amount,
-
-                            currency:
-                                "UGX",
-
-                            duration:
-                                plan.days,
-
-                            duration_days:
-                                plan.days,
-
-                            daily_rate:
-                                0.10
-                        })
+                    })
                 }
             );
-
-
-        let data = null;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch (error) {
-
-            throw new Error(
-                "The investment server returned an invalid response."
-            );
-        }
 
 
         console.log(
@@ -263,220 +477,64 @@ async function createInvestment(planKey) {
         );
 
 
-        /*
-         * Login/session failure.
-         */
-
-        if (response.status === 401) {
-
-            throw new Error(
-                "Your session has expired. Please log in again."
-            );
-        }
-
-
-        /*
-         * Backend failure.
-         */
-
-        if (!response.ok) {
-
-            throw new Error(
-
-                data?.message ||
-
-                data?.error ||
-
-                "Unable to create the investment."
-            );
-        }
-
-
-        /*
-         * Backend may explicitly return
-         * success false.
-         */
-
         if (
-            data &&
-            data.success === false
+            !data ||
+            data.success !== true
         ) {
 
             throw new Error(
-
-                data.message ||
-
-                "Investment could not be completed."
+                data?.message ||
+                data?.error ||
+                "Unable to create investment."
             );
         }
-
-
-        /*
-         * =============================================
-         * CRITICAL WALLET LOGIC
-         * =============================================
-         *
-         * investment.php returns the wallet AFTER
-         * deducting the investment.
-         *
-         * Example:
-         *
-         * Before = 40,000
-         * Investment = 10,000
-         * After = 30,000
-         *
-         * We MUST display new_balance.
-         *
-         * We must NEVER add the investment amount.
-         */
-
-        const walletData =
-            data?.wallet ||
-            data?.data?.wallet ||
-            {};
 
 
         const newBalance =
-            firstValue(
-                walletData,
-                [
-                    "new_balance",
-                    "newBalance",
-                    "balance_after",
-                    "balanceAfter"
-                ],
-                firstValue(
-                    data,
-                    [
-                        "new_balance",
-                        "newBalance",
-                        "balance_after",
-                        "balanceAfter"
-                    ],
-                    null
-                )
+            Number(
+                data?.wallet?.new_balance ??
+                data?.new_balance
             );
 
-
-        /*
-         * Update wallet if backend returned
-         * the new balance.
-         */
-
-        if (newBalance !== null) {
-
-            updateWalletDisplays(
-                newBalance
-            );
-
-        } else {
-
-            /*
-             * If no balance was returned,
-             * reload the actual dashboard balance.
-             */
-
-            await getWalletBalance();
-        }
-
-
-        /*
-         * Investment successfully created.
-         */
 
         showMessage(
-
-            data?.message ||
-
-            "Investment submitted successfully. Your investment is now pending admin approval.",
-
+            "Investment Created",
+            data.message ||
+            `${plan.name} was created successfully.`,
             "success"
         );
 
 
         /*
-         * Show reference if supplied.
+         * Update wallet immediately if the backend
+         * returned the new balance.
          */
 
-        const investment =
-            data?.investment ||
-            data?.data?.investment ||
-            {};
+        if (
+            Number.isFinite(
+                newBalance
+            )
+        ) {
 
-
-        const reference =
-            firstValue(
-                investment,
-                [
-                    "reference",
-                    "investment_reference",
-                    "investmentReference"
-                ],
-                firstValue(
-                    data,
-                    [
-                        "reference",
-                        "investment_reference"
-                    ],
-                    null
-                )
-            );
-
-
-        if (reference) {
-
-            setTimeout(
-                function () {
-
-                    alert(
-
-                        "Investment submitted successfully.\n\n" +
-
-                        `Reference: ${reference}\n` +
-
-                        "Status: Pending approval."
-                    );
-
-                },
-                300
+            updateWalletDisplay(
+                newBalance
             );
         }
 
 
         /*
-         * Refresh the real wallet from the
-         * backend shortly afterwards.
+         * Give the success message time to display,
+         * then open My Investments.
          */
 
         setTimeout(
-            function () {
-
-                getWalletBalance();
-
-            },
-            800
-        );
-
-
-        /*
-         * Do NOT automatically redirect to
-         * deposit.html.
-         *
-         * The investment has already been
-         * submitted through investment.php.
-         *
-         * Send the user to My Investments
-         * after successful submission.
-         */
-
-        setTimeout(
-            function () {
+            () => {
 
                 window.location.href =
                     "my-investments.html";
 
             },
-            1800
+            1200
         );
 
 
@@ -488,198 +546,39 @@ async function createInvestment(planKey) {
         );
 
 
+        /*
+         * IMPORTANT:
+         * Show the REAL backend message.
+         * This will expose the exact reason if the
+         * server rejects the investment.
+         */
+
         showMessage(
-            error.message ||
-            "Unable to submit the investment.",
+            "Investment Failed",
+            error?.message ||
+            "Unable to create investment.",
             "error"
         );
 
-
-    } finally {
-
-        setButtonsLoading(
-            buttons,
-            false
-        );
     }
 
 }
 
 
 /* =========================================================
-   SELECT PLAN
-   ========================================================= */
+   LOAD WALLET BALANCE
+========================================================= */
 
-/*
- * This function is kept because your existing
- * investments.html buttons currently use:
- *
- * onclick="selectPlan(...)"
- *
- * We support those buttons without redirecting
- * to deposit.html.
- */
-
-window.selectPlan =
-    function (
-        planName,
-        amount,
-        rate,
-        duration
-    ) {
-
-        let planKey = "";
-
-
-        const normalized =
-            String(
-                planName || ""
-            )
-            .toLowerCase()
-            .trim();
-
-
-        if (
-            normalized.includes("starter")
-        ) {
-
-            planKey = "starter";
-
-        } else if (
-            normalized.includes("standard")
-        ) {
-
-            planKey = "standard";
-
-        } else if (
-            normalized.includes("advanced")
-        ) {
-
-            planKey = "advanced";
-        }
-
-
-        /*
-         * If the name wasn't recognized,
-         * try the amount.
-         */
-
-        if (!planKey) {
-
-            const numericAmount =
-                Number(amount);
-
-
-            if (
-                numericAmount === 10000
-            ) {
-
-                planKey = "starter";
-
-            } else if (
-                numericAmount === 15000
-            ) {
-
-                planKey = "standard";
-
-            } else if (
-                numericAmount === 25000
-            ) {
-
-                planKey = "advanced";
-            }
-        }
-
-
-        if (!planKey) {
-
-            showMessage(
-                "Unable to identify the selected investment plan.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        createInvestment(
-            planKey
-        );
-    };
-
-
-/* =========================================================
-   COMPATIBILITY FUNCTION
-   ========================================================= */
-
-window.investNow =
-    function (plan) {
-
-        let planKey =
-            String(
-                plan || ""
-            )
-            .toLowerCase()
-            .trim();
-
-
-        if (
-            planKey.includes("starter")
-        ) {
-
-            planKey = "starter";
-
-        } else if (
-            planKey.includes("standard")
-        ) {
-
-            planKey = "standard";
-
-        } else if (
-            planKey.includes("advanced")
-        ) {
-
-            planKey = "advanced";
-        }
-
-
-        if (!PLANS[planKey]) {
-
-            showMessage(
-                "Invalid investment plan.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        createInvestment(
-            planKey
-        );
-    };
-
-
-/* =========================================================
-   WALLET
-   ========================================================= */
-
-async function getWalletBalance() {
+async function loadWalletBalance() {
 
     try {
 
         const response =
             await fetch(
-                DASHBOARD_API +
-                "?_=" +
-                Date.now(),
+                PROFILE_API,
                 {
                     method: "GET",
-
                     credentials: "include",
-
-                    cache: "no-store",
-
                     headers: {
                         "Accept":
                             "application/json"
@@ -688,18 +587,9 @@ async function getWalletBalance() {
             );
 
 
-        if (response.status === 401) {
-
-            window.location.href =
-                "login.html";
-
-            return null;
-        }
-
-
         if (!response.ok) {
 
-            return null;
+            return;
         }
 
 
@@ -707,449 +597,221 @@ async function getWalletBalance() {
             await response.json();
 
 
-        const wallet =
-            data?.wallet ||
-            data?.data?.wallet ||
-            {};
+        if (
+            data?.success === false
+        ) {
+
+            return;
+        }
+
+
+        const user =
+            data.user ||
+            data.profile ||
+            data;
 
 
         const balance =
-            firstValue(
-                wallet,
-                [
-                    "available",
-                    "available_balance",
-                    "availableBalance",
-                    "balance",
-                    "wallet_balance",
-                    "walletBalance"
-                ],
-                firstValue(
-                    data,
-                    [
-                        "available_balance",
-                        "availableBalance",
-                        "balance",
-                        "wallet_balance",
-                        "walletBalance"
-                    ],
-                    0
-                )
+            Number(
+                user?.balance ??
+                user?.wallet_balance ??
+                user?.walletBalance ??
+                user?.wallet?.balance ??
+                data?.balance ??
+                data?.wallet_balance
             );
 
 
-        const numericBalance =
-            Number(balance);
+        if (
+            Number.isFinite(balance)
+        ) {
 
-
-        updateWalletDisplays(
-            numericBalance
-        );
-
-
-        return Number.isFinite(
-            numericBalance
-        )
-            ? numericBalance
-            : 0;
-
+            updateWalletDisplay(
+                balance
+            );
+        }
 
     } catch (error) {
 
-        console.error(
-            "Wallet balance error:",
+        console.warn(
+            "Wallet balance could not be loaded:",
             error
         );
 
-        return null;
     }
+
 }
 
 
 /* =========================================================
-   UPDATE WALLET DISPLAYS
-   ========================================================= */
+   UPDATE WALLET DISPLAY
+========================================================= */
 
-function updateWalletDisplays(
+function updateWalletDisplay(
     balance
 ) {
 
-    const amount =
-        Number(balance);
-
-
-    if (!Number.isFinite(amount)) {
-        return;
-    }
-
-
-    const walletElements =
+    const elements =
         document.querySelectorAll(
-            "#availableBalance, #walletBalance, #currentBalance, #userBalance"
+            "#availableBalance, #walletBalance, .wallet-balance"
         );
 
 
-    walletElements.forEach(
-        function (element) {
+    elements.forEach(
+        (element) => {
 
             element.textContent =
-                "UGX " +
-                Math.round(
-                    amount
-                ).toLocaleString(
-                    "en-UG"
-                );
-
-            element.dataset.value =
-                String(amount);
+                `UGX ${formatMoney(balance)}`;
 
         }
     );
-}
 
-
-/* =========================================================
-   FIRST VALUE
-   ========================================================= */
-
-function firstValue(
-    object,
-    keys,
-    fallback = null
-) {
-
-    if (
-        !object ||
-        typeof object !== "object"
-    ) {
-
-        return fallback;
-    }
-
-
-    for (
-        const key of keys
-    ) {
-
-        if (
-            object[key] !== undefined &&
-            object[key] !== null &&
-            object[key] !== ""
-        ) {
-
-            return object[key];
-        }
-    }
-
-
-    return fallback;
-}
-
-
-/* =========================================================
-   BUTTON LOADING
-   ========================================================= */
-
-function setButtonsLoading(
-    buttons,
-    loading
-) {
-
-    buttons.forEach(
-        function (button) {
-
-            if (loading) {
-
-                if (
-                    !button.dataset.originalText
-                ) {
-
-                    button.dataset.originalText =
-                        button.innerHTML;
-                }
-
-
-                button.disabled =
-                    true;
-
-
-                button.innerHTML =
-                    '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-
-            } else {
-
-                button.disabled =
-                    false;
-
-
-                if (
-                    button.dataset.originalText
-                ) {
-
-                    button.innerHTML =
-                        button.dataset.originalText;
-                }
-            }
-        }
-    );
-}
-
-
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
-function showMessage(
-    message,
-    type = "info"
-) {
-
-    let messageBox =
-        document.getElementById(
-            "investmentMessage"
-        );
-
-
-    if (!messageBox) {
-
-        messageBox =
-            document.createElement(
-                "div"
-            );
-
-
-        messageBox.id =
-            "investmentMessage";
-
-
-        messageBox.style.margin =
-            "20px 0";
-
-
-        messageBox.style.padding =
-            "14px 18px";
-
-
-        messageBox.style.borderRadius =
-            "12px";
-
-
-        messageBox.style.fontWeight =
-            "600";
-
-
-        messageBox.style.whiteSpace =
-            "pre-line";
-
-
-        const container =
-            document.querySelector(
-                ".main-content"
-            ) ||
-            document.querySelector(
-                "main"
-            ) ||
-            document.body;
-
-
-        container.prepend(
-            messageBox
-        );
-    }
-
-
-    messageBox.textContent =
-        message;
-
-
-    messageBox.className =
-        "investment-message " +
-        type;
-
-
-    messageBox.style.display =
-        "block";
-
-
-    if (
-        type === "success"
-    ) {
-
-        messageBox.style.background =
-            "rgba(0, 200, 120, 0.12)";
-
-        messageBox.style.border =
-            "1px solid rgba(0, 200, 120, 0.35)";
-
-        messageBox.style.color =
-            "#58e6a8";
-
-
-    } else if (
-        type === "error"
-    ) {
-
-        messageBox.style.background =
-            "rgba(255, 70, 90, 0.12)";
-
-        messageBox.style.border =
-            "1px solid rgba(255, 70, 90, 0.35)";
-
-        messageBox.style.color =
-            "#ff7b8a";
-
-
-    } else {
-
-        messageBox.style.background =
-            "rgba(140, 80, 255, 0.12)";
-
-        messageBox.style.border =
-            "1px solid rgba(140, 80, 255, 0.35)";
-
-        messageBox.style.color =
-            "#c9a7ff";
-    }
-}
-
-
-/* =========================================================
-   MONEY FORMAT
-   ========================================================= */
-
-function formatMoney(
-    amount
-) {
-
-    const number =
-        Number(amount);
-
-
-    if (
-        !Number.isFinite(number)
-    ) {
-
-        return "0";
-    }
-
-
-    return Math.round(
-        number
-    ).toLocaleString(
-        "en-UG"
-    );
 }
 
 
 /* =========================================================
    CALCULATOR
-   ========================================================= */
+========================================================= */
 
-function calculateInvestment() {
+function setupCalculator() {
 
-    const input =
+    const amountInput =
         document.getElementById(
             "investmentAmount"
         );
 
 
-    if (!input) {
-        return;
-    }
-
-
-    const amount =
-        Number(input.value) || 0;
-
-
-    const dailyRate =
-        0.10;
-
-
-    const days =
-        30;
-
-
-    const daily =
-        amount * dailyRate;
-
-
-    const monthly =
-        daily * days;
-
-
-    const total =
-        amount + monthly;
-
-
-    const dailyElement =
+    const dailyReturn =
         document.getElementById(
             "dailyReturn"
         );
 
 
-    const monthlyElement =
+    const monthlyReturn =
         document.getElementById(
             "monthlyReturn"
         );
 
 
-    const totalElement =
+    const totalAfter30 =
         document.getElementById(
             "totalAfter30"
         );
 
 
-    if (dailyElement) {
+    if (!amountInput) {
 
-        dailyElement.textContent =
-            "UGX " +
-            Math.round(
-                daily
-            ).toLocaleString();
+        return;
     }
 
 
-    if (monthlyElement) {
+    function calculate() {
 
-        monthlyElement.textContent =
-            "UGX " +
-            Math.round(
-                monthly
-            ).toLocaleString();
+        const amount =
+            Number(
+                amountInput.value
+            ) || 0;
+
+
+        const rate =
+            Number(
+                dailyReturn?.value
+            ) || 10;
+
+
+        const daily =
+            amount *
+            (rate / 100);
+
+
+        const thirtyDayIncome =
+            daily *
+            30;
+
+
+        const total =
+            amount +
+            thirtyDayIncome;
+
+
+        if (monthlyReturn) {
+
+            monthlyReturn.textContent =
+                `UGX ${formatMoney(
+                    thirtyDayIncome
+                )}`;
+
+        }
+
+
+        /*
+         * Some versions of the page use a separate
+         * daily income element.
+         */
+
+        const dailyIncome =
+            document.getElementById(
+                "dailyIncome"
+            );
+
+
+        if (dailyIncome) {
+
+            dailyIncome.textContent =
+                `UGX ${formatMoney(
+                    daily
+                )}`;
+
+        }
+
+
+        if (totalAfter30) {
+
+            totalAfter30.textContent =
+                `UGX ${formatMoney(
+                    total
+                )}`;
+
+        }
+
     }
 
 
-    if (totalElement) {
+    amountInput.addEventListener(
+        "input",
+        calculate
+    );
 
-        totalElement.textContent =
-            "UGX " +
-            Math.round(
-                total
-            ).toLocaleString();
-    }
+
+    dailyReturn?.addEventListener(
+        "input",
+        calculate
+    );
+
+
+    calculate();
+
 }
 
 
 /* =========================================================
    MOBILE MENU
-   ========================================================= */
+========================================================= */
 
 function setupMobileMenu() {
-
-    /*
-     * Your HTML uses menuBtn, not menuToggle.
-     */
 
     const menuButton =
         document.getElementById(
             "menuBtn"
+        ) ||
+        document.getElementById(
+            "menuToggle"
         );
 
 
     const sidebar =
-        document.getElementById(
-            "sidebar"
+        document.querySelector(
+            ".sidebar"
         );
 
 
@@ -1164,100 +826,32 @@ function setupMobileMenu() {
 
     menuButton.addEventListener(
         "click",
-        function () {
-
-            sidebar.classList.toggle(
-                "open"
-            );
-
+        () => {
 
             sidebar.classList.toggle(
                 "active"
             );
 
-
-            const icon =
-                menuButton.querySelector(
-                    "i"
-                );
-
-
-            if (
-                icon &&
-                (
-                    sidebar.classList.contains(
-                        "open"
-                    ) ||
-                    sidebar.classList.contains(
-                        "active"
-                    )
-                )
-            ) {
-
-                icon.classList.remove(
-                    "fa-bars"
-                );
-
-                icon.classList.add(
-                    "fa-xmark"
-                );
-
-            } else if (icon) {
-
-                icon.classList.remove(
-                    "fa-xmark"
-                );
-
-                icon.classList.add(
-                    "fa-bars"
-                );
-            }
-
         }
     );
 
-
-    const links =
-        sidebar.querySelectorAll(
-            "a"
-        );
-
-
-    links.forEach(
-        function (link) {
-
-            link.addEventListener(
-                "click",
-                function () {
-
-                    sidebar.classList.remove(
-                        "open"
-                    );
-
-                    sidebar.classList.remove(
-                        "active"
-                    );
-                }
-            );
-        }
-    );
 }
 
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
 function setupLogout() {
 
     const logoutButtons =
         document.querySelectorAll(
-            ".logout, .logout-btn, #logoutBtn"
+            "#logoutBtn, .logout-btn, [data-logout]"
         );
 
 
     logoutButtons.forEach(
-        function (button) {
+        (button) => {
 
             button.addEventListener(
                 "click",
@@ -1269,17 +863,10 @@ function setupLogout() {
                     try {
 
                         await fetch(
-                            `${API_URL}/logout.php`,
+                            LOGOUT_API,
                             {
-                                method:
-                                    "POST",
-
-                                credentials:
-                                    "include",
-
-                                cache:
-                                    "no-store",
-
+                                method: "POST",
+                                credentials: "include",
                                 headers: {
                                     "Accept":
                                         "application/json"
@@ -1289,51 +876,191 @@ function setupLogout() {
 
                     } catch (error) {
 
-                        console.error(
-                            "Logout error:",
+                        console.warn(
+                            "Logout request failed:",
                             error
                         );
 
-                    } finally {
-
-                        localStorage.removeItem(
-                            "crownCashUser"
-                        );
-
-                        localStorage.removeItem(
-                            "currentUser"
-                        );
-
-
-                        window.location.href =
-                            "login.html";
                     }
+
+
+                    window.location.href =
+                        "index.html";
 
                 }
             );
+
         }
     );
+
 }
 
 
 /* =========================================================
-   GLOBAL API
-   ========================================================= */
+   MESSAGE / TOAST
+========================================================= */
 
-window.CrownCashInvestments = {
+function showMessage(
+    title,
+    message,
+    type = "info"
+) {
 
-    plans: PLANS,
+    /*
+     * Remove existing Crown Cash message.
+     */
 
-    invest:
-        createInvestment,
+    const existing =
+        document.getElementById(
+            "crownCashMessage"
+        );
 
-    confirm:
-        createInvestment,
 
-    formatMoney:
-        formatMoney,
+    if (existing) {
 
-    getWalletBalance:
-        getWalletBalance
+        existing.remove();
+    }
+
+
+    const box =
+        document.createElement(
+            "div"
+        );
+
+
+    box.id =
+        "crownCashMessage";
+
+
+    box.className =
+        `crown-cash-message ${type}`;
+
+
+    box.innerHTML = `
+
+        <div class="crown-cash-message-title">
+            ${escapeHtml(title)}
+        </div>
+
+        <div class="crown-cash-message-text">
+            ${escapeHtml(message)}
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        box
+    );
+
+
+    setTimeout(
+        () => {
+
+            box.classList.add(
+                "show"
+            );
+
+        },
+        10
+    );
+
+
+    if (
+        type !== "error"
+    ) {
+
+        setTimeout(
+            () => {
+
+                box.classList.remove(
+                    "show"
+                );
+
+                setTimeout(
+                    () => {
+
+                        box.remove();
+
+                    },
+                    300
+                );
+
+            },
+            3500
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =========================================================
+   FORMAT MONEY
+========================================================= */
+
+function formatMoney(
+    amount
+) {
+
+    return Number(
+        amount || 0
+    ).toLocaleString(
+        "en-UG",
+        {
+            maximumFractionDigits: 0
+        }
+    );
+
+}
+
+
+/* =========================================================
+   GLOBAL INVEST NOW
+========================================================= */
+
+window.investNow =
+function (
+    planKey
+) {
+
+    confirmInvestment(
+        planKey
+    );
 
 };

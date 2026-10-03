@@ -24,32 +24,11 @@ require_once __DIR__ . '/config.php';
 
 use MongoDB\BSON\ObjectId;
 
+
 /* ======================================================
-   CORS
+   RESPONSE / CACHE HEADERS
+   CORS IS HANDLED BY config.php
 ====================================================== */
-
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-$allowedOrigins = [
-    'https://crown-cash.vercel.app',
-    'https://www.crown-cash.vercel.app',
-];
-
-if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
-    header("Access-Control-Allow-Origin: {$origin}");
-    header("Vary: Origin");
-} else {
-    header("Access-Control-Allow-Origin: https://crown-cash.vercel.app");
-}
-
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -119,7 +98,10 @@ function dashboardObjectId(mixed $value): ?ObjectId
         return $value;
     }
 
-    if (is_string($value) && preg_match('/^[a-f0-9]{24}$/i', trim($value))) {
+    if (
+        is_string($value) &&
+        preg_match('/^[a-f0-9]{24}$/i', trim($value))
+    ) {
         try {
             return new ObjectId(trim($value));
         } catch (Throwable $e) {
@@ -134,25 +116,33 @@ function dashboardObjectId(mixed $value): ?ObjectId
 function dashboardDate(mixed $value): ?DateTimeImmutable
 {
     try {
+
         if ($value instanceof MongoDB\BSON\UTCDateTime) {
+
             return $value->toDateTime()->setTimezone(
                 new DateTimeZone('UTC')
             );
         }
 
         if ($value instanceof DateTimeInterface) {
+
             return new DateTimeImmutable(
                 $value->format('Y-m-d H:i:s'),
                 new DateTimeZone('UTC')
             );
         }
 
-        if (is_string($value) && trim($value) !== '') {
+        if (
+            is_string($value) &&
+            trim($value) !== ''
+        ) {
+
             return new DateTimeImmutable(
                 trim($value),
                 new DateTimeZone('UTC')
             );
         }
+
     } catch (Throwable $e) {
         return null;
     }
@@ -162,13 +152,36 @@ function dashboardDate(mixed $value): ?DateTimeImmutable
 
 
 /* ======================================================
+   HANDLE CORS PREFLIGHT
+   config.php provides the CORS headers.
+====================================================== */
+
+if (
+    isset($_SERVER['REQUEST_METHOD']) &&
+    $_SERVER['REQUEST_METHOD'] === 'OPTIONS'
+) {
+    http_response_code(204);
+    exit;
+}
+
+
+/* ======================================================
    START SESSION
 ====================================================== */
 
 try {
+
     startSecureSession();
+
 } catch (Throwable $e) {
-    session_start();
+
+    /*
+     * Do not blindly call session_start() if a session
+     * has already been started.
+     */
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
 }
 
 
@@ -177,7 +190,9 @@ try {
 ====================================================== */
 
 try {
+
     requireLogin();
+
 } catch (Throwable $e) {
 
     dashboardResponse([
@@ -194,8 +209,11 @@ try {
 ====================================================== */
 
 try {
+
     $sessionUserId = currentUserId();
+
 } catch (Throwable $e) {
+
     $sessionUserId = null;
 }
 
@@ -204,6 +222,7 @@ if (
     $sessionUserId === null ||
     $sessionUserId === ''
 ) {
+
     dashboardResponse([
         'success' => false,
         'authenticated' => false,
@@ -244,6 +263,10 @@ try {
         $referrals = $db->selectCollection('referrals');
     }
 
+    if (!isset($withdrawals)) {
+        $withdrawals = $db->selectCollection('withdrawals');
+    }
+
 } catch (Throwable $e) {
 
     dashboardResponse([
@@ -262,15 +285,29 @@ $user = null;
 try {
 
     $userIdString = dashboardString($sessionUserId);
-    $userObjectId = dashboardObjectId($sessionUserId);
+
+    $userObjectId = dashboardObjectId(
+        $sessionUserId
+    );
 
     $queries = [];
 
+
+    /*
+     * MongoDB ObjectId lookup.
+     */
+
     if ($userObjectId !== null) {
+
         $queries[] = [
             '_id' => $userObjectId
         ];
     }
+
+
+    /*
+     * String ID lookups.
+     */
 
     if ($userIdString !== '') {
 
@@ -292,11 +329,16 @@ try {
      * Some sessions store the user's email instead
      * of the MongoDB ID.
      */
+
     $sessionEmail = '';
 
     if (isset($_SESSION['email'])) {
-        $sessionEmail = trim((string)$_SESSION['email']);
+
+        $sessionEmail = trim(
+            (string)$_SESSION['email']
+        );
     }
+
 
     if ($sessionEmail !== '') {
 
@@ -310,6 +352,10 @@ try {
     }
 
 
+    /*
+     * Search through all possible user identifiers.
+     */
+
     foreach ($queries as $query) {
 
         try {
@@ -317,11 +363,14 @@ try {
             $found = $users->findOne($query);
 
             if ($found !== null) {
+
                 $user = $found;
+
                 break;
             }
 
         } catch (Throwable $e) {
+
             continue;
         }
     }
@@ -331,13 +380,23 @@ try {
      * Last fallback:
      * if session stores an email directly as the user ID.
      */
-    if ($user === null && filter_var($userIdString, FILTER_VALIDATE_EMAIL)) {
+
+    if (
+        $user === null &&
+        filter_var(
+            $userIdString,
+            FILTER_VALIDATE_EMAIL
+        )
+    ) {
 
         try {
+
             $user = $users->findOne([
                 'email' => $userIdString
             ]);
+
         } catch (Throwable $e) {
+
             $user = null;
         }
     }
@@ -369,14 +428,24 @@ if ($user === null) {
 $dbUserId = '';
 
 if (isset($user['_id'])) {
-    $dbUserId = dashboardString($user['_id']);
+
+    $dbUserId = dashboardString(
+        $user['_id']
+    );
 }
+
 
 if ($dbUserId === '') {
-    $dbUserId = dashboardString($sessionUserId);
+
+    $dbUserId = dashboardString(
+        $sessionUserId
+    );
 }
 
-$userObjectId = dashboardObjectId($user['_id'] ?? null);
+
+$userObjectId = dashboardObjectId(
+    $user['_id'] ?? null
+);
 
 
 /* ======================================================
@@ -384,23 +453,31 @@ $userObjectId = dashboardObjectId($user['_id'] ?? null);
 ====================================================== */
 
 $firstName = trim(
-    (string)($user['first_name'] ??
-    $user['firstName'] ??
-    '')
+    (string)(
+        $user['first_name'] ??
+        $user['firstName'] ??
+        ''
+    )
 );
+
 
 $lastName = trim(
-    (string)($user['last_name'] ??
-    $user['lastName'] ??
-    '')
+    (string)(
+        $user['last_name'] ??
+        $user['lastName'] ??
+        ''
+    )
 );
 
+
 $fullName = trim(
-    (string)($user['name'] ??
-    $user['full_name'] ??
-    $user['fullName'] ??
-    $user['username'] ??
-    '')
+    (string)(
+        $user['name'] ??
+        $user['full_name'] ??
+        $user['fullName'] ??
+        $user['username'] ??
+        ''
+    )
 );
 
 
@@ -415,9 +492,11 @@ if ($fullName === '') {
 if ($fullName === '') {
 
     $fullName =
-        (string)($user['email'] ??
-        $user['phone'] ??
-        'Member');
+        (string)(
+            $user['email'] ??
+            $user['phone'] ??
+            'Member'
+        );
 }
 
 
@@ -427,18 +506,22 @@ if ($fullName === '') {
 
 $role = strtolower(
     trim(
-        (string)($user['role'] ??
-        $user['account_type'] ??
-        $user['accountType'] ??
-        $user['user_role'] ??
-        '')
+        (string)(
+            $user['role'] ??
+            $user['account_type'] ??
+            $user['accountType'] ??
+            $user['user_role'] ??
+            ''
+        )
     )
 );
 
 
 $email = strtolower(
     trim(
-        (string)($user['email'] ?? '')
+        (string)(
+            $user['email'] ?? ''
+        )
     )
 );
 
@@ -449,12 +532,23 @@ $isAdmin = false;
 /*
  * Explicit admin flags.
  */
+
 $adminFlags = [
-    $user['is_admin'] ?? false,
-    $user['isAdmin'] ?? false,
-    $user['admin'] ?? false,
-    $user['administrator'] ?? false,
+
+    $user['is_admin'] ??
+    false,
+
+    $user['isAdmin'] ??
+    false,
+
+    $user['admin'] ??
+    false,
+
+    $user['administrator'] ??
+    false
+
 ];
+
 
 foreach ($adminFlags as $flag) {
 
@@ -464,7 +558,9 @@ foreach ($adminFlags as $flag) {
         $flag === '1' ||
         strtolower((string)$flag) === 'true'
     ) {
+
         $isAdmin = true;
+
         break;
     }
 }
@@ -473,17 +569,21 @@ foreach ($adminFlags as $flag) {
 /*
  * Role-based admin.
  */
-if (in_array(
-    $role,
-    [
-        'admin',
-        'administrator',
-        'superadmin',
-        'super_admin',
-        'super-admin'
-    ],
-    true
-)) {
+
+if (
+    in_array(
+        $role,
+        [
+            'admin',
+            'administrator',
+            'superadmin',
+            'super_admin',
+            'super-admin'
+        ],
+        true
+    )
+) {
+
     $isAdmin = true;
 }
 
@@ -491,12 +591,20 @@ if (in_array(
 /*
  * Environment-configured admin.
  */
+
 $adminEmail = strtolower(
-    trim((string)(getenv('ADMIN_EMAIL') ?: ''))
+    trim(
+        (string)(
+            getenv('ADMIN_EMAIL') ?: ''
+        )
+    )
 );
 
+
 $adminUserId = trim(
-    (string)(getenv('ADMIN_USER_ID') ?: '')
+    (string)(
+        getenv('ADMIN_USER_ID') ?: ''
+    )
 );
 
 
@@ -505,6 +613,7 @@ if (
     $email !== '' &&
     $email === $adminEmail
 ) {
+
     $isAdmin = true;
 }
 
@@ -514,6 +623,7 @@ if (
     $dbUserId !== '' &&
     $dbUserId === $adminUserId
 ) {
+
     $isAdmin = true;
 }
 
@@ -528,20 +638,32 @@ $balance = 0.0;
 /*
  * Direct wallet fields.
  */
+
 $walletFields = [
+
     'balance',
+
     'wallet_balance',
+
     'walletBalance',
+
     'available_balance',
+
     'availableBalance'
+
 ];
 
 
 foreach ($walletFields as $field) {
 
-    if (isset($user[$field]) && is_numeric($user[$field])) {
+    if (
+        isset($user[$field]) &&
+        is_numeric($user[$field])
+    ) {
 
-        $balance = dashboardMoney($user[$field]);
+        $balance = dashboardMoney(
+            $user[$field]
+        );
 
         break;
     }
@@ -551,6 +673,7 @@ foreach ($walletFields as $field) {
 /*
  * Nested wallet object.
  */
+
 if (
     $balance == 0.0 &&
     isset($user['wallet']) &&
@@ -568,7 +691,9 @@ if (
 
         if (
             isset($user['wallet'][$field]) &&
-            is_numeric($user['wallet'][$field])
+            is_numeric(
+                $user['wallet'][$field]
+            )
         ) {
 
             $balance = dashboardMoney(
@@ -586,19 +711,28 @@ if (
 ====================================================== */
 
 $totalInvested = 0.0;
+
 $totalEarnings = 0.0;
+
 $investmentCount = 0;
 
 
 /*
  * Investment statuses that represent actual investments.
  */
+
 $validInvestmentStatuses = [
+
     'pending',
+
     'approved',
+
     'active',
+
     'running',
+
     'completed'
+
 ];
 
 
@@ -606,24 +740,55 @@ try {
 
     $investmentQuery = [];
 
+
     if ($userObjectId !== null) {
 
         $investmentQuery = [
+
             '$or' => [
-                ['user_id' => $userObjectId],
-                ['userId' => $userObjectId],
-                ['user' => $userObjectId]
+
+                [
+                    'user_id' =>
+                    $userObjectId
+                ],
+
+                [
+                    'userId' =>
+                    $userObjectId
+                ],
+
+                [
+                    'user' =>
+                    $userObjectId
+                ]
+
             ]
+
         ];
 
     } else {
 
         $investmentQuery = [
+
             '$or' => [
-                ['user_id' => $dbUserId],
-                ['userId' => $dbUserId],
-                ['user' => $dbUserId]
+
+                [
+                    'user_id' =>
+                    $dbUserId
+                ],
+
+                [
+                    'userId' =>
+                    $dbUserId
+                ],
+
+                [
+                    'user' =>
+                    $dbUserId
+                ]
+
             ]
+
         ];
     }
 
@@ -643,7 +808,9 @@ try {
 
         $status = strtolower(
             trim(
-                (string)($investment['status'] ?? '')
+                (string)(
+                    $investment['status'] ?? ''
+                )
             )
         );
 
@@ -656,16 +823,23 @@ try {
                 true
             )
         ) {
+
             continue;
         }
 
 
         $principal = dashboardMoney(
+
             $investment['amount'] ??
+
             $investment['principal'] ??
+
             $investment['investment_amount'] ??
+
             $investment['investmentAmount'] ??
+
             0
+
         );
 
 
@@ -675,6 +849,7 @@ try {
              * Total invested represents the principal
              * put into investments.
              */
+
             $totalInvested += $principal;
 
             $investmentCount++;
@@ -698,24 +873,55 @@ try {
 
     $earningQuery = [];
 
+
     if ($userObjectId !== null) {
 
         $earningQuery = [
+
             '$or' => [
-                ['user_id' => $userObjectId],
-                ['userId' => $userObjectId],
-                ['user' => $userObjectId]
+
+                [
+                    'user_id' =>
+                    $userObjectId
+                ],
+
+                [
+                    'userId' =>
+                    $userObjectId
+                ],
+
+                [
+                    'user' =>
+                    $userObjectId
+                ]
+
             ]
+
         ];
 
     } else {
 
         $earningQuery = [
+
             '$or' => [
-                ['user_id' => $dbUserId],
-                ['userId' => $dbUserId],
-                ['user' => $dbUserId]
+
+                [
+                    'user_id' =>
+                    $dbUserId
+                ],
+
+                [
+                    'userId' =>
+                    $dbUserId
+                ],
+
+                [
+                    'user' =>
+                    $dbUserId
+                ]
+
             ]
+
         ];
     }
 
@@ -742,24 +948,32 @@ try {
         /*
          * Principal returned is NOT earnings.
          */
+
         if (
             $category === 'principal' ||
             $category === 'principal_return' ||
             $category === 'investment_principal'
         ) {
+
             continue;
         }
 
 
         $amount = dashboardMoney(
+
             $earning['amount'] ??
+
             $earning['earning'] ??
+
             $earning['value'] ??
+
             0
+
         );
 
 
         if ($amount <= 0) {
+
             continue;
         }
 
@@ -768,27 +982,48 @@ try {
          * Include investment/daily earnings and
          * referral/commission earnings.
          */
+
         $investmentCategories = [
+
             'investment',
+
             'investment_earning',
+
             'daily',
+
             'daily_earning',
+
             'profit',
+
             'return'
+
         ];
 
 
         $referralCategories = [
+
             'referral',
+
             'referral_earning',
+
             'commission',
+
             'referral_commission'
+
         ];
 
 
         if (
-            in_array($category, $investmentCategories, true) ||
-            in_array($category, $referralCategories, true)
+            in_array(
+                $category,
+                $investmentCategories,
+                true
+            ) ||
+            in_array(
+                $category,
+                $referralCategories,
+                true
+            )
         ) {
 
             $totalEarnings += $amount;
@@ -800,20 +1035,23 @@ try {
      * If the earnings ledger has no entries yet,
      * use stored user-level totals as a fallback.
      */
+
     if ($totalEarnings <= 0) {
 
-        $storedInvestmentEarnings = dashboardMoney(
-            $user['investment_earnings'] ??
-            $user['investmentEarnings'] ??
-            0
-        );
+        $storedInvestmentEarnings =
+            dashboardMoney(
+                $user['investment_earnings'] ??
+                $user['investmentEarnings'] ??
+                0
+            );
 
 
-        $storedReferralEarnings = dashboardMoney(
-            $user['referral_earnings'] ??
-            $user['referralEarnings'] ??
-            0
-        );
+        $storedReferralEarnings =
+            dashboardMoney(
+                $user['referral_earnings'] ??
+                $user['referralEarnings'] ??
+                0
+            );
 
 
         $totalEarnings =
@@ -824,9 +1062,13 @@ try {
 } catch (Throwable $e) {
 
     $totalEarnings = dashboardMoney(
+
         $user['total_earnings'] ??
+
         $user['totalEarnings'] ??
+
         0
+
     );
 }
 
@@ -842,20 +1084,35 @@ $referralTeam = 0;
  * Parent/referrer fields used by different versions
  * of the Crown Cash database.
  */
+
 $parentFields = [
+
     'referrer_id',
+
     'referrerId',
+
     'referrer',
+
     'referred_by_id',
+
     'referredById',
+
     'referred_by',
+
     'parent_id',
+
     'parentId',
+
     'sponsor_id',
+
     'sponsorId',
+
     'sponsor',
+
     'upline_id',
+
     'uplineId'
+
 ];
 
 
@@ -867,18 +1124,25 @@ try {
     /*
      * First-level members.
      */
+
     foreach ($parentFields as $field) {
 
         if ($userObjectId !== null) {
 
             $query = [
-                $field => $userObjectId
+
+                $field =>
+                $userObjectId
+
             ];
 
         } else {
 
             $query = [
-                $field => $dbUserId
+
+                $field =>
+                $dbUserId
+
             ];
         }
 
@@ -886,12 +1150,19 @@ try {
         try {
 
             $cursor = $users->find(
+
                 $query,
+
                 [
+
                     'projection' => [
+
                         '_id' => 1
+
                     ]
+
                 ]
+
             );
 
 
@@ -900,12 +1171,15 @@ try {
                 if (isset($member['_id'])) {
 
                     $allReferralIds[
-                        dashboardString($member['_id'])
+                        dashboardString(
+                            $member['_id']
+                        )
                     ] = true;
                 }
             }
 
         } catch (Throwable $e) {
+
             continue;
         }
     }
@@ -914,56 +1188,111 @@ try {
     /*
      * Also check the referrals collection.
      */
+
     try {
 
         $referralQuery = [];
 
+
         if ($userObjectId !== null) {
 
             $referralQuery = [
+
                 '$or' => [
-                    ['referrer_id' => $userObjectId],
-                    ['referrerId' => $userObjectId],
-                    ['parent_id' => $userObjectId],
-                    ['parentId' => $userObjectId]
+
+                    [
+                        'referrer_id' =>
+                        $userObjectId
+                    ],
+
+                    [
+                        'referrerId' =>
+                        $userObjectId
+                    ],
+
+                    [
+                        'parent_id' =>
+                        $userObjectId
+                    ],
+
+                    [
+                        'parentId' =>
+                        $userObjectId
+                    ]
+
                 ]
+
             ];
 
         } else {
 
             $referralQuery = [
+
                 '$or' => [
-                    ['referrer_id' => $dbUserId],
-                    ['referrerId' => $dbUserId],
-                    ['parent_id' => $dbUserId],
-                    ['parentId' => $dbUserId]
+
+                    [
+                        'referrer_id' =>
+                        $dbUserId
+                    ],
+
+                    [
+                        'referrerId' =>
+                        $dbUserId
+                    ],
+
+                    [
+                        'parent_id' =>
+                        $dbUserId
+                    ],
+
+                    [
+                        'parentId' =>
+                        $dbUserId
+                    ]
+
                 ]
+
             ];
         }
 
 
-        $referralCursor = $referrals->find(
-            $referralQuery,
-            [
-                'projection' => [
-                    'user_id' => 1,
-                    'userId' => 1,
-                    'referred_user_id' => 1,
-                    'referredUserId' => 1
+        $referralCursor =
+            $referrals->find(
+
+                $referralQuery,
+
+                [
+
+                    'projection' => [
+
+                        'user_id' => 1,
+
+                        'userId' => 1,
+
+                        'referred_user_id' => 1,
+
+                        'referredUserId' => 1
+
+                    ]
+
                 ]
-            ]
-        );
+
+            );
 
 
         foreach ($referralCursor as $ref) {
 
             foreach (
+
                 [
                     'user_id',
                     'userId',
                     'referred_user_id',
                     'referredUserId'
-                ] as $field
+                ]
+
+                as $field
+
             ) {
 
                 if (isset($ref[$field])) {
@@ -973,6 +1302,7 @@ try {
                     );
 
                     if ($id !== '') {
+
                         $allReferralIds[$id] = true;
                     }
                 }
@@ -980,39 +1310,57 @@ try {
         }
 
     } catch (Throwable $e) {
-        /* Ignore referral collection errors. */
+
+        /*
+         * Ignore referral collection errors.
+         */
     }
 
 
-    $referralTeam = count($allReferralIds);
+    $referralTeam =
+        count($allReferralIds);
 
 
     /*
      * If user-level stored count exists and our query
      * found nothing, use it as fallback.
      */
+
     if ($referralTeam === 0) {
 
-        $storedReferralTeam = dashboardMoney(
-            $user['referral_team'] ??
-            $user['referralTeam'] ??
-            $user['team_count'] ??
-            0
-        );
+        $storedReferralTeam =
+            dashboardMoney(
+
+                $user['referral_team'] ??
+
+                $user['referralTeam'] ??
+
+                $user['team_count'] ??
+
+                0
+
+            );
 
 
         if ($storedReferralTeam > 0) {
-            $referralTeam = (int)$storedReferralTeam;
+
+            $referralTeam =
+                (int)$storedReferralTeam;
         }
     }
 
 } catch (Throwable $e) {
 
-    $referralTeam = (int)dashboardMoney(
-        $user['referral_team'] ??
-        $user['referralTeam'] ??
-        0
-    );
+    $referralTeam =
+        (int)dashboardMoney(
+
+            $user['referral_team'] ??
+
+            $user['referralTeam'] ??
+
+            0
+
+        );
 }
 
 
@@ -1028,21 +1376,51 @@ try {
     if ($userObjectId !== null) {
 
         $transactionQuery = [
+
             '$or' => [
-                ['user_id' => $userObjectId],
-                ['userId' => $userObjectId],
-                ['user' => $userObjectId]
+
+                [
+                    'user_id' =>
+                    $userObjectId
+                ],
+
+                [
+                    'userId' =>
+                    $userObjectId
+                ],
+
+                [
+                    'user' =>
+                    $userObjectId
+                ]
+
             ]
+
         ];
 
     } else {
 
         $transactionQuery = [
+
             '$or' => [
-                ['user_id' => $dbUserId],
-                ['userId' => $dbUserId],
-                ['user' => $dbUserId]
+
+                [
+                    'user_id' =>
+                    $dbUserId
+                ],
+
+                [
+                    'userId' =>
+                    $dbUserId
+                ],
+
+                [
+                    'user' =>
+                    $dbUserId
+                ]
+
             ]
+
         ];
     }
 
@@ -1054,11 +1432,16 @@ try {
 
 } catch (Throwable $e) {
 
-    $transactionCount = (int)dashboardMoney(
-        $user['transaction_count'] ??
-        $user['transactionCount'] ??
-        0
-    );
+    $transactionCount =
+        (int)dashboardMoney(
+
+            $user['transaction_count'] ??
+
+            $user['transactionCount'] ??
+
+            0
+
+        );
 }
 
 
@@ -1076,31 +1459,65 @@ try {
         if ($userObjectId !== null) {
 
             $withdrawalQuery = [
+
                 '$or' => [
-                    ['user_id' => $userObjectId],
-                    ['userId' => $userObjectId]
-                ],
-                'status' => [
-                    '$in' => [
-                        'pending',
-                        'processing'
+
+                    [
+                        'user_id' =>
+                        $userObjectId
+                    ],
+
+                    [
+                        'userId' =>
+                        $userObjectId
                     ]
+
+                ],
+
+                'status' => [
+
+                    '$in' => [
+
+                        'pending',
+
+                        'processing'
+
+                    ]
+
                 ]
+
             ];
 
         } else {
 
             $withdrawalQuery = [
+
                 '$or' => [
-                    ['user_id' => $dbUserId],
-                    ['userId' => $dbUserId]
-                ],
-                'status' => [
-                    '$in' => [
-                        'pending',
-                        'processing'
+
+                    [
+                        'user_id' =>
+                        $dbUserId
+                    ],
+
+                    [
+                        'userId' =>
+                        $dbUserId
                     ]
+
+                ],
+
+                'status' => [
+
+                    '$in' => [
+
+                        'pending',
+
+                        'processing'
+
+                    ]
+
                 ]
+
             ];
         }
 
@@ -1112,6 +1529,7 @@ try {
     }
 
 } catch (Throwable $e) {
+
     $pendingWithdrawals = 0;
 }
 
@@ -1121,12 +1539,25 @@ try {
 ====================================================== */
 
 $accountType =
+
     $isAdmin
+
         ? 'Administrator'
+
         : (
+
             $role !== ''
-                ? ucfirst(str_replace('_', ' ', $role))
+
+                ? ucfirst(
+                    str_replace(
+                        '_',
+                        ' ',
+                        $role
+                    )
+                )
+
                 : 'Personal Account'
+
         );
 
 
@@ -1136,45 +1567,65 @@ $accountType =
 
 $userResponse = [
 
-    'id' => $dbUserId,
+    'id' =>
+    $dbUserId,
 
-    '_id' => $dbUserId,
+    '_id' =>
+    $dbUserId,
 
-    'name' => $fullName,
+    'name' =>
+    $fullName,
 
-    'full_name' => $fullName,
+    'full_name' =>
+    $fullName,
 
-    'fullName' => $fullName,
+    'fullName' =>
+    $fullName,
 
-    'first_name' => $firstName,
+    'first_name' =>
+    $firstName,
 
-    'firstName' => $firstName,
+    'firstName' =>
+    $firstName,
 
-    'last_name' => $lastName,
+    'last_name' =>
+    $lastName,
 
-    'lastName' => $lastName,
+    'lastName' =>
+    $lastName,
 
-    'email' => $email,
+    'email' =>
+    $email,
 
-    'role' => $role,
+    'role' =>
+    $role,
 
-    'account_type' => $accountType,
+    'account_type' =>
+    $accountType,
 
-    'accountType' => $accountType,
+    'accountType' =>
+    $accountType,
 
-    'is_admin' => $isAdmin,
+    'is_admin' =>
+    $isAdmin,
 
-    'isAdmin' => $isAdmin,
+    'isAdmin' =>
+    $isAdmin,
 
-    'balance' => $balance,
+    'balance' =>
+    $balance,
 
-    'wallet_balance' => $balance,
+    'wallet_balance' =>
+    $balance,
 
-    'walletBalance' => $balance,
+    'walletBalance' =>
+    $balance,
 
-    'available_balance' => $balance,
+    'available_balance' =>
+    $balance,
 
-    'availableBalance' => $balance
+    'availableBalance' =>
+    $balance
 
 ];
 
@@ -1185,15 +1636,20 @@ $userResponse = [
 
 $adminResponse = [
 
-    'is_admin' => $isAdmin,
+    'is_admin' =>
+    $isAdmin,
 
-    'isAdmin' => $isAdmin,
+    'isAdmin' =>
+    $isAdmin,
 
-    'authorized' => $isAdmin,
+    'authorized' =>
+    $isAdmin,
 
-    'role' => $role,
+    'role' =>
+    $role,
 
-    'account_type' => $accountType
+    'account_type' =>
+    $accountType
 
 ];
 
@@ -1204,89 +1660,140 @@ $adminResponse = [
 
 dashboardResponse([
 
-    'success' => true,
+    'success' =>
+    true,
 
-    'authenticated' => true,
+    'authenticated' =>
+    true,
 
-    'authorized' => true,
+    'authorized' =>
+    true,
 
-    'message' => 'Dashboard loaded successfully.',
+    'message' =>
+    'Dashboard loaded successfully.',
+
 
     /*
      * USER
      */
-    'user' => $userResponse,
+
+    'user' =>
+    $userResponse,
+
 
     /*
      * ADMIN
      */
-    'admin' => $adminResponse,
+
+    'admin' =>
+    $adminResponse,
+
 
     /*
      * WALLET
      */
-    'balance' => $balance,
 
-    'available_balance' => $balance,
+    'balance' =>
+    $balance,
 
-    'availableBalance' => $balance,
+    'available_balance' =>
+    $balance,
+
+    'availableBalance' =>
+    $balance,
+
 
     /*
      * INVESTMENTS
      */
-    'total_invested' => $totalInvested,
 
-    'totalInvested' => $totalInvested,
+    'total_invested' =>
+    $totalInvested,
 
-    'investment_count' => $investmentCount,
+    'totalInvested' =>
+    $totalInvested,
 
-    'investmentCount' => $investmentCount,
+    'investment_count' =>
+    $investmentCount,
+
+    'investmentCount' =>
+    $investmentCount,
+
 
     /*
      * EARNINGS
      */
-    'total_earnings' => $totalEarnings,
 
-    'totalEarnings' => $totalEarnings,
+    'total_earnings' =>
+    $totalEarnings,
 
-    'daily_earnings' => dashboardMoney(
+    'totalEarnings' =>
+    $totalEarnings,
+
+    'daily_earnings' =>
+    dashboardMoney(
+
         $user['daily_earnings'] ??
+
         $user['dailyEarnings'] ??
+
         0
+
     ),
 
-    'referral_earnings' => dashboardMoney(
+    'referral_earnings' =>
+    dashboardMoney(
+
         $user['referral_earnings'] ??
+
         $user['referralEarnings'] ??
+
         0
+
     ),
+
 
     /*
      * REFERRALS
      */
-    'referral_team' => $referralTeam,
 
-    'referralTeam' => $referralTeam,
+    'referral_team' =>
+    $referralTeam,
+
+    'referralTeam' =>
+    $referralTeam,
+
 
     /*
      * TRANSACTIONS
      */
-    'transaction_count' => $transactionCount,
 
-    'transactionCount' => $transactionCount,
+    'transaction_count' =>
+    $transactionCount,
+
+    'transactionCount' =>
+    $transactionCount,
+
 
     /*
      * WITHDRAWALS
      */
-    'pending_withdrawals' => $pendingWithdrawals,
 
-    'pendingWithdrawals' => $pendingWithdrawals,
+    'pending_withdrawals' =>
+    $pendingWithdrawals,
+
+    'pendingWithdrawals' =>
+    $pendingWithdrawals,
+
 
     /*
      * EXTRA
      */
-    'server_time' => gmdate('c'),
 
-    'api' => 'dashboard'
+    'server_time' =>
+    gmdate('c'),
+
+    'api' =>
+    'dashboard'
 
 ]);

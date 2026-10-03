@@ -5,24 +5,22 @@
    File: investment.php
 
    PURPOSE:
-   - Create a new investment
-   - Deduct investment amount from user's wallet
+   - Create investment
+   - Deduct investment amount from wallet
    - Save investment as pending
    - Record transaction
-   - Do NOT deduct again during admin approval
+   - Admin approval must NOT deduct again
 
    PLANS:
    Starter  = UGX 10,000
    Standard = UGX 15,000
    Advanced = UGX 25,000
 
-   Daily Return = 10%
-   Duration     = 30 days
-========================================================= */
+   DAILY RETURN:
+   10%
 
-
-/* =========================================================
-   ERROR HANDLING
+   DURATION:
+   30 days
 ========================================================= */
 
 ini_set("display_errors", "0");
@@ -32,7 +30,7 @@ error_reporting(E_ALL);
 
 
 /* =========================================================
-   LOAD CONFIG FIRST
+   LOAD CONFIG
 ========================================================= */
 
 try {
@@ -80,19 +78,13 @@ if (
         $requestOrigin
     );
 
-} else {
+} elseif (
+    $requestOrigin === ""
+) {
 
-    /*
-     * Keep production origin available when
-     * the browser does not send an Origin header.
-     */
-
-    if ($requestOrigin === "") {
-
-        header(
-            "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
-        );
-    }
+    header(
+        "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+    );
 }
 
 header(
@@ -125,8 +117,7 @@ header(
 ========================================================= */
 
 if (
-    ($_SERVER["REQUEST_METHOD"] ?? "") ===
-    "OPTIONS"
+    ($_SERVER["REQUEST_METHOD"] ?? "") === "OPTIONS"
 ) {
 
     http_response_code(204);
@@ -140,8 +131,7 @@ if (
 ========================================================= */
 
 if (
-    ($_SERVER["REQUEST_METHOD"] ?? "") !==
-    "POST"
+    ($_SERVER["REQUEST_METHOD"] ?? "") !== "POST"
 ) {
 
     http_response_code(405);
@@ -161,11 +151,6 @@ if (
 
 try {
 
-    /*
-     * IMPORTANT:
-     * Crown Cash uses CROWN_CASH_SESSION.
-     */
-
     if (
         function_exists("startSecureSession")
     ) {
@@ -175,8 +160,7 @@ try {
     } else {
 
         if (
-            session_status() !==
-            PHP_SESSION_ACTIVE
+            session_status() !== PHP_SESSION_ACTIVE
         ) {
 
             session_name(
@@ -219,14 +203,14 @@ $loggedIn =
         $_SESSION["logged_in"]
     );
 
-
 if (!$loggedIn) {
 
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
-        "message" => "Please log in before making an investment."
+        "message" =>
+            "Please log in before making an investment."
     ]);
 
     exit;
@@ -234,7 +218,7 @@ if (!$loggedIn) {
 
 
 /* =========================================================
-   GET SESSION USER ID
+   SESSION USER
 ========================================================= */
 
 $userId =
@@ -243,7 +227,6 @@ $userId =
     ?? $_SESSION["id"]
     ?? $_SESSION["_id"]
     ?? null;
-
 
 $userEmail =
     $_SESSION["email"]
@@ -260,7 +243,8 @@ if (
 
     echo json_encode([
         "success" => false,
-        "message" => "Your login session does not contain a valid user account."
+        "message" =>
+            "Your login session does not contain a valid user account."
     ]);
 
     exit;
@@ -274,12 +258,11 @@ if (
 $rawInput =
     file_get_contents("php://input");
 
-
-$data = json_decode(
-    $rawInput,
-    true
-);
-
+$data =
+    json_decode(
+        $rawInput,
+        true
+    );
 
 if (
     !is_array($data)
@@ -290,7 +273,7 @@ if (
 
 
 /* =========================================================
-   REQUEST VALUES
+   REQUEST PLAN
 ========================================================= */
 
 $requestedPlan =
@@ -299,7 +282,6 @@ $requestedPlan =
     ?? $data["planName"]
     ?? $data["package"]
     ?? "";
-
 
 $requestedPlan =
     strtolower(
@@ -346,7 +328,8 @@ if (
 
     echo json_encode([
         "success" => false,
-        "message" => "Please select a valid investment plan."
+        "message" =>
+            "Please select a valid investment plan."
     ]);
 
     exit;
@@ -354,48 +337,76 @@ if (
 
 
 /* =========================================================
-   FIXED PLAN DETAILS
+   FIXED PLANS
 ========================================================= */
 
 $plans = [
 
     "starter" => [
-        "name" => "Starter Plan",
-        "amount" => 10000,
-        "daily_rate" => 0.10,
-        "daily_return" => 10,
-        "duration_days" => 30
+
+        "name" =>
+            "Starter Plan",
+
+        "amount" =>
+            10000,
+
+        "daily_rate" =>
+            0.10,
+
+        "daily_return" =>
+            10,
+
+        "duration_days" =>
+            30
     ],
 
     "standard" => [
-        "name" => "Standard Plan",
-        "amount" => 15000,
-        "daily_rate" => 0.10,
-        "daily_return" => 10,
-        "duration_days" => 30
+
+        "name" =>
+            "Standard Plan",
+
+        "amount" =>
+            15000,
+
+        "daily_rate" =>
+            0.10,
+
+        "daily_return" =>
+            10,
+
+        "duration_days" =>
+            30
     ],
 
     "advanced" => [
-        "name" => "Advanced Plan",
-        "amount" => 25000,
-        "daily_rate" => 0.10,
-        "daily_return" => 10,
-        "duration_days" => 30
+
+        "name" =>
+            "Advanced Plan",
+
+        "amount" =>
+            25000,
+
+        "daily_rate" =>
+            0.10,
+
+        "daily_return" =>
+            10,
+
+        "duration_days" =>
+            30
     ]
 
 ];
 
-
 $plan =
     $plans[$planKey];
-
 
 $amount =
     (float)$plan["amount"];
 
 
 /* =========================================================
-   DATABASE COLLECTION CHECK
+   DATABASE COLLECTIONS
 ========================================================= */
 
 if (
@@ -407,7 +418,8 @@ if (
 
     echo json_encode([
         "success" => false,
-        "message" => "Investment database collections are not configured."
+        "message" =>
+            "Investment database collections are not configured."
     ]);
 
     exit;
@@ -415,46 +427,41 @@ if (
 
 
 /* =========================================================
-   HELPER: NUMBER
+   NUMBER HELPER
 ========================================================= */
 
-function investmentNumber(
-    $value
-): float {
-
-    if (
-        $value === null
-    ) {
+function investmentNumber($value): float
+{
+    if ($value === null) {
         return 0;
     }
 
-
     if (
-        $value instanceof MongoDB\BSON\Decimal128
+        $value instanceof
+        MongoDB\BSON\Decimal128
     ) {
 
         return (float)
             $value->toString();
     }
 
-
     if (
-        $value instanceof MongoDB\BSON\Int64
+        $value instanceof
+        MongoDB\BSON\Int64
     ) {
 
         return (float)
             $value->__toString();
     }
 
-
     if (
-        $value instanceof MongoDB\BSON\Double
+        $value instanceof
+        MongoDB\BSON\Double
     ) {
 
         return (float)
             $value->__toString();
     }
-
 
     if (
         is_numeric($value)
@@ -462,7 +469,6 @@ function investmentNumber(
 
         return (float)$value;
     }
-
 
     if (
         is_array($value)
@@ -478,7 +484,6 @@ function investmentNumber(
                 $value["\$numberDecimal"];
         }
 
-
         if (
             isset(
                 $value["\$numberLong"]
@@ -488,7 +493,6 @@ function investmentNumber(
             return (float)
                 $value["\$numberLong"];
         }
-
 
         if (
             isset(
@@ -502,19 +506,16 @@ function investmentNumber(
         }
     }
 
-
     return 0;
 }
 
 
 /* =========================================================
-   HELPER: OBJECT ID
+   OBJECT ID HELPER
 ========================================================= */
 
-function investmentObjectId(
-    $value
-) {
-
+function investmentObjectId($value)
+{
     if (
         $value instanceof
         MongoDB\BSON\ObjectId
@@ -522,7 +523,6 @@ function investmentObjectId(
 
         return $value;
     }
-
 
     try {
 
@@ -538,7 +538,45 @@ function investmentObjectId(
 
 
 /* =========================================================
-   HELPER: CURRENT USER FILTER
+   MONGODB DOCUMENT FIELD HELPER
+=========================================================
+
+   IMPORTANT:
+   MongoDB findOne() returns BSONDocument.
+   Do NOT use array_key_exists() directly on it.
+========================================================= */
+
+function investmentDocumentHasField(
+    $document,
+    string $field
+): bool {
+
+    if (
+        is_array($document)
+    ) {
+
+        return array_key_exists(
+            $field,
+            $document
+        );
+    }
+
+    if (
+        $document instanceof
+        ArrayAccess
+    ) {
+
+        return $document->offsetExists(
+            $field
+        );
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   USER FILTER
 ========================================================= */
 
 function buildInvestmentUserFilter(
@@ -560,7 +598,8 @@ function buildInvestmentUserFilter(
     ) {
 
         $or[] = [
-            "_id" => $objectId
+            "_id" =>
+                $objectId
         ];
     }
 
@@ -576,15 +615,18 @@ function buildInvestmentUserFilter(
     ) {
 
         $or[] = [
-            "_id" => $userIdString
+            "_id" =>
+                $userIdString
         ];
 
         $or[] = [
-            "id" => $userIdString
+            "id" =>
+                $userIdString
         ];
 
         $or[] = [
-            "user_id" => $userIdString
+            "user_id" =>
+                $userIdString
         ];
     }
 
@@ -600,11 +642,13 @@ function buildInvestmentUserFilter(
     ) {
 
         $or[] = [
-            "email" => $email
+            "email" =>
+                $email
         ];
 
         $or[] = [
-            "email" => strtolower($email)
+            "email" =>
+                strtolower($email)
         ];
     }
 
@@ -620,13 +664,14 @@ function buildInvestmentUserFilter(
 
 
     return [
-        '$or' => $or
+        '$or' =>
+            $or
     ];
 }
 
 
 /* =========================================================
-   MAIN INVESTMENT PROCESS
+   MAIN PROCESS
 ========================================================= */
 
 try {
@@ -656,7 +701,8 @@ try {
 
         echo json_encode([
             "success" => false,
-            "message" => "Your Crown Cash account could not be found."
+            "message" =>
+                "Your Crown Cash account could not be found."
         ]);
 
         exit;
@@ -687,9 +733,9 @@ try {
     ) {
 
         if (
-            array_key_exists(
-                $field,
-                $user
+            investmentDocumentHasField(
+                $user,
+                $field
             )
         ) {
 
@@ -702,8 +748,8 @@ try {
 
 
     /*
-     * If no wallet field exists yet,
-     * use the normal Crown Cash balance field.
+     * If the user document does not yet have
+     * a balance field, Crown Cash uses balance.
      */
 
     if (
@@ -715,19 +761,30 @@ try {
     }
 
 
-    $walletBalance =
-        array_key_exists(
-            $balanceField,
-            $user
+    /* =====================================================
+       READ WALLET BALANCE
+    ===================================================== */
+
+    if (
+        investmentDocumentHasField(
+            $user,
+            $balanceField
         )
-            ? investmentNumber(
+    ) {
+
+        $walletBalance =
+            investmentNumber(
                 $user[$balanceField]
-            )
-            : 0;
+            );
+
+    } else {
+
+        $walletBalance = 0;
+    }
 
 
     /* =====================================================
-       CHECK BALANCE
+       CHECK SUFFICIENT BALANCE
     ===================================================== */
 
     if (
@@ -737,7 +794,10 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Insufficient wallet balance. You need UGX " .
                 number_format(
@@ -756,6 +816,7 @@ try {
 
             "available_balance" =>
                 $walletBalance
+
         ]);
 
         exit;
@@ -763,7 +824,7 @@ try {
 
 
     /* =====================================================
-       CHECK DUPLICATE INVESTMENT
+       BUILD INVESTMENT USER FILTER
     ===================================================== */
 
     $investmentUserOr = [];
@@ -780,13 +841,17 @@ try {
     ) {
 
         $investmentUserOr[] = [
+
             "user_id" =>
                 $userObjectId
+
         ];
 
         $investmentUserOr[] = [
+
             "userId" =>
                 $userObjectId
+
         ];
     }
 
@@ -802,16 +867,44 @@ try {
     ) {
 
         $investmentUserOr[] = [
+
             "user_id" =>
                 $userIdString
+
         ];
 
         $investmentUserOr[] = [
+
             "userId" =>
                 $userIdString
+
         ];
     }
 
+
+    /*
+     * If there is no usable ID, use email.
+     */
+
+    if (
+        count($investmentUserOr) === 0 &&
+        trim((string)$userEmail) !== ""
+    ) {
+
+        $investmentUserOr[] = [
+
+            "user_email" =>
+                trim(
+                    (string)$userEmail
+                )
+
+        ];
+    }
+
+
+    /* =====================================================
+       CHECK EXISTING INVESTMENT
+    ===================================================== */
 
     $duplicateFilter = [
 
@@ -866,9 +959,13 @@ try {
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "You already have a pending or active investment. Please wait for the current investment to be completed before creating another one."
+
         ]);
 
         exit;
@@ -876,7 +973,7 @@ try {
 
 
     /* =====================================================
-       CALCULATIONS
+       CALCULATE EARNINGS
     ===================================================== */
 
     $dailyIncome =
@@ -894,12 +991,16 @@ try {
         $totalIncome;
 
 
+    /* =====================================================
+       CURRENT TIME
+    ===================================================== */
+
     $now =
         new MongoDB\BSON\UTCDateTime();
 
 
     /* =====================================================
-       INVESTMENT REFERENCE
+       GENERATE REFERENCE
     ===================================================== */
 
     try {
@@ -937,15 +1038,16 @@ try {
 
 
     /* =====================================================
+       NEW WALLET BALANCE
+    ===================================================== */
+
+    $newBalance =
+        $walletBalance -
+        $amount;
+
+
+    /* =====================================================
        ATOMIC WALLET DEDUCTION
-    =====================================================
-
-       The balance condition is included in the filter.
-       This prevents the balance from going below the
-       required amount if two requests happen together.
-
-       MongoDB updateOne/findOneAndUpdate operations are
-       supported by the PHP library. 
     ===================================================== */
 
     $balanceFilter = [
@@ -956,8 +1058,10 @@ try {
 
             [
                 $balanceField => [
+
                     '$gte' =>
                         $amount
+
                 ]
             ]
 
@@ -965,17 +1069,6 @@ try {
 
     ];
 
-
-    $newBalance =
-        $walletBalance -
-        $amount;
-
-
-    /*
-     * Use $set rather than $inc so the resulting
-     * balance is exactly calculated from the balance
-     * we verified.
-     */
 
     $walletUpdate = [
 
@@ -1000,17 +1093,16 @@ try {
         $walletResult->getMatchedCount() !== 1
     ) {
 
-        /*
-         * The balance may have changed between the
-         * initial read and this update.
-         */
-
         http_response_code(400);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "Your wallet balance changed before the investment could be created. Please refresh your wallet and try again."
+
         ]);
 
         exit;
@@ -1091,8 +1183,7 @@ try {
             "pending",
 
         /*
-         * The money has already been deducted
-         * from the wallet.
+         * Wallet has already been deducted.
          */
 
         "balance_reserved" =>
@@ -1141,14 +1232,15 @@ try {
     } catch (Throwable $investmentError) {
 
         /*
-         * IMPORTANT:
-         * If investment creation fails after the wallet
-         * has been deducted, restore the deducted amount.
+         * Investment insertion failed.
+         *
+         * Restore the wallet amount.
          */
 
         try {
 
             $users->updateOne(
+
                 [
                     '$and' => [
 
@@ -1161,6 +1253,7 @@ try {
 
                     ]
                 ],
+
                 [
                     '$set' => [
 
@@ -1169,6 +1262,7 @@ try {
 
                     ]
                 ]
+
             );
 
         } catch (Throwable $restoreError) {
@@ -1183,12 +1277,16 @@ try {
         http_response_code(500);
 
         echo json_encode([
-            "success" => false,
+
+            "success" =>
+                false,
+
             "message" =>
                 "The investment could not be created, so your wallet deduction was cancelled.",
 
             "error" =>
                 $investmentError->getMessage()
+
         ]);
 
         exit;
@@ -1208,11 +1306,6 @@ try {
     /* =====================================================
        TRANSACTION RECORD
     ===================================================== */
-
-    /*
-     * Transaction logging should not make a successful
-     * investment fail.
-     */
 
     if (
         isset($transactions)
@@ -1274,11 +1367,6 @@ try {
 
         } catch (Throwable $transactionError) {
 
-            /*
-             * Keep the investment successful.
-             * Log transaction failure for debugging.
-             */
-
             error_log(
                 "Crown Cash investment transaction log failed: " .
                 $transactionError->getMessage()
@@ -1298,8 +1386,11 @@ try {
         try {
 
             audit(
+
                 "investment_created",
+
                 [
+
                     "investment_id" =>
                         $investmentId,
 
@@ -1317,7 +1408,9 @@ try {
 
                     "balance_after" =>
                         $newBalance
+
                 ]
+
             );
 
         } catch (Throwable $auditError) {
@@ -1331,7 +1424,7 @@ try {
 
 
     /* =====================================================
-       SUCCESS RESPONSE
+       SUCCESS
     ===================================================== */
 
     http_response_code(201);
@@ -1376,6 +1469,9 @@ try {
             "total_income" =>
                 $totalIncome,
 
+            "maturity_amount" =>
+                $maturityAmount,
+
             "status" =>
                 "pending"
 
@@ -1409,10 +1505,6 @@ try {
 
 
 } catch (Throwable $e) {
-
-    /*
-     * Catch unexpected backend errors.
-     */
 
     error_log(
         "Crown Cash investment error: " .

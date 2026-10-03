@@ -1,17 +1,16 @@
 /* =========================================================
    CROWN CASH — ADMIN PANEL
-   Complete Production Admin Controller
-   Includes:
+   Production Admin Controller
+   FIXED:
+   - Admin loading screen
    - Admin authentication
    - Profile
    - Dashboard statistics
-   - Users
-   - Deposits
-   - Withdrawals
-   - Investments
-   - Approval actions
+   - Recent transactions
+   - Recent users
    - Maintenance controls
    - Earnings monitor
+   - Approval actions
    - Logout
    - Mobile navigation
 ========================================================= */
@@ -22,7 +21,8 @@
    API CONFIGURATION
 ========================================================= */
 
-const API_BASE = "https://crown-cash1.onrender.com";
+const API_BASE =
+    "https://crown-cash1.onrender.com";
 
 const ADMIN_AUTH_API =
     `${API_BASE}/admin-auth.php`;
@@ -126,6 +126,106 @@ function $all(selector) {
 
 
 /* =========================================================
+   ADMIN LOADING SCREEN FIX
+========================================================= */
+
+function hideAdminLoader() {
+
+    const selectors = [
+
+        "#adminLoader",
+
+        "#adminLoading",
+
+        "#loadingScreen",
+
+        "#loadingOverlay",
+
+        "#pageLoader",
+
+        "#adminPageLoader",
+
+        ".admin-loader",
+
+        ".admin-loading",
+
+        ".admin-loading-screen",
+
+        ".loading-screen",
+
+        ".loading-overlay",
+
+        ".page-loader",
+
+        "[data-admin-loader]",
+
+        "[data-loading-screen]"
+    ];
+
+    selectors.forEach(selector => {
+
+        $all(selector).forEach(element => {
+
+            element.style.display = "none";
+
+            element.style.visibility = "hidden";
+
+            element.style.opacity = "0";
+
+            element.style.pointerEvents = "none";
+
+            element.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+        });
+    });
+
+    /*
+       Also remove common body loading classes.
+    */
+
+    document.body.classList.remove(
+        "loading",
+        "is-loading",
+        "admin-loading",
+        "page-loading"
+    );
+
+    document.documentElement.classList.remove(
+        "loading",
+        "is-loading",
+        "admin-loading",
+        "page-loading"
+    );
+}
+
+
+/*
+   Safety fallback.
+
+   Even if an unexpected API request hangs,
+   the page must not remain covered by the
+   loading screen forever.
+*/
+
+function forceHideAdminLoader() {
+
+    hideAdminLoader();
+
+    setTimeout(
+        hideAdminLoader,
+        100
+    );
+
+    setTimeout(
+        hideAdminLoader,
+        500
+    );
+}
+
+
+/* =========================================================
    GENERAL HELPERS
 ========================================================= */
 
@@ -149,7 +249,8 @@ function escapeHtml(value) {
 
 function formatCurrency(value) {
 
-    const number = Number(value || 0);
+    const number =
+        Number(value || 0);
 
     return `UGX ${number.toLocaleString(
         "en-UG",
@@ -162,7 +263,8 @@ function formatCurrency(value) {
 
 function formatNumber(value) {
 
-    const number = Number(value || 0);
+    const number =
+        Number(value || 0);
 
     return number.toLocaleString(
         "en-UG",
@@ -176,12 +278,37 @@ function formatNumber(value) {
 function formatDate(value) {
 
     if (!value) {
+
         return "Not available";
     }
 
-    const date = new Date(value);
+    /*
+       Support MongoDB-style date objects.
+    */
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+        typeof value === "object" &&
+        value !== null
+    ) {
+
+        if (value.$date) {
+
+            value = value.$date;
+        } else if (value.date) {
+
+            value = value.date;
+        }
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
         return "Not available";
     }
 
@@ -198,7 +325,10 @@ function formatDate(value) {
 }
 
 
-function normalizeBoolean(value, fallback = false) {
+function normalizeBoolean(
+    value,
+    fallback = false
+) {
 
     if (
         value === true ||
@@ -208,6 +338,7 @@ function normalizeBoolean(value, fallback = false) {
         value === "TRUE" ||
         value === "on"
     ) {
+
         return true;
     }
 
@@ -219,6 +350,7 @@ function normalizeBoolean(value, fallback = false) {
         value === "FALSE" ||
         value === "off"
     ) {
+
         return false;
     }
 
@@ -226,7 +358,10 @@ function normalizeBoolean(value, fallback = false) {
 }
 
 
-function showMessage(message, type = "success") {
+function showMessage(
+    message,
+    type = "success"
+) {
 
     const existing =
         document.querySelector(
@@ -234,16 +369,20 @@ function showMessage(message, type = "success") {
         );
 
     if (existing) {
+
         existing.remove();
     }
 
     const box =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     box.className =
         `admin-js-message ${type}`;
 
-    box.textContent = message;
+    box.textContent =
+        message;
 
     Object.assign(
         box.style,
@@ -269,11 +408,17 @@ function showMessage(message, type = "success") {
 
     document.body.appendChild(box);
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        box.remove();
+            if (box.parentNode) {
 
-    }, 4000);
+                box.remove();
+            }
+
+        },
+        4000
+    );
 }
 
 
@@ -292,7 +437,11 @@ async function apiRequest(
 
     const timeout =
         setTimeout(
-            () => controller.abort(),
+            () => {
+
+                controller.abort();
+
+            },
             REQUEST_TIMEOUT
         );
 
@@ -304,9 +453,11 @@ async function apiRequest(
                 {
                     ...options,
 
-                    credentials: "include",
+                    credentials:
+                        "include",
 
                     headers: {
+
                         "Accept":
                             "application/json",
 
@@ -340,7 +491,9 @@ async function apiRequest(
         } catch {
 
             data = {
+
                 success: false,
+
                 message:
                     text ||
                     `HTTP ${response.status}`
@@ -415,6 +568,7 @@ async function authenticateAdmin() {
             );
 
         if (!response) {
+
             return false;
         }
 
@@ -433,7 +587,7 @@ async function authenticateAdmin() {
                 response.is_admin ??
                 response.isAdmin ??
                 response.admin,
-                authenticated
+                false
             );
 
         AdminDashboard.authenticated =
@@ -442,10 +596,27 @@ async function authenticateAdmin() {
         AdminDashboard.authorized =
             authorized;
 
+        /*
+           IMPORTANT:
+           Both conditions must be true.
+
+           A normal user must never be treated
+           as an administrator just because the
+           authentication endpoint returned success.
+        */
+
         if (
             !authenticated ||
             !authorized
         ) {
+
+            console.warn(
+                "Admin access denied.",
+                {
+                    authenticated,
+                    authorized
+                }
+            );
 
             window.location.href =
                 "login.html";
@@ -462,8 +633,33 @@ async function authenticateAdmin() {
             error
         );
 
-        window.location.href =
-            "login.html";
+        /*
+           Do not leave the loading screen stuck.
+        */
+
+        forceHideAdminLoader();
+
+        showMessage(
+            error.message ||
+            "Unable to verify administrator access.",
+            "error"
+        );
+
+        /*
+           Give the message a moment to display
+           instead of instantly trapping the user
+           on the loading screen.
+        */
+
+        setTimeout(
+            () => {
+
+                window.location.href =
+                    "login.html";
+
+            },
+            1200
+        );
 
         return false;
     }
@@ -488,6 +684,7 @@ async function loadProfile() {
             );
 
         if (!response) {
+
             return null;
         }
 
@@ -523,6 +720,7 @@ async function loadProfile() {
 function renderProfile(profile) {
 
     if (!profile) {
+
         return;
     }
 
@@ -550,41 +748,38 @@ function renderProfile(profile) {
         profile.account_type ||
         "Administrator";
 
-    const nameElements =
-        $all(
-            "#adminName, #welcomeName, #profileName, [data-admin-name]"
+    $all(
+        "#adminName, #welcomeName, #profileName, [data-admin-name]"
+    )
+        .forEach(
+            element => {
+
+                element.textContent =
+                    name;
+            }
         );
 
-    nameElements.forEach(
-        element => {
-            element.textContent =
-                name;
-        }
-    );
+    $all(
+        "#adminEmail, #profileEmail, [data-admin-email]"
+    )
+        .forEach(
+            element => {
 
-    const emailElements =
-        $all(
-            "#adminEmail, #profileEmail, [data-admin-email]"
+                element.textContent =
+                    email;
+            }
         );
 
-    emailElements.forEach(
-        element => {
-            element.textContent =
-                email;
-        }
-    );
+    $all(
+        "#adminRole, #profileRole, [data-admin-role]"
+    )
+        .forEach(
+            element => {
 
-    const roleElements =
-        $all(
-            "#adminRole, #profileRole, [data-admin-role]"
+                element.textContent =
+                    role;
+            }
         );
-
-    roleElements.forEach(
-        element => {
-            element.textContent =
-                role;
-        }
-    );
 }
 
 
@@ -606,6 +801,7 @@ async function loadAdminDashboard() {
             );
 
         if (!response) {
+
             return null;
         }
 
@@ -644,6 +840,7 @@ async function loadAdminDashboard() {
 function renderDashboardStats(data) {
 
     if (!data) {
+
         return;
     }
 
@@ -731,51 +928,50 @@ function renderDashboardStats(data) {
                 if (
                     value === undefined
                 ) {
+
                     return;
                 }
 
-                const elements =
-                    $all(
-                        `[data-stat="${key}"],
-                         #${key}`
-                    );
-
-                elements.forEach(
-                    element => {
-
-                        if (
-                            key.includes("Balance") ||
-                            key.includes("Deposits") ||
-                            key.includes("Withdrawals") ||
-                            key.includes("Investments") ||
-                            key.includes("Earnings")
-                        ) {
+                $all(
+                    `[data-stat="${key}"], #${key}`
+                )
+                    .forEach(
+                        element => {
 
                             if (
-                                typeof value === "number" ||
-                                !Number.isNaN(
-                                    Number(value)
-                                )
+                                key.includes("Balance") ||
+                                key.includes("Deposits") ||
+                                key.includes("Withdrawals") ||
+                                key.includes("Investments") ||
+                                key.includes("Earnings")
                             ) {
 
-                                element.textContent =
-                                    key === "totalBalance" ||
-                                    key === "totalEarnings"
-                                        ? formatCurrency(value)
-                                        : formatNumber(value);
+                                if (
+                                    typeof value === "number" ||
+                                    !Number.isNaN(
+                                        Number(value)
+                                    )
+                                ) {
+
+                                    element.textContent =
+                                        key === "totalBalance" ||
+                                        key === "totalEarnings"
+                                            ? formatCurrency(value)
+                                            : formatNumber(value);
+
+                                } else {
+
+                                    element.textContent =
+                                        value;
+                                }
+
                             } else {
 
                                 element.textContent =
-                                    value;
+                                    formatNumber(value);
                             }
-
-                        } else {
-
-                            element.textContent =
-                                formatNumber(value);
                         }
-                    }
-                );
+                    );
             }
         );
 
@@ -815,53 +1011,55 @@ function renderPendingActions(stats) {
         pendingWithdrawals +
         pendingInvestments;
 
-    const elements =
-        $all(
-            "#pendingActionsCount, [data-stat='pendingActions']"
+    $all(
+        "#pendingActionsCount, [data-stat='pendingActions']"
+    )
+        .forEach(
+            element => {
+
+                element.textContent =
+                    formatNumber(total);
+            }
         );
 
-    elements.forEach(
-        element => {
-            element.textContent =
-                formatNumber(total);
-        }
-    );
+    $all(
+        "#pendingDeposits, [data-pending='deposits']"
+    )
+        .forEach(
+            element => {
 
-    const depositElements =
-        $all(
-            "#pendingDeposits, [data-pending='deposits']"
+                element.textContent =
+                    formatNumber(
+                        pendingDeposits
+                    );
+            }
         );
 
-    depositElements.forEach(
-        element => {
-            element.textContent =
-                formatNumber(pendingDeposits);
-        }
-    );
+    $all(
+        "#pendingWithdrawals, [data-pending='withdrawals']"
+    )
+        .forEach(
+            element => {
 
-    const withdrawalElements =
-        $all(
-            "#pendingWithdrawals, [data-pending='withdrawals']"
+                element.textContent =
+                    formatNumber(
+                        pendingWithdrawals
+                    );
+            }
         );
 
-    withdrawalElements.forEach(
-        element => {
-            element.textContent =
-                formatNumber(pendingWithdrawals);
-        }
-    );
+    $all(
+        "#pendingInvestments, [data-pending='investments']"
+    )
+        .forEach(
+            element => {
 
-    const investmentElements =
-        $all(
-            "#pendingInvestments, [data-pending='investments']"
+                element.textContent =
+                    formatNumber(
+                        pendingInvestments
+                    );
+            }
         );
-
-    investmentElements.forEach(
-        element => {
-            element.textContent =
-                formatNumber(pendingInvestments);
-        }
-    );
 }
 
 
@@ -872,11 +1070,10 @@ function renderPendingActions(stats) {
 function renderRecentTransactions(data) {
 
     const container =
-        $(
-            "#recentTransactions"
-        );
+        $("#recentTransactions");
 
     if (!container) {
+
         return;
     }
 
@@ -886,8 +1083,10 @@ function renderRecentTransactions(data) {
         data.recentTransactions ||
         [];
 
-    if (!Array.isArray(transactions) ||
-        transactions.length === 0) {
+    if (
+        !Array.isArray(transactions) ||
+        transactions.length === 0
+    ) {
 
         container.innerHTML =
             `<div class="empty-state">
@@ -900,61 +1099,66 @@ function renderRecentTransactions(data) {
     container.innerHTML =
         transactions
             .slice(0, 10)
-            .map(transaction => {
+            .map(
+                transaction => {
 
-                const type =
-                    transaction.type ||
-                    transaction.transaction_type ||
-                    "Transaction";
+                    const type =
+                        transaction.type ||
+                        transaction.transaction_type ||
+                        "Transaction";
 
-                const amount =
-                    Number(
-                        transaction.amount ||
-                        0
-                    );
+                    const amount =
+                        Number(
+                            transaction.amount ||
+                            0
+                        );
 
-                const status =
-                    transaction.status ||
-                    "pending";
+                    const status =
+                        transaction.status ||
+                        "pending";
 
-                const date =
-                    transaction.created_at ||
-                    transaction.createdAt ||
-                    transaction.date;
+                    const date =
+                        transaction.created_at ||
+                        transaction.createdAt ||
+                        transaction.date ||
+                        transaction.timestamp ||
+                        transaction.created ||
+                        transaction.updated_at ||
+                        transaction.updatedAt;
 
-                return `
-                    <div class="transaction-row">
+                    return `
+                        <div class="transaction-row">
 
-                        <div class="transaction-info">
+                            <div class="transaction-info">
 
-                            <strong>
-                                ${escapeHtml(type)}
-                            </strong>
+                                <strong>
+                                    ${escapeHtml(type)}
+                                </strong>
 
-                            <span>
-                                ${escapeHtml(
-                                    formatDate(date)
-                                )}
-                            </span>
+                                <span>
+                                    ${escapeHtml(
+                                        formatDate(date)
+                                    )}
+                                </span>
+
+                            </div>
+
+                            <div class="transaction-amount">
+
+                                <strong>
+                                    ${formatCurrency(amount)}
+                                </strong>
+
+                                <span>
+                                    ${escapeHtml(status)}
+                                </span>
+
+                            </div>
 
                         </div>
-
-                        <div class="transaction-amount">
-
-                            <strong>
-                                ${formatCurrency(amount)}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(status)}
-                            </span>
-
-                        </div>
-
-                    </div>
-                `;
-
-            })
+                    `;
+                }
+            )
             .join("");
 }
 
@@ -966,11 +1170,10 @@ function renderRecentTransactions(data) {
 function renderRecentUsers(data) {
 
     const container =
-        $(
-            "#recentUsers"
-        );
+        $("#recentUsers");
 
     if (!container) {
+
         return;
     }
 
@@ -980,8 +1183,10 @@ function renderRecentUsers(data) {
         data.recentUsers ||
         [];
 
-    if (!Array.isArray(users) ||
-        users.length === 0) {
+    if (
+        !Array.isArray(users) ||
+        users.length === 0
+    ) {
 
         container.innerHTML =
             `<div class="empty-state">
@@ -994,47 +1199,48 @@ function renderRecentUsers(data) {
     container.innerHTML =
         users
             .slice(0, 10)
-            .map(user => {
+            .map(
+                user => {
 
-                const name =
-                    user.name ||
-                    user.full_name ||
-                    user.fullName ||
-                    user.username ||
-                    user.email ||
-                    "User";
+                    const name =
+                        user.name ||
+                        user.full_name ||
+                        user.fullName ||
+                        user.username ||
+                        user.email ||
+                        "User";
 
-                const email =
-                    user.email ||
-                    "";
+                    const email =
+                        user.email ||
+                        "";
 
-                const status =
-                    user.status ||
-                    "active";
+                    const status =
+                        user.status ||
+                        "active";
 
-                return `
-                    <div class="user-row">
+                    return `
+                        <div class="user-row">
 
-                        <div class="user-info">
+                            <div class="user-info">
 
-                            <strong>
-                                ${escapeHtml(name)}
-                            </strong>
+                                <strong>
+                                    ${escapeHtml(name)}
+                                </strong>
 
-                            <span>
-                                ${escapeHtml(email)}
+                                <span>
+                                    ${escapeHtml(email)}
+                                </span>
+
+                            </div>
+
+                            <span class="user-status">
+                                ${escapeHtml(status)}
                             </span>
 
                         </div>
-
-                        <span class="user-status">
-                            ${escapeHtml(status)}
-                        </span>
-
-                    </div>
-                `;
-
-            })
+                    `;
+                }
+            )
             .join("");
 }
 
@@ -1057,6 +1263,7 @@ async function loadMaintenanceSettings() {
             );
 
         if (!response) {
+
             return null;
         }
 
@@ -1181,39 +1388,25 @@ function renderMaintenanceSettings(
 ) {
 
     const maintenanceToggle =
-        $(
-            "#maintenanceModeToggle"
-        );
+        $("#maintenanceModeToggle");
 
     const investmentsToggle =
-        $(
-            "#maintenanceInvestmentsToggle"
-        );
+        $("#maintenanceInvestmentsToggle");
 
     const depositsToggle =
-        $(
-            "#maintenanceDepositsToggle"
-        );
+        $("#maintenanceDepositsToggle");
 
     const withdrawalsToggle =
-        $(
-            "#maintenanceWithdrawalsToggle"
-        );
+        $("#maintenanceWithdrawalsToggle");
 
     const earningsToggle =
-        $(
-            "#maintenanceEarningsToggle"
-        );
+        $("#maintenanceEarningsToggle");
 
     const registrationToggle =
-        $(
-            "#maintenanceRegistrationToggle"
-        );
+        $("#maintenanceRegistrationToggle");
 
     const message =
-        $(
-            "#maintenanceMessage"
-        );
+        $("#maintenanceMessage");
 
     if (maintenanceToggle) {
 
@@ -1259,9 +1452,7 @@ function renderMaintenanceSettings(
     }
 
     const lastRun =
-        $(
-            "#lastEarningsRun"
-        );
+        $("#lastEarningsRun");
 
     if (lastRun) {
 
@@ -1274,9 +1465,7 @@ function renderMaintenanceSettings(
     }
 
     const processed =
-        $(
-            "#earningsProcessedToday"
-        );
+        $("#earningsProcessedToday");
 
     if (processed) {
 
@@ -1289,9 +1478,7 @@ function renderMaintenanceSettings(
     }
 
     const active =
-        $(
-            "#maintenanceActiveInvestments"
-        );
+        $("#maintenanceActiveInvestments");
 
     if (active) {
 
@@ -1302,9 +1489,7 @@ function renderMaintenanceSettings(
     }
 
     const pending =
-        $(
-            "#maintenancePendingInvestments"
-        );
+        $("#maintenancePendingInvestments");
 
     if (pending) {
 
@@ -1335,26 +1520,19 @@ function updateMaintenanceStatus(
 ) {
 
     const status =
-        $(
-            "#maintenanceStatus"
-        );
+        $("#maintenanceStatus");
 
     const statusText =
-        $(
-            "#maintenanceStatusText"
-        );
+        $("#maintenanceStatusText");
 
     const statusDot =
-        $(
-            "#maintenanceStatusDot"
-        );
+        $("#maintenanceStatusDot");
 
     const description =
-        $(
-            "#maintenanceDescription"
-        );
+        $("#maintenanceDescription");
 
     if (!statusText) {
+
         return;
     }
 
@@ -1378,11 +1556,8 @@ function updateMaintenanceStatus(
                 "rgba(255,193,7,.15)";
         }
 
-        if (statusText) {
-
-            statusText.style.color =
-                "#ffd05a";
-        }
+        statusText.style.color =
+            "#ffd05a";
 
         if (statusDot) {
 
@@ -1413,11 +1588,8 @@ function updateMaintenanceStatus(
                 "rgba(72,210,125,.14)";
         }
 
-        if (statusText) {
-
-            statusText.style.color =
-                "#72dda0";
-        }
+        statusText.style.color =
+            "#72dda0";
 
         if (statusDot) {
 
@@ -1435,16 +1607,13 @@ function updateMaintenanceStatus(
    EARNINGS ENGINE STATUS
 ========================================================= */
 
-function setMaintenanceEngineStatus(
-    text
-) {
+function setMaintenanceEngineStatus(text) {
 
     const element =
-        $(
-            "#earningsEngineStatus"
-        );
+        $("#earningsEngineStatus");
 
     if (!element) {
+
         return;
     }
 
@@ -1495,39 +1664,27 @@ function collectMaintenanceSettings() {
     return {
 
         maintenance_mode:
-            !!$(
-                "#maintenanceModeToggle"
-            )?.checked,
+            !!$("#maintenanceModeToggle")?.checked,
 
         new_investments:
-            !!$(
-                "#maintenanceInvestmentsToggle"
-            )?.checked,
+            !!$("#maintenanceInvestmentsToggle")?.checked,
 
         deposits:
-            !!$(
-                "#maintenanceDepositsToggle"
-            )?.checked,
+            !!$("#maintenanceDepositsToggle")?.checked,
 
         withdrawals:
-            !!$(
-                "#maintenanceWithdrawalsToggle"
-            )?.checked,
+            !!$("#maintenanceWithdrawalsToggle")?.checked,
 
         daily_earnings:
-            !!$(
-                "#maintenanceEarningsToggle"
-            )?.checked,
+            !!$("#maintenanceEarningsToggle")?.checked,
 
         user_registration:
-            !!$(
-                "#maintenanceRegistrationToggle"
-            )?.checked,
+            !!$("#maintenanceRegistrationToggle")?.checked,
 
         maintenance_message:
-            $(
-                "#maintenanceMessage"
-            )?.value?.trim() || ""
+            $("#maintenanceMessage")
+                ?.value
+                ?.trim() || ""
     };
 }
 
@@ -1539,14 +1696,10 @@ function collectMaintenanceSettings() {
 async function saveMaintenanceSettings() {
 
     const button =
-        $(
-            "#saveMaintenanceBtn"
-        );
+        $("#saveMaintenanceBtn");
 
     const status =
-        $(
-            "#maintenanceSaveStatus"
-        );
+        $("#maintenanceSaveStatus");
 
     const settings =
         collectMaintenanceSettings();
@@ -1582,6 +1735,7 @@ async function saveMaintenanceSettings() {
             );
 
         if (!response) {
+
             throw new Error(
                 "No response from maintenance server."
             );
@@ -1665,9 +1819,7 @@ async function saveMaintenanceSettings() {
 function setupMaintenanceControls() {
 
     const maintenanceToggle =
-        $(
-            "#maintenanceModeToggle"
-        );
+        $("#maintenanceModeToggle");
 
     if (maintenanceToggle) {
 
@@ -1683,9 +1835,7 @@ function setupMaintenanceControls() {
     }
 
     const saveButton =
-        $(
-            "#saveMaintenanceBtn"
-        );
+        $("#saveMaintenanceBtn");
 
     if (saveButton) {
 
@@ -1698,7 +1848,7 @@ function setupMaintenanceControls() {
 
 
 /* =========================================================
-   APPROVAL HELPERS
+   ADMIN ACTION
 ========================================================= */
 
 async function processAdminAction(
@@ -1714,6 +1864,7 @@ async function processAdminAction(
                 endpoint,
                 {
                     method: "POST",
+
                     body:
                         JSON.stringify(
                             payload
@@ -1723,6 +1874,7 @@ async function processAdminAction(
             );
 
         if (!response) {
+
             return null;
         }
 
@@ -1733,8 +1885,11 @@ async function processAdminAction(
         );
 
         await Promise.allSettled([
+
             loadAdminDashboard(),
+
             loadMaintenanceSettings()
+
         ]);
 
         return response;
@@ -1771,14 +1926,18 @@ async function processDepositAction(
         ADMIN_DEPOSITS_API,
         {
             deposit_id: depositId,
+
             id: depositId,
+
             action,
+
             status:
                 action === "approve"
                     ? "approved"
                     : action === "reject"
                         ? "rejected"
                         : action,
+
             note
         },
         `Deposit ${action}d successfully.`
@@ -1800,11 +1959,19 @@ async function processWithdrawalAction(
     return processAdminAction(
         ADMIN_WITHDRAWALS_API,
         {
-            withdrawal_id: withdrawalId,
-            id: withdrawalId,
-            user_id: userId,
+            withdrawal_id:
+                withdrawalId,
+
+            id:
+                withdrawalId,
+
+            user_id:
+                userId,
+
             userId,
+
             action,
+
             note
         },
         `Withdrawal ${action}d successfully.`
@@ -1825,15 +1992,21 @@ async function processInvestmentAction(
     return processAdminAction(
         ADMIN_INVESTMENTS_API,
         {
-            investment_id: investmentId,
-            id: investmentId,
+            investment_id:
+                investmentId,
+
+            id:
+                investmentId,
+
             action,
+
             status:
                 action === "approve"
                     ? "approved"
                     : action === "reject"
                         ? "rejected"
                         : action,
+
             note
         },
         `Investment ${action}d successfully.`
@@ -1954,25 +2127,23 @@ async function logoutAdmin() {
 
 function setupLogout() {
 
-    const logoutButtons =
-        $all(
-            "#logoutBtn, [data-action='logout'], .logout-btn"
+    $all(
+        "#logoutBtn, [data-action='logout'], .logout-btn"
+    )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+
+                        logoutAdmin();
+                    }
+                );
+            }
         );
-
-    logoutButtons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                event => {
-
-                    event.preventDefault();
-
-                    logoutAdmin();
-                }
-            );
-        }
-    );
 }
 
 
@@ -2001,6 +2172,7 @@ function setupMobileMenu() {
         !menuButton ||
         !sidebar
     ) {
+
         return;
     }
 
@@ -2040,32 +2212,33 @@ function setupMobileMenu() {
 
     $all(
         ".nav-link"
-    ).forEach(
-        link => {
+    )
+        .forEach(
+            link => {
 
-            link.addEventListener(
-                "click",
-                () => {
+                link.addEventListener(
+                    "click",
+                    () => {
 
-                    if (
-                        window.innerWidth <= 900
-                    ) {
+                        if (
+                            window.innerWidth <= 900
+                        ) {
 
-                        sidebar.classList.remove(
-                            "active"
-                        );
-
-                        if (overlay) {
-
-                            overlay.classList.remove(
+                            sidebar.classList.remove(
                                 "active"
                             );
+
+                            if (overlay) {
+
+                                overlay.classList.remove(
+                                    "active"
+                                );
+                            }
                         }
                     }
-                }
-            );
-        }
-    );
+                );
+            }
+        );
 }
 
 
@@ -2076,9 +2249,7 @@ function setupMobileMenu() {
 function setupNavigation() {
 
     const links =
-        $all(
-            ".nav-link"
-        );
+        $all(".nav-link");
 
     links.forEach(
         link => {
@@ -2117,13 +2288,14 @@ function updateCurrentYear() {
 
     $all(
         "#currentYear, [data-current-year]"
-    ).forEach(
-        element => {
+    )
+        .forEach(
+            element => {
 
-            element.textContent =
-                year;
-        }
-    );
+                element.textContent =
+                    year;
+            }
+        );
 }
 
 
@@ -2136,48 +2308,126 @@ async function initializeAdmin() {
     if (
         AdminDashboard.initialized
     ) {
+
         return;
     }
 
     AdminDashboard.initialized =
         true;
 
-    setupMobileMenu();
+    /*
+       Safety timer.
 
-    setupNavigation();
+       The admin panel must NEVER remain on
+       the loading screen permanently.
+    */
 
-    setupLogout();
+    const safetyLoaderTimer =
+        setTimeout(
+            () => {
 
-    setupMaintenanceControls();
+                forceHideAdminLoader();
 
-    updateCurrentYear();
+            },
+            22000
+        );
 
-    AdminDashboard.loading =
-        true;
+    try {
 
-    const authenticated =
-        await authenticateAdmin();
+        setupMobileMenu();
 
-    if (!authenticated) {
+        setupNavigation();
+
+        setupLogout();
+
+        setupMaintenanceControls();
+
+        updateCurrentYear();
+
+        AdminDashboard.loading =
+            true;
+
+        /*
+           Authenticate first.
+        */
+
+        const authenticated =
+            await authenticateAdmin();
+
+        if (!authenticated) {
+
+            AdminDashboard.loading =
+                false;
+
+            forceHideAdminLoader();
+
+            return;
+        }
+
+        /*
+           IMPORTANT FIX:
+           Release the page immediately after
+           successful admin authentication.
+
+           The other API requests can continue
+           loading in the background.
+        */
+
+        forceHideAdminLoader();
+
+        /*
+           Load all secondary information
+           independently.
+
+           One failure cannot block the page.
+        */
+
+        await Promise.allSettled([
+
+            loadProfile(),
+
+            loadAdminDashboard(),
+
+            loadMaintenanceSettings()
+
+        ]);
 
         AdminDashboard.loading =
             false;
 
-        return;
+        forceHideAdminLoader();
+
+    } catch (error) {
+
+        console.error(
+            "Admin initialization error:",
+            error
+        );
+
+        AdminDashboard.loading =
+            false;
+
+        forceHideAdminLoader();
+
+        showMessage(
+            error.message ||
+            "Unable to initialize admin panel.",
+            "error"
+        );
+
+    } finally {
+
+        clearTimeout(
+            safetyLoaderTimer
+        );
+
+        /*
+           Final guarantee that the loading
+           overlay is removed.
+        */
+
+        forceHideAdminLoader();
     }
-
-    await Promise.allSettled([
-
-        loadProfile(),
-
-        loadAdminDashboard(),
-
-        loadMaintenanceSettings()
-
-    ]);
-
-    AdminDashboard.loading =
-        false;
 }
 
 
@@ -2192,10 +2442,37 @@ if (
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeAdmin
+        initializeAdmin,
+        {
+            once: true
+        }
     );
 
 } else {
 
     initializeAdmin();
 }
+
+
+/* =========================================================
+   GLOBAL SAFETY LOADER
+========================================================= */
+
+window.addEventListener(
+    "load",
+    () => {
+
+        /*
+           Do not hide before authentication.
+           This only acts as a final visual safeguard
+           after the page itself has finished loading.
+        */
+
+        if (
+            AdminDashboard.authenticated
+        ) {
+
+            forceHideAdminLoader();
+        }
+    }
+);

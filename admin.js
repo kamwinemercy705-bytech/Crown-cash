@@ -1,10 +1,11 @@
 /* =========================================================
    CROWN CASH — ADMIN CONTROLLER
    Production Admin Controller
-   Version: 20261003ADMIN05
+   Version: 20261003ADMIN06
 
    FEATURES:
    - Secure admin authentication
+   - Loader cannot remain stuck on data endpoints
    - Dashboard statistics
    - Deposits management
    - Withdrawals management
@@ -14,12 +15,10 @@
    - MongoDB date parsing
    - MongoDB ObjectId parsing
    - Flexible API response parsing
-   - Investment customer resolution
-   - Withdrawal customer resolution
+   - Customer resolution
    - Refresh after actions
    - Maintenance controls
    - Secure logout
-   - Loader fix
    ========================================================= */
 
 (() => {
@@ -98,7 +97,6 @@
        ===================================================== */
 
     function escapeHtml(value) {
-
         if (
             value === null ||
             value === undefined
@@ -120,7 +118,6 @@
        ===================================================== */
 
     function money(value) {
-
         const amount = Number(value || 0);
 
         return new Intl.NumberFormat("en-UG", {
@@ -128,40 +125,26 @@
             currency: "UGX",
             maximumFractionDigits: 0
         }).format(
-            Number.isFinite(amount)
-                ? amount
-                : 0
+            Number.isFinite(amount) ? amount : 0
         );
     }
 
-
     function number(value) {
-
         const amount = Number(value || 0);
 
         return new Intl.NumberFormat("en-UG", {
             maximumFractionDigits: 0
         }).format(
-            Number.isFinite(amount)
-                ? amount
-                : 0
+            Number.isFinite(amount) ? amount : 0
         );
     }
 
 
     /* =====================================================
-       DATE PARSING
-       Handles:
-       - ISO strings
-       - timestamps
-       - MongoDB $date
-       - MongoDB $numberLong
-       - MongoDB $numberInt
-       - nested date objects
+       DATE HELPERS
        ===================================================== */
 
     function extractDateValue(value) {
-
         if (
             value === null ||
             value === undefined ||
@@ -177,14 +160,12 @@
         }
 
         if (typeof value === "number") {
-
             const milliseconds =
                 value < 100000000000
                     ? value * 1000
                     : value;
 
-            const date =
-                new Date(milliseconds);
+            const date = new Date(milliseconds);
 
             return Number.isNaN(date.getTime())
                 ? null
@@ -192,153 +173,84 @@
         }
 
         if (typeof value === "string") {
-
-            const trimmed =
-                value.trim();
+            const trimmed = value.trim();
 
             if (!trimmed) {
                 return null;
             }
 
-            /*
-             * Numeric timestamp supplied
-             * as a string.
-             */
             if (/^\d+$/.test(trimmed)) {
-
-                const numeric =
-                    Number(trimmed);
+                const numeric = Number(trimmed);
 
                 const milliseconds =
                     numeric < 100000000000
                         ? numeric * 1000
                         : numeric;
 
-                const numericDate =
-                    new Date(milliseconds);
+                const date = new Date(milliseconds);
 
-                if (
-                    !Number.isNaN(
-                        numericDate.getTime()
-                    )
-                ) {
-                    return numericDate;
+                if (!Number.isNaN(date.getTime())) {
+                    return date;
                 }
             }
 
-            const date =
-                new Date(trimmed);
+            const date = new Date(trimmed);
 
-            if (
-                !Number.isNaN(
-                    date.getTime()
-                )
-            ) {
-                return date;
-            }
-
-            return null;
+            return Number.isNaN(date.getTime())
+                ? null
+                : date;
         }
 
-        if (
-            typeof value === "object"
-        ) {
-
-            /*
-             * MongoDB:
-             * { "$date": "..." }
-             */
-            if (
-                value.$date !== undefined
-            ) {
-                return extractDateValue(
-                    value.$date
-                );
+        if (typeof value === "object") {
+            if (value.$date !== undefined) {
+                return extractDateValue(value.$date);
             }
 
-            /*
-             * MongoDB:
-             * { "$date": { "$numberLong": "..." } }
-             */
-            if (
-                value.$numberLong !== undefined
-            ) {
-                return extractDateValue(
-                    value.$numberLong
-                );
+            if (value.$numberLong !== undefined) {
+                return extractDateValue(value.$numberLong);
             }
 
-            /*
-             * MongoDB:
-             * { "$numberInt": "..." }
-             */
-            if (
-                value.$numberInt !== undefined
-            ) {
-                return extractDateValue(
-                    value.$numberInt
-                );
+            if (value.$numberInt !== undefined) {
+                return extractDateValue(value.$numberInt);
             }
 
-            if (
-                value.date !== undefined
-            ) {
-                return extractDateValue(
-                    value.date
-                );
+            if (value.date !== undefined) {
+                return extractDateValue(value.date);
             }
 
-            if (
-                value.datetime !== undefined
-            ) {
-                return extractDateValue(
-                    value.datetime
-                );
+            if (value.datetime !== undefined) {
+                return extractDateValue(value.datetime);
             }
 
-            if (
-                value.created_at !== undefined
-            ) {
-                return extractDateValue(
-                    value.created_at
-                );
+            if (value.created_at !== undefined) {
+                return extractDateValue(value.created_at);
             }
 
-            if (
-                value.createdAt !== undefined
-            ) {
-                return extractDateValue(
-                    value.createdAt
-                );
+            if (value.createdAt !== undefined) {
+                return extractDateValue(value.createdAt);
             }
 
-            if (
-                value.timestamp !== undefined
-            ) {
-                return extractDateValue(
-                    value.timestamp
-                );
+            if (value.updated_at !== undefined) {
+                return extractDateValue(value.updated_at);
             }
 
-            if (
-                value.time !== undefined
-            ) {
-                return extractDateValue(
-                    value.time
-                );
+            if (value.updatedAt !== undefined) {
+                return extractDateValue(value.updatedAt);
             }
 
-            if (
-                value.milliseconds !== undefined
-            ) {
-                return extractDateValue(
-                    value.milliseconds
-                );
+            if (value.timestamp !== undefined) {
+                return extractDateValue(value.timestamp);
             }
 
-            if (
-                value.seconds !== undefined
-            ) {
+            if (value.time !== undefined) {
+                return extractDateValue(value.time);
+            }
+
+            if (value.milliseconds !== undefined) {
+                return extractDateValue(value.milliseconds);
+            }
+
+            if (value.seconds !== undefined) {
                 return extractDateValue(
                     Number(value.seconds)
                 );
@@ -348,18 +260,14 @@
         return null;
     }
 
-
     function formatDate(value) {
-
-        const date =
-            extractDateValue(value);
+        const date = extractDateValue(value);
 
         if (!date) {
             return "Not available";
         }
 
         try {
-
             return new Intl.DateTimeFormat(
                 "en-GB",
                 {
@@ -370,16 +278,14 @@
                     minute: "2-digit"
                 }
             ).format(date);
-
         } catch {
-
             return date.toLocaleString();
         }
     }
 
 
     /* =====================================================
-       GENERIC VALUE HELPERS
+       GENERIC HELPERS
        ===================================================== */
 
     function firstValue(
@@ -387,7 +293,6 @@
         keys,
         fallback = ""
     ) {
-
         if (
             !object ||
             typeof object !== "object"
@@ -395,10 +300,7 @@
             return fallback;
         }
 
-        for (
-            const key of keys
-        ) {
-
+        for (const key of keys) {
             if (
                 object[key] !== undefined &&
                 object[key] !== null &&
@@ -411,9 +313,7 @@
         return fallback;
     }
 
-
     function normalizeId(value) {
-
         if (
             value === null ||
             value === undefined ||
@@ -422,66 +322,50 @@
             return "";
         }
 
-        if (
-            typeof value === "object"
-        ) {
-
+        if (typeof value === "object") {
             if (value.$oid) {
-                return String(
-                    value.$oid
-                );
+                return String(value.$oid);
             }
 
             if (value.id) {
-                return String(
-                    value.id
-                );
+                return String(value.id);
             }
 
             if (value._id) {
-                return normalizeId(
-                    value._id
-                );
+                return normalizeId(value._id);
             }
         }
 
         return String(value);
     }
 
-
-    function getId(
-        item,
-        extraKeys = []
-    ) {
-
-        const value =
-            firstValue(
-                item,
-                [
-                    ...extraKeys,
-                    "_id",
-                    "id",
-                    "deposit_id",
-                    "withdrawal_id",
-                    "investment_id",
-                    "request_id"
-                ],
-                ""
-            );
+    function getId(item, extraKeys = []) {
+        const value = firstValue(
+            item,
+            [
+                ...extraKeys,
+                "_id",
+                "id",
+                "deposit_id",
+                "withdrawal_id",
+                "investment_id",
+                "request_id"
+            ],
+            ""
+        );
 
         return normalizeId(value);
     }
 
 
     /* =====================================================
-       FLEXIBLE ARRAY EXTRACTION
+       ARRAY EXTRACTION
        ===================================================== */
 
     function extractArray(
         response,
         possibleKeys = []
     ) {
-
         if (!response) {
             return [];
         }
@@ -490,9 +374,7 @@
             return response;
         }
 
-        if (
-            typeof response !== "object"
-        ) {
+        if (typeof response !== "object") {
             return [];
         }
 
@@ -507,19 +389,10 @@
             "result"
         ];
 
-        /*
-         * First look at known keys.
-         */
-        for (
-            const key of keys
-        ) {
+        for (const key of keys) {
+            const value = response[key];
 
-            const value =
-                response[key];
-
-            if (
-                Array.isArray(value)
-            ) {
+            if (Array.isArray(value)) {
                 return value;
             }
 
@@ -527,36 +400,21 @@
                 value &&
                 typeof value === "object"
             ) {
+                const nested = extractArray(
+                    value,
+                    possibleKeys
+                );
 
-                const nested =
-                    extractArray(
-                        value,
-                        possibleKeys
-                    );
-
-                if (
-                    nested.length
-                ) {
+                if (nested.length) {
                     return nested;
                 }
             }
         }
 
-        /*
-         * Recursive fallback.
-         */
-        for (
-            const key of Object.keys(
-                response
-            )
-        ) {
+        for (const key of Object.keys(response)) {
+            const value = response[key];
 
-            const value =
-                response[key];
-
-            if (
-                Array.isArray(value)
-            ) {
+            if (Array.isArray(value)) {
                 return value;
             }
 
@@ -564,16 +422,12 @@
                 value &&
                 typeof value === "object"
             ) {
+                const nested = extractArray(
+                    value,
+                    []
+                );
 
-                const nested =
-                    extractArray(
-                        value,
-                        []
-                    );
-
-                if (
-                    nested.length
-                ) {
+                if (nested.length) {
                     return nested;
                 }
             }
@@ -592,28 +446,21 @@
         options = {},
         redirectOnAuth = false
     ) {
-
         const controller =
             new AbortController();
 
         const timeout =
-            setTimeout(
-                () => {
-                    controller.abort();
-                },
-                20000
-            );
+            setTimeout(() => {
+                controller.abort();
+            }, 20000);
 
         const requestOptions = {
             credentials: "include",
             ...options,
-
-            signal:
-                controller.signal,
+            signal: controller.signal,
 
             headers: {
-                Accept:
-                    "application/json",
+                Accept: "application/json",
 
                 ...(options.body
                     ? {
@@ -627,7 +474,6 @@
         };
 
         try {
-
             const response =
                 await fetch(
                     url,
@@ -640,14 +486,9 @@
             let data = {};
 
             if (text) {
-
                 try {
-
-                    data =
-                        JSON.parse(text);
-
+                    data = JSON.parse(text);
                 } catch {
-
                     data = {
                         success: false,
                         message: text
@@ -659,11 +500,7 @@
                 response.status === 401 ||
                 response.status === 403
             ) {
-
-                if (
-                    redirectOnAuth
-                ) {
-
+                if (redirectOnAuth) {
                     window.location.href =
                         "login.html?redirect=admin.html";
                 }
@@ -676,7 +513,6 @@
             }
 
             if (!response.ok) {
-
                 throw new Error(
                     data?.message ||
                     data?.error ||
@@ -687,12 +523,10 @@
             return data;
 
         } catch (error) {
-
             if (
                 error?.name ===
                 "AbortError"
             ) {
-
                 throw new Error(
                     "Request timed out. Please try again."
                 );
@@ -701,18 +535,16 @@
             throw error;
 
         } finally {
-
             clearTimeout(timeout);
         }
     }
 
 
     /* =====================================================
-       LOADER
+       ADMIN LOADER
        ===================================================== */
 
     function hideAdminLoader() {
-
         const loader =
             byId("adminLoader");
 
@@ -720,35 +552,22 @@
             return;
         }
 
-        loader.classList.add(
-            "hidden"
-        );
+        loader.classList.add("hidden");
 
-        loader.style.display =
-            "none";
+        loader.style.display = "none";
+        loader.style.opacity = "0";
+        loader.style.visibility = "hidden";
+        loader.style.pointerEvents = "none";
 
         loader.setAttribute(
             "aria-hidden",
             "true"
         );
-
-        /*
-         * Some existing admin CSS uses
-         * opacity/visibility instead of
-         * display.
-         */
-        loader.style.opacity = "0";
-        loader.style.visibility =
-            "hidden";
-        loader.style.pointerEvents =
-            "none";
     }
-
 
     function showAdminLoader(
         message = "Loading Crown Cash Admin..."
     ) {
-
         const loader =
             byId("adminLoader");
 
@@ -756,35 +575,19 @@
             return;
         }
 
-        loader.classList.remove(
-            "hidden"
-        );
+        loader.classList.remove("hidden");
 
-        loader.style.display =
-            "";
-
-        loader.style.opacity =
-            "1";
-
-        loader.style.visibility =
-            "visible";
-
-        loader.style.pointerEvents =
-            "auto";
+        loader.style.display = "";
+        loader.style.opacity = "1";
+        loader.style.visibility = "visible";
+        loader.style.pointerEvents = "auto";
 
         const textElement =
-            qs(
-                ".loader-text",
-                loader
-            ) ||
-            qs(
-                "[data-loader-text]",
-                loader
-            );
+            qs(".loader-text", loader) ||
+            qs("[data-loader-text]", loader);
 
         if (textElement) {
-            textElement.textContent =
-                message;
+            textElement.textContent = message;
         }
     }
 
@@ -794,7 +597,6 @@
        ===================================================== */
 
     async function authenticateAdmin() {
-
         const data =
             await apiRequest(
                 ENDPOINTS.auth,
@@ -822,17 +624,13 @@
             !authenticated ||
             !authorized
         ) {
-
             throw new Error(
                 "Administrator authorization required."
             );
         }
 
-        state.authenticated =
-            true;
-
-        state.authorized =
-            true;
+        state.authenticated = true;
+        state.authorized = true;
 
         state.admin =
             data?.admin ||
@@ -850,9 +648,7 @@
        ===================================================== */
 
     async function loadProfile() {
-
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.profile,
@@ -872,7 +668,6 @@
             renderAdminProfile();
 
         } catch (error) {
-
             console.warn(
                 "Profile could not be loaded:",
                 error.message
@@ -880,9 +675,7 @@
         }
     }
 
-
     function renderAdminProfile() {
-
         const profile =
             state.profile ||
             state.admin ||
@@ -910,36 +703,44 @@
                 ""
             );
 
-        qsa(
-            "[data-admin-name]"
-        ).forEach(
-            element => {
-                element.textContent =
-                    name;
-            }
-        );
+        qsa("[data-admin-name]")
+            .forEach(element => {
+                element.textContent = name;
+            });
 
-        qsa(
-            "[data-admin-email]"
-        ).forEach(
-            element => {
-                element.textContent =
-                    email;
-            }
-        );
+        qsa("[data-admin-email]")
+            .forEach(element => {
+                element.textContent = email;
+            });
 
         [
             "adminName",
             "administratorName",
             "welcomeAdminName"
         ].forEach(id => {
-
-            const element =
-                byId(id);
+            const element = byId(id);
 
             if (element) {
-                element.textContent =
-                    name;
+                element.textContent = name;
+            }
+        });
+    }
+
+
+    /* =====================================================
+       TEXT HELPER
+       ===================================================== */
+
+    function setText(ids, value) {
+        if (!Array.isArray(ids)) {
+            ids = [ids];
+        }
+
+        ids.forEach(id => {
+            const element = byId(id);
+
+            if (element) {
+                element.textContent = value;
             }
         });
     }
@@ -950,12 +751,9 @@
        ===================================================== */
 
     async function loadDashboard() {
-
-        state.loading.dashboard =
-            true;
+        state.loading.dashboard = true;
 
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.dashboard,
@@ -965,8 +763,7 @@
                     false
                 );
 
-            state.dashboard =
-                data;
+            state.dashboard = data;
 
             state.users =
                 extractArray(
@@ -980,22 +777,25 @@
                     ]
                 );
 
-            renderDashboard(
-                data
-            );
+            renderDashboard(data);
 
             return data;
 
-        } finally {
+        } catch (error) {
+            console.error(
+                "Dashboard loading failed:",
+                error
+            );
 
-            state.loading.dashboard =
-                false;
+            return null;
+
+        } finally {
+            state.loading.dashboard = false;
         }
     }
 
 
     function renderDashboard(data) {
-
         const stats =
             data?.stats ||
             data?.statistics ||
@@ -1154,30 +954,6 @@
     }
 
 
-    function setText(
-        ids,
-        value
-    ) {
-
-        if (
-            !Array.isArray(ids)
-        ) {
-            ids = [ids];
-        }
-
-        ids.forEach(id => {
-
-            const element =
-                byId(id);
-
-            if (element) {
-                element.textContent =
-                    value;
-            }
-        });
-    }
-
-
     /* =====================================================
        RECENT TRANSACTIONS
        ===================================================== */
@@ -1185,7 +961,6 @@
     function renderRecentTransactions(
         transactions
     ) {
-
         const containers = [
             byId("recentTransactions"),
             byId("recentTransactionsList")
@@ -1195,19 +970,13 @@
             return;
         }
 
-        if (
-            !transactions.length
-        ) {
-
-            containers.forEach(
-                container => {
-
-                    container.innerHTML =
-                        `<div class="empty-state">
-                            No recent transactions found.
-                        </div>`;
-                }
-            );
+        if (!transactions.length) {
+            containers.forEach(container => {
+                container.innerHTML =
+                    `<div class="empty-state">
+                        No recent transactions found.
+                    </div>`;
+            });
 
             return;
         }
@@ -1215,89 +984,84 @@
         const html =
             transactions
                 .slice(0, 20)
-                .map(
-                    transaction => {
+                .map(transaction => {
+                    const type =
+                        firstValue(
+                            transaction,
+                            [
+                                "type",
+                                "transaction_type",
+                                "transactionType"
+                            ],
+                            "transaction"
+                        );
 
-                        const type =
-                            firstValue(
-                                transaction,
-                                [
-                                    "type",
-                                    "transaction_type",
-                                    "transactionType"
-                                ],
-                                "transaction"
-                            );
+                    const amount =
+                        firstValue(
+                            transaction,
+                            [
+                                "amount",
+                                "value"
+                            ],
+                            0
+                        );
 
-                        const amount =
-                            firstValue(
-                                transaction,
-                                [
-                                    "amount",
-                                    "value"
-                                ],
-                                0
-                            );
+                    const status =
+                        firstValue(
+                            transaction,
+                            [
+                                "status",
+                                "state"
+                            ],
+                            "unknown"
+                        );
 
-                        const status =
-                            firstValue(
-                                transaction,
-                                [
-                                    "status",
-                                    "state"
-                                ],
-                                "unknown"
-                            );
+                    const date =
+                        firstValue(
+                            transaction,
+                            [
+                                "created_at",
+                                "createdAt",
+                                "date",
+                                "timestamp",
+                                "time",
+                                "updated_at",
+                                "updatedAt"
+                            ],
+                            null
+                        );
 
-                        const date =
-                            firstValue(
-                                transaction,
-                                [
-                                    "created_at",
-                                    "createdAt",
-                                    "date",
-                                    "timestamp",
-                                    "time",
-                                    "updated_at"
-                                ],
-                                null
-                            );
+                    return `
+                        <div class="transaction-item">
 
-                        return `
-                            <div class="transaction-item">
-
-                                <div>
-                                    <strong>
-                                        ${escapeHtml(type)}
-                                    </strong>
-
-                                    <div>
-                                        ${formatDate(date)}
-                                    </div>
-                                </div>
+                            <div>
+                                <strong>
+                                    ${escapeHtml(type)}
+                                </strong>
 
                                 <div>
-                                    <strong>
-                                        ${money(amount)}
-                                    </strong>
-
-                                    <div>
-                                        ${escapeHtml(status)}
-                                    </div>
+                                    ${formatDate(date)}
                                 </div>
-
                             </div>
-                        `;
-                    }
-                )
+
+                            <div>
+                                <strong>
+                                    ${money(amount)}
+                                </strong>
+
+                                <div>
+                                    ${escapeHtml(status)}
+                                </div>
+                            </div>
+
+                        </div>
+                    `;
+                })
                 .join("");
 
-        containers.forEach(
-            container => {
-                container.innerHTML =
-                    html;
-            }
-        );
+        containers.forEach(container => {
+            container.innerHTML = html;
+        });
     }
 
 
@@ -1305,10 +1069,7 @@
        RECENT USERS
        ===================================================== */
 
-    function renderRecentUsers(
-        users
-    ) {
-
+    function renderRecentUsers(users) {
         const container =
             byId("recentUsers") ||
             byId("recentUsersList");
@@ -1318,7 +1079,6 @@
         }
 
         if (!users.length) {
-
             container.innerHTML =
                 `<div class="empty-state">
                     No recent users found.
@@ -1331,7 +1091,6 @@
             users
                 .slice(0, 20)
                 .map(user => {
-
                     const name =
                         firstValue(
                             user,
@@ -1389,15 +1148,11 @@
 
 
     /* =====================================================
-       MANAGEMENT CONTAINER
+       MANAGEMENT CONTAINERS
        ===================================================== */
 
-    function findManagementContainer(
-        type
-    ) {
-
+    function findManagementContainer(type) {
         const selectors = {
-
             deposits: [
                 "#depositsManagement",
                 "#depositManagement",
@@ -1433,9 +1188,7 @@
             const selector of
             selectors[type] || []
         ) {
-
-            const element =
-                qs(selector);
+            const element = qs(selector);
 
             if (element) {
                 return element;
@@ -1451,9 +1204,7 @@
        ===================================================== */
 
     async function loadDeposits() {
-
-        state.loading.deposits =
-            true;
+        state.loading.deposits = true;
 
         const container =
             findManagementContainer(
@@ -1461,7 +1212,6 @@
             );
 
         if (container) {
-
             showManagementLoading(
                 container,
                 "Loading deposit requests..."
@@ -1469,7 +1219,6 @@
         }
 
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.deposits,
@@ -1495,14 +1244,12 @@
             return state.deposits;
 
         } catch (error) {
-
             console.error(
                 "Deposits loading failed:",
                 error
             );
 
             if (container) {
-
                 showManagementError(
                     container,
                     error.message
@@ -1512,15 +1259,12 @@
             return [];
 
         } finally {
-
-            state.loading.deposits =
-                false;
+            state.loading.deposits = false;
         }
     }
 
 
     function renderDeposits() {
-
         const container =
             findManagementContainer(
                 "deposits"
@@ -1530,10 +1274,7 @@
             return;
         }
 
-        if (
-            !state.deposits.length
-        ) {
-
+        if (!state.deposits.length) {
             container.innerHTML = `
                 <div class="management-toolbar">
 
@@ -1556,7 +1297,6 @@
             `;
 
             bindManagementEvents();
-
             return;
         }
 
@@ -1594,9 +1334,7 @@
 
                     <tbody>
                         ${state.deposits
-                            .map(
-                                renderDepositRow
-                            )
+                            .map(renderDepositRow)
                             .join("")}
                     </tbody>
 
@@ -1609,16 +1347,11 @@
     }
 
 
-    function renderDepositRow(
-        deposit
-    ) {
-
+    function renderDepositRow(deposit) {
         const id =
             getId(
                 deposit,
-                [
-                    "deposit_id"
-                ]
+                ["deposit_id"]
             );
 
         const user =
@@ -1780,9 +1513,7 @@
        ===================================================== */
 
     async function loadWithdrawals() {
-
-        state.loading.withdrawals =
-            true;
+        state.loading.withdrawals = true;
 
         const container =
             findManagementContainer(
@@ -1790,7 +1521,6 @@
             );
 
         if (container) {
-
             showManagementLoading(
                 container,
                 "Loading withdrawal requests..."
@@ -1798,7 +1528,6 @@
         }
 
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.withdrawals,
@@ -1807,18 +1536,6 @@
                     },
                     false
                 );
-
-            /*
-             * Supports:
-             * withdrawals
-             * withdrawal_requests
-             * pending_withdrawals
-             * pendingWithdrawals
-             * requests
-             * records
-             * items
-             * nested data.withdrawals
-             */
 
             state.withdrawals =
                 extractArray(
@@ -1837,14 +1554,12 @@
             return state.withdrawals;
 
         } catch (error) {
-
             console.error(
                 "Withdrawals loading failed:",
                 error
             );
 
             if (container) {
-
                 showManagementError(
                     container,
                     error.message
@@ -1854,15 +1569,12 @@
             return [];
 
         } finally {
-
-            state.loading.withdrawals =
-                false;
+            state.loading.withdrawals = false;
         }
     }
 
 
     function renderWithdrawals() {
-
         const container =
             findManagementContainer(
                 "withdrawals"
@@ -1872,10 +1584,7 @@
             return;
         }
 
-        if (
-            !state.withdrawals.length
-        ) {
-
+        if (!state.withdrawals.length) {
             container.innerHTML = `
                 <div class="management-toolbar">
 
@@ -1898,7 +1607,6 @@
             `;
 
             bindManagementEvents();
-
             return;
         }
 
@@ -1936,9 +1644,7 @@
 
                     <tbody>
                         ${state.withdrawals
-                            .map(
-                                renderWithdrawalRow
-                            )
+                            .map(renderWithdrawalRow)
                             .join("")}
                     </tbody>
 
@@ -1954,13 +1660,10 @@
     function renderWithdrawalRow(
         withdrawal
     ) {
-
         const id =
             getId(
                 withdrawal,
-                [
-                    "withdrawal_id"
-                ]
+                ["withdrawal_id"]
             );
 
         const user =
@@ -2152,9 +1855,7 @@
        ===================================================== */
 
     async function loadInvestments() {
-
-        state.loading.investments =
-            true;
+        state.loading.investments = true;
 
         const container =
             findManagementContainer(
@@ -2162,7 +1863,6 @@
             );
 
         if (container) {
-
             showManagementLoading(
                 container,
                 "Loading investment requests..."
@@ -2170,7 +1870,6 @@
         }
 
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.investments,
@@ -2192,12 +1891,6 @@
                     ]
                 );
 
-            /*
-             * If the investment endpoint does
-             * not provide user data, try to
-             * enrich the records from dashboard
-             * users.
-             */
             enrichInvestmentUsers();
 
             renderInvestments();
@@ -2205,14 +1898,12 @@
             return state.investments;
 
         } catch (error) {
-
             console.error(
                 "Investments loading failed:",
                 error
             );
 
             if (container) {
-
                 showManagementError(
                     container,
                     error.message
@@ -2222,19 +1913,15 @@
             return [];
 
         } finally {
-
-            state.loading.investments =
-                false;
+            state.loading.investments = false;
         }
     }
 
 
     function enrichInvestmentUsers() {
-
         state.investments =
             state.investments.map(
                 investment => {
-
                     if (
                         investment.user &&
                         typeof investment.user ===
@@ -2278,7 +1965,6 @@
 
 
     function renderInvestments() {
-
         const container =
             findManagementContainer(
                 "investments"
@@ -2288,10 +1974,7 @@
             return;
         }
 
-        if (
-            !state.investments.length
-        ) {
-
+        if (!state.investments.length) {
             container.innerHTML = `
                 <div class="management-toolbar">
 
@@ -2314,7 +1997,6 @@
             `;
 
             bindManagementEvents();
-
             return;
         }
 
@@ -2352,9 +2034,7 @@
 
                     <tbody>
                         ${state.investments
-                            .map(
-                                renderInvestmentRow
-                            )
+                            .map(renderInvestmentRow)
                             .join("")}
                     </tbody>
 
@@ -2370,13 +2050,10 @@
     function renderInvestmentRow(
         investment
     ) {
-
         const id =
             getId(
                 investment,
-                [
-                    "investment_id"
-                ]
+                ["investment_id"]
             );
 
         const user =
@@ -2409,7 +2086,6 @@
             );
 
         if (!name) {
-
             name =
                 firstValue(
                     investment,
@@ -2426,7 +2102,6 @@
         }
 
         if (!name && userId) {
-
             name =
                 resolveUserName(
                     userId
@@ -2434,8 +2109,7 @@
         }
 
         if (!name) {
-            name =
-                "Unknown Customer";
+            name = "Unknown Customer";
         }
 
         let email =
@@ -2449,7 +2123,6 @@
             );
 
         if (!email) {
-
             email =
                 firstValue(
                     investment,
@@ -2584,10 +2257,7 @@
        USER RESOLUTION
        ===================================================== */
 
-    function getUserFromRecord(
-        record
-    ) {
-
+    function getUserFromRecord(record) {
         if (
             !record ||
             typeof record !== "object"
@@ -2595,7 +2265,7 @@
             return {};
         }
 
-        const possibleObjects = [
+        const objects = [
             record.user,
             record.customer,
             record.account,
@@ -2604,15 +2274,10 @@
             record.owner
         ];
 
-        for (
-            const object of
-            possibleObjects
-        ) {
-
+        for (const object of objects) {
             if (
                 object &&
-                typeof object ===
-                "object"
+                typeof object === "object"
             ) {
                 return object;
             }
@@ -2634,57 +2299,38 @@
             return {};
         }
 
-        return (
-            findUserById(
-                userId
-            ) || {}
-        );
+        return findUserById(userId) || {};
     }
 
-
-    function findUserById(
-        userId
-    ) {
-
+    function findUserById(userId) {
         const normalized =
-            normalizeId(
-                userId
-            );
+            normalizeId(userId);
 
         if (!normalized) {
             return null;
         }
 
         return (
-            state.users.find(
-                user => {
+            state.users.find(user => {
+                const ids = [
+                    user?._id,
+                    user?.id,
+                    user?.user_id,
+                    user?.userId
+                ];
 
-                    const ids = [
-                        user?._id,
-                        user?.id,
-                        user?.user_id,
-                        user?.userId
-                    ];
-
-                    return ids.some(
-                        id =>
-                            normalizeId(id) ===
-                            normalized
-                    );
-                }
-            ) || null
+                return ids.some(
+                    id =>
+                        normalizeId(id) ===
+                        normalized
+                );
+            }) || null
         );
     }
 
-
-    function resolveUserName(
-        userId
-    ) {
-
+    function resolveUserName(userId) {
         const user =
-            findUserById(
-                userId
-            );
+            findUserById(userId);
 
         if (!user) {
             return "";
@@ -2707,10 +2353,7 @@
        STATUS BADGE
        ===================================================== */
 
-    function statusBadge(
-        status
-    ) {
-
+    function statusBadge(status) {
         const normalized =
             String(
                 status || "unknown"
@@ -2735,7 +2378,6 @@
         status,
         userId = ""
     ) {
-
         const normalized =
             String(
                 status || ""
@@ -2751,7 +2393,6 @@
             normalized === "completed" ||
             normalized === "active"
         ) {
-
             return `
                 <span class="action-status">
                     ${escapeHtml(normalized)}
@@ -2759,16 +2400,8 @@
             `;
         }
 
-        if (
-            normalized ===
-            "pending"
-        ) {
-
-            if (
-                type ===
-                "deposit"
-            ) {
-
+        if (normalized === "pending") {
+            if (type === "deposit") {
                 return `
                     <div class="action-buttons">
 
@@ -2792,11 +2425,7 @@
                 `;
             }
 
-            if (
-                type ===
-                "withdrawal"
-            ) {
-
+            if (type === "withdrawal") {
                 return `
                     <div class="action-buttons">
 
@@ -2822,11 +2451,7 @@
                 `;
             }
 
-            if (
-                type ===
-                "investment"
-            ) {
-
+            if (type === "investment") {
                 return `
                     <div class="action-buttons">
 
@@ -2860,7 +2485,7 @@
 
 
     /* =====================================================
-       DEPOSIT ACTION
+       ACTION REQUESTS
        ===================================================== */
 
     async function processDepositAction(
@@ -2868,58 +2493,30 @@
         action,
         note = ""
     ) {
-
         if (!depositId) {
-
             throw new Error(
                 "Deposit ID is missing."
             );
         }
 
-        const payload = {
-
-            deposit_id:
-                depositId,
-
-            id:
-                depositId,
-
-            action:
-                action,
-
-            status:
-                action,
-
-            note:
-                note,
-
-            reason:
-                note,
-
-            rejection_reason:
-                note
-        };
-
-        const result =
-            await apiRequest(
-                ENDPOINTS.deposits,
-                {
-                    method: "POST",
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
-                },
-                false
-            );
-
-        return result;
+        return apiRequest(
+            ENDPOINTS.deposits,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    deposit_id: depositId,
+                    id: depositId,
+                    action,
+                    status: action,
+                    note,
+                    reason: note,
+                    rejection_reason: note
+                })
+            },
+            false
+        );
     }
 
-
-    /* =====================================================
-       WITHDRAWAL ACTION
-       ===================================================== */
 
     async function processWithdrawalAction(
         withdrawalId,
@@ -2927,113 +2524,59 @@
         action,
         note = ""
     ) {
-
         if (!withdrawalId) {
-
             throw new Error(
                 "Withdrawal ID is missing."
             );
         }
 
-        const payload = {
-
-            withdrawal_id:
-                withdrawalId,
-
-            id:
-                withdrawalId,
-
-            user_id:
-                userId || "",
-
-            action:
-                action,
-
-            status:
-                action,
-
-            note:
-                note,
-
-            reason:
-                note,
-
-            rejection_reason:
-                note
-        };
-
-        const result =
-            await apiRequest(
-                ENDPOINTS.withdrawals,
-                {
-                    method: "POST",
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
-                },
-                false
-            );
-
-        return result;
+        return apiRequest(
+            ENDPOINTS.withdrawals,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    withdrawal_id: withdrawalId,
+                    id: withdrawalId,
+                    user_id: userId || "",
+                    action,
+                    status: action,
+                    note,
+                    reason: note,
+                    rejection_reason: note
+                })
+            },
+            false
+        );
     }
 
-
-    /* =====================================================
-       INVESTMENT ACTION
-       ===================================================== */
 
     async function processInvestmentAction(
         investmentId,
         action,
         note = ""
     ) {
-
         if (!investmentId) {
-
             throw new Error(
                 "Investment ID is missing."
             );
         }
 
-        const payload = {
-
-            investment_id:
-                investmentId,
-
-            id:
-                investmentId,
-
-            action:
-                action,
-
-            status:
-                action,
-
-            note:
-                note,
-
-            reason:
-                note,
-
-            rejection_reason:
-                note
-        };
-
-        const result =
-            await apiRequest(
-                ENDPOINTS.investments,
-                {
-                    method: "POST",
-                    body:
-                        JSON.stringify(
-                            payload
-                        )
-                },
-                false
-            );
-
-        return result;
+        return apiRequest(
+            ENDPOINTS.investments,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    investment_id: investmentId,
+                    id: investmentId,
+                    action,
+                    status: action,
+                    note,
+                    reason: note,
+                    rejection_reason: note
+                })
+            },
+            false
+        );
     }
 
 
@@ -3047,43 +2590,29 @@
         id,
         userId = ""
     ) {
-
         let note = "";
 
-        if (
-            action ===
-            "reject"
-        ) {
-
+        if (action === "reject") {
             note =
                 window.prompt(
                     "Enter the reason for rejecting this request:"
                 );
 
-            if (
-                note === null
-            ) {
+            if (note === null) {
                 return;
             }
 
-            note =
-                note.trim();
+            note = note.trim();
 
             if (!note) {
-
                 alert(
                     "Please provide a rejection reason."
                 );
-
                 return;
             }
         }
 
-        if (
-            action ===
-            "approve"
-        ) {
-
+        if (action === "approve") {
             const confirmed =
                 window.confirm(
                     `Are you sure you want to approve this ${type}?`
@@ -3095,59 +2624,47 @@
         }
 
         try {
+            const selector =
+                `[data-action="${action === "approve"
+                    ? "approve"
+                    : "reject"
+                }-${type}"]`;
 
-            /*
-             * Disable the clicked button
-             * immediately.
-             */
-            const clickedButton =
-                qs(
-                    `[data-action="${action === "approve"
-                        ? "approve"
-                        : "reject"
-                    }-${type}"][data-id="${CSS.escape(String(id))}"]`
-                );
+            const buttons =
+                qsa(selector)
+                    .filter(
+                        button =>
+                            String(
+                                button.dataset.id
+                            ) === String(id)
+                    );
 
-            if (clickedButton) {
-
-                clickedButton.disabled =
-                    true;
-
-                clickedButton.dataset.originalText =
-                    clickedButton.textContent;
-
-                clickedButton.textContent =
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.dataset.originalText =
+                    button.textContent;
+                button.textContent =
                     "Processing...";
-            }
+            });
 
-            if (
-                type ===
-                "deposit"
-            ) {
-
+            if (type === "deposit") {
                 await processDepositAction(
                     id,
                     action,
                     note
                 );
+            }
 
-            } else if (
-                type ===
-                "withdrawal"
-            ) {
-
+            if (type === "withdrawal") {
                 await processWithdrawalAction(
                     id,
                     userId,
                     action,
                     note
                 );
+            }
 
-            } else if (
-                type ===
-                "investment"
-            ) {
-
+            if (type === "investment") {
                 await processInvestmentAction(
                     id,
                     action,
@@ -3156,17 +2673,30 @@
             }
 
             /*
-             * Refresh all relevant
-             * dashboard information.
+             * Refresh the affected section first.
              */
-            await refreshEverything();
+            if (type === "deposit") {
+                await loadDeposits();
+            }
+
+            if (type === "withdrawal") {
+                await loadWithdrawals();
+            }
+
+            if (type === "investment") {
+                await loadInvestments();
+            }
+
+            /*
+             * Refresh dashboard counters.
+             */
+            await loadDashboard();
 
             alert(
                 `${capitalize(type)} ${action}d successfully.`
             );
 
         } catch (error) {
-
             console.error(
                 "Admin action failed:",
                 error
@@ -3177,20 +2707,15 @@
                 `Unable to ${action} ${type}.`
             );
 
-            /*
-             * Restore button if
-             * action failed.
-             */
             qsa(
-                `[data-id="${CSS.escape(String(id))}"]`
+                `[data-id="${escapeSelector(
+                    String(id)
+                )}"]`
             ).forEach(button => {
-
                 if (
                     button.dataset.originalText
                 ) {
-
-                    button.disabled =
-                        false;
+                    button.disabled = false;
 
                     button.textContent =
                         button.dataset.originalText;
@@ -3201,22 +2726,48 @@
 
 
     /* =====================================================
+       SAFE SELECTOR
+       ===================================================== */
+
+    function escapeSelector(value) {
+        if (
+            window.CSS &&
+            typeof window.CSS.escape ===
+            "function"
+        ) {
+            return window.CSS.escape(value);
+        }
+
+        return String(value)
+            .replace(
+                /["\\]/g,
+                "\\$&"
+            );
+    }
+
+
+    /* =====================================================
        MANAGEMENT EVENTS
        ===================================================== */
 
     function bindManagementEvents() {
 
-        /*
-         * Refresh buttons
-         */
-        qsa(
-            "[data-refresh]"
-        ).forEach(
-            button => {
+        qsa("[data-refresh]")
+            .forEach(button => {
 
-                button.onclick =
+                if (
+                    button.dataset.eventBound ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                button.dataset.eventBound =
+                    "true";
+
+                button.addEventListener(
+                    "click",
                     async () => {
-
                         const type =
                             button.dataset.refresh;
 
@@ -3224,7 +2775,6 @@
                             type ===
                             "deposits"
                         ) {
-
                             await loadDeposits();
                         }
 
@@ -3232,7 +2782,6 @@
                             type ===
                             "withdrawals"
                         ) {
-
                             await loadWithdrawals();
                         }
 
@@ -3240,23 +2789,28 @@
                             type ===
                             "investments"
                         ) {
-
                             await loadInvestments();
                         }
-                    };
-            }
-        );
+                    }
+                );
+            });
 
 
-        /*
-         * Approve / reject buttons
-         */
-        qsa(
-            "[data-action]"
-        ).forEach(
-            button => {
+        qsa("[data-action]")
+            .forEach(button => {
 
-                button.onclick =
+                if (
+                    button.dataset.eventBound ===
+                    "true"
+                ) {
+                    return;
+                }
+
+                button.dataset.eventBound =
+                    "true";
+
+                button.addEventListener(
+                    "click",
                     async () => {
 
                         const actionType =
@@ -3273,7 +2827,6 @@
                             actionType ===
                             "approve-deposit"
                         ) {
-
                             await handleAction(
                                 "deposit",
                                 "approve",
@@ -3285,7 +2838,6 @@
                             actionType ===
                             "reject-deposit"
                         ) {
-
                             await handleAction(
                                 "deposit",
                                 "reject",
@@ -3297,7 +2849,6 @@
                             actionType ===
                             "approve-withdrawal"
                         ) {
-
                             await handleAction(
                                 "withdrawal",
                                 "approve",
@@ -3310,7 +2861,6 @@
                             actionType ===
                             "reject-withdrawal"
                         ) {
-
                             await handleAction(
                                 "withdrawal",
                                 "reject",
@@ -3323,7 +2873,6 @@
                             actionType ===
                             "approve-investment"
                         ) {
-
                             await handleAction(
                                 "investment",
                                 "approve",
@@ -3335,16 +2884,15 @@
                             actionType ===
                             "reject-investment"
                         ) {
-
                             await handleAction(
                                 "investment",
                                 "reject",
                                 id
                             );
                         }
-                    };
-            }
-        );
+                    }
+                );
+            });
     }
 
 
@@ -3353,12 +2901,9 @@
        ===================================================== */
 
     async function loadMaintenance() {
-
-        state.loading.maintenance =
-            true;
+        state.loading.maintenance = true;
 
         try {
-
             const data =
                 await apiRequest(
                     ENDPOINTS.maintenance,
@@ -3379,22 +2924,25 @@
 
             return state.maintenance;
 
-        } finally {
+        } catch (error) {
+            console.error(
+                "Maintenance loading failed:",
+                error
+            );
 
-            state.loading.maintenance =
-                false;
+            return null;
+
+        } finally {
+            state.loading.maintenance = false;
         }
     }
 
 
     function renderMaintenance() {
-
         const settings =
-            state.maintenance ||
-            {};
+            state.maintenance || {};
 
         const controls = [
-
             [
                 "maintenance_mode",
                 [
@@ -3402,7 +2950,6 @@
                     "maintenanceToggle"
                 ]
             ],
-
             [
                 "new_investments",
                 [
@@ -3410,7 +2957,6 @@
                     "newInvestmentsToggle"
                 ]
             ],
-
             [
                 "deposits_enabled",
                 [
@@ -3418,7 +2964,6 @@
                     "depositsToggle"
                 ]
             ],
-
             [
                 "withdrawals_enabled",
                 [
@@ -3426,7 +2971,6 @@
                     "withdrawalsToggle"
                 ]
             ],
-
             [
                 "daily_earnings_enabled",
                 [
@@ -3434,7 +2978,6 @@
                     "dailyEarningsToggle"
                 ]
             ],
-
             [
                 "registration_enabled",
                 [
@@ -3450,36 +2993,24 @@
                 const value =
                     Boolean(
                         settings[key] ??
-                        settings[
-                            camelCase(key)
-                        ]
+                        settings[camelCase(key)]
                     );
 
-                ids.forEach(
-                    id => {
+                ids.forEach(id => {
+                    const element =
+                        byId(id);
 
-                        const element =
-                            byId(id);
-
-                        if (
-                            !element
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            element.type ===
-                            "checkbox"
-                        ) {
-
-                            element.checked =
-                                value;
-                        }
+                    if (
+                        element &&
+                        element.type ===
+                        "checkbox"
+                    ) {
+                        element.checked =
+                            value;
                     }
-                );
+                });
             }
         );
-
 
         const message =
             firstValue(
@@ -3496,14 +3027,10 @@
                 "maintenanceMessage"
             );
 
-        if (
-            messageElement
-        ) {
-
+        if (messageElement) {
             messageElement.value =
                 message;
         }
-
 
         const active =
             firstValue(
@@ -3526,19 +3053,14 @@
             );
 
         setText(
-            [
-                "activeInvestments"
-            ],
+            ["activeInvestments"],
             number(active)
         );
 
         setText(
-            [
-                "pendingInvestments"
-            ],
+            ["pendingInvestments"],
             number(pending)
         );
-
 
         const lastRun =
             firstValue(
@@ -3563,7 +3085,6 @@
                 : "Not available"
         );
 
-
         const processed =
             firstValue(
                 settings,
@@ -3576,18 +3097,14 @@
             );
 
         setText(
-            [
-                "processedToday"
-            ],
+            ["processedToday"],
             money(processed)
         );
     }
 
 
     async function saveMaintenance() {
-
         const payload = {
-
             maintenance_mode:
                 getCheckboxValue(
                     [
@@ -3643,7 +3160,6 @@
         };
 
         try {
-
             await apiRequest(
                 ENDPOINTS.maintenance,
                 {
@@ -3663,7 +3179,6 @@
             );
 
         } catch (error) {
-
             console.error(
                 "Maintenance save failed:",
                 error
@@ -3677,16 +3192,9 @@
     }
 
 
-    function getCheckboxValue(
-        ids
-    ) {
-
-        for (
-            const id of ids
-        ) {
-
-            const element =
-                byId(id);
+    function getCheckboxValue(ids) {
+        for (const id of ids) {
+            const element = byId(id);
 
             if (element) {
                 return Boolean(
@@ -3699,31 +3207,24 @@
     }
 
 
-    function camelCase(
-        value
-    ) {
-
+    function camelCase(value) {
         return String(value)
             .replace(
                 /_([a-z])/g,
-                (
-                    _,
-                    letter
-                ) =>
+                (_, letter) =>
                     letter.toUpperCase()
             );
     }
 
 
     /* =====================================================
-       UI HELPERS
+       MANAGEMENT UI
        ===================================================== */
 
     function showManagementLoading(
         container,
         message
     ) {
-
         container.innerHTML = `
             <div class="loading-state">
                 ${escapeHtml(message)}
@@ -3736,50 +3237,56 @@
         container,
         message
     ) {
-
         container.innerHTML = `
             <div class="error-state">
-                ${escapeHtml(
-                    message ||
-                    "Unable to load records."
-                )}
+
+                <strong>
+                    Unable to load records
+                </strong>
+
+                <div>
+                    ${escapeHtml(
+                        message ||
+                        "Please try again."
+                    )}
+                </div>
+
+                <br>
+
+                <button
+                    type="button"
+                    class="admin-refresh-btn"
+                    onclick="location.reload()">
+                    Reload Admin Panel
+                </button>
+
             </div>
         `;
     }
 
 
-    function capitalize(
-        value
-    ) {
-
+    function capitalize(value) {
         if (!value) {
             return "";
         }
 
         return (
-            value.charAt(0)
-                .toUpperCase() +
+            value.charAt(0).toUpperCase() +
             value.slice(1)
         );
     }
 
 
     /* =====================================================
-       REFRESH EVERYTHING
+       REFRESH
        ===================================================== */
 
     async function refreshEverything() {
-
         await Promise.allSettled([
-
             loadDashboard(),
-
             loadDeposits(),
-
             loadWithdrawals(),
-
             loadInvestments(),
-
             loadMaintenance()
         ]);
     }
@@ -3790,505 +3297,14 @@
        ===================================================== */
 
     function handleHashNavigation() {
-
         let hash =
             window.location.hash
-                .replace(
-                    "#",
-                    ""
-                )
+                .replace("#", "")
                 .trim()
                 .toLowerCase();
 
         if (!hash) {
-            hash =
-                "dashboard";
+            hash = "dashboard";
         }
 
-        if (
-            hash ===
-            "deposits"
-        ) {
-
-            loadDeposits()
-                .catch(
-                    error =>
-                        console.error(
-                            error
-                        )
-                );
-
-            return;
-        }
-
-        if (
-            hash ===
-            "withdrawals"
-        ) {
-
-            loadWithdrawals()
-                .catch(
-                    error =>
-                        console.error(
-                            error
-                        )
-                );
-
-            return;
-        }
-
-        if (
-            hash ===
-            "investments"
-        ) {
-
-            loadInvestments()
-                .catch(
-                    error =>
-                        console.error(
-                            error
-                        )
-                );
-
-            return;
-        }
-    }
-
-
-    /* =====================================================
-       LOGOUT
-       ===================================================== */
-
-    async function logout() {
-
-        try {
-
-            await apiRequest(
-                ENDPOINTS.logout,
-                {
-                    method: "POST"
-                },
-                false
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "Logout request failed:",
-                error.message
-            );
-
-        } finally {
-
-            window.location.href =
-                "login.html";
-        }
-    }
-
-
-    /* =====================================================
-       MOBILE NAVIGATION
-       ===================================================== */
-
-    function initMobileNavigation() {
-
-        const menuButton =
-            byId(
-                "mobileMenuButton"
-            ) ||
-            qs(
-                "[data-mobile-menu]"
-            ) ||
-            qs(
-                ".mobile-menu-button"
-            );
-
-        const sidebar =
-            byId(
-                "adminSidebar"
-            ) ||
-            qs(
-                ".admin-sidebar"
-            ) ||
-            qs(
-                ".sidebar"
-            );
-
-        if (
-            !menuButton ||
-            !sidebar
-        ) {
-            return;
-        }
-
-        /*
-         * Prevent duplicate listeners.
-         */
-        if (
-            menuButton.dataset.bound ===
-            "true"
-        ) {
-            return;
-        }
-
-        menuButton.dataset.bound =
-            "true";
-
-        menuButton.addEventListener(
-            "click",
-            () => {
-
-                sidebar.classList.toggle(
-                    "open"
-                );
-            }
-        );
-    }
-
-
-    /* =====================================================
-       GENERAL EVENTS
-       ===================================================== */
-
-    function bindGeneralEvents() {
-
-        /*
-         * Logout
-         */
-        qsa(
-            "#logoutBtn, [data-admin-logout]"
-        ).forEach(
-            button => {
-
-                if (
-                    button.dataset.bound ===
-                    "true"
-                ) {
-                    return;
-                }
-
-                button.dataset.bound =
-                    "true";
-
-                button.addEventListener(
-                    "click",
-                    event => {
-
-                        event.preventDefault();
-
-                        logout();
-                    }
-                );
-            }
-        );
-
-
-        /*
-         * Save maintenance
-         */
-        const saveButton =
-            byId(
-                "savePlatformSettings"
-            );
-
-        if (
-            saveButton &&
-            saveButton.dataset.bound !==
-            "true"
-        ) {
-
-            saveButton.dataset.bound =
-                "true";
-
-            saveButton.addEventListener(
-                "click",
-                event => {
-
-                    event.preventDefault();
-
-                    saveMaintenance();
-                }
-            );
-        }
-
-
-        /*
-         * Hash changes
-         */
-        if (
-            !window.__crownCashAdminHashBound
-        ) {
-
-            window.__crownCashAdminHashBound =
-                true;
-
-            window.addEventListener(
-                "hashchange",
-                handleHashNavigation
-            );
-        }
-
-
-        /*
-         * Close mobile sidebar
-         */
-        qsa(
-            'a[href^="#"]'
-        ).forEach(
-            link => {
-
-                if (
-                    link.dataset.bound ===
-                    "true"
-                ) {
-                    return;
-                }
-
-                link.dataset.bound =
-                    "true";
-
-                link.addEventListener(
-                    "click",
-                    () => {
-
-                        const sidebar =
-                            qs(
-                                ".admin-sidebar"
-                            ) ||
-                            qs(
-                                ".sidebar"
-                            );
-
-                        if (sidebar) {
-
-                            sidebar.classList.remove(
-                                "open"
-                            );
-                        }
-                    }
-                );
-            }
-        );
-    }
-
-
-    /* =====================================================
-       GLOBAL ADMIN API
-       ===================================================== */
-
-    window.CrownCashAdmin = {
-
-        loadDashboard,
-
-        loadDeposits,
-
-        loadWithdrawals,
-
-        loadInvestments,
-
-        loadMaintenance,
-
-        refreshEverything,
-
-        approveDeposit:
-            depositId =>
-                handleAction(
-                    "deposit",
-                    "approve",
-                    depositId
-                ),
-
-        rejectDeposit:
-            depositId =>
-                handleAction(
-                    "deposit",
-                    "reject",
-                    depositId
-                ),
-
-        approveWithdrawal:
-            (
-                withdrawalId,
-                userId
-            ) =>
-                handleAction(
-                    "withdrawal",
-                    "approve",
-                    withdrawalId,
-                    userId
-                ),
-
-        rejectWithdrawal:
-            (
-                withdrawalId,
-                userId
-            ) =>
-                handleAction(
-                    "withdrawal",
-                    "reject",
-                    withdrawalId,
-                    userId
-                ),
-
-        approveInvestment:
-            investmentId =>
-                handleAction(
-                    "investment",
-                    "approve",
-                    investmentId
-                ),
-
-        rejectInvestment:
-            investmentId =>
-                handleAction(
-                    "investment",
-                    "reject",
-                    investmentId
-                )
-    };
-
-
-    /* =====================================================
-       INITIALIZATION
-       ===================================================== */
-
-    async function init() {
-
-        showAdminLoader(
-            "Loading Crown Cash Admin..."
-        );
-
-        try {
-
-            /*
-             * STEP 1:
-             * Authenticate first.
-             */
-            await authenticateAdmin();
-
-
-            /*
-             * STEP 2:
-             * Load everything.
-             *
-             * Promise.allSettled means one
-             * non-critical endpoint failing
-             * does not keep the entire admin
-             * interface stuck.
-             */
-            await Promise.allSettled([
-
-                loadProfile(),
-
-                loadDashboard(),
-
-                loadDeposits(),
-
-                loadWithdrawals(),
-
-                loadInvestments(),
-
-                loadMaintenance()
-            ]);
-
-
-            /*
-             * STEP 3:
-             * Bind UI.
-             */
-            bindGeneralEvents();
-
-            initMobileNavigation();
-
-
-            /*
-             * STEP 4:
-             * Process current URL hash.
-             */
-            handleHashNavigation();
-
-
-            /*
-             * STEP 5:
-             * VERY IMPORTANT:
-             * Hide the loading screen.
-             */
-            hideAdminLoader();
-
-
-            console.log(
-                "Crown Cash Admin initialized successfully."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Admin initialization failed:",
-                error
-            );
-
-            /*
-             * Authentication failures
-             * should not expose internal
-             * backend information.
-             */
-            const message =
-                (
-                    state.authenticated &&
-                    state.authorized
-                )
-                    ? (
-                        error?.message ||
-                        "Unable to load administrator panel."
-                    )
-                    : "Administrator access required.";
-
-
-            const loader =
-                byId(
-                    "adminLoader"
-                );
-
-            if (loader) {
-
-                loader.innerHTML = `
-                    <div class="error-state"
-                         style="
-                            text-align:center;
-                            padding:30px;
-                         ">
-
-                        <strong>
-                            ${escapeHtml(message)}
-                        </strong>
-
-                    </div>
-                `;
-            }
-        }
-    }
-
-
-    /* =====================================================
-       START APPLICATION
-       ===================================================== */
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            init,
-            {
-                once: true
-            }
-        );
-
-    } else {
-
-        init();
-    }
-
-})();
+        if (hash === "deposits

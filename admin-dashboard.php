@@ -4,6 +4,15 @@
 |--------------------------------------------------------------------------
 | CROWN CASH - ADMIN DASHBOARD API
 |--------------------------------------------------------------------------
+| File: admin-dashboard.php
+|
+| SECURITY:
+| - Requires authenticated Crown Cash session.
+| - Requires the current database user to have an admin role.
+| - A normal user receives HTTP 403.
+| - Environment ADMIN_USER_ID / ADMIN_EMAIL can further restrict access,
+|   but can NEVER grant admin privileges to a normal user.
+|--------------------------------------------------------------------------
 */
 
 declare(strict_types=1);
@@ -49,16 +58,11 @@ $allowedOrigins = [
     'https://www.crown-cash.vercel.app'
 ];
 
-$requestOrigin =
-    $_SERVER['HTTP_ORIGIN'] ?? '';
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (
     $requestOrigin !== '' &&
-    in_array(
-        $requestOrigin,
-        $allowedOrigins,
-        true
-    )
+    in_array($requestOrigin, $allowedOrigins, true)
 ) {
 
     header(
@@ -89,8 +93,7 @@ if (
 */
 
 if (
-    ($_SERVER['REQUEST_METHOD'] ?? '') ===
-    'OPTIONS'
+    ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS'
 ) {
 
     http_response_code(204);
@@ -106,8 +109,7 @@ if (
 */
 
 if (
-    ($_SERVER['REQUEST_METHOD'] ?? '') !==
-    'GET'
+    ($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET'
 ) {
 
     http_response_code(405);
@@ -125,12 +127,6 @@ if (
 |--------------------------------------------------------------------------
 | SESSION
 |--------------------------------------------------------------------------
-|
-| IMPORTANT:
-| Do NOT call session_start() with the default PHPSESSID.
-|
-| config.php is responsible for the Crown Cash session.
-|--------------------------------------------------------------------------
 */
 
 try {
@@ -146,9 +142,7 @@ try {
         session_status() !== PHP_SESSION_ACTIVE
     ) {
 
-        session_name(
-            'CROWN_CASH_SESSION'
-        );
+        session_name('CROWN_CASH_SESSION');
 
         session_set_cookie_params([
             'lifetime' => 0,
@@ -209,31 +203,60 @@ function crownCashDashboardResponse(
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATION
+| SESSION AUTHENTICATION
 |--------------------------------------------------------------------------
 */
 
 $loggedIn =
     isset($_SESSION['logged_in']) &&
-    $_SESSION['logged_in'] === true;
-
-$sessionUserId =
-    trim(
-        (string)(
-            $_SESSION['user_id']
-            ?? ''
-        )
+    (
+        $_SESSION['logged_in'] === true ||
+        $_SESSION['logged_in'] === 1 ||
+        $_SESSION['logged_in'] === '1'
     );
 
+$sessionUserId = trim(
+    (string)(
+        $_SESSION['user_id']
+        ?? $_SESSION['userId']
+        ?? $_SESSION['id']
+        ?? $_SESSION['_id']
+        ?? ''
+    )
+);
 
-if (
-    !$loggedIn ||
-    $sessionUserId === ''
-) {
+$sessionEmail = strtolower(
+    trim(
+        (string)(
+            $_SESSION['user_email']
+            ?? $_SESSION['email']
+            ?? ''
+        )
+    )
+);
+
+
+if (!$loggedIn) {
 
     crownCashDashboardResponse(
         false,
         'Authentication required.',
+        [
+            'authenticated' => false,
+            'authorized' => false
+        ],
+        401
+    );
+}
+
+if (
+    $sessionUserId === '' &&
+    $sessionEmail === ''
+) {
+
+    crownCashDashboardResponse(
+        false,
+        'Authenticated session does not contain a valid user identity.',
         [
             'authenticated' => false,
             'authorized' => false
@@ -262,46 +285,29 @@ try {
     }
 
     if (!isset($deposits)) {
-        $deposits =
-            $db->selectCollection(
-                'deposits'
-            );
+        $deposits = $db->selectCollection('deposits');
     }
 
     if (!isset($withdrawals)) {
-        $withdrawals =
-            $db->selectCollection(
-                'withdrawals'
-            );
+        $withdrawals = $db->selectCollection('withdrawals');
     }
 
     if (!isset($investments)) {
-        $investments =
-            $db->selectCollection(
-                'investments'
-            );
+        $investments = $db->selectCollection('investments');
     }
 
     if (!isset($referrals)) {
-        $referrals =
-            $db->selectCollection(
-                'referrals'
-            );
+        $referrals = $db->selectCollection('referrals');
     }
 
     if (!isset($transactions)) {
-        $transactions =
-            $db->selectCollection(
-                'transactions'
-            );
+        $transactions = $db->selectCollection('transactions');
     }
 
     try {
 
         $supportTickets =
-            $db->selectCollection(
-                'support_tickets'
-            );
+            $db->selectCollection('support_tickets');
 
     } catch (Throwable $e) {
 
@@ -321,7 +327,7 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| FIND CURRENT ADMIN
+| FIND CURRENT USER
 |--------------------------------------------------------------------------
 */
 
@@ -330,48 +336,53 @@ $currentUser = null;
 
 /*
 |--------------------------------------------------------------------------
-| BY OBJECT ID
+| OBJECT ID LOOKUP
 |--------------------------------------------------------------------------
 */
 
-try {
+if ($sessionUserId !== '') {
 
-    if (
-        preg_match(
-            '/^[a-f0-9]{24}$/i',
-            $sessionUserId
-        )
-    ) {
+    try {
 
-        $currentUser =
-            $users->findOne([
-                '_id' =>
-                    new MongoDB\BSON\ObjectId(
-                        $sessionUserId
-                    )
-            ]);
+        if (
+            preg_match(
+                '/^[a-f0-9]{24}$/i',
+                $sessionUserId
+            )
+        ) {
+
+            $currentUser =
+                $users->findOne([
+                    '_id' =>
+                        new MongoDB\BSON\ObjectId(
+                            $sessionUserId
+                        )
+                ]);
+        }
+
+    } catch (Throwable $e) {
+
+        $currentUser = null;
     }
-
-} catch (Throwable $e) {
-
-    $currentUser = null;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| BY STRING ID
+| STRING ID LOOKUP
 |--------------------------------------------------------------------------
 */
 
-if (!$currentUser) {
+if (
+    !$currentUser &&
+    $sessionUserId !== ''
+) {
 
     try {
 
         $currentUser =
             $users->findOne([
-                'id' =>
-                    $sessionUserId
+                'id' => $sessionUserId
             ]);
 
     } catch (Throwable $e) {
@@ -383,37 +394,25 @@ if (!$currentUser) {
 
 /*
 |--------------------------------------------------------------------------
-| BY EMAIL
+| EMAIL LOOKUP
 |--------------------------------------------------------------------------
 */
 
-if (!$currentUser) {
+if (
+    !$currentUser &&
+    $sessionEmail !== ''
+) {
 
-    $sessionEmail =
-        strtolower(
-            trim(
-                (string)(
-                    $_SESSION['user_email']
-                    ?? $_SESSION['email']
-                    ?? ''
-                )
-            )
-        );
+    try {
 
-    if ($sessionEmail !== '') {
+        $currentUser =
+            $users->findOne([
+                'email' => $sessionEmail
+            ]);
 
-        try {
+    } catch (Throwable $e) {
 
-            $currentUser =
-                $users->findOne([
-                    'email' =>
-                        $sessionEmail
-                ]);
-
-        } catch (Throwable $e) {
-
-            $currentUser = null;
-        }
+        $currentUser = null;
     }
 }
 
@@ -428,9 +427,9 @@ if (!$currentUser) {
 
     crownCashDashboardResponse(
         false,
-        'Administrator account could not be found.',
+        'Authenticated user could not be found.',
         [
-            'authenticated' => false,
+            'authenticated' => true,
             'authorized' => false
         ],
         401
@@ -440,7 +439,7 @@ if (!$currentUser) {
 
 /*
 |--------------------------------------------------------------------------
-| USER ARRAY
+| NORMALIZE USER
 |--------------------------------------------------------------------------
 */
 
@@ -452,15 +451,13 @@ $user =
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN ID
+| CURRENT USER ID
 |--------------------------------------------------------------------------
 */
 
 $currentUserId = '';
 
-if (
-    isset($user['_id'])
-) {
+if (isset($user['_id'])) {
 
     if (
         $user['_id']
@@ -497,50 +494,48 @@ if ($currentUserId === '') {
 |--------------------------------------------------------------------------
 */
 
-$email =
-    strtolower(
-        trim(
-            (string)(
-                $user['email']
-                ?? ''
-            )
+$email = strtolower(
+    trim(
+        (string)(
+            $user['email']
+            ?? ''
         )
-    );
+    )
+);
 
-$role =
-    strtolower(
-        trim(
-            (string)(
-                $user['role']
-                ?? ''
-            )
+$role = strtolower(
+    trim(
+        (string)(
+            $user['role']
+            ?? $user['user_role']
+            ?? ''
         )
-    );
+    )
+);
 
-$accountType =
-    strtolower(
-        trim(
-            (string)(
-                $user['account_type']
-                ?? ''
-            )
+$accountType = strtolower(
+    trim(
+        (string)(
+            $user['account_type']
+            ?? $user['accountType']
+            ?? ''
         )
-    );
+    )
+);
 
-$status =
-    strtolower(
-        trim(
-            (string)(
-                $user['status']
-                ?? 'active'
-            )
+$status = strtolower(
+    trim(
+        (string)(
+            $user['status']
+            ?? 'active'
         )
-    );
+    )
+);
 
 
 /*
 |--------------------------------------------------------------------------
-| STATUS CHECK
+| ACCOUNT STATUS
 |--------------------------------------------------------------------------
 */
 
@@ -572,11 +567,17 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN CHECK
+| ADMIN ROLE CHECK
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| A user MUST have an admin role in the database.
+|
+| ADMIN_USER_ID / ADMIN_EMAIL are NOT allowed to create admin access.
 |--------------------------------------------------------------------------
 */
 
-$isAdmin =
+$isAdminRole =
     in_array(
         $role,
         [
@@ -596,7 +597,29 @@ $isAdmin =
     );
 
 
-if (!$isAdmin) {
+/*
+|--------------------------------------------------------------------------
+| OPTIONAL EXPLICIT ADMIN FLAG
+|--------------------------------------------------------------------------
+|
+| Supports installations that use is_admin=true.
+|--------------------------------------------------------------------------
+*/
+
+if (
+    isset($user['is_admin']) &&
+    (
+        $user['is_admin'] === true ||
+        $user['is_admin'] === 1 ||
+        $user['is_admin'] === '1'
+    )
+) {
+
+    $isAdminRole = true;
+}
+
+
+if (!$isAdminRole) {
 
     crownCashDashboardResponse(
         false,
@@ -612,28 +635,31 @@ if (!$isAdmin) {
 
 /*
 |--------------------------------------------------------------------------
-| ENVIRONMENT ADMIN CHECK
+| ENVIRONMENT ADMIN RESTRICTION
+|--------------------------------------------------------------------------
+|
+| If ADMIN_USER_ID or ADMIN_EMAIL is configured, the authenticated
+| administrator must also match one of them.
+|
+| IMPORTANT:
+| These values RESTRICT admin access.
+| They NEVER grant admin access to a normal user.
 |--------------------------------------------------------------------------
 */
 
-$configuredAdminId =
+$configuredAdminId = trim(
+    (string)(
+        getenv('ADMIN_USER_ID') ?: ''
+    )
+);
+
+$configuredAdminEmail = strtolower(
     trim(
         (string)(
-            getenv('ADMIN_USER_ID')
-            ?: ''
+            getenv('ADMIN_EMAIL') ?: ''
         )
-    );
-
-$configuredAdminEmail =
-    strtolower(
-        trim(
-            (string)(
-                getenv('ADMIN_EMAIL')
-                ?: ''
-            )
-        )
-    );
-
+    )
+);
 
 if (
     $configuredAdminId !== '' ||
@@ -642,19 +668,13 @@ if (
 
     $idMatches =
         $configuredAdminId !== '' &&
-        strtolower(
-            $configuredAdminId
-        ) === strtolower(
-            $currentUserId
-        );
+        strtolower($configuredAdminId) ===
+        strtolower($currentUserId);
 
     $emailMatches =
         $configuredAdminEmail !== '' &&
-        strtolower(
-            $configuredAdminEmail
-        ) === strtolower(
-            $email
-        );
+        $configuredAdminEmail ===
+        strtolower($email);
 
     if (
         !$idMatches &&
@@ -684,9 +704,7 @@ function crownCashNumber(
     mixed $value
 ): float {
 
-    if (
-        $value === null
-    ) {
+    if ($value === null) {
         return 0.0;
     }
 
@@ -694,12 +712,11 @@ function crownCashNumber(
         is_int($value) ||
         is_float($value)
     ) {
+
         return (float)$value;
     }
 
-    if (
-        is_string($value)
-    ) {
+    if (is_string($value)) {
 
         $value =
             str_replace(
@@ -723,8 +740,7 @@ function crownCashNumber(
 
         try {
 
-            $value =
-                (string)$value;
+            $value = (string)$value;
 
             return is_numeric($value)
                 ? (float)$value
@@ -793,9 +809,7 @@ function crownCashDate(
 
         try {
 
-            return new DateTimeImmutable(
-                $value
-            );
+            return new DateTimeImmutable($value);
 
         } catch (Throwable $e) {
 
@@ -809,39 +823,36 @@ function crownCashDate(
 
 /*
 |--------------------------------------------------------------------------
-| USER NAME
+| ADMIN NAME
 |--------------------------------------------------------------------------
 */
 
-$firstName =
-    trim(
-        (string)(
-            $user['first_name']
-            ?? $user['firstname']
-            ?? $user['firstName']
-            ?? ''
-        )
-    );
+$firstName = trim(
+    (string)(
+        $user['first_name']
+        ?? $user['firstname']
+        ?? $user['firstName']
+        ?? ''
+    )
+);
 
-$lastName =
-    trim(
-        (string)(
-            $user['last_name']
-            ?? $user['lastname']
-            ?? $user['lastName']
-            ?? ''
-        )
-    );
+$lastName = trim(
+    (string)(
+        $user['last_name']
+        ?? $user['lastname']
+        ?? $user['lastName']
+        ?? ''
+    )
+);
 
-$adminName =
-    trim(
-        (string)(
-            $user['full_name']
-            ?? $user['fullName']
-            ?? $user['name']
-            ?? ''
-        )
-    );
+$adminName = trim(
+    (string)(
+        $user['full_name']
+        ?? $user['fullName']
+        ?? $user['name']
+        ?? ''
+    )
+);
 
 if ($adminName === '') {
 
@@ -855,8 +866,7 @@ if ($adminName === '') {
 
 if ($adminName === '') {
 
-    $adminName =
-        'Administrator';
+    $adminName = 'Administrator';
 }
 
 
@@ -943,13 +953,9 @@ $pendingDeposits = 0.0;
 $rejectedDeposits = 0.0;
 $pendingDepositCount = 0;
 
-
 try {
 
-    foreach (
-        $deposits->find([])
-        as $document
-    ) {
+    foreach ($deposits->find([]) as $document) {
 
         $doc =
             is_array($document)
@@ -972,9 +978,7 @@ try {
             );
 
         $verified =
-            !empty(
-                $doc['verified']
-            );
+            !empty($doc['verified']);
 
         if (
             $verified ||
@@ -990,8 +994,7 @@ try {
             )
         ) {
 
-            $totalDeposits +=
-                $amount;
+            $totalDeposits += $amount;
 
         } elseif (
             in_array(
@@ -1005,8 +1008,7 @@ try {
             )
         ) {
 
-            $pendingDeposits +=
-                $amount;
+            $pendingDeposits += $amount;
 
         } elseif (
             in_array(
@@ -1021,8 +1023,7 @@ try {
             )
         ) {
 
-            $rejectedDeposits +=
-                $amount;
+            $rejectedDeposits += $amount;
         }
     }
 
@@ -1055,13 +1056,9 @@ $totalWithdrawals = 0.0;
 $pendingWithdrawals = 0.0;
 $pendingWithdrawalCount = 0;
 
-
 try {
 
-    foreach (
-        $withdrawals->find([])
-        as $document
-    ) {
+    foreach ($withdrawals->find([]) as $document) {
 
         $doc =
             is_array($document)
@@ -1096,8 +1093,7 @@ try {
             )
         ) {
 
-            $totalWithdrawals +=
-                $amount;
+            $totalWithdrawals += $amount;
 
         } elseif (
             in_array(
@@ -1111,8 +1107,7 @@ try {
             )
         ) {
 
-            $pendingWithdrawals +=
-                $amount;
+            $pendingWithdrawals += $amount;
         }
     }
 
@@ -1146,13 +1141,9 @@ $activeInvestmentCount = 0;
 $pendingInvestmentCount = 0;
 $pendingInvestments = 0.0;
 
-
 try {
 
-    foreach (
-        $investments->find([])
-        as $document
-    ) {
+    foreach ($investments->find([]) as $document) {
 
         $doc =
             is_array($document)
@@ -1191,15 +1182,10 @@ try {
             )
         ) {
 
-            $totalInvestments +=
-                $amount;
+            $totalInvestments += $amount;
         }
 
-        if (
-            $investmentStatus ===
-            'active'
-        ) {
-
+        if ($investmentStatus === 'active') {
             $activeInvestmentCount++;
         }
 
@@ -1216,9 +1202,7 @@ try {
         ) {
 
             $pendingInvestmentCount++;
-
-            $pendingInvestments +=
-                $amount;
+            $pendingInvestments += $amount;
         }
     }
 
@@ -1259,15 +1243,13 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| SUPPORT TICKETS
+| SUPPORT
 |--------------------------------------------------------------------------
 */
 
 $openTickets = 0;
 
-if (
-    $supportTickets !== null
-) {
+if ($supportTickets !== null) {
 
     try {
 
@@ -1294,7 +1276,6 @@ if (
 
 $recentTransactions = [];
 
-
 try {
 
     $cursor =
@@ -1302,12 +1283,12 @@ try {
             [],
             [
                 'sort' => [
-                    'created_at' => -1
+                    'created_at' => -1,
+                    '_id' => -1
                 ],
                 'limit' => 8
             ]
         );
-
 
     foreach ($cursor as $document) {
 
@@ -1318,55 +1299,25 @@ try {
 
         $id = '';
 
-        if (
-            isset($doc['_id'])
-        ) {
+        if (isset($doc['_id'])) {
 
-            if (
-                $doc['_id']
-                instanceof MongoDB\BSON\ObjectId
-            ) {
-
-                $id =
-                    (string)$doc['_id'];
-
-            } else {
-
-                $id =
-                    (string)$doc['_id'];
-            }
+            $id = (string)$doc['_id'];
         }
 
         if ($id === '') {
 
             $id =
                 (string)(
-                    $doc['id']
-                    ?? ''
+                    $doc['id'] ?? ''
                 );
         }
 
         $userId = '';
 
-        if (
-            isset($doc['user_id'])
-        ) {
+        if (isset($doc['user_id'])) {
 
-            if (
-                $doc['user_id']
-                instanceof MongoDB\BSON\ObjectId
-            ) {
-
-                $userId =
-                    (string)$doc['user_id'];
-
-            } else {
-
-                $userId =
-                    trim(
-                        (string)$doc['user_id']
-                    );
-            }
+            $userId =
+                (string)$doc['user_id'];
         }
 
         $userName =
@@ -1381,9 +1332,6 @@ try {
             );
 
 
-        /*
-         * Resolve user name.
-         */
         if (
             $userName === '' &&
             $userId !== ''
@@ -1413,8 +1361,7 @@ try {
 
                     $transactionUser =
                         $users->findOne([
-                            'id' =>
-                                $userId
+                            'id' => $userId
                         ]);
                 }
 
@@ -1438,9 +1385,7 @@ try {
                             )
                         );
 
-                    if (
-                        $userName === ''
-                    ) {
+                    if ($userName === '') {
 
                         $userName =
                             trim(
@@ -1462,21 +1407,14 @@ try {
             } catch (Throwable $e) {}
         }
 
-        if (
-            $userName === ''
-        ) {
-
-            $userName =
-                'Crown Cash User';
+        if ($userName === '') {
+            $userName = 'Crown Cash User';
         }
-
 
         $created =
             crownCashDate(
-                $doc['created_at']
-                ?? null
+                $doc['created_at'] ?? null
             );
-
 
         $recentTransactions[] = [
 
@@ -1484,19 +1422,15 @@ try {
 
             '_id' => $id,
 
-            'user_id' =>
-                $userId,
+            'user_id' => $userId,
 
-            'user_name' =>
-                $userName,
+            'user_name' => $userName,
 
-            'name' =>
-                $userName,
+            'name' => $userName,
 
             'amount' =>
                 crownCashNumber(
-                    $doc['amount']
-                    ?? 0
+                    $doc['amount'] ?? 0
                 ),
 
             'type' =>
@@ -1532,7 +1466,6 @@ try {
 
 $recentUsers = [];
 
-
 try {
 
     $cursor =
@@ -1540,12 +1473,12 @@ try {
             [],
             [
                 'sort' => [
-                    'created_at' => -1
+                    'created_at' => -1,
+                    '_id' => -1
                 ],
                 'limit' => 8
             ]
         );
-
 
     foreach ($cursor as $document) {
 
@@ -1556,50 +1489,29 @@ try {
 
         $id = '';
 
-        if (
-            isset($doc['_id'])
-        ) {
-
-            if (
-                $doc['_id']
-                instanceof MongoDB\BSON\ObjectId
-            ) {
-
-                $id =
-                    (string)$doc['_id'];
-
-            } else {
-
-                $id =
-                    (string)$doc['_id'];
-            }
+        if (isset($doc['_id'])) {
+            $id = (string)$doc['_id'];
         }
 
-        if (
-            $id === ''
-        ) {
+        if ($id === '') {
 
             $id =
                 (string)(
-                    $doc['id']
-                    ?? ''
+                    $doc['id'] ?? ''
                 );
         }
-
 
         $first =
             trim(
                 (string)(
-                    $doc['first_name']
-                    ?? ''
+                    $doc['first_name'] ?? ''
                 )
             );
 
         $last =
             trim(
                 (string)(
-                    $doc['last_name']
-                    ?? ''
+                    $doc['last_name'] ?? ''
                 )
             );
 
@@ -1616,9 +1528,7 @@ try {
                 )
             );
 
-        if (
-            $name === ''
-        ) {
+        if ($name === '') {
 
             $name =
                 trim(
@@ -1628,43 +1538,30 @@ try {
                 );
         }
 
-        if (
-            $name === ''
-        ) {
-
-            $name =
-                'Crown Cash User';
+        if ($name === '') {
+            $name = 'Crown Cash User';
         }
-
 
         $created =
             crownCashDate(
-                $doc['created_at']
-                ?? null
+                $doc['created_at'] ?? null
             );
-
 
         $recentUsers[] = [
 
-            'id' =>
-                $id,
+            'id' => $id,
 
-            '_id' =>
-                $id,
+            '_id' => $id,
 
-            'name' =>
-                $name,
+            'name' => $name,
 
-            'first_name' =>
-                $first,
+            'first_name' => $first,
 
-            'last_name' =>
-                $last,
+            'last_name' => $last,
 
             'email' =>
                 (string)(
-                    $doc['email']
-                    ?? ''
+                    $doc['email'] ?? ''
                 ),
 
             'status' =>
@@ -1697,63 +1594,46 @@ crownCashDashboardResponse(
     'Administrator dashboard data loaded successfully.',
     [
 
-        'authenticated' =>
-            true,
+        'authenticated' => true,
 
-        'authorized' =>
-            true,
-
+        'authorized' => true,
 
         'admin' => [
 
-            'id' =>
-                $currentUserId,
+            'id' => $currentUserId,
 
-            'email' =>
-                $email,
+            'email' => $email,
 
-            'name' =>
-                $adminName,
+            'name' => $adminName,
 
-            'first_name' =>
-                $firstName,
+            'first_name' => $firstName,
 
-            'last_name' =>
-                $lastName,
+            'last_name' => $lastName,
 
-            'role' =>
-                $role,
+            'role' => $role,
 
-            'account_type' =>
-                $accountType,
+            'account_type' => $accountType,
 
-            'status' =>
-                $status
+            'is_admin' => true,
+
+            'status' => $status
         ],
-
 
         'stats' => [
 
-            'total_users' =>
-                $totalUsers,
+            'total_users' => $totalUsers,
 
-            'active_users' =>
-                $activeUsers,
+            'active_users' => $activeUsers,
 
-            'new_accounts' =>
-                $newAccounts,
+            'new_accounts' => $newAccounts,
 
-            'total_deposits' =>
-                $totalDeposits,
+            'total_deposits' => $totalDeposits,
 
-            'pending_deposits' =>
-                $pendingDeposits,
+            'pending_deposits' => $pendingDeposits,
 
-            'approved_deposits' =>
-                $totalDeposits,
+            'approved_deposits' => $totalDeposits,
 
-            'rejected_deposits' =>
-                $rejectedDeposits,
+            'rejected_deposits' => $rejectedDeposits,
 
             'pending_deposit_count' =>
                 $pendingDepositCount,
@@ -1789,20 +1669,15 @@ crownCashDashboardResponse(
                 $openTickets
         ],
 
-
         'summary' => [
 
-            'users' =>
-                $totalUsers,
+            'users' => $totalUsers,
 
-            'active_users' =>
-                $activeUsers,
+            'active_users' => $activeUsers,
 
-            'new_accounts' =>
-                $newAccounts,
+            'new_accounts' => $newAccounts,
 
-            'deposits' =>
-                $totalDeposits,
+            'deposits' => $totalDeposits,
 
             'pending_deposits' =>
                 $pendingDeposits,
@@ -1832,7 +1707,6 @@ crownCashDashboardResponse(
                 $openTickets
         ],
 
-
         'pending_activity' => [
 
             'deposits' =>
@@ -1857,13 +1731,11 @@ crownCashDashboardResponse(
                 $newAccounts
         ],
 
-
         'recent_transactions' =>
             $recentTransactions,
 
         'recent_users' =>
             $recentUsers,
-
 
         'generated_at' =>
             (new DateTimeImmutable(
@@ -1872,5 +1744,3 @@ crownCashDashboardResponse(
             ))->format('c')
     ]
 );
-
-?>

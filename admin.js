@@ -1,7 +1,7 @@
 /* ==========================================================================
    CROWN CASH - ADMIN DASHBOARD
    COMPLETE REPLACEMENT admin.js
-   Version: 2026-10-03
+   Version: 2026-10-03 ADMIN03
    ========================================================================== */
 
 (() => {
@@ -31,6 +31,9 @@
     const ADMIN_INVESTMENTS_API =
         `${API_BASE}/admin_investments.php`;
 
+    const ADMIN_MAINTENANCE_API =
+        `${API_BASE}/admin-maintenance.php`;
+
     const LOGOUT_API =
         `${API_BASE}/logout.php`;
 
@@ -59,7 +62,9 @@
 
         withdrawals: [],
 
-        investments: []
+        investments: [],
+
+        maintenance: null
 
     };
 
@@ -69,14 +74,18 @@
     ====================================================================== */
 
     function $(selector, parent = document) {
+
         return parent.querySelector(selector);
+
     }
 
 
     function $$(selector, parent = document) {
+
         return Array.from(
             parent.querySelectorAll(selector)
         );
+
     }
 
 
@@ -92,11 +101,14 @@
             value === null ||
             value === undefined
         ) {
+
             element.textContent = "0";
+
             return;
         }
 
-        element.textContent = String(value);
+        element.textContent =
+            String(value);
     }
 
 
@@ -106,7 +118,8 @@
 
     function showLoader() {
 
-        const loader = $("#pageLoader");
+        const loader =
+            $("#pageLoader");
 
         if (!loader) {
             return;
@@ -114,13 +127,15 @@
 
         loader.classList.remove("hidden");
 
-        loader.style.display = "flex";
+        loader.style.display =
+            "flex";
     }
 
 
     function hideLoader() {
 
-        const loader = $("#pageLoader");
+        const loader =
+            $("#pageLoader");
 
         if (!loader) {
             return;
@@ -128,7 +143,8 @@
 
         loader.classList.add("hidden");
 
-        loader.style.display = "none";
+        loader.style.display =
+            "none";
     }
 
 
@@ -141,28 +157,51 @@
         type = "info"
     ) {
 
-        let box = $("#adminMessage");
+        let box =
+            $("#adminMessage");
+
 
         if (!box) {
 
-            box = document.createElement("div");
+            box =
+                document.createElement("div");
 
-            box.id = "adminMessage";
+            box.id =
+                "adminMessage";
 
-            box.style.position = "fixed";
-            box.style.top = "20px";
-            box.style.right = "20px";
-            box.style.zIndex = "999999";
-            box.style.maxWidth = "420px";
-            box.style.padding = "14px 18px";
-            box.style.borderRadius = "12px";
-            box.style.fontSize = "14px";
-            box.style.fontWeight = "600";
+            box.style.position =
+                "fixed";
+
+            box.style.top =
+                "20px";
+
+            box.style.right =
+                "20px";
+
+            box.style.zIndex =
+                "999999";
+
+            box.style.maxWidth =
+                "420px";
+
+            box.style.padding =
+                "14px 18px";
+
+            box.style.borderRadius =
+                "12px";
+
+            box.style.fontSize =
+                "14px";
+
+            box.style.fontWeight =
+                "600";
+
             box.style.boxShadow =
                 "0 10px 30px rgba(0,0,0,.15)";
 
             document.body.appendChild(box);
         }
+
 
         const colors = {
 
@@ -185,10 +224,14 @@
                 background: "#eef4ff",
                 color: "#2456a6"
             }
+
         };
 
+
         const selected =
-            colors[type] || colors.info;
+            colors[type] ||
+            colors.info;
+
 
         box.style.background =
             selected.background;
@@ -197,18 +240,28 @@
             selected.color;
 
         box.textContent =
-            message || "Operation completed.";
+            message ||
+            "Operation completed.";
 
-        box.style.display = "block";
+        box.style.display =
+            "block";
 
-        clearTimeout(box._hideTimer);
+
+        clearTimeout(
+            box._hideTimer
+        );
+
 
         box._hideTimer =
-            setTimeout(() => {
+            setTimeout(
+                () => {
 
-                box.style.display = "none";
+                    box.style.display =
+                        "none";
 
-            }, 7000);
+                },
+                7000
+            );
     }
 
 
@@ -225,11 +278,13 @@
         const controller =
             new AbortController();
 
+
         const timer =
             setTimeout(
                 () => controller.abort(),
                 timeout
             );
+
 
         try {
 
@@ -238,9 +293,11 @@
                 {
                     ...options,
 
-                    credentials: "include",
+                    credentials:
+                        "include",
 
-                    cache: "no-store",
+                    cache:
+                        "no-store",
 
                     signal:
                         controller.signal
@@ -258,12 +315,16 @@
        READ RESPONSE
     ====================================================================== */
 
-    async function readResponse(response) {
+    async function readResponse(
+        response
+    ) {
 
         const text =
             await response.text();
 
+
         let data = {};
+
 
         if (text) {
 
@@ -279,13 +340,21 @@
                     text
                 );
 
+
                 data = {
+
                     success: false,
+
                     message:
-                        text.substring(0, 500)
+                        text.substring(
+                            0,
+                            500
+                        )
+
                 };
             }
         }
+
 
         data._httpStatus =
             response.status;
@@ -293,15 +362,13 @@
         data._ok =
             response.ok;
 
+
         return data;
     }
 
 
     /* ======================================================================
        API REQUEST
-       IMPORTANT:
-       Secondary admin endpoints DO NOT redirect to login on 401.
-       Only admin-auth.php decides whether the admin can enter the panel.
     ====================================================================== */
 
     async function apiRequest(
@@ -311,11 +378,17 @@
     ) {
 
         const {
+
             redirectOnAuth = false,
-            timeout = REQUEST_TIMEOUT
+
+            timeout =
+                REQUEST_TIMEOUT
+
         } = config;
 
+
         let response;
+
 
         try {
 
@@ -337,8 +410,11 @@
                                 }
                                 : {}),
 
-                            ...(options.headers || {})
+                            ...(options.headers ||
+                                {})
+
                         }
+
                     },
                     timeout
                 );
@@ -351,6 +427,7 @@
                 error
             );
 
+
             if (
                 error.name ===
                 "AbortError"
@@ -360,6 +437,7 @@
                     "Request timed out. Please try again."
                 );
             }
+
 
             throw new Error(
                 "Unable to connect to the Crown Cash server."
@@ -388,12 +466,9 @@
         }
 
 
-        /* --------------------------------------------------------------
-           401
-        -------------------------------------------------------------- */
-
         if (
-            response.status === 401
+            response.status ===
+            401
         ) {
 
             if (redirectOnAuth) {
@@ -407,6 +482,7 @@
                 redirectToLogin();
             }
 
+
             throw new Error(
                 data.message ||
                 data.error ||
@@ -415,12 +491,9 @@
         }
 
 
-        /* --------------------------------------------------------------
-           403
-        -------------------------------------------------------------- */
-
         if (
-            response.status === 403
+            response.status ===
+            403
         ) {
 
             throw new Error(
@@ -431,10 +504,6 @@
         }
 
 
-        /* --------------------------------------------------------------
-           OTHER HTTP ERRORS
-        -------------------------------------------------------------- */
-
         if (!response.ok) {
 
             const message =
@@ -444,13 +513,10 @@
                 data.reason ||
                 `Server error (${response.status}).`;
 
+
             throw new Error(message);
         }
 
-
-        /* --------------------------------------------------------------
-           APPLICATION FAILURE
-        -------------------------------------------------------------- */
 
         if (
             Object.prototype.hasOwnProperty.call(
@@ -486,6 +552,7 @@
             return;
         }
 
+
         window.location.href =
             "login.html";
     }
@@ -514,12 +581,14 @@
             const authenticated =
                 data.authenticated === true;
 
+
             const authorized =
                 data.authorized === true;
 
 
             AdminDashboard.authenticated =
                 authenticated;
+
 
             AdminDashboard.authorized =
                 authorized;
@@ -546,10 +615,12 @@
                     "error"
                 );
 
+
                 setTimeout(
                     redirectToLogin,
                     1200
                 );
+
 
                 return false;
             }
@@ -564,8 +635,10 @@
                 error
             );
 
+
             AdminDashboard.authenticated =
                 false;
+
 
             AdminDashboard.authorized =
                 false;
@@ -618,6 +691,7 @@
                 AdminDashboard.profile =
                     user;
 
+
                 renderAdminProfile(
                     user
                 );
@@ -633,12 +707,15 @@
                 error.message
             );
 
+
             return null;
         }
     }
 
 
-    function renderAdminProfile(user) {
+    function renderAdminProfile(
+        user
+    ) {
 
         const firstName =
             getValue(
@@ -822,11 +899,6 @@
             );
 
 
-            /*
-             * Do not replace the dashboard with fake zero values.
-             * This makes backend problems visible.
-             */
-
             showDashboardConnectionError(
                 error.message
             );
@@ -837,7 +909,9 @@
     }
 
 
-    function renderDashboard(data) {
+    function renderDashboard(
+        data
+    ) {
 
         if (!data) {
             return;
@@ -865,22 +939,15 @@
             {};
 
 
-        /* ==============================================================
-           USERS
-        ============================================================== */
-
         const totalUsers =
             getNumericValue(
                 stats.total_users,
                 stats.users,
                 stats.users_count,
-
                 data.total_users,
                 data.totalUsers,
-
                 users.total_users,
                 users.total,
-
                 0
             );
 
@@ -889,13 +956,10 @@
             getNumericValue(
                 stats.active_users,
                 stats.activeUsers,
-
                 data.active_users,
                 data.activeUsers,
-
                 users.active_users,
                 users.active,
-
                 0
             );
 
@@ -904,13 +968,10 @@
             getNumericValue(
                 stats.new_accounts,
                 stats.newAccounts,
-
                 pending.new_accounts,
                 pending.newAccounts,
-
                 data.new_accounts,
                 data.newAccounts,
-
                 0
             );
 
@@ -933,24 +994,15 @@
         );
 
 
-        /* ==============================================================
-           DEPOSITS
-        ============================================================== */
-
         const totalDeposits =
             getNumericValue(
                 stats.total_deposits,
                 stats.totalDeposits,
-
                 stats.deposits_total,
-
                 data.total_deposits,
                 data.totalDeposits,
-
                 data.deposits_total,
-
                 data.deposit_total,
-
                 0
             );
 
@@ -959,13 +1011,10 @@
             getNumericValue(
                 stats.pending_deposits,
                 stats.pendingDeposits,
-
                 pending.deposits,
                 pending.pending_deposits,
-
                 data.pending_deposits,
                 data.pendingDeposits,
-
                 0
             );
 
@@ -982,24 +1031,15 @@
         );
 
 
-        /* ==============================================================
-           WITHDRAWALS
-        ============================================================== */
-
         const totalWithdrawals =
             getNumericValue(
                 stats.total_withdrawals,
                 stats.totalWithdrawals,
-
                 stats.withdrawals_total,
-
                 data.total_withdrawals,
                 data.totalWithdrawals,
-
                 data.withdrawals_total,
-
                 data.withdrawal_total,
-
                 0
             );
 
@@ -1008,13 +1048,10 @@
             getNumericValue(
                 stats.pending_withdrawals,
                 stats.pendingWithdrawals,
-
                 pending.withdrawals,
                 pending.pending_withdrawals,
-
                 data.pending_withdrawals,
                 data.pendingWithdrawals,
-
                 0
             );
 
@@ -1031,24 +1068,15 @@
         );
 
 
-        /* ==============================================================
-           INVESTMENTS
-        ============================================================== */
-
         const totalInvestments =
             getNumericValue(
                 stats.total_investments,
                 stats.totalInvestments,
-
                 stats.investments_total,
-
                 data.total_investments,
                 data.totalInvestments,
-
                 data.investments_total,
-
                 data.investment_total,
-
                 0
             );
 
@@ -1059,18 +1087,12 @@
         );
 
 
-        /* ==============================================================
-           REFERRALS
-        ============================================================== */
-
         const totalReferrals =
             getNumericValue(
                 stats.total_referrals,
                 stats.totalReferrals,
-
                 data.total_referrals,
                 data.totalReferrals,
-
                 0
             );
 
@@ -1081,18 +1103,12 @@
         );
 
 
-        /* ==============================================================
-           TRANSACTIONS
-        ============================================================== */
-
         const totalTransactions =
             getNumericValue(
                 stats.total_transactions,
                 stats.totalTransactions,
-
                 data.total_transactions,
                 data.totalTransactions,
-
                 0
             );
 
@@ -1103,18 +1119,12 @@
         );
 
 
-        /* ==============================================================
-           SUPPORT
-        ============================================================== */
-
         const openTickets =
             getNumericValue(
                 stats.open_tickets,
                 stats.openTickets,
-
                 data.open_tickets,
                 data.openTickets,
-
                 0
             );
 
@@ -1125,10 +1135,6 @@
         );
 
 
-        /* ==============================================================
-           RECENT TRANSACTIONS
-        ============================================================== */
-
         renderRecentTransactions(
             data.recent_transactions ||
             data.recentTransactions ||
@@ -1136,10 +1142,6 @@
             []
         );
 
-
-        /* ==============================================================
-           RECENT USERS
-        ============================================================== */
 
         renderRecentUsers(
             data.recent_users ||
@@ -1150,10 +1152,13 @@
     }
 
 
-    function showDashboardConnectionError(message) {
+    function showDashboardConnectionError(
+        message
+    ) {
 
         const transactionBox =
             $("#recentTransactions");
+
 
         const userBox =
             $("#recentUsers");
@@ -1200,6 +1205,7 @@
 
         const container =
             $("#recentTransactions");
+
 
         if (!container) {
             return;
@@ -1325,10 +1331,13 @@
        RECENT USERS
     ====================================================================== */
 
-    function renderRecentUsers(users) {
+    function renderRecentUsers(
+        users
+    ) {
 
         const container =
             $("#recentUsers");
+
 
         if (!container) {
             return;
@@ -1585,6 +1594,7 @@
 
                         await loadApprovalData();
 
+
                         showAdminMessage(
                             "Approval data refreshed.",
                             "success"
@@ -1818,6 +1828,7 @@
                                 button.classList.remove(
                                     "active"
                                 );
+
                             });
 
 
@@ -1830,6 +1841,7 @@
                                 panel.classList.remove(
                                     "active"
                                 );
+
                             });
 
 
@@ -1857,6 +1869,7 @@
                                 "active"
                             );
                         }
+
                     }
                 );
             });
@@ -1909,10 +1922,6 @@
             results[2];
 
 
-        /* ==============================================================
-           DEPOSITS
-        ============================================================== */
-
         if (
             depositResult.status ===
             "fulfilled"
@@ -1940,10 +1949,6 @@
             );
         }
 
-
-        /* ==============================================================
-           WITHDRAWALS
-        ============================================================== */
 
         if (
             withdrawalResult.status ===
@@ -1999,10 +2004,6 @@
             }
         }
 
-
-        /* ==============================================================
-           INVESTMENTS
-        ============================================================== */
 
         if (
             investmentResult.status ===
@@ -2073,6 +2074,7 @@
                     data?.[key]
                 )
             ) {
+
                 return data[key];
             }
         }
@@ -2126,10 +2128,13 @@
        DEPOSITS
     ====================================================================== */
 
-    function renderDepositApprovals(items) {
+    function renderDepositApprovals(
+        items
+    ) {
 
         const container =
             $("#approvalDeposits");
+
 
         if (!container) {
             return;
@@ -2287,10 +2292,13 @@
        WITHDRAWALS
     ====================================================================== */
 
-    function renderWithdrawalApprovals(items) {
+    function renderWithdrawalApprovals(
+        items
+    ) {
 
         const container =
             $("#approvalWithdrawals");
+
 
         if (!container) {
             return;
@@ -2499,10 +2507,13 @@
        INVESTMENTS
     ====================================================================== */
 
-    function renderInvestmentApprovals(items) {
+    function renderInvestmentApprovals(
+        items
+    ) {
 
         const container =
             $("#approvalInvestments");
+
 
         if (!container) {
             return;
@@ -2657,7 +2668,9 @@
        APPROVAL LISTENERS
     ====================================================================== */
 
-    function attachApprovalListeners(container) {
+    function attachApprovalListeners(
+        container
+    ) {
 
         container
             .querySelectorAll(
@@ -2672,8 +2685,10 @@
                         const action =
                             button.dataset.approvalAction;
 
+
                         const type =
                             button.dataset.approvalType;
+
 
                         const id =
                             button.dataset.approvalId;
@@ -2752,6 +2767,7 @@
                             reason,
                             button
                         );
+
                     }
                 );
             });
@@ -2828,9 +2844,11 @@
 
             reason,
 
-            note: reason,
+            note:
+                reason,
 
-            admin_note: reason
+            admin_note:
+                reason
         };
 
 
@@ -2974,11 +2992,14 @@
                         "span"
                     );
 
+
                 badge.className =
                     "nav-badge";
 
+
                 badge.id =
                     "navPendingInvestments";
+
 
                 investmentLink.appendChild(
                     badge
@@ -3001,6 +3022,7 @@
 
         const badge =
             $(selector);
+
 
         if (!badge) {
             return;
@@ -3041,6 +3063,674 @@
 
 
     /* ======================================================================
+       MAINTENANCE
+       ====================================================================== */
+
+    async function loadMaintenanceSettings() {
+
+        try {
+
+            const data =
+                await apiRequest(
+                    ADMIN_MAINTENANCE_API,
+                    {
+                        method: "GET"
+                    }
+                );
+
+
+            const settings =
+                data.settings ||
+                data.maintenance ||
+                data.data ||
+                data;
+
+
+            AdminDashboard.maintenance =
+                settings;
+
+
+            renderMaintenanceSettings(
+                settings
+            );
+
+
+            return settings;
+
+        } catch (error) {
+
+            console.error(
+                "Maintenance settings failed:",
+                error
+            );
+
+
+            showMaintenanceError(
+                error.message
+            );
+
+
+            return null;
+        }
+    }
+
+
+    function renderMaintenanceSettings(
+        settings
+    ) {
+
+        if (!settings) {
+            return;
+        }
+
+
+        const maintenanceMode =
+            getBooleanValue(
+                settings.maintenance_mode,
+                settings.maintenanceMode,
+                settings.system_maintenance,
+                false
+            );
+
+
+        const investments =
+            getBooleanValue(
+                settings.investments_enabled,
+                settings.new_investments,
+                settings.newInvestments,
+                true
+            );
+
+
+        const deposits =
+            getBooleanValue(
+                settings.deposits_enabled,
+                settings.deposits,
+                true
+            );
+
+
+        const withdrawals =
+            getBooleanValue(
+                settings.withdrawals_enabled,
+                settings.withdrawals,
+                true
+            );
+
+
+        const earnings =
+            getBooleanValue(
+                settings.earnings_enabled,
+                settings.daily_earnings,
+                settings.dailyEarnings,
+                true
+            );
+
+
+        const registration =
+            getBooleanValue(
+                settings.registration_enabled,
+                settings.user_registration,
+                settings.userRegistration,
+                true
+            );
+
+
+        setCheckbox(
+            "#maintenanceModeToggle",
+            maintenanceMode
+        );
+
+
+        setCheckbox(
+            "#maintenanceInvestmentsToggle",
+            investments
+        );
+
+
+        setCheckbox(
+            "#maintenanceDepositsToggle",
+            deposits
+        );
+
+
+        setCheckbox(
+            "#maintenanceWithdrawalsToggle",
+            withdrawals
+        );
+
+
+        setCheckbox(
+            "#maintenanceEarningsToggle",
+            earnings
+        );
+
+
+        setCheckbox(
+            "#maintenanceRegistrationToggle",
+            registration
+        );
+
+
+        const message =
+            getValue(
+                settings,
+                [
+                    "maintenance_message",
+                    "maintenanceMessage",
+                    "message"
+                ],
+                ""
+            );
+
+
+        const messageBox =
+            $("#maintenanceMessage");
+
+
+        if (messageBox) {
+
+            messageBox.value =
+                String(message);
+        }
+
+
+        const lastRun =
+            getValue(
+                settings,
+                [
+                    "last_earnings_run",
+                    "lastEarningsRun",
+                    "last_daily_earnings_run",
+                    "last_run"
+                ],
+                ""
+            );
+
+
+        setText(
+            "#lastEarningsRun",
+            lastRun
+                ? formatDate(lastRun)
+                : "Not available"
+        );
+
+
+        const processed =
+            getNumericValue(
+                settings.earnings_processed_today,
+                settings.earningsProcessedToday,
+                settings.processed_today,
+                0
+            );
+
+
+        setText(
+            "#earningsProcessedToday",
+            formatCurrency(processed)
+        );
+
+
+        const active =
+            getNumericValue(
+                settings.active_investments,
+                settings.activeInvestments,
+                AdminDashboard.investments.filter(
+                    item =>
+                        String(
+                            item.status || ""
+                        ).toLowerCase() ===
+                        "active"
+                ).length,
+                0
+            );
+
+
+        const pending =
+            getNumericValue(
+                settings.pending_investments,
+                settings.pendingInvestments,
+                AdminDashboard.investments.length,
+                0
+            );
+
+
+        setText(
+            "#maintenanceActiveInvestments",
+            formatNumber(active)
+        );
+
+
+        setText(
+            "#maintenancePendingInvestments",
+            formatNumber(pending)
+        );
+
+
+        const engineEnabled =
+            earnings;
+
+
+        const engineStatus =
+            $("#earningsEngineStatus");
+
+
+        if (engineStatus) {
+
+            engineStatus.textContent =
+                engineEnabled
+                    ? "Engine Enabled"
+                    : "Engine Disabled";
+
+            engineStatus.style.color =
+                engineEnabled
+                    ? "#72dda0"
+                    : "#e56b6f";
+        }
+
+
+        updateMaintenanceStatus();
+    }
+
+
+    function setupMaintenance() {
+
+        const saveButton =
+            $("#saveMaintenanceBtn");
+
+
+        if (
+            saveButton &&
+            !saveButton.dataset.ccMaintenanceReady
+        ) {
+
+            saveButton.dataset.ccMaintenanceReady =
+                "true";
+
+
+            saveButton.addEventListener(
+                "click",
+                saveMaintenanceSettings
+            );
+        }
+
+
+        const controls = [
+
+            "#maintenanceModeToggle",
+
+            "#maintenanceInvestmentsToggle",
+
+            "#maintenanceDepositsToggle",
+
+            "#maintenanceWithdrawalsToggle",
+
+            "#maintenanceEarningsToggle",
+
+            "#maintenanceRegistrationToggle"
+
+        ];
+
+
+        controls.forEach(selector => {
+
+            const element =
+                $(selector);
+
+
+            if (
+                element &&
+                !element.dataset.ccMaintenanceReady
+            ) {
+
+                element.dataset.ccMaintenanceReady =
+                    "true";
+
+
+                element.addEventListener(
+                    "change",
+                    updateMaintenanceStatus
+                );
+            }
+        });
+
+
+        loadMaintenanceSettings();
+    }
+
+
+    function updateMaintenanceStatus() {
+
+        const maintenanceMode =
+            $("#maintenanceModeToggle")?.checked === true;
+
+
+        const status =
+            $("#maintenanceStatus");
+
+
+        const statusText =
+            $("#maintenanceStatusText");
+
+
+        const statusDot =
+            $("#maintenanceStatusDot");
+
+
+        if (
+            !status ||
+            !statusText ||
+            !statusDot
+        ) {
+            return;
+        }
+
+
+        if (maintenanceMode) {
+
+            statusText.textContent =
+                "Maintenance Mode";
+
+
+            status.style.background =
+                "rgba(255,193,7,0.08)";
+
+
+            status.style.borderColor =
+                "rgba(255,193,7,0.18)";
+
+
+            statusText.style.color =
+                "#ffd166";
+
+
+            statusDot.style.background =
+                "#ffd166";
+
+
+            statusDot.style.boxShadow =
+                "0 0 10px rgba(255,209,102,.5)";
+
+        } else {
+
+            statusText.textContent =
+                "System Online";
+
+
+            status.style.background =
+                "rgba(72,210,125,0.08)";
+
+
+            status.style.borderColor =
+                "rgba(72,210,125,0.14)";
+
+
+            statusText.style.color =
+                "#72dda0";
+
+
+            statusDot.style.background =
+                "#50d58a";
+
+
+            statusDot.style.boxShadow =
+                "0 0 10px rgba(80,213,138,.5)";
+        }
+    }
+
+
+    async function saveMaintenanceSettings() {
+
+        const button =
+            $("#saveMaintenanceBtn");
+
+
+        const status =
+            $("#maintenanceSaveStatus");
+
+
+        const settings = {
+
+            maintenance_mode:
+                $("#maintenanceModeToggle")?.checked === true,
+
+            investments_enabled:
+                $("#maintenanceInvestmentsToggle")?.checked === true,
+
+            deposits_enabled:
+                $("#maintenanceDepositsToggle")?.checked === true,
+
+            withdrawals_enabled:
+                $("#maintenanceWithdrawalsToggle")?.checked === true,
+
+            earnings_enabled:
+                $("#maintenanceEarningsToggle")?.checked === true,
+
+            registration_enabled:
+                $("#maintenanceRegistrationToggle")?.checked === true,
+
+            maintenance_message:
+                $("#maintenanceMessage")?.value.trim() || ""
+
+        };
+
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.textContent =
+                "Saving...";
+        }
+
+
+        if (status) {
+
+            status.textContent =
+                "";
+        }
+
+
+        try {
+
+            const data =
+                await apiRequest(
+                    ADMIN_MAINTENANCE_API,
+                    {
+                        method: "POST",
+
+                        body:
+                            JSON.stringify(
+                                settings
+                            )
+                    }
+                );
+
+
+            AdminDashboard.maintenance =
+                data.settings ||
+                data.maintenance ||
+                settings;
+
+
+            renderMaintenanceSettings(
+                AdminDashboard.maintenance
+            );
+
+
+            if (status) {
+
+                status.textContent =
+                    "Settings saved successfully.";
+
+                status.style.color =
+                    "#72dda0";
+            }
+
+
+            showAdminMessage(
+                data.message ||
+                "Platform maintenance settings saved.",
+                "success"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Unable to save maintenance settings:",
+                error
+            );
+
+
+            if (status) {
+
+                status.textContent =
+                    error.message ||
+                    "Unable to save settings.";
+
+                status.style.color =
+                    "#e56b6f";
+            }
+
+
+            showAdminMessage(
+                error.message ||
+                "Unable to save maintenance settings.",
+                "error"
+            );
+
+        } finally {
+
+            if (button) {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "Save Platform Settings";
+            }
+        }
+    }
+
+
+    function showMaintenanceError(
+        message
+    ) {
+
+        const status =
+            $("#maintenanceSaveStatus");
+
+
+        if (status) {
+
+            status.textContent =
+                `Maintenance settings unavailable: ${message || "Server error."}`;
+
+            status.style.color =
+                "#e56b6f";
+        }
+    }
+
+
+    function setCheckbox(
+        selector,
+        value
+    ) {
+
+        const element =
+            $(selector);
+
+
+        if (!element) {
+            return;
+        }
+
+
+        element.checked =
+            Boolean(value);
+    }
+
+
+    function getBooleanValue(
+        ...values
+    ) {
+
+        for (
+            const value of values
+        ) {
+
+            if (
+                value ===
+                undefined ||
+                value ===
+                null
+            ) {
+                continue;
+            }
+
+
+            if (
+                typeof value ===
+                "boolean"
+            ) {
+
+                return value;
+            }
+
+
+            if (
+                typeof value ===
+                "number"
+            ) {
+
+                return value !== 0;
+            }
+
+
+            const text =
+                String(value)
+                    .trim()
+                    .toLowerCase();
+
+
+            if (
+                [
+                    "true",
+                    "1",
+                    "yes",
+                    "on",
+                    "enabled",
+                    "active"
+                ].includes(text)
+            ) {
+
+                return true;
+            }
+
+
+            if (
+                [
+                    "false",
+                    "0",
+                    "no",
+                    "off",
+                    "disabled",
+                    "inactive"
+                ].includes(text)
+            ) {
+
+                return false;
+            }
+        }
+
+
+        return false;
+    }
+
+
+    /* ======================================================================
        SIDEBAR
     ====================================================================== */
 
@@ -3049,11 +3739,14 @@
         const sidebar =
             $("#sidebar");
 
+
         const overlay =
             $("#sidebarOverlay");
 
+
         const menuButton =
             $("#menuButton");
+
 
         const sidebarClose =
             $("#sidebarClose");
@@ -3272,9 +3965,7 @@
                     "Logging out...";
 
 
-                await logoutAdmin(
-                    logoutButton
-                );
+                await logoutAdmin();
             }
         );
     }
@@ -3312,6 +4003,7 @@
             AdminDashboard.authenticated =
                 false;
 
+
             AdminDashboard.authorized =
                 false;
 
@@ -3326,7 +4018,9 @@
        FORMATTING
     ====================================================================== */
 
-    function formatCurrency(value) {
+    function formatCurrency(
+        value
+    ) {
 
         const number =
             Number(value) || 0;
@@ -3335,15 +4029,22 @@
         return new Intl.NumberFormat(
             "en-UG",
             {
-                style: "currency",
-                currency: "UGX",
-                maximumFractionDigits: 0
+                style:
+                    "currency",
+
+                currency:
+                    "UGX",
+
+                maximumFractionDigits:
+                    0
             }
         ).format(number);
     }
 
 
-    function formatNumber(value) {
+    function formatNumber(
+        value
+    ) {
 
         const number =
             Number(value) || 0;
@@ -3355,7 +4056,9 @@
     }
 
 
-    function formatDate(value) {
+    function formatDate(
+        value
+    ) {
 
         if (!value) {
             return "Date unavailable";
@@ -3396,17 +4099,28 @@
         return new Intl.DateTimeFormat(
             "en-UG",
             {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit"
+                year:
+                    "numeric",
+
+                month:
+                    "short",
+
+                day:
+                    "numeric",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
             }
         ).format(date);
     }
 
 
-    function formatStatus(status) {
+    function formatStatus(
+        status
+    ) {
 
         if (!status) {
             return "Unknown";
@@ -3431,7 +4145,9 @@
     }
 
 
-    function formatTransactionType(type) {
+    function formatTransactionType(
+        type
+    ) {
 
         if (!type) {
             return "Transaction";
@@ -3472,6 +4188,7 @@
 
             credit:
                 "Credit"
+
         };
 
 
@@ -3487,7 +4204,9 @@
     }
 
 
-    function formatAccountType(type) {
+    function formatAccountType(
+        type
+    ) {
 
         if (!type) {
             return "Administrator";
@@ -3507,7 +4226,9 @@
     }
 
 
-    function getTransactionIcon(type) {
+    function getTransactionIcon(
+        type
+    ) {
 
         const key =
             String(type || "")
@@ -3548,6 +4269,7 @@
 
             credit:
                 "+"
+
         };
 
 
@@ -3558,7 +4280,9 @@
     }
 
 
-    function getTypeClass(type) {
+    function getTypeClass(
+        type
+    ) {
 
         const key =
             String(type || "")
@@ -3604,7 +4328,9 @@
     }
 
 
-    function getStatusClass(status) {
+    function getStatusClass(
+        status
+    ) {
 
         const key =
             String(status || "")
@@ -3665,7 +4391,9 @@
        VALUE HELPERS
     ====================================================================== */
 
-    function getNumericValue(...values) {
+    function getNumericValue(
+        ...values
+    ) {
 
         for (
             const value of values
@@ -3686,10 +4414,12 @@
             ) {
 
                 const mongoNumbers = [
+
                     "$numberInt",
                     "$numberLong",
                     "$numberDecimal",
                     "$numberDouble"
+
                 ];
 
 
@@ -3737,7 +4467,9 @@
 
 
             if (
-                Number.isFinite(number)
+                Number.isFinite(
+                    number
+                )
             ) {
 
                 return number;
@@ -3782,7 +4514,9 @@
     }
 
 
-    function getItemId(item) {
+    function getItemId(
+        item
+    ) {
 
         if (!item) {
             return "";
@@ -3825,7 +4559,9 @@
     }
 
 
-    function getInitials(name) {
+    function getInitials(
+        name
+    ) {
 
         if (!name) {
             return "CC";
@@ -3844,19 +4580,26 @@
         ) {
 
             return parts[0]
-                .substring(0, 2)
+                .substring(
+                    0,
+                    2
+                )
                 .toUpperCase();
         }
 
 
         return (
             parts[0][0] +
-            parts[parts.length - 1][0]
+            parts[
+                parts.length - 1
+            ][0]
         ).toUpperCase();
     }
 
 
-    function capitalize(value) {
+    function capitalize(
+        value
+    ) {
 
         if (!value) {
             return "";
@@ -3877,7 +4620,9 @@
        HTML ESCAPING
     ====================================================================== */
 
-    function escapeHtml(value) {
+    function escapeHtml(
+        value
+    ) {
 
         return String(
             value === null ||
@@ -3921,7 +4666,9 @@
 
                     loadDashboardData(),
 
-                    loadApprovalData()
+                    loadApprovalData(),
+
+                    loadMaintenanceSettings()
 
                 ]);
             },
@@ -3935,6 +4682,14 @@
             loadApprovalData,
 
 
+        loadMaintenance:
+            loadMaintenanceSettings,
+
+
+        saveMaintenance:
+            saveMaintenanceSettings,
+
+
         refresh:
             async () => {
 
@@ -3942,7 +4697,9 @@
 
                     loadDashboardData(),
 
-                    loadApprovalData()
+                    loadApprovalData(),
+
+                    loadMaintenanceSettings()
 
                 ]);
             },
@@ -4058,6 +4815,7 @@
 
         logout:
             logoutAdmin
+
     };
 
 
@@ -4096,7 +4854,6 @@
 
 
             if (!authenticated) {
-
                 return;
             }
 
@@ -4109,11 +4866,13 @@
 
             setupLogout();
 
+            setupMaintenance();
+
             createApprovalCenter();
 
 
             /* ----------------------------------------------------------
-               STEP 3: LOAD ALL ADMIN DATA
+               STEP 3: LOAD ADMIN DATA
             ---------------------------------------------------------- */
 
             const results =
@@ -4123,7 +4882,9 @@
 
                     loadDashboardData(),
 
-                    loadApprovalData()
+                    loadApprovalData(),
+
+                    loadMaintenanceSettings()
 
                 ]);
 
@@ -4152,6 +4913,7 @@
 
             AdminDashboard.loading =
                 false;
+
 
             hideLoader();
         }

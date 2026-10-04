@@ -1,25 +1,49 @@
 <?php
+
 declare(strict_types=1);
 
 /*
-|--------------------------------------------------------------------------
-| CROWN CASH - ADMIN WITHDRAWAL API
-|--------------------------------------------------------------------------
-| File: admin_withdrawal.php
-|
-| SECURITY:
-| - Requires Crown Cash authenticated session.
-| - Requires database user to have an admin role/account type.
-| - is_admin=true is accepted.
-| - ADMIN_EMAIL / ADMIN_USER_ID only restrict an already-authorized admin.
-| - Environment variables NEVER grant admin privileges.
-|
-| ACCOUNTING:
-| - Withdrawal amount is reserved/deducted when created.
-| - Approval does NOT deduct again.
-| - Rejection restores funds only when balance_reserved=true.
-| - A withdrawal cannot be processed twice.
-|--------------------------------------------------------------------------
+=========================================================
+CROWN CASH - ADMIN WITHDRAWAL API
+=========================================================
+
+FLOW
+
+USER:
+    Request withdrawal
+        ↓
+    Pending
+        ↓
+    NO WALLET DEDUCTION
+
+ADMIN:
+    Approve
+        ↓
+    Wallet deducted
+        ↓
+    Withdrawal approved
+
+OR
+
+ADMIN:
+    Reject
+        ↓
+    Wallet unchanged
+        ↓
+    Withdrawal rejected
+
+SECURITY:
+- Server-side admin authentication.
+- Normal users receive 403.
+- Admin role is verified from database.
+- Environment variables cannot create admin access.
+
+ACCOUNTING:
+- Pending withdrawal does NOT deduct wallet.
+- Approval deducts exactly once.
+- Rejection does not refund because nothing was deducted.
+- Double approval is prevented.
+=========================================================
 */
 
 require_once __DIR__ . '/config.php';
@@ -33,19 +57,26 @@ use MongoDB\BSON\Decimal128;
    CORS
 ========================================================= */
 
-header('Content-Type: application/json; charset=utf-8');
+header(
+    'Content-Type: application/json; charset=utf-8'
+);
 
 $allowedOrigins = [
     'https://crown-cash.vercel.app',
     'https://www.crown-cash.vercel.app'
 ];
 
-$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$requestOrigin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if (
     $requestOrigin !== ''
     &&
-    in_array($requestOrigin, $allowedOrigins, true)
+    in_array(
+        $requestOrigin,
+        $allowedOrigins,
+        true
+    )
 ) {
 
     header(
@@ -65,7 +96,9 @@ if (
         'Access-Control-Allow-Methods: GET, POST, OPTIONS'
     );
 
-    header('Vary: Origin');
+    header(
+        'Vary: Origin'
+    );
 }
 
 
@@ -73,7 +106,7 @@ if (
    RESPONSE
 ========================================================= */
 
-function withdrawalResponse(
+function adminWithdrawalResponse(
     bool $success,
     string $message = '',
     array $data = [],
@@ -85,8 +118,11 @@ function withdrawalResponse(
     echo json_encode(
         array_merge(
             [
-                'success' => $success,
-                'message' => $message
+                'success' =>
+                    $success,
+
+                'message' =>
+                    $message
             ],
             $data
         ),
@@ -120,15 +156,19 @@ $requestMethod =
         $_SERVER['REQUEST_METHOD'] ?? ''
     );
 
+
 if (
     !in_array(
         $requestMethod,
-        ['GET', 'POST'],
+        [
+            'GET',
+            'POST'
+        ],
         true
     )
 ) {
 
-    withdrawalResponse(
+    adminWithdrawalResponse(
         false,
         'Method not allowed.',
         [],
@@ -144,11 +184,15 @@ if (
 try {
 
     if (
-        function_exists('startSecureSession')
+        function_exists(
+            'startSecureSession'
+        )
     ) {
 
         if (
-            session_status() !== PHP_SESSION_ACTIVE
+            session_status()
+            !==
+            PHP_SESSION_ACTIVE
         ) {
 
             startSecureSession();
@@ -157,7 +201,9 @@ try {
     } else {
 
         if (
-            session_status() !== PHP_SESSION_ACTIVE
+            session_status()
+            !==
+            PHP_SESSION_ACTIVE
         ) {
 
             ini_set(
@@ -200,11 +246,11 @@ try {
 } catch (Throwable $e) {
 
     error_log(
-        'Crown Cash withdrawal session error: ' .
+        'Crown Cash admin withdrawal session error: ' .
         $e->getMessage()
     );
 
-    withdrawalResponse(
+    adminWithdrawalResponse(
         false,
         'Unable to initialize session.',
         [],
@@ -214,10 +260,10 @@ try {
 
 
 /* =========================================================
-   STRING
+   HELPERS
 ========================================================= */
 
-function withdrawalString(
+function adminWithdrawalString(
     $value,
     string $default = ''
 ): string {
@@ -226,11 +272,17 @@ function withdrawalString(
         return $default;
     }
 
-    if ($value instanceof ObjectId) {
+    if (
+        $value instanceof ObjectId
+    ) {
+
         return (string)$value;
     }
 
-    if ($value instanceof Decimal128) {
+    if (
+        $value instanceof Decimal128
+    ) {
+
         return $value->__toString();
     }
 
@@ -247,30 +299,24 @@ function withdrawalString(
 
 
 /* =========================================================
-   VALUE CHECK
-========================================================= */
-
-function withdrawalHasValue(
-    $value
-): bool {
-
-    if ($value instanceof ObjectId) {
-        return true;
-    }
-
-    return withdrawalString($value) !== '';
-}
-
-
-/* =========================================================
    MONEY
 ========================================================= */
 
-function withdrawalMoney(
+function adminWithdrawalMoney(
     $value
 ): float {
 
-    if ($value instanceof Decimal128) {
+    if (
+        $value instanceof Decimal128
+    ) {
+
+        return (float)$value->__toString();
+    }
+
+    if (
+        $value instanceof MongoDB\BSON\Int64
+    ) {
+
         return (float)$value->__toString();
     }
 
@@ -280,10 +326,6 @@ function withdrawalMoney(
         is_float($value)
     ) {
 
-        return (float)$value;
-    }
-
-    if (is_numeric($value)) {
         return (float)$value;
     }
 
@@ -301,7 +343,10 @@ function withdrawalMoney(
                 $value
             );
 
-        if (is_numeric($clean)) {
+        if (
+            is_numeric($clean)
+        ) {
+
             return (float)$clean;
         }
     }
@@ -314,7 +359,7 @@ function withdrawalMoney(
    BOOLEAN
 ========================================================= */
 
-function withdrawalBool(
+function adminWithdrawalBool(
     $value,
     bool $default = false
 ): bool {
@@ -328,13 +373,16 @@ function withdrawalBool(
     }
 
     if (is_numeric($value)) {
+
         return ((int)$value) === 1;
     }
 
     if (is_string($value)) {
 
         return in_array(
-            strtolower(trim($value)),
+            strtolower(
+                trim($value)
+            ),
             [
                 '1',
                 'true',
@@ -353,13 +401,15 @@ function withdrawalBool(
    DATE
 ========================================================= */
 
-function withdrawalDate(
+function adminWithdrawalDate(
     $value
 ): ?string {
 
     try {
 
-        if ($value instanceof UTCDateTime) {
+        if (
+            $value instanceof UTCDateTime
+        ) {
 
             return $value
                 ->toDateTime()
@@ -369,7 +419,10 @@ function withdrawalDate(
                 ->format('c');
         }
 
-        if ($value instanceof DateTimeInterface) {
+
+        if (
+            $value instanceof DateTimeInterface
+        ) {
 
             return $value
                 ->setTimezone(
@@ -377,6 +430,7 @@ function withdrawalDate(
                 )
                 ->format('c');
         }
+
 
         if (
             is_string($value)
@@ -397,7 +451,7 @@ function withdrawalDate(
     } catch (Throwable $e) {
 
         error_log(
-            'Crown Cash withdrawal date error: ' .
+            'Admin withdrawal date error: ' .
             $e->getMessage()
         );
     }
@@ -410,99 +464,55 @@ function withdrawalDate(
    OBJECT ID
 ========================================================= */
 
-function withdrawalObjectId(
+function adminWithdrawalObjectId(
     $value
 ): ?ObjectId {
 
-    if ($value instanceof ObjectId) {
+    if (
+        $value instanceof ObjectId
+    ) {
+
         return $value;
     }
 
     $value =
-        withdrawalString($value);
+        adminWithdrawalString(
+            $value
+        );
+
 
     if (
-        $value !== ''
-        &&
-        preg_match(
+        $value === ''
+        ||
+        !preg_match(
             '/^[a-fA-F0-9]{24}$/',
             $value
         )
     ) {
 
-        try {
-
-            return new ObjectId($value);
-
-        } catch (Throwable $e) {
-
-            return null;
-        }
+        return null;
     }
 
-    return null;
+
+    try {
+
+        return new ObjectId(
+            $value
+        );
+
+    } catch (Throwable $e) {
+
+        return null;
+    }
 }
 
 
 /* =========================================================
-   WITHDRAWAL USER ID
+   GET USER ID
 ========================================================= */
 
-function getWithdrawalUserId(
-    $withdrawal
-) {
-
-    $fields = [
-        'user_id',
-        'userId',
-        'userid',
-        'userID',
-        'user'
-    ];
-
-    foreach ($fields as $field) {
-
-        if (
-            array_key_exists(
-                $field,
-                $withdrawal
-            )
-            &&
-            $withdrawal[$field] !== null
-        ) {
-
-            $value =
-                $withdrawal[$field];
-
-            if ($value instanceof ObjectId) {
-                return $value;
-            }
-
-            if (
-                is_string($value)
-                &&
-                trim($value) !== ''
-            ) {
-
-                return trim($value);
-            }
-
-            if (is_scalar($value)) {
-                return (string)$value;
-            }
-        }
-    }
-
-    return null;
-}
-
-
-/* =========================================================
-   POST USER ID
-========================================================= */
-
-function getPostedUserId(
-    array $input
+function getAdminWithdrawalUserId(
+    $record
 ) {
 
     foreach (
@@ -515,85 +525,44 @@ function getPostedUserId(
     ) {
 
         if (
-            array_key_exists(
-                $field,
-                $input
-            )
-            &&
-            $input[$field] !== null
+            isset($record[$field])
         ) {
 
-            $value =
-                $input[$field];
-
-            if ($value instanceof ObjectId) {
-                return $value;
-            }
-
-            if (
-                is_string($value)
-                &&
-                trim($value) !== ''
-            ) {
-
-                return trim($value);
-            }
-
-            if (is_scalar($value)) {
-                return (string)$value;
-            }
+            return $record[$field];
         }
     }
 
+
+    if (
+        isset($record['user'])
+    ) {
+
+        if (
+            $record['user']
+            instanceof ObjectId
+        ) {
+
+            return $record['user'];
+        }
+
+
+        if (
+            is_array(
+                $record['user']
+            )
+        ) {
+
+            return
+                $record['user']['_id']
+                ??
+                $record['user']['id']
+                ??
+                null;
+        }
+    }
+
+
     return null;
-}
-
-
-/* =========================================================
-   WITHDRAWAL ID FILTER
-========================================================= */
-
-function withdrawalIdFilter(
-    $value
-): ?array {
-
-    $value =
-        withdrawalString($value);
-
-    if ($value === '') {
-        return null;
-    }
-
-    $objectId =
-        withdrawalObjectId($value);
-
-    if ($objectId !== null) {
-
-        return [
-            '$or' => [
-                [
-                    '_id' => $objectId
-                ],
-                [
-                    'reference' => $value
-                ],
-                [
-                    'transaction_id' => $value
-                ]
-            ]
-        ];
-    }
-
-    return [
-        '$or' => [
-            [
-                'reference' => $value
-            ],
-            [
-                'transaction_id' => $value
-            ]
-        ]
-    ];
 }
 
 
@@ -601,98 +570,90 @@ function withdrawalIdFilter(
    FIND USER
 ========================================================= */
 
-function findWithdrawalUser(
+function findAdminWithdrawalUser(
     $userId
 ) {
 
     global $users;
 
-    if ($userId === null) {
+
+    if (
+        $userId === null
+    ) {
+
         return null;
     }
 
-    $userString =
-        withdrawalString($userId);
-
-    if ($userString === '') {
-        return null;
-    }
 
     $objectId =
-        withdrawalObjectId($userId);
-
-    if ($objectId !== null) {
-
-        try {
-
-            $user =
-                $users->findOne([
-                    '_id' => $objectId
-                ]);
-
-            if ($user !== null) {
-                return $user;
-            }
-
-        } catch (Throwable $e) {
-
-            error_log(
-                'Withdrawal user ObjectId lookup error: ' .
-                $e->getMessage()
-            );
-        }
-    }
-
-
-    try {
-
-        $user =
-            $users->findOne([
-                'id' => $userString
-            ]);
-
-        if ($user !== null) {
-            return $user;
-        }
-
-    } catch (Throwable $e) {
-
-        error_log(
-            'Withdrawal user ID lookup error: ' .
-            $e->getMessage()
+        adminWithdrawalObjectId(
+            $userId
         );
-    }
 
 
     if (
-        filter_var(
-            $userString,
-            FILTER_VALIDATE_EMAIL
-        )
+        $objectId !== null
     ) {
 
         try {
 
             $user =
                 $users->findOne([
-                    'email' =>
-                        strtolower(
-                            $userString
-                        )
+                    '_id' =>
+                        $objectId
                 ]);
 
-            if ($user !== null) {
+            if (
+                $user !== null
+            ) {
+
                 return $user;
             }
 
         } catch (Throwable $e) {
 
             error_log(
-                'Withdrawal user email lookup error: ' .
+                'Admin withdrawal user lookup error: ' .
                 $e->getMessage()
             );
         }
     }
+
+
+    $stringId =
+        adminWithdrawalString(
+            $userId
+        );
+
+
+    if (
+        $stringId !== ''
+    ) {
+
+        try {
+
+            $user =
+                $users->findOne([
+                    'id' =>
+                        $stringId
+                ]);
+
+            if (
+                $user !== null
+            ) {
+
+                return $user;
+            }
+
+        } catch (Throwable $e) {
+
+            error_log(
+                'Admin withdrawal string ID lookup error: ' .
+                $e->getMessage()
+            );
+        }
+    }
+
 
     return null;
 }
@@ -702,9 +663,9 @@ function findWithdrawalUser(
    WALLET FIELD
 ========================================================= */
 
-function getWalletField(
+function getAdminWithdrawalWalletField(
     $user
-): array {
+): string {
 
     if (
         array_key_exists(
@@ -713,11 +674,9 @@ function getWalletField(
         )
     ) {
 
-        return [
-            'type' => 'top_level',
-            'field' => 'balance'
-        ];
+        return 'balance';
     }
+
 
     if (
         array_key_exists(
@@ -726,11 +685,9 @@ function getWalletField(
         )
     ) {
 
-        return [
-            'type' => 'top_level',
-            'field' => 'wallet_balance'
-        ];
+        return 'wallet_balance';
     }
+
 
     if (
         array_key_exists(
@@ -739,33 +696,28 @@ function getWalletField(
         )
     ) {
 
-        return [
-            'type' => 'top_level',
-            'field' => 'walletBalance'
-        ];
+        return 'walletBalance';
     }
+
 
     if (
         isset($user['wallet'])
         &&
         (
-            is_array($user['wallet'])
+            is_array(
+                $user['wallet']
+            )
             ||
             $user['wallet']
-                instanceof \MongoDB\Model\BSONDocument
+                instanceof MongoDB\Model\BSONDocument
         )
     ) {
 
-        return [
-            'type' => 'nested',
-            'field' => 'wallet.balance'
-        ];
+        return 'wallet.balance';
     }
 
-    return [
-        'type' => 'top_level',
-        'field' => 'balance'
-    ];
+
+    return 'balance';
 }
 
 
@@ -773,7 +725,7 @@ function getWalletField(
    WALLET BALANCE
 ========================================================= */
 
-function getUserWalletBalance(
+function getAdminWithdrawalWalletBalance(
     $user
 ): float {
 
@@ -781,122 +733,63 @@ function getUserWalletBalance(
         return 0.0;
     }
 
-    $wallet =
-        getWalletField($user);
+
+    $field =
+        getAdminWithdrawalWalletField(
+            $user
+        );
+
 
     if (
-        $wallet['type'] === 'nested'
+        $field === 'wallet.balance'
     ) {
 
-        return withdrawalMoney(
-            $user['wallet']['balance'] ?? 0
+        return adminWithdrawalMoney(
+            $user['wallet']['balance']
+            ?? 0
         );
     }
 
-    return withdrawalMoney(
-        $user[$wallet['field']] ?? 0
+
+    return adminWithdrawalMoney(
+        $user[$field]
+        ?? 0
     );
 }
 
 
 /* =========================================================
-   INCREMENT WALLET
+   ADMIN AUTH
 ========================================================= */
 
-function incrementUserWalletBalance(
-    $user,
-    float $amount
-): bool {
-
-    global $users;
-
-    if (!$user) {
-        return false;
-    }
-
-    $wallet =
-        getWalletField($user);
-
-
-    if (isset($user['_id'])) {
-
-        $userFilter = [
-            '_id' => $user['_id']
-        ];
-
-    } elseif (isset($user['id'])) {
-
-        $userFilter = [
-            'id' => $user['id']
-        ];
-
-    } else {
-
-        return false;
-    }
-
-
-    $field =
-        $wallet['type'] === 'nested'
-            ? 'wallet.balance'
-            : $wallet['field'];
-
-
-    try {
-
-        $result =
-            $users->updateOne(
-                $userFilter,
-                [
-                    '$inc' => [
-                        $field => $amount
-                    ]
-                ]
-            );
-
-        return
-            $result->getMatchedCount() > 0;
-
-    } catch (Throwable $e) {
-
-        error_log(
-            'Crown Cash wallet increment error: ' .
-            $e->getMessage()
-        );
-
-        return false;
-    }
-}
-
-
-/* =========================================================
-   ADMIN AUTHENTICATION
-========================================================= */
-
-function authenticateWithdrawalAdmin(): array
+function authenticateAdminWithdrawal(): array
 {
     global $users;
 
 
-    /* -----------------------------------------------------
-       REQUIRE LOGIN
-    ----------------------------------------------------- */
-
     $loggedIn =
         (
-            ($_SESSION['logged_in'] ?? false) === true
+            ($_SESSION['logged_in'] ?? false)
+            ===
+            true
             ||
-            ($_SESSION['logged_in'] ?? null) === 1
+            ($_SESSION['logged_in'] ?? null)
+            ===
+            1
             ||
-            ($_SESSION['logged_in'] ?? null) === '1'
+            ($_SESSION['logged_in'] ?? null)
+            ===
+            '1'
             ||
-            ($_SESSION['authenticated'] ?? false) === true
+            ($_SESSION['authenticated'] ?? false)
+            ===
+            true
         );
 
 
     if (!$loggedIn) {
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Authentication required.',
             [
@@ -907,10 +800,6 @@ function authenticateWithdrawalAdmin(): array
         );
     }
 
-
-    /* -----------------------------------------------------
-       SESSION IDENTITY
-    ----------------------------------------------------- */
 
     $sessionUserId =
         $_SESSION['user_id']
@@ -938,7 +827,7 @@ function authenticateWithdrawalAdmin(): array
         $sessionEmail === null
     ) {
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Authenticated session does not contain a valid user identity.',
             [
@@ -950,60 +839,57 @@ function authenticateWithdrawalAdmin(): array
     }
 
 
-    /* -----------------------------------------------------
-       FIND USER
-    ----------------------------------------------------- */
-
     $user = null;
 
 
-    if ($sessionUserId !== null) {
+    /* -----------------------------------------------------
+       USER ID LOOKUP
+    ----------------------------------------------------- */
+
+    if (
+        $sessionUserId !== null
+    ) {
 
         $objectId =
-            withdrawalObjectId(
+            adminWithdrawalObjectId(
                 $sessionUserId
             );
 
 
-        if ($objectId !== null) {
+        if (
+            $objectId !== null
+        ) {
 
             try {
 
                 $user =
                     $users->findOne([
-                        '_id' => $objectId
+                        '_id' =>
+                            $objectId
                     ]);
 
             } catch (Throwable $e) {
-
-                error_log(
-                    'Admin withdrawal ObjectId lookup error: ' .
-                    $e->getMessage()
-                );
 
                 $user = null;
             }
         }
 
 
-        if ($user === null) {
+        if (
+            $user === null
+        ) {
 
             try {
 
                 $user =
                     $users->findOne([
                         'id' =>
-                            withdrawalString(
+                            adminWithdrawalString(
                                 $sessionUserId
                             )
                     ]);
 
             } catch (Throwable $e) {
-
-                error_log(
-                    'Admin withdrawal ID lookup error: ' .
-                    $e->getMessage()
-                );
 
                 $user = null;
             }
@@ -1012,7 +898,7 @@ function authenticateWithdrawalAdmin(): array
 
 
     /* -----------------------------------------------------
-       EMAIL FALLBACK
+       EMAIL LOOKUP
     ----------------------------------------------------- */
 
     if (
@@ -1035,23 +921,16 @@ function authenticateWithdrawalAdmin(): array
 
         } catch (Throwable $e) {
 
-            error_log(
-                'Admin withdrawal email lookup error: ' .
-                $e->getMessage()
-            );
-
             $user = null;
         }
     }
 
 
-    /* -----------------------------------------------------
-       USER NOT FOUND
-    ----------------------------------------------------- */
+    if (
+        $user === null
+    ) {
 
-    if ($user === null) {
-
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Authenticated user could not be found.',
             [
@@ -1069,8 +948,10 @@ function authenticateWithdrawalAdmin(): array
 
     $status =
         strtolower(
-            withdrawalString(
-                $user['status'] ?? 'active'
+            adminWithdrawalString(
+                $user['status']
+                ??
+                'active'
             )
         );
 
@@ -1089,7 +970,7 @@ function authenticateWithdrawalAdmin(): array
         )
     ) {
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Administrator account is not active.',
             [
@@ -1101,13 +982,13 @@ function authenticateWithdrawalAdmin(): array
     }
 
 
-    /* =====================================================
-       SERVER-SIDE ADMIN ROLE
-    ===================================================== */
+    /* -----------------------------------------------------
+       ADMIN ROLE
+    ----------------------------------------------------- */
 
     $role =
         strtolower(
-            withdrawalString(
+            adminWithdrawalString(
                 $user['role']
                 ??
                 $user['user_role']
@@ -1119,7 +1000,7 @@ function authenticateWithdrawalAdmin(): array
 
     $accountType =
         strtolower(
-            withdrawalString(
+            adminWithdrawalString(
                 $user['account_type']
                 ??
                 $user['accountType']
@@ -1130,68 +1011,45 @@ function authenticateWithdrawalAdmin(): array
 
 
     $explicitAdmin =
-        isset($user['is_admin'])
-        &&
         (
-            $user['is_admin'] === true
+            ($user['is_admin'] ?? false)
+            === true
             ||
-            $user['is_admin'] === 1
+            ($user['is_admin'] ?? null)
+            === 1
             ||
-            $user['is_admin'] === '1'
+            ($user['is_admin'] ?? null)
+            === '1'
         );
 
 
-    $isAdminRole =
-        in_array(
-            $role,
-            [
-                'admin',
-                'administrator',
-                'super_admin',
-                'superadmin'
-            ],
-            true
-        );
-
-
-    $isAdminAccountType =
-        in_array(
-            $accountType,
-            [
-                'admin',
-                'administrator',
-                'super_admin',
-                'superadmin'
-            ],
-            true
-        );
+    $adminRoles = [
+        'admin',
+        'administrator',
+        'super_admin',
+        'superadmin'
+    ];
 
 
     $isAdmin =
         $explicitAdmin
         ||
-        $isAdminRole
+        in_array(
+            $role,
+            $adminRoles,
+            true
+        )
         ||
-        $isAdminAccountType;
+        in_array(
+            $accountType,
+            $adminRoles,
+            true
+        );
 
-
-    /* -----------------------------------------------------
-       DENY NORMAL USERS
-    ----------------------------------------------------- */
 
     if (!$isAdmin) {
 
-        error_log(
-            'Unauthorized withdrawal admin access attempt. User ID: '
-            .
-            (
-                isset($user['_id'])
-                    ? (string)$user['_id']
-                    : withdrawalString($sessionUserId)
-            )
-        );
-
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Administrator access required.',
             [
@@ -1203,29 +1061,21 @@ function authenticateWithdrawalAdmin(): array
     }
 
 
-    /* =====================================================
+    /* -----------------------------------------------------
        OPTIONAL ENVIRONMENT RESTRICTION
-    ===================================================== */
+    ----------------------------------------------------- */
 
-    $currentId = '';
-
-    if (isset($user['_id'])) {
-
-        $currentId =
-            (string)$user['_id'];
-
-    } elseif (isset($user['id'])) {
-
-        $currentId =
-            withdrawalString(
-                $user['id']
+    $currentId =
+        isset($user['_id'])
+            ? (string)$user['_id']
+            : adminWithdrawalString(
+                $user['id'] ?? ''
             );
-    }
 
 
     $currentEmail =
         strtolower(
-            withdrawalString(
+            adminWithdrawalString(
                 $user['email'] ?? ''
             )
         );
@@ -1251,10 +1101,6 @@ function authenticateWithdrawalAdmin(): array
         );
 
 
-    /*
-     * These values ONLY restrict an already-authorized
-     * administrator. They cannot create admin access.
-     */
     if (
         $configuredAdminEmail !== ''
         ||
@@ -1287,7 +1133,7 @@ function authenticateWithdrawalAdmin(): array
             !$emailMatches
         ) {
 
-            withdrawalResponse(
+            adminWithdrawalResponse(
                 false,
                 'This administrator account is not authorized for withdrawal management.',
                 [
@@ -1300,69 +1146,62 @@ function authenticateWithdrawalAdmin(): array
     }
 
 
-    /* -----------------------------------------------------
-       SYNCHRONIZE SESSION
-    ----------------------------------------------------- */
+    $_SESSION['logged_in'] =
+        true;
 
-    $_SESSION['logged_in'] = true;
-    $_SESSION['authenticated'] = true;
+    $_SESSION['authenticated'] =
+        true;
 
     $_SESSION['user_id'] =
         $user['_id']
-        ?? $sessionUserId;
+        ??
+        $sessionUserId;
 
     $_SESSION['userId'] =
         $user['_id']
-        ?? $sessionUserId;
+        ??
+        $sessionUserId;
 
-    $_SESSION['id'] =
-        $user['_id']
-        ?? $sessionUserId;
-
-    $_SESSION['role'] =
-        $role !== ''
-            ? $role
-            : 'admin';
-
-    $_SESSION['account_type'] =
-        $accountType !== ''
-            ? $accountType
-            : 'admin';
-
-    $_SESSION['is_admin'] = true;
-
-    if (!isset($_SESSION['login_time'])) {
-
-        $_SESSION['login_time'] =
-            time();
-    }
+    $_SESSION['is_admin'] =
+        true;
 
 
     return [
-        'user' => $user,
-        'id' => $currentId,
-        'email' => $currentEmail
+        'user' =>
+            $user,
+
+        'id' =>
+            $currentId,
+
+        'email' =>
+            $currentEmail
     ];
 }
 
 
 /* =========================================================
-   ADMIN AUTHENTICATION
+   AUTHENTICATE
 ========================================================= */
 
 $admin =
-    authenticateWithdrawalAdmin();
+    authenticateAdminWithdrawal();
 
 
 /* =========================================================
-   DATABASE CHECK
+   REQUIRED COLLECTIONS
 ========================================================= */
 
-if (!isset($transactions)) {
+if (
+    !isset($users)
+    ||
+    !isset($withdrawals)
+    ||
+    !isset($transactions)
+) {
 
-    withdrawalResponse(
+    adminWithdrawalResponse(
         false,
-        'Transactions collection is unavailable.',
+        'Required database collections are unavailable.',
         [],
         500
     );
@@ -1373,50 +1212,23 @@ if (!isset($transactions)) {
    GET WITHDRAWALS
 ========================================================= */
 
-if ($requestMethod === 'GET') {
+if (
+    $requestMethod === 'GET'
+) {
 
     try {
 
-        $withdrawalFilter = [
-
-            '$or' => [
-
-                [
-                    'type' => [
-                        '$in' => [
-                            'withdrawal',
-                            'Withdrawal',
-                            'WITHDRAWAL'
-                        ]
-                    ]
-                ],
-
-                [
-                    'payout_sent' => [
-                        '$exists' => true
-                    ]
-                ],
-
-                [
-                    'balance_reserved' => true
-                ],
-
-                [
-                    'admin_approved' => true
-                ],
-
-                [
-                    'withdrawal_amount' => [
-                        '$exists' => true
-                    ]
-                ]
-            ]
-        ];
+        $records = [];
 
 
-        $cursor =
-            $transactions->find(
-                $withdrawalFilter,
+        /* =================================================
+           PRIMARY SOURCE:
+           WITHDRAWALS COLLECTION
+        ================================================= */
+
+        $withdrawalCursor =
+            $withdrawals->find(
+                [],
                 [
                     'sort' => [
                         'created_at' => -1,
@@ -1427,415 +1239,640 @@ if ($requestMethod === 'GET') {
             );
 
 
-        $withdrawals = [];
-
-        $totalWithdrawals = 0.0;
-        $pendingWithdrawals = 0.0;
-        $approvedWithdrawals = 0.0;
-        $rejectedWithdrawals = 0.0;
-
-
-        foreach ($cursor as $withdrawal) {
-
-            try {
-
-                $id =
-                    isset($withdrawal['_id'])
-                        ? (string)$withdrawal['_id']
-                        : '';
-
-
-                $reference =
-                    withdrawalString(
-                        $withdrawal['reference'] ?? ''
-                    );
-
-
-                if ($reference === '') {
-
-                    $reference =
-                        withdrawalString(
-                            $withdrawal['transaction_id']
-                            ?? ''
-                        );
-                }
-
-
-                if ($reference === '') {
-                    $reference = $id;
-                }
-
-
-                $amount =
-                    withdrawalMoney(
-                        $withdrawal['amount']
-                        ??
-                        $withdrawal['withdrawal_amount']
-                        ??
-                        $withdrawal['value']
-                        ??
-                        0
-                    );
-
-
-                $status =
-                    strtolower(
-                        withdrawalString(
-                            $withdrawal['status']
-                            ??
-                            'pending'
-                        )
-                    );
-
-
-                if ($status === '') {
-                    $status = 'pending';
-                }
-
-
-                $userId =
-                    getWithdrawalUserId(
-                        $withdrawal
-                    );
-
-
-                $user =
-                    findWithdrawalUser(
-                        $userId
-                    );
-
-
-                $firstName = '';
-                $lastName = '';
-                $fullName = '';
-                $phone = '';
-                $email = '';
-
-
-                if ($user !== null) {
-
-                    $firstName =
-                        withdrawalString(
-                            $user['firstName']
-                            ??
-                            $user['first_name']
-                            ??
-                            ''
-                        );
-
-
-                    $lastName =
-                        withdrawalString(
-                            $user['lastName']
-                            ??
-                            $user['last_name']
-                            ??
-                            ''
-                        );
-
-
-                    $fullName =
-                        withdrawalString(
-                            $user['name']
-                            ??
-                            $user['full_name']
-                            ??
-                            $user['fullName']
-                            ??
-                            ''
-                        );
-
-
-                    if ($fullName === '') {
-
-                        $fullName =
-                            trim(
-                                $firstName .
-                                ' ' .
-                                $lastName
-                            );
-                    }
-
-
-                    $phone =
-                        withdrawalString(
-                            $user['phone']
-                            ??
-                            $user['phone_number']
-                            ??
-                            $user['mobile']
-                            ??
-                            ''
-                        );
-
-
-                    $email =
-                        withdrawalString(
-                            $user['email']
-                            ?? ''
-                        );
-                }
-
-
-                if ($fullName === '') {
-
-                    $fullName =
-                        withdrawalString(
-                            $withdrawal['name']
-                            ??
-                            $withdrawal['full_name']
-                            ??
-                            ''
-                        );
-                }
-
-
-                if ($phone === '') {
-
-                    $phone =
-                        withdrawalString(
-                            $withdrawal['phone']
-                            ??
-                            $withdrawal['phone_number']
-                            ??
-                            ''
-                        );
-                }
-
-
-                if ($email === '') {
-
-                    $email =
-                        withdrawalString(
-                            $withdrawal['email']
-                            ?? ''
-                        );
-                }
-
-
-                $method =
-                    withdrawalString(
-                        $withdrawal['method']
-                        ??
-                        $withdrawal['payment_method']
-                        ??
-                        $withdrawal['withdrawal_method']
-                        ??
-                        ''
-                    );
-
-
-                $accountNumber =
-                    withdrawalString(
-                        $withdrawal['account_number']
-                        ??
-                        $withdrawal['accountNumber']
-                        ??
-                        $withdrawal['phone']
-                        ??
-                        $withdrawal['phone_number']
-                        ??
-                        $phone
-                    );
-
-
-                $accountName =
-                    withdrawalString(
-                        $withdrawal['account_name']
-                        ??
-                        $withdrawal['accountName']
-                        ??
-                        $withdrawal['recipient_name']
-                        ??
-                        $fullName
-                    );
-
-
-                $createdAt =
-                    withdrawalDate(
-                        $withdrawal['created_at']
-                        ??
-                        $withdrawal['createdAt']
-                        ??
-                        $withdrawal['date']
-                        ??
-                        null
-                    );
-
-
-                $processedAt =
-                    withdrawalDate(
-                        $withdrawal['processed_at']
-                        ??
-                        $withdrawal['updated_at']
-                        ??
-                        null
-                    );
-
-
-                $adminNote =
-                    withdrawalString(
-                        $withdrawal['admin_note']
-                        ??
-                        $withdrawal['adminNote']
-                        ??
-                        $withdrawal['rejection_reason']
-                        ??
-                        ''
-                    );
-
-
-                $totalWithdrawals += $amount;
-
-
-                if ($status === 'pending') {
-
-                    $pendingWithdrawals += $amount;
-
-                } elseif (
-                    $status === 'approved'
-                    ||
-                    $status === 'completed'
-                ) {
-
-                    $approvedWithdrawals += $amount;
-
-                } elseif ($status === 'rejected') {
-
-                    $rejectedWithdrawals += $amount;
-                }
-
-
-                $normalizedUserId =
-                    withdrawalString(
-                        $userId
-                    );
-
-
-                $withdrawals[] = [
-
-                    'id' =>
-                        $id,
-
-                    '_id' =>
-                        $id,
-
-                    'reference' =>
-                        $reference,
-
-                    'user_id' =>
-                        $normalizedUserId,
-
-                    'userId' =>
-                        $normalizedUserId,
-
-                    'name' =>
-                        $fullName,
-
-                    'full_name' =>
-                        $fullName,
-
-                    'firstName' =>
-                        $firstName,
-
-                    'lastName' =>
-                        $lastName,
-
-                    'email' =>
-                        $email,
-
-                    'phone' =>
-                        $phone,
-
-                    'amount' =>
-                        $amount,
-
-                    'status' =>
-                        $status,
-
-                    'method' =>
-                        $method,
-
-                    'payment_method' =>
-                        $method,
-
-                    'account_number' =>
-                        $accountNumber,
-
-                    'accountNumber' =>
-                        $accountNumber,
-
-                    'account_name' =>
-                        $accountName,
-
-                    'accountName' =>
-                        $accountName,
-
-                    'balance_reserved' =>
-                        withdrawalBool(
-                            $withdrawal[
-                                'balance_reserved'
-                            ] ?? false
-                        ),
-
-                    'balance_deducted' =>
-                        withdrawalBool(
-                            $withdrawal[
-                                'balance_deducted'
-                            ] ?? false
-                        ),
-
-                    'admin_approved' =>
-                        withdrawalBool(
-                            $withdrawal[
-                                'admin_approved'
-                            ] ?? false
-                        ),
-
-                    'payout_sent' =>
-                        withdrawalBool(
-                            $withdrawal[
-                                'payout_sent'
-                            ] ?? false
-                        ),
-
-                    'created_at' =>
-                        $createdAt,
-
-                    'processed_at' =>
-                        $processedAt,
-
-                    'admin_note' =>
-                        $adminNote,
-
-                    'admin_id' =>
-                        withdrawalString(
-                            $withdrawal[
-                                'admin_id'
-                            ] ?? ''
-                        ),
-
-                    'admin_email' =>
-                        withdrawalString(
-                            $withdrawal[
-                                'admin_email'
-                            ] ?? ''
-                        )
+        foreach (
+            $withdrawalCursor
+            as $record
+        ) {
+
+            $records[] =
+                [
+                    'source' =>
+                        'withdrawals',
+
+                    'record' =>
+                        $record
                 ];
-
-            } catch (Throwable $rowError) {
-
-                error_log(
-                    'Crown Cash withdrawal row error: ' .
-                    $rowError->getMessage()
-                );
-
-                continue;
-            }
         }
 
 
-        withdrawalResponse(
+        /* =================================================
+           SECONDARY SOURCE:
+           TRANSACTIONS COLLECTION
+
+           This catches older withdrawals created before
+           this replacement.
+        ================================================= */
+
+        $transactionCursor =
+            $transactions->find(
+                [
+                    '$or' => [
+
+                        [
+                            'type' => [
+                                '$in' => [
+                                    'withdrawal',
+                                    'Withdrawal',
+                                    'WITHDRAWAL'
+                                ]
+                            ]
+                        ],
+
+                        [
+                            'transaction_type' =>
+                                'withdrawal'
+                        ],
+
+                        [
+                            'withdrawal_id' =>
+                                [
+                                    '$exists' => true
+                                ]
+                        ]
+                    ]
+                ],
+                [
+                    'sort' => [
+                        'created_at' => -1,
+                        '_id' => -1
+                    ],
+                    'limit' => 500
+                ]
+            );
+
+
+        foreach (
+            $transactionCursor
+            as $record
+        ) {
+
+            $records[] =
+                [
+                    'source' =>
+                        'transactions',
+
+                    'record' =>
+                        $record
+                ];
+        }
+
+
+        /* =================================================
+           NORMALIZE + DEDUPLICATE
+        ================================================= */
+
+        $withdrawalList = [];
+
+        $seen = [];
+
+        $total = 0.0;
+        $pending = 0.0;
+        $approved = 0.0;
+        $rejected = 0.0;
+
+
+        foreach (
+            $records
+            as $entry
+        ) {
+
+            $record =
+                $entry['record'];
+
+
+            $source =
+                $entry['source'];
+
+
+            $id = '';
+
+
+            if (
+                isset($record['_id'])
+            ) {
+
+                $id =
+                    (string)$record['_id'];
+            }
+
+
+            $withdrawalId =
+                isset($record['withdrawal_id'])
+                    ? adminWithdrawalString(
+                        $record['withdrawal_id']
+                    )
+                    : '';
+
+
+            $reference =
+                adminWithdrawalString(
+                    $record['reference']
+                    ??
+                    ''
+                );
+
+
+            /*
+            Use the actual withdrawal record ID
+            whenever available.
+            */
+
+            $uniqueKey =
+                $withdrawalId !== ''
+                    ? 'wd:' . $withdrawalId
+                    : (
+                        $id !== ''
+                            ? 'id:' . $id
+                            : (
+                                $reference !== ''
+                                    ? 'ref:' . $reference
+                                    : ''
+                            )
+                    );
+
+
+            if (
+                $uniqueKey !== ''
+                &&
+                isset($seen[$uniqueKey])
+            ) {
+
+                continue;
+            }
+
+
+            if (
+                $uniqueKey !== ''
+            ) {
+
+                $seen[$uniqueKey] =
+                    true;
+            }
+
+
+            /* -------------------------------------------------
+               USER
+            ------------------------------------------------- */
+
+            $userId =
+                getAdminWithdrawalUserId(
+                    $record
+                );
+
+
+            $user =
+                findAdminWithdrawalUser(
+                    $userId
+                );
+
+
+            $name = '';
+            $email = '';
+            $phone = '';
+
+
+            if (
+                $user !== null
+            ) {
+
+                $name =
+                    adminWithdrawalString(
+                        $user['full_name']
+                        ??
+                        $user['fullName']
+                        ??
+                        $user['name']
+                        ??
+                        ''
+                    );
+
+
+                if (
+                    $name === ''
+                ) {
+
+                    $name =
+                        trim(
+                            adminWithdrawalString(
+                                $user['firstName']
+                                ??
+                                $user['first_name']
+                                ??
+                                ''
+                            )
+                            .
+                            ' '
+                            .
+                            adminWithdrawalString(
+                                $user['lastName']
+                                ??
+                                $user['last_name']
+                                ??
+                                ''
+                            )
+                        );
+                }
+
+
+                $email =
+                    adminWithdrawalString(
+                        $user['email']
+                        ??
+                        ''
+                    );
+
+
+                $phone =
+                    adminWithdrawalString(
+                        $user['phone']
+                        ??
+                        $user['phone_number']
+                        ??
+                        $user['mobile']
+                        ??
+                        ''
+                    );
+            }
+
+
+            if (
+                $name === ''
+            ) {
+
+                $name =
+                    adminWithdrawalString(
+                        $record['full_name']
+                        ??
+                        $record['fullName']
+                        ??
+                        $record['name']
+                        ??
+                        ''
+                    );
+            }
+
+
+            if (
+                $email === ''
+            ) {
+
+                $email =
+                    adminWithdrawalString(
+                        $record['email']
+                        ??
+                        ''
+                    );
+            }
+
+
+            if (
+                $phone === ''
+            ) {
+
+                $phone =
+                    adminWithdrawalString(
+                        $record['phone']
+                        ??
+                        $record['phone_number']
+                        ??
+                        ''
+                    );
+            }
+
+
+            if (
+                $name === ''
+            ) {
+
+                $name =
+                    'Unknown user';
+            }
+
+
+            /* -------------------------------------------------
+               AMOUNT
+            ------------------------------------------------- */
+
+            $amount =
+                adminWithdrawalMoney(
+                    $record['amount']
+                    ??
+                    $record['requested_amount']
+                    ??
+                    $record['withdrawal_amount']
+                    ??
+                    0
+                );
+
+
+            /* -------------------------------------------------
+               STATUS
+            ------------------------------------------------- */
+
+            $status =
+                strtolower(
+                    adminWithdrawalString(
+                        $record['status']
+                        ??
+                        'pending'
+                    )
+                );
+
+
+            if (
+                $status === ''
+            ) {
+
+                $status =
+                    'pending';
+            }
+
+
+            /* -------------------------------------------------
+               METHOD
+            ------------------------------------------------- */
+
+            $method =
+                adminWithdrawalString(
+                    $record['payment_method']
+                    ??
+                    $record['method']
+                    ??
+                    $record['withdrawal_method']
+                    ??
+                    ''
+                );
+
+
+            /* -------------------------------------------------
+               ACCOUNT NUMBER
+            ------------------------------------------------- */
+
+            $accountNumber =
+                adminWithdrawalString(
+                    $record['account_number']
+                    ??
+                    $record['accountNumber']
+                    ??
+                    $record['phone']
+                    ??
+                    $phone
+                );
+
+
+            /* -------------------------------------------------
+               FEE / PAYOUT
+            ------------------------------------------------- */
+
+            $fee =
+                adminWithdrawalMoney(
+                    $record['fee']
+                    ??
+                    0
+                );
+
+
+            $payout =
+                adminWithdrawalMoney(
+                    $record['payout_amount']
+                    ??
+                    $record['net_amount']
+                    ??
+                    (
+                        $amount -
+                        $fee
+                    )
+                );
+
+
+            /* -------------------------------------------------
+               DATES
+            ------------------------------------------------- */
+
+            $createdAt =
+                adminWithdrawalDate(
+                    $record['created_at']
+                    ??
+                    $record['createdAt']
+                    ??
+                    $record['date']
+                    ??
+                    $record['timestamp']
+                    ??
+                    null
+                );
+
+
+            $processedAt =
+                adminWithdrawalDate(
+                    $record['processed_at']
+                    ??
+                    $record['updated_at']
+                    ??
+                    null
+                );
+
+
+            /* -------------------------------------------------
+               ID
+            ------------------------------------------------- */
+
+            $displayId =
+                $withdrawalId
+                !== ''
+                    ? $withdrawalId
+                    : $id;
+
+
+            if (
+                $displayId === ''
+            ) {
+
+                $displayId =
+                    $reference;
+            }
+
+
+            /* -------------------------------------------------
+               COUNTS
+            ------------------------------------------------- */
+
+            $total +=
+                $amount;
+
+
+            if (
+                $status === 'pending'
+            ) {
+
+                $pending +=
+                    $amount;
+
+            } elseif (
+                $status === 'approved'
+                ||
+                $status === 'completed'
+            ) {
+
+                $approved +=
+                    $amount;
+
+            } elseif (
+                $status === 'rejected'
+            ) {
+
+                $rejected +=
+                    $amount;
+            }
+
+
+            /* -------------------------------------------------
+               RESPONSE RECORD
+            ------------------------------------------------- */
+
+            $withdrawalList[] = [
+
+                'id' =>
+                    $displayId,
+
+                '_id' =>
+                    $displayId,
+
+                'withdrawal_id' =>
+                    $withdrawalId,
+
+                'reference' =>
+                    $reference,
+
+                'user_id' =>
+                    adminWithdrawalString(
+                        $userId
+                    ),
+
+                'userId' =>
+                    adminWithdrawalString(
+                        $userId
+                    ),
+
+                'name' =>
+                    $name,
+
+                'full_name' =>
+                    $name,
+
+                'email' =>
+                    $email,
+
+                'phone' =>
+                    $phone,
+
+                'amount' =>
+                    $amount,
+
+                'requested_amount' =>
+                    $amount,
+
+                'fee' =>
+                    $fee,
+
+                'payout_amount' =>
+                    $payout,
+
+                'method' =>
+                    $method,
+
+                'payment_method' =>
+                    $method,
+
+                'account_number' =>
+                    $accountNumber,
+
+                'status' =>
+                    $status,
+
+                'balance_reserved' =>
+                    adminWithdrawalBool(
+                        $record[
+                            'balance_reserved'
+                        ] ?? false
+                    ),
+
+                'balance_deducted' =>
+                    adminWithdrawalBool(
+                        $record[
+                            'balance_deducted'
+                        ] ?? false
+                    ),
+
+                'admin_approved' =>
+                    adminWithdrawalBool(
+                        $record[
+                            'admin_approved'
+                        ] ?? false
+                    ),
+
+                'payout_sent' =>
+                    adminWithdrawalBool(
+                        $record[
+                            'payout_sent'
+                        ] ?? false
+                    ),
+
+                'created_at' =>
+                    $createdAt,
+
+                'processed_at' =>
+                    $processedAt,
+
+                'admin_note' =>
+                    adminWithdrawalString(
+                        $record[
+                            'admin_note'
+                        ]
+                        ??
+                        $record[
+                            'rejection_reason'
+                        ]
+                        ??
+                        ''
+                    ),
+
+                'source' =>
+                    $source
+            ];
+        }
+
+
+        /* =================================================
+           SORT NEWEST FIRST
+        ================================================= */
+
+        usort(
+            $withdrawalList,
+            function (
+                array $a,
+                array $b
+            ): int {
+
+                return strcmp(
+                    (string)(
+                        $b['created_at']
+                        ?? ''
+                    ),
+                    (string)(
+                        $a['created_at']
+                        ?? ''
+                    )
+                );
+            }
+        );
+
+
+        /* =================================================
+           RESPONSE
+        ================================================= */
+
+        adminWithdrawalResponse(
             true,
             'Withdrawals loaded successfully.',
             [
@@ -1850,39 +1887,46 @@ if ($requestMethod === 'GET') {
                     true,
 
                 'withdrawals' =>
-                    $withdrawals,
+                    $withdrawalList,
 
                 'data' =>
-                    $withdrawals,
+                    $withdrawalList,
 
                 'total' =>
-                    count($withdrawals),
+                    count(
+                        $withdrawalList
+                    ),
+
+                'count' =>
+                    count(
+                        $withdrawalList
+                    ),
 
                 'totals' => [
 
                     'withdrawals' =>
-                        $totalWithdrawals,
+                        $total,
 
                     'total_withdrawals' =>
-                        $totalWithdrawals,
+                        $total,
 
                     'pending' =>
-                        $pendingWithdrawals,
+                        $pending,
 
                     'pending_withdrawals' =>
-                        $pendingWithdrawals,
+                        $pending,
 
                     'approved' =>
-                        $approvedWithdrawals,
+                        $approved,
 
                     'approved_withdrawals' =>
-                        $approvedWithdrawals,
+                        $approved,
 
                     'rejected' =>
-                        $rejectedWithdrawals,
+                        $rejected,
 
                     'rejected_withdrawals' =>
-                        $rejectedWithdrawals
+                        $rejected
                 ]
             ]
         );
@@ -1890,11 +1934,11 @@ if ($requestMethod === 'GET') {
     } catch (Throwable $e) {
 
         error_log(
-            'Crown Cash admin_withdrawal.php GET error: ' .
+            'Crown Cash admin withdrawal GET error: ' .
             $e->getMessage()
         );
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Unable to load withdrawals.',
             [],
@@ -1905,10 +1949,12 @@ if ($requestMethod === 'GET') {
 
 
 /* =========================================================
-   POST
+   POST - APPROVE / REJECT
 ========================================================= */
 
-if ($requestMethod === 'POST') {
+if (
+    $requestMethod === 'POST'
+) {
 
     try {
 
@@ -1925,13 +1971,16 @@ if ($requestMethod === 'POST') {
             );
 
 
-        if (!is_array($input)) {
+        if (
+            !is_array($input)
+        ) {
+
             $input = [];
         }
 
 
         /* =================================================
-           REQUEST
+           ID
         ================================================= */
 
         $withdrawalId =
@@ -1945,14 +1994,18 @@ if ($requestMethod === 'POST') {
 
 
         $withdrawalId =
-            withdrawalString(
+            adminWithdrawalString(
                 $withdrawalId
             );
 
 
+        /* =================================================
+           ACTION
+        ================================================= */
+
         $action =
             strtolower(
-                withdrawalString(
+                adminWithdrawalString(
                     $input['action']
                     ??
                     $input['status']
@@ -1962,9 +2015,11 @@ if ($requestMethod === 'POST') {
             );
 
 
-        if ($withdrawalId === '') {
+        if (
+            $withdrawalId === ''
+        ) {
 
-            withdrawalResponse(
+            adminWithdrawalResponse(
                 false,
                 'Withdrawal ID is required.',
                 [],
@@ -1974,19 +2029,35 @@ if ($requestMethod === 'POST') {
 
 
         if (
+            $action === 'approved'
+        ) {
+
+            $action =
+                'approve';
+        }
+
+
+        if (
+            $action === 'rejected'
+        ) {
+
+            $action =
+                'reject';
+        }
+
+
+        if (
             !in_array(
                 $action,
                 [
                     'approve',
-                    'approved',
-                    'reject',
-                    'rejected'
+                    'reject'
                 ],
                 true
             )
         ) {
 
-            withdrawalResponse(
+            adminWithdrawalResponse(
                 false,
                 'Invalid withdrawal action.',
                 [],
@@ -1995,46 +2066,131 @@ if ($requestMethod === 'POST') {
         }
 
 
-        if ($action === 'approved') {
-            $action = 'approve';
-        }
-
-
-        if ($action === 'rejected') {
-            $action = 'reject';
-        }
-
-
         /* =================================================
            FIND WITHDRAWAL
         ================================================= */
 
-        $idFilter =
-            withdrawalIdFilter(
+        $withdrawalObjectId =
+            adminWithdrawalObjectId(
                 $withdrawalId
             );
 
 
-        if ($idFilter === null) {
+        $withdrawal = null;
+        $withdrawalSource = '';
 
-            withdrawalResponse(
-                false,
-                'Invalid withdrawal ID.',
-                [],
-                400
-            );
+
+        /*
+        First look in the actual withdrawals
+        collection.
+        */
+
+        if (
+            $withdrawalObjectId !== null
+        ) {
+
+            $withdrawal =
+                $withdrawals->findOne([
+                    '_id' =>
+                        $withdrawalObjectId
+                ]);
+
+
+            if (
+                $withdrawal !== null
+            ) {
+
+                $withdrawalSource =
+                    'withdrawals';
+            }
         }
 
 
-        $withdrawal =
-            $transactions->findOne(
-                $idFilter
-            );
+        /*
+        Fallback by reference.
+        */
+
+        if (
+            $withdrawal === null
+        ) {
+
+            $withdrawal =
+                $withdrawals->findOne([
+                    'reference' =>
+                        $withdrawalId
+                ]);
 
 
-        if ($withdrawal === null) {
+            if (
+                $withdrawal !== null
+            ) {
 
-            withdrawalResponse(
+                $withdrawalSource =
+                    'withdrawals';
+            }
+        }
+
+
+        /*
+        Finally search transactions for older
+        withdrawal records.
+        */
+
+        if (
+            $withdrawal === null
+        ) {
+
+            if (
+                $withdrawalObjectId !== null
+            ) {
+
+                $withdrawal =
+                    $transactions->findOne([
+                        '_id' =>
+                            $withdrawalObjectId
+                    ]);
+            }
+
+
+            if (
+                $withdrawal === null
+            ) {
+
+                $withdrawal =
+                    $transactions->findOne([
+                        'withdrawal_id' =>
+                            $withdrawalObjectId
+                    ]);
+            }
+
+
+            if (
+                $withdrawal === null
+            ) {
+
+                $withdrawal =
+                    $transactions->findOne([
+                        'reference' =>
+                            $withdrawalId
+                    ]);
+            }
+
+
+            if (
+                $withdrawal !== null
+            ) {
+
+                $withdrawalSource =
+                    'transactions';
+            }
+        }
+
+
+        if (
+            $withdrawal === null
+        ) {
+
+            adminWithdrawalResponse(
                 false,
                 'Withdrawal request not found.',
                 [],
@@ -2044,47 +2200,12 @@ if ($requestMethod === 'POST') {
 
 
         /* =================================================
-           VERIFY TYPE
-        ================================================= */
-
-        $type =
-            strtolower(
-                withdrawalString(
-                    $withdrawal['type'] ?? ''
-                )
-            );
-
-
-        $isWithdrawal =
-            $type === 'withdrawal'
-            ||
-            isset($withdrawal['payout_sent'])
-            ||
-            isset($withdrawal['balance_reserved'])
-            ||
-            isset($withdrawal['withdrawal_amount'])
-            ||
-            isset($withdrawal['withdrawal_method']);
-
-
-        if (!$isWithdrawal) {
-
-            withdrawalResponse(
-                false,
-                'The selected transaction is not a withdrawal request.',
-                [],
-                400
-            );
-        }
-
-
-        /* =================================================
-           CURRENT STATUS
+           STATUS
         ================================================= */
 
         $currentStatus =
             strtolower(
-                withdrawalString(
+                adminWithdrawalString(
                     $withdrawal['status']
                     ??
                     'pending'
@@ -2092,14 +2213,20 @@ if ($requestMethod === 'POST') {
             );
 
 
-        if ($currentStatus === '') {
-            $currentStatus = 'pending';
+        if (
+            $currentStatus === ''
+        ) {
+
+            $currentStatus =
+                'pending';
         }
 
 
-        if ($currentStatus !== 'pending') {
+        if (
+            $currentStatus !== 'pending'
+        ) {
 
-            withdrawalResponse(
+            adminWithdrawalResponse(
                 false,
                 'This withdrawal has already been processed.',
                 [
@@ -2112,139 +2239,73 @@ if ($requestMethod === 'POST') {
 
 
         /* =================================================
-           AMOUNT
-        ================================================= */
-
-        $amount =
-            withdrawalMoney(
-                $withdrawal['amount']
-                ??
-                $withdrawal['withdrawal_amount']
-                ??
-                $withdrawal['value']
-                ??
-                0
-            );
-
-
-        if ($amount <= 0) {
-
-            withdrawalResponse(
-                false,
-                'Withdrawal amount is invalid.',
-                [
-                    'amount' =>
-                        $amount
-                ],
-                400
-            );
-        }
-
-
-        /* =================================================
            USER
         ================================================= */
 
         $userId =
-            getWithdrawalUserId(
+            getAdminWithdrawalUserId(
                 $withdrawal
             );
 
 
         if (
-            !withdrawalHasValue(
-                $userId
-            )
+            $userId === null
         ) {
 
-            $postedUserId =
-                getPostedUserId(
-                    $input
-                );
-
-
-            if (
-                withdrawalHasValue(
-                    $postedUserId
-                )
-            ) {
-
-                $userId =
-                    $postedUserId;
-            }
-        }
-
-
-        if (
-            !withdrawalHasValue(
-                $userId
-            )
-        ) {
-
-            withdrawalResponse(
+            adminWithdrawalResponse(
                 false,
-                'Withdrawal is missing the user ID.',
+                'Withdrawal is missing its user ID.',
                 [],
                 400
             );
         }
 
 
-        /* =================================================
-           VERIFY POSTED USER ID
-        ================================================= */
-
-        $databaseUserId =
-            getWithdrawalUserId(
-                $withdrawal
-            );
-
-
-        $postedUserId =
-            getPostedUserId(
-                $input
+        $user =
+            findAdminWithdrawalUser(
+                $userId
             );
 
 
         if (
-            withdrawalHasValue(
-                $databaseUserId
-            )
-            &&
-            withdrawalHasValue(
-                $postedUserId
-            )
+            $user === null
         ) {
 
-            $dbUserString =
-                withdrawalString(
-                    $databaseUserId
-                );
+            adminWithdrawalResponse(
+                false,
+                'The user associated with this withdrawal could not be found.',
+                [],
+                404
+            );
+        }
 
 
-            $postedUserString =
-                withdrawalString(
-                    $postedUserId
-                );
+        /* =================================================
+           AMOUNT
+        ================================================= */
+
+        $amount =
+            adminWithdrawalMoney(
+                $withdrawal['amount']
+                ??
+                $withdrawal['requested_amount']
+                ??
+                $withdrawal['withdrawal_amount']
+                ??
+                0
+            );
 
 
-            if (
-                strtolower(
-                    $dbUserString
-                )
-                !==
-                strtolower(
-                    $postedUserString
-                )
-            ) {
+        if (
+            $amount <= 0
+        ) {
 
-                withdrawalResponse(
-                    false,
-                    'The supplied user ID does not match the withdrawal owner.',
-                    [],
-                    400
-                );
-            }
+            adminWithdrawalResponse(
+                false,
+                'Withdrawal amount is invalid.',
+                [],
+                400
+            );
         }
 
 
@@ -2257,236 +2318,104 @@ if ($requestMethod === 'POST') {
 
 
         $adminId =
-            $admin['id'] ?? '';
+            $admin['id']
+            ??
+            '';
 
 
         $adminEmail =
-            withdrawalString(
-                $adminUser['email'] ?? ''
-            );
-
-
-        $adminName =
-            withdrawalString(
-                $adminUser['name']
-                ??
-                $adminUser['full_name']
-                ??
-                $adminUser['fullName']
+            adminWithdrawalString(
+                $adminUser['email']
                 ??
                 ''
             );
 
 
-        /* =================================================
-           TRANSACTION ID
-        ================================================= */
-
-        $transactionId =
-            $withdrawal['_id']
-            ??
-            null;
-
-
-        if ($transactionId === null) {
-
-            withdrawalResponse(
-                false,
-                'Withdrawal record has no database ID.',
-                [],
-                400
+        $adminName =
+            adminWithdrawalString(
+                $adminUser['full_name']
+                ??
+                $adminUser['fullName']
+                ??
+                $adminUser['name']
+                ??
+                ''
             );
-        }
+
+
+        $now =
+            new UTCDateTime();
 
 
         /* =================================================
            APPROVE
         ================================================= */
 
-        if ($action === 'approve') {
+        if (
+            $action === 'approve'
+        ) {
 
             /*
-             * The wallet was already reserved/deducted
-             * when the withdrawal was created.
-             *
-             * Approval therefore does NOT deduct again.
-             */
+            IMPORTANT:
 
-            $updateResult =
-                $transactions->updateOne(
-                    [
-                        '_id' =>
-                            $transactionId,
+            The wallet has NOT been deducted yet.
 
-                        'status' =>
-                            'pending'
-                    ],
-                    [
-                        '$set' => [
+            We first claim the withdrawal so that two
+            admins cannot approve it simultaneously.
+            */
 
-                            'status' =>
-                                'approved',
+            $claimFilter = [
 
-                            'admin_approved' =>
-                                true,
-
-                            'balance_reserved' =>
-                                false,
-
-                            'balance_deducted' =>
-                                true,
-
-                            'processed_at' =>
-                                new UTCDateTime(),
-
-                            'updated_at' =>
-                                new UTCDateTime(),
-
-                            'admin_id' =>
-                                $adminId,
-
-                            'admin_email' =>
-                                $adminEmail,
-
-                            'admin_name' =>
-                                $adminName,
-
-                            'admin_action' =>
-                                'approved'
-                        ]
-                    ]
-                );
+                'status' =>
+                    'pending'
+            ];
 
 
             if (
-                $updateResult->getMatchedCount()
-                === 0
+                $withdrawalSource ===
+                'withdrawals'
             ) {
 
-                withdrawalResponse(
-                    false,
-                    'Withdrawal could not be approved because it was already processed.',
-                    [],
-                    409
-                );
+                $claimFilter['_id'] =
+                    $withdrawal['_id'];
+
+            } else {
+
+                $claimFilter['_id'] =
+                    $withdrawal['_id'];
             }
 
-
-            withdrawalResponse(
-                true,
-                'Withdrawal approved successfully.',
-                [
-                    'authenticated' =>
-                        true,
-
-                    'authorized' =>
-                        true,
-
-                    'admin' =>
-                        true,
-
-                    'withdrawal' => [
-
-                        'id' =>
-                            (string)$transactionId,
-
-                        'reference' =>
-                            withdrawalString(
-                                $withdrawal[
-                                    'reference'
-                                ] ?? ''
-                            ),
-
-                        'user_id' =>
-                            withdrawalString(
-                                $userId
-                            ),
-
-                        'status' =>
-                            'approved',
-
-                        'amount' =>
-                            $amount
-                    ]
-                ]
-            );
-        }
-
-
-        /* =================================================
-           REJECT
-        ================================================= */
-
-        if ($action === 'reject') {
-
-            $user =
-                findWithdrawalUser(
-                    $userId
-                );
-
-
-            if ($user === null) {
-
-                withdrawalResponse(
-                    false,
-                    'The user associated with this withdrawal could not be found.',
-                    [
-                        'user_id' =>
-                            withdrawalString(
-                                $userId
-                            )
-                    ],
-                    404
-                );
-            }
-
-
-            /* ---------------------------------------------
-               WAS MONEY RESERVED?
-            --------------------------------------------- */
-
-            $wasReserved =
-                withdrawalBool(
-                    $withdrawal[
-                        'balance_reserved'
-                    ] ?? false,
-                    false
-                );
-
-
-            /* ---------------------------------------------
-               CLAIM REQUEST
-            --------------------------------------------- */
 
             $claimResult =
-                $transactions->updateOne(
-                    [
-                        '_id' =>
-                            $transactionId,
-
-                        'status' =>
-                            'pending'
-                    ],
+                (
+                    $withdrawalSource ===
+                    'withdrawals'
+                )
+                ?
+                $withdrawals->updateOne(
+                    $claimFilter,
                     [
                         '$set' => [
 
                             'status' =>
-                                'rejection_processing',
+                                'approval_processing',
 
                             'updated_at' =>
-                                new UTCDateTime(),
+                                $now
+                        ]
+                    ]
+                )
+                :
+                $transactions->updateOne(
+                    $claimFilter,
+                    [
+                        '$set' => [
 
-                            'admin_id' =>
-                                $adminId,
+                            'status' =>
+                                'approval_processing',
 
-                            'admin_email' =>
-                                $adminEmail,
-
-                            'admin_name' =>
-                                $adminName,
-
-                            'admin_action' =>
-                                'rejecting'
+                            'updated_at' =>
+                                $now
                         ]
                     ]
                 );
@@ -2497,172 +2426,56 @@ if ($requestMethod === 'POST') {
                 === 0
             ) {
 
-                withdrawalResponse(
+                adminWithdrawalResponse(
                     false,
-                    'Withdrawal could not be rejected because it was already processed.',
+                    'Withdrawal could not be approved because it was already processed.',
                     [],
                     409
                 );
             }
 
 
-            /* ---------------------------------------------
-               RESTORE FUNDS
-            --------------------------------------------- */
+            /* =================================================
+               ATOMIC WALLET DEDUCTION
+            ================================================= */
 
-            $newBalance = null;
-            $balanceRestored = false;
-
-
-            if ($wasReserved) {
-
-                $balanceRestored =
-                    incrementUserWalletBalance(
-                        $user,
-                        $amount
-                    );
-
-
-                if (!$balanceRestored) {
-
-                    try {
-
-                        $transactions->updateOne(
-                            [
-                                '_id' =>
-                                    $transactionId,
-
-                                'status' =>
-                                    'rejection_processing'
-                            ],
-                            [
-                                '$set' => [
-
-                                    'status' =>
-                                        'pending',
-
-                                    'updated_at' =>
-                                        new UTCDateTime(),
-
-                                    'admin_action' =>
-                                        'rejection_failed'
-                                ]
-                            ]
-                        );
-
-                    } catch (Throwable $rollbackError) {
-
-                        error_log(
-                            'Crown Cash withdrawal rejection rollback error: ' .
-                            $rollbackError->getMessage()
-                        );
-                    }
-
-
-                    withdrawalResponse(
-                        false,
-                        'Unable to restore the user wallet balance.',
-                        [],
-                        500
-                    );
-                }
-
-
-                $updatedUser =
-                    findWithdrawalUser(
-                        $userId
-                    );
-
-
-                $newBalance =
-                    getUserWalletBalance(
-                        $updatedUser
-                    );
-            }
-
-
-            /* ---------------------------------------------
-               FINALIZE REJECTION
-            --------------------------------------------- */
-
-            $rejectResult =
-                $transactions->updateOne(
-                    [
-                        '_id' =>
-                            $transactionId,
-
-                        'status' =>
-                            'rejection_processing'
-                    ],
-                    [
-                        '$set' => [
-
-                            'status' =>
-                                'rejected',
-
-                            'admin_approved' =>
-                                false,
-
-                            'balance_reserved' =>
-                                false,
-
-                            'balance_deducted' =>
-                                false,
-
-                            'processed_at' =>
-                                new UTCDateTime(),
-
-                            'updated_at' =>
-                                new UTCDateTime(),
-
-                            'admin_id' =>
-                                $adminId,
-
-                            'admin_email' =>
-                                $adminEmail,
-
-                            'admin_name' =>
-                                $adminName,
-
-                            'admin_action' =>
-                                'rejected'
-                        ]
-                    ]
+            $walletField =
+                getAdminWithdrawalWalletField(
+                    $user
                 );
 
 
+            $currentBalance =
+                getAdminWithdrawalWalletBalance(
+                    $user
+                );
+
+
+            /*
+            Never allow approval to make the wallet
+            negative.
+            */
+
             if (
-                $rejectResult->getMatchedCount()
-                === 0
+                $currentBalance < $amount
             ) {
 
                 /*
-                 * Reverse restoration if the status update
-                 * could not be finalized.
-                 */
+                Return withdrawal to pending.
+                */
 
                 if (
-                    $wasReserved
-                    &&
-                    $balanceRestored
+                    $withdrawalSource ===
+                    'withdrawals'
                 ) {
 
-                    incrementUserWalletBalance(
-                        $user,
-                        -$amount
-                    );
-                }
-
-
-                try {
-
-                    $transactions->updateOne(
+                    $withdrawals->updateOne(
                         [
                             '_id' =>
-                                $transactionId,
+                                $withdrawal['_id'],
 
                             'status' =>
-                                'rejection_processing'
+                                'approval_processing'
                         ],
                         [
                             '$set' => [
@@ -2671,41 +2484,484 @@ if ($requestMethod === 'POST') {
                                     'pending',
 
                                 'updated_at' =>
-                                    new UTCDateTime(),
-
-                                'admin_action' =>
-                                    'rejection_rollback'
+                                    new UTCDateTime()
                             ]
                         ]
                     );
 
-                } catch (Throwable $statusRollbackError) {
+                } else {
 
-                    error_log(
-                        'Crown Cash status rollback error: ' .
-                        $statusRollbackError->getMessage()
+                    $transactions->updateOne(
+                        [
+                            '_id' =>
+                                $withdrawal['_id'],
+
+                            'status' =>
+                                'approval_processing'
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'pending',
+
+                                'updated_at' =>
+                                    new UTCDateTime()
+                            ]
+                        ]
                     );
                 }
 
 
-                withdrawalResponse(
+                adminWithdrawalResponse(
                     false,
-                    'Withdrawal rejection could not be completed.',
+                    'Withdrawal cannot be approved because the user wallet no longer has sufficient funds.',
+                    [
+                        'wallet_balance' =>
+                            $currentBalance,
+
+                        'withdrawal_amount' =>
+                            $amount
+                    ],
+                    400
+                );
+            }
+
+
+            /*
+            Use a conditional update.
+
+            This is critical because the wallet balance
+            could change between reading it and deducting.
+            */
+
+            $userFilter = [];
+
+
+            if (
+                isset($user['_id'])
+            ) {
+
+                $userFilter['_id'] =
+                    $user['_id'];
+
+            } elseif (
+                isset($user['id'])
+            ) {
+
+                $userFilter['id'] =
+                    $user['id'];
+
+            } else {
+
+                throw new RuntimeException(
+                    'User account has no usable ID.'
+                );
+            }
+
+
+            /*
+            Convert balance condition to integer-safe
+            numeric comparison.
+
+            MongoDB will reject the update if the current
+            balance has fallen below the withdrawal amount.
+            */
+
+            $deductResult =
+                $users->updateOne(
+                    array_merge(
+                        $userFilter,
+                        [
+                            $walletField =>
+                                [
+                                    '$gte' =>
+                                        $amount
+                                ]
+                        ]
+                    ),
+                    [
+                        '$inc' => [
+
+                            $walletField =>
+                                -$amount
+                        ]
+                    ]
+                );
+
+
+            if (
+                $deductResult->getModifiedCount()
+                !== 1
+            ) {
+
+                /*
+                Wallet deduction failed.
+                Return withdrawal to pending.
+                */
+
+                if (
+                    $withdrawalSource ===
+                    'withdrawals'
+                ) {
+
+                    $withdrawals->updateOne(
+                        [
+                            '_id' =>
+                                $withdrawal['_id'],
+
+                            'status' =>
+                                'approval_processing'
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'pending',
+
+                                'updated_at' =>
+                                    new UTCDateTime()
+                            ]
+                        ]
+                    );
+
+                } else {
+
+                    $transactions->updateOne(
+                        [
+                            '_id' =>
+                                $withdrawal['_id'],
+
+                            'status' =>
+                                'approval_processing'
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'pending',
+
+                                'updated_at' =>
+                                    new UTCDateTime()
+                            ]
+                        ]
+                    );
+                }
+
+
+                adminWithdrawalResponse(
+                    false,
+                    'Wallet deduction failed. The withdrawal remains pending.',
+                    [],
+                    409
+                );
+            }
+
+
+            /* =================================================
+               FINALIZE WITHDRAWAL
+            ================================================= */
+
+            $finalStatus = [
+
+                'status' =>
+                    'approved',
+
+                'admin_approved' =>
+                    true,
+
+                'balance_reserved' =>
+                    false,
+
+                'balance_deducted' =>
+                    true,
+
+                'payout_status' =>
+                    'pending_payout',
+
+                'processed_at' =>
+                    $now,
+
+                'updated_at' =>
+                    $now,
+
+                'admin_id' =>
+                    $adminId,
+
+                'admin_email' =>
+                    $adminEmail,
+
+                'admin_name' =>
+                    $adminName,
+
+                'admin_action' =>
+                    'approved'
+            ];
+
+
+            $finalResult =
+                (
+                    $withdrawalSource ===
+                    'withdrawals'
+                )
+                ?
+                $withdrawals->updateOne(
+                    [
+                        '_id' =>
+                            $withdrawal['_id'],
+
+                        'status' =>
+                            'approval_processing'
+                    ],
+                    [
+                        '$set' =>
+                            $finalStatus
+                    ]
+                )
+                :
+                $transactions->updateOne(
+                    [
+                        '_id' =>
+                            $withdrawal['_id'],
+
+                        'status' =>
+                            'approval_processing'
+                    ],
+                    [
+                        '$set' =>
+                            $finalStatus
+                    ]
+                );
+
+
+            /*
+            If finalization somehow fails, restore the
+            wallet because the deduction already occurred.
+            */
+
+            if (
+                $finalResult->getMatchedCount()
+                === 0
+            ) {
+
+                $users->updateOne(
+                    $userFilter,
+                    [
+                        '$inc' => [
+
+                            $walletField =>
+                                $amount
+                        ]
+                    ]
+                );
+
+
+                if (
+                    $withdrawalSource ===
+                    'withdrawals'
+                ) {
+
+                    $withdrawals->updateOne(
+                        [
+                            '_id' =>
+                                $withdrawal['_id']
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'pending',
+
+                                'balance_deducted' =>
+                                    false,
+
+                                'updated_at' =>
+                                    new UTCDateTime()
+                            ]
+                        ]
+                    );
+
+                } else {
+
+                    $transactions->updateOne(
+                        [
+                            '_id' =>
+                                $withdrawal['_id']
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'pending',
+
+                                'balance_deducted' =>
+                                    false,
+
+                                'updated_at' =>
+                                    new UTCDateTime()
+                            ]
+                        ]
+                    );
+                }
+
+
+                adminWithdrawalResponse(
+                    false,
+                    'Withdrawal approval failed. The wallet deduction was reversed.',
                     [],
                     500
                 );
             }
 
 
-            /* ---------------------------------------------
-               SUCCESS
-            --------------------------------------------- */
+            /* =================================================
+               UPDATE RELATED TRANSACTION
+            ================================================= */
 
-            withdrawalResponse(
+            $relatedWithdrawalId =
+                $withdrawal['_id']
+                ??
+                null;
+
+
+            if (
+                $withdrawalSource ===
+                'withdrawals'
+                &&
+                $relatedWithdrawalId !== null
+            ) {
+
+                try {
+
+                    $transactions->updateMany(
+                        [
+                            '$or' => [
+
+                                [
+                                    'withdrawal_id' =>
+                                        $relatedWithdrawalId
+                                ],
+
+                                [
+                                    'withdrawal_record_id' =>
+                                        $relatedWithdrawalId
+                                ]
+                            ],
+
+                            'status' =>
+                                'pending'
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'approved',
+
+                                'admin_approved' =>
+                                    true,
+
+                                'balance_deducted' =>
+                                    true,
+
+                                'updated_at' =>
+                                    $now,
+
+                                'processed_at' =>
+                                    $now,
+
+                                'admin_id' =>
+                                    $adminId,
+
+                                'admin_email' =>
+                                    $adminEmail
+                            ]
+                        ]
+                    );
+
+                } catch (Throwable $relatedError) {
+
+                    error_log(
+                        'Related withdrawal transaction update error: ' .
+                        $relatedError->getMessage()
+                    );
+                }
+            }
+
+
+            /* =================================================
+               AUDIT
+            ================================================= */
+
+            if (
+                isset($auditLogs)
+            ) {
+
+                try {
+
+                    $auditLogs->insertOne([
+
+                        'user_id' =>
+                            $user['_id']
+                            ??
+                            $user['id']
+                            ??
+                            null,
+
+                        'action' =>
+                            'withdrawal_approved',
+
+                        'type' =>
+                            'withdrawal',
+
+                        'withdrawal_id' =>
+                            $withdrawal['_id'],
+
+                        'amount' =>
+                            $amount,
+
+                        'admin_id' =>
+                            $adminId,
+
+                        'admin_email' =>
+                            $adminEmail,
+
+                        'created_at' =>
+                            $now
+                    ]);
+
+                } catch (Throwable $auditError) {
+
+                    error_log(
+                        'Withdrawal approval audit error: ' .
+                        $auditError->getMessage()
+                    );
+                }
+            }
+
+
+            /* =================================================
+               NEW BALANCE
+            ================================================= */
+
+            $updatedUser =
+                findAdminWithdrawalUser(
+                    $user['_id']
+                    ??
+                    $user['id']
+                    ??
+                    $userId
+                );
+
+
+            $newBalance =
+                getAdminWithdrawalWalletBalance(
+                    $updatedUser
+                );
+
+
+            adminWithdrawalResponse(
                 true,
-                $wasReserved
-                    ? 'Withdrawal rejected and funds restored successfully.'
-                    : 'Withdrawal rejected successfully.',
+                'Withdrawal approved successfully. The wallet has been deducted.',
                 [
 
                     'authenticated' =>
@@ -2720,17 +2976,271 @@ if ($requestMethod === 'POST') {
                     'withdrawal' => [
 
                         'id' =>
-                            (string)$transactionId,
-
-                        'reference' =>
-                            withdrawalString(
-                                $withdrawal[
-                                    'reference'
-                                ] ?? ''
+                            (string)(
+                                $withdrawal['_id']
                             ),
 
                         'user_id' =>
-                            withdrawalString(
+                            adminWithdrawalString(
+                                $userId
+                            ),
+
+                        'status' =>
+                            'approved',
+
+                        'amount' =>
+                            $amount,
+
+                        'balance_deducted' =>
+                            true,
+
+                        'new_balance' =>
+                            $newBalance
+                    ]
+                ]
+            );
+        }
+
+
+        /* =================================================
+           REJECT
+        ================================================= */
+
+        if (
+            $action === 'reject'
+        ) {
+
+            /*
+            Nothing is deducted at request time.
+
+            Therefore rejection simply changes status.
+            */
+
+            $rejectData = [
+
+                'status' =>
+                    'rejected',
+
+                'admin_approved' =>
+                    false,
+
+                'balance_reserved' =>
+                    false,
+
+                'balance_deducted' =>
+                    false,
+
+                'payout_status' =>
+                    'not_paid',
+
+                'processed_at' =>
+                    $now,
+
+                'updated_at' =>
+                    $now,
+
+                'admin_id' =>
+                    $adminId,
+
+                'admin_email' =>
+                    $adminEmail,
+
+                'admin_name' =>
+                    $adminName,
+
+                'admin_action' =>
+                    'rejected'
+            ];
+
+
+            $rejectFilter = [
+
+                '_id' =>
+                    $withdrawal['_id'],
+
+                'status' =>
+                    'pending'
+            ];
+
+
+            $rejectResult =
+                (
+                    $withdrawalSource ===
+                    'withdrawals'
+                )
+                ?
+                $withdrawals->updateOne(
+                    $rejectFilter,
+                    [
+                        '$set' =>
+                            $rejectData
+                    ]
+                )
+                :
+                $transactions->updateOne(
+                    $rejectFilter,
+                    [
+                        '$set' =>
+                            $rejectData
+                    ]
+                );
+
+
+            if (
+                $rejectResult->getMatchedCount()
+                === 0
+            ) {
+
+                adminWithdrawalResponse(
+                    false,
+                    'Withdrawal could not be rejected because it was already processed.',
+                    [],
+                    409
+                );
+            }
+
+
+            /*
+            Update the matching transaction if this is
+            the primary withdrawal record.
+            */
+
+            if (
+                $withdrawalSource ===
+                'withdrawals'
+            ) {
+
+                try {
+
+                    $transactions->updateMany(
+                        [
+                            '$or' => [
+
+                                [
+                                    'withdrawal_id' =>
+                                        $withdrawal['_id']
+                                ],
+
+                                [
+                                    'withdrawal_record_id' =>
+                                        $withdrawal['_id']
+                                ]
+                            ],
+
+                            'status' =>
+                                'pending'
+                        ],
+                        [
+                            '$set' => [
+
+                                'status' =>
+                                    'rejected',
+
+                                'admin_approved' =>
+                                    false,
+
+                                'balance_deducted' =>
+                                    false,
+
+                                'updated_at' =>
+                                    $now,
+
+                                'processed_at' =>
+                                    $now,
+
+                                'admin_id' =>
+                                    $adminId,
+
+                                'admin_email' =>
+                                    $adminEmail
+                            ]
+                        ]
+                    );
+
+                } catch (Throwable $relatedError) {
+
+                    error_log(
+                        'Related withdrawal rejection update error: ' .
+                        $relatedError->getMessage()
+                    );
+                }
+            }
+
+
+            /* =================================================
+               AUDIT
+            ================================================= */
+
+            if (
+                isset($auditLogs)
+            ) {
+
+                try {
+
+                    $auditLogs->insertOne([
+
+                        'user_id' =>
+                            $user['_id']
+                            ??
+                            $user['id']
+                            ??
+                            null,
+
+                        'action' =>
+                            'withdrawal_rejected',
+
+                        'type' =>
+                            'withdrawal',
+
+                        'withdrawal_id' =>
+                            $withdrawal['_id'],
+
+                        'amount' =>
+                            $amount,
+
+                        'admin_id' =>
+                            $adminId,
+
+                        'admin_email' =>
+                            $adminEmail,
+
+                        'created_at' =>
+                            $now
+                    ]);
+
+                } catch (Throwable $auditError) {
+
+                    error_log(
+                        'Withdrawal rejection audit error: ' .
+                        $auditError->getMessage()
+                    );
+                }
+            }
+
+
+            adminWithdrawalResponse(
+                true,
+                'Withdrawal rejected successfully. No wallet deduction was made.',
+                [
+
+                    'authenticated' =>
+                        true,
+
+                    'authorized' =>
+                        true,
+
+                    'admin' =>
+                        true,
+
+                    'withdrawal' => [
+
+                        'id' =>
+                            (string)(
+                                $withdrawal['_id']
+                            ),
+
+                        'user_id' =>
+                            adminWithdrawalString(
                                 $userId
                             ),
 
@@ -2740,18 +3250,15 @@ if ($requestMethod === 'POST') {
                         'amount' =>
                             $amount,
 
-                        'funds_restored' =>
-                            $wasReserved,
-
-                        'restored_balance' =>
-                            $newBalance
+                        'balance_deducted' =>
+                            false
                     ]
                 ]
             );
         }
 
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Unsupported withdrawal action.',
             [],
@@ -2765,7 +3272,7 @@ if ($requestMethod === 'POST') {
             $e->getMessage()
         );
 
-        withdrawalResponse(
+        adminWithdrawalResponse(
             false,
             'Unable to process withdrawal.',
             [],

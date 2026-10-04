@@ -13,326 +13,2143 @@
         content="#070b16"
     >
 
-    <title>Crown Cash - Admin Test</title>
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
-        }
-
-        body {
-            min-height: 100vh;
-            background: #070b16;
-            color: #ffffff;
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-        }
-
-        .test-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-        }
-
-        .test-card {
-            width: 100%;
-            max-width: 650px;
-            padding: 40px;
-            border: 1px solid rgba(245, 197, 66, 0.35);
-            border-radius: 24px;
-            background: #0d1424;
-            box-shadow:
-                0 25px 80px rgba(0, 0, 0, 0.45);
-            text-align: center;
-        }
-
-        .crown {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 25px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 50%;
-
-            background: rgba(245, 197, 66, 0.12);
-
-            color: #f5c542;
-
-            font-size: 48px;
-        }
-
-        .brand {
-            margin-bottom: 8px;
-
-            color: #f5c542;
-
-            font-size: 14px;
-            font-weight: 800;
-
-            letter-spacing: 4px;
-        }
-
-        h1 {
-            margin: 0 0 15px;
-
-            font-size: 32px;
-            line-height: 1.2;
-        }
-
-        .success {
-            display: inline-flex;
-
-            align-items: center;
-            gap: 8px;
-
-            margin: 15px 0 20px;
-
-            padding: 10px 16px;
-
-            border-radius: 50px;
-
-            background: rgba(95, 224, 161, 0.12);
-
-            color: #5fe0a1;
-
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .success-dot {
-            width: 9px;
-            height: 9px;
-
-            border-radius: 50%;
-
-            background: #5fe0a1;
-        }
-
-        .message {
-            margin: 0 auto 25px;
-
-            max-width: 500px;
-
-            color: rgba(255, 255, 255, 0.65);
-
-            font-size: 15px;
-
-            line-height: 1.7;
-        }
-
-        .test-results {
-            display: grid;
-
-            grid-template-columns: repeat(3, 1fr);
-
-            gap: 12px;
-
-            margin-top: 25px;
-        }
-
-        .result {
-            padding: 16px 10px;
-
-            border: 1px solid rgba(255, 255, 255, 0.08);
-
-            border-radius: 14px;
-
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .result strong {
-            display: block;
-
-            margin-bottom: 6px;
-
-            color: #5fe0a1;
-
-            font-size: 14px;
-        }
-
-        .result span {
-            color: rgba(255, 255, 255, 0.45);
-
-            font-size: 11px;
-        }
-
-        .url-box {
-            margin-top: 25px;
-
-            padding: 14px;
-
-            border-radius: 10px;
-
-            background: rgba(0, 0, 0, 0.25);
-
-            color: rgba(255, 255, 255, 0.5);
-
-            font-size: 11px;
-
-            word-break: break-all;
-        }
-
-        .time {
-            margin-top: 20px;
-
-            color: rgba(255, 255, 255, 0.35);
-
-            font-size: 11px;
-        }
-
-        @media (max-width: 600px) {
-
-            .test-page {
-                padding: 15px;
-            }
-
-            .test-card {
-                padding: 30px 20px;
-            }
-
-            h1 {
-                font-size: 26px;
-            }
-
-            .test-results {
-                grid-template-columns: 1fr;
-            }
-
-        }
-
-    </style>
+    <meta
+        name="robots"
+        content="noindex, nofollow"
+    >
+
+    <title>Crown Cash - Admin Panel</title>
+
+    <!-- =====================================================
+         CROWN CASH ADMIN STYLES
+         ===================================================== -->
+    <link
+        rel="stylesheet"
+        href="admin.css?v=20261004ADMIN01"
+    >
 </head>
 
 <body>
 
-    <main class="test-page">
+    <!-- =====================================================
+         PAGE LOADER
+         ===================================================== -->
 
-        <section class="test-card">
+    <div
+        class="page-loader"
+        id="pageLoader"
+        style="display:none;"
+        aria-hidden="true"
+    >
+        <div class="loader-content">
 
-            <div class="crown">
+            <div class="loader-logo">
                 ♛
             </div>
 
-            <div class="brand">
+            <div class="loader-brand">
                 CROWN CASH
             </div>
 
-            <h1>
-                Admin Page Test
-            </h1>
+            <div class="loader-spinner"></div>
 
-            <div class="success">
+            <div class="loader-text">
+                Loading Admin Panel...
+            </div>
 
-                <span class="success-dot"></span>
+        </div>
+    </div>
 
-                HTML IS LOADING CORRECTLY
+
+    <!-- =====================================================
+         MOBILE OVERLAY
+         ===================================================== -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        aria-hidden="true"
+    ></div>
+
+
+    <!-- =====================================================
+         ADMIN APPLICATION
+         ===================================================== -->
+
+    <div class="admin-app">
+
+
+        <!-- =================================================
+             SIDEBAR
+             ================================================= -->
+
+        <aside
+            class="admin-sidebar"
+            id="sidebar"
+        >
+
+            <!-- Brand -->
+
+            <div class="sidebar-brand">
+
+                <div class="brand-logo">
+                    ♛
+                </div>
+
+                <div class="brand-text">
+
+                    <div class="brand-name">
+                        CROWN CASH
+                    </div>
+
+                    <div class="brand-subtitle">
+                        ADMIN PANEL
+                    </div>
+
+                </div>
 
             </div>
 
-            <p class="message">
 
-                If you can see this page, your
-                <strong>admin.html</strong> file is being
-                served correctly by Vercel.
+            <!-- Admin Profile -->
 
-                The previous blank page is therefore being
-                caused by another file or script, not by the
-                basic HTML document.
+            <div class="sidebar-profile">
 
-            </p>
+                <div
+                    class="admin-avatar"
+                    id="adminAvatar"
+                >
+                    A
+                </div>
+
+                <div class="admin-profile-info">
+
+                    <div
+                        class="admin-name"
+                        id="adminName"
+                    >
+                        Administrator
+                    </div>
+
+                    <div
+                        class="admin-role"
+                        id="adminRole"
+                    >
+                        Administrator
+                    </div>
+
+                </div>
+
+            </div>
 
 
-            <div class="test-results">
+            <!-- Navigation -->
 
-                <div class="result">
+            <nav class="admin-navigation">
 
-                    <strong>✓ HTML</strong>
+                <div class="nav-section-title">
+                    MAIN
+                </div>
+
+
+                <a
+                    href="#dashboard"
+                    class="nav-link active"
+                    id="dashboardNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ▦
+                    </span>
+
+                    <span class="nav-label">
+                        Dashboard
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#users"
+                    class="nav-link"
+                    id="usersNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ♙
+                    </span>
+
+                    <span class="nav-label">
+                        Users
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#deposits"
+                    class="nav-link"
+                    id="depositsNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ↓
+                    </span>
+
+                    <span class="nav-label">
+                        Deposits
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#withdrawals"
+                    class="nav-link"
+                    id="withdrawalsNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ↑
+                    </span>
+
+                    <span class="nav-label">
+                        Withdrawals
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#investments"
+                    class="nav-link"
+                    id="investmentsNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ◈
+                    </span>
+
+                    <span class="nav-label">
+                        Investments
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#transactions"
+                    class="nav-link"
+                    id="transactionsNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ≋
+                    </span>
+
+                    <span class="nav-label">
+                        Transactions
+                    </span>
+
+                </a>
+
+
+                <div class="nav-section-title">
+                    MANAGEMENT
+                </div>
+
+
+                <a
+                    href="#referrals"
+                    class="nav-link"
+                    id="referralsNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ◎
+                    </span>
+
+                    <span class="nav-label">
+                        Referrals
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#support"
+                    class="nav-link"
+                    id="supportNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ?
+                    </span>
+
+                    <span class="nav-label">
+                        Support
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#security"
+                    class="nav-link"
+                    id="securityNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ◉
+                    </span>
+
+                    <span class="nav-label">
+                        Security
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="#maintenance"
+                    class="nav-link"
+                    id="maintenanceNavLink"
+                >
+
+                    <span class="nav-icon">
+                        ⚙
+                    </span>
+
+                    <span class="nav-label">
+                        Maintenance
+                    </span>
+
+                </a>
+
+            </nav>
+
+
+            <!-- Sidebar Bottom -->
+
+            <div class="sidebar-bottom">
+
+                <button
+                    type="button"
+                    class="logout-button"
+                    id="logoutButton"
+                >
+
+                    <span class="nav-icon">
+                        ↪
+                    </span>
 
                     <span>
-                        Working
+                        Logout
                     </span>
+
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =================================================
+             MAIN CONTENT
+             ================================================= -->
+
+        <main class="admin-main">
+
+
+            <!-- =================================================
+                 TOPBAR
+                 ================================================= -->
+
+            <header class="admin-topbar">
+
+                <div class="topbar-left">
+
+                    <button
+                        type="button"
+                        class="mobile-menu-button"
+                        id="mobileMenuButton"
+                        aria-label="Open menu"
+                        aria-expanded="false"
+                    >
+                        ☰
+                    </button>
+
+
+                    <div class="topbar-title">
+
+                        <div class="topbar-title-main">
+                            Admin Dashboard
+                        </div>
+
+                        <div class="topbar-title-sub">
+                            Crown Cash Management System
+                        </div>
+
+                    </div>
 
                 </div>
 
 
-                <div class="result">
+                <div class="topbar-right">
 
-                    <strong>✓ CSS</strong>
+                    <div class="admin-top-profile">
 
-                    <span>
-                        Internal CSS working
-                    </span>
+                        <div
+                            class="admin-avatar top-avatar"
+                            id="adminAvatarTop"
+                        >
+                            A
+                        </div>
+
+                        <div class="top-profile-details">
+
+                            <div
+                                class="top-admin-name"
+                                id="adminEmail"
+                            >
+                                Administrator
+                            </div>
+
+                            <div class="top-admin-status">
+
+                                <span class="online-dot"></span>
+
+                                Online
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
-
-                <div class="result">
-
-                    <strong>✓ Vercel</strong>
-
-                    <span>
-                        Page served
-                    </span>
-
-                </div>
-
-            </div>
+            </header>
 
 
-            <div class="url-box">
+            <!-- =================================================
+                 DASHBOARD CONTENT
+                 ================================================= -->
 
-                Current page:
-
-                <br><br>
-
-                <span id="currentUrl">
-                    Loading URL...
-                </span>
-
-            </div>
+            <section
+                class="admin-content"
+                id="dashboard"
+            >
 
 
-            <div class="time">
+                <!-- =================================================
+                     WELCOME PANEL
+                     ================================================= -->
 
-                Test loaded at:
+                <section class="welcome-panel">
 
-                <span id="testTime">
-                    Loading...
-                </span>
+                    <div class="welcome-content">
 
-            </div>
+                        <div class="welcome-label">
+                            CROWN CASH ADMINISTRATION
+                        </div>
 
-        </section>
+                        <h1>
+                            Welcome to the Admin Dashboard
+                        </h1>
 
-    </main>
+                        <p>
+                            Manage users, deposits, withdrawals,
+                            investments, transactions and platform
+                            settings from one secure location.
+                        </p>
 
+                    </div>
+
+
+                    <div class="welcome-icon">
+                        ♛
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     OVERVIEW STATS
+                     ================================================= -->
+
+                <section class="section-block">
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <h2>
+                                Platform Overview
+                            </h2>
+
+                            <p>
+                                Current Crown Cash platform statistics
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stats-grid">
+
+
+                        <!-- Users -->
+
+                        <article class="stat-card">
+
+                            <div class="stat-icon">
+                                ♙
+                            </div>
+
+                            <div class="stat-content">
+
+                                <div class="stat-label">
+                                    Total Users
+                                </div>
+
+                                <div
+                                    class="stat-value"
+                                    id="totalUsers"
+                                >
+                                    0
+                                </div>
+
+                                <div class="stat-description">
+                                    Registered accounts
+                                </div>
+
+                            </div>
+
+                        </article>
+
+
+                        <!-- Deposits -->
+
+                        <article class="stat-card">
+
+                            <div class="stat-icon">
+                                ↓
+                            </div>
+
+                            <div class="stat-content">
+
+                                <div class="stat-label">
+                                    Total Deposits
+                                </div>
+
+                                <div
+                                    class="stat-value"
+                                    id="totalDeposits"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="stat-description">
+                                    Deposits received
+                                </div>
+
+                            </div>
+
+                        </article>
+
+
+                        <!-- Withdrawals -->
+
+                        <article class="stat-card">
+
+                            <div class="stat-icon">
+                                ↑
+                            </div>
+
+                            <div class="stat-content">
+
+                                <div class="stat-label">
+                                    Total Withdrawals
+                                </div>
+
+                                <div
+                                    class="stat-value"
+                                    id="totalWithdrawals"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="stat-description">
+                                    Withdrawals processed
+                                </div>
+
+                            </div>
+
+                        </article>
+
+
+                        <!-- Investments -->
+
+                        <article class="stat-card">
+
+                            <div class="stat-icon">
+                                ◈
+                            </div>
+
+                            <div class="stat-content">
+
+                                <div class="stat-label">
+                                    Total Investments
+                                </div>
+
+                                <div
+                                    class="stat-value"
+                                    id="totalInvestments"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="stat-description">
+                                    Investment capital
+                                </div>
+
+                            </div>
+
+                        </article>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     PENDING ACTIONS
+                     ================================================= -->
+
+                <section class="section-block">
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <h2>
+                                Pending Actions
+                            </h2>
+
+                            <p>
+                                Items requiring administrator attention
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pending-grid">
+
+
+                        <!-- Pending Deposits -->
+
+                        <a
+                            href="#deposits"
+                            class="pending-card"
+                        >
+
+                            <div class="pending-icon">
+                                ↓
+                            </div>
+
+                            <div class="pending-content">
+
+                                <div class="pending-title">
+                                    Pending Deposits
+                                </div>
+
+                                <div
+                                    class="pending-value"
+                                    id="pendingDeposits"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="pending-action">
+                                    Review deposits →
+                                </div>
+
+                            </div>
+
+                        </a>
+
+
+                        <!-- Pending Withdrawals -->
+
+                        <a
+                            href="#withdrawals"
+                            class="pending-card"
+                        >
+
+                            <div class="pending-icon">
+                                ↑
+                            </div>
+
+                            <div class="pending-content">
+
+                                <div class="pending-title">
+                                    Pending Withdrawals
+                                </div>
+
+                                <div
+                                    class="pending-value"
+                                    id="pendingWithdrawals"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="pending-action">
+                                    Review withdrawals →
+                                </div>
+
+                            </div>
+
+                        </a>
+
+
+                        <!-- Pending Investments -->
+
+                        <a
+                            href="#investments"
+                            class="pending-card"
+                        >
+
+                            <div class="pending-icon">
+                                ◈
+                            </div>
+
+                            <div class="pending-content">
+
+                                <div class="pending-title">
+                                    Pending Investments
+                                </div>
+
+                                <div
+                                    class="pending-value"
+                                    id="pendingInvestments"
+                                >
+                                    UGX 0
+                                </div>
+
+                                <div class="pending-action">
+                                    Review investments →
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     RECENT TRANSACTIONS
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="transactions"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Recent Transactions
+                            </h2>
+
+                            <p>
+                                Latest platform financial activity
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="#transactions"
+                            class="panel-action"
+                        >
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        User
+                                    </th>
+
+                                    <th>
+                                        Type
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="recentTransactions">
+
+                                <tr>
+
+                                    <td
+                                        colspan="5"
+                                        class="table-empty"
+                                    >
+                                        Loading transactions...
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     RECENT USERS
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="users"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Recent Users
+                            </h2>
+
+                            <p>
+                                Latest registered Crown Cash users
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="#users"
+                            class="panel-action"
+                        >
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        User
+                                    </th>
+
+                                    <th>
+                                        Email
+                                    </th>
+
+                                    <th>
+                                        Phone
+                                    </th>
+
+                                    <th>
+                                        Balance
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="recentUsers">
+
+                                <tr>
+
+                                    <td
+                                        colspan="5"
+                                        class="table-empty"
+                                    >
+                                        Loading users...
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     DEPOSITS MANAGEMENT
+                     ================================================= -->
+
+                <section
+                    class="panel management-panel"
+                    id="deposits"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Deposit Management
+                            </h2>
+
+                            <p>
+                                Review and process customer deposits
+                            </p>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="panel-action"
+                            id="refreshDepositsButton"
+                        >
+                            Refresh
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        User
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                    <th>
+                                        Method
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="depositsTableBody">
+
+                                <tr>
+
+                                    <td
+                                        colspan="6"
+                                        class="table-empty"
+                                    >
+                                        Deposit management will load here.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     WITHDRAWALS MANAGEMENT
+                     ================================================= -->
+
+                <section
+                    class="panel management-panel"
+                    id="withdrawals"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Withdrawal Management
+                            </h2>
+
+                            <p>
+                                Review and process withdrawal requests
+                            </p>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="panel-action"
+                            id="refreshWithdrawalsButton"
+                        >
+                            Refresh
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        User
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                    <th>
+                                        Method
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="withdrawalsTableBody">
+
+                                <tr>
+
+                                    <td
+                                        colspan="6"
+                                        class="table-empty"
+                                    >
+                                        Withdrawal management will load here.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     INVESTMENTS MANAGEMENT
+                     ================================================= -->
+
+                <section
+                    class="panel management-panel"
+                    id="investments"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Investment Management
+                            </h2>
+
+                            <p>
+                                Review and process investment requests
+                            </p>
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="panel-action"
+                            id="refreshInvestmentsButton"
+                        >
+                            Refresh
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        User
+                                    </th>
+
+                                    <th>
+                                        Plan
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                    <th>
+                                        Duration
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="investmentsTableBody">
+
+                                <tr>
+
+                                    <td
+                                        colspan="6"
+                                        class="table-empty"
+                                    >
+                                        Investment management will load here.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     MANAGEMENT CARDS
+                     ================================================= -->
+
+                <section class="section-block">
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <h2>
+                                Management
+                            </h2>
+
+                            <p>
+                                Quick access to Crown Cash administration
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="management-grid">
+
+
+                        <a
+                            href="#users"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ♙
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Users
+                                </h3>
+
+                                <p>
+                                    View and manage registered users.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                        <a
+                            href="#deposits"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ↓
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Deposits
+                                </h3>
+
+                                <p>
+                                    Approve or reject deposit requests.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                        <a
+                            href="#withdrawals"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ↑
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Withdrawals
+                                </h3>
+
+                                <p>
+                                    Review customer withdrawals.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                        <a
+                            href="#investments"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ◈
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Investments
+                                </h3>
+
+                                <p>
+                                    Approve or reject investments.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                        <a
+                            href="#transactions"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ≋
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Transactions
+                                </h3>
+
+                                <p>
+                                    Monitor platform transactions.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+
+                        <a
+                            href="#referrals"
+                            class="management-card"
+                        >
+
+                            <div class="management-card-icon">
+                                ◎
+                            </div>
+
+                            <div class="management-card-content">
+
+                                <h3>
+                                    Referrals
+                                </h3>
+
+                                <p>
+                                    Monitor referral activity.
+                                </p>
+
+                            </div>
+
+                            <span class="management-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     REFERRALS
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="referrals"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Referral System
+                            </h2>
+
+                            <p>
+                                Monitor Crown Cash referral activity
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-grid">
+
+                        <div class="info-card">
+
+                            <div class="info-card-icon">
+                                L1
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    Level 1
+                                </h3>
+
+                                <p>
+                                    Direct referral commission
+                                </p>
+
+                                <strong>
+                                    15%
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-card">
+
+                            <div class="info-card-icon">
+                                L2
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    Level 2
+                                </h3>
+
+                                <p>
+                                    Second-level commission
+                                </p>
+
+                                <strong>
+                                    5%
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-card">
+
+                            <div class="info-card-icon">
+                                L3
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    Level 3
+                                </h3>
+
+                                <p>
+                                    Third-level commission
+                                </p>
+
+                                <strong>
+                                    2%
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     SUPPORT
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="support"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Support
+                            </h2>
+
+                            <p>
+                                Customer support management
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="support-placeholder">
+
+                        <div class="support-icon">
+                            ?
+                        </div>
+
+                        <h3>
+                            Support Center
+                        </h3>
+
+                        <p>
+                            Customer support tools can be connected
+                            here for managing customer enquiries
+                            and support requests.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     SECURITY
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="security"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Security
+                            </h2>
+
+                            <p>
+                                Current administrator security status
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="security-status-card">
+
+                        <div
+                            class="security-icon"
+                            id="securityStatus"
+                        >
+                            ✓
+                        </div>
+
+                        <div class="security-content">
+
+                            <h3>
+                                Secure
+                            </h3>
+
+                            <p id="securityDescription">
+                                Administrator authentication and
+                                protected server-side endpoints are active.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     MAINTENANCE
+                     ================================================= -->
+
+                <section
+                    class="panel"
+                    id="maintenance"
+                >
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h2>
+                                Platform Maintenance
+                            </h2>
+
+                            <p>
+                                Control Crown Cash platform operations
+                            </p>
+
+                        </div>
+
+                        <div
+                            class="maintenance-status"
+                            id="maintenanceStatus"
+                        >
+
+                            <span
+                                class="status-dot"
+                                id="maintenanceStatusDot"
+                            ></span>
+
+                            <span id="maintenanceStatusText">
+                                System Online
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Maintenance Message -->
+
+                    <div class="maintenance-message">
+
+                        <div class="maintenance-message-label">
+                            Maintenance Message
+                        </div>
+
+                        <textarea
+                            id="maintenanceMessage"
+                            rows="3"
+                            placeholder="Enter a message to display during maintenance..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- Platform Controls -->
+
+                    <div class="maintenance-controls">
+
+                        <h3>
+                            Platform Controls
+                        </h3>
+
+
+                        <!-- Maintenance Mode -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    Maintenance Mode
+                                </strong>
+
+                                <span>
+                                    Temporarily place the platform
+                                    into maintenance mode.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceModeToggle"
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Investments -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    New Investments
+                                </strong>
+
+                                <span>
+                                    Allow users to create new investments.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceInvestmentsToggle"
+                                    checked
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Deposits -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    Deposits
+                                </strong>
+
+                                <span>
+                                    Allow users to submit deposits.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceDepositsToggle"
+                                    checked
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Withdrawals -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    Withdrawals
+                                </strong>
+
+                                <span>
+                                    Allow users to submit withdrawals.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceWithdrawalsToggle"
+                                    checked
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Daily Earnings -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    Daily Earnings
+                                </strong>
+
+                                <span>
+                                    Enable automated daily earnings processing.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceEarningsToggle"
+                                    checked
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Registration -->
+
+                        <div class="control-row">
+
+                            <div class="control-info">
+
+                                <strong>
+                                    User Registration
+                                </strong>
+
+                                <span>
+                                    Allow new users to register.
+                                </span>
+
+                            </div>
+
+                            <label class="toggle">
+
+                                <input
+                                    type="checkbox"
+                                    id="maintenanceRegistrationToggle"
+                                    checked
+                                >
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Maintenance Description -->
+
+                    <div class="maintenance-description">
+
+                        <div class="maintenance-description-icon">
+                            ℹ
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Platform Status
+                            </strong>
+
+                            <p id="maintenanceDescription">
+                                Crown Cash platform operations are currently
+                                available.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Earnings Monitor -->
+
+                    <div class="earnings-monitor">
+
+                        <div class="monitor-header">
+
+                            <div>
+
+                                <h3>
+                                    Earnings Engine
+                                </h3>
+
+                                <p>
+                                    Automated daily earnings monitor
+                                </p>
+
+                            </div>
+
+                            <span
+                                class="engine-status"
+                                id="earningsEngineStatus"
+                            >
+                                Enabled
+                            </span>
+
+                        </div>
+
+
+                        <div class="monitor-grid">
+
+                            <div class="monitor-item">
+
+                                <span class="monitor-label">
+                                    Last Run
+                                </span>
+
+                                <strong id="lastEarningsRun">
+                                    Not available
+                                </strong>
+
+                            </div>
+
+
+                            <div class="monitor-item">
+
+                                <span class="monitor-label">
+                                    Processed Today
+                                </span>
+
+                                <strong id="earningsProcessedToday">
+                                    UGX 0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="monitor-item">
+
+                                <span class="monitor-label">
+                                    Active Investments
+                                </span>
+
+                                <strong id="maintenanceActiveInvestments">
+                                    0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="monitor-item">
+
+                                <span class="monitor-label">
+                                    Pending Investments
+                                </span>
+
+                                <strong id="maintenancePendingInvestments">
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Save -->
+
+                    <div class="maintenance-footer">
+
+                        <div
+                            class="save-status"
+                            id="maintenanceSaveStatus"
+                            aria-live="polite"
+                        ></div>
+
+                        <button
+                            type="button"
+                            class="primary-button"
+                            id="saveMaintenanceBtn"
+                        >
+                            Save Platform Settings
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================================
+                     FOOTER
+                     ================================================= -->
+
+                <footer class="admin-footer">
+
+                    <div>
+                        ©
+                        <span id="currentYear">
+                            2026
+                        </span>
+                        Crown Cash. All rights reserved.
+                    </div>
+
+                    <div>
+                        Secure Administration System
+                    </div>
+
+                </footer>
+
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         BASIC MOBILE FALLBACK
+         ===================================================== -->
 
     <script>
 
         "use strict";
 
-        document.getElementById("currentUrl").textContent =
-            window.location.href;
+        (function () {
 
-        document.getElementById("testTime").textContent =
-            new Date().toLocaleString();
+            const menuButton =
+                document.getElementById("mobileMenuButton");
+
+            const sidebar =
+                document.getElementById("sidebar");
+
+            const overlay =
+                document.getElementById("sidebarOverlay");
+
+            if (menuButton && sidebar) {
+
+                function openMenu() {
+
+                    sidebar.classList.add("open");
+
+                    if (overlay) {
+                        overlay.classList.add("active");
+                    }
+
+                    menuButton.setAttribute(
+                        "aria-expanded",
+                        "true"
+                    );
+
+                }
+
+
+                function closeMenu() {
+
+                    sidebar.classList.remove("open");
+
+                    if (overlay) {
+                        overlay.classList.remove("active");
+                    }
+
+                    menuButton.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                }
+
+
+                menuButton.addEventListener(
+                    "click",
+                    function () {
+
+                        if (
+                            sidebar.classList.contains("open")
+                        ) {
+
+                            closeMenu();
+
+                        } else {
+
+                            openMenu();
+
+                        }
+
+                    }
+                );
+
+
+                if (overlay) {
+
+                    overlay.addEventListener(
+                        "click",
+                        closeMenu
+                    );
+
+                }
+
+
+                document
+                    .querySelectorAll(".nav-link")
+                    .forEach(function (link) {
+
+                        link.addEventListener(
+                            "click",
+                            closeMenu
+                        );
+
+                    });
+
+            }
+
+
+            const year =
+                document.getElementById("currentYear");
+
+            if (year) {
+
+                year.textContent =
+                    new Date().getFullYear();
+
+            }
+
+        })();
 
     </script>
+
+
+    <!-- =====================================================
+         CROWN CASH ADMIN CONTROLLER
+         
+         IMPORTANT:
+         - Loaded AFTER the page markup
+         - defer prevents blocking
+         - Authentication remains server-side
+         ===================================================== -->
+
+    <script
+        src="admin.js?v=20261004ADMIN01"
+        defer
+    ></script>
 
 </body>
 </html>

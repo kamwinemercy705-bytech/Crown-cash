@@ -2,25 +2,39 @@
    CROWN CASH - REFERRAL TEAM
    File: team.js
 
-   Referral flow:
-   Referral Center
-        ↓
-   Home Page
-        ↓
+   REFERRAL FLOW:
+
+   User Referral Link
+          ↓
+   Crown Cash Homepage
+          ↓
    Registration
-        ↓
+          ↓
    Dashboard
+
+   Example:
+
+   https://crown-cash.vercel.app/?ref=CC87A040AD
    ============================================================ */
 
 "use strict";
 
-const API_URL = "https://crown-cash1.onrender.com";
+
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
+
+const API_URL =
+    "https://crown-cash1.onrender.com";
 
 /*
  * IMPORTANT:
- * All referral links now start from the Crown Cash HOME PAGE.
+ * Referral links MUST start from the Crown Cash homepage.
+ *
+ * Do NOT change this to dashboard.html.
  */
-const HOME_URL = "https://crown-cash.vercel.app/";
+const HOME_URL =
+    "https://crown-cash.vercel.app/";
 
 
 /* ============================================================
@@ -74,12 +88,22 @@ const teamList =
 
 
 /* ============================================================
+   GLOBAL STATE
+   ============================================================ */
+
+let referralMembers = [];
+
+let referralDataLoaded = false;
+
+
+/* ============================================================
    FORMAT MONEY
    ============================================================ */
 
 function formatMoney(amount) {
 
-    const number = Number(amount || 0);
+    const number =
+        Number(amount || 0);
 
     return (
         "UGX " +
@@ -104,25 +128,275 @@ function escapeHtml(value) {
 
 
 /* ============================================================
-   BUILD HOME-PAGE REFERRAL LINK
+   NORMALIZE REFERRAL CODE
    ============================================================ */
+
+function normalizeReferralCode(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    const code =
+        String(value)
+            .trim()
+            .toUpperCase();
+
+    if (
+        !code ||
+        code === "NULL" ||
+        code === "UNDEFINED" ||
+        code === "LOADING..." ||
+        code === "UNAVAILABLE"
+    ) {
+        return "";
+    }
+
+    return code;
+}
+
+
+/* ============================================================
+   BUILD REFERRAL LINK
+   ============================================================ */
+
+/*
+ * FINAL REFERRAL LINK FORMAT:
+ *
+ * https://crown-cash.vercel.app/?ref=CC87A040AD
+ *
+ * This intentionally starts at the homepage.
+ */
 
 function buildReferralLink(code) {
 
     const cleanCode =
-        String(code || "")
-            .trim()
-            .toUpperCase();
+        normalizeReferralCode(code);
 
     if (!cleanCode) {
         return "";
     }
 
+    const separator =
+        HOME_URL.includes("?")
+            ? "&"
+            : "?";
+
     return (
         HOME_URL +
-        "?ref=" +
+        separator +
+        "ref=" +
         encodeURIComponent(cleanCode)
     );
+}
+
+
+/* ============================================================
+   FIND VALUE RECURSIVELY
+   ============================================================ */
+
+/*
+ * This allows the page to work with responses such as:
+ *
+ * {
+ *   referral_code: "CC123"
+ * }
+ *
+ * OR
+ *
+ * {
+ *   data: {
+ *      referral_code: "CC123"
+ *   }
+ * }
+ *
+ * OR
+ *
+ * {
+ *   user: {
+ *      referralCode: "CC123"
+ *   }
+ * }
+ */
+
+function findValueByKeys(
+    source,
+    keys,
+    depth = 0
+) {
+
+    if (
+        source === null ||
+        source === undefined ||
+        depth > 5
+    ) {
+        return null;
+    }
+
+    if (
+        typeof source !== "object"
+    ) {
+        return null;
+    }
+
+    const wantedKeys =
+        keys.map(
+            key =>
+                String(key)
+                    .toLowerCase()
+        );
+
+    for (
+        const key of Object.keys(source)
+    ) {
+
+        const normalizedKey =
+            String(key)
+                .toLowerCase();
+
+        if (
+            wantedKeys.includes(
+                normalizedKey
+            )
+        ) {
+
+            const value =
+                source[key];
+
+            if (
+                value !== null &&
+                value !== undefined &&
+                String(value).trim() !== ""
+            ) {
+
+                return value;
+            }
+        }
+    }
+
+    for (
+        const key of Object.keys(source)
+    ) {
+
+        const value =
+            source[key];
+
+        if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            const result =
+                findValueByKeys(
+                    value,
+                    keys,
+                    depth + 1
+                );
+
+            if (
+                result !== null &&
+                result !== undefined
+            ) {
+
+                return result;
+            }
+        }
+    }
+
+    return null;
+}
+
+
+/* ============================================================
+   FIND ARRAY RECURSIVELY
+   ============================================================ */
+
+function findArrayByKeys(
+    source,
+    keys,
+    depth = 0
+) {
+
+    if (
+        source === null ||
+        source === undefined ||
+        depth > 5
+    ) {
+        return [];
+    }
+
+    if (
+        !source ||
+        typeof source !== "object"
+    ) {
+        return [];
+    }
+
+    const wantedKeys =
+        keys.map(
+            key =>
+                String(key)
+                    .toLowerCase()
+        );
+
+    for (
+        const key of Object.keys(source)
+    ) {
+
+        const normalizedKey =
+            String(key)
+                .toLowerCase();
+
+        if (
+            wantedKeys.includes(
+                normalizedKey
+            )
+        ) {
+
+            if (
+                Array.isArray(
+                    source[key]
+                )
+            ) {
+
+                return source[key];
+            }
+        }
+    }
+
+    for (
+        const key of Object.keys(source)
+    ) {
+
+        const value =
+            source[key];
+
+        if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            const result =
+                findArrayByKeys(
+                    value,
+                    keys,
+                    depth + 1
+                );
+
+            if (
+                Array.isArray(result) &&
+                result.length
+            ) {
+
+                return result;
+            }
+        }
+    }
+
+    return [];
 }
 
 
@@ -161,7 +435,9 @@ function showCopyMessage(
 
     void box.offsetWidth;
 
-    box.classList.add("show");
+    box.classList.add(
+        "show"
+    );
 
     clearTimeout(
         window.crownCashCopyMessageTimer
@@ -188,7 +464,8 @@ function showCopyMessage(
 async function copyText(text) {
 
     const value =
-        String(text || "").trim();
+        String(text || "")
+            .trim();
 
     if (!value) {
         return false;
@@ -218,7 +495,9 @@ async function copyText(text) {
     }
 
 
-    /* Older browser fallback */
+    /* ========================================================
+       OLD BROWSER FALLBACK
+       ======================================================== */
 
     try {
 
@@ -309,16 +588,14 @@ async function copyReferralCode() {
     }
 
     const code =
-        referralCodeInput.value.trim();
+        normalizeReferralCode(
+            referralCodeInput.value
+        );
 
-    if (
-        !code ||
-        code.toLowerCase() ===
-            "loading..."
-    ) {
+    if (!code) {
 
         showCopyMessage(
-            "Your referral code is still loading.",
+            "Your referral code is not available yet.",
             false
         );
 
@@ -400,11 +677,13 @@ async function copyReferralLink() {
     if (
         !link ||
         link.toLowerCase() ===
-            "loading..."
+            "loading..." ||
+        link.toLowerCase() ===
+            "unavailable"
     ) {
 
         showCopyMessage(
-            "Your referral link is still loading.",
+            "Your referral link is not available yet.",
             false
         );
 
@@ -477,17 +756,21 @@ async function shareReferralLink() {
 
     const code =
         referralCodeInput
-            ? referralCodeInput.value.trim()
+            ? normalizeReferralCode(
+                referralCodeInput.value
+            )
             : "";
 
     if (
         !link ||
         link.toLowerCase() ===
-            "loading..."
+            "loading..." ||
+        link.toLowerCase() ===
+            "unavailable"
     ) {
 
         showCopyMessage(
-            "Your referral link is still loading.",
+            "Your referral link is not available yet.",
             false
         );
 
@@ -495,7 +778,9 @@ async function shareReferralLink() {
     }
 
 
-    /* Native sharing */
+    /* ========================================================
+       NATIVE PHONE SHARING
+       ======================================================== */
 
     if (
         navigator.share &&
@@ -541,11 +826,14 @@ async function shareReferralLink() {
     }
 
 
-    /* WhatsApp fallback */
+    /* ========================================================
+       WHATSAPP FALLBACK
+       ======================================================== */
 
     const message =
-        "Join Crown Cash using my referral link:\n\n" +
-        link;
+        code
+            ? `Join Crown Cash using my referral code ${code}.\n\n${link}`
+            : `Join Crown Cash using my referral link:\n\n${link}`;
 
     const whatsappUrl =
         "https://wa.me/?text=" +
@@ -778,40 +1066,55 @@ async function loadReferralData() {
            REFERRAL CODE
            ==================================================== */
 
+        const rawReferralCode =
+            findValueByKeys(
+                data,
+                [
+                    "referral_code",
+                    "referralCode",
+                    "referral",
+                    "ref_code",
+                    "refCode",
+                    "invite_code",
+                    "inviteCode",
+                    "code"
+                ]
+            );
+
         const code =
-            String(
-                data.referral_code ||
-                data.referralCode ||
-                ""
-            )
-                .trim()
-                .toUpperCase();
-
-        if (referralCodeInput) {
-
-            referralCodeInput.value =
-                code || "Unavailable";
-        }
+            normalizeReferralCode(
+                rawReferralCode
+            );
 
 
         /* ====================================================
            REFERRAL LINK
-
-           IMPORTANT:
-           Ignore an old backend referral link.
-
-           ALWAYS generate:
-
-           https://crown-cash.vercel.app/?ref=CODE
            ==================================================== */
+
+        /*
+         * ALWAYS generate the link ourselves.
+         *
+         * This prevents an old backend URL from sending
+         * users directly to dashboard.html.
+         */
 
         const link =
             buildReferralLink(code);
 
+
+        if (referralCodeInput) {
+
+            referralCodeInput.value =
+                code ||
+                "Unavailable";
+        }
+
+
         if (referralLinkInput) {
 
             referralLinkInput.value =
-                link || "Unavailable";
+                link ||
+                "Unavailable";
         }
 
 
@@ -822,12 +1125,14 @@ async function loadReferralData() {
         const counts =
             data.counts ||
             data.team_counts ||
+            data.teamCounts ||
             {};
 
         const l1 =
             Number(
                 counts.l1 ??
                 counts.level1 ??
+                counts.level_1 ??
                 0
             );
 
@@ -835,6 +1140,7 @@ async function loadReferralData() {
             Number(
                 counts.l2 ??
                 counts.level2 ??
+                counts.level_2 ??
                 0
             );
 
@@ -842,18 +1148,22 @@ async function loadReferralData() {
             Number(
                 counts.l3 ??
                 counts.level3 ??
+                counts.level_3 ??
                 0
             );
 
         const total =
             Number(
                 counts.total ??
+                counts.total_team ??
+                counts.totalTeam ??
                 (
                     l1 +
                     l2 +
                     l3
                 )
             );
+
 
         if (totalTeam) {
 
@@ -887,12 +1197,14 @@ async function loadReferralData() {
         const earnings =
             data.earnings ||
             data.referral_earnings ||
+            data.referralEarnings ||
             {};
 
         const incomeL1 =
             Number(
                 earnings.l1 ??
                 earnings.level1 ??
+                earnings.level_1 ??
                 0
             );
 
@@ -900,6 +1212,7 @@ async function loadReferralData() {
             Number(
                 earnings.l2 ??
                 earnings.level2 ??
+                earnings.level_2 ??
                 0
             );
 
@@ -907,12 +1220,15 @@ async function loadReferralData() {
             Number(
                 earnings.l3 ??
                 earnings.level3 ??
+                earnings.level_3 ??
                 0
             );
 
         const incomeTotal =
             Number(
                 earnings.total ??
+                earnings.total_income ??
+                earnings.totalIncome ??
                 (
                     incomeL1 +
                     incomeL2 +
@@ -920,28 +1236,37 @@ async function loadReferralData() {
                 )
             );
 
+
         if (level1Income) {
 
             level1Income.textContent =
-                formatMoney(incomeL1);
+                formatMoney(
+                    incomeL1
+                );
         }
 
         if (level2Income) {
 
             level2Income.textContent =
-                formatMoney(incomeL2);
+                formatMoney(
+                    incomeL2
+                );
         }
 
         if (level3Income) {
 
             level3Income.textContent =
-                formatMoney(incomeL3);
+                formatMoney(
+                    incomeL3
+                );
         }
 
         if (totalIncome) {
 
             totalIncome.textContent =
-                formatMoney(incomeTotal);
+                formatMoney(
+                    incomeTotal
+                );
         }
 
 
@@ -951,6 +1276,7 @@ async function loadReferralData() {
 
         const commission =
             data.commission_structure ||
+            data.commissionStructure ||
             {};
 
         const level1Percent =
@@ -968,11 +1294,13 @@ async function loadReferralData() {
                 "level3Percent"
             );
 
+
         if (level1Percent) {
 
             level1Percent.textContent =
                 Number(
                     commission.l1 ??
+                    commission.level1 ??
                     15
                 ) + "%";
         }
@@ -982,6 +1310,7 @@ async function loadReferralData() {
             level2Percent.textContent =
                 Number(
                     commission.l2 ??
+                    commission.level2 ??
                     5
                 ) + "%";
         }
@@ -991,6 +1320,7 @@ async function loadReferralData() {
             level3Percent.textContent =
                 Number(
                     commission.l3 ??
+                    commission.level3 ??
                     2
                 ) + "%";
         }
@@ -1001,11 +1331,31 @@ async function loadReferralData() {
            ==================================================== */
 
         const members =
-            Array.isArray(data.members)
-                ? data.members
+            findArrayByKeys(
+                data,
+                [
+                    "members",
+                    "team",
+                    "team_members",
+                    "teamMembers",
+                    "referrals",
+                    "referral_members",
+                    "referralMembers"
+                ]
+            );
+
+
+        referralMembers =
+            Array.isArray(members)
+                ? members
                 : [];
 
-        renderMembers(members);
+        referralDataLoaded =
+            true;
+
+        renderMembers(
+            referralMembers
+        );
 
     } catch (error) {
 
@@ -1013,6 +1363,9 @@ async function loadReferralData() {
             "Crown Cash referral loading error:",
             error
         );
+
+        referralDataLoaded =
+            false;
 
         showTeamError(
             error.message ||
@@ -1050,6 +1403,9 @@ function renderMembers(members) {
             String(
                 member.name ||
                 member.full_name ||
+                member.fullName ||
+                member.username ||
+                member.email ||
                 "Crown Cash Member"
             ).trim();
 
@@ -1057,6 +1413,8 @@ function renderMembers(members) {
             String(
                 member.level ||
                 member.referral_level ||
+                member.referralLevel ||
+                member.level_name ||
                 "L1"
             ).toUpperCase();
 
@@ -1064,6 +1422,7 @@ function renderMembers(members) {
             String(
                 member.phone ||
                 member.phone_number ||
+                member.phoneNumber ||
                 ""
             ).trim();
 
@@ -1072,6 +1431,7 @@ function renderMembers(members) {
                 member.status ||
                 "active"
             );
+
 
         const card =
             document.createElement(
@@ -1083,6 +1443,7 @@ function renderMembers(members) {
 
         card.dataset.level =
             level;
+
 
         card.innerHTML = `
 
@@ -1135,7 +1496,9 @@ function renderMembers(members) {
 
         `;
 
-        teamList.appendChild(card);
+        teamList.appendChild(
+            card
+        );
     });
 
     applyCurrentFilter();
@@ -1157,38 +1520,42 @@ function setupFilters() {
         return;
     }
 
-    filterButtons.forEach(button => {
+    filterButtons.forEach(
+        button => {
 
-        if (
-            button.dataset.filterReady ===
-            "true"
-        ) {
-            return;
-        }
+            if (
+                button.dataset.filterReady ===
+                "true"
+            ) {
+                return;
+            }
 
-        button.dataset.filterReady =
-            "true";
+            button.dataset.filterReady =
+                "true";
 
-        button.addEventListener(
-            "click",
-            function () {
+            button.addEventListener(
+                "click",
+                function () {
 
-                filterButtons.forEach(btn => {
+                    filterButtons.forEach(
+                        btn => {
 
-                    btn.classList.remove(
+                            btn.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+                    this.classList.add(
                         "active"
                     );
 
-                });
-
-                this.classList.add(
-                    "active"
-                );
-
-                applyCurrentFilter();
-            }
-        );
-    });
+                    applyCurrentFilter();
+                }
+            );
+        }
+    );
 }
 
 
@@ -1224,7 +1591,9 @@ function applyCurrentFilter() {
         if (
             filter === "all" ||
             cardLevel ===
-                String(filter).toUpperCase()
+                String(
+                    filter
+                ).toUpperCase()
         ) {
 
             card.style.display =
@@ -1263,6 +1632,7 @@ async function logoutUser() {
         );
     }
 
+
     try {
 
         localStorage.removeItem(
@@ -1284,6 +1654,7 @@ async function logoutUser() {
             error
         );
     }
+
 
     window.location.href =
         "/login.html";
@@ -1316,6 +1687,7 @@ function setupMobileMenu() {
             "sidebarOverlay"
         );
 
+
     if (
         menuToggle &&
         sidebar
@@ -1339,6 +1711,7 @@ function setupMobileMenu() {
         );
     }
 
+
     if (closeSidebar) {
 
         closeSidebar.addEventListener(
@@ -1346,6 +1719,7 @@ function setupMobileMenu() {
             closeMobileSidebar
         );
     }
+
 
     if (overlay) {
 
@@ -1369,12 +1743,14 @@ function closeMobileSidebar() {
             "sidebarOverlay"
         );
 
+
     if (sidebar) {
 
         sidebar.classList.remove(
             "active"
         );
     }
+
 
     if (overlay) {
 
@@ -1399,6 +1775,7 @@ function setupButtonEvents() {
         );
     }
 
+
     if (copyLinkBtn) {
 
         copyLinkBtn.addEventListener(
@@ -1406,6 +1783,7 @@ function setupButtonEvents() {
             copyReferralLink
         );
     }
+
 
     if (shareBtn) {
 
@@ -1415,10 +1793,12 @@ function setupButtonEvents() {
         );
     }
 
+
     const logoutBtn =
         document.getElementById(
             "logoutBtn"
         );
+
 
     if (logoutBtn) {
 
@@ -1484,3 +1864,6 @@ window.shareReferralLink =
 
 window.logoutUser =
     logoutUser;
+
+window.buildReferralLink =
+    buildReferralLink;

@@ -29,64 +29,44 @@
 
     <link
         rel="stylesheet"
-        href="admin.css?v=20261004ADMIN02"
+        href="admin.css?v=20261004ADMIN04"
     >
 
 
     <!-- =====================================================
          CRITICAL SAFETY CSS
-         
-         This prevents a broken loader/CSS rule from hiding
-         the complete admin application.
          ===================================================== -->
 
     <style>
-
-        /*
-         * Make sure the document itself is visible.
-         */
 
         html,
         body {
             min-height: 100%;
         }
 
-
         body {
             margin: 0;
             background: #070b16;
         }
 
-
         /*
-         * The admin application must remain visible.
+         * Keep the admin application visible.
          */
-
         .admin-app {
             visibility: visible !important;
             opacity: 1 !important;
         }
 
-
         /*
-         * IMPORTANT:
-         *
-         * The loader must NOT permanently cover the page.
+         * Do not allow the loader to permanently cover
+         * the administration panel.
          */
-
         #pageLoader {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
         }
-
-
-        /*
-         * If JavaScript adds an active/loading class,
-         * keep the loader from becoming a permanent white
-         * screen while the page is being diagnosed.
-         */
 
         #pageLoader.active,
         #pageLoader.show,
@@ -97,37 +77,23 @@
             pointer-events: none !important;
         }
 
-
-        /*
-         * Make sure the main admin content is visible.
-         */
-
         .admin-main,
         .admin-content {
             visibility: visible !important;
             opacity: 1 !important;
         }
 
-
-        /*
-         * Safety fallback for a CSS rule accidentally hiding
-         * the complete application.
-         */
-
         body > .admin-app {
             visibility: visible !important;
             opacity: 1 !important;
         }
 
-
         /*
-         * Mobile overlay must not cover the page when inactive.
+         * Overlay should only receive clicks when active.
          */
-
         #sidebarOverlay {
             pointer-events: none;
         }
-
 
         #sidebarOverlay.active {
             pointer-events: auto;
@@ -268,7 +234,6 @@
 
             <nav class="admin-navigation">
 
-
                 <div class="nav-section-title">
                     MAIN
                 </div>
@@ -279,15 +244,11 @@
                     class="nav-link active"
                     id="dashboardNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ▦
-                    </span>
+                    <span class="nav-icon">▦</span>
 
                     <span class="nav-label">
                         Dashboard
                     </span>
-
                 </a>
 
 
@@ -296,15 +257,11 @@
                     class="nav-link"
                     id="usersNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ♙
-                    </span>
+                    <span class="nav-icon">♙</span>
 
                     <span class="nav-label">
                         Users
                     </span>
-
                 </a>
 
 
@@ -313,15 +270,11 @@
                     class="nav-link"
                     id="depositsNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ↓
-                    </span>
+                    <span class="nav-icon">↓</span>
 
                     <span class="nav-label">
                         Deposits
                     </span>
-
                 </a>
 
 
@@ -330,15 +283,11 @@
                     class="nav-link"
                     id="withdrawalsNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ↑
-                    </span>
+                    <span class="nav-icon">↑</span>
 
                     <span class="nav-label">
                         Withdrawals
                     </span>
-
                 </a>
 
 
@@ -347,15 +296,11 @@
                     class="nav-link"
                     id="investmentsNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ◈
-                    </span>
+                    <span class="nav-icon">◈</span>
 
                     <span class="nav-label">
                         Investments
                     </span>
-
                 </a>
 
 
@@ -364,15 +309,11 @@
                     class="nav-link"
                     id="transactionsNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ≋
-                    </span>
+                    <span class="nav-icon">≋</span>
 
                     <span class="nav-label">
                         Transactions
                     </span>
-
                 </a>
 
 
@@ -386,15 +327,11 @@
                     class="nav-link"
                     id="referralsNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ◎
-                    </span>
+                    <span class="nav-icon">◎</span>
 
                     <span class="nav-label">
                         Referrals
                     </span>
-
                 </a>
 
 
@@ -403,15 +340,11 @@
                     class="nav-link"
                     id="supportNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ?
-                    </span>
+                    <span class="nav-icon">?</span>
 
                     <span class="nav-label">
                         Support
                     </span>
-
                 </a>
 
 
@@ -420,15 +353,11 @@
                     class="nav-link"
                     id="securityNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ◉
-                    </span>
+                    <span class="nav-icon">◉</span>
 
                     <span class="nav-label">
                         Security
                     </span>
-
                 </a>
 
 
@@ -437,15 +366,11 @@
                     class="nav-link"
                     id="maintenanceNavLink"
                 >
-
-                    <span class="nav-icon">
-                        ⚙
-                    </span>
+                    <span class="nav-icon">⚙</span>
 
                     <span class="nav-label">
                         Maintenance
                     </span>
-
                 </a>
 
             </nav>
@@ -564,7 +489,9 @@
             >
 
 
-                <!-- WELCOME -->
+                <!-- =================================================
+                     WELCOME
+                     ================================================= -->
 
                 <section class="welcome-panel">
 
@@ -737,7 +664,7 @@
 
 
                 <!-- =================================================
-                     PENDING
+                     PENDING ACTIONS
                      ================================================= -->
 
                 <section class="section-block">
@@ -892,13 +819,11 @@
                             <thead>
 
                                 <tr>
-
                                     <th>User</th>
                                     <th>Type</th>
                                     <th>Amount</th>
                                     <th>Status</th>
                                     <th>Date</th>
-
                                 </tr>
 
                             </thead>
@@ -958,13 +883,11 @@
                             <thead>
 
                                 <tr>
-
                                     <th>User</th>
                                     <th>Email</th>
                                     <th>Phone</th>
                                     <th>Balance</th>
                                     <th>Status</th>
-
                                 </tr>
 
                             </thead>
@@ -1024,14 +947,12 @@
                             <thead>
 
                                 <tr>
-
                                     <th>User</th>
                                     <th>Amount</th>
                                     <th>Method</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Action</th>
-
                                 </tr>
 
                             </thead>
@@ -1091,14 +1012,12 @@
                             <thead>
 
                                 <tr>
-
                                     <th>User</th>
                                     <th>Amount</th>
                                     <th>Method</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Action</th>
-
                                 </tr>
 
                             </thead>
@@ -1158,14 +1077,12 @@
                             <thead>
 
                                 <tr>
-
                                     <th>User</th>
                                     <th>Plan</th>
                                     <th>Amount</th>
                                     <th>Duration</th>
                                     <th>Status</th>
                                     <th>Action</th>
-
                                 </tr>
 
                             </thead>
@@ -1418,6 +1335,7 @@
 
                     <div class="info-grid">
 
+
                         <div class="info-card">
 
                             <div class="info-card-icon">
@@ -1640,7 +1558,7 @@
                     </div>
 
 
-                    <!-- MESSAGE -->
+                    <!-- MAINTENANCE MESSAGE -->
 
                     <div class="maintenance-message">
 
@@ -1657,7 +1575,7 @@
                     </div>
 
 
-                    <!-- CONTROLS -->
+                    <!-- PLATFORM CONTROLS -->
 
                     <div class="maintenance-controls">
 
@@ -1842,7 +1760,7 @@
                     </div>
 
 
-                    <!-- STATUS -->
+                    <!-- PLATFORM STATUS -->
 
                     <div class="maintenance-description">
 
@@ -2019,42 +1937,31 @@
         (function () {
 
             const menuButton =
-                document.getElementById(
-                    "mobileMenuButton"
-                );
+                document.getElementById("mobileMenuButton");
 
             const sidebar =
-                document.getElementById(
-                    "sidebar"
-                );
+                document.getElementById("sidebar");
 
             const overlay =
-                document.getElementById(
-                    "sidebarOverlay"
-                );
+                document.getElementById("sidebarOverlay");
 
 
             function openMenu() {
 
                 if (sidebar) {
-
                     sidebar.classList.add("open");
-
                 }
 
                 if (overlay) {
-
                     overlay.classList.add("active");
-
+                    overlay.setAttribute("aria-hidden", "false");
                 }
 
                 if (menuButton) {
-
                     menuButton.setAttribute(
                         "aria-expanded",
                         "true"
                     );
-
                 }
 
             }
@@ -2063,24 +1970,19 @@
             function closeMenu() {
 
                 if (sidebar) {
-
                     sidebar.classList.remove("open");
-
                 }
 
                 if (overlay) {
-
                     overlay.classList.remove("active");
-
+                    overlay.setAttribute("aria-hidden", "true");
                 }
 
                 if (menuButton) {
-
                     menuButton.setAttribute(
                         "aria-expanded",
                         "false"
                     );
-
                 }
 
             }
@@ -2134,9 +2036,7 @@
 
 
             const year =
-                document.getElementById(
-                    "currentYear"
-                );
+                document.getElementById("currentYear");
 
             if (year) {
 
@@ -2156,11 +2056,10 @@
          CROWN CASH ADMIN CONTROLLER
          ===================================================== -->
 
-    
     <script
-    src="admin.js?v=20261004ADMIN03"
-    defer
-></script>
+        src="admin.js?v=20261004ADMIN04"
+        defer
+    ></script>
 
 
 </body>

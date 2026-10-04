@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -20,16 +22,124 @@
 
     <title>Crown Cash - Admin Panel</title>
 
+
     <!-- =====================================================
-         CROWN CASH ADMIN STYLES
+         CROWN CASH ADMIN CSS
          ===================================================== -->
+
     <link
         rel="stylesheet"
-        href="admin.css?v=20261004ADMIN01"
+        href="admin.css?v=20261004ADMIN02"
     >
+
+
+    <!-- =====================================================
+         CRITICAL SAFETY CSS
+         
+         This prevents a broken loader/CSS rule from hiding
+         the complete admin application.
+         ===================================================== -->
+
+    <style>
+
+        /*
+         * Make sure the document itself is visible.
+         */
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+
+        body {
+            margin: 0;
+            background: #070b16;
+        }
+
+
+        /*
+         * The admin application must remain visible.
+         */
+
+        .admin-app {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+
+        /*
+         * IMPORTANT:
+         *
+         * The loader must NOT permanently cover the page.
+         */
+
+        #pageLoader {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+
+        /*
+         * If JavaScript adds an active/loading class,
+         * keep the loader from becoming a permanent white
+         * screen while the page is being diagnosed.
+         */
+
+        #pageLoader.active,
+        #pageLoader.show,
+        #pageLoader.loading {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+
+        /*
+         * Make sure the main admin content is visible.
+         */
+
+        .admin-main,
+        .admin-content {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+
+        /*
+         * Safety fallback for a CSS rule accidentally hiding
+         * the complete application.
+         */
+
+        body > .admin-app {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+
+        /*
+         * Mobile overlay must not cover the page when inactive.
+         */
+
+        #sidebarOverlay {
+            pointer-events: none;
+        }
+
+
+        #sidebarOverlay.active {
+            pointer-events: auto;
+        }
+
+    </style>
+
 </head>
 
+
 <body>
+
 
     <!-- =====================================================
          PAGE LOADER
@@ -38,9 +148,15 @@
     <div
         class="page-loader"
         id="pageLoader"
-        style="display:none;"
+        style="
+            display:none !important;
+            visibility:hidden !important;
+            opacity:0 !important;
+            pointer-events:none !important;
+        "
         aria-hidden="true"
     >
+
         <div class="loader-content">
 
             <div class="loader-logo">
@@ -58,11 +174,12 @@
             </div>
 
         </div>
+
     </div>
 
 
     <!-- =====================================================
-         MOBILE OVERLAY
+         MOBILE SIDEBAR OVERLAY
          ===================================================== -->
 
     <div
@@ -76,7 +193,10 @@
          ADMIN APPLICATION
          ===================================================== -->
 
-    <div class="admin-app">
+    <div
+        class="admin-app"
+        id="adminApp"
+    >
 
 
         <!-- =================================================
@@ -88,7 +208,8 @@
             id="sidebar"
         >
 
-            <!-- Brand -->
+
+            <!-- BRAND -->
 
             <div class="sidebar-brand">
 
@@ -111,7 +232,7 @@
             </div>
 
 
-            <!-- Admin Profile -->
+            <!-- ADMIN PROFILE -->
 
             <div class="sidebar-profile">
 
@@ -143,9 +264,10 @@
             </div>
 
 
-            <!-- Navigation -->
+            <!-- NAVIGATION -->
 
             <nav class="admin-navigation">
+
 
                 <div class="nav-section-title">
                     MAIN
@@ -329,7 +451,7 @@
             </nav>
 
 
-            <!-- Sidebar Bottom -->
+            <!-- SIDEBAR BOTTOM -->
 
             <div class="sidebar-bottom">
 
@@ -355,7 +477,7 @@
 
 
         <!-- =================================================
-             MAIN CONTENT
+             MAIN
              ================================================= -->
 
         <main class="admin-main">
@@ -433,7 +555,7 @@
 
 
             <!-- =================================================
-                 DASHBOARD CONTENT
+                 CONTENT
                  ================================================= -->
 
             <section
@@ -442,9 +564,7 @@
             >
 
 
-                <!-- =================================================
-                     WELCOME PANEL
-                     ================================================= -->
+                <!-- WELCOME -->
 
                 <section class="welcome-panel">
 
@@ -475,7 +595,7 @@
 
 
                 <!-- =================================================
-                     OVERVIEW STATS
+                     PLATFORM OVERVIEW
                      ================================================= -->
 
                 <section class="section-block">
@@ -499,8 +619,6 @@
 
                     <div class="stats-grid">
 
-
-                        <!-- Users -->
 
                         <article class="stat-card">
 
@@ -530,8 +648,6 @@
                         </article>
 
 
-                        <!-- Deposits -->
-
                         <article class="stat-card">
 
                             <div class="stat-icon">
@@ -560,8 +676,6 @@
                         </article>
 
 
-                        <!-- Withdrawals -->
-
                         <article class="stat-card">
 
                             <div class="stat-icon">
@@ -589,8 +703,6 @@
 
                         </article>
 
-
-                        <!-- Investments -->
 
                         <article class="stat-card">
 
@@ -625,7 +737,7 @@
 
 
                 <!-- =================================================
-                     PENDING ACTIONS
+                     PENDING
                      ================================================= -->
 
                 <section class="section-block">
@@ -649,8 +761,6 @@
 
                     <div class="pending-grid">
 
-
-                        <!-- Pending Deposits -->
 
                         <a
                             href="#deposits"
@@ -683,8 +793,6 @@
                         </a>
 
 
-                        <!-- Pending Withdrawals -->
-
                         <a
                             href="#withdrawals"
                             class="pending-card"
@@ -715,8 +823,6 @@
 
                         </a>
 
-
-                        <!-- Pending Investments -->
 
                         <a
                             href="#investments"
@@ -776,13 +882,6 @@
 
                         </div>
 
-                        <a
-                            href="#transactions"
-                            class="panel-action"
-                        >
-                            View All
-                        </a>
-
                     </div>
 
 
@@ -794,25 +893,11 @@
 
                                 <tr>
 
-                                    <th>
-                                        User
-                                    </th>
-
-                                    <th>
-                                        Type
-                                    </th>
-
-                                    <th>
-                                        Amount
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
 
                                 </tr>
 
@@ -863,13 +948,6 @@
 
                         </div>
 
-                        <a
-                            href="#users"
-                            class="panel-action"
-                        >
-                            View All
-                        </a>
-
                     </div>
 
 
@@ -881,25 +959,11 @@
 
                                 <tr>
 
-                                    <th>
-                                        User
-                                    </th>
-
-                                    <th>
-                                        Email
-                                    </th>
-
-                                    <th>
-                                        Phone
-                                    </th>
-
-                                    <th>
-                                        Balance
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
 
                                 </tr>
 
@@ -928,7 +992,7 @@
 
 
                 <!-- =================================================
-                     DEPOSITS MANAGEMENT
+                     DEPOSITS
                      ================================================= -->
 
                 <section
@@ -950,14 +1014,6 @@
 
                         </div>
 
-                        <button
-                            type="button"
-                            class="panel-action"
-                            id="refreshDepositsButton"
-                        >
-                            Refresh
-                        </button>
-
                     </div>
 
 
@@ -969,29 +1025,12 @@
 
                                 <tr>
 
-                                    <th>
-                                        User
-                                    </th>
-
-                                    <th>
-                                        Amount
-                                    </th>
-
-                                    <th>
-                                        Method
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Action
-                                    </th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
 
                                 </tr>
 
@@ -1005,7 +1044,7 @@
                                         colspan="6"
                                         class="table-empty"
                                     >
-                                        Deposit management will load here.
+                                        Loading deposits...
                                     </td>
 
                                 </tr>
@@ -1020,7 +1059,7 @@
 
 
                 <!-- =================================================
-                     WITHDRAWALS MANAGEMENT
+                     WITHDRAWALS
                      ================================================= -->
 
                 <section
@@ -1042,14 +1081,6 @@
 
                         </div>
 
-                        <button
-                            type="button"
-                            class="panel-action"
-                            id="refreshWithdrawalsButton"
-                        >
-                            Refresh
-                        </button>
-
                     </div>
 
 
@@ -1061,29 +1092,12 @@
 
                                 <tr>
 
-                                    <th>
-                                        User
-                                    </th>
-
-                                    <th>
-                                        Amount
-                                    </th>
-
-                                    <th>
-                                        Method
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Date
-                                    </th>
-
-                                    <th>
-                                        Action
-                                    </th>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
 
                                 </tr>
 
@@ -1097,7 +1111,7 @@
                                         colspan="6"
                                         class="table-empty"
                                     >
-                                        Withdrawal management will load here.
+                                        Loading withdrawals...
                                     </td>
 
                                 </tr>
@@ -1112,7 +1126,7 @@
 
 
                 <!-- =================================================
-                     INVESTMENTS MANAGEMENT
+                     INVESTMENTS
                      ================================================= -->
 
                 <section
@@ -1134,14 +1148,6 @@
 
                         </div>
 
-                        <button
-                            type="button"
-                            class="panel-action"
-                            id="refreshInvestmentsButton"
-                        >
-                            Refresh
-                        </button>
-
                     </div>
 
 
@@ -1153,29 +1159,12 @@
 
                                 <tr>
 
-                                    <th>
-                                        User
-                                    </th>
-
-                                    <th>
-                                        Plan
-                                    </th>
-
-                                    <th>
-                                        Amount
-                                    </th>
-
-                                    <th>
-                                        Duration
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Action
-                                    </th>
+                                    <th>User</th>
+                                    <th>Plan</th>
+                                    <th>Amount</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
 
                                 </tr>
 
@@ -1189,7 +1178,7 @@
                                         colspan="6"
                                         class="table-empty"
                                     >
-                                        Investment management will load here.
+                                        Loading investments...
                                     </td>
 
                                 </tr>
@@ -1204,7 +1193,7 @@
 
 
                 <!-- =================================================
-                     MANAGEMENT CARDS
+                     MANAGEMENT
                      ================================================= -->
 
                 <section class="section-block">
@@ -1631,6 +1620,7 @@
 
                         </div>
 
+
                         <div
                             class="maintenance-status"
                             id="maintenanceStatus"
@@ -1650,7 +1640,7 @@
                     </div>
 
 
-                    <!-- Maintenance Message -->
+                    <!-- MESSAGE -->
 
                     <div class="maintenance-message">
 
@@ -1667,7 +1657,7 @@
                     </div>
 
 
-                    <!-- Platform Controls -->
+                    <!-- CONTROLS -->
 
                     <div class="maintenance-controls">
 
@@ -1675,8 +1665,6 @@
                             Platform Controls
                         </h3>
 
-
-                        <!-- Maintenance Mode -->
 
                         <div class="control-row">
 
@@ -1707,8 +1695,6 @@
                         </div>
 
 
-                        <!-- Investments -->
-
                         <div class="control-row">
 
                             <div class="control-info">
@@ -1737,8 +1723,6 @@
 
                         </div>
 
-
-                        <!-- Deposits -->
 
                         <div class="control-row">
 
@@ -1769,8 +1753,6 @@
                         </div>
 
 
-                        <!-- Withdrawals -->
-
                         <div class="control-row">
 
                             <div class="control-info">
@@ -1800,8 +1782,6 @@
                         </div>
 
 
-                        <!-- Daily Earnings -->
-
                         <div class="control-row">
 
                             <div class="control-info">
@@ -1830,8 +1810,6 @@
 
                         </div>
 
-
-                        <!-- Registration -->
 
                         <div class="control-row">
 
@@ -1864,7 +1842,7 @@
                     </div>
 
 
-                    <!-- Maintenance Description -->
+                    <!-- STATUS -->
 
                     <div class="maintenance-description">
 
@@ -1888,7 +1866,7 @@
                     </div>
 
 
-                    <!-- Earnings Monitor -->
+                    <!-- EARNINGS ENGINE -->
 
                     <div class="earnings-monitor">
 
@@ -1974,7 +1952,7 @@
                     </div>
 
 
-                    <!-- Save -->
+                    <!-- SAVE -->
 
                     <div class="maintenance-footer">
 
@@ -1983,6 +1961,7 @@
                             id="maintenanceSaveStatus"
                             aria-live="polite"
                         ></div>
+
 
                         <button
                             type="button"
@@ -2004,19 +1983,23 @@
                 <footer class="admin-footer">
 
                     <div>
+
                         ©
                         <span id="currentYear">
                             2026
                         </span>
-                        Crown Cash. All rights reserved.
+
+                        Crown Cash.
+                        All rights reserved.
+
                     </div>
+
 
                     <div>
                         Secure Administration System
                     </div>
 
                 </footer>
-
 
             </section>
 
@@ -2026,7 +2009,7 @@
 
 
     <!-- =====================================================
-         BASIC MOBILE FALLBACK
+         MOBILE MENU FALLBACK
          ===================================================== -->
 
     <script>
@@ -2036,23 +2019,36 @@
         (function () {
 
             const menuButton =
-                document.getElementById("mobileMenuButton");
+                document.getElementById(
+                    "mobileMenuButton"
+                );
 
             const sidebar =
-                document.getElementById("sidebar");
+                document.getElementById(
+                    "sidebar"
+                );
 
             const overlay =
-                document.getElementById("sidebarOverlay");
+                document.getElementById(
+                    "sidebarOverlay"
+                );
 
-            if (menuButton && sidebar) {
 
-                function openMenu() {
+            function openMenu() {
+
+                if (sidebar) {
 
                     sidebar.classList.add("open");
 
-                    if (overlay) {
-                        overlay.classList.add("active");
-                    }
+                }
+
+                if (overlay) {
+
+                    overlay.classList.add("active");
+
+                }
+
+                if (menuButton) {
 
                     menuButton.setAttribute(
                         "aria-expanded",
@@ -2061,14 +2057,24 @@
 
                 }
 
+            }
 
-                function closeMenu() {
+
+            function closeMenu() {
+
+                if (sidebar) {
 
                     sidebar.classList.remove("open");
 
-                    if (overlay) {
-                        overlay.classList.remove("active");
-                    }
+                }
+
+                if (overlay) {
+
+                    overlay.classList.remove("active");
+
+                }
+
+                if (menuButton) {
 
                     menuButton.setAttribute(
                         "aria-expanded",
@@ -2077,12 +2083,17 @@
 
                 }
 
+            }
+
+
+            if (menuButton) {
 
                 menuButton.addEventListener(
                     "click",
                     function () {
 
                         if (
+                            sidebar &&
                             sidebar.classList.contains("open")
                         ) {
 
@@ -2097,38 +2108,42 @@
                     }
                 );
 
-
-                if (overlay) {
-
-                    overlay.addEventListener(
-                        "click",
-                        closeMenu
-                    );
-
-                }
+            }
 
 
-                document
-                    .querySelectorAll(".nav-link")
-                    .forEach(function (link) {
+            if (overlay) {
 
-                        link.addEventListener(
-                            "click",
-                            closeMenu
-                        );
-
-                    });
+                overlay.addEventListener(
+                    "click",
+                    closeMenu
+                );
 
             }
 
 
+            document
+                .querySelectorAll(".nav-link")
+                .forEach(function (link) {
+
+                    link.addEventListener(
+                        "click",
+                        closeMenu
+                    );
+
+                });
+
+
             const year =
-                document.getElementById("currentYear");
+                document.getElementById(
+                    "currentYear"
+                );
 
             if (year) {
 
                 year.textContent =
-                    new Date().getFullYear();
+                    String(
+                        new Date().getFullYear()
+                    );
 
             }
 
@@ -2139,17 +2154,13 @@
 
     <!-- =====================================================
          CROWN CASH ADMIN CONTROLLER
-         
-         IMPORTANT:
-         - Loaded AFTER the page markup
-         - defer prevents blocking
-         - Authentication remains server-side
          ===================================================== -->
 
     <script
-        src="admin.js?v=20261004ADMIN01"
+        src="admin.js?v=20261004ADMIN02"
         defer
     ></script>
+
 
 </body>
 </html>

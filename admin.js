@@ -1,7 +1,7 @@
 /* =========================================================
    CROWN CASH — ADMIN PANEL CONTROLLER
-   Production-safe version
-   Version: 20261004ADMIN03
+   Complete production replacement
+   Version: 20261004ADMIN04
    ========================================================= */
 
 "use strict";
@@ -45,7 +45,7 @@ const ENDPOINTS = {
 
 
 /* =========================================================
-   STATE
+   APPLICATION STATE
    ========================================================= */
 
 const state = {
@@ -70,7 +70,13 @@ const state = {
 
     maintenance: null,
 
-    loading: false
+    users: [],
+
+    userMap: new Map(),
+
+    loading: false,
+
+    initialized: false
 
 };
 
@@ -112,8 +118,11 @@ function escapeHtml(value) {
         value === null ||
         value === undefined
     ) {
+
         return "";
+
     }
+
 
     return String(value)
         .replace(/&/g, "&amp;")
@@ -136,10 +145,15 @@ function toNumber(value) {
         value === undefined ||
         value === ""
     ) {
+
         return 0;
+
     }
 
-    if (typeof value === "number") {
+
+    if (
+        typeof value === "number"
+    ) {
 
         return Number.isFinite(value)
             ? value
@@ -147,13 +161,16 @@ function toNumber(value) {
 
     }
 
+
     const cleaned =
         String(value)
             .replace(/,/g, "")
             .replace(/[^\d.-]/g, "");
 
+
     const number =
         Number(cleaned);
+
 
     return Number.isFinite(number)
         ? number
@@ -169,7 +186,10 @@ function toNumber(value) {
 function formatUGX(value) {
 
     const amount =
-        Math.round(toNumber(value));
+        Math.round(
+            toNumber(value)
+        );
+
 
     return (
         "UGX " +
@@ -195,7 +215,9 @@ function parseDate(value) {
         value === undefined ||
         value === ""
     ) {
+
         return null;
+
     }
 
 
@@ -223,11 +245,33 @@ function parseDate(value) {
 
     if (
         typeof value === "object" &&
-        value.seconds
+        value.$numberLong
+    ) {
+
+        value =
+            Number(value.$numberLong);
+
+    }
+
+
+    if (
+        typeof value === "object" &&
+        value.seconds !== undefined
     ) {
 
         value =
             Number(value.seconds) * 1000;
+
+    }
+
+
+    if (
+        typeof value === "object" &&
+        value._seconds !== undefined
+    ) {
+
+        value =
+            Number(value._seconds) * 1000;
 
     }
 
@@ -241,8 +285,10 @@ function parseDate(value) {
                 ? value * 1000
                 : value;
 
+
         const date =
             new Date(timestamp);
+
 
         return Number.isNaN(
             date.getTime()
@@ -258,7 +304,9 @@ function parseDate(value) {
 
 
     if (!stringValue) {
+
         return null;
+
     }
 
 
@@ -323,7 +371,9 @@ function getId(value) {
         value === null ||
         value === undefined
     ) {
+
         return "";
+
     }
 
 
@@ -342,19 +392,74 @@ function getId(value) {
     ) {
 
         if (value.$oid) {
-            return String(value.$oid);
+
+            return String(
+                value.$oid
+            );
+
         }
+
 
         if (value._id) {
-            return getId(value._id);
+
+            return getId(
+                value._id
+            );
+
         }
+
 
         if (value.id) {
-            return getId(value.id);
+
+            return getId(
+                value.id
+            );
+
         }
 
+
         if (value.ID) {
-            return getId(value.ID);
+
+            return getId(
+                value.ID
+            );
+
+        }
+
+
+        if (value.user_id) {
+
+            return getId(
+                value.user_id
+            );
+
+        }
+
+
+        if (value.userId) {
+
+            return getId(
+                value.userId
+            );
+
+        }
+
+
+        if (value.account_id) {
+
+            return getId(
+                value.account_id
+            );
+
+        }
+
+
+        if (value.accountId) {
+
+            return getId(
+                value.accountId
+            );
+
         }
 
     }
@@ -366,10 +471,79 @@ function getId(value) {
 
 
 /* =========================================================
+   RECORD ID
+   ========================================================= */
+
+function getRecordId(record) {
+
+    if (!record) {
+
+        return "";
+
+    }
+
+
+    return getId(
+        record._id ??
+        record.id ??
+        record.ID ??
+        record.deposit_id ??
+        record.depositId ??
+        record.withdrawal_id ??
+        record.withdrawalId ??
+        record.investment_id ??
+        record.investmentId
+    );
+
+}
+
+
+/* =========================================================
+   USER ID
+   ========================================================= */
+
+function getUserId(record) {
+
+    if (!record) {
+
+        return "";
+
+    }
+
+
+    const embeddedUser =
+        record.user ||
+        record.customer ||
+        record.account ||
+        record.owner ||
+        {};
+
+
+    return getId(
+        record.user_id ??
+        record.userId ??
+        record.userID ??
+        record.customer_id ??
+        record.customerId ??
+        record.account_id ??
+        record.accountId ??
+        record.owner_id ??
+        record.ownerId ??
+        embeddedUser._id ??
+        embeddedUser.id
+    );
+
+}
+
+
+/* =========================================================
    ARRAY EXTRACTION
    ========================================================= */
 
-function extractArray(data, keys = []) {
+function extractArray(
+    data,
+    keys = []
+) {
 
     if (Array.isArray(data)) {
 
@@ -388,6 +562,10 @@ function extractArray(data, keys = []) {
     }
 
 
+    /*
+     * First check the requested keys directly.
+     */
+
     for (const key of keys) {
 
         if (
@@ -403,7 +581,366 @@ function extractArray(data, keys = []) {
     }
 
 
-    return [];
+    /*
+     * Then check common nested containers.
+     */
+
+    const containers = [
+
+        data.data,
+
+        data.result,
+
+        data.results,
+
+        data.response,
+
+        data.payload,
+
+        data.records,
+
+        data.items
+
+    ];
+
+
+    for (
+        const container
+        of containers
+    ) {
+
+        if (
+            Array.isArray(
+                container
+            )
+        ) {
+
+            return container;
+
+        }
+
+
+        if (
+            container &&
+            typeof container === "object"
+        ) {
+
+            for (
+                const key
+                of keys
+            ) {
+
+                if (
+                    Array.isArray(
+                        container[key]
+                    )
+                ) {
+
+                    return container[key];
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * Deep search for the requested array keys.
+     */
+
+    const visited =
+        new Set();
+
+
+    function deepSearch(object) {
+
+        if (
+            !object ||
+            typeof object !== "object"
+        ) {
+
+            return null;
+
+        }
+
+
+        if (
+            visited.has(object)
+        ) {
+
+            return null;
+
+        }
+
+
+        visited.add(object);
+
+
+        for (
+            const key
+            of keys
+        ) {
+
+            if (
+                Array.isArray(
+                    object[key]
+                )
+            ) {
+
+                return object[key];
+
+            }
+
+        }
+
+
+        for (
+            const value
+            of Object.values(object)
+        ) {
+
+            if (
+                value &&
+                typeof value === "object"
+            ) {
+
+                const result =
+                    deepSearch(value);
+
+
+                if (result) {
+
+                    return result;
+
+                }
+
+            }
+
+        }
+
+
+        return null;
+
+    }
+
+
+    return deepSearch(data) || [];
+
+}
+
+
+/* =========================================================
+   USER NAME
+   ========================================================= */
+
+function getUserName(record) {
+
+    if (!record) {
+
+        return "Unknown user";
+
+    }
+
+
+    const user =
+        record.user ||
+        record.customer ||
+        record.account ||
+        record.owner ||
+        {};
+
+
+    const name =
+        record.user_name ||
+        record.userName ||
+        record.customer_name ||
+        record.customerName ||
+        record.account_name ||
+        record.accountName ||
+        record.name ||
+        record.full_name ||
+        record.fullName ||
+        user.name ||
+        user.full_name ||
+        user.fullName ||
+        [
+            user.first_name,
+            user.last_name
+        ]
+            .filter(Boolean)
+            .join(" ") ||
+        user.email;
+
+
+    if (name) {
+
+        return String(name);
+
+    }
+
+
+    /*
+     * If the record only contains a user ID,
+     * resolve it from the cached user map.
+     */
+
+    const userId =
+        getUserId(record);
+
+
+    if (
+        userId &&
+        state.userMap.has(
+            userId
+        )
+    ) {
+
+        const cachedUser =
+            state.userMap.get(
+                userId
+            );
+
+
+        return getUserName(
+            cachedUser
+        );
+
+    }
+
+
+    return "Unknown user";
+
+}
+
+
+/* =========================================================
+   USER CACHE
+   ========================================================= */
+
+function cacheUsers(users) {
+
+    if (
+        !Array.isArray(users)
+    ) {
+
+        return;
+
+    }
+
+
+    for (
+        const user
+        of users
+    ) {
+
+        if (
+            !user ||
+            typeof user !== "object"
+        ) {
+
+            continue;
+
+        }
+
+
+        const id =
+            getId(
+                user._id ??
+                user.id ??
+                user.ID ??
+                user.user_id ??
+                user.userId
+            );
+
+
+        if (id) {
+
+            state.userMap.set(
+                id,
+                user
+            );
+
+        }
+
+
+        /*
+         * Also cache by email where available.
+         */
+
+        if (user.email) {
+
+            state.userMap.set(
+                `email:${String(user.email).toLowerCase()}`,
+                user
+            );
+
+        }
+
+    }
+
+
+    state.users =
+        Array.from(
+            state.userMap.values()
+        )
+            .filter(
+                user =>
+                    user &&
+                    typeof user === "object"
+            );
+
+}
+
+
+/* =========================================================
+   CACHE USERS FROM RECORDS
+   ========================================================= */
+
+function cacheUsersFromRecords(records) {
+
+    if (
+        !Array.isArray(records)
+    ) {
+
+        return;
+
+    }
+
+
+    for (
+        const record
+        of records
+    ) {
+
+        if (!record) {
+
+            continue;
+
+        }
+
+
+        const user =
+            record.user ||
+            record.customer ||
+            record.account ||
+            record.owner;
+
+
+        if (
+            user &&
+            typeof user === "object"
+        ) {
+
+            cacheUsers([
+                user
+            ]);
+
+        }
+
+    }
 
 }
 
@@ -427,7 +964,9 @@ async function safeJson(response) {
 
     try {
 
-        return JSON.parse(text);
+        return JSON.parse(
+            text
+        );
 
     } catch (error) {
 
@@ -436,7 +975,10 @@ async function safeJson(response) {
             success: false,
 
             message:
-                text.substring(0, 500)
+                text.substring(
+                    0,
+                    500
+                )
 
         };
 
@@ -471,7 +1013,9 @@ async function apiRequest(
     const timeoutId =
         setTimeout(
             () => {
+
                 controller.abort();
+
             },
             timeout
         );
@@ -479,7 +1023,8 @@ async function apiRequest(
 
     const requestOptions = {
 
-        credentials: "include",
+        credentials:
+            "include",
 
         ...options,
 
@@ -518,7 +1063,9 @@ async function apiRequest(
             response.status === 403
         ) {
 
-            if (redirectOnAuth) {
+            if (
+                redirectOnAuth
+            ) {
 
                 handleAuthenticationFailure(
                     response.status
@@ -551,7 +1098,9 @@ async function apiRequest(
         }
 
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             const error =
                 new Error(
@@ -587,8 +1136,10 @@ async function apiRequest(
                     "The server request timed out."
                 );
 
+
             timeoutError.code =
                 "TIMEOUT";
+
 
             throw timeoutError;
 
@@ -626,13 +1177,6 @@ function handleAuthenticationFailure(
         false;
 
 
-    /*
-     * Do NOT blank the document.
-     *
-     * Give the user a clear message and then
-     * redirect only for a real authentication failure.
-     */
-
     if (
         status === 401
     ) {
@@ -652,6 +1196,7 @@ function handleAuthenticationFailure(
             },
             1200
         );
+
 
         return;
 
@@ -703,44 +1248,58 @@ function showPageMessage(
                 "div"
             );
 
+
         element.id =
             "adminPageMessage";
 
-        element.style.position =
-            "fixed";
 
-        element.style.left =
-            "50%";
+        Object.assign(
+            element.style,
+            {
 
-        element.style.top =
-            "20px";
+                position:
+                    "fixed",
 
-        element.style.transform =
-            "translateX(-50%)";
+                left:
+                    "50%",
 
-        element.style.zIndex =
-            "999999";
+                top:
+                    "20px",
 
-        element.style.maxWidth =
-            "calc(100vw - 30px)";
+                transform:
+                    "translateX(-50%)",
 
-        element.style.padding =
-            "14px 18px";
+                zIndex:
+                    "999999",
 
-        element.style.borderRadius =
-            "12px";
+                maxWidth:
+                    "calc(100vw - 30px)",
 
-        element.style.fontFamily =
-            "Arial, sans-serif";
+                padding:
+                    "14px 18px",
 
-        element.style.fontSize =
-            "14px";
+                borderRadius:
+                    "12px",
 
-        element.style.fontWeight =
-            "700";
+                fontFamily:
+                    "Inter, Arial, sans-serif",
 
-        element.style.boxShadow =
-            "0 10px 35px rgba(0,0,0,.35)";
+                fontSize:
+                    "14px",
+
+                fontWeight:
+                    "700",
+
+                boxShadow:
+                    "0 10px 35px rgba(0,0,0,.35)",
+
+                textAlign:
+                    "center"
+
+            }
+
+        );
+
 
         document.body.appendChild(
             element
@@ -753,10 +1312,26 @@ function showPageMessage(
         message;
 
 
-    element.style.background =
+    if (
+        type === "success"
+    ) {
+
+        element.style.background =
+            "#155d3b";
+
+    } else if (
         type === "warning"
-            ? "#6d5614"
-            : "#7b2530";
+    ) {
+
+        element.style.background =
+            "#6d5614";
+
+    } else {
+
+        element.style.background =
+            "#7b2530";
+
+    }
 
 
     element.style.color =
@@ -765,6 +1340,23 @@ function showPageMessage(
 
     element.style.display =
         "block";
+
+
+    clearTimeout(
+        element._hideTimer
+    );
+
+
+    element._hideTimer =
+        setTimeout(
+            () => {
+
+                element.style.display =
+                    "none";
+
+            },
+            5000
+        );
 
 }
 
@@ -780,7 +1372,9 @@ function showLoader() {
 
 
     if (!loader) {
+
         return;
+
     }
 
 
@@ -806,7 +1400,9 @@ function hideLoader() {
 
 
     if (!loader) {
+
         return;
+
     }
 
 
@@ -831,44 +1427,7 @@ function hideLoader() {
 
 
 /* =========================================================
-   FAILSAFE LOADER
-   ========================================================= */
-
-function forceHideLoader() {
-
-    hideLoader();
-
-
-    const loader =
-        $("pageLoader");
-
-
-    if (loader) {
-
-        loader.removeAttribute(
-            "style"
-        );
-
-
-        loader.style.display =
-            "none";
-
-        loader.style.visibility =
-            "hidden";
-
-        loader.style.opacity =
-            "0";
-
-        loader.style.pointerEvents =
-            "none";
-
-    }
-
-}
-
-
-/* =========================================================
-   ENSURE APPLICATION VISIBILITY
+   FORCE APPLICATION VISIBILITY
    ========================================================= */
 
 function ensureApplicationVisible() {
@@ -918,7 +1477,7 @@ function ensureApplicationVisible() {
     }
 
 
-    forceHideLoader();
+    hideLoader();
 
 }
 
@@ -935,11 +1494,15 @@ async function authenticateAdmin() {
             await apiRequest(
                 ENDPOINTS.auth,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 15000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        15000
                 }
             );
 
@@ -962,11 +1525,6 @@ async function authenticateAdmin() {
                 data.admin
             );
 
-
-        /*
-         * Some backend responses return authenticated=true
-         * with the authoritative admin flag in nested data.
-         */
 
         const user =
             data.user ||
@@ -1009,6 +1567,7 @@ async function authenticateAdmin() {
                 401
             );
 
+
             return false;
 
         }
@@ -1022,18 +1581,16 @@ async function authenticateAdmin() {
                 403
             );
 
+
             return false;
 
         }
 
 
         /*
-         * CRITICAL:
-         *
-         * As soon as admin authentication succeeds,
-         * reveal the page.
-         *
-         * Other API requests must NEVER block the page.
+         * Admin authentication succeeded.
+         * Never wait for other endpoints before
+         * showing the page.
          */
 
         ensureApplicationVisible();
@@ -1047,16 +1604,8 @@ async function authenticateAdmin() {
             true;
 
 
-        /*
-         * Do NOT turn the entire page white.
-         */
-
         ensureApplicationVisible();
 
-
-        /*
-         * A genuine 401/403 was already handled.
-         */
 
         if (
             error.status === 401 ||
@@ -1093,11 +1642,15 @@ async function loadProfile() {
             await apiRequest(
                 ENDPOINTS.profile,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 15000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        15000
                 }
             );
 
@@ -1135,9 +1688,9 @@ async function loadProfile() {
 function renderProfile(data) {
 
     const user =
-        data.user ||
-        data.profile ||
-        data.account ||
+        data?.user ||
+        data?.profile ||
+        data?.account ||
         data;
 
 
@@ -1155,14 +1708,12 @@ function renderProfile(data) {
         user.name ||
         user.full_name ||
         user.fullName ||
-        (
-            [
-                user.first_name,
-                user.last_name
-            ]
-                .filter(Boolean)
-                .join(" ")
-        ) ||
+        [
+            user.first_name,
+            user.last_name
+        ]
+            .filter(Boolean)
+            .join(" ") ||
         "Administrator";
 
 
@@ -1179,7 +1730,7 @@ function renderProfile(data) {
 
 
     const avatar =
-        name
+        String(name)
             .trim()
             .charAt(0)
             .toUpperCase() ||
@@ -1240,11 +1791,15 @@ async function loadDashboard() {
             await apiRequest(
                 ENDPOINTS.dashboard,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -1281,13 +1836,15 @@ async function loadDashboard() {
 
 
 /* =========================================================
-   DASHBOARD DATA RENDER
+   DASHBOARD RENDER
    ========================================================= */
 
 function renderDashboard(data) {
 
     if (!data) {
+
         return;
+
     }
 
 
@@ -1296,6 +1853,7 @@ function renderDashboard(data) {
         data.statistics ||
         data.overview ||
         data.summary ||
+        data.data?.stats ||
         data;
 
 
@@ -1331,7 +1889,9 @@ function renderDashboard(data) {
     if ($("totalUsers")) {
 
         $("totalUsers").textContent =
-            Number(users).toLocaleString(
+            Number(
+                users
+            ).toLocaleString(
                 "en-UG"
             );
 
@@ -1371,6 +1931,7 @@ function renderDashboard(data) {
     const pending =
         data.pending ||
         data.pending_items ||
+        data.data?.pending ||
         data;
 
 
@@ -1425,7 +1986,7 @@ function renderDashboard(data) {
     }
 
 
-    renderRecentTransactions(
+    const transactions =
         extractArray(
             data,
             [
@@ -1433,11 +1994,10 @@ function renderDashboard(data) {
                 "recentTransactions",
                 "transactions"
             ]
-        )
-    );
+        );
 
 
-    renderRecentUsers(
+    const usersList =
         extractArray(
             data,
             [
@@ -1445,8 +2005,60 @@ function renderDashboard(data) {
                 "recentUsers",
                 "users"
             ]
-        )
+        );
+
+
+    cacheUsers(
+        usersList
     );
+
+
+    renderRecentTransactions(
+        transactions
+    );
+
+
+    renderRecentUsers(
+        usersList
+    );
+
+
+    /*
+     * Re-render management tables because the
+     * dashboard may have supplied user information.
+     */
+
+    if (
+        state.investments.length
+    ) {
+
+        renderInvestments(
+            state.investments
+        );
+
+    }
+
+
+    if (
+        state.withdrawals.length
+    ) {
+
+        renderWithdrawals(
+            state.withdrawals
+        );
+
+    }
+
+
+    if (
+        state.deposits.length
+    ) {
+
+        renderDeposits(
+            state.deposits
+        );
+
+    }
 
 }
 
@@ -1459,9 +2071,8 @@ function showDashboardError(error) {
 
     const message =
         escapeHtml(
-            error && error.message
-                ? error.message
-                : "Unable to load dashboard data."
+            error?.message ||
+            "Unable to load dashboard data."
         );
 
 
@@ -1524,14 +2135,14 @@ function renderRecentTransactions(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
     if (
-        !Array.isArray(
-            transactions
-        ) ||
+        !Array.isArray(transactions) ||
         transactions.length === 0
     ) {
 
@@ -1550,19 +2161,22 @@ function renderRecentTransactions(
 
         `;
 
+
         return;
 
     }
+
+
+    cacheUsersFromRecords(
+        transactions
+    );
 
 
     tbody.innerHTML =
         transactions
             .slice(0, 10)
             .map(
-                transaction =>
-                    renderTransactionRow(
-                        transaction
-                    )
+                renderTransactionRow
             )
             .join("");
 
@@ -1585,18 +2199,15 @@ function renderTransactionRow(
 
 
     const name =
-        transaction.user_name ||
-        transaction.userName ||
-        transaction.name ||
-        user.name ||
-        user.full_name ||
-        user.email ||
-        "Unknown user";
+        getUserName(
+            transaction
+        );
 
 
     const type =
         transaction.type ||
         transaction.transaction_type ||
+        transaction.transactionType ||
         transaction.category ||
         "Transaction";
 
@@ -1616,9 +2227,12 @@ function renderTransactionRow(
     const date =
         transaction.created_at ||
         transaction.createdAt ||
+        transaction.created_on ||
+        transaction.createdOn ||
         transaction.date ||
         transaction.timestamp ||
-        transaction.time;
+        transaction.time ||
+        transaction.updated_at;
 
 
     return `
@@ -1669,7 +2283,9 @@ function renderRecentUsers(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
@@ -1693,19 +2309,22 @@ function renderRecentUsers(
 
         `;
 
+
         return;
 
     }
+
+
+    cacheUsers(
+        users
+    );
 
 
     tbody.innerHTML =
         users
             .slice(0, 10)
             .map(
-                user =>
-                    renderUserRow(
-                        user
-                    )
+                renderUserRow
             )
             .join("");
 
@@ -1719,16 +2338,9 @@ function renderRecentUsers(
 function renderUserRow(user) {
 
     const name =
-        user.name ||
-        user.full_name ||
-        user.fullName ||
-        [
-            user.first_name,
-            user.last_name
-        ]
-            .filter(Boolean)
-            .join(" ") ||
-        "Unknown user";
+        getUserName(
+            user
+        );
 
 
     const email =
@@ -1739,6 +2351,7 @@ function renderUserRow(user) {
     const phone =
         user.phone ||
         user.phone_number ||
+        user.phoneNumber ||
         user.mobile ||
         "Not available";
 
@@ -1747,12 +2360,14 @@ function renderUserRow(user) {
         user.balance ??
         user.wallet_balance ??
         user.walletBalance ??
+        user.wallet?.balance ??
         0;
 
 
     const status =
         user.status ||
         user.account_status ||
+        user.accountStatus ||
         "active";
 
 
@@ -1826,7 +2441,9 @@ function statusBadge(status) {
         [
             "pending",
             "processing",
-            "review"
+            "review",
+            "awaiting",
+            "requested"
         ].includes(
             normalized
         )
@@ -1910,11 +2527,15 @@ async function loadDeposits() {
             await apiRequest(
                 ENDPOINTS.deposits,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -1924,11 +2545,19 @@ async function loadDeposits() {
                 data,
                 [
                     "deposits",
-                    "data",
+                    "deposit_requests",
+                    "depositRequests",
+                    "records",
                     "items",
-                    "results"
+                    "results",
+                    "data"
                 ]
             );
+
+
+        cacheUsersFromRecords(
+            state.deposits
+        );
 
 
         renderDeposits(
@@ -1961,7 +2590,7 @@ async function loadDeposits() {
 
 
 /* =========================================================
-   DEPOSITS RENDER
+   DEPOSIT RENDER
    ========================================================= */
 
 function renderDeposits(
@@ -1973,12 +2602,15 @@ function renderDeposits(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
     if (
-        !deposits.length
+        !Array.isArray(deposits) ||
+        deposits.length === 0
     ) {
 
         tbody.innerHTML = `
@@ -1996,6 +2628,7 @@ function renderDeposits(
 
         `;
 
+
         return;
 
     }
@@ -2004,10 +2637,7 @@ function renderDeposits(
     tbody.innerHTML =
         deposits
             .map(
-                deposit =>
-                    renderDepositRow(
-                        deposit
-                    )
+                renderDepositRow
             )
             .join("");
 
@@ -2022,25 +2652,11 @@ function renderDepositRow(
     deposit
 ) {
 
-    const user =
-        deposit.user ||
-        deposit.customer ||
-        {};
-
-
-    const name =
-        deposit.user_name ||
-        deposit.userName ||
-        deposit.name ||
-        user.name ||
-        user.full_name ||
-        user.email ||
-        "Unknown user";
-
-
     const amount =
         deposit.amount ??
         deposit.value ??
+        deposit.deposit_amount ??
+        deposit.depositAmount ??
         0;
 
 
@@ -2048,6 +2664,7 @@ function renderDepositRow(
         deposit.method ||
         deposit.payment_method ||
         deposit.paymentMethod ||
+        deposit.network ||
         "Not available";
 
 
@@ -2059,14 +2676,15 @@ function renderDepositRow(
     const date =
         deposit.created_at ||
         deposit.createdAt ||
+        deposit.created_on ||
+        deposit.createdOn ||
         deposit.date ||
         deposit.timestamp;
 
 
     const id =
-        getId(
-            deposit._id ||
-            deposit.id
+        getRecordId(
+            deposit
         );
 
 
@@ -2075,7 +2693,9 @@ function renderDepositRow(
         <tr>
 
             <td>
-                ${escapeHtml(name)}
+                ${escapeHtml(
+                    getUserName(deposit)
+                )}
             </td>
 
             <td>
@@ -2131,7 +2751,7 @@ async function loadWithdrawals() {
                     colspan="6"
                     class="table-empty"
                 >
-                    Loading withdrawals...
+                    Loading withdrawal requests...
                 </td>
 
             </tr>
@@ -2147,25 +2767,44 @@ async function loadWithdrawals() {
             await apiRequest(
                 ENDPOINTS.withdrawals,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
+
+        /*
+         * IMPORTANT:
+         * The old code only checked top-level arrays.
+         * This version also supports nested responses.
+         */
 
         state.withdrawals =
             extractArray(
                 data,
                 [
                     "withdrawals",
-                    "data",
+                    "withdrawal_requests",
+                    "withdrawalRequests",
+                    "requests",
+                    "records",
                     "items",
-                    "results"
+                    "results",
+                    "data"
                 ]
             );
+
+
+        cacheUsersFromRecords(
+            state.withdrawals
+        );
 
 
         renderWithdrawals(
@@ -2210,12 +2849,15 @@ function renderWithdrawals(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
     if (
-        !withdrawals.length
+        !Array.isArray(withdrawals) ||
+        withdrawals.length === 0
     ) {
 
         tbody.innerHTML = `
@@ -2233,6 +2875,7 @@ function renderWithdrawals(
 
         `;
 
+
         return;
 
     }
@@ -2241,10 +2884,7 @@ function renderWithdrawals(
     tbody.innerHTML =
         withdrawals
             .map(
-                withdrawal =>
-                    renderWithdrawalRow(
-                        withdrawal
-                    )
+                renderWithdrawalRow
             )
             .join("");
 
@@ -2259,25 +2899,11 @@ function renderWithdrawalRow(
     withdrawal
 ) {
 
-    const user =
-        withdrawal.user ||
-        withdrawal.customer ||
-        {};
-
-
-    const name =
-        withdrawal.user_name ||
-        withdrawal.userName ||
-        withdrawal.name ||
-        user.name ||
-        user.full_name ||
-        user.email ||
-        "Unknown user";
-
-
     const amount =
         withdrawal.amount ??
         withdrawal.value ??
+        withdrawal.withdrawal_amount ??
+        withdrawal.withdrawalAmount ??
         0;
 
 
@@ -2285,6 +2911,7 @@ function renderWithdrawalRow(
         withdrawal.method ||
         withdrawal.payment_method ||
         withdrawal.paymentMethod ||
+        withdrawal.network ||
         "Not available";
 
 
@@ -2296,14 +2923,15 @@ function renderWithdrawalRow(
     const date =
         withdrawal.created_at ||
         withdrawal.createdAt ||
+        withdrawal.created_on ||
+        withdrawal.createdOn ||
         withdrawal.date ||
         withdrawal.timestamp;
 
 
     const id =
-        getId(
-            withdrawal._id ||
-            withdrawal.id
+        getRecordId(
+            withdrawal
         );
 
 
@@ -2312,7 +2940,9 @@ function renderWithdrawalRow(
         <tr>
 
             <td>
-                ${escapeHtml(name)}
+                ${escapeHtml(
+                    getUserName(withdrawal)
+                )}
             </td>
 
             <td>
@@ -2384,11 +3014,15 @@ async function loadInvestments() {
             await apiRequest(
                 ENDPOINTS.investments,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -2398,15 +3032,47 @@ async function loadInvestments() {
                 data,
                 [
                     "investments",
-                    "data",
+                    "investment_requests",
+                    "investmentRequests",
+                    "requests",
+                    "records",
                     "items",
-                    "results"
+                    "results",
+                    "data"
                 ]
             );
 
 
+        cacheUsersFromRecords(
+            state.investments
+        );
+
+
         renderInvestments(
             state.investments
+        );
+
+
+        /*
+         * If investments only contain user IDs,
+         * re-render after dashboard users have loaded.
+         */
+
+        setTimeout(
+            () => {
+
+                if (
+                    state.investments.length
+                ) {
+
+                    renderInvestments(
+                        state.investments
+                    );
+
+                }
+
+            },
+            500
         );
 
 
@@ -2447,12 +3113,15 @@ function renderInvestments(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
     if (
-        !investments.length
+        !Array.isArray(investments) ||
+        investments.length === 0
     ) {
 
         tbody.innerHTML = `
@@ -2470,6 +3139,7 @@ function renderInvestments(
 
         `;
 
+
         return;
 
     }
@@ -2478,10 +3148,7 @@ function renderInvestments(
     tbody.innerHTML =
         investments
             .map(
-                investment =>
-                    renderInvestmentRow(
-                        investment
-                    )
+                renderInvestmentRow
             )
             .join("");
 
@@ -2496,27 +3163,13 @@ function renderInvestmentRow(
     investment
 ) {
 
-    const user =
-        investment.user ||
-        investment.customer ||
-        {};
-
-
-    const name =
-        investment.user_name ||
-        investment.userName ||
-        investment.name ||
-        user.name ||
-        user.full_name ||
-        user.email ||
-        "Unknown user";
-
-
     const plan =
         investment.plan_name ||
         investment.planName ||
         investment.plan ||
         investment.package ||
+        investment.package_name ||
+        investment.packageName ||
         "Investment";
 
 
@@ -2524,12 +3177,14 @@ function renderInvestmentRow(
         investment.amount ??
         investment.principal ??
         investment.investment_amount ??
+        investment.investmentAmount ??
         0;
 
 
     const duration =
         investment.duration ??
         investment.duration_days ??
+        investment.durationDays ??
         investment.days ??
         30;
 
@@ -2540,9 +3195,8 @@ function renderInvestmentRow(
 
 
     const id =
-        getId(
-            investment._id ||
-            investment.id
+        getRecordId(
+            investment
         );
 
 
@@ -2551,7 +3205,9 @@ function renderInvestmentRow(
         <tr>
 
             <td>
-                ${escapeHtml(name)}
+                ${escapeHtml(
+                    getUserName(investment)
+                )}
             </td>
 
             <td>
@@ -2623,9 +3279,11 @@ function managementActions(
     ) {
 
         return `
+
             <span class="action-none">
                 —
             </span>
+
         `;
 
     }
@@ -2677,15 +3335,16 @@ function renderManagementError(
 
 
     if (!tbody) {
+
         return;
+
     }
 
 
     const message =
         escapeHtml(
-            error && error.message
-                ? error.message
-                : "Unable to load this section."
+            error?.message ||
+            "Unable to load this section."
         );
 
 
@@ -2766,7 +3425,9 @@ async function processManagementAction(
 
 
         if (!confirmed) {
+
             return;
+
         }
 
     }
@@ -2833,16 +3494,58 @@ async function processManagementAction(
 
         const body = {
 
-            id: id,
+            id:
 
-            action: action,
+                id,
+
+            action:
+
+                action,
 
             status:
+
                 action === "approve"
                     ? "approved"
                     : "rejected"
 
         };
+
+
+        /*
+         * Include common ID names as well.
+         * This makes the frontend compatible with
+         * hardened PHP endpoints accepting either
+         * id or type-specific IDs.
+         */
+
+        if (
+            type === "deposit"
+        ) {
+
+            body.deposit_id =
+                id;
+
+        }
+
+
+        if (
+            type === "withdrawal"
+        ) {
+
+            body.withdrawal_id =
+                id;
+
+        }
+
+
+        if (
+            type === "investment"
+        ) {
+
+            body.investment_id =
+                id;
+
+        }
 
 
         if (
@@ -2863,7 +3566,8 @@ async function processManagementAction(
                 endpoint,
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -2879,8 +3583,11 @@ async function processManagementAction(
 
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -2891,10 +3598,6 @@ async function processManagementAction(
             "success"
         );
 
-
-        /*
-         * Refresh only the affected section.
-         */
 
         if (
             type === "deposit"
@@ -2916,10 +3619,6 @@ async function processManagementAction(
 
         }
 
-
-        /*
-         * Also refresh dashboard statistics.
-         */
 
         await loadDashboard();
 
@@ -2955,11 +3654,15 @@ async function loadMaintenance() {
             await apiRequest(
                 ENDPOINTS.maintenance,
                 {
-                    method: "GET"
+                    method:
+                        "GET"
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -2983,16 +3686,40 @@ async function loadMaintenance() {
         );
 
 
-        /*
-         * IMPORTANT:
-         *
-         * Maintenance failure must NEVER blank
-         * the admin dashboard.
-         */
+        showPageMessage(
+            "Unable to load platform maintenance settings.",
+            "warning"
+        );
+
 
         return null;
 
     }
+
+}
+
+
+/* =========================================================
+   MAINTENANCE DATA EXTRACTION
+   ========================================================= */
+
+function getMaintenanceSettings(data) {
+
+    if (!data) {
+
+        return {};
+
+    }
+
+
+    return (
+        data.settings ||
+        data.maintenance ||
+        data.data?.settings ||
+        data.data?.maintenance ||
+        data.data ||
+        data
+    );
 
 }
 
@@ -3006,57 +3733,68 @@ function renderMaintenance(
 ) {
 
     if (!data) {
+
         return;
+
     }
 
 
     const settings =
-        data.settings ||
-        data.maintenance ||
-        data.data ||
-        data;
+        getMaintenanceSettings(
+            data
+        );
 
 
     const maintenanceMode =
-        Boolean(
+        toBoolean(
             settings.maintenance_mode ??
             settings.maintenance ??
-            settings.maintenanceMode ??
+            settings.maintenanceMode,
             false
         );
 
 
     const investments =
-        settings.new_investments ??
-        settings.investments ??
-        settings.allow_investments ??
-        true;
+        toBoolean(
+            settings.new_investments ??
+            settings.investments ??
+            settings.allow_investments,
+            true
+        );
 
 
     const deposits =
-        settings.deposits ??
-        settings.allow_deposits ??
-        true;
+        toBoolean(
+            settings.deposits ??
+            settings.allow_deposits,
+            true
+        );
 
 
     const withdrawals =
-        settings.withdrawals ??
-        settings.allow_withdrawals ??
-        true;
+        toBoolean(
+            settings.withdrawals ??
+            settings.allow_withdrawals,
+            true
+        );
 
 
     const earnings =
-        settings.daily_earnings ??
-        settings.earnings ??
-        settings.allow_daily_earnings ??
-        true;
+        toBoolean(
+            settings.daily_earnings ??
+            settings.earnings ??
+            settings.allow_daily_earnings,
+            true
+        );
 
 
     const registration =
-        settings.user_registration ??
-        settings.registration ??
-        settings.allow_registration ??
-        true;
+        toBoolean(
+            settings.user_registration ??
+            settings.registration ??
+            settings.allow_registration,
+            true
+        );
 
 
     const message =
@@ -3073,35 +3811,37 @@ function renderMaintenance(
 
     setChecked(
         "maintenanceInvestmentsToggle",
-        Boolean(investments)
+        investments
     );
 
 
     setChecked(
         "maintenanceDepositsToggle",
-        Boolean(deposits)
+        deposits
     );
 
 
     setChecked(
         "maintenanceWithdrawalsToggle",
-        Boolean(withdrawals)
+        withdrawals
     );
 
 
     setChecked(
         "maintenanceEarningsToggle",
-        Boolean(earnings)
+        earnings
     );
 
 
     setChecked(
         "maintenanceRegistrationToggle",
-        Boolean(registration)
+        registration
     );
 
 
-    if ($("maintenanceMessage")) {
+    if (
+        $("maintenanceMessage")
+    ) {
 
         $("maintenanceMessage").value =
             message;
@@ -3112,11 +3852,15 @@ function renderMaintenance(
     const monitor =
         data.monitor ||
         data.earnings ||
+        data.data?.monitor ||
+        data.data?.earnings ||
         settings.monitor ||
         {};
 
 
-    if ($("earningsEngineStatus")) {
+    if (
+        $("earningsEngineStatus")
+    ) {
 
         const enabled =
             monitor.enabled ??
@@ -3124,26 +3868,34 @@ function renderMaintenance(
 
 
         $("earningsEngineStatus").textContent =
-            enabled
+            toBoolean(
+                enabled,
+                Boolean(earnings)
+            )
                 ? "Enabled"
                 : "Disabled";
 
     }
 
 
-    if ($("lastEarningsRun")) {
+    if (
+        $("lastEarningsRun")
+    ) {
 
         $("lastEarningsRun").textContent =
             formatDate(
                 monitor.last_run ||
                 monitor.lastRun ||
-                monitor.last_earnings_run
+                monitor.last_earnings_run ||
+                monitor.lastEarningsRun
             );
 
     }
 
 
-    if ($("earningsProcessedToday")) {
+    if (
+        $("earningsProcessedToday")
+    ) {
 
         $("earningsProcessedToday").textContent =
             formatUGX(
@@ -3155,7 +3907,9 @@ function renderMaintenance(
     }
 
 
-    if ($("maintenanceActiveInvestments")) {
+    if (
+        $("maintenanceActiveInvestments")
+    ) {
 
         $("maintenanceActiveInvestments").textContent =
             Number(
@@ -3169,7 +3923,9 @@ function renderMaintenance(
     }
 
 
-    if ($("maintenancePendingInvestments")) {
+    if (
+        $("maintenancePendingInvestments")
+    ) {
 
         $("maintenancePendingInvestments").textContent =
             Number(
@@ -3191,6 +3947,89 @@ function renderMaintenance(
 
 
 /* =========================================================
+   BOOLEAN HELPER
+   ========================================================= */
+
+function toBoolean(
+    value,
+    fallback = false
+) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return fallback;
+
+    }
+
+
+    if (
+        typeof value === "boolean"
+    ) {
+
+        return value;
+
+    }
+
+
+    if (
+        typeof value === "number"
+    ) {
+
+        return value !== 0;
+
+    }
+
+
+    const normalized =
+        String(value)
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        [
+            "true",
+            "1",
+            "yes",
+            "on",
+            "enabled"
+        ].includes(
+            normalized
+        )
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        [
+            "false",
+            "0",
+            "no",
+            "off",
+            "disabled"
+        ].includes(
+            normalized
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    return fallback;
+
+}
+
+
+/* =========================================================
    CHECKBOX
    ========================================================= */
 
@@ -3204,7 +4043,9 @@ function setChecked(
 
 
     if (!element) {
+
         return;
+
     }
 
 
@@ -3234,34 +4075,137 @@ function updateMaintenanceStatus(
         $("maintenanceDescription");
 
 
-    if (statusText) {
+    const status =
+        Boolean(enabled);
+
+
+    if (
+        statusText
+    ) {
 
         statusText.textContent =
-            enabled
+            status
                 ? "Maintenance Mode"
                 : "System Online";
 
     }
 
 
-    if (description) {
+    if (
+        description
+    ) {
 
         description.textContent =
-            enabled
+            status
                 ? "Crown Cash is currently in maintenance mode."
                 : "Crown Cash platform operations are currently available.";
 
     }
 
 
-    if (dot) {
+    if (
+        dot
+    ) {
 
         dot.classList.toggle(
             "active",
-            Boolean(enabled)
+            status
         );
 
     }
+
+
+    const mainStatus =
+        $("maintenanceStatus");
+
+
+    if (
+        mainStatus
+    ) {
+
+        mainStatus.textContent =
+            status
+                ? "Maintenance Mode"
+                : "System Online";
+
+    }
+
+}
+
+
+/* =========================================================
+   MAINTENANCE TOGGLE LIVE STATUS
+   ========================================================= */
+
+function setupMaintenanceToggles() {
+
+    const toggle =
+        $("maintenanceModeToggle");
+
+
+    if (!toggle) {
+
+        return;
+
+    }
+
+
+    toggle.addEventListener(
+        "change",
+        function () {
+
+            updateMaintenanceStatus(
+                this.checked
+            );
+
+        }
+    );
+
+
+    const otherToggleIds = [
+
+        "maintenanceInvestmentsToggle",
+
+        "maintenanceDepositsToggle",
+
+        "maintenanceWithdrawalsToggle",
+
+        "maintenanceEarningsToggle",
+
+        "maintenanceRegistrationToggle"
+
+    ];
+
+
+    otherToggleIds.forEach(
+        id => {
+
+            const element =
+                $(id);
+
+
+            if (!element) {
+
+                return;
+
+            }
+
+
+            element.addEventListener(
+                "change",
+                function () {
+
+                    /*
+                     * No API request is sent here.
+                     * Changes are saved only when
+                     * Save Platform Settings is clicked.
+                     */
+
+                }
+            );
+
+        }
+    );
 
 }
 
@@ -3320,6 +4264,24 @@ async function saveMaintenance() {
     };
 
 
+    /*
+     * Send the same settings both at top-level and
+     * inside settings for compatibility with the
+     * PHP endpoint.
+     */
+
+    const requestBody = {
+
+        ...payload,
+
+        settings:
+            {
+                ...payload
+            }
+
+    };
+
+
     if (button) {
 
         button.disabled =
@@ -3334,7 +4296,10 @@ async function saveMaintenance() {
     if (status) {
 
         status.textContent =
-            "";
+            "Saving platform settings...";
+
+        status.style.display =
+            "block";
 
     }
 
@@ -3346,7 +4311,8 @@ async function saveMaintenance() {
                 ENDPOINTS.maintenance,
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -3357,13 +4323,16 @@ async function saveMaintenance() {
 
                     body:
                         JSON.stringify(
-                            payload
+                            requestBody
                         )
 
                 },
                 {
-                    redirectOnAuth: false,
-                    timeout: 20000
+                    redirectOnAuth:
+                        false,
+
+                    timeout:
+                        20000
                 }
             );
 
@@ -3393,6 +4362,14 @@ async function saveMaintenance() {
         );
 
 
+        /*
+         * Reload the saved settings from server.
+         * This confirms the values actually persisted.
+         */
+
+        await loadMaintenance();
+
+
     } catch (error) {
 
         console.error(
@@ -3416,7 +4393,6 @@ async function saveMaintenance() {
             "error"
         );
 
-
     } finally {
 
         if (button) {
@@ -3435,6 +4411,62 @@ async function saveMaintenance() {
 
 
 /* =========================================================
+   MAINTENANCE SAVE HANDLER
+   ========================================================= */
+
+function setupMaintenanceSave() {
+
+    const button =
+        $("saveMaintenanceBtn");
+
+
+    if (!button) {
+
+        console.warn(
+            "saveMaintenanceBtn was not found."
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * Prevent duplicate listeners.
+     */
+
+    if (
+        button.dataset.listenerAttached ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    button.dataset.listenerAttached =
+        "true";
+
+
+    button.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            saveMaintenance();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
    NAVIGATION
    ========================================================= */
 
@@ -3448,6 +4480,20 @@ function setupNavigation() {
 
     links.forEach(
         link => {
+
+            if (
+                link.dataset.navigationAttached ===
+                "true"
+            ) {
+
+                return;
+
+            }
+
+
+            link.dataset.navigationAttached =
+                "true";
+
 
             link.addEventListener(
                 "click",
@@ -3498,7 +4544,24 @@ function updateNavigationFromHash() {
 
 
     if (!hash) {
+
+        const dashboardLink =
+            $("dashboardNavLink");
+
+
+        if (
+            dashboardLink
+        ) {
+
+            dashboardLink.classList.add(
+                "active"
+            );
+
+        }
+
+
         return;
+
     }
 
 
@@ -3590,7 +4653,9 @@ function setupMobileMenu() {
 
 
     if (!button) {
+
         return;
+
     }
 
 
@@ -3650,30 +4715,49 @@ function setupMobileMenu() {
     }
 
 
-    button.addEventListener(
-        "click",
-        function () {
+    if (
+        button.dataset.menuAttached !==
+        "true"
+    ) {
 
-            if (
-                sidebar &&
-                sidebar.classList.contains(
-                    "open"
-                )
-            ) {
+        button.dataset.menuAttached =
+            "true";
 
-                closeMenu();
 
-            } else {
+        button.addEventListener(
+            "click",
+            function () {
 
-                openMenu();
+                if (
+                    sidebar &&
+                    sidebar.classList.contains(
+                        "open"
+                    )
+                ) {
+
+                    closeMenu();
+
+                } else {
+
+                    openMenu();
+
+                }
 
             }
+        );
 
-        }
-    );
+    }
 
 
-    if (overlay) {
+    if (
+        overlay &&
+        overlay.dataset.overlayAttached !==
+        "true"
+    ) {
+
+        overlay.dataset.overlayAttached =
+            "true";
+
 
         overlay.addEventListener(
             "click",
@@ -3688,6 +4772,20 @@ function setupMobileMenu() {
     )
         .forEach(
             link => {
+
+                if (
+                    link.dataset.mobileAttached ===
+                    "true"
+                ) {
+
+                    return;
+
+                }
+
+
+                link.dataset.mobileAttached =
+                    "true";
+
 
                 link.addEventListener(
                     "click",
@@ -3706,6 +4804,20 @@ function setupMobileMenu() {
 
 function setupActionHandlers() {
 
+    if (
+        document.body.dataset.actionsAttached ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    document.body.dataset.actionsAttached =
+        "true";
+
+
     document.addEventListener(
         "click",
         function (event) {
@@ -3717,7 +4829,9 @@ function setupActionHandlers() {
 
 
             if (!button) {
+
                 return;
+
             }
 
 
@@ -3743,6 +4857,9 @@ function setupActionHandlers() {
             }
 
 
+            event.preventDefault();
+
+
             processManagementAction(
                 type,
                 id,
@@ -3765,7 +4882,15 @@ function setupRefreshButtons() {
         $("refreshDepositsButton");
 
 
-    if (depositButton) {
+    if (
+        depositButton &&
+        depositButton.dataset.listenerAttached !==
+        "true"
+    ) {
+
+        depositButton.dataset.listenerAttached =
+            "true";
+
 
         depositButton.addEventListener(
             "click",
@@ -3779,7 +4904,15 @@ function setupRefreshButtons() {
         $("refreshWithdrawalsButton");
 
 
-    if (withdrawalButton) {
+    if (
+        withdrawalButton &&
+        withdrawalButton.dataset.listenerAttached !==
+        "true"
+    ) {
+
+        withdrawalButton.dataset.listenerAttached =
+            "true";
+
 
         withdrawalButton.addEventListener(
             "click",
@@ -3793,7 +4926,15 @@ function setupRefreshButtons() {
         $("refreshInvestmentsButton");
 
 
-    if (investmentButton) {
+    if (
+        investmentButton &&
+        investmentButton.dataset.listenerAttached !==
+        "true"
+    ) {
+
+        investmentButton.dataset.listenerAttached =
+            "true";
+
 
         investmentButton.addEventListener(
             "click",
@@ -3831,11 +4972,15 @@ async function logout() {
         await apiRequest(
             ENDPOINTS.logout,
             {
-                method: "POST"
+                method:
+                    "POST"
             },
             {
-                redirectOnAuth: false,
-                timeout: 10000
+                redirectOnAuth:
+                    false,
+
+                timeout:
+                    10000
             }
         );
 
@@ -3867,13 +5012,32 @@ function setupLogout() {
 
 
     if (!button) {
+
         return;
+
     }
+
+
+    if (
+        button.dataset.listenerAttached ===
+        "true"
+    ) {
+
+        return;
+
+    }
+
+
+    button.dataset.listenerAttached =
+        "true";
 
 
     button.addEventListener(
         "click",
-        function () {
+        function (event) {
+
+            event.preventDefault();
+
 
             const confirmed =
                 window.confirm(
@@ -3882,7 +5046,9 @@ function setupLogout() {
 
 
             if (!confirmed) {
+
                 return;
+
             }
 
 
@@ -3954,28 +5120,82 @@ function updateSecurityDisplay() {
 
 async function loadNonCriticalData() {
 
+    const results =
+        await Promise.allSettled([
+
+            loadProfile(),
+
+            loadDashboard(),
+
+            loadDeposits(),
+
+            loadWithdrawals(),
+
+            loadInvestments(),
+
+            loadMaintenance()
+
+        ]);
+
+
+    results.forEach(
+        result => {
+
+            if (
+                result.status ===
+                "rejected"
+            ) {
+
+                console.error(
+                    "Admin data request failed:",
+                    result.reason
+                );
+
+            }
+
+        }
+    );
+
+
     /*
-     * These requests intentionally run independently.
-     *
-     * A failure in one endpoint MUST NOT blank the page
-     * or prevent the other sections from loading.
+     * Re-render management sections one more time
+     * after all user caches have had a chance to load.
      */
 
-    await Promise.allSettled([
+    if (
+        state.deposits.length
+    ) {
 
-        loadProfile(),
+        renderDeposits(
+            state.deposits
+        );
 
-        loadDashboard(),
+    }
 
-        loadDeposits(),
 
-        loadWithdrawals(),
+    if (
+        state.withdrawals.length
+    ) {
 
-        loadInvestments(),
+        renderWithdrawals(
+            state.withdrawals
+        );
 
-        loadMaintenance()
+    }
 
-    ]);
+
+    if (
+        state.investments.length
+    ) {
+
+        renderInvestments(
+            state.investments
+        );
+
+    }
+
+
+    ensureApplicationVisible();
 
 }
 
@@ -3986,8 +5206,21 @@ async function loadNonCriticalData() {
 
 async function initializeAdmin() {
 
+    if (
+        state.initialized
+    ) {
+
+        return;
+
+    }
+
+
+    state.initialized =
+        true;
+
+
     /*
-     * Immediately make the HTML application visible.
+     * Never allow the loader to trap the page.
      */
 
     ensureApplicationVisible();
@@ -4005,11 +5238,15 @@ async function initializeAdmin() {
 
     setupLogout();
 
+    setupMaintenanceSave();
+
+    setupMaintenanceToggles();
+
     updateSecurityDisplay();
 
 
     /*
-     * Authentication is the ONLY blocking request.
+     * Authentication is the only blocking operation.
      */
 
     const authenticated =
@@ -4018,10 +5255,6 @@ async function initializeAdmin() {
 
     if (!authenticated) {
 
-        /*
-         * Do not continue loading protected data.
-         */
-
         ensureApplicationVisible();
 
         return;
@@ -4029,17 +5262,11 @@ async function initializeAdmin() {
     }
 
 
-    /*
-     * Authentication succeeded.
-     *
-     * The page is already visible.
-     */
-
     ensureApplicationVisible();
 
 
     /*
-     * Load everything else independently.
+     * Load the remaining sections independently.
      */
 
     loadNonCriticalData()
@@ -4056,7 +5283,7 @@ async function initializeAdmin() {
 
 
     /*
-     * Final safety check.
+     * Safety checks against a stuck loader.
      */
 
     setTimeout(
@@ -4095,14 +5322,10 @@ window.addEventListener(
 
         console.error(
             "Crown Cash Admin JavaScript error:",
-            event.error || event.message
+            event.error ||
+            event.message
         );
 
-
-        /*
-         * NEVER allow an uncaught JS error to leave
-         * the loader covering the admin page.
-         */
 
         ensureApplicationVisible();
 
@@ -4138,53 +5361,61 @@ window.CrownCashAdmin = {
 
     state,
 
-    reload: function () {
+    reload:
+        function () {
 
-        return loadNonCriticalData();
+            return loadNonCriticalData();
 
-    },
+        },
 
-    reloadDashboard: function () {
+    reloadDashboard:
+        function () {
 
-        return loadDashboard();
+            return loadDashboard();
 
-    },
+        },
 
-    reloadDeposits: function () {
+    reloadDeposits:
+        function () {
 
-        return loadDeposits();
+            return loadDeposits();
 
-    },
+        },
 
-    reloadWithdrawals: function () {
+    reloadWithdrawals:
+        function () {
 
-        return loadWithdrawals();
+            return loadWithdrawals();
 
-    },
+        },
 
-    reloadInvestments: function () {
+    reloadInvestments:
+        function () {
 
-        return loadInvestments();
+            return loadInvestments();
 
-    },
+        },
 
-    reloadMaintenance: function () {
+    reloadMaintenance:
+        function () {
 
-        return loadMaintenance();
+            return loadMaintenance();
 
-    },
+        },
 
-    saveMaintenance: function () {
+    saveMaintenance:
+        function () {
 
-        return saveMaintenance();
+            return saveMaintenance();
 
-    },
+        },
 
-    logout: function () {
+    logout:
+        function () {
 
-        return logout();
+            return logout();
 
-    }
+        }
 
 };
 
@@ -4194,14 +5425,16 @@ window.CrownCashAdmin = {
    ========================================================= */
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
         "DOMContentLoaded",
         initializeAdmin,
         {
-            once: true
+            once:
+                true
         }
     );
 

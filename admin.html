@@ -13,3007 +13,326 @@
         content="#070b16"
     >
 
-    <title>Crown Cash - Admin Panel</title>
+    <title>Crown Cash - Admin Test</title>
 
-    <link
-        rel="stylesheet"
-        href="admin.css?v=20261003ADMIN04"
-    >
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #070b16;
+            color: #ffffff;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+        }
+
+        .test-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .test-card {
+            width: 100%;
+            max-width: 650px;
+            padding: 40px;
+            border: 1px solid rgba(245, 197, 66, 0.35);
+            border-radius: 24px;
+            background: #0d1424;
+            box-shadow:
+                0 25px 80px rgba(0, 0, 0, 0.45);
+            text-align: center;
+        }
+
+        .crown {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 25px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: rgba(245, 197, 66, 0.12);
+
+            color: #f5c542;
+
+            font-size: 48px;
+        }
+
+        .brand {
+            margin-bottom: 8px;
+
+            color: #f5c542;
+
+            font-size: 14px;
+            font-weight: 800;
+
+            letter-spacing: 4px;
+        }
+
+        h1 {
+            margin: 0 0 15px;
+
+            font-size: 32px;
+            line-height: 1.2;
+        }
+
+        .success {
+            display: inline-flex;
+
+            align-items: center;
+            gap: 8px;
+
+            margin: 15px 0 20px;
+
+            padding: 10px 16px;
+
+            border-radius: 50px;
+
+            background: rgba(95, 224, 161, 0.12);
+
+            color: #5fe0a1;
+
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .success-dot {
+            width: 9px;
+            height: 9px;
+
+            border-radius: 50%;
+
+            background: #5fe0a1;
+        }
+
+        .message {
+            margin: 0 auto 25px;
+
+            max-width: 500px;
+
+            color: rgba(255, 255, 255, 0.65);
+
+            font-size: 15px;
+
+            line-height: 1.7;
+        }
+
+        .test-results {
+            display: grid;
+
+            grid-template-columns: repeat(3, 1fr);
+
+            gap: 12px;
+
+            margin-top: 25px;
+        }
+
+        .result {
+            padding: 16px 10px;
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+
+            border-radius: 14px;
+
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .result strong {
+            display: block;
+
+            margin-bottom: 6px;
+
+            color: #5fe0a1;
+
+            font-size: 14px;
+        }
+
+        .result span {
+            color: rgba(255, 255, 255, 0.45);
+
+            font-size: 11px;
+        }
+
+        .url-box {
+            margin-top: 25px;
+
+            padding: 14px;
+
+            border-radius: 10px;
+
+            background: rgba(0, 0, 0, 0.25);
+
+            color: rgba(255, 255, 255, 0.5);
+
+            font-size: 11px;
+
+            word-break: break-all;
+        }
+
+        .time {
+            margin-top: 20px;
+
+            color: rgba(255, 255, 255, 0.35);
+
+            font-size: 11px;
+        }
+
+        @media (max-width: 600px) {
+
+            .test-page {
+                padding: 15px;
+            }
+
+            .test-card {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .test-results {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
 </head>
 
 <body>
 
-<!-- =========================================================
-     PAGE LOADER
-========================================================= -->
-<div
-    class="page-loader"
-    id="pageLoader"
-    style="display:none;"
-    aria-hidden="true"
->
-    <div class="loader-spinner"></div>
+    <main class="test-page">
 
-    <div class="loader-text">
-        Loading Crown Cash Admin...
-    </div>
-</div>
+        <section class="test-card">
 
-
-<!-- =========================================================
-     MOBILE OVERLAY
-========================================================= -->
-<div
-    class="sidebar-overlay"
-    id="sidebarOverlay"
-></div>
-
-
-<!-- =========================================================
-     ADMIN LAYOUT
-========================================================= -->
-<div class="admin-layout">
-
-
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
-    <aside
-        class="admin-sidebar"
-        id="sidebar"
-    >
-
-        <div class="sidebar-header">
-
-            <a
-                href="#dashboard"
-                class="admin-brand"
-            >
-
-                <div class="brand-crown">
-                    ♛
-                </div>
-
-                <div class="brand-text">
-                    <strong>CROWN</strong>
-                    <span>CASH</span>
-                </div>
-
-            </a>
-
-            <button
-                type="button"
-                class="sidebar-close"
-                id="sidebarClose"
-                aria-label="Close menu"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <!-- =================================================
-             ADMIN PROFILE
-        ================================================== -->
-        <div class="sidebar-profile">
-
-            <div
-                class="sidebar-avatar"
-                id="adminAvatar"
-            >
-                A
+            <div class="crown">
+                ♛
             </div>
 
-            <div class="sidebar-profile-info">
+            <div class="brand">
+                CROWN CASH
+            </div>
 
-                <strong id="adminName">
-                    Administrator
-                </strong>
+            <h1>
+                Admin Page Test
+            </h1>
 
-                <span id="adminRole">
-                    Admin Account
-                </span>
+            <div class="success">
+
+                <span class="success-dot"></span>
+
+                HTML IS LOADING CORRECTLY
 
             </div>
 
-        </div>
+            <p class="message">
 
+                If you can see this page, your
+                <strong>admin.html</strong> file is being
+                served correctly by Vercel.
 
-        <!-- =================================================
-             NAVIGATION
-        ================================================== -->
-        <nav class="admin-navigation">
+                The previous blank page is therefore being
+                caused by another file or script, not by the
+                basic HTML document.
 
-            <span class="navigation-label">
-                MAIN MENU
-            </span>
+            </p>
 
 
-            <!-- Dashboard -->
-            <a
-                href="#dashboard"
-                class="nav-link active"
-                id="dashboardNavLink"
-            >
+            <div class="test-results">
 
-                <span class="nav-icon">
+                <div class="result">
 
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <rect
-                            x="3"
-                            y="3"
-                            width="7"
-                            height="7"
-                            rx="1"
-                        ></rect>
-
-                        <rect
-                            x="14"
-                            y="3"
-                            width="7"
-                            height="7"
-                            rx="1"
-                        ></rect>
-
-                        <rect
-                            x="3"
-                            y="14"
-                            width="7"
-                            height="7"
-                            rx="1"
-                        ></rect>
-
-                        <rect
-                            x="14"
-                            y="14"
-                            width="7"
-                            height="7"
-                            rx="1"
-                        ></rect>
-
-                    </svg>
-
-                </span>
-
-                <span>Dashboard</span>
-
-            </a>
-
-
-            <!-- Users -->
-            <a
-                href="#users"
-                class="nav-link"
-                id="usersNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-                        ></path>
-
-                        <circle
-                            cx="9"
-                            cy="7"
-                            r="4"
-                        ></circle>
-
-                        <path
-                            d="M22 21v-2a4 4 0 0 0-3-3.87"
-                        ></path>
-
-                        <path
-                            d="M16 3.13a4 4 0 0 1 0 7.75"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Users</span>
-
-            </a>
-
-
-            <!-- Deposits -->
-            <a
-                href="#deposits"
-                class="nav-link"
-                id="depositsNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="14"
-                            rx="2"
-                        ></rect>
-
-                        <path
-                            d="M3 10h18"
-                        ></path>
-
-                        <path
-                            d="M7 15h4"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Deposits</span>
-
-            </a>
-
-
-            <!-- Withdrawals -->
-            <a
-                href="#withdrawals"
-                class="nav-link"
-                id="withdrawalsNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M12 3v18"
-                        ></path>
-
-                        <path
-                            d="M17 8l-5-5-5 5"
-                        ></path>
-
-                        <path
-                            d="M7 16l5 5 5-5"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Withdrawals</span>
-
-            </a>
-
-
-            <!-- Investments -->
-            <a
-                href="#investments"
-                class="nav-link"
-                id="investmentsNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M3 3v18h18"
-                        ></path>
-
-                        <path
-                            d="M7 16l4-5 3 3 6-8"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Investments</span>
-
-            </a>
-
-
-            <!-- Transactions -->
-            <a
-                href="#transactions"
-                class="nav-link"
-                id="transactionsNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M4 4h16v16H4z"
-                        ></path>
-
-                        <path
-                            d="M8 8h8"
-                        ></path>
-
-                        <path
-                            d="M8 12h8"
-                        ></path>
-
-                        <path
-                            d="M8 16h5"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Transactions</span>
-
-            </a>
-
-
-            <!-- Referrals -->
-            <a
-                href="#referrals"
-                class="nav-link"
-                id="referralsNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <circle
-                            cx="9"
-                            cy="7"
-                            r="3"
-                        ></circle>
-
-                        <circle
-                            cx="17"
-                            cy="9"
-                            r="3"
-                        ></circle>
-
-                        <path
-                            d="M3 21a6 6 0 0 1 12 0"
-                        ></path>
-
-                        <path
-                            d="M14 18a6 6 0 0 1 7 3"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Referrals</span>
-
-            </a>
-
-
-            <!-- Support -->
-            <a
-                href="#support"
-                class="nav-link"
-                id="supportNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M21 11.5a8.38 8.38 0 0 1-.9 3.8
-                               8.5 8.5 0 0 1-7.6 4.7
-                               8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7
-                               A8.38 8.38 0 0 1 4 11.5
-                               8.5 8.5 0 0 1 8.7 3.9
-                               8.38 8.38 0 0 1 12.5 3h.5
-                               a8.5 8.5 0 0 1 8 8.5z"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Support</span>
-
-            </a>
-
-
-            <!-- Security -->
-            <a
-                href="#security"
-                class="nav-link"
-                id="securityNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                        ></path>
-
-                        <path
-                            d="M9 12l2 2 4-4"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Security</span>
-
-            </a>
-
-
-            <!-- Maintenance -->
-            <a
-                href="#maintenance"
-                class="nav-link"
-                id="maintenanceNavLink"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="3"
-                        ></circle>
-
-                        <path
-                            d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1
-                               a1.7 1.7 0 0 0-1.9-.3
-                               1.7 1.7 0 0 0-1 1.5V20h-2.6v-.1
-                               a1.7 1.7 0 0 0-1-1.5
-                               1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1
-                               a1.7 1.7 0 0 0 .3-1.9
-                               1.7 1.7 0 0 0-1.5-1H6v-2.6h.1
-                               a1.7 1.7 0 0 0 1.5-1
-                               1.7 1.7 0 0 0-.3-1.9l-.1-.1L9 6.6l.1.1
-                               a1.7 1.7 0 0 0 1.9.3
-                               1.7 1.7 0 0 0 1-1.5V5h2.6v.5
-                               a1.7 1.7 0 0 0 1 1.5
-                               1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1
-                               a1.7 1.7 0 0 0-.3 1.9
-                               1.7 1.7 0 0 0 1.5 1h.5V14h-.5
-                               a1.7 1.7 0 0 0-1.5 1z"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Maintenance</span>
-
-            </a>
-
-        </nav>
-
-
-        <!-- =================================================
-             SIDEBAR FOOTER
-        ================================================== -->
-        <div class="sidebar-footer">
-
-            <button
-                type="button"
-                class="logout-button"
-                id="logoutButton"
-            >
-
-                <span class="nav-icon">
-
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-
-                        <path
-                            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
-                        ></path>
-
-                        <path
-                            d="M16 17l5-5-5-5"
-                        ></path>
-
-                        <path
-                            d="M21 12H9"
-                        ></path>
-
-                    </svg>
-
-                </span>
-
-                <span>Logout</span>
-
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =====================================================
-         MAIN CONTENT
-    ====================================================== -->
-    <main class="admin-main">
-
-
-        <!-- =================================================
-             TOP BAR
-        ================================================== -->
-        <header class="admin-topbar">
-
-            <button
-                type="button"
-                class="mobile-menu-button"
-                id="mobileMenuButton"
-                aria-label="Open menu"
-            >
-                ☰
-            </button>
-
-
-            <div class="topbar-title">
-
-                <span class="topbar-eyebrow">
-                    CROWN CASH ADMINISTRATION
-                </span>
-
-                <h1>
-                    Admin Dashboard
-                </h1>
-
-            </div>
-
-
-            <div class="topbar-account">
-
-                <div class="topbar-account-info">
-
-                    <strong id="adminEmail">
-                        Loading...
-                    </strong>
+                    <strong>✓ HTML</strong>
 
                     <span>
-                        Administrator
+                        Working
                     </span>
 
                 </div>
 
-                <div
-                    class="topbar-avatar"
-                    id="adminAvatarTop"
-                >
-                    A
-                </div>
 
-            </div>
+                <div class="result">
 
-        </header>
+                    <strong>✓ CSS</strong>
 
-
-        <!-- =================================================
-             DASHBOARD
-        ================================================== -->
-        <section
-            class="admin-content"
-            id="dashboard"
-        >
-
-
-            <!-- WELCOME -->
-            <div class="welcome-card">
-
-                <div class="welcome-content">
-
-                    <span class="section-label">
-                        ADMINISTRATION
+                    <span>
+                        Internal CSS working
                     </span>
 
-                    <h2>
-                        Welcome back,
-                        <span id="welcomeAdminName">
-                            Administrator
-                        </span>
-                    </h2>
-
-                    <p>
-                        Manage Crown Cash users, investments,
-                        deposits, withdrawals and platform
-                        operations from one place.
-                    </p>
-
                 </div>
 
-                <div class="welcome-visual">
-                    ♛
+
+                <div class="result">
+
+                    <strong>✓ Vercel</strong>
+
+                    <span>
+                        Page served
+                    </span>
+
                 </div>
 
             </div>
 
 
-            <!-- =================================================
-                 PLATFORM STATISTICS
-            ================================================== -->
-            <section class="dashboard-section">
+            <div class="url-box">
 
-                <div class="section-heading">
+                Current page:
 
-                    <div>
+                <br><br>
 
-                        <span class="section-label">
-                            OVERVIEW
-                        </span>
+                <span id="currentUrl">
+                    Loading URL...
+                </span>
 
-                        <h2>
-                            Platform Statistics
-                        </h2>
+            </div>
 
-                    </div>
 
-                    <span class="section-live">
-                        LIVE
-                    </span>
+            <div class="time">
 
-                </div>
+                Test loaded at:
 
+                <span id="testTime">
+                    Loading...
+                </span>
 
-                <div class="stats-grid">
-
-                    <div class="stat-card">
-
-                        <div class="stat-icon">
-                            👥
-                        </div>
-
-                        <div class="stat-info">
-
-                            <span>
-                                Total Users
-                            </span>
-
-                            <strong id="totalUsers">
-                                0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <div class="stat-icon">
-                            💰
-                        </div>
-
-                        <div class="stat-info">
-
-                            <span>
-                                Total Deposits
-                            </span>
-
-                            <strong id="totalDeposits">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <div class="stat-icon">
-                            💸
-                        </div>
-
-                        <div class="stat-info">
-
-                            <span>
-                                Total Withdrawals
-                            </span>
-
-                            <strong id="totalWithdrawals">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="stat-card">
-
-                        <div class="stat-icon">
-                            📈
-                        </div>
-
-                        <div class="stat-info">
-
-                            <span>
-                                Total Investments
-                            </span>
-
-                            <strong id="totalInvestments">
-                                UGX 0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 PENDING ACTIONS
-            ================================================== -->
-            <section class="dashboard-section">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            ADMIN ACTIONS
-                        </span>
-
-                        <h2>
-                            Pending Actions
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="pending-grid">
-
-                    <div class="pending-card">
-
-                        <div class="pending-card-icon">
-                            💰
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Pending Deposits
-                            </span>
-
-                            <strong id="pendingDeposits">
-                                0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="pending-card">
-
-                        <div class="pending-card-icon">
-                            💸
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Pending Withdrawals
-                            </span>
-
-                            <strong id="pendingWithdrawals">
-                                0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="pending-card">
-
-                        <div class="pending-card-icon">
-                            📊
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Pending Investments
-                            </span>
-
-                            <strong id="pendingInvestments">
-                                0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 RECENT TRANSACTIONS
-            ================================================== -->
-            <section class="dashboard-section">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            ACTIVITY
-                        </span>
-
-                        <h2>
-                            Recent Transactions
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="activity-card"
-                    id="recentTransactions"
-                >
-
-                    <div class="empty-state">
-                        Loading transactions...
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 RECENT USERS
-            ================================================== -->
-            <section
-                class="dashboard-section"
-                id="users"
-            >
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            USERS
-                        </span>
-
-                        <h2>
-                            Recent Users
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="users-card"
-                    id="recentUsers"
-                >
-
-                    <div class="empty-state">
-                        Loading users...
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 MANAGEMENT AREAS
-            ================================================== -->
-            <section class="dashboard-section">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            MANAGEMENT
-                        </span>
-
-                        <h2>
-                            Management Areas
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="management-grid">
-
-                    <a
-                        href="#deposits"
-                        class="management-card"
-                        id="deposits"
-                    >
-
-                        <div class="management-icon">
-                            💰
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Deposits
-                            </strong>
-
-                            <span>
-                                Review and manage deposit requests.
-                            </span>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#withdrawals"
-                        class="management-card"
-                        id="withdrawals"
-                    >
-
-                        <div class="management-icon">
-                            💸
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Withdrawals
-                            </strong>
-
-                            <span>
-                                Review withdrawal requests.
-                            </span>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#investments"
-                        class="management-card"
-                        id="investments"
-                    >
-
-                        <div class="management-icon">
-                            📈
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Investments
-                            </strong>
-
-                            <span>
-                                Review pending investments.
-                            </span>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#transactions"
-                        class="management-card"
-                        id="transactions"
-                    >
-
-                        <div class="management-icon">
-                            📋
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Transactions
-                            </strong>
-
-                            <span>
-                                Monitor platform transactions.
-                            </span>
-
-                        </div>
-
-                    </a>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 SECURITY
-            ================================================== -->
-            <section
-                class="dashboard-section"
-                id="security"
-            >
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            SECURITY
-                        </span>
-
-                        <h2>
-                            System Security
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="security-card">
-
-                    <div class="security-icon">
-                        🛡️
-                    </div>
-
-                    <div class="security-content">
-
-                        <strong id="securityStatus">
-                            Secure
-                        </strong>
-
-                        <p id="securityDescription">
-                            Your administrator session is
-                            protected by Crown Cash security
-                            controls.
-                        </p>
-
-                    </div>
-
-                    <div class="security-indicator">
-
-                        <span></span>
-
-                        Active
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 REFERRALS
-            ================================================== -->
-            <section
-                class="dashboard-section"
-                id="referrals"
-            >
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            NETWORK
-                        </span>
-
-                        <h2>
-                            Referral System
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="information-card">
-
-                    <div class="information-icon">
-                        🔗
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Referral Management
-                        </strong>
-
-                        <p>
-                            Monitor referral relationships and
-                            commission activity from the
-                            Crown Cash administration system.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 SUPPORT
-            ================================================== -->
-            <section
-                class="dashboard-section"
-                id="support"
-            >
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            CUSTOMER SERVICE
-                        </span>
-
-                        <h2>
-                            Support
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="information-card">
-
-                    <div class="information-icon">
-                        💬
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Customer Support
-                        </strong>
-
-                        <p>
-                            Support tools can be connected here
-                            for managing Crown Cash customer
-                            enquiries.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 MAINTENANCE
-            ================================================== -->
-            <section
-                class="maintenance-section"
-                id="maintenance"
-            >
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <span class="section-label">
-                            SYSTEM CONTROL
-                        </span>
-
-                        <h2 class="section-title">
-                            Maintenance & Platform Controls
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="maintenance-card">
-
-
-                    <!-- PLATFORM STATUS -->
-                    <div class="maintenance-header">
-
-                        <div>
-
-                            <span class="maintenance-eyebrow">
-                                PLATFORM STATUS
-                            </span>
-
-                            <h3>
-                                Crown Cash System
-                            </h3>
-
-                            <p id="maintenanceDescription">
-                                Control important platform
-                                functions from this administrator
-                                panel.
-                            </p>
-
-                        </div>
-
-
-                        <div
-                            class="maintenance-status"
-                            id="maintenanceStatus"
-                        >
-
-                            <span
-                                class="maintenance-status-dot"
-                                id="maintenanceStatusDot"
-                            ></span>
-
-                            <strong
-                                id="maintenanceStatusText"
-                            >
-                                System Online
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- MASTER MAINTENANCE -->
-                    <div class="maintenance-master">
-
-                        <div class="maintenance-control-info">
-
-                            <strong>
-                                Maintenance Mode
-                            </strong>
-
-                            <span>
-                                Temporarily restrict platform
-                                activity while maintenance is
-                                being performed.
-                            </span>
-
-                        </div>
-
-
-                        <label class="maintenance-switch">
-
-                            <input
-                                type="checkbox"
-                                id="maintenanceModeToggle"
-                            >
-
-                            <span class="maintenance-slider"></span>
-
-                        </label>
-
-                    </div>
-
-
-                    <!-- INDIVIDUAL CONTROLS -->
-                    <div class="maintenance-controls">
-
-
-                        <!-- INVESTMENTS -->
-                        <div class="maintenance-control">
-
-                            <div class="maintenance-control-icon">
-                                📈
-                            </div>
-
-                            <div class="maintenance-control-info">
-
-                                <strong>
-                                    New Investments
-                                </strong>
-
-                                <span>
-                                    Allow users to create new
-                                    investments.
-                                </span>
-
-                            </div>
-
-                            <label class="maintenance-switch">
-
-                                <input
-                                    type="checkbox"
-                                    id="maintenanceInvestmentsToggle"
-                                    checked
-                                >
-
-                                <span class="maintenance-slider"></span>
-
-                            </label>
-
-                        </div>
-
-
-                        <!-- DEPOSITS -->
-                        <div class="maintenance-control">
-
-                            <div class="maintenance-control-icon">
-                                💰
-                            </div>
-
-                            <div class="maintenance-control-info">
-
-                                <strong>
-                                    Deposits
-                                </strong>
-
-                                <span>
-                                    Allow users to submit deposit
-                                    requests.
-                                </span>
-
-                            </div>
-
-                            <label class="maintenance-switch">
-
-                                <input
-                                    type="checkbox"
-                                    id="maintenanceDepositsToggle"
-                                    checked
-                                >
-
-                                <span class="maintenance-slider"></span>
-
-                            </label>
-
-                        </div>
-
-
-                        <!-- WITHDRAWALS -->
-                        <div class="maintenance-control">
-
-                            <div class="maintenance-control-icon">
-                                💸
-                            </div>
-
-                            <div class="maintenance-control-info">
-
-                                <strong>
-                                    Withdrawals
-                                </strong>
-
-                                <span>
-                                    Allow users to submit
-                                    withdrawal requests.
-                                </span>
-
-                            </div>
-
-                            <label class="maintenance-switch">
-
-                                <input
-                                    type="checkbox"
-                                    id="maintenanceWithdrawalsToggle"
-                                    checked
-                                >
-
-                                <span class="maintenance-slider"></span>
-
-                            </label>
-
-                        </div>
-
-
-                        <!-- DAILY EARNINGS -->
-                        <div class="maintenance-control">
-
-                            <div class="maintenance-control-icon">
-                                🪙
-                            </div>
-
-                            <div class="maintenance-control-info">
-
-                                <strong>
-                                    Daily Earnings
-                                </strong>
-
-                                <span>
-                                    Enable automatic daily
-                                    investment earnings.
-                                </span>
-
-                            </div>
-
-                            <label class="maintenance-switch">
-
-                                <input
-                                    type="checkbox"
-                                    id="maintenanceEarningsToggle"
-                                    checked
-                                >
-
-                                <span class="maintenance-slider"></span>
-
-                            </label>
-
-                        </div>
-
-
-                        <!-- USER REGISTRATION -->
-                        <div class="maintenance-control">
-
-                            <div class="maintenance-control-icon">
-                                👤
-                            </div>
-
-                            <div class="maintenance-control-info">
-
-                                <strong>
-                                    User Registration
-                                </strong>
-
-                                <span>
-                                    Allow new users to create
-                                    accounts.
-                                </span>
-
-                            </div>
-
-                            <label class="maintenance-switch">
-
-                                <input
-                                    type="checkbox"
-                                    id="maintenanceRegistrationToggle"
-                                    checked
-                                >
-
-                                <span class="maintenance-slider"></span>
-
-                            </label>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- MAINTENANCE MESSAGE -->
-                    <div class="maintenance-message-box">
-
-                        <label for="maintenanceMessage">
-                            Maintenance Message
-                        </label>
-
-                        <textarea
-                            id="maintenanceMessage"
-                            rows="3"
-                            maxlength="500"
-                            placeholder="Enter the message users should see when maintenance mode is enabled..."
-                        ></textarea>
-
-                        <small>
-                            This message will be displayed to
-                            users when the affected platform
-                            service is unavailable.
-                        </small>
-
-                    </div>
-
-
-                    <!-- EARNINGS ENGINE -->
-                    <div class="earnings-monitor">
-
-                        <div class="earnings-monitor-header">
-
-                            <div>
-
-                                <span>
-                                    EARNINGS ENGINE
-                                </span>
-
-                                <h3>
-                                    Automatic Daily Processing
-                                </h3>
-
-                            </div>
-
-
-                            <span
-                                class="engine-status"
-                                id="earningsEngineStatus"
-                            >
-                                Checking...
-                            </span>
-
-                        </div>
-
-
-                        <div class="earnings-monitor-grid">
-
-                            <div>
-
-                                <span>
-                                    Last Run
-                                </span>
-
-                                <strong id="lastEarningsRun">
-                                    Not available
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    Processed Today
-                                </span>
-
-                                <strong id="earningsProcessedToday">
-                                    UGX 0
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    Active Investments
-                                </span>
-
-                                <strong id="maintenanceActiveInvestments">
-                                    0
-                                </strong>
-
-                            </div>
-
-
-                            <div>
-
-                                <span>
-                                    Pending Investments
-                                </span>
-
-                                <strong id="maintenancePendingInvestments">
-                                    0
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- SAVE -->
-                    <div class="maintenance-actions">
-
-                        <button
-                            type="button"
-                            class="maintenance-save-button"
-                            id="saveMaintenanceBtn"
-                        >
-                            Save Platform Settings
-                        </button>
-
-                        <span
-                            class="maintenance-save-status"
-                            id="maintenanceSaveStatus"
-                        ></span>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- =================================================
-                 ADMINISTRATOR NOTICE
-            ================================================== -->
-            <section class="dashboard-section">
-
-                <div class="admin-note">
-
-                    <div class="admin-note-icon">
-                        ℹ️
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Administrator Notice
-                        </strong>
-
-                        <p>
-                            Changes made in Maintenance &
-                            Platform Controls affect the
-                            corresponding Crown Cash services.
-                            Review settings carefully before
-                            saving.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
+            </div>
 
         </section>
 
-
-        <!-- =================================================
-             FOOTER
-        ================================================== -->
-        <footer class="admin-footer">
-
-            <div>
-
-                <strong>
-                    CROWN CASH
-                </strong>
-
-                <span>
-                    Administration Panel
-                </span>
-
-            </div>
-
-            <div>
-
-                ©
-                <span id="currentYear">
-                    2026
-                </span>
-
-                Crown Cash. All rights reserved.
-
-            </div>
-
-        </footer>
-
     </main>
 
-</div>
 
+    <script>
 
-<!-- =========================================================
-     FALLBACK STYLES
-========================================================= -->
-<style>
+        "use strict";
 
-* {
-    box-sizing: border-box;
-}
+        document.getElementById("currentUrl").textContent =
+            window.location.href;
 
-html {
-    scroll-behavior: smooth;
-}
+        document.getElementById("testTime").textContent =
+            new Date().toLocaleString();
 
-body {
-    margin: 0;
-    background: #070b16;
-    color: #f5f7fb;
-    font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
-
-button,
-input,
-textarea {
-    font: inherit;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-
-/* =========================================================
-   LOADER
-========================================================= */
-
-.page-loader {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    background: #070b16;
-}
-
-.loader-spinner {
-    width: 42px;
-    height: 42px;
-    border: 3px solid rgba(255,255,255,.12);
-    border-top-color: #f5c542;
-    border-radius: 50%;
-    animation: crownSpin .8s linear infinite;
-}
-
-.loader-text {
-    color: rgba(255,255,255,.65);
-    font-size: 13px;
-}
-
-@keyframes crownSpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
-/* =========================================================
-   LAYOUT
-========================================================= */
-
-.admin-layout {
-    min-height: 100vh;
-    display: flex;
-}
-
-.admin-sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 260px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    background: #0b1020;
-    border-right: 1px solid rgba(255,255,255,.08);
-}
-
-.sidebar-header {
-    height: 82px;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-}
-
-.admin-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand-crown {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    background: rgba(245,197,66,.12);
-    color: #f5c542;
-    font-size: 25px;
-}
-
-.brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1;
-}
-
-.brand-text strong {
-    font-size: 15px;
-    letter-spacing: 2px;
-}
-
-.brand-text span {
-    margin-top: 4px;
-    color: #f5c542;
-    font-size: 11px;
-    letter-spacing: 4px;
-}
-
-.sidebar-close {
-    display: none;
-    border: 0;
-    background: transparent;
-    color: #fff;
-    font-size: 27px;
-    cursor: pointer;
-}
-
-.sidebar-profile {
-    margin: 20px 16px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid rgba(255,255,255,.07);
-    border-radius: 14px;
-    background: rgba(255,255,255,.025);
-}
-
-.sidebar-avatar,
-.topbar-avatar {
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: #f5c542;
-    color: #080b14;
-    font-weight: 800;
-}
-
-.sidebar-avatar {
-    width: 42px;
-    height: 42px;
-}
-
-.sidebar-profile-info {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar-profile-info strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 14px;
-}
-
-.sidebar-profile-info span {
-    margin-top: 3px;
-    color: rgba(255,255,255,.48);
-    font-size: 11px;
-}
-
-.admin-navigation {
-    flex: 1;
-    padding: 5px 13px;
-    overflow-y: auto;
-}
-
-.navigation-label {
-    display: block;
-    padding: 10px 10px 8px;
-    color: rgba(255,255,255,.35);
-    font-size: 10px;
-    letter-spacing: 1.5px;
-}
-
-.nav-link {
-    min-height: 45px;
-    margin-bottom: 3px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-radius: 10px;
-    color: rgba(255,255,255,.62);
-    font-size: 13px;
-    transition: .2s ease;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: #fff;
-    background: rgba(245,197,66,.09);
-}
-
-.nav-link.active {
-    box-shadow: inset 3px 0 0 #f5c542;
-}
-
-.nav-icon {
-    width: 21px;
-    height: 21px;
-    flex: 0 0 21px;
-    display: grid;
-    place-items: center;
-}
-
-.nav-icon svg {
-    width: 19px;
-    height: 19px;
-}
-
-.sidebar-footer {
-    padding: 14px;
-    border-top: 1px solid rgba(255,255,255,.07);
-}
-
-.logout-button {
-    width: 100%;
-    min-height: 45px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: rgba(255,255,255,.58);
-    cursor: pointer;
-}
-
-.logout-button:hover {
-    color: #fff;
-    background: rgba(255,255,255,.05);
-}
-
-
-/* =========================================================
-   MAIN
-========================================================= */
-
-.admin-main {
-    width: calc(100% - 260px);
-    min-height: 100vh;
-    margin-left: 260px;
-    background:
-        radial-gradient(
-            circle at 80% 0%,
-            rgba(245,197,66,.055),
-            transparent 30%
-        ),
-        #070b16;
-}
-
-.admin-topbar {
-    min-height: 82px;
-    padding: 15px 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-    background: rgba(7,11,22,.86);
-    backdrop-filter: blur(14px);
-    position: sticky;
-    top: 0;
-    z-index: 500;
-}
-
-.mobile-menu-button {
-    display: none;
-    border: 0;
-    background: transparent;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-.topbar-title {
-    display: flex;
-    flex-direction: column;
-}
-
-.topbar-eyebrow,
-.section-label {
-    color: #f5c542;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.7px;
-}
-
-.topbar-title h1 {
-    margin: 4px 0 0;
-    font-size: 22px;
-}
-
-.topbar-account {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.topbar-account-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.topbar-account-info strong {
-    font-size: 12px;
-}
-
-.topbar-account-info span {
-    color: rgba(255,255,255,.43);
-    font-size: 10px;
-}
-
-.topbar-avatar {
-    width: 38px;
-    height: 38px;
-}
-
-
-/* =========================================================
-   CONTENT
-========================================================= */
-
-.admin-content {
-    padding: 30px;
-    max-width: 1500px;
-    margin: auto;
-}
-
-.welcome-card {
-    min-height: 190px;
-    padding: 30px;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid rgba(245,197,66,.13);
-    border-radius: 22px;
-    background:
-        linear-gradient(
-            120deg,
-            rgba(245,197,66,.08),
-            rgba(255,255,255,.025)
-        );
-}
-
-.welcome-content {
-    max-width: 720px;
-    position: relative;
-    z-index: 1;
-}
-
-.welcome-content h2 {
-    margin: 8px 0;
-    font-size: clamp(25px, 3vw, 38px);
-}
-
-.welcome-content h2 span {
-    color: #f5c542;
-}
-
-.welcome-content p {
-    margin: 0;
-    color: rgba(255,255,255,.56);
-    line-height: 1.7;
-}
-
-.welcome-visual {
-    width: 150px;
-    height: 150px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: #f5c542;
-    font-size: 82px;
-    background: rgba(245,197,66,.06);
-}
-
-.dashboard-section,
-.maintenance-section {
-    margin-top: 34px;
-}
-
-.section-heading {
-    margin-bottom: 17px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.section-heading h2 {
-    margin: 5px 0 0;
-    font-size: 21px;
-}
-
-.section-live {
-    padding: 6px 10px;
-    border-radius: 99px;
-    background: rgba(63,207,142,.09);
-    color: #5fe0a1;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-
-/* =========================================================
-   CARDS
-========================================================= */
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-}
-
-.stat-card,
-.pending-card,
-.activity-card,
-.users-card,
-.security-card,
-.information-card,
-.management-card {
-    border: 1px solid rgba(255,255,255,.07);
-    background: rgba(255,255,255,.025);
-    border-radius: 16px;
-}
-
-.stat-card {
-    min-height: 130px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.stat-icon,
-.pending-card-icon,
-.management-icon,
-.information-icon,
-.security-icon {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
-    display: grid;
-    place-items: center;
-    border-radius: 13px;
-    background: rgba(245,197,66,.08);
-    font-size: 21px;
-}
-
-.stat-info {
-    min-width: 0;
-}
-
-.stat-info span,
-.pending-card span {
-    display: block;
-    color: rgba(255,255,255,.45);
-    font-size: 11px;
-}
-
-.stat-info strong,
-.pending-card strong {
-    display: block;
-    margin-top: 7px;
-    color: #fff;
-    font-size: 20px;
-}
-
-.pending-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-}
-
-.pending-card {
-    padding: 19px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.activity-card,
-.users-card {
-    min-height: 120px;
-    overflow: hidden;
-}
-
-.empty-state {
-    min-height: 120px;
-    display: grid;
-    place-items: center;
-    color: rgba(255,255,255,.4);
-    font-size: 13px;
-}
-
-.management-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-}
-
-.management-card {
-    padding: 18px;
-    display: flex;
-    gap: 13px;
-    align-items: center;
-    transition: .2s ease;
-}
-
-.management-card:hover {
-    border-color: rgba(245,197,66,.25);
-    transform: translateY(-2px);
-}
-
-.management-card strong,
-.management-card span {
-    display: block;
-}
-
-.management-card strong {
-    font-size: 13px;
-}
-
-.management-card span {
-    margin-top: 5px;
-    color: rgba(255,255,255,.42);
-    font-size: 10px;
-    line-height: 1.5;
-}
-
-
-/* =========================================================
-   SECURITY / INFORMATION
-========================================================= */
-
-.security-card,
-.information-card {
-    padding: 22px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.security-content {
-    flex: 1;
-}
-
-.security-content strong,
-.security-content p {
-    display: block;
-}
-
-.security-content strong {
-    color: #5fe0a1;
-}
-
-.security-content p,
-.information-card p {
-    margin: 6px 0 0;
-    color: rgba(255,255,255,.45);
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.security-indicator {
-    color: #5fe0a1;
-    font-size: 11px;
-}
-
-.security-indicator span {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 5px;
-    border-radius: 50%;
-    background: #5fe0a1;
-}
-
-.information-card {
-    align-items: flex-start;
-}
-
-
-/* =========================================================
-   MAINTENANCE
-========================================================= */
-
-.maintenance-card {
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 20px;
-    background: rgba(255,255,255,.025);
-}
-
-.maintenance-header {
-    padding: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-}
-
-.maintenance-eyebrow {
-    color: #f5c542;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-}
-
-.maintenance-header h3 {
-    margin: 6px 0;
-    font-size: 20px;
-}
-
-.maintenance-header p {
-    margin: 0;
-    max-width: 650px;
-    color: rgba(255,255,255,.45);
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.maintenance-status {
-    min-width: 150px;
-    padding: 10px 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: 99px;
-    background: rgba(63,207,142,.08);
-    color: #5fe0a1;
-    font-size: 11px;
-}
-
-.maintenance-status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #5fe0a1;
-    box-shadow: 0 0 0 4px rgba(95,224,161,.08);
-}
-
-.maintenance-master {
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    background: rgba(245,197,66,.035);
-    border-bottom: 1px solid rgba(255,255,255,.07);
-}
-
-.maintenance-control-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.maintenance-control-info strong {
-    font-size: 13px;
-}
-
-.maintenance-control-info span {
-    color: rgba(255,255,255,.43);
-    font-size: 11px;
-    line-height: 1.5;
-}
-
-.maintenance-controls {
-    padding: 20px 24px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-}
-
-.maintenance-control {
-    min-height: 80px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 13px;
-    background: rgba(255,255,255,.018);
-}
-
-.maintenance-control-icon {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    display: grid;
-    place-items: center;
-    border-radius: 11px;
-    background: rgba(245,197,66,.07);
-}
-
-.maintenance-control .maintenance-control-info {
-    flex: 1;
-}
-
-.maintenance-switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 26px;
-    flex: 0 0 48px;
-}
-
-.maintenance-switch input {
-    width: 0;
-    height: 0;
-    opacity: 0;
-}
-
-.maintenance-slider {
-    position: absolute;
-    inset: 0;
-    cursor: pointer;
-    border-radius: 99px;
-    background: rgba(255,255,255,.12);
-    transition: .2s ease;
-}
-
-.maintenance-slider::before {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    left: 3px;
-    top: 3px;
-    border-radius: 50%;
-    background: #fff;
-    transition: .2s ease;
-}
-
-.maintenance-switch input:checked + .maintenance-slider {
-    background: #f5c542;
-}
-
-.maintenance-switch input:checked + .maintenance-slider::before {
-    transform: translateX(22px);
-    background: #111522;
-}
-
-.maintenance-message-box {
-    margin: 0 24px 20px;
-    padding: 18px;
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 14px;
-    background: rgba(255,255,255,.018);
-}
-
-.maintenance-message-box label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.maintenance-message-box textarea {
-    width: 100%;
-    min-height: 90px;
-    padding: 12px;
-    resize: vertical;
-    outline: none;
-    border: 1px solid rgba(255,255,255,.09);
-    border-radius: 10px;
-    background: rgba(0,0,0,.18);
-    color: #fff;
-}
-
-.maintenance-message-box textarea:focus {
-    border-color: rgba(245,197,66,.45);
-}
-
-.maintenance-message-box small {
-    display: block;
-    margin-top: 7px;
-    color: rgba(255,255,255,.35);
-    font-size: 10px;
-}
-
-.earnings-monitor {
-    margin: 0 24px 20px;
-    padding: 18px;
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 15px;
-    background: rgba(0,0,0,.12);
-}
-
-.earnings-monitor-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.earnings-monitor-header > div > span {
-    color: #f5c542;
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 1.4px;
-}
-
-.earnings-monitor-header h3 {
-    margin: 5px 0 0;
-    font-size: 15px;
-}
-
-.engine-status {
-    padding: 6px 10px;
-    border-radius: 99px;
-    background: rgba(95,224,161,.08);
-    color: #5fe0a1;
-    font-size: 9px;
-    font-weight: 700;
-}
-
-.earnings-monitor-grid {
-    margin-top: 15px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-.earnings-monitor-grid > div {
-    padding: 13px;
-    border-radius: 12px;
-    background: rgba(255,255,255,.02);
-}
-
-.earnings-monitor-grid span,
-.earnings-monitor-grid strong {
-    display: block;
-}
-
-.earnings-monitor-grid span {
-    color: rgba(255,255,255,.38);
-    font-size: 9px;
-}
-
-.earnings-monitor-grid strong {
-    margin-top: 6px;
-    font-size: 13px;
-}
-
-.maintenance-actions {
-    padding: 0 24px 24px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.maintenance-save-button {
-    min-height: 44px;
-    padding: 0 18px;
-    border: 0;
-    border-radius: 10px;
-    background: #f5c542;
-    color: #10131c;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-.maintenance-save-button:hover {
-    filter: brightness(1.06);
-}
-
-.maintenance-save-button:disabled {
-    opacity: .55;
-    cursor: wait;
-}
-
-.maintenance-save-status {
-    color: #5fe0a1;
-    font-size: 11px;
-}
-
-
-/* =========================================================
-   ADMIN NOTE / FOOTER
-========================================================= */
-
-.admin-note {
-    padding: 17px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    border: 1px solid rgba(245,197,66,.1);
-    border-radius: 14px;
-    background: rgba(245,197,66,.035);
-}
-
-.admin-note-icon {
-    font-size: 18px;
-}
-
-.admin-note strong {
-    font-size: 12px;
-}
-
-.admin-note p {
-    margin: 5px 0 0;
-    color: rgba(255,255,255,.43);
-    font-size: 11px;
-    line-height: 1.6;
-}
-
-.admin-footer {
-    margin-top: 40px;
-    padding: 25px 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-top: 1px solid rgba(255,255,255,.06);
-    color: rgba(255,255,255,.35);
-    font-size: 10px;
-}
-
-.admin-footer strong {
-    color: #f5c542;
-    margin-right: 7px;
-}
-
-.admin-footer span {
-    color: rgba(255,255,255,.35);
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-.sidebar-overlay {
-    display: none;
-}
-
-@media (max-width: 1100px) {
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .management-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .earnings-monitor-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-}
-
-@media (max-width: 800px) {
-
-    .admin-sidebar {
-        transform: translateX(-105%);
-        transition: transform .25s ease;
-        box-shadow: 20px 0 50px rgba(0,0,0,.35);
-    }
-
-    .admin-sidebar.open {
-        transform: translateX(0);
-    }
-
-    .sidebar-close {
-        display: block;
-    }
-
-    .sidebar-overlay.active {
-        display: block;
-        position: fixed;
-        inset: 0;
-        z-index: 900;
-        background: rgba(0,0,0,.65);
-    }
-
-    .admin-main {
-        width: 100%;
-        margin-left: 0;
-    }
-
-    .mobile-menu-button {
-        display: block;
-    }
-
-    .admin-topbar {
-        padding: 12px 17px;
-    }
-
-    .admin-content {
-        padding: 20px 15px;
-    }
-
-    .topbar-title h1 {
-        font-size: 17px;
-    }
-
-    .topbar-eyebrow {
-        display: none;
-    }
-
-    .topbar-account-info {
-        display: none;
-    }
-
-    .welcome-card {
-        padding: 24px;
-    }
-
-    .welcome-visual {
-        width: 85px;
-        height: 85px;
-        font-size: 48px;
-    }
-
-    .pending-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .maintenance-controls {
-        grid-template-columns: 1fr;
-        padding: 15px;
-    }
-
-    .maintenance-header {
-        padding: 20px;
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .maintenance-master {
-        padding: 18px;
-    }
-
-    .maintenance-message-box,
-    .earnings-monitor {
-        margin-left: 15px;
-        margin-right: 15px;
-    }
-
-    .maintenance-actions {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-
-}
-
-@media (max-width: 560px) {
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .management-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .earnings-monitor-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-card {
-        min-height: 220px;
-    }
-
-    .welcome-visual {
-        position: absolute;
-        right: 10px;
-        bottom: 10px;
-        opacity: .5;
-    }
-
-    .security-card,
-    .information-card {
-        align-items: flex-start;
-    }
-
-    .security-indicator {
-        display: none;
-    }
-
-    .maintenance-control {
-        align-items: flex-start;
-    }
-
-    .maintenance-control .maintenance-switch {
-        margin-top: 4px;
-    }
-
-    .maintenance-actions {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .maintenance-save-button {
-        width: 100%;
-    }
-
-    .admin-footer {
-        padding: 22px 15px;
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-}
-
-</style>
-
-
-<!-- =========================================================
-     MOBILE MENU FALLBACK
-========================================================= -->
-<script>
-(function () {
-
-    "use strict";
-
-    const menuButton =
-        document.getElementById("mobileMenuButton");
-
-    const sidebar =
-        document.getElementById("sidebar");
-
-    const sidebarClose =
-        document.getElementById("sidebarClose");
-
-    const overlay =
-        document.getElementById("sidebarOverlay");
-
-
-    function openSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.add("open");
-        }
-
-        if (overlay) {
-            overlay.classList.add("active");
-        }
-
-    }
-
-
-    function closeSidebar() {
-
-        if (sidebar) {
-            sidebar.classList.remove("open");
-        }
-
-        if (overlay) {
-            overlay.classList.remove("active");
-        }
-
-    }
-
-
-    if (menuButton) {
-
-        menuButton.addEventListener(
-            "click",
-            openSidebar
-        );
-
-    }
-
-
-    if (sidebarClose) {
-
-        sidebarClose.addEventListener(
-            "click",
-            closeSidebar
-        );
-
-    }
-
-
-    if (overlay) {
-
-        overlay.addEventListener(
-            "click",
-            closeSidebar
-        );
-
-    }
-
-
-    document
-        .querySelectorAll(".nav-link")
-        .forEach(function (link) {
-
-            link.addEventListener(
-                "click",
-                closeSidebar
-            );
-
-        });
-
-
-    const year =
-        document.getElementById("currentYear");
-
-    if (year) {
-
-        year.textContent =
-            new Date().getFullYear();
-
-    }
-
-})();
-</script>
-
-
-<!-- =========================================================
-     CROWN CASH ADMIN CONTROLLER
-     
-     IMPORTANT:
-     This script tag must NOT be nested inside another
-     incomplete <script> tag.
-========================================================= -->
-<script
-    src="admin.js?v=20261003ADMIN07"
-    defer
-></script>
-
+    </script>
 
 </body>
 </html>

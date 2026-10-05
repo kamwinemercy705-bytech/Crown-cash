@@ -1,173 +1,146 @@
 <?php
 
-/* =========================================================
-   CROWN CASH - MY INVESTMENTS API
-   File: my-investments.php
+declare(strict_types=1);
 
-   PURPOSE:
-   - Return the logged-in user's investments
-   - Return current wallet balance
-   - Return investment statistics
-   - Support ObjectId and string user IDs
-   - Safely handle MongoDB BSONDocument objects
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| CROWN CASH - MY INVESTMENTS
+|--------------------------------------------------------------------------
+| READ-ONLY investment history endpoint.
+|
+| IMPORTANT:
+| - This file NEVER deducts wallet money.
+| - This file NEVER credits earnings.
+| - This file NEVER approves/rejects investments.
+| - Approval is handled by the admin investment endpoint.
+| - Earnings are handled by the earnings engine.
+|--------------------------------------------------------------------------
+*/
 
-ini_set("display_errors", "0");
-ini_set("log_errors", "1");
+ob_start();
 
-error_reporting(E_ALL);
-
-
-/* =========================================================
-   LOAD CONFIG FIRST
-========================================================= */
+/* =========================================================================
+   LOAD CONFIG
+========================================================================= */
 
 try {
 
-    require_once __DIR__ . "/config.php";
+    require_once __DIR__ . '/config.php';
 
 } catch (Throwable $e) {
 
-    header("Content-Type: application/json; charset=UTF-8");
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
 
+    header('Content-Type: application/json; charset=UTF-8');
     http_response_code(500);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Server configuration could not be loaded.",
-        "error" => $e->getMessage()
+        'success' => false,
+        'message' => 'Server configuration could not be loaded.'
     ]);
 
     exit;
 }
 
-
-/* =========================================================
+/* =========================================================================
    CORS
-========================================================= */
+========================================================================= */
 
-$requestOrigin =
-    $_SERVER["HTTP_ORIGIN"] ?? "";
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 $allowedOrigins = [
-    "https://crown-cash.vercel.app",
-    "https://www.crown-cash.vercel.app"
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
 ];
 
-
-if (
-    in_array(
-        $requestOrigin,
-        $allowedOrigins,
-        true
-    )
-) {
+if (in_array($requestOrigin, $allowedOrigins, true)) {
 
     header(
-        "Access-Control-Allow-Origin: " .
+        'Access-Control-Allow-Origin: ' .
         $requestOrigin
     );
 
-} elseif (
-    $requestOrigin === ""
-) {
+} elseif ($requestOrigin === '') {
 
     header(
-        "Access-Control-Allow-Origin: https://crown-cash.vercel.app"
+        'Access-Control-Allow-Origin: https://crown-cash.vercel.app'
     );
 }
 
+header('Access-Control-Allow-Credentials: true');
 
 header(
-    "Access-Control-Allow-Credentials: true"
+    'Access-Control-Allow-Headers: ' .
+    'Content-Type, Accept, Authorization, X-Requested-With'
 );
 
 header(
-    "Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With"
+    'Access-Control-Allow-Methods: GET, OPTIONS'
 );
+
+header('Access-Control-Max-Age: 86400');
+
+header('Vary: Origin');
 
 header(
-    "Access-Control-Allow-Methods: GET, OPTIONS"
+    'Content-Type: application/json; charset=UTF-8'
 );
 
-header(
-    "Access-Control-Max-Age: 86400"
-);
-
-header(
-    "Vary: Origin"
-);
-
-header(
-    "Content-Type: application/json; charset=UTF-8"
-);
-
-
-/* =========================================================
+/* =========================================================================
    OPTIONS
-========================================================= */
+========================================================================= */
 
 if (
-    ($_SERVER["REQUEST_METHOD"] ?? "") ===
-    "OPTIONS"
+    ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS'
 ) {
 
     http_response_code(204);
-
     exit;
 }
 
-
-/* =========================================================
+/* =========================================================================
    ONLY GET
-========================================================= */
+========================================================================= */
 
 if (
-    ($_SERVER["REQUEST_METHOD"] ?? "") !==
-    "GET"
+    ($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET'
 ) {
 
     http_response_code(405);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
+        'success' => false,
+        'message' => 'Method not allowed.'
     ]);
 
     exit;
 }
 
-
-/* =========================================================
-   START CROWN CASH SESSION
-========================================================= */
+/* =========================================================================
+   SESSION
+========================================================================= */
 
 try {
 
-    if (
-        function_exists("startSecureSession")
-    ) {
+    if (function_exists('startSecureSession')) {
 
         startSecureSession();
 
     } else {
 
-        if (
-            session_status() !==
-            PHP_SESSION_ACTIVE
-        ) {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
 
-            session_name(
-                "CROWN_CASH_SESSION"
-            );
+            session_name('CROWN_CASH_SESSION');
 
             session_set_cookie_params([
-                "lifetime" => 0,
-                "path" => "/",
-                "domain" => "",
-                "secure" => true,
-                "httponly" => true,
-                "samesite" => "None"
+                'lifetime' => 0,
+                'path' => '/',
+                'domain' => '',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'None'
             ]);
 
             session_start();
@@ -179,106 +152,86 @@ try {
     http_response_code(500);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Unable to start your session.",
-        "error" => $e->getMessage()
+        'success' => false,
+        'message' => 'Unable to start your session.'
     ]);
 
     exit;
 }
 
-
-/* =========================================================
+/* =========================================================================
    AUTHENTICATION
-========================================================= */
+========================================================================= */
 
 if (
-    empty(
-        $_SESSION["logged_in"]
-    )
+    empty($_SESSION['logged_in']) ||
+    $_SESSION['logged_in'] !== true
 ) {
 
     http_response_code(401);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Please log in before viewing your investments."
+        'success' => false,
+        'message' => 'Please log in before viewing your investments.'
     ]);
 
     exit;
 }
 
-
-/* =========================================================
+/* =========================================================================
    SESSION USER
-========================================================= */
+========================================================================= */
 
 $sessionUserId =
-    $_SESSION["user_id"]
-    ?? $_SESSION["userId"]
-    ?? $_SESSION["id"]
-    ?? $_SESSION["_id"]
+    $_SESSION['user_id']
+    ?? $_SESSION['userId']
+    ?? $_SESSION['id']
+    ?? $_SESSION['_id']
     ?? null;
 
-
 $sessionEmail =
-    $_SESSION["email"]
-    ?? $_SESSION["user_email"]
-    ?? "";
+    $_SESSION['email']
+    ?? $_SESSION['user_email']
+    ?? '';
 
+$sessionEmail = trim((string)$sessionEmail);
 
 if (
     $sessionUserId === null &&
-    trim((string)$sessionEmail) === ""
+    $sessionEmail === ''
 ) {
 
     http_response_code(401);
 
     echo json_encode([
-        "success" => false,
-        "message" => "Your login session does not contain a valid user account."
+        'success' => false,
+        'message' => 'Your login session does not contain a valid user account.'
     ]);
 
     exit;
 }
 
+/* =========================================================================
+   OBJECT ID
+========================================================================= */
 
-/* =========================================================
-   HELPER - OBJECT ID
-========================================================= */
-
-function myInvestmentObjectId(
-    $value
-) {
-
+function crownInvestmentObjectId($value): ?MongoDB\BSON\ObjectId
+{
     if (
-        $value instanceof
-        MongoDB\BSON\ObjectId
+        $value instanceof MongoDB\BSON\ObjectId
     ) {
-
         return $value;
     }
 
+    $value = trim((string)$value);
 
-    $value =
-        trim(
-            (string)$value
-        );
-
-
-    if (
-        $value === ""
-    ) {
-
+    if ($value === '') {
         return null;
     }
 
-
     try {
 
-        return new MongoDB\BSON\ObjectId(
-            $value
-        );
+        return new MongoDB\BSON\ObjectId($value);
 
     } catch (Throwable $e) {
 
@@ -286,136 +239,90 @@ function myInvestmentObjectId(
     }
 }
 
+/* =========================================================================
+   NUMBER
+========================================================================= */
 
-/* =========================================================
-   HELPER - NUMBER
-========================================================= */
-
-function myInvestmentNumber(
-    $value
-): float {
-
-    if (
-        $value === null
-    ) {
-
-        return 0;
+function crownInvestmentNumber($value): float
+{
+    if ($value === null) {
+        return 0.0;
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Decimal128
+        $value instanceof MongoDB\BSON\Decimal128
     ) {
-
-        return (float)
-            $value->toString();
+        return (float)$value->toString();
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Int64
+        $value instanceof MongoDB\BSON\Int64
     ) {
-
-        return (float)
-            $value->__toString();
+        return (float)$value->__toString();
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Double
+        $value instanceof MongoDB\BSON\Double
     ) {
-
-        return (float)
-            $value->__toString();
+        return (float)$value->__toString();
     }
 
-
-    if (
-        is_numeric($value)
-    ) {
-
+    if (is_numeric($value)) {
         return (float)$value;
     }
 
-
-    return 0;
+    return 0.0;
 }
 
+/* =========================================================================
+   BSON NORMALIZER
+========================================================================= */
 
-/* =========================================================
-   HELPER - BSON TO PHP
-========================================================= */
-
-function myInvestmentToArray(
-    $value
-) {
-
+function crownInvestmentNormalize($value)
+{
     if (
-        $value instanceof
-        MongoDB\Model\BSONDocument
+        $value instanceof MongoDB\Model\BSONDocument
     ) {
 
-        $array = [];
+        $result = [];
 
-        foreach (
-            $value as $key => $item
-        ) {
-
-            $array[$key] =
-                myInvestmentToArray(
-                    $item
-                );
+        foreach ($value as $key => $item) {
+            $result[$key] =
+                crownInvestmentNormalize($item);
         }
 
-        return $array;
+        return $result;
     }
 
-
     if (
-        $value instanceof
-        MongoDB\Model\BSONArray
+        $value instanceof MongoDB\Model\BSONArray
     ) {
 
-        $array = [];
+        $result = [];
 
-        foreach (
-            $value as $item
-        ) {
-
-            $array[] =
-                myInvestmentToArray(
-                    $item
-                );
+        foreach ($value as $item) {
+            $result[] =
+                crownInvestmentNormalize($item);
         }
 
-        return $array;
+        return $result;
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\ObjectId
+        $value instanceof MongoDB\BSON\ObjectId
     ) {
-
         return (string)$value;
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\UTCDateTime
+        $value instanceof MongoDB\BSON\UTCDateTime
     ) {
 
         try {
 
             return $value
                 ->toDateTime()
-                ->format(
-                    "Y-m-d H:i:s"
-                );
+                ->format('Y-m-d H:i:s');
 
         } catch (Throwable $e) {
 
@@ -423,184 +330,292 @@ function myInvestmentToArray(
         }
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Decimal128
+        $value instanceof MongoDB\BSON\Decimal128
     ) {
-
-        return (float)
-            $value->toString();
+        return (float)$value->toString();
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Int64
+        $value instanceof MongoDB\BSON\Int64
     ) {
-
-        return (int)
-            $value->__toString();
+        return (int)$value->__toString();
     }
 
-
     if (
-        $value instanceof
-        MongoDB\BSON\Double
+        $value instanceof MongoDB\BSON\Double
     ) {
-
-        return (float)
-            $value->__toString();
+        return (float)$value->__toString();
     }
 
-
-    if (
-        is_array($value)
-    ) {
+    if (is_array($value)) {
 
         $result = [];
 
-        foreach (
-            $value as $key => $item
-        ) {
-
+        foreach ($value as $key => $item) {
             $result[$key] =
-                myInvestmentToArray(
-                    $item
-                );
+                crownInvestmentNormalize($item);
         }
 
         return $result;
     }
 
-
     return $value;
 }
 
+/* =========================================================================
+   USER FILTER
+========================================================================= */
 
-/* =========================================================
-   HELPER - USER FILTER
-========================================================= */
-
-function buildMyInvestmentUserFilter(
+function crownInvestmentUserFilter(
     $userId,
-    $email
+    string $email
 ): array {
 
     $or = [];
 
-
     $objectId =
-        myInvestmentObjectId(
-            $userId
-        );
+        crownInvestmentObjectId($userId);
 
-
-    if (
-        $objectId !== null
-    ) {
+    if ($objectId !== null) {
 
         $or[] = [
-            "_id" =>
-                $objectId
+            '_id' => $objectId
         ];
 
         $or[] = [
-            "user_id" =>
-                $objectId
+            'user_id' => $objectId
         ];
 
         $or[] = [
-            "userId" =>
-                $objectId
+            'userId' => $objectId
         ];
     }
-
 
     $idString =
-        trim(
-            (string)$userId
-        );
+        trim((string)$userId);
 
-
-    if (
-        $idString !== ""
-    ) {
+    if ($idString !== '') {
 
         $or[] = [
-            "_id" =>
-                $idString
+            '_id' => $idString
         ];
 
         $or[] = [
-            "id" =>
-                $idString
+            'id' => $idString
         ];
 
         $or[] = [
-            "user_id" =>
-                $idString
+            'user_id' => $idString
         ];
 
         $or[] = [
-            "userId" =>
-                $idString
+            'userId' => $idString
         ];
 
         $or[] = [
-            "account_id" =>
-                $idString
+            'account_id' => $idString
         ];
     }
 
-
-    $email =
-        trim(
-            (string)$email
-        );
-
-
-    if (
-        $email !== ""
-    ) {
+    if ($email !== '') {
 
         $or[] = [
-            "email" =>
-                $email
+            'email' => $email
         ];
 
         $or[] = [
-            "user_email" =>
-                $email
+            'user_email' => $email
         ];
     }
 
-
-    if (
-        count($or) === 0
-    ) {
+    if (count($or) === 0) {
 
         return [
-            "_id" => null
+            '_id' => null
         ];
     }
-
 
     return [
         '$or' => $or
     ];
 }
 
+/* =========================================================================
+   INVESTMENT USER FILTER
+========================================================================= */
 
-/* =========================================================
+function crownInvestmentInvestmentFilter(
+    $userId,
+    string $email
+): array {
+
+    $or = [];
+
+    $objectId =
+        crownInvestmentObjectId($userId);
+
+    if ($objectId !== null) {
+
+        $or[] = [
+            'user_id' => $objectId
+        ];
+
+        $or[] = [
+            'userId' => $objectId
+        ];
+
+        $or[] = [
+            'account_id' => $objectId
+        ];
+    }
+
+    $idString =
+        trim((string)$userId);
+
+    if ($idString !== '') {
+
+        $or[] = [
+            'user_id' => $idString
+        ];
+
+        $or[] = [
+            'userId' => $idString
+        ];
+
+        $or[] = [
+            'account_id' => $idString
+        ];
+    }
+
+    if ($email !== '') {
+
+        $or[] = [
+            'user_email' => $email
+        ];
+
+        $or[] = [
+            'email' => $email
+        ];
+    }
+
+    if (count($or) === 0) {
+
+        return [
+            '_id' => null
+        ];
+    }
+
+    return [
+        '$or' => $or
+    ];
+}
+
+/* =========================================================================
+   NORMALIZE STATUS
+========================================================================= */
+
+function crownInvestmentStatus($value): string
+{
+    $status =
+        strtolower(
+            trim(
+                (string)$value
+            )
+        );
+
+    if ($status === '') {
+        return 'pending';
+    }
+
+    if (
+        in_array(
+            $status,
+            [
+                'approved',
+                'active',
+                'running',
+                'in_progress'
+            ],
+            true
+        )
+    ) {
+        return 'active';
+    }
+
+    if (
+        in_array(
+            $status,
+            [
+                'complete',
+                'completed',
+                'matured',
+                'finished'
+            ],
+            true
+        )
+    ) {
+        return 'completed';
+    }
+
+    if (
+        in_array(
+            $status,
+            [
+                'declined',
+                'rejected'
+            ],
+            true
+        )
+    ) {
+        return 'rejected';
+    }
+
+    return $status;
+}
+
+/* =========================================================================
+   DATE TO TIMESTAMP
+========================================================================= */
+
+function crownInvestmentTimestamp($value): ?int
+{
+    if (!$value) {
+        return null;
+    }
+
+    if (
+        is_array($value)
+    ) {
+
+        if (
+            isset($value['$date'])
+        ) {
+            $value =
+                $value['$date'];
+        } elseif (
+            isset($value['date'])
+        ) {
+            $value =
+                $value['date'];
+        }
+    }
+
+    $timestamp =
+        strtotime((string)$value);
+
+    if ($timestamp === false) {
+        return null;
+    }
+
+    return $timestamp;
+}
+
+/* =========================================================================
    MAIN
-========================================================= */
+========================================================================= */
 
 try {
-
-    /* =====================================================
-       CHECK COLLECTIONS
-    ===================================================== */
 
     if (
         !isset($users) ||
@@ -610,634 +625,521 @@ try {
         http_response_code(500);
 
         echo json_encode([
-            "success" => false,
-            "message" => "Investment database collections are not configured."
+            'success' => false,
+            'message' => 'Investment database collections are not configured.'
         ]);
 
         exit;
     }
 
-
-    /* =====================================================
+    /* ---------------------------------------------------------------------
        FIND USER
-    ===================================================== */
+    --------------------------------------------------------------------- */
 
     $userFilter =
-        buildMyInvestmentUserFilter(
+        crownInvestmentUserFilter(
             $sessionUserId,
             $sessionEmail
         );
-
 
     $userDocument =
         $users->findOne(
             $userFilter
         );
 
-
-    if (
-        $userDocument === null
-    ) {
+    if ($userDocument === null) {
 
         http_response_code(404);
 
         echo json_encode([
-            "success" => false,
-            "message" => "Your Crown Cash account could not be found."
+            'success' => false,
+            'message' => 'Your Crown Cash account could not be found.'
         ]);
 
         exit;
     }
 
-
-    /*
-     * Convert BSONDocument into a normal PHP array.
-     *
-     * This is important because PHP functions such as
-     * array_key_exists() require an actual array.
-     */
-
     $user =
-        myInvestmentToArray(
+        crownInvestmentNormalize(
             $userDocument
         );
 
-
-    if (
-        !is_array($user)
-    ) {
-
+    if (!is_array($user)) {
         $user = [];
     }
 
+    /* ---------------------------------------------------------------------
+       BALANCE
+    --------------------------------------------------------------------- */
 
-    /* =====================================================
-       WALLET BALANCE
-    ===================================================== */
+    $balance = 0.0;
 
-    $balance = 0;
-
-
-    if (
-        isset($user["balance"])
-    ) {
+    if (isset($user['balance'])) {
 
         $balance =
-            myInvestmentNumber(
-                $user["balance"]
+            crownInvestmentNumber(
+                $user['balance']
             );
 
     } elseif (
-        isset($user["wallet_balance"])
+        isset($user['wallet_balance'])
     ) {
 
         $balance =
-            myInvestmentNumber(
-                $user["wallet_balance"]
+            crownInvestmentNumber(
+                $user['wallet_balance']
             );
 
     } elseif (
-        isset($user["walletBalance"])
+        isset($user['walletBalance'])
     ) {
 
         $balance =
-            myInvestmentNumber(
-                $user["walletBalance"]
+            crownInvestmentNumber(
+                $user['walletBalance']
             );
 
     } elseif (
-        isset($user["wallet"]) &&
-        is_array($user["wallet"]) &&
-        isset($user["wallet"]["balance"])
+        isset($user['wallet']) &&
+        is_array($user['wallet']) &&
+        isset($user['wallet']['balance'])
     ) {
 
         $balance =
-            myInvestmentNumber(
-                $user["wallet"]["balance"]
+            crownInvestmentNumber(
+                $user['wallet']['balance']
             );
     }
 
-
-    /* =====================================================
-       BUILD INVESTMENT USER FILTER
-    ===================================================== */
-
-    $investmentUserOr = [];
-
-
-    $sessionObjectId =
-        myInvestmentObjectId(
-            $sessionUserId
-        );
-
-
-    if (
-        $sessionObjectId !== null
-    ) {
-
-        $investmentUserOr[] = [
-            "user_id" =>
-                $sessionObjectId
-        ];
-
-        $investmentUserOr[] = [
-            "userId" =>
-                $sessionObjectId
-        ];
-
-        $investmentUserOr[] = [
-            "account_id" =>
-                $sessionObjectId
-        ];
-    }
-
-
-    $sessionIdString =
-        trim(
-            (string)$sessionUserId
-        );
-
-
-    if (
-        $sessionIdString !== ""
-    ) {
-
-        $investmentUserOr[] = [
-            "user_id" =>
-                $sessionIdString
-        ];
-
-        $investmentUserOr[] = [
-            "userId" =>
-                $sessionIdString
-        ];
-
-        $investmentUserOr[] = [
-            "account_id" =>
-                $sessionIdString
-        ];
-    }
-
-
-    $email =
-        trim(
-            (string)$sessionEmail
-        );
-
-
-    if (
-        $email !== ""
-    ) {
-
-        $investmentUserOr[] = [
-            "user_email" =>
-                $email
-        ];
-
-        $investmentUserOr[] = [
-            "email" =>
-                $email
-        ];
-    }
-
-
-    /* =====================================================
+    /* ---------------------------------------------------------------------
        FETCH INVESTMENTS
-    ===================================================== */
+    --------------------------------------------------------------------- */
+
+    $investmentFilter =
+        crownInvestmentInvestmentFilter(
+            $sessionUserId,
+            $sessionEmail
+        );
 
     $investmentDocuments = [];
 
-
-    if (
-        count($investmentUserOr) > 0
-    ) {
-
-        $cursor =
-            $investments->find(
-                [
-                    '$or' =>
-                        $investmentUserOr
-                ],
-                [
-                    "sort" => [
-                        "created_at" =>
-                            -1
-                    ]
+    $cursor =
+        $investments->find(
+            $investmentFilter,
+            [
+                'sort' => [
+                    'created_at' => -1
                 ]
+            ]
+        );
+
+    foreach ($cursor as $document) {
+
+        $normalized =
+            crownInvestmentNormalize(
+                $document
             );
 
-
-        foreach (
-            $cursor as $document
-        ) {
-
+        if (is_array($normalized)) {
             $investmentDocuments[] =
-                myInvestmentToArray(
-                    $document
-                );
+                $normalized;
         }
     }
 
-
-    /* =====================================================
-       NORMALIZE INVESTMENTS
-    ===================================================== */
+    /* ---------------------------------------------------------------------
+       BUILD NORMALIZED LIST
+    --------------------------------------------------------------------- */
 
     $investmentList = [];
-
 
     foreach (
         $investmentDocuments
         as $investment
     ) {
 
-        if (
-            !is_array($investment)
-        ) {
-
-            continue;
-        }
-
-
-        /* ---------------------------------------------
-           ID
-        --------------------------------------------- */
-
         $id =
-            $investment["_id"]
-            ?? $investment["id"]
-            ?? "";
-
+            $investment['_id']
+            ?? $investment['id']
+            ?? '';
 
         $id =
             (string)$id;
 
-
-        /* ---------------------------------------------
-           PLAN
-        --------------------------------------------- */
-
         $plan =
-            $investment["plan"]
-            ?? $investment["plan_name"]
-            ?? $investment["package"]
-            ?? "Investment Plan";
-
+            $investment['plan']
+            ?? $investment['plan_name']
+            ?? $investment['package']
+            ?? 'Investment Plan';
 
         $planName =
-            $investment["plan_name"]
-            ?? $investment["package"]
+            $investment['plan_name']
+            ?? $investment['package']
             ?? $plan;
 
-
-        /* ---------------------------------------------
-           AMOUNT
-        --------------------------------------------- */
-
         $amount =
-            myInvestmentNumber(
-                $investment["amount"]
-                ?? $investment["principal"]
-                ?? $investment["reserved_amount"]
+            crownInvestmentNumber(
+                $investment['amount']
+                ?? $investment['principal']
+                ?? $investment['reserved_amount']
                 ?? 0
             );
 
-
         $principal =
-            myInvestmentNumber(
-                $investment["principal"]
+            crownInvestmentNumber(
+                $investment['principal']
                 ?? $amount
             );
 
-
-        /* ---------------------------------------------
-           DAILY RATE
-        --------------------------------------------- */
-
         $dailyRate =
-            myInvestmentNumber(
-                $investment["daily_rate"]
+            crownInvestmentNumber(
+                $investment['daily_rate']
                 ?? 0
             );
 
-
         /*
-         * Older records may contain 10 instead of 0.10.
+         * Older records may store 10 rather than 0.10.
          */
-
-        if (
-            $dailyRate > 1
-        ) {
-
-            $dailyRate =
-                $dailyRate / 100;
+        if ($dailyRate > 1) {
+            $dailyRate /= 100;
         }
 
-
-        $dailyReturn =
-            $dailyRate * 100;
-
-
-        /* ---------------------------------------------
-           DAILY INCOME
-        --------------------------------------------- */
-
         $dailyIncome =
-            myInvestmentNumber(
-                $investment["daily_income"]
-                ?? (
-                    $amount *
-                    $dailyRate
-                )
+            crownInvestmentNumber(
+                $investment['daily_income']
+                ?? ($amount * $dailyRate)
             );
-
-
-        /* ---------------------------------------------
-           TOTAL INCOME
-        --------------------------------------------- */
 
         $duration =
             (int)(
-                $investment["duration_days"]
-                ?? $investment["duration"]
+                $investment['duration_days']
+                ?? $investment['duration']
                 ?? 30
             );
 
-
-        if (
-            $duration <= 0
-        ) {
-
+        if ($duration <= 0) {
             $duration = 30;
         }
 
-
         $totalIncome =
-            myInvestmentNumber(
-                $investment["total_income"]
-                ?? (
-                    $dailyIncome *
-                    $duration
-                )
+            crownInvestmentNumber(
+                $investment['total_income']
+                ?? ($dailyIncome * $duration)
             );
-
-
-        /* ---------------------------------------------
-           MATURITY
-        --------------------------------------------- */
 
         $maturityAmount =
-            myInvestmentNumber(
-                $investment["maturity_amount"]
-                ?? (
-                    $principal +
-                    $totalIncome
-                )
+            crownInvestmentNumber(
+                $investment['maturity_amount']
+                ?? ($principal + $totalIncome)
             );
 
-
-        /* ---------------------------------------------
+        /* -----------------------------------------------------------------
            STATUS
-        --------------------------------------------- */
+        ----------------------------------------------------------------- */
+
+        $rawStatus =
+            $investment['status']
+            ?? 'pending';
 
         $status =
-            strtolower(
-                trim(
-                    (string)(
-                        $investment["status"]
-                        ?? "pending"
-                    )
-                )
+            crownInvestmentStatus(
+                $rawStatus
             );
 
-
-        if (
-            $status === ""
-        ) {
-
-            $status = "pending";
-        }
-
-
-        /* ---------------------------------------------
+        /* -----------------------------------------------------------------
            DATES
-        --------------------------------------------- */
+        ----------------------------------------------------------------- */
 
         $createdAt =
-            $investment["created_at"]
-            ?? $investment["createdAt"]
+            $investment['created_at']
+            ?? $investment['createdAt']
             ?? null;
-
 
         $approvedAt =
-            $investment["approved_at"]
-            ?? $investment["approvedAt"]
+            $investment['approved_at']
+            ?? $investment['approvedAt']
             ?? null;
-
 
         $activatedAt =
-            $investment["activated_at"]
-            ?? $investment["activatedAt"]
+            $investment['activated_at']
+            ?? $investment['activatedAt']
             ?? null;
-
 
         $startedAt =
-            $investment["started_at"]
-            ?? $investment["startedAt"]
+            $investment['started_at']
+            ?? $investment['startedAt']
             ?? null;
-
 
         $completedAt =
-            $investment["completed_at"]
-            ?? $investment["completedAt"]
+            $investment['completed_at']
+            ?? $investment['completedAt']
             ?? null;
 
+        /*
+         * For an approved/active investment, activation should be preferred.
+         */
+        $startDate =
+            $activatedAt
+            ?? $startedAt
+            ?? $approvedAt
+            ?? null;
 
-        /* ---------------------------------------------
-           REFERENCE
-        --------------------------------------------- */
+        $endDate =
+            $investment['end_date']
+            ?? $investment['endDate']
+            ?? $investment['matures_at']
+            ?? $completedAt
+            ?? null;
 
-        $reference =
-            $investment["reference"]
-            ?? $investment["investment_reference"]
-            ?? "";
+        /*
+         * If active and no explicit end date exists,
+         * calculate a display-only maturity date.
+         */
+        if (
+            $endDate === null &&
+            $startDate !== null &&
+            in_array(
+                $status,
+                ['active'],
+                true
+            )
+        ) {
 
+            $startTimestamp =
+                crownInvestmentTimestamp(
+                    $startDate
+                );
 
-        /* ---------------------------------------------
+            if ($startTimestamp !== null) {
+
+                $endTimestamp =
+                    $startTimestamp +
+                    ($duration * 86400);
+
+                $endDate =
+                    date(
+                        'Y-m-d H:i:s',
+                        $endTimestamp
+                    );
+            }
+        }
+
+        /* -----------------------------------------------------------------
            PROGRESS
-        --------------------------------------------- */
+        ----------------------------------------------------------------- */
 
         $progress = 0;
 
-
-        if (
-            $status === "completed"
-        ) {
+        if ($status === 'completed') {
 
             $progress = 100;
 
-        } elseif (
-            $status === "active" ||
-            $status === "running"
-        ) {
+        } elseif ($status === 'active') {
 
-            $startDate =
-                $activatedAt
-                ?? $startedAt
-                ?? $approvedAt
-                ?? $createdAt;
+            $startTimestamp =
+                crownInvestmentTimestamp(
+                    $startDate
+                );
 
+            $endTimestamp =
+                crownInvestmentTimestamp(
+                    $endDate
+                );
 
             if (
-                $startDate
+                $startTimestamp !== null &&
+                $endTimestamp !== null &&
+                $endTimestamp > $startTimestamp
             ) {
 
-                try {
+                $now =
+                    time();
 
-                    $startTimestamp =
-                        strtotime(
-                            (string)$startDate
-                        );
-
-
-                    if (
-                        $startTimestamp !== false
-                    ) {
-
-                        $elapsedDays =
-                            floor(
-                                (
-                                    time() -
-                                    $startTimestamp
-                                ) /
-                                86400
-                            );
-
-
-                        $elapsedDays =
-                            max(
-                                0,
-                                $elapsedDays
-                            );
-
-
-                        $progress =
-                            min(
-                                100,
-                                (
-                                    $elapsedDays /
-                                    $duration
-                                ) *
-                                100
-                            );
-                    }
-
-                } catch (Throwable $e) {
+                if ($now <= $startTimestamp) {
 
                     $progress = 0;
+
+                } elseif ($now >= $endTimestamp) {
+
+                    $progress = 100;
+
+                } else {
+
+                    $elapsed =
+                        $now -
+                        $startTimestamp;
+
+                    $total =
+                        $endTimestamp -
+                        $startTimestamp;
+
+                    $progress =
+                        ($elapsed / $total) *
+                        100;
+
+                    $progress =
+                        max(
+                            0,
+                            min(
+                                100,
+                                $progress
+                            )
+                        );
                 }
             }
         }
 
+        /* -----------------------------------------------------------------
+           REFERENCE
+        ----------------------------------------------------------------- */
 
-        /* ---------------------------------------------
-           NORMALIZED RECORD
-        --------------------------------------------- */
+        $reference =
+            $investment['reference']
+            ?? $investment['investment_reference']
+            ?? $investment['transaction_reference']
+            ?? '';
+
+        /* -----------------------------------------------------------------
+           EARNINGS TRACKING
+        ----------------------------------------------------------------- */
+
+        $earningsProcessed =
+            crownInvestmentNumber(
+                $investment['earnings_processed']
+                ?? 0
+            );
+
+        $totalEarningsPaid =
+            crownInvestmentNumber(
+                $investment['total_earnings_paid']
+                ?? 0
+            );
+
+        $lastEarningDate =
+            $investment['last_earning_date']
+            ?? null;
+
+        /* -----------------------------------------------------------------
+           NORMALIZED RESPONSE
+        ----------------------------------------------------------------- */
 
         $investmentList[] = [
 
-            "id" =>
+            'id' =>
                 $id,
 
-            "_id" =>
+            '_id' =>
                 $id,
 
-            "reference" =>
+            'reference' =>
                 $reference,
 
-            "investment_reference" =>
+            'investment_reference' =>
                 $reference,
 
-            "plan" =>
+            'plan' =>
                 $plan,
 
-            "plan_name" =>
+            'plan_name' =>
                 $planName,
 
-            "package" =>
+            'package' =>
                 $planName,
 
-            "amount" =>
+            'amount' =>
                 $amount,
 
-            "principal" =>
+            'principal' =>
                 $principal,
 
-            "reserved_amount" =>
-                myInvestmentNumber(
-                    $investment["reserved_amount"]
+            'reserved_amount' =>
+                crownInvestmentNumber(
+                    $investment['reserved_amount']
                     ?? $principal
                 ),
 
-            "currency" =>
-                $investment["currency"]
-                ?? "UGX",
+            'currency' =>
+                $investment['currency']
+                ?? 'UGX',
 
-            "duration" =>
+            'duration' =>
                 $duration,
 
-            "duration_days" =>
+            'duration_days' =>
                 $duration,
 
-            "daily_rate" =>
+            'daily_rate' =>
                 $dailyRate,
 
-            "daily_return" =>
-                $dailyReturn,
+            'daily_return' =>
+                $dailyRate * 100,
 
-            "daily_income" =>
+            'daily_income' =>
                 $dailyIncome,
 
-            "total_income" =>
+            'total_income' =>
                 $totalIncome,
 
-            "maturity_amount" =>
+            'maturity_amount' =>
                 $maturityAmount,
 
-            "status" =>
+            'status' =>
                 $status,
 
-            "balance_reserved" =>
-                !empty(
-                    $investment["balance_reserved"]
+            'raw_status' =>
+                strtolower(
+                    trim(
+                        (string)$rawStatus
+                    )
                 ),
 
-            "balance_deducted" =>
+            'balance_reserved' =>
                 !empty(
-                    $investment["balance_deducted"]
+                    $investment['balance_reserved']
                 ),
 
-            "principal_returned" =>
+            'balance_deducted' =>
                 !empty(
-                    $investment["principal_returned"]
+                    $investment['balance_deducted']
                 ),
 
-            "created_at" =>
+            'admin_approved' =>
+                !empty(
+                    $investment['admin_approved']
+                ),
+
+            'principal_returned' =>
+                !empty(
+                    $investment['principal_returned']
+                ),
+
+            'earnings_processed' =>
+                $earningsProcessed,
+
+            'total_earnings_paid' =>
+                $totalEarningsPaid,
+
+            'last_earning_date' =>
+                $lastEarningDate,
+
+            'created_at' =>
                 $createdAt,
 
-            "approved_at" =>
+            'approved_at' =>
                 $approvedAt,
 
-            "activated_at" =>
+            'activated_at' =>
                 $activatedAt,
 
-            "started_at" =>
+            'started_at' =>
                 $startedAt,
 
-            "completed_at" =>
+            'end_date' =>
+                $endDate,
+
+            'completed_at' =>
                 $completedAt,
 
-            "progress" =>
+            'progress' =>
                 round(
                     $progress,
                     1
@@ -1245,25 +1147,18 @@ try {
         ];
     }
 
-
-    /* =====================================================
+    /* ---------------------------------------------------------------------
        STATISTICS
-    ===================================================== */
+    --------------------------------------------------------------------- */
 
     $totalInvestments =
-        count(
-            $investmentList
-        );
-
+        count($investmentList);
 
     $activeCount = 0;
-
     $pendingCount = 0;
-
     $completedCount = 0;
-
-    $totalInvested = 0;
-
+    $rejectedCount = 0;
+    $totalInvested = 0.0;
 
     foreach (
         $investmentList
@@ -1271,123 +1166,134 @@ try {
     ) {
 
         $status =
-            strtolower(
-                $investment["status"]
-                ?? ""
-            );
-
+            $investment['status']
+            ?? 'pending';
 
         $totalInvested +=
-            myInvestmentNumber(
-                $investment["amount"]
+            crownInvestmentNumber(
+                $investment['amount']
                 ?? 0
             );
 
-
-        if (
-            $status === "pending"
-        ) {
-
-            $pendingCount++;
-
-        } elseif (
-            $status === "active" ||
-            $status === "approved" ||
-            $status === "running"
-        ) {
+        if ($status === 'active') {
 
             $activeCount++;
 
-        } elseif (
-            $status === "completed"
-        ) {
+        } elseif ($status === 'pending') {
+
+            $pendingCount++;
+
+        } elseif ($status === 'completed') {
 
             $completedCount++;
+
+        } elseif ($status === 'rejected') {
+
+            $rejectedCount++;
         }
     }
 
-
-    /* =====================================================
+    /* ---------------------------------------------------------------------
        RESPONSE
-    ===================================================== */
+    --------------------------------------------------------------------- */
 
     http_response_code(200);
 
-
     echo json_encode(
         [
-            "success" =>
+            'success' =>
                 true,
 
-            "message" =>
-                "Investments loaded successfully.",
+            'message' =>
+                'Investments loaded successfully.',
 
-            "balance" =>
+            'balance' =>
                 $balance,
 
-            "available_balance" =>
+            'available_balance' =>
                 $balance,
 
-            "wallet_balance" =>
+            'wallet_balance' =>
                 $balance,
 
-            "total_investments" =>
+            'total_investments' =>
                 $totalInvestments,
 
-            "active_count" =>
+            'active_count' =>
                 $activeCount,
 
-            "pending_count" =>
+            'active_investments' =>
+                $activeCount,
+
+            'pending_count' =>
                 $pendingCount,
 
-            "completed_count" =>
+            'pending_investments' =>
+                $pendingCount,
+
+            'completed_count' =>
                 $completedCount,
 
-            "total_invested" =>
+            'completed_investments' =>
+                $completedCount,
+
+            'rejected_count' =>
+                $rejectedCount,
+
+            'total_invested' =>
                 $totalInvested,
 
-            "counts" => [
+            'counts' => [
 
-                "total" =>
+                'total' =>
                     $totalInvestments,
 
-                "active" =>
+                'active' =>
                     $activeCount,
 
-                "pending" =>
+                'pending' =>
                     $pendingCount,
 
-                "completed" =>
-                    $completedCount
-            ],
-
-            "investments" =>
-                $investmentList,
-
-            "data" => [
-
-                "balance" =>
-                    $balance,
-
-                "available_balance" =>
-                    $balance,
-
-                "total_investments" =>
-                    $totalInvestments,
-
-                "active" =>
-                    $activeCount,
-
-                "pending" =>
-                    $pendingCount,
-
-                "completed" =>
+                'completed' =>
                     $completedCount,
 
-                "total_invested" =>
+                'rejected' =>
+                    $rejectedCount
+            ],
+
+            'investments' =>
+                $investmentList,
+
+            'data' => [
+
+                'balance' =>
+                    $balance,
+
+                'available_balance' =>
+                    $balance,
+
+                'wallet_balance' =>
+                    $balance,
+
+                'total_investments' =>
+                    $totalInvestments,
+
+                'active' =>
+                    $activeCount,
+
+                'pending' =>
+                    $pendingCount,
+
+                'completed' =>
+                    $completedCount,
+
+                'rejected' =>
+                    $rejectedCount,
+
+                'total_invested' =>
                     $totalInvested,
 
-                "investments" =>
+                'investments' =>
                     $investmentList
             ]
         ],
@@ -1396,25 +1302,20 @@ try {
 
     exit;
 
-
 } catch (Throwable $e) {
 
     error_log(
-        "Crown Cash my-investments error: " .
+        'Crown Cash my-investments error: ' .
         $e->getMessage()
     );
 
-
     http_response_code(500);
 
-
     echo json_encode([
-        "success" => false,
-        "message" => "Unable to load your investments.",
-        "error" => $e->getMessage()
+        'success' => false,
+        'message' => 'Unable to load your investments.'
     ]);
 
     exit;
 }
-
 ?>

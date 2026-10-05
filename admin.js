@@ -1,7 +1,7 @@
 /* =========================================================
    CROWN CASH — ADMIN PANEL CONTROLLER
    Complete production replacement
-   Version: 20261004ADMIN04
+   Version: 20261005ADMIN05
    ========================================================= */
 
 "use strict";
@@ -123,7 +123,6 @@ function escapeHtml(value) {
 
     }
 
-
     return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -150,7 +149,6 @@ function toNumber(value) {
 
     }
 
-
     if (
         typeof value === "number"
     ) {
@@ -161,16 +159,13 @@ function toNumber(value) {
 
     }
 
-
     const cleaned =
         String(value)
             .replace(/,/g, "")
             .replace(/[^\d.-]/g, "");
 
-
     const number =
         Number(cleaned);
-
 
     return Number.isFinite(number)
         ? number
@@ -189,7 +184,6 @@ function formatUGX(value) {
         Math.round(
             toNumber(value)
         );
-
 
     return (
         "UGX " +
@@ -220,7 +214,6 @@ function parseDate(value) {
 
     }
 
-
     if (
         typeof value === "object" &&
         value.$date
@@ -230,7 +223,6 @@ function parseDate(value) {
             value.$date;
 
     }
-
 
     if (
         typeof value === "object" &&
@@ -242,7 +234,6 @@ function parseDate(value) {
 
     }
 
-
     if (
         typeof value === "object" &&
         value.$numberLong
@@ -252,7 +243,6 @@ function parseDate(value) {
             Number(value.$numberLong);
 
     }
-
 
     if (
         typeof value === "object" &&
@@ -264,7 +254,6 @@ function parseDate(value) {
 
     }
 
-
     if (
         typeof value === "object" &&
         value._seconds !== undefined
@@ -275,7 +264,6 @@ function parseDate(value) {
 
     }
 
-
     if (
         typeof value === "number"
     ) {
@@ -285,10 +273,8 @@ function parseDate(value) {
                 ? value * 1000
                 : value;
 
-
         const date =
             new Date(timestamp);
-
 
         return Number.isNaN(
             date.getTime()
@@ -298,10 +284,8 @@ function parseDate(value) {
 
     }
 
-
     const stringValue =
         String(value).trim();
-
 
     if (!stringValue) {
 
@@ -309,10 +293,8 @@ function parseDate(value) {
 
     }
 
-
     const date =
         new Date(stringValue);
-
 
     if (
         Number.isNaN(
@@ -323,7 +305,6 @@ function parseDate(value) {
         return null;
 
     }
-
 
     return date;
 
@@ -339,13 +320,11 @@ function formatDate(value) {
     const date =
         parseDate(value);
 
-
     if (!date) {
 
         return "Not available";
 
     }
-
 
     return date.toLocaleString(
         "en-UG",
@@ -376,7 +355,6 @@ function getId(value) {
 
     }
 
-
     if (
         typeof value === "string" ||
         typeof value === "number"
@@ -385,7 +363,6 @@ function getId(value) {
         return String(value);
 
     }
-
 
     if (
         typeof value === "object"
@@ -399,7 +376,6 @@ function getId(value) {
 
         }
 
-
         if (value._id) {
 
             return getId(
@@ -407,7 +383,6 @@ function getId(value) {
             );
 
         }
-
 
         if (value.id) {
 
@@ -417,7 +392,6 @@ function getId(value) {
 
         }
 
-
         if (value.ID) {
 
             return getId(
@@ -425,7 +399,6 @@ function getId(value) {
             );
 
         }
-
 
         if (value.user_id) {
 
@@ -435,7 +408,6 @@ function getId(value) {
 
         }
 
-
         if (value.userId) {
 
             return getId(
@@ -444,7 +416,6 @@ function getId(value) {
 
         }
 
-
         if (value.account_id) {
 
             return getId(
@@ -452,7 +423,6 @@ function getId(value) {
             );
 
         }
-
 
         if (value.accountId) {
 
@@ -463,7 +433,6 @@ function getId(value) {
         }
 
     }
-
 
     return "";
 
@@ -481,7 +450,6 @@ function getRecordId(record) {
         return "";
 
     }
-
 
     return getId(
         record._id ??
@@ -510,14 +478,12 @@ function getUserId(record) {
 
     }
 
-
     const embeddedUser =
         record.user ||
         record.customer ||
         record.account ||
         record.owner ||
         {};
-
 
     return getId(
         record.user_id ??
@@ -551,7 +517,6 @@ function extractArray(
 
     }
 
-
     if (
         !data ||
         typeof data !== "object"
@@ -560,11 +525,6 @@ function extractArray(
         return [];
 
     }
-
-
-    /*
-     * First check the requested keys directly.
-     */
 
     for (const key of keys) {
 
@@ -579,11 +539,6 @@ function extractArray(
         }
 
     }
-
-
-    /*
-     * Then check common nested containers.
-     */
 
     const containers = [
 
@@ -603,7 +558,6 @@ function extractArray(
 
     ];
 
-
     for (
         const container
         of containers
@@ -618,7 +572,6 @@ function extractArray(
             return container;
 
         }
-
 
         if (
             container &&
@@ -646,14 +599,8 @@ function extractArray(
 
     }
 
-
-    /*
-     * Deep search for the requested array keys.
-     */
-
     const visited =
         new Set();
-
 
     function deepSearch(object) {
 
@@ -666,7 +613,6 @@ function extractArray(
 
         }
 
-
         if (
             visited.has(object)
         ) {
@@ -675,9 +621,7 @@ function extractArray(
 
         }
 
-
         visited.add(object);
-
 
         for (
             const key
@@ -696,7 +640,6 @@ function extractArray(
 
         }
 
-
         for (
             const value
             of Object.values(object)
@@ -710,7 +653,6 @@ function extractArray(
                 const result =
                     deepSearch(value);
 
-
                 if (result) {
 
                     return result;
@@ -721,11 +663,9 @@ function extractArray(
 
         }
 
-
         return null;
 
     }
-
 
     return deepSearch(data) || [];
 
@@ -744,7 +684,6 @@ function getUserName(record) {
 
     }
 
-
     const user =
         record.user ||
         record.customer ||
@@ -752,8 +691,7 @@ function getUserName(record) {
         record.owner ||
         {};
 
-
-    const name =
+    const directName =
         record.user_name ||
         record.userName ||
         record.customer_name ||
@@ -762,7 +700,17 @@ function getUserName(record) {
         record.accountName ||
         record.name ||
         record.full_name ||
-        record.fullName ||
+        record.fullName;
+
+    if (directName) {
+
+        return String(
+            directName
+        );
+
+    }
+
+    const nestedName =
         user.name ||
         user.full_name ||
         user.fullName ||
@@ -771,25 +719,18 @@ function getUserName(record) {
             user.last_name
         ]
             .filter(Boolean)
-            .join(" ") ||
-        user.email;
+            .join(" ");
 
+    if (nestedName) {
 
-    if (name) {
-
-        return String(name);
+        return String(
+            nestedName
+        );
 
     }
 
-
-    /*
-     * If the record only contains a user ID,
-     * resolve it from the cached user map.
-     */
-
     const userId =
         getUserId(record);
-
 
     if (
         userId &&
@@ -803,13 +744,21 @@ function getUserName(record) {
                 userId
             );
 
-
         return getUserName(
             cachedUser
         );
 
     }
 
+    if (
+        record.email
+    ) {
+
+        return String(
+            record.email
+        );
+
+    }
 
     return "Unknown user";
 
@@ -817,7 +766,135 @@ function getUserName(record) {
 
 
 /* =========================================================
-   USER CACHE
+   REGISTERED PHONE
+   ========================================================= */
+
+function getRegisteredPhone(record) {
+
+    if (!record) {
+
+        return "Not available";
+
+    }
+
+    const user =
+        record.user ||
+        record.customer ||
+        record.account ||
+        record.owner ||
+        {};
+
+    /*
+     * Prefer the registered account number.
+     */
+
+    const phone =
+        record.registered_phone ||
+        record.registeredPhone ||
+        record.registered_mobile ||
+        record.registeredMobile ||
+        record.account_phone ||
+        record.accountPhone ||
+        record.phone ||
+        record.phone_number ||
+        record.phoneNumber ||
+        record.mobile ||
+        record.mobile_number ||
+        record.mobileNumber ||
+        user.registered_phone ||
+        user.registeredPhone ||
+        user.phone ||
+        user.phone_number ||
+        user.phoneNumber ||
+        user.mobile ||
+        user.mobile_number ||
+        user.mobileNumber;
+
+    if (phone) {
+
+        return String(
+            phone
+        ).trim();
+
+    }
+
+    /*
+     * Try the cached user by user ID.
+     */
+
+    const userId =
+        getUserId(record);
+
+    if (
+        userId &&
+        state.userMap.has(
+            userId
+        )
+    ) {
+
+        const cachedUser =
+            state.userMap.get(
+                userId
+            );
+
+        const cachedPhone =
+            getRegisteredPhone(
+                cachedUser
+            );
+
+        if (
+            cachedPhone &&
+            cachedPhone !== "Not available"
+        ) {
+
+            return cachedPhone;
+
+        }
+
+    }
+
+    /*
+     * Try email lookup.
+     */
+
+    const email =
+        record.email ||
+        user.email;
+
+    if (email) {
+
+        const cachedUser =
+            state.userMap.get(
+                `email:${String(email).toLowerCase()}`
+            );
+
+        if (cachedUser) {
+
+            const cachedPhone =
+                getRegisteredPhone(
+                    cachedUser
+                );
+
+            if (
+                cachedPhone &&
+                cachedPhone !== "Not available"
+            ) {
+
+                return cachedPhone;
+
+            }
+
+        }
+
+    }
+
+    return "Not available";
+
+}
+
+
+/* =========================================================
+   CACHE USERS
    ========================================================= */
 
 function cacheUsers(users) {
@@ -829,7 +906,6 @@ function cacheUsers(users) {
         return;
 
     }
-
 
     for (
         const user
@@ -845,7 +921,6 @@ function cacheUsers(users) {
 
         }
 
-
         const id =
             getId(
                 user._id ??
@@ -855,7 +930,6 @@ function cacheUsers(users) {
                 user.userId
             );
 
-
         if (id) {
 
             state.userMap.set(
@@ -864,11 +938,6 @@ function cacheUsers(users) {
             );
 
         }
-
-
-        /*
-         * Also cache by email where available.
-         */
 
         if (user.email) {
 
@@ -880,7 +949,6 @@ function cacheUsers(users) {
         }
 
     }
-
 
     state.users =
         Array.from(
@@ -909,7 +977,6 @@ function cacheUsersFromRecords(records) {
 
     }
 
-
     for (
         const record
         of records
@@ -921,13 +988,11 @@ function cacheUsersFromRecords(records) {
 
         }
 
-
         const user =
             record.user ||
             record.customer ||
             record.account ||
             record.owner;
-
 
         if (
             user &&
@@ -954,13 +1019,11 @@ async function safeJson(response) {
     const text =
         await response.text();
 
-
     if (!text) {
 
         return {};
 
     }
-
 
     try {
 
@@ -1005,10 +1068,8 @@ async function apiRequest(
 
     } = config;
 
-
     const controller =
         new AbortController();
-
 
     const timeoutId =
         setTimeout(
@@ -1019,7 +1080,6 @@ async function apiRequest(
             },
             timeout
         );
-
 
     const requestOptions = {
 
@@ -1042,7 +1102,6 @@ async function apiRequest(
 
     };
 
-
     try {
 
         const response =
@@ -1051,12 +1110,10 @@ async function apiRequest(
                 requestOptions
             );
 
-
         const data =
             await safeJson(
                 response
             );
-
 
         if (
             response.status === 401 ||
@@ -1073,7 +1130,6 @@ async function apiRequest(
 
             }
 
-
             const error =
                 new Error(
                     data.message ||
@@ -1084,19 +1140,15 @@ async function apiRequest(
                     )
                 );
 
-
             error.status =
                 response.status;
-
 
             error.data =
                 data;
 
-
             throw error;
 
         }
-
 
         if (
             !response.ok
@@ -1109,19 +1161,15 @@ async function apiRequest(
                     `Request failed (${response.status})`
                 );
 
-
             error.status =
                 response.status;
-
 
             error.data =
                 data;
 
-
             throw error;
 
         }
-
 
         return data;
 
@@ -1136,15 +1184,12 @@ async function apiRequest(
                     "The server request timed out."
                 );
 
-
             timeoutError.code =
                 "TIMEOUT";
-
 
             throw timeoutError;
 
         }
-
 
         throw error;
 
@@ -1176,7 +1221,6 @@ function handleAuthenticationFailure(
     state.isAdmin =
         false;
 
-
     if (
         status === 401
     ) {
@@ -1185,7 +1229,6 @@ function handleAuthenticationFailure(
             "Your admin session has expired. Redirecting to login...",
             "warning"
         );
-
 
         setTimeout(
             () => {
@@ -1197,11 +1240,9 @@ function handleAuthenticationFailure(
             1200
         );
 
-
         return;
 
     }
-
 
     if (
         status === 403
@@ -1211,7 +1252,6 @@ function handleAuthenticationFailure(
             "Administrator access is required for this page.",
             "error"
         );
-
 
         setTimeout(
             () => {
@@ -1240,7 +1280,6 @@ function showPageMessage(
     let element =
         $("adminPageMessage");
 
-
     if (!element) {
 
         element =
@@ -1248,10 +1287,8 @@ function showPageMessage(
                 "div"
             );
 
-
         element.id =
             "adminPageMessage";
-
 
         Object.assign(
             element.style,
@@ -1297,9 +1334,7 @@ function showPageMessage(
                     "center"
 
             }
-
         );
-
 
         document.body.appendChild(
             element
@@ -1307,10 +1342,8 @@ function showPageMessage(
 
     }
 
-
     element.textContent =
         message;
-
 
     if (
         type === "success"
@@ -1333,19 +1366,15 @@ function showPageMessage(
 
     }
 
-
     element.style.color =
         "#ffffff";
-
 
     element.style.display =
         "block";
 
-
     clearTimeout(
         element._hideTimer
     );
-
 
     element._hideTimer =
         setTimeout(
@@ -1370,13 +1399,11 @@ function showLoader() {
     const loader =
         $("pageLoader");
 
-
     if (!loader) {
 
         return;
 
     }
-
 
     loader.style.display =
         "flex";
@@ -1398,13 +1425,11 @@ function hideLoader() {
     const loader =
         $("pageLoader");
 
-
     if (!loader) {
 
         return;
 
     }
-
 
     loader.style.display =
         "none";
@@ -1435,7 +1460,6 @@ function ensureApplicationVisible() {
     const app =
         $("adminApp");
 
-
     if (app) {
 
         app.style.visibility =
@@ -1446,10 +1470,8 @@ function ensureApplicationVisible() {
 
     }
 
-
     const main =
         query(".admin-main");
-
 
     if (main) {
 
@@ -1461,10 +1483,8 @@ function ensureApplicationVisible() {
 
     }
 
-
     const content =
         query(".admin-content");
-
 
     if (content) {
 
@@ -1475,7 +1495,6 @@ function ensureApplicationVisible() {
             "1";
 
     }
-
 
     hideLoader();
 
@@ -1506,16 +1525,13 @@ async function authenticateAdmin() {
                 }
             );
 
-
         state.authChecked =
             true;
-
 
         state.authenticated =
             Boolean(
                 data.authenticated !== false
             );
-
 
         state.authorized =
             Boolean(
@@ -1525,13 +1541,11 @@ async function authenticateAdmin() {
                 data.admin
             );
 
-
         const user =
             data.user ||
             data.account ||
             data.profile ||
             {};
-
 
         if (
             user &&
@@ -1554,10 +1568,8 @@ async function authenticateAdmin() {
 
         }
 
-
         state.isAdmin =
             state.authorized;
-
 
         if (
             !state.authenticated
@@ -1567,11 +1579,9 @@ async function authenticateAdmin() {
                 401
             );
 
-
             return false;
 
         }
-
 
         if (
             !state.authorized
@@ -1581,20 +1591,11 @@ async function authenticateAdmin() {
                 403
             );
 
-
             return false;
 
         }
 
-
-        /*
-         * Admin authentication succeeded.
-         * Never wait for other endpoints before
-         * showing the page.
-         */
-
         ensureApplicationVisible();
-
 
         return true;
 
@@ -1603,9 +1604,7 @@ async function authenticateAdmin() {
         state.authChecked =
             true;
 
-
         ensureApplicationVisible();
-
 
         if (
             error.status === 401 ||
@@ -1616,12 +1615,10 @@ async function authenticateAdmin() {
 
         }
 
-
         showPageMessage(
             "Admin authentication could not be completed. Please check the server connection.",
             "error"
         );
-
 
         return false;
 
@@ -1654,15 +1651,12 @@ async function loadProfile() {
                 }
             );
 
-
         state.profile =
             data;
-
 
         renderProfile(
             data
         );
-
 
         return data;
 
@@ -1672,7 +1666,6 @@ async function loadProfile() {
             "Profile request failed:",
             error
         );
-
 
         return null;
 
@@ -1693,7 +1686,6 @@ function renderProfile(data) {
         data?.account ||
         data;
 
-
     if (
         !user ||
         typeof user !== "object"
@@ -1702,7 +1694,6 @@ function renderProfile(data) {
         return;
 
     }
-
 
     const name =
         user.name ||
@@ -1716,18 +1707,15 @@ function renderProfile(data) {
             .join(" ") ||
         "Administrator";
 
-
     const email =
         user.email ||
         user.username ||
         "Administrator";
 
-
     const role =
         user.role ||
         user.account_type ||
         "Administrator";
-
 
     const avatar =
         String(name)
@@ -1736,14 +1724,12 @@ function renderProfile(data) {
             .toUpperCase() ||
         "A";
 
-
     if ($("adminName")) {
 
         $("adminName").textContent =
             name;
 
     }
-
 
     if ($("adminRole")) {
 
@@ -1752,7 +1738,6 @@ function renderProfile(data) {
 
     }
 
-
     if ($("adminEmail")) {
 
         $("adminEmail").textContent =
@@ -1760,14 +1745,12 @@ function renderProfile(data) {
 
     }
 
-
     if ($("adminAvatar")) {
 
         $("adminAvatar").textContent =
             avatar;
 
     }
-
 
     if ($("adminAvatarTop")) {
 
@@ -1803,15 +1786,12 @@ async function loadDashboard() {
                 }
             );
 
-
         state.dashboard =
             data;
-
 
         renderDashboard(
             data
         );
-
 
         return data;
 
@@ -1822,11 +1802,9 @@ async function loadDashboard() {
             error
         );
 
-
         showDashboardError(
             error
         );
-
 
         return null;
 
@@ -1847,7 +1825,6 @@ function renderDashboard(data) {
 
     }
 
-
     const stats =
         data.stats ||
         data.statistics ||
@@ -1856,7 +1833,6 @@ function renderDashboard(data) {
         data.data?.stats ||
         data;
 
-
     const users =
         stats.total_users ??
         stats.users ??
@@ -1864,13 +1840,11 @@ function renderDashboard(data) {
         data.total_users ??
         0;
 
-
     const deposits =
         stats.total_deposits ??
         stats.deposits ??
         data.total_deposits ??
         0;
-
 
     const withdrawals =
         stats.total_withdrawals ??
@@ -1878,13 +1852,11 @@ function renderDashboard(data) {
         data.total_withdrawals ??
         0;
 
-
     const investments =
         stats.total_investments ??
         stats.investments ??
         data.total_investments ??
         0;
-
 
     if ($("totalUsers")) {
 
@@ -1897,7 +1869,6 @@ function renderDashboard(data) {
 
     }
 
-
     if ($("totalDeposits")) {
 
         $("totalDeposits").textContent =
@@ -1906,7 +1877,6 @@ function renderDashboard(data) {
             );
 
     }
-
 
     if ($("totalWithdrawals")) {
 
@@ -1917,7 +1887,6 @@ function renderDashboard(data) {
 
     }
 
-
     if ($("totalInvestments")) {
 
         $("totalInvestments").textContent =
@@ -1927,13 +1896,11 @@ function renderDashboard(data) {
 
     }
 
-
     const pending =
         data.pending ||
         data.pending_items ||
         data.data?.pending ||
         data;
-
 
     const pendingDeposits =
         pending.pending_deposits ??
@@ -1941,20 +1908,17 @@ function renderDashboard(data) {
         data.pending_deposits ??
         0;
 
-
     const pendingWithdrawals =
         pending.pending_withdrawals ??
         pending.pendingWithdrawalAmount ??
         data.pending_withdrawals ??
         0;
 
-
     const pendingInvestments =
         pending.pending_investments ??
         pending.pendingInvestmentAmount ??
         data.pending_investments ??
         0;
-
 
     if ($("pendingDeposits")) {
 
@@ -1965,7 +1929,6 @@ function renderDashboard(data) {
 
     }
 
-
     if ($("pendingWithdrawals")) {
 
         $("pendingWithdrawals").textContent =
@@ -1975,7 +1938,6 @@ function renderDashboard(data) {
 
     }
 
-
     if ($("pendingInvestments")) {
 
         $("pendingInvestments").textContent =
@@ -1984,7 +1946,6 @@ function renderDashboard(data) {
             );
 
     }
-
 
     const transactions =
         extractArray(
@@ -1996,7 +1957,6 @@ function renderDashboard(data) {
             ]
         );
 
-
     const usersList =
         extractArray(
             data,
@@ -2007,26 +1967,17 @@ function renderDashboard(data) {
             ]
         );
 
-
     cacheUsers(
         usersList
     );
-
 
     renderRecentTransactions(
         transactions
     );
 
-
     renderRecentUsers(
         usersList
     );
-
-
-    /*
-     * Re-render management tables because the
-     * dashboard may have supplied user information.
-     */
 
     if (
         state.investments.length
@@ -2038,7 +1989,6 @@ function renderDashboard(data) {
 
     }
 
-
     if (
         state.withdrawals.length
     ) {
@@ -2048,7 +1998,6 @@ function renderDashboard(data) {
         );
 
     }
-
 
     if (
         state.deposits.length
@@ -2075,7 +2024,6 @@ function showDashboardError(error) {
             "Unable to load dashboard data."
         );
 
-
     if ($("recentTransactions")) {
 
         $("recentTransactions").innerHTML = `
@@ -2086,9 +2034,15 @@ function showDashboardError(error) {
                     colspan="5"
                     class="table-empty"
                 >
+
                     Unable to load transactions.
+
                     <br>
-                    <small>${message}</small>
+
+                    <small>
+                        ${message}
+                    </small>
+
                 </td>
 
             </tr>
@@ -2096,7 +2050,6 @@ function showDashboardError(error) {
         `;
 
     }
-
 
     if ($("recentUsers")) {
 
@@ -2108,9 +2061,15 @@ function showDashboardError(error) {
                     colspan="5"
                     class="table-empty"
                 >
+
                     Unable to load users.
+
                     <br>
-                    <small>${message}</small>
+
+                    <small>
+                        ${message}
+                    </small>
+
                 </td>
 
             </tr>
@@ -2133,13 +2092,11 @@ function renderRecentTransactions(
     const tbody =
         $("recentTransactions");
 
-
     if (!tbody) {
 
         return;
 
     }
-
 
     if (
         !Array.isArray(transactions) ||
@@ -2161,16 +2118,13 @@ function renderRecentTransactions(
 
         `;
 
-
         return;
 
     }
 
-
     cacheUsersFromRecords(
         transactions
     );
-
 
     tbody.innerHTML =
         transactions
@@ -2191,18 +2145,10 @@ function renderTransactionRow(
     transaction
 ) {
 
-    const user =
-        transaction.user ||
-        transaction.customer ||
-        transaction.account ||
-        {};
-
-
     const name =
         getUserName(
             transaction
         );
-
 
     const type =
         transaction.type ||
@@ -2211,18 +2157,15 @@ function renderTransactionRow(
         transaction.category ||
         "Transaction";
 
-
     const amount =
         transaction.amount ??
         transaction.value ??
         transaction.total ??
         0;
 
-
     const status =
         transaction.status ||
         "unknown";
-
 
     const date =
         transaction.created_at ||
@@ -2233,7 +2176,6 @@ function renderTransactionRow(
         transaction.timestamp ||
         transaction.time ||
         transaction.updated_at;
-
 
     return `
 
@@ -2281,13 +2223,11 @@ function renderRecentUsers(
     const tbody =
         $("recentUsers");
 
-
     if (!tbody) {
 
         return;
 
     }
-
 
     if (
         !Array.isArray(users) ||
@@ -2309,16 +2249,13 @@ function renderRecentUsers(
 
         `;
 
-
         return;
 
     }
 
-
     cacheUsers(
         users
     );
-
 
     tbody.innerHTML =
         users
@@ -2342,19 +2279,14 @@ function renderUserRow(user) {
             user
         );
 
-
     const email =
         user.email ||
         "Not available";
 
-
     const phone =
-        user.phone ||
-        user.phone_number ||
-        user.phoneNumber ||
-        user.mobile ||
-        "Not available";
-
+        getRegisteredPhone(
+            user
+        );
 
     const balance =
         user.balance ??
@@ -2363,13 +2295,11 @@ function renderUserRow(user) {
         user.wallet?.balance ??
         0;
 
-
     const status =
         user.status ||
         user.account_status ||
         user.accountStatus ||
         "active";
-
 
     return `
 
@@ -2415,10 +2345,8 @@ function statusBadge(status) {
             .toLowerCase()
             .trim();
 
-
     let className =
         "status-badge";
-
 
     if (
         [
@@ -2441,6 +2369,8 @@ function statusBadge(status) {
         [
             "pending",
             "processing",
+            "approval_processing",
+            "approval processing",
             "review",
             "awaiting",
             "requested"
@@ -2474,16 +2404,17 @@ function statusBadge(status) {
 
     }
 
+    const label =
+        normalized
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, char =>
+                char.toUpperCase()
+            );
 
     return `
 
         <span class="${className}">
-            ${escapeHtml(
-                normalized
-                    .charAt(0)
-                    .toUpperCase() +
-                normalized.slice(1)
-            )}
+            ${escapeHtml(label)}
         </span>
 
     `;
@@ -2499,7 +2430,6 @@ async function loadDeposits() {
 
     const tbody =
         $("depositsTableBody");
-
 
     if (tbody) {
 
@@ -2520,7 +2450,6 @@ async function loadDeposits() {
 
     }
 
-
     try {
 
         const data =
@@ -2539,7 +2468,6 @@ async function loadDeposits() {
                 }
             );
 
-
         state.deposits =
             extractArray(
                 data,
@@ -2554,16 +2482,13 @@ async function loadDeposits() {
                 ]
             );
 
-
         cacheUsersFromRecords(
             state.deposits
         );
 
-
         renderDeposits(
             state.deposits
         );
-
 
         return state.deposits;
 
@@ -2574,13 +2499,11 @@ async function loadDeposits() {
             error
         );
 
-
         renderManagementError(
             "depositsTableBody",
             6,
             error
         );
-
 
         return [];
 
@@ -2600,13 +2523,11 @@ function renderDeposits(
     const tbody =
         $("depositsTableBody");
 
-
     if (!tbody) {
 
         return;
 
     }
-
 
     if (
         !Array.isArray(deposits) ||
@@ -2628,11 +2549,9 @@ function renderDeposits(
 
         `;
 
-
         return;
 
     }
-
 
     tbody.innerHTML =
         deposits
@@ -2659,7 +2578,6 @@ function renderDepositRow(
         deposit.depositAmount ??
         0;
 
-
     const method =
         deposit.method ||
         deposit.payment_method ||
@@ -2667,11 +2585,9 @@ function renderDepositRow(
         deposit.network ||
         "Not available";
 
-
     const status =
         deposit.status ||
         "pending";
-
 
     const date =
         deposit.created_at ||
@@ -2681,12 +2597,10 @@ function renderDepositRow(
         deposit.date ||
         deposit.timestamp;
 
-
     const id =
         getRecordId(
             deposit
         );
-
 
     return `
 
@@ -2740,7 +2654,6 @@ async function loadWithdrawals() {
     const tbody =
         $("withdrawalsTableBody");
 
-
     if (tbody) {
 
         tbody.innerHTML = `
@@ -2748,7 +2661,7 @@ async function loadWithdrawals() {
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="table-empty"
                 >
                     Loading withdrawal requests...
@@ -2759,7 +2672,6 @@ async function loadWithdrawals() {
         `;
 
     }
-
 
     try {
 
@@ -2779,13 +2691,6 @@ async function loadWithdrawals() {
                 }
             );
 
-
-        /*
-         * IMPORTANT:
-         * The old code only checked top-level arrays.
-         * This version also supports nested responses.
-         */
-
         state.withdrawals =
             extractArray(
                 data,
@@ -2801,16 +2706,32 @@ async function loadWithdrawals() {
                 ]
             );
 
+        /*
+         * Cache both embedded users and any users
+         * returned directly by the withdrawal API.
+         */
 
         cacheUsersFromRecords(
             state.withdrawals
         );
 
+        const responseUsers =
+            extractArray(
+                data,
+                [
+                    "users",
+                    "customers",
+                    "accounts"
+                ]
+            );
+
+        cacheUsers(
+            responseUsers
+        );
 
         renderWithdrawals(
             state.withdrawals
         );
-
 
         return state.withdrawals;
 
@@ -2821,13 +2742,11 @@ async function loadWithdrawals() {
             error
         );
 
-
         renderManagementError(
             "withdrawalsTableBody",
-            6,
+            7,
             error
         );
-
 
         return [];
 
@@ -2847,13 +2766,11 @@ function renderWithdrawals(
     const tbody =
         $("withdrawalsTableBody");
 
-
     if (!tbody) {
 
         return;
 
     }
-
 
     if (
         !Array.isArray(withdrawals) ||
@@ -2865,7 +2782,7 @@ function renderWithdrawals(
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     class="table-empty"
                 >
                     No withdrawal requests found.
@@ -2875,11 +2792,9 @@ function renderWithdrawals(
 
         `;
 
-
         return;
 
     }
-
 
     tbody.innerHTML =
         withdrawals
@@ -2906,7 +2821,6 @@ function renderWithdrawalRow(
         withdrawal.withdrawalAmount ??
         0;
 
-
     const method =
         withdrawal.method ||
         withdrawal.payment_method ||
@@ -2914,11 +2828,9 @@ function renderWithdrawalRow(
         withdrawal.network ||
         "Not available";
 
-
     const status =
         withdrawal.status ||
         "pending";
-
 
     const date =
         withdrawal.created_at ||
@@ -2928,12 +2840,15 @@ function renderWithdrawalRow(
         withdrawal.date ||
         withdrawal.timestamp;
 
-
     const id =
         getRecordId(
             withdrawal
         );
 
+    const registeredPhone =
+        getRegisteredPhone(
+            withdrawal
+        );
 
     return `
 
@@ -2943,6 +2858,14 @@ function renderWithdrawalRow(
                 ${escapeHtml(
                     getUserName(withdrawal)
                 )}
+            </td>
+
+            <td>
+                <strong>
+                    ${escapeHtml(
+                        registeredPhone
+                    )}
+                </strong>
             </td>
 
             <td>
@@ -2987,7 +2910,6 @@ async function loadInvestments() {
     const tbody =
         $("investmentsTableBody");
 
-
     if (tbody) {
 
         tbody.innerHTML = `
@@ -3007,7 +2929,6 @@ async function loadInvestments() {
 
     }
 
-
     try {
 
         const data =
@@ -3026,7 +2947,6 @@ async function loadInvestments() {
                 }
             );
 
-
         state.investments =
             extractArray(
                 data,
@@ -3042,21 +2962,13 @@ async function loadInvestments() {
                 ]
             );
 
-
         cacheUsersFromRecords(
             state.investments
         );
 
-
         renderInvestments(
             state.investments
         );
-
-
-        /*
-         * If investments only contain user IDs,
-         * re-render after dashboard users have loaded.
-         */
 
         setTimeout(
             () => {
@@ -3075,7 +2987,6 @@ async function loadInvestments() {
             500
         );
 
-
         return state.investments;
 
     } catch (error) {
@@ -3085,13 +2996,11 @@ async function loadInvestments() {
             error
         );
 
-
         renderManagementError(
             "investmentsTableBody",
             6,
             error
         );
-
 
         return [];
 
@@ -3111,13 +3020,11 @@ function renderInvestments(
     const tbody =
         $("investmentsTableBody");
 
-
     if (!tbody) {
 
         return;
 
     }
-
 
     if (
         !Array.isArray(investments) ||
@@ -3139,11 +3046,9 @@ function renderInvestments(
 
         `;
 
-
         return;
 
     }
-
 
     tbody.innerHTML =
         investments
@@ -3172,14 +3077,12 @@ function renderInvestmentRow(
         investment.packageName ||
         "Investment";
 
-
     const amount =
         investment.amount ??
         investment.principal ??
         investment.investment_amount ??
         investment.investmentAmount ??
         0;
-
 
     const duration =
         investment.duration ??
@@ -3188,17 +3091,14 @@ function renderInvestmentRow(
         investment.days ??
         30;
 
-
     const status =
         investment.status ||
         "pending";
-
 
     const id =
         getRecordId(
             investment
         );
-
 
     return `
 
@@ -3262,18 +3162,32 @@ function managementActions(
             .toLowerCase()
             .trim();
 
+    /*
+     * Important:
+     * approval_processing IS intentionally actionable.
+     */
+
+    const finalStatuses = [
+
+        "approved",
+
+        "completed",
+
+        "complete",
+
+        "rejected",
+
+        "cancelled",
+
+        "canceled",
+
+        "failed"
+
+    ];
 
     if (
         !id ||
-        [
-            "approved",
-            "completed",
-            "complete",
-            "rejected",
-            "cancelled",
-            "canceled",
-            "failed"
-        ].includes(
+        finalStatuses.includes(
             normalized
         )
     ) {
@@ -3288,6 +3202,11 @@ function managementActions(
 
     }
 
+    const approveLabel =
+        normalized ===
+            "approval_processing"
+            ? "Approve"
+            : "Approve";
 
     return `
 
@@ -3300,7 +3219,7 @@ function managementActions(
                 data-id="${escapeHtml(id)}"
                 data-type="${escapeHtml(type)}"
             >
-                Approve
+                ${approveLabel}
             </button>
 
             <button
@@ -3333,20 +3252,17 @@ function renderManagementError(
     const tbody =
         $(elementId);
 
-
     if (!tbody) {
 
         return;
 
     }
 
-
     const message =
         escapeHtml(
             error?.message ||
             "Unable to load this section."
         );
-
 
     tbody.innerHTML = `
 
@@ -3394,7 +3310,6 @@ async function processManagementAction(
 
     }
 
-
     const labels = {
 
         deposit:
@@ -3408,11 +3323,9 @@ async function processManagementAction(
 
     };
 
-
     const label =
         labels[type] ||
         "request";
-
 
     if (
         action === "approve"
@@ -3423,7 +3336,6 @@ async function processManagementAction(
                 `Approve this ${label}?`
             );
 
-
         if (!confirmed) {
 
             return;
@@ -3432,10 +3344,8 @@ async function processManagementAction(
 
     }
 
-
     let rejectionReason =
         "";
-
 
     if (
         action === "reject"
@@ -3447,7 +3357,6 @@ async function processManagementAction(
                 ""
             );
 
-
         if (
             rejectionReason === null
         ) {
@@ -3458,9 +3367,7 @@ async function processManagementAction(
 
     }
 
-
     let endpoint;
-
 
     if (
         type === "deposit"
@@ -3489,34 +3396,22 @@ async function processManagementAction(
 
     }
 
-
     try {
 
         const body = {
 
             id:
-
                 id,
 
             action:
-
                 action,
 
             status:
-
                 action === "approve"
                     ? "approved"
                     : "rejected"
 
         };
-
-
-        /*
-         * Include common ID names as well.
-         * This makes the frontend compatible with
-         * hardened PHP endpoints accepting either
-         * id or type-specific IDs.
-         */
 
         if (
             type === "deposit"
@@ -3527,7 +3422,6 @@ async function processManagementAction(
 
         }
 
-
         if (
             type === "withdrawal"
         ) {
@@ -3537,7 +3431,6 @@ async function processManagementAction(
 
         }
 
-
         if (
             type === "investment"
         ) {
@@ -3546,7 +3439,6 @@ async function processManagementAction(
                 id;
 
         }
-
 
         if (
             action === "reject"
@@ -3560,6 +3452,24 @@ async function processManagementAction(
 
         }
 
+        /*
+         * Disable the clicked button while processing.
+         */
+
+        const clickedButton =
+            document.querySelector(
+                `[data-action="${action}"][data-id="${CSS.escape(id)}"][data-type="${CSS.escape(type)}"]`
+            );
+
+        if (clickedButton) {
+
+            clickedButton.disabled =
+                true;
+
+            clickedButton.textContent =
+                "Processing...";
+
+        }
 
         const data =
             await apiRequest(
@@ -3587,17 +3497,15 @@ async function processManagementAction(
                         false,
 
                     timeout:
-                        20000
+                        30000
                 }
             );
-
 
         showPageMessage(
             data.message ||
             `${label} ${action}d successfully.`,
             "success"
         );
-
 
         if (
             type === "deposit"
@@ -3619,9 +3527,7 @@ async function processManagementAction(
 
         }
 
-
         await loadDashboard();
-
 
     } catch (error) {
 
@@ -3630,12 +3536,24 @@ async function processManagementAction(
             error
         );
 
-
         showPageMessage(
             error.message ||
             `Unable to ${action} ${label}.`,
             "error"
         );
+
+        /*
+         * Reload the withdrawal list so the admin sees
+         * the real server status after an error.
+         */
+
+        if (
+            type === "withdrawal"
+        ) {
+
+            await loadWithdrawals();
+
+        }
 
     }
 
@@ -3666,15 +3584,12 @@ async function loadMaintenance() {
                 }
             );
 
-
         state.maintenance =
             data;
-
 
         renderMaintenance(
             data
         );
-
 
         return data;
 
@@ -3685,12 +3600,10 @@ async function loadMaintenance() {
             error
         );
 
-
         showPageMessage(
             "Unable to load platform maintenance settings.",
             "warning"
         );
-
 
         return null;
 
@@ -3700,7 +3613,7 @@ async function loadMaintenance() {
 
 
 /* =========================================================
-   MAINTENANCE DATA EXTRACTION
+   MAINTENANCE SETTINGS
    ========================================================= */
 
 function getMaintenanceSettings(data) {
@@ -3711,7 +3624,6 @@ function getMaintenanceSettings(data) {
 
     }
 
-
     return (
         data.settings ||
         data.maintenance ||
@@ -3720,6 +3632,99 @@ function getMaintenanceSettings(data) {
         data.data ||
         data
     );
+
+}
+
+
+function toBoolean(
+    value,
+    fallback = false
+) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return fallback;
+
+    }
+
+    if (
+        typeof value === "boolean"
+    ) {
+
+        return value;
+
+    }
+
+    if (
+        typeof value === "number"
+    ) {
+
+        return value !== 0;
+
+    }
+
+    const normalized =
+        String(value)
+            .trim()
+            .toLowerCase();
+
+    if (
+        [
+            "true",
+            "1",
+            "yes",
+            "on",
+            "enabled"
+        ].includes(
+            normalized
+        )
+    ) {
+
+        return true;
+
+    }
+
+    if (
+        [
+            "false",
+            "0",
+            "no",
+            "off",
+            "disabled"
+        ].includes(
+            normalized
+        )
+    ) {
+
+        return false;
+
+    }
+
+    return fallback;
+
+}
+
+
+function setChecked(
+    id,
+    value
+) {
+
+    const element =
+        $(id);
+
+    if (!element) {
+
+        return;
+
+    }
+
+    element.checked =
+        Boolean(value);
 
 }
 
@@ -3738,12 +3743,10 @@ function renderMaintenance(
 
     }
 
-
     const settings =
         getMaintenanceSettings(
             data
         );
-
 
     const maintenanceMode =
         toBoolean(
@@ -3753,7 +3756,6 @@ function renderMaintenance(
             false
         );
 
-
     const investments =
         toBoolean(
             settings.new_investments ??
@@ -3762,7 +3764,6 @@ function renderMaintenance(
             true
         );
 
-
     const deposits =
         toBoolean(
             settings.deposits ??
@@ -3770,14 +3771,12 @@ function renderMaintenance(
             true
         );
 
-
     const withdrawals =
         toBoolean(
             settings.withdrawals ??
             settings.allow_withdrawals,
             true
         );
-
 
     const earnings =
         toBoolean(
@@ -3787,7 +3786,6 @@ function renderMaintenance(
             true
         );
 
-
     const registration =
         toBoolean(
             settings.user_registration ??
@@ -3796,48 +3794,40 @@ function renderMaintenance(
             true
         );
 
-
     const message =
         settings.message ||
         settings.maintenance_message ||
         "";
-
 
     setChecked(
         "maintenanceModeToggle",
         maintenanceMode
     );
 
-
     setChecked(
         "maintenanceInvestmentsToggle",
         investments
     );
-
 
     setChecked(
         "maintenanceDepositsToggle",
         deposits
     );
 
-
     setChecked(
         "maintenanceWithdrawalsToggle",
         withdrawals
     );
-
 
     setChecked(
         "maintenanceEarningsToggle",
         earnings
     );
 
-
     setChecked(
         "maintenanceRegistrationToggle",
         registration
     );
-
 
     if (
         $("maintenanceMessage")
@@ -3848,7 +3838,6 @@ function renderMaintenance(
 
     }
 
-
     const monitor =
         data.monitor ||
         data.earnings ||
@@ -3857,7 +3846,6 @@ function renderMaintenance(
         settings.monitor ||
         {};
 
-
     if (
         $("earningsEngineStatus")
     ) {
@@ -3865,7 +3853,6 @@ function renderMaintenance(
         const enabled =
             monitor.enabled ??
             earnings;
-
 
         $("earningsEngineStatus").textContent =
             toBoolean(
@@ -3876,7 +3863,6 @@ function renderMaintenance(
                 : "Disabled";
 
     }
-
 
     if (
         $("lastEarningsRun")
@@ -3892,7 +3878,6 @@ function renderMaintenance(
 
     }
 
-
     if (
         $("earningsProcessedToday")
     ) {
@@ -3905,7 +3890,6 @@ function renderMaintenance(
             );
 
     }
-
 
     if (
         $("maintenanceActiveInvestments")
@@ -3922,7 +3906,6 @@ function renderMaintenance(
 
     }
 
-
     if (
         $("maintenancePendingInvestments")
     ) {
@@ -3938,119 +3921,9 @@ function renderMaintenance(
 
     }
 
-
     updateMaintenanceStatus(
         maintenanceMode
     );
-
-}
-
-
-/* =========================================================
-   BOOLEAN HELPER
-   ========================================================= */
-
-function toBoolean(
-    value,
-    fallback = false
-) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ""
-    ) {
-
-        return fallback;
-
-    }
-
-
-    if (
-        typeof value === "boolean"
-    ) {
-
-        return value;
-
-    }
-
-
-    if (
-        typeof value === "number"
-    ) {
-
-        return value !== 0;
-
-    }
-
-
-    const normalized =
-        String(value)
-            .trim()
-            .toLowerCase();
-
-
-    if (
-        [
-            "true",
-            "1",
-            "yes",
-            "on",
-            "enabled"
-        ].includes(
-            normalized
-        )
-    ) {
-
-        return true;
-
-    }
-
-
-    if (
-        [
-            "false",
-            "0",
-            "no",
-            "off",
-            "disabled"
-        ].includes(
-            normalized
-        )
-    ) {
-
-        return false;
-
-    }
-
-
-    return fallback;
-
-}
-
-
-/* =========================================================
-   CHECKBOX
-   ========================================================= */
-
-function setChecked(
-    id,
-    value
-) {
-
-    const element =
-        $(id);
-
-
-    if (!element) {
-
-        return;
-
-    }
-
-
-    element.checked =
-        Boolean(value);
 
 }
 
@@ -4066,18 +3939,14 @@ function updateMaintenanceStatus(
     const statusText =
         $("maintenanceStatusText");
 
-
     const dot =
         $("maintenanceStatusDot");
-
 
     const description =
         $("maintenanceDescription");
 
-
     const status =
         Boolean(enabled);
-
 
     if (
         statusText
@@ -4090,7 +3959,6 @@ function updateMaintenanceStatus(
 
     }
 
-
     if (
         description
     ) {
@@ -4101,7 +3969,6 @@ function updateMaintenanceStatus(
                 : "Crown Cash platform operations are currently available.";
 
     }
-
 
     if (
         dot
@@ -4114,10 +3981,8 @@ function updateMaintenanceStatus(
 
     }
 
-
     const mainStatus =
         $("maintenanceStatus");
-
 
     if (
         mainStatus
@@ -4134,7 +3999,7 @@ function updateMaintenanceStatus(
 
 
 /* =========================================================
-   MAINTENANCE TOGGLE LIVE STATUS
+   MAINTENANCE TOGGLES
    ========================================================= */
 
 function setupMaintenanceToggles() {
@@ -4142,13 +4007,11 @@ function setupMaintenanceToggles() {
     const toggle =
         $("maintenanceModeToggle");
 
-
     if (!toggle) {
 
         return;
 
     }
-
 
     toggle.addEventListener(
         "change",
@@ -4156,52 +4019,6 @@ function setupMaintenanceToggles() {
 
             updateMaintenanceStatus(
                 this.checked
-            );
-
-        }
-    );
-
-
-    const otherToggleIds = [
-
-        "maintenanceInvestmentsToggle",
-
-        "maintenanceDepositsToggle",
-
-        "maintenanceWithdrawalsToggle",
-
-        "maintenanceEarningsToggle",
-
-        "maintenanceRegistrationToggle"
-
-    ];
-
-
-    otherToggleIds.forEach(
-        id => {
-
-            const element =
-                $(id);
-
-
-            if (!element) {
-
-                return;
-
-            }
-
-
-            element.addEventListener(
-                "change",
-                function () {
-
-                    /*
-                     * No API request is sent here.
-                     * Changes are saved only when
-                     * Save Platform Settings is clicked.
-                     */
-
-                }
             );
 
         }
@@ -4219,10 +4036,8 @@ async function saveMaintenance() {
     const button =
         $("saveMaintenanceBtn");
 
-
     const status =
         $("maintenanceSaveStatus");
-
 
     const payload = {
 
@@ -4263,13 +4078,6 @@ async function saveMaintenance() {
 
     };
 
-
-    /*
-     * Send the same settings both at top-level and
-     * inside settings for compatibility with the
-     * PHP endpoint.
-     */
-
     const requestBody = {
 
         ...payload,
@@ -4281,7 +4089,6 @@ async function saveMaintenance() {
 
     };
 
-
     if (button) {
 
         button.disabled =
@@ -4292,7 +4099,6 @@ async function saveMaintenance() {
 
     }
 
-
     if (status) {
 
         status.textContent =
@@ -4302,7 +4108,6 @@ async function saveMaintenance() {
             "block";
 
     }
-
 
     try {
 
@@ -4336,15 +4141,12 @@ async function saveMaintenance() {
                 }
             );
 
-
         state.maintenance =
             data;
-
 
         updateMaintenanceStatus(
             payload.maintenance_mode
         );
-
 
         if (status) {
 
@@ -4354,21 +4156,13 @@ async function saveMaintenance() {
 
         }
 
-
         showPageMessage(
             data.message ||
             "Platform settings saved successfully.",
             "success"
         );
 
-
-        /*
-         * Reload the saved settings from server.
-         * This confirms the values actually persisted.
-         */
-
         await loadMaintenance();
-
 
     } catch (error) {
 
@@ -4377,7 +4171,6 @@ async function saveMaintenance() {
             error
         );
 
-
         if (status) {
 
             status.textContent =
@@ -4385,7 +4178,6 @@ async function saveMaintenance() {
                 "Unable to save platform settings.";
 
         }
-
 
         showPageMessage(
             error.message ||
@@ -4419,22 +4211,11 @@ function setupMaintenanceSave() {
     const button =
         $("saveMaintenanceBtn");
 
-
     if (!button) {
-
-        console.warn(
-            "saveMaintenanceBtn was not found."
-        );
-
 
         return;
 
     }
-
-
-    /*
-     * Prevent duplicate listeners.
-     */
 
     if (
         button.dataset.listenerAttached ===
@@ -4445,10 +4226,8 @@ function setupMaintenanceSave() {
 
     }
 
-
     button.dataset.listenerAttached =
         "true";
-
 
     button.addEventListener(
         "click",
@@ -4477,7 +4256,6 @@ function setupNavigation() {
             ".nav-link"
         );
 
-
     links.forEach(
         link => {
 
@@ -4490,10 +4268,8 @@ function setupNavigation() {
 
             }
 
-
             link.dataset.navigationAttached =
                 "true";
-
 
             link.addEventListener(
                 "click",
@@ -4506,7 +4282,6 @@ function setupNavigation() {
                             )
                     );
 
-
                     this.classList.add(
                         "active"
                     );
@@ -4517,12 +4292,10 @@ function setupNavigation() {
         }
     );
 
-
     window.addEventListener(
         "hashchange",
         updateNavigationFromHash
     );
-
 
     updateNavigationFromHash();
 
@@ -4542,12 +4315,10 @@ function updateNavigationFromHash() {
                 ""
             );
 
-
     if (!hash) {
 
         const dashboardLink =
             $("dashboardNavLink");
-
 
         if (
             dashboardLink
@@ -4559,11 +4330,9 @@ function updateNavigationFromHash() {
 
         }
 
-
         return;
 
     }
-
 
     const navMap = {
 
@@ -4599,7 +4368,6 @@ function updateNavigationFromHash() {
 
     };
 
-
     queryAll(
         ".nav-link"
     )
@@ -4610,16 +4378,13 @@ function updateNavigationFromHash() {
                 )
         );
 
-
     const linkId =
         navMap[hash];
-
 
     if (linkId) {
 
         const link =
             $(linkId);
-
 
         if (link) {
 
@@ -4643,21 +4408,17 @@ function setupMobileMenu() {
     const button =
         $("mobileMenuButton");
 
-
     const sidebar =
         $("sidebar");
 
-
     const overlay =
         $("sidebarOverlay");
-
 
     if (!button) {
 
         return;
 
     }
-
 
     function openMenu() {
 
@@ -4669,7 +4430,6 @@ function setupMobileMenu() {
 
         }
 
-
         if (overlay) {
 
             overlay.classList.add(
@@ -4678,14 +4438,12 @@ function setupMobileMenu() {
 
         }
 
-
         button.setAttribute(
             "aria-expanded",
             "true"
         );
 
     }
-
 
     function closeMenu() {
 
@@ -4697,7 +4455,6 @@ function setupMobileMenu() {
 
         }
 
-
         if (overlay) {
 
             overlay.classList.remove(
@@ -4706,14 +4463,12 @@ function setupMobileMenu() {
 
         }
 
-
         button.setAttribute(
             "aria-expanded",
             "false"
         );
 
     }
-
 
     if (
         button.dataset.menuAttached !==
@@ -4722,7 +4477,6 @@ function setupMobileMenu() {
 
         button.dataset.menuAttached =
             "true";
-
 
         button.addEventListener(
             "click",
@@ -4748,7 +4502,6 @@ function setupMobileMenu() {
 
     }
 
-
     if (
         overlay &&
         overlay.dataset.overlayAttached !==
@@ -4758,14 +4511,12 @@ function setupMobileMenu() {
         overlay.dataset.overlayAttached =
             "true";
 
-
         overlay.addEventListener(
             "click",
             closeMenu
         );
 
     }
-
 
     queryAll(
         ".nav-link"
@@ -4782,10 +4533,8 @@ function setupMobileMenu() {
 
                 }
 
-
                 link.dataset.mobileAttached =
                     "true";
-
 
                 link.addEventListener(
                     "click",
@@ -4813,10 +4562,8 @@ function setupActionHandlers() {
 
     }
 
-
     document.body.dataset.actionsAttached =
         "true";
-
 
     document.addEventListener(
         "click",
@@ -4827,25 +4574,20 @@ function setupActionHandlers() {
                     "[data-action]"
                 );
 
-
             if (!button) {
 
                 return;
 
             }
 
-
             const action =
                 button.dataset.action;
-
 
             const id =
                 button.dataset.id;
 
-
             const type =
                 button.dataset.type;
-
 
             if (
                 action !== "approve" &&
@@ -4856,9 +4598,7 @@ function setupActionHandlers() {
 
             }
 
-
             event.preventDefault();
-
 
             processManagementAction(
                 type,
@@ -4881,7 +4621,6 @@ function setupRefreshButtons() {
     const depositButton =
         $("refreshDepositsButton");
 
-
     if (
         depositButton &&
         depositButton.dataset.listenerAttached !==
@@ -4891,7 +4630,6 @@ function setupRefreshButtons() {
         depositButton.dataset.listenerAttached =
             "true";
 
-
         depositButton.addEventListener(
             "click",
             loadDeposits
@@ -4899,10 +4637,8 @@ function setupRefreshButtons() {
 
     }
 
-
     const withdrawalButton =
         $("refreshWithdrawalsButton");
-
 
     if (
         withdrawalButton &&
@@ -4913,7 +4649,6 @@ function setupRefreshButtons() {
         withdrawalButton.dataset.listenerAttached =
             "true";
 
-
         withdrawalButton.addEventListener(
             "click",
             loadWithdrawals
@@ -4921,10 +4656,8 @@ function setupRefreshButtons() {
 
     }
 
-
     const investmentButton =
         $("refreshInvestmentsButton");
-
 
     if (
         investmentButton &&
@@ -4934,7 +4667,6 @@ function setupRefreshButtons() {
 
         investmentButton.dataset.listenerAttached =
             "true";
-
 
         investmentButton.addEventListener(
             "click",
@@ -4955,7 +4687,6 @@ async function logout() {
     const button =
         $("logoutButton");
 
-
     if (button) {
 
         button.disabled =
@@ -4965,7 +4696,6 @@ async function logout() {
             "Logging out...";
 
     }
-
 
     try {
 
@@ -5010,13 +4740,11 @@ function setupLogout() {
     const button =
         $("logoutButton");
 
-
     if (!button) {
 
         return;
 
     }
-
 
     if (
         button.dataset.listenerAttached ===
@@ -5027,10 +4755,8 @@ function setupLogout() {
 
     }
 
-
     button.dataset.listenerAttached =
         "true";
-
 
     button.addEventListener(
         "click",
@@ -5038,19 +4764,16 @@ function setupLogout() {
 
             event.preventDefault();
 
-
             const confirmed =
                 window.confirm(
                     "Are you sure you want to logout?"
                 );
-
 
             if (!confirmed) {
 
                 return;
 
             }
-
 
             logout();
 
@@ -5068,7 +4791,6 @@ function updateYear() {
 
     const year =
         $("currentYear");
-
 
     if (year) {
 
@@ -5091,10 +4813,8 @@ function updateSecurityDisplay() {
     const status =
         $("securityStatus");
 
-
     const description =
         $("securityDescription");
-
 
     if (status) {
 
@@ -5102,7 +4822,6 @@ function updateSecurityDisplay() {
             "✓";
 
     }
-
 
     if (description) {
 
@@ -5137,7 +4856,6 @@ async function loadNonCriticalData() {
 
         ]);
 
-
     results.forEach(
         result => {
 
@@ -5156,12 +4874,6 @@ async function loadNonCriticalData() {
         }
     );
 
-
-    /*
-     * Re-render management sections one more time
-     * after all user caches have had a chance to load.
-     */
-
     if (
         state.deposits.length
     ) {
@@ -5171,7 +4883,6 @@ async function loadNonCriticalData() {
         );
 
     }
-
 
     if (
         state.withdrawals.length
@@ -5183,7 +4894,6 @@ async function loadNonCriticalData() {
 
     }
 
-
     if (
         state.investments.length
     ) {
@@ -5193,7 +4903,6 @@ async function loadNonCriticalData() {
         );
 
     }
-
 
     ensureApplicationVisible();
 
@@ -5214,17 +4923,10 @@ async function initializeAdmin() {
 
     }
 
-
     state.initialized =
         true;
 
-
-    /*
-     * Never allow the loader to trap the page.
-     */
-
     ensureApplicationVisible();
-
 
     updateYear();
 
@@ -5244,14 +4946,8 @@ async function initializeAdmin() {
 
     updateSecurityDisplay();
 
-
-    /*
-     * Authentication is the only blocking operation.
-     */
-
     const authenticated =
         await authenticateAdmin();
-
 
     if (!authenticated) {
 
@@ -5261,13 +4957,7 @@ async function initializeAdmin() {
 
     }
 
-
     ensureApplicationVisible();
-
-
-    /*
-     * Load the remaining sections independently.
-     */
 
     loadNonCriticalData()
         .catch(
@@ -5281,28 +4971,20 @@ async function initializeAdmin() {
             }
         );
 
-
-    /*
-     * Safety checks against a stuck loader.
-     */
-
     setTimeout(
         ensureApplicationVisible,
         100
     );
-
 
     setTimeout(
         ensureApplicationVisible,
         1000
     );
 
-
     setTimeout(
         ensureApplicationVisible,
         3000
     );
-
 
     setTimeout(
         ensureApplicationVisible,
@@ -5326,7 +5008,6 @@ window.addEventListener(
             event.message
         );
 
-
         ensureApplicationVisible();
 
     }
@@ -5345,7 +5026,6 @@ window.addEventListener(
             "Crown Cash Admin promise error:",
             event.reason
         );
-
 
         ensureApplicationVisible();
 

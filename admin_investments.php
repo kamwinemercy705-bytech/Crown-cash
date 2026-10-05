@@ -7,47 +7,29 @@ declare(strict_types=1);
 | CROWN CASH - ADMIN INVESTMENTS API
 |--------------------------------------------------------------------------
 |
-| GET:
-|   Load investments for the admin panel.
+| GET
+|   Loads investment requests for the admin panel.
 |
-| POST:
-|   approve  -> deduct investment principal exactly once
-|   reject   -> reject without deduction
+| POST
+|   approve -> deduct principal once and activate investment
+|   reject  -> reject without deduction
 |
-| IMPORTANT ACCOUNTING RULE
-|--------------------------------------------------------------------------
+| ACCOUNTING RULE
 |
 | New investment:
-|
-|   User creates investment
-|          ↓
-|   status = pending
+|   pending
 |   balance_deducted = false
-|          ↓
-|   Admin approves
-|          ↓
-|   wallet -= principal
-|          ↓
-|   investment = approved
+|
+| Admin approval:
+|   wallet -= investment amount
+|   balance_deducted = true
+|   status = approved
 |
 | Rejection:
-|
-|   balance_deducted = false
-|          ↓
-|   reject
-|          ↓
 |   wallet unchanged
 |
 | Legacy investment:
-|
-|   balance_deducted = true
-|          ↓
-|   reject
-|          ↓
-|   refund exactly once
-|
-| This file does NOT generate daily earnings.
-| Daily earnings should be handled by daily_earnings.php.
+|   If balance_deducted=true, approval does NOT deduct again.
 |
 |--------------------------------------------------------------------------
 */
@@ -55,12 +37,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 
 header('Content-Type: application/json; charset=utf-8');
-
-/*
-|--------------------------------------------------------------------------
-| CORS
-|--------------------------------------------------------------------------
-*/
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
@@ -89,12 +65,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
 |--------------------------------------------------------------------------
 */
 
-function adminInvestmentResponse(
+function investmentApiResponse(
     bool $success,
     string $message,
     array $data = [],
     int $status = 200
 ): never {
+
     http_response_code($status);
 
     echo json_encode(
@@ -105,8 +82,8 @@ function adminInvestmentResponse(
             ],
             $data
         ),
-        JSON_UNESCAPED_SLASHES |
-        JSON_UNESCAPED_UNICODE
+        JSON_UNESCAPED_UNICODE |
+        JSON_UNESCAPED_SLASHES
     );
 
     exit;
@@ -114,14 +91,14 @@ function adminInvestmentResponse(
 
 /*
 |--------------------------------------------------------------------------
-| HELPERS
+| BASIC HELPERS
 |--------------------------------------------------------------------------
 */
 
-function aiString(mixed $value): string
+function invString(mixed $value): string
 {
     if ($value instanceof MongoDB\BSON\ObjectId) {
-        return (string) $value;
+        return (string)$value;
     }
 
     if ($value instanceof MongoDB\BSON\UTCDateTime) {
@@ -129,24 +106,21 @@ function aiString(mixed $value): string
     }
 
     if (is_string($value) || is_numeric($value)) {
-        return trim((string) $value);
+        return trim((string)$value);
     }
 
     return '';
 }
 
-function aiObjectId(mixed $value): ?MongoDB\BSON\ObjectId
+function invObjectId(mixed $value): ?MongoDB\BSON\ObjectId
 {
     if ($value instanceof MongoDB\BSON\ObjectId) {
         return $value;
     }
 
-    $value = trim((string) $value);
+    $value = trim((string)$value);
 
-    if (
-        $value === '' ||
-        !preg_match('/^[a-f0-9]{24}$/i', $value)
-    ) {
+    if ($value === '' || !preg_match('/^[a-f0-9]{24}$/i', $value)) {
         return null;
     }
 
@@ -157,48 +131,48 @@ function aiObjectId(mixed $value): ?MongoDB\BSON\ObjectId
     }
 }
 
-function aiMoney(mixed $value): int
+function invMoney(mixed $value): int
 {
     if (is_int($value)) {
         return $value;
     }
 
     if (is_float($value)) {
-        return (int) round($value);
+        return (int)round($value);
     }
 
     if (is_numeric($value)) {
-        return (int) round((float) $value);
+        return (int)round((float)$value);
     }
 
     return 0;
 }
 
-function aiStatus(mixed $value): string
+function invStatus(mixed $value): string
 {
-    return strtolower(trim((string) $value));
+    return strtolower(trim((string)$value));
 }
 
-function aiNow(): MongoDB\BSON\UTCDateTime
+function invNow(): MongoDB\BSON\UTCDateTime
 {
     return new MongoDB\BSON\UTCDateTime(
-        (int) round(microtime(true) * 1000)
+        (int)round(microtime(true) * 1000)
     );
 }
 
 /*
 |--------------------------------------------------------------------------
-| USER HELPERS
+| USER LOOKUP
 |--------------------------------------------------------------------------
 */
 
-function aiFindUser(
+function invFindUser(
     MongoDB\Collection $users,
     mixed $userId = null,
     mixed $email = null
 ): ?array {
 
-    $objectId = aiObjectId($userId);
+    $objectId = invObjectId($userId);
 
     if ($objectId !== null) {
 
@@ -211,7 +185,7 @@ function aiFindUser(
         }
     }
 
-    $stringId = trim((string) $userId);
+    $stringId = trim((string)$userId);
 
     if ($stringId !== '') {
 
@@ -228,12 +202,12 @@ function aiFindUser(
         }
     }
 
-    $email = strtolower(trim((string) $email));
+    $emailValue = strtolower(trim((string)$email));
 
-    if ($email !== '') {
+    if ($emailValue !== '') {
 
         $user = $users->findOne([
-            'email' => $email,
+            'email' => $emailValue,
         ]);
 
         if ($user !== null) {
@@ -244,7 +218,7 @@ function aiFindUser(
     return null;
 }
 
-function aiUserId(array $user): mixed
+function invUserId(array $user): mixed
 {
     return
         $user['_id']
@@ -254,10 +228,10 @@ function aiUserId(array $user): mixed
         ?? null;
 }
 
-function aiUserName(array $user): string
+function invUserName(array $user): string
 {
     $full = trim(
-        (string) (
+        (string)(
             $user['full_name']
             ?? $user['fullName']
             ?? $user['name']
@@ -270,7 +244,7 @@ function aiUserName(array $user): string
     }
 
     $first = trim(
-        (string) (
+        (string)(
             $user['first_name']
             ?? $user['firstName']
             ?? $user['firstname']
@@ -279,7 +253,7 @@ function aiUserName(array $user): string
     );
 
     $last = trim(
-        (string) (
+        (string)(
             $user['last_name']
             ?? $user['lastName']
             ?? $user['lastname']
@@ -287,20 +261,26 @@ function aiUserName(array $user): string
         )
     );
 
-    $combined = trim($first . ' ' . $last);
+    $name = trim($first . ' ' . $last);
 
-    if ($combined !== '') {
-        return $combined;
+    if ($name !== '') {
+        return $name;
     }
 
     if (!empty($user['username'])) {
-        return trim((string) $user['username']);
+        return trim((string)$user['username']);
     }
 
     return 'Unknown user';
 }
 
-function aiWalletField(array $user): string
+/*
+|--------------------------------------------------------------------------
+| WALLET
+|--------------------------------------------------------------------------
+*/
+
+function invWalletField(array $user): string
 {
     if (array_key_exists('balance', $user)) {
         return 'balance';
@@ -327,18 +307,18 @@ function aiWalletField(array $user): string
     return 'balance';
 }
 
-function aiWalletBalance(array $user): int
+function invWalletBalance(array $user): int
 {
     if (array_key_exists('balance', $user)) {
-        return aiMoney($user['balance']);
+        return invMoney($user['balance']);
     }
 
     if (array_key_exists('wallet_balance', $user)) {
-        return aiMoney($user['wallet_balance']);
+        return invMoney($user['wallet_balance']);
     }
 
     if (array_key_exists('walletBalance', $user)) {
-        return aiMoney($user['walletBalance']);
+        return invMoney($user['walletBalance']);
     }
 
     if (
@@ -348,7 +328,7 @@ function aiWalletBalance(array $user): int
             $user['wallet'] instanceof MongoDB\Model\BSONDocument
         )
     ) {
-        return aiMoney(
+        return invMoney(
             $user['wallet']['balance'] ?? 0
         );
     }
@@ -356,7 +336,7 @@ function aiWalletBalance(array $user): int
     return 0;
 }
 
-function aiUserFilter(array $user): array
+function invUserFilter(array $user): array
 {
     if (isset($user['_id'])) {
         return [
@@ -389,36 +369,32 @@ function aiUserFilter(array $user): array
     }
 
     throw new RuntimeException(
-        'Investment owner cannot be identified.'
+        'Unable to identify investment owner.'
     );
 }
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN AUTHORIZATION
+| ADMIN AUTH
 |--------------------------------------------------------------------------
 */
 
-function aiAdminAllowed(array $user): bool
+function invIsAdmin(array $user): bool
 {
     $role = strtolower(
-        trim((string) ($user['role'] ?? ''))
+        trim((string)($user['role'] ?? ''))
     );
 
     $accountType = strtolower(
-        trim((string) ($user['account_type'] ?? ''))
+        trim((string)($user['account_type'] ?? ''))
     );
 
-    $isAdmin =
-        $user['is_admin'] ?? false;
-
-    $isAdminFlag =
-        $isAdmin === true ||
-        $isAdmin === 1 ||
-        $isAdmin === '1';
+    $isAdmin = $user['is_admin'] ?? false;
 
     return
-        $isAdminFlag ||
+        $isAdmin === true ||
+        $isAdmin === 1 ||
+        $isAdmin === '1' ||
         in_array(
             $role,
             [
@@ -441,15 +417,14 @@ function aiAdminAllowed(array $user): bool
         );
 }
 
-function aiAuthenticateAdmin(): array
+function invAuthenticateAdmin(): array
 {
     startSecureSession();
 
-    $sessionUserId =
-        currentUserId();
+    $sessionUserId = currentUserId();
 
     if (!$sessionUserId) {
-        adminInvestmentResponse(
+        investmentApiResponse(
             false,
             'Authentication required.',
             [],
@@ -459,14 +434,14 @@ function aiAuthenticateAdmin(): array
 
     global $users;
 
-    $admin = aiFindUser(
+    $admin = invFindUser(
         $users,
         $sessionUserId,
         $_SESSION['email'] ?? ''
     );
 
     if ($admin === null) {
-        adminInvestmentResponse(
+        investmentApiResponse(
             false,
             'Administrator account was not found.',
             [],
@@ -474,8 +449,8 @@ function aiAuthenticateAdmin(): array
         );
     }
 
-    if (!aiAdminAllowed($admin)) {
-        adminInvestmentResponse(
+    if (!invIsAdmin($admin)) {
+        investmentApiResponse(
             false,
             'Administrator access required.',
             [],
@@ -483,54 +458,48 @@ function aiAuthenticateAdmin(): array
         );
     }
 
-    $configuredAdminId = trim(
-        (string) (
-            getenv('ADMIN_USER_ID') ?: ''
-        )
+    $configuredId = trim(
+        (string)(getenv('ADMIN_USER_ID') ?: '')
     );
 
-    $configuredAdminEmail = strtolower(
+    $configuredEmail = strtolower(
         trim(
-            (string) (
-                getenv('ADMIN_EMAIL') ?: ''
-            )
+            (string)(getenv('ADMIN_EMAIL') ?: '')
         )
     );
 
-    $actualAdminId = aiString(
-        aiUserId($admin)
-    );
+    if ($configuredId !== '') {
 
-    $actualAdminEmail = strtolower(
-        trim(
-            (string) (
-                $admin['email'] ?? ''
-            )
-        )
-    );
-
-    if (
-        $configuredAdminId !== '' &&
-        $actualAdminId !== $configuredAdminId
-    ) {
-        adminInvestmentResponse(
-            false,
-            'Administrator authorization failed.',
-            [],
-            403
+        $actualId = invString(
+            invUserId($admin)
         );
+
+        if ($actualId !== $configuredId) {
+            investmentApiResponse(
+                false,
+                'Administrator authorization failed.',
+                [],
+                403
+            );
+        }
     }
 
-    if (
-        $configuredAdminEmail !== '' &&
-        $actualAdminEmail !== $configuredAdminEmail
-    ) {
-        adminInvestmentResponse(
-            false,
-            'Administrator authorization failed.',
-            [],
-            403
+    if ($configuredEmail !== '') {
+
+        $actualEmail = strtolower(
+            trim(
+                (string)($admin['email'] ?? '')
+            )
         );
+
+        if ($actualEmail !== $configuredEmail) {
+            investmentApiResponse(
+                false,
+                'Administrator authorization failed.',
+                [],
+                403
+            );
+        }
     }
 
     return $admin;
@@ -542,9 +511,9 @@ function aiAuthenticateAdmin(): array
 |--------------------------------------------------------------------------
 */
 
-function aiInvestmentAmount(array $investment): int
+function invAmount(array $investment): int
 {
-    return aiMoney(
+    return invMoney(
         $investment['amount']
         ?? $investment['principal']
         ?? $investment['investment_amount']
@@ -552,10 +521,10 @@ function aiInvestmentAmount(array $investment): int
     );
 }
 
-function aiInvestmentPlan(array $investment): string
+function invPlan(array $investment): string
 {
     return trim(
-        (string) (
+        (string)(
             $investment['plan']
             ?? $investment['plan_name']
             ?? $investment['package']
@@ -564,45 +533,58 @@ function aiInvestmentPlan(array $investment): string
     );
 }
 
-function aiInvestmentDuration(array $investment): int
+function invDuration(array $investment): int
 {
-    $duration = (int) (
-        $investment['duration']
+    $value = $investment['duration']
         ?? $investment['duration_days']
-        ?? 30
-    );
+        ?? 30;
 
-    return $duration > 0
-        ? $duration
-        : 30;
+    $duration = (int)$value;
+
+    return $duration > 0 ? $duration : 30;
 }
 
-function aiInvestmentRate(array $investment): float
+function invRate(array $investment): float
 {
-    $rate = (float) (
+    $rate = (float)(
         $investment['daily_rate']
         ?? $investment['dailyRate']
         ?? $investment['rate']
         ?? 0
     );
 
-    /*
-     * Support both:
-     * 0.10 = 10%
-     * 10   = 10%
-     */
     if ($rate > 1) {
         $rate /= 100;
     }
 
-    if ($rate < 0) {
-        $rate = 0;
-    }
-
-    return $rate;
+    return max(0, $rate);
 }
 
-function aiResolveInvestmentUser(
+function invDailyEarning(array $investment): int
+{
+    if (isset($investment['daily_earning'])) {
+        $stored = invMoney($investment['daily_earning']);
+
+        if ($stored > 0) {
+            return $stored;
+        }
+    }
+
+    if (isset($investment['dailyIncome'])) {
+        $stored = invMoney($investment['dailyIncome']);
+
+        if ($stored > 0) {
+            return $stored;
+        }
+    }
+
+    $amount = invAmount($investment);
+    $rate = invRate($investment);
+
+    return (int)round($amount * $rate);
+}
+
+function invOwner(
     MongoDB\Collection $users,
     array $investment
 ): ?array {
@@ -619,92 +601,49 @@ function aiResolveInvestmentUser(
         ?? $investment['user_email']
         ?? '';
 
-    return aiFindUser(
+    return invFindUser(
         $users,
         $userId,
         $email
     );
 }
 
-function aiDateValue(mixed $value): mixed
+/*
+|--------------------------------------------------------------------------
+| DATE SERIALIZATION
+|--------------------------------------------------------------------------
+*/
+
+function invDateOutput(mixed $value): mixed
 {
     if ($value instanceof MongoDB\BSON\UTCDateTime) {
-        return $value;
+        return $value->toDateTime()->format(DATE_ATOM);
     }
 
     if ($value instanceof DateTimeInterface) {
-        return new MongoDB\BSON\UTCDateTime(
-            $value->getTimestamp() * 1000
-        );
+        return $value->format(DATE_ATOM);
     }
 
-    if (is_numeric($value)) {
-        $timestamp = (int) $value;
-
-        if ($timestamp < 100000000000) {
-            $timestamp *= 1000;
-        }
-
-        return new MongoDB\BSON\UTCDateTime(
-            $timestamp
-        );
+    if ($value === null || $value === '') {
+        return null;
     }
 
-    if (is_string($value) && trim($value) !== '') {
-
-        try {
-
-            $date = new DateTimeImmutable(
-                trim($value),
-                new DateTimeZone('UTC')
-            );
-
-            return new MongoDB\BSON\UTCDateTime(
-                $date->getTimestamp() * 1000
-            );
-
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
-    return null;
-}
-
-function aiNextEarningDate(
-    MongoDB\BSON\UTCDateTime $now
-): MongoDB\BSON\UTCDateTime {
-
-    return new MongoDB\BSON\UTCDateTime(
-        $now->toDateTime()->getTimestamp() * 1000
-        + (86400 * 1000)
-    );
-}
-
-function aiMaturityDate(
-    MongoDB\BSON\UTCDateTime $now,
-    int $duration
-): MongoDB\BSON\UTCDateTime {
-
-    return new MongoDB\BSON\UTCDateTime(
-        $now->toDateTime()->getTimestamp() * 1000
-        + ($duration * 86400 * 1000)
-    );
+    return $value;
 }
 
 /*
 |--------------------------------------------------------------------------
-| FIND TRANSACTION
+| TRANSACTION RECORD
 |--------------------------------------------------------------------------
 */
 
-function aiRecordApprovalTransaction(
+function invCreateApprovalTransaction(
     MongoDB\Collection $transactions,
     string $investmentId,
     string $userId,
     int $amount,
-    int $walletBefore,
-    int $walletAfter,
+    int $before,
+    int $after,
     array $admin,
     MongoDB\BSON\UTCDateTime $now,
     ?MongoDB\Driver\Session $session = null
@@ -723,10 +662,9 @@ function aiRecordApprovalTransaction(
 
         'amount' => $amount,
 
-        'balance_before' => $walletBefore,
-        'balance_after' => $walletAfter,
-        'balance_change' =>
-            $walletAfter - $walletBefore,
+        'balance_before' => $before,
+        'balance_after' => $after,
+        'balance_change' => $after - $before,
 
         'status' => 'completed',
 
@@ -734,12 +672,13 @@ function aiRecordApprovalTransaction(
             'Investment approved by administrator.',
 
         'admin_id' =>
-            aiString(aiUserId($admin)),
+            invString(invUserId($admin)),
 
         'admin_email' =>
-            (string) (
-                $admin['email'] ?? ''
-            ),
+            (string)($admin['email'] ?? ''),
+
+        'reference' =>
+            'INVESTMENT_APPROVAL_' . $investmentId,
 
         'created_at' => $now,
     ];
@@ -764,13 +703,13 @@ function aiRecordApprovalTransaction(
     );
 }
 
-function aiRecordRejectionTransaction(
+function invCreateRejectionTransaction(
     MongoDB\Collection $transactions,
     string $investmentId,
     string $userId,
     int $amount,
-    int $walletBefore,
-    int $walletAfter,
+    int $before,
+    int $after,
     bool $refunded,
     array $admin,
     MongoDB\BSON\UTCDateTime $now,
@@ -792,32 +731,29 @@ function aiRecordRejectionTransaction(
         'category' => 'investment',
 
         'direction' =>
-            $refunded
-                ? 'credit'
-                : 'none',
+            $refunded ? 'credit' : 'none',
 
         'amount' => $amount,
 
-        'balance_before' => $walletBefore,
-        'balance_after' => $walletAfter,
-
-        'balance_change' =>
-            $walletAfter - $walletBefore,
+        'balance_before' => $before,
+        'balance_after' => $after,
+        'balance_change' => $after - $before,
 
         'status' => 'completed',
 
         'description' =>
             $refunded
-                ? 'Investment rejected and legacy principal refunded.'
+                ? 'Investment rejected and principal refunded.'
                 : 'Investment rejected without wallet deduction.',
 
         'admin_id' =>
-            aiString(aiUserId($admin)),
+            invString(invUserId($admin)),
 
         'admin_email' =>
-            (string) (
-                $admin['email'] ?? ''
-            ),
+            (string)($admin['email'] ?? ''),
+
+        'reference' =>
+            strtoupper($type) . '_' . $investmentId,
 
         'created_at' => $now,
     ];
@@ -844,147 +780,114 @@ function aiRecordRejectionTransaction(
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATE ADMIN
+| ADMIN AUTHENTICATION
 |--------------------------------------------------------------------------
 */
 
-$currentAdmin =
-    aiAuthenticateAdmin();
+$currentAdmin = invAuthenticateAdmin();
 
 /*
 |--------------------------------------------------------------------------
-| GET INVESTMENTS
+| GET
 |--------------------------------------------------------------------------
 */
 
-if (
-    ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET'
-) {
-
-    $statusFilter = strtolower(
-        trim(
-            (string) (
-                $_GET['status'] ?? ''
-            )
-        )
-    );
-
-    $search = trim(
-        (string) (
-            $_GET['search'] ?? ''
-        )
-    );
-
-    $filter = [];
-
-    if (
-        $statusFilter !== '' &&
-        $statusFilter !== 'all'
-    ) {
-        $filter['status'] =
-            $statusFilter;
-    }
-
-    if ($search !== '') {
-
-        $conditions = [];
-
-        $searchObjectId =
-            aiObjectId($search);
-
-        if ($searchObjectId !== null) {
-
-            $conditions[] = [
-                '_id' => $searchObjectId,
-            ];
-
-            $conditions[] = [
-                'user_id' => $searchObjectId,
-            ];
-        }
-
-        $conditions[] = [
-            'user_id' => $search,
-        ];
-
-        $conditions[] = [
-            'userId' => $search,
-        ];
-
-        $conditions[] = [
-            'email' => [
-                '$regex' =>
-                    preg_quote(
-                        $search,
-                        '/'
-                    ),
-                '$options' => 'i',
-            ],
-        ];
-
-        $conditions[] = [
-            'user_name' => [
-                '$regex' =>
-                    preg_quote(
-                        $search,
-                        '/'
-                    ),
-                '$options' => 'i',
-            ],
-        ];
-
-        $conditions[] = [
-            'name' => [
-                '$regex' =>
-                    preg_quote(
-                        $search,
-                        '/'
-                    ),
-                '$options' => 'i',
-            ],
-        ];
-
-        $conditions[] = [
-            'full_name' => [
-                '$regex' =>
-                    preg_quote(
-                        $search,
-                        '/'
-                    ),
-                '$options' => 'i',
-            ],
-        ];
-
-        $filter['$or'] =
-            $conditions;
-    }
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
 
     try {
 
-        $cursor =
-            $investments->find(
-                $filter,
-                [
-                    'sort' => [
-                        'created_at' => -1,
-                        '_id' => -1,
-                    ],
-                    'limit' => 500,
-                ]
+        $status = strtolower(
+            trim((string)($_GET['status'] ?? ''))
+        );
+
+        $search = trim(
+            (string)($_GET['search'] ?? '')
+        );
+
+        $filter = [];
+
+        if (
+            $status !== '' &&
+            $status !== 'all'
+        ) {
+            $filter['status'] = $status;
+        }
+
+        if ($search !== '') {
+
+            $or = [];
+
+            $searchObjectId = invObjectId($search);
+
+            if ($searchObjectId !== null) {
+                $or[] = [
+                    '_id' => $searchObjectId,
+                ];
+
+                $or[] = [
+                    'user_id' => $searchObjectId,
+                ];
+            }
+
+            $or[] = [
+                'user_id' => $search,
+            ];
+
+            $or[] = [
+                'userId' => $search,
+            ];
+
+            $safeSearch = preg_quote(
+                $search,
+                '/'
             );
+
+            $or[] = [
+                'email' => [
+                    '$regex' => $safeSearch,
+                    '$options' => 'i',
+                ],
+            ];
+
+            $or[] = [
+                'user_name' => [
+                    '$regex' => $safeSearch,
+                    '$options' => 'i',
+                ],
+            ];
+
+            $or[] = [
+                'name' => [
+                    '$regex' => $safeSearch,
+                    '$options' => 'i',
+                ],
+            ];
+
+            $filter['$or'] = $or;
+        }
+
+        $cursor = $investments->find(
+            $filter,
+            [
+                'sort' => [
+                    'created_at' => -1,
+                    '_id' => -1,
+                ],
+                'limit' => 500,
+            ]
+        );
 
         $items = [];
 
         foreach ($cursor as $document) {
 
-            $investment =
-                $document->getArrayCopy();
+            $investment = $document->getArrayCopy();
 
-            $id = aiString(
+            $id = invString(
                 $investment['_id'] ?? ''
             );
 
-            $userId = aiString(
+            $userId = invString(
                 $investment['user_id']
                 ?? $investment['userId']
                 ?? $investment['owner_id']
@@ -992,42 +895,10 @@ if (
                 ?? ''
             );
 
-            $amount =
-                aiInvestmentAmount(
-                    $investment
-                );
-
-            $plan =
-                aiInvestmentPlan(
-                    $investment
-                );
-
-            $status =
-                aiStatus(
-                    $investment['status']
-                    ?? 'pending'
-                );
-
-            $dailyRate =
-                aiInvestmentRate(
-                    $investment
-                );
-
-            $dailyEarning =
-                (int) round(
-                    $amount * $dailyRate
-                );
-
-            $duration =
-                aiInvestmentDuration(
-                    $investment
-                );
-
-            $owner =
-                aiResolveInvestmentUser(
-                    $users,
-                    $investment
-                );
+            $owner = invOwner(
+                $users,
+                $investment
+            );
 
             $userName = '';
             $userEmail = '';
@@ -1035,34 +906,28 @@ if (
 
             if ($owner !== null) {
 
-                $userName =
-                    aiUserName($owner);
+                $userName = invUserName($owner);
 
-                $userEmail =
-                    (string) (
-                        $owner['email'] ?? ''
-                    );
+                $userEmail = (string)(
+                    $owner['email'] ?? ''
+                );
 
-                $userPhone =
-                    (string) (
-                        $owner['phone']
-                        ?? $owner['phone_number']
-                        ?? $owner['phoneNumber']
-                        ?? ''
-                    );
+                $userPhone = (string)(
+                    $owner['phone']
+                    ?? $owner['phone_number']
+                    ?? $owner['phoneNumber']
+                    ?? ''
+                );
             }
 
-            /*
-             * Fallback to values stored on investment.
-             */
             if (
                 $userName === '' ||
                 $userName === 'Unknown user'
             ) {
-
                 $userName = trim(
-                    (string) (
+                    (string)(
                         $investment['user_name']
+                        ?? $investment['userName']
                         ?? $investment['name']
                         ?? $investment['full_name']
                         ?? ''
@@ -1071,49 +936,31 @@ if (
             }
 
             if ($userName === '') {
-                $userName =
-                    'Unknown user';
+                $userName = 'Unknown user';
             }
 
             if ($userEmail === '') {
-                $userEmail =
-                    (string) (
-                        $investment['email']
-                        ?? $investment['user_email']
-                        ?? ''
-                    );
+                $userEmail = (string)(
+                    $investment['email']
+                    ?? $investment['user_email']
+                    ?? ''
+                );
             }
 
             if ($userPhone === '') {
-                $userPhone =
-                    (string) (
-                        $investment['phone']
-                        ?? $investment['phone_number']
-                        ?? ''
-                    );
+                $userPhone = (string)(
+                    $investment['phone']
+                    ?? $investment['phone_number']
+                    ?? ''
+                );
             }
 
-            $createdAt =
-                $investment['created_at']
-                ?? $investment['createdAt']
-                ?? null;
+            $amount = invAmount($investment);
+            $rate = invRate($investment);
+            $dailyEarning = invDailyEarning($investment);
+            $duration = invDuration($investment);
 
-            $approvedAt =
-                $investment['approved_at']
-                ?? $investment['approvedAt']
-                ?? null;
-
-            $activatedAt =
-                $investment['activated_at']
-                ?? $investment['activatedAt']
-                ?? null;
-
-            $maturityDate =
-                $investment['maturity_date']
-                ?? $investment['maturityDate']
-                ?? null;
-
-            $items[] = [
+            $row = [
 
                 'id' => $id,
                 '_id' => $id,
@@ -1133,106 +980,104 @@ if (
                 'email' => $userEmail,
                 'phone' => $userPhone,
 
-                'plan' => $plan,
-                'plan_name' => $plan,
+                'plan' => invPlan($investment),
+                'plan_name' => invPlan($investment),
 
                 'amount' => $amount,
                 'principal' => $amount,
                 'investment_amount' => $amount,
 
-                'daily_rate' => $dailyRate,
-                'dailyRate' => $dailyRate,
+                'daily_rate' => $rate,
+                'dailyRate' => $rate,
 
-                'daily_earning' =>
-                    $dailyEarning,
+                'daily_earning' => $dailyEarning,
+                'dailyIncome' => $dailyEarning,
 
-                'dailyIncome' =>
-                    $dailyEarning,
+                'duration' => $duration,
 
-                'duration' =>
-                    $duration,
+                'status' => invStatus(
+                    $investment['status']
+                    ?? 'pending'
+                ),
 
-                'status' =>
-                    $status,
+                'balance_reserved' => (bool)(
+                    $investment['balance_reserved']
+                    ?? false
+                ),
 
-                'balance_reserved' =>
-                    (bool) (
-                        $investment[
-                            'balance_reserved'
-                        ] ?? false
-                    ),
+                'balance_deducted' => (bool)(
+                    $investment['balance_deducted']
+                    ?? false
+                ),
 
-                'balance_deducted' =>
-                    (bool) (
-                        $investment[
-                            'balance_deducted'
-                        ] ?? false
-                    ),
+                'principal_returned' => (bool)(
+                    $investment['principal_returned']
+                    ?? false
+                ),
 
-                'principal_returned' =>
-                    (bool) (
-                        $investment[
-                            'principal_returned'
-                        ] ?? false
-                    ),
+                'earnings_processed' => invMoney(
+                    $investment['earnings_processed']
+                    ?? 0
+                ),
 
-                'earnings_processed' =>
-                    aiMoney(
-                        $investment[
-                            'earnings_processed'
-                        ] ?? 0
-                    ),
+                'total_earnings_paid' => invMoney(
+                    $investment['total_earnings_paid']
+                    ?? 0
+                ),
 
-                'total_earnings_paid' =>
-                    aiMoney(
-                        $investment[
-                            'total_earnings_paid'
-                        ] ?? 0
-                    ),
-
-                'earning_days' =>
-                    (int) (
-                        $investment[
-                            'earning_days'
-                        ] ?? 0
-                    ),
+                'earning_days' => (int)(
+                    $investment['earning_days']
+                    ?? 0
+                ),
 
                 'last_earning_date' =>
-                    $investment[
-                        'last_earning_date'
-                    ] ?? null,
+                    invDateOutput(
+                        $investment['last_earning_date']
+                        ?? null
+                    ),
 
                 'next_earning_date' =>
-                    $investment[
-                        'next_earning_date'
-                    ] ?? null,
-
-                'earnings_paid' =>
-                    (bool) (
-                        $investment[
-                            'earnings_paid'
-                        ] ?? false
+                    invDateOutput(
+                        $investment['next_earning_date']
+                        ?? null
                     ),
 
                 'created_at' =>
-                    $createdAt,
+                    invDateOutput(
+                        $investment['created_at']
+                        ?? $investment['createdAt']
+                        ?? null
+                    ),
 
                 'approved_at' =>
-                    $approvedAt,
+                    invDateOutput(
+                        $investment['approved_at']
+                        ?? $investment['approvedAt']
+                        ?? null
+                    ),
 
                 'activated_at' =>
-                    $activatedAt,
+                    invDateOutput(
+                        $investment['activated_at']
+                        ?? $investment['activatedAt']
+                        ?? null
+                    ),
 
                 'maturity_date' =>
-                    $maturityDate,
+                    invDateOutput(
+                        $investment['maturity_date']
+                        ?? $investment['maturityDate']
+                        ?? null
+                    ),
 
                 'admin_note' =>
-                    (string) (
-                        $investment[
-                            'admin_note'
-                        ] ?? ''
+                    (string)(
+                        $investment['admin_note']
+                        ?? ''
                     ),
             ];
+
+            $items[] = $row;
         }
 
         /*
@@ -1259,38 +1104,39 @@ if (
             'completed_amount' => 0,
         ];
 
-        $allInvestments =
-            $investments->find([]);
+        /*
+         * Use the same cursor approach but only calculate
+         * statistics from MongoDB records.
+         */
+        $allCursor = $investments->find(
+            [],
+            [
+                'projection' => [
+                    'status' => 1,
+                    'amount' => 1,
+                    'principal' => 1,
+                    'investment_amount' => 1,
+                ],
+            ]
+        );
 
-        foreach (
-            $allInvestments as $document
-        ) {
+        foreach ($allCursor as $document) {
 
-            $row =
-                $document->getArrayCopy();
+            $row = $document->getArrayCopy();
 
-            $rowStatus =
-                aiStatus(
-                    $row['status']
-                    ?? 'pending'
-                );
+            $rowStatus = invStatus(
+                $row['status'] ?? 'pending'
+            );
 
-            $rowAmount =
-                aiInvestmentAmount($row);
+            $rowAmount = invAmount($row);
 
             $stats['total']++;
 
-            if (
-                array_key_exists(
-                    $rowStatus,
-                    $stats
-                )
-            ) {
+            if (isset($stats[$rowStatus])) {
                 $stats[$rowStatus]++;
             }
 
-            $stats['total_amount'] +=
-                $rowAmount;
+            $stats['total_amount'] += $rowAmount;
 
             if (
                 in_array(
@@ -1303,8 +1149,7 @@ if (
                     true
                 )
             ) {
-                $stats['pending_amount'] +=
-                    $rowAmount;
+                $stats['pending_amount'] += $rowAmount;
             }
 
             if (
@@ -1318,34 +1163,22 @@ if (
                     true
                 )
             ) {
-                $stats['active_amount'] +=
-                    $rowAmount;
+                $stats['active_amount'] += $rowAmount;
             }
 
-            if (
-                $rowStatus ===
-                'completed'
-            ) {
-                $stats['completed_amount'] +=
-                    $rowAmount;
+            if ($rowStatus === 'completed') {
+                $stats['completed_amount'] += $rowAmount;
             }
         }
 
-        adminInvestmentResponse(
+        investmentApiResponse(
             true,
             'Investments loaded successfully.',
             [
-                'investments' =>
-                    $items,
-
-                'data' =>
-                    $items,
-
-                'total' =>
-                    count($items),
-
-                'stats' =>
-                    $stats,
+                'investments' => $items,
+                'data' => $items,
+                'total' => count($items),
+                'stats' => $stats,
             ]
         );
 
@@ -1356,7 +1189,7 @@ if (
             $e->getMessage()
         );
 
-        adminInvestmentResponse(
+        investmentApiResponse(
             false,
             'Failed to load investments.',
             [],
@@ -1367,14 +1200,13 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| POST ONLY BELOW THIS POINT
+| POST
 |--------------------------------------------------------------------------
 */
 
-if (
-    ($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST'
-) {
-    adminInvestmentResponse(
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+
+    investmentApiResponse(
         false,
         'Method not allowed.',
         [],
@@ -1384,33 +1216,23 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| READ JSON
+| READ REQUEST
 |--------------------------------------------------------------------------
 */
 
-$rawBody =
-    file_get_contents(
-        'php://input'
-    );
+$raw = file_get_contents('php://input');
 
-$body =
-    json_decode(
-        $rawBody ?: '{}',
-        true
-    );
+$body = json_decode(
+    $raw ?: '{}',
+    true
+);
 
 if (!is_array($body)) {
     $body = [];
 }
 
-/*
-|--------------------------------------------------------------------------
-| INPUT
-|--------------------------------------------------------------------------
-*/
-
 $investmentId = trim(
-    (string) (
+    (string)(
         $body['investment_id']
         ?? $body['investmentId']
         ?? $body['id']
@@ -1423,7 +1245,7 @@ $investmentId = trim(
 
 $action = strtolower(
     trim(
-        (string) (
+        (string)(
             $body['action']
             ?? $body['status']
             ?? $_POST['action']
@@ -1434,20 +1256,19 @@ $action = strtolower(
 );
 
 $adminNote = trim(
-    (string) (
+    (string)(
         $body['admin_note']
         ?? $body['adminNote']
         ?? $body['note']
         ?? $body['reason']
         ?? $body['rejection_reason']
-        ?? $_POST['admin_note']
-        ?? $_POST['note']
         ?? ''
     )
 );
 
 if ($investmentId === '') {
-    adminInvestmentResponse(
+
+    investmentApiResponse(
         false,
         'Investment ID is required.',
         [],
@@ -1455,19 +1276,17 @@ if ($investmentId === '') {
     );
 }
 
-if (
-    !in_array(
-        $action,
-        [
-            'approve',
-            'approved',
-            'reject',
-            'rejected',
-        ],
-        true
-    )
-) {
-    adminInvestmentResponse(
+$approve =
+    $action === 'approve' ||
+    $action === 'approved';
+
+$reject =
+    $action === 'reject' ||
+    $action === 'rejected';
+
+if (!$approve && !$reject) {
+
+    investmentApiResponse(
         false,
         'Invalid investment action.',
         [],
@@ -1476,10 +1295,11 @@ if (
 }
 
 $investmentObjectId =
-    aiObjectId($investmentId);
+    invObjectId($investmentId);
 
 if ($investmentObjectId === null) {
-    adminInvestmentResponse(
+
+    investmentApiResponse(
         false,
         'Invalid investment ID.',
         [],
@@ -1495,14 +1315,13 @@ if ($investmentObjectId === null) {
 
 try {
 
-    $investmentDocument =
-        $investments->findOne([
-            '_id' =>
-                $investmentObjectId,
-        ]);
+    $document = $investments->findOne([
+        '_id' => $investmentObjectId,
+    ]);
 
-    if ($investmentDocument === null) {
-        adminInvestmentResponse(
+    if ($document === null) {
+
+        investmentApiResponse(
             false,
             'Investment not found.',
             [],
@@ -1511,21 +1330,19 @@ try {
     }
 
     $investment =
-        $investmentDocument->getArrayCopy();
+        $document->getArrayCopy();
 
-    $currentStatus =
-        aiStatus(
-            $investment['status']
-            ?? 'pending'
-        );
+    $status = invStatus(
+        $investment['status']
+        ?? 'pending'
+    );
 
     $amount =
-        aiInvestmentAmount(
-            $investment
-        );
+        invAmount($investment);
 
     if ($amount <= 0) {
-        adminInvestmentResponse(
+
+        investmentApiResponse(
             false,
             'Investment amount is invalid.',
             [],
@@ -1534,82 +1351,16 @@ try {
     }
 
     /*
-     * Final state protection.
+     * Resolve owner.
      */
-    if (
-        in_array(
-            $currentStatus,
-            [
-                'approved',
-                'active',
-                'running',
-                'completed',
-                'rejected',
-                'cancelled',
-            ],
-            true
-        )
-    ) {
+    $owner = invOwner(
+        $users,
+        $investment
+    );
 
-        adminInvestmentResponse(
-            false,
-            'This investment has already been processed.',
-            [
-                'investment_id' =>
-                    $investmentId,
+    if ($owner === null) {
 
-                'status' =>
-                    $currentStatus,
-
-                'balance_deducted' =>
-                    (bool) (
-                        $investment[
-                            'balance_deducted'
-                        ] ?? false
-                    ),
-            ],
-            409
-        );
-    }
-
-    /*
-     * Only pending/processing investments
-     * may be handled here.
-     */
-    if (
-        !in_array(
-            $currentStatus,
-            [
-                'pending',
-                'approval_processing',
-                'processing',
-            ],
-            true
-        )
-    ) {
-
-        adminInvestmentResponse(
-            false,
-            'This investment is not available for administrative processing.',
-            [
-                'status' =>
-                    $currentStatus,
-            ],
-            409
-        );
-    }
-
-    /*
-     * Resolve investment owner.
-     */
-    $investmentUser =
-        aiResolveInvestmentUser(
-            $users,
-            $investment
-        );
-
-    if ($investmentUser === null) {
-        adminInvestmentResponse(
+        investmentApiResponse(
             false,
             'Investment owner could not be found.',
             [],
@@ -1617,15 +1368,13 @@ try {
         );
     }
 
-    $investmentUserId =
-        aiString(
-            aiUserId(
-                $investmentUser
-            )
-        );
+    $ownerId = invString(
+        invUserId($owner)
+    );
 
-    if ($investmentUserId === '') {
-        adminInvestmentResponse(
+    if ($ownerId === '') {
+
+        investmentApiResponse(
             false,
             'Investment owner ID is missing.',
             [],
@@ -1634,281 +1383,209 @@ try {
     }
 
     $walletField =
-        aiWalletField(
-            $investmentUser
-        );
+        invWalletField($owner);
 
-    $walletBefore =
-        aiWalletBalance(
-            $investmentUser
-        );
-
-    $balanceWasDeducted =
-        (bool) (
-            $investment[
-                'balance_deducted'
-            ] ?? false
+    $balanceDeducted =
+        (bool)(
+            $investment['balance_deducted']
+            ?? false
         );
 
     $principalReturned =
-        (bool) (
-            $investment[
-                'principal_returned'
-            ] ?? false
+        (bool)(
+            $investment['principal_returned']
+            ?? false
         );
 
-    $now =
-        aiNow();
-
     /*
-    |--------------------------------------------------------------------------
-    | APPROVE
-    |--------------------------------------------------------------------------
-    */
+     |--------------------------------------------------------------------------
+     | APPROVE
+     |--------------------------------------------------------------------------
+     */
 
-    if (
-        $action === 'approve' ||
-        $action === 'approved'
-    ) {
+    if ($approve) {
+
+        if (
+            in_array(
+                $status,
+                [
+                    'approved',
+                    'active',
+                    'running',
+                    'completed',
+                ],
+                true
+            )
+        ) {
+
+            investmentApiResponse(
+                false,
+                'This investment has already been approved.',
+                [
+                    'investment_id' => $investmentId,
+                    'status' => $status,
+                    'balance_deducted' =>
+                        $balanceDeducted,
+                ],
+                409
+            );
+        }
+
+        if ($status === 'rejected') {
+
+            investmentApiResponse(
+                false,
+                'A rejected investment cannot be approved.',
+                [],
+                409
+            );
+        }
+
+        if (
+            !in_array(
+                $status,
+                [
+                    'pending',
+                    'approval_processing',
+                    'processing',
+                ],
+                true
+            )
+        ) {
+
+            investmentApiResponse(
+                false,
+                'This investment is not available for approval.',
+                [
+                    'status' => $status,
+                ],
+                409
+            );
+        }
 
         /*
-         * LEGACY RECORD
-         *
-         * If this investment already had its principal
-         * deducted, approval must NOT deduct again.
+         * Existing legacy investment.
+         * Never deduct again.
          */
-        if ($balanceWasDeducted) {
+        if ($balanceDeducted) {
 
-            $dailyRate =
-                aiInvestmentRate(
-                    $investment
-                );
+            $now = invNow();
+
+            $rate = invRate($investment);
+
+            $dailyEarning =
+                invDailyEarning($investment);
 
             $duration =
-                aiInvestmentDuration(
-                    $investment
-                );
+                invDuration($investment);
 
-            /*
-             * Do not invent a rate here.
-             * Preserve the investment's stored terms.
-             */
-            $dailyEarning =
-                (int) round(
-                    $amount * $dailyRate
-                );
+            $activatedAt =
+                $investment['activated_at']
+                ?? $investment['approved_at']
+                ?? $now;
 
-            $nextEarningDate =
-                aiNextEarningDate(
-                    $now
-                );
+            $maturity =
+                $investment['maturity_date']
+                ?? null;
 
-            $maturityDate =
-                aiMaturityDate(
-                    $now,
-                    $duration
-                );
+            if ($maturity === null) {
 
-            $session =
-                $client->startSession();
+                $timestamp =
+                    $now->toDateTime()->getTimestamp()
+                    + ($duration * 86400);
 
-            try {
-
-                $session->withTransaction(
-                    function (
-                        MongoDB\Driver\Session $session
-                    ) use (
-                        $investments,
-                        $transactions,
-                        $investmentObjectId,
-                        $investmentId,
-                        $investmentUserId,
-                        $amount,
-                        $walletBefore,
-                        $currentStatus,
-                        $currentAdmin,
-                        $investment,
-                        $now,
-                        $dailyRate,
-                        $dailyEarning,
-                        $duration,
-                        $nextEarningDate,
-                        $maturityDate,
-                        $adminNote,
-                        $session
-                    ): void {
-
-                        $updateSet = [
-
-                            'status' =>
-                                'approved',
-
-                            'approved_at' =>
-                                $investment[
-                                    'approved_at'
-                                ]
-                                ?? $now,
-
-                            'activated_at' =>
-                                $investment[
-                                    'activated_at'
-                                ]
-                                ?? $now,
-
-                            'start_date' =>
-                                $investment[
-                                    'start_date'
-                                ]
-                                ?? $now,
-
-                            'maturity_date' =>
-                                $investment[
-                                    'maturity_date'
-                                ]
-                                ?? $maturityDate,
-
-                            'updated_at' =>
-                                $now,
-
-                            'balance_deducted' =>
-                                true,
-
-                            'admin_approved' =>
-                                true,
-
-                            'admin_id' =>
-                                aiString(
-                                    aiUserId(
-                                        $currentAdmin
-                                    )
-                                ),
-
-                            'admin_email' =>
-                                (string) (
-                                    $currentAdmin[
-                                        'email'
-                                    ] ?? ''
-                                ),
-
-                            'daily_rate' =>
-                                $dailyRate,
-
-                            'daily_earning' =>
-                                $dailyEarning,
-
-                            'duration' =>
-                                $duration,
-
-                            'next_earning_date' =>
-                                $investment[
-                                    'next_earning_date'
-                                ]
-                                ?? $nextEarningDate,
-                        ];
-
-                        if ($adminNote !== '') {
-                            $updateSet[
-                                'admin_note'
-                            ] = $adminNote;
-                        }
-
-                        $result =
-                            $investments->updateOne(
-                                [
-                                    '_id' =>
-                                        $investmentObjectId,
-
-                                    'status' =>
-                                        $currentStatus,
-
-                                    'balance_deducted' =>
-                                        true,
-                                ],
-                                [
-                                    '$set' =>
-                                        $updateSet,
-                                ],
-                                [
-                                    'session' =>
-                                        $session,
-                                ]
-                            );
-
-                        if (
-                            $result->getModifiedCount() !== 1
-                        ) {
-                            throw new RuntimeException(
-                                'Investment was already processed.'
-                            );
-                        }
-
-                        aiRecordApprovalTransaction(
-                            $transactions,
-                            $investmentId,
-                            $investmentUserId,
-                            $amount,
-                            $walletBefore,
-                            $walletBefore,
-                            $currentAdmin,
-                            $now,
-                            $session
-                        );
-                    }
-                );
-
-            } finally {
-                $session->endSession();
+                $maturity =
+                    new MongoDB\BSON\UTCDateTime(
+                        $timestamp * 1000
+                    );
             }
 
-            try {
+            $set = [
 
-                audit(
-                    'investment_approved_legacy',
+                'status' => 'approved',
+
+                'admin_approved' => true,
+
+                'approved_at' =>
+                    $investment['approved_at']
+                    ?? $now,
+
+                'activated_at' =>
+                    $activatedAt,
+
+                'maturity_date' =>
+                    $maturity,
+
+                'daily_rate' =>
+                    $rate,
+
+                'daily_earning' =>
+                    $dailyEarning,
+
+                'duration' =>
+                    $duration,
+
+                'balance_deducted' =>
+                    true,
+
+                'updated_at' =>
+                    $now,
+
+                'admin_id' =>
+                    invString(
+                        invUserId(
+                            $currentAdmin
+                        )
+                    ),
+
+                'admin_email' =>
+                    (string)(
+                        $currentAdmin['email']
+                        ?? ''
+                    ),
+            ];
+
+            if ($adminNote !== '') {
+                $set['admin_note'] =
+                    $adminNote;
+            }
+
+            $result =
+                $investments->updateOne(
                     [
-                        'investment_id' =>
-                            $investmentId,
+                        '_id' =>
+                            $investmentObjectId,
 
-                        'user_id' =>
-                            $investmentUserId,
+                        'status' =>
+                            $status,
 
-                        'amount' =>
-                            $amount,
-
-                        'wallet_deducted' =>
-                            false,
-
-                        'already_deducted' =>
+                        'balance_deducted' =>
                             true,
-
-                        'admin_id' =>
-                            aiString(
-                                aiUserId(
-                                    $currentAdmin
-                                )
-                            ),
+                    ],
+                    [
+                        '$set' => $set,
                     ]
                 );
 
-            } catch (Throwable $auditError) {
+            /*
+             * Use matched count, not modified count.
+             */
+            if ($result->getMatchedCount() !== 1) {
 
-                error_log(
-                    'Legacy investment audit error: ' .
-                    $auditError->getMessage()
+                investmentApiResponse(
+                    false,
+                    'Investment was already processed.',
+                    [],
+                    409
                 );
             }
 
-            adminInvestmentResponse(
+            investmentApiResponse(
                 true,
                 'Investment approved. Its principal had already been deducted.',
                 [
                     'investment_id' =>
                         $investmentId,
-
-                    'user_id' =>
-                        $investmentUserId,
-
-                    'amount' =>
-                        $amount,
 
                     'status' =>
                         'approved',
@@ -1919,25 +1596,39 @@ try {
                     'already_deducted' =>
                         true,
 
-                    'wallet_before' =>
-                        $walletBefore,
-
-                    'wallet_after' =>
-                        $walletBefore,
+                    'amount' =>
+                        $amount,
                 ]
             );
         }
 
         /*
-         * NEW RECORD
+         * NEW INVESTMENT
          *
-         * The investment was created without deduction.
-         * Deduct principal now, during approval.
+         * Check current wallet.
          */
+        $owner = $users->findOne(
+            invUserFilter($owner)
+        );
+
+        if ($owner === null) {
+
+            investmentApiResponse(
+                false,
+                'Investment owner could not be loaded.',
+                [],
+                404
+            );
+        }
+
+        $walletBefore =
+            invWalletBalance(
+                $owner->getArrayCopy()
+            );
 
         if ($walletBefore < $amount) {
 
-            adminInvestmentResponse(
+            investmentApiResponse(
                 false,
                 'Insufficient wallet balance to approve this investment.',
                 [
@@ -1955,64 +1646,58 @@ try {
             );
         }
 
-        $dailyRate =
-            aiInvestmentRate(
-                $investment
-            );
-
         /*
-         * The investment must already contain its
-         * configured rate. Do not silently create one.
+         * Do not invent a return rate.
+         * The investment must contain its configured rate.
          */
-        if ($dailyRate <= 0) {
+        $rate =
+            invRate($investment);
 
-            adminInvestmentResponse(
+        if ($rate <= 0) {
+
+            investmentApiResponse(
                 false,
-                'Investment daily return rate is missing. Please correct the investment plan before approving it.',
+                'Investment daily return rate is missing.',
                 [],
                 400
             );
         }
 
-        $duration =
-            aiInvestmentDuration(
-                $investment
-            );
-
         $dailyEarning =
-            (int) round(
-                $amount * $dailyRate
-            );
+            invDailyEarning($investment);
 
-        $nextEarningDate =
-            aiNextEarningDate(
-                $now
-            );
+        $duration =
+            invDuration($investment);
+
+        $now =
+            invNow();
+
+        $maturityTimestamp =
+            $now->toDateTime()->getTimestamp()
+            + ($duration * 86400);
 
         $maturityDate =
-            aiMaturityDate(
-                $now,
-                $duration
+            new MongoDB\BSON\UTCDateTime(
+                $maturityTimestamp * 1000
             );
 
         $walletAfter =
-            $walletBefore -
-            $amount;
+            $walletBefore - $amount;
 
-        /*
-         * Atomic wallet condition.
-         */
         $userFilter =
-            aiUserFilter(
-                $investmentUser
+            invUserFilter(
+                $owner->getArrayCopy()
             );
 
+        /*
+         * Critical atomic condition.
+         */
         $userFilter[$walletField] = [
             '$gte' => $amount,
         ];
 
         /*
-         * MongoDB transaction.
+         * Use MongoDB transaction.
          */
         $session =
             $client->startSession();
@@ -2028,28 +1713,27 @@ try {
                     $transactions,
                     $investmentObjectId,
                     $investmentId,
-                    $investmentUser,
-                    $investmentUserId,
+                    $owner,
+                    $ownerId,
                     $amount,
                     $walletField,
                     $walletBefore,
                     $walletAfter,
-                    $currentStatus,
+                    $status,
                     $currentAdmin,
                     $now,
-                    $dailyRate,
+                    $rate,
                     $dailyEarning,
                     $duration,
-                    $nextEarningDate,
                     $maturityDate,
                     $adminNote,
                     $userFilter
                 ): void {
 
                     /*
-                     * 1. Deduct wallet exactly once.
+                     * 1. Deduct wallet.
                      */
-                    $deductResult =
+                    $walletResult =
                         $users->updateOne(
                             $userFilter,
                             [
@@ -2070,25 +1754,35 @@ try {
                         );
 
                     if (
-                        $deductResult->getModifiedCount() !== 1
+                        $walletResult->getMatchedCount() !== 1
                     ) {
+
                         throw new RuntimeException(
                             'Wallet balance changed or is insufficient.'
                         );
                     }
 
                     /*
-                     * 2. Resolve user information.
+                     * 2. Prepare investment.
                      */
-                    $resolvedName =
-                        aiUserName(
-                            $investmentUser
+                    $ownerArray =
+                        $owner instanceof
+                        MongoDB\Model\BSONDocument
+                            ? $owner->getArrayCopy()
+                            : $owner;
+
+                    $name =
+                        invUserName(
+                            $ownerArray
                         );
 
-                    $updateSet = [
+                    $set = [
 
                         'status' =>
                             'approved',
+
+                        'admin_approved' =>
+                            true,
 
                         'approved_at' =>
                             $now,
@@ -2111,25 +1805,11 @@ try {
                         'balance_deducted' =>
                             true,
 
-                        'admin_approved' =>
-                            true,
-
-                        'admin_id' =>
-                            aiString(
-                                aiUserId(
-                                    $currentAdmin
-                                )
-                            ),
-
-                        'admin_email' =>
-                            (string) (
-                                $currentAdmin[
-                                    'email'
-                                ] ?? ''
-                            ),
+                        'principal_returned' =>
+                            false,
 
                         'daily_rate' =>
-                            $dailyRate,
+                            $rate,
 
                         'daily_earning' =>
                             $dailyEarning,
@@ -2138,21 +1818,21 @@ try {
                             $duration,
 
                         'earnings_processed' =>
-                            aiMoney(
+                            invMoney(
                                 $investment[
                                     'earnings_processed'
                                 ] ?? 0
                             ),
 
                         'total_earnings_paid' =>
-                            aiMoney(
+                            invMoney(
                                 $investment[
                                     'total_earnings_paid'
                                 ] ?? 0
                             ),
 
                         'earning_days' =>
-                            (int) (
+                            (int)(
                                 $investment[
                                     'earning_days'
                                 ] ?? 0
@@ -2164,71 +1844,67 @@ try {
                             ] ?? null,
 
                         'next_earning_date' =>
-                            $nextEarningDate,
-
-                        'earnings_paid' =>
-                            (bool) (
-                                $investment[
-                                    'earnings_paid'
-                                ] ?? false
+                            new MongoDB\BSON\UTCDateTime(
+                                (
+                                    $now
+                                    ->toDateTime()
+                                    ->getTimestamp()
+                                    + 86400
+                                ) * 1000
                             ),
 
-                        'principal_returned' =>
-                            false,
+                        'admin_id' =>
+                            invString(
+                                invUserId(
+                                    $currentAdmin
+                                )
+                            ),
+
+                        'admin_email' =>
+                            (string)(
+                                $currentAdmin['email']
+                                ?? ''
+                            ),
                     ];
 
                     if (
-                        $resolvedName !==
-                        'Unknown user'
+                        $name !== '' &&
+                        $name !== 'Unknown user'
                     ) {
 
-                        $updateSet[
-                            'user_name'
-                        ] =
-                            $resolvedName;
+                        $set['user_name'] =
+                            $name;
 
-                        $updateSet[
-                            'name'
-                        ] =
-                            $resolvedName;
+                        $set['userName'] =
+                            $name;
 
-                        $updateSet[
-                            'full_name'
-                        ] =
-                            $resolvedName;
+                        $set['name'] =
+                            $name;
+
+                        $set['full_name'] =
+                            $name;
                     }
 
                     if (
                         !empty(
-                            $investmentUser[
-                                'email'
-                            ]
+                            $ownerArray['email']
                         )
                     ) {
 
-                        $updateSet[
-                            'email'
-                        ] =
-                            (string) (
-                                $investmentUser[
-                                    'email'
-                                ]
+                        $set['email'] =
+                            (string)(
+                                $ownerArray['email']
                             );
                     }
 
                     if ($adminNote !== '') {
-
-                        $updateSet[
-                            'admin_note'
-                        ] =
+                        $set['admin_note'] =
                             $adminNote;
                     }
 
                     /*
-                     * 3. Approve only if still pending.
-                     *
-                     * The balance_deducted condition prevents
-                     * a second approval from deducting again.
+                     * 3. Change only a request that has
+                     * not already had its balance deducted.
                      */
                     $investmentResult =
                         $investments->updateOne(
@@ -2237,17 +1913,16 @@ try {
                                     $investmentObjectId,
 
                                 'status' =>
-                                    $currentStatus,
+                                    $status,
 
                                 'balance_deducted' =>
                                     [
-                                        '$ne' =>
-                                            true,
+                                        '$ne' => true,
                                     ],
                             ],
                             [
                                 '$set' =>
-                                    $updateSet,
+                                    $set,
                             ],
                             [
                                 'session' =>
@@ -2257,7 +1932,7 @@ try {
 
                     if (
                         $investmentResult
-                            ->getModifiedCount() !== 1
+                            ->getMatchedCount() !== 1
                     ) {
 
                         throw new RuntimeException(
@@ -2268,10 +1943,10 @@ try {
                     /*
                      * 4. Accounting transaction.
                      */
-                    aiRecordApprovalTransaction(
+                    invCreateApprovalTransaction(
                         $transactions,
                         $investmentId,
-                        $investmentUserId,
+                        $ownerId,
                         $amount,
                         $walletBefore,
                         $walletAfter,
@@ -2298,7 +1973,7 @@ try {
                         $investmentId,
 
                     'user_id' =>
-                        $investmentUserId,
+                        $ownerId,
 
                     'amount' =>
                         $amount,
@@ -2309,44 +1984,32 @@ try {
                     'wallet_after' =>
                         $walletAfter,
 
-                    'wallet_deducted' =>
-                        true,
-
-                    'daily_rate' =>
-                        $dailyRate,
-
-                    'daily_earning' =>
-                        $dailyEarning,
-
-                    'duration' =>
-                        $duration,
-
                     'admin_id' =>
-                        aiString(
-                            aiUserId(
+                        invString(
+                            invUserId(
                                 $currentAdmin
                             )
                         ),
                 ]
             );
 
-        } catch (Throwable $auditError) {
+        } catch (Throwable $e) {
 
             error_log(
-                'Investment approval audit error: ' .
-                $auditError->getMessage()
+                'Investment audit failed: ' .
+                $e->getMessage()
             );
         }
 
-        adminInvestmentResponse(
+        investmentApiResponse(
             true,
-            'Investment approved successfully. The wallet principal was deducted once.',
+            'Investment approved successfully.',
             [
                 'investment_id' =>
                     $investmentId,
 
                 'user_id' =>
-                    $investmentUserId,
+                    $ownerId,
 
                 'amount' =>
                     $amount,
@@ -2357,9 +2020,6 @@ try {
                 'wallet_deducted' =>
                     true,
 
-                'already_deducted' =>
-                    false,
-
                 'wallet_before' =>
                     $walletBefore,
 
@@ -2367,42 +2027,112 @@ try {
                     $walletAfter,
 
                 'daily_rate' =>
-                    $dailyRate,
+                    $rate,
 
                 'daily_earning' =>
                     $dailyEarning,
 
                 'duration' =>
                     $duration,
-
-                'next_earning_date' =>
-                    $nextEarningDate,
             ]
         );
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | REJECT
-    |--------------------------------------------------------------------------
-    */
+     |--------------------------------------------------------------------------
+     | REJECT
+     |--------------------------------------------------------------------------
+     */
 
-    if (
-        $action === 'reject' ||
-        $action === 'rejected'
-    ) {
+    if ($reject) {
 
-        /*
-         * Refund only a legacy investment whose principal
-         * was actually deducted and has not already been
-         * returned.
-         */
-        $refundRequired =
-            $balanceWasDeducted &&
-            !$principalReturned;
+        if (
+            in_array(
+                $status,
+                [
+                    'approved',
+                    'active',
+                    'running',
+                    'completed',
+                ],
+                true
+            )
+        ) {
+
+            investmentApiResponse(
+                false,
+                'An approved investment cannot be rejected from this screen.',
+                [],
+                409
+            );
+        }
+
+        if ($status === 'rejected') {
+
+            investmentApiResponse(
+                false,
+                'This investment has already been rejected.',
+                [],
+                409
+            );
+        }
+
+        if (
+            !in_array(
+                $status,
+                [
+                    'pending',
+                    'approval_processing',
+                    'processing',
+                ],
+                true
+            )
+        ) {
+
+            investmentApiResponse(
+                false,
+                'This investment is not available for rejection.',
+                [],
+                409
+            );
+        }
+
+        $ownerDocument =
+            $users->findOne(
+                invUserFilter($owner)
+            );
+
+        if ($ownerDocument === null) {
+
+            investmentApiResponse(
+                false,
+                'Investment owner could not be loaded.',
+                [],
+                404
+            );
+        }
+
+        $ownerArray =
+            $ownerDocument->getArrayCopy();
+
+        $walletBefore =
+            invWalletBalance(
+                $ownerArray
+            );
 
         $walletAfter =
             $walletBefore;
+
+        /*
+         * Only legacy records that actually had their
+         * principal deducted require a refund.
+         */
+        $refund =
+            $balanceDeducted &&
+            !$principalReturned;
+
+        $now =
+            invNow();
 
         $session =
             $client->startSession();
@@ -2418,33 +2148,33 @@ try {
                     $transactions,
                     $investmentObjectId,
                     $investmentId,
-                    $investmentUser,
-                    $investmentUserId,
+                    $ownerArray,
+                    $ownerId,
                     $amount,
+                    $walletField,
                     $walletBefore,
                     &$walletAfter,
-                    $walletField,
-                    $refundRequired,
+                    $status,
+                    $refund,
                     $principalReturned,
-                    $currentStatus,
                     $currentAdmin,
                     $now,
                     $adminNote
                 ): void {
 
                     /*
-                     * Refund legacy deduction.
+                     * Legacy refund.
                      */
-                    if ($refundRequired) {
+                    if ($refund) {
 
-                        $userFilter =
-                            aiUserFilter(
-                                $investmentUser
+                        $refundFilter =
+                            invUserFilter(
+                                $ownerArray
                             );
 
                         $refundResult =
                             $users->updateOne(
-                                $userFilter,
+                                $refundFilter,
                                 [
                                     '$inc' => [
                                         $walletField =>
@@ -2464,7 +2194,7 @@ try {
 
                         if (
                             $refundResult
-                                ->getModifiedCount() !== 1
+                                ->getMatchedCount() !== 1
                         ) {
 
                             throw new RuntimeException(
@@ -2477,10 +2207,7 @@ try {
                             $amount;
                     }
 
-                    /*
-                     * Mark rejected.
-                     */
-                    $updateSet = [
+                    $set = [
 
                         'status' =>
                             'rejected',
@@ -2495,59 +2222,47 @@ try {
                             false,
 
                         'admin_id' =>
-                            aiString(
-                                aiUserId(
+                            invString(
+                                invUserId(
                                     $currentAdmin
                                 )
                             ),
 
                         'admin_email' =>
-                            (string) (
-                                $currentAdmin[
-                                    'email'
-                                ] ?? ''
+                            (string)(
+                                $currentAdmin['email']
+                                ?? ''
                             ),
 
                         'balance_reserved' =>
                             false,
+
+                        'balance_refunded' =>
+                            $refund,
+
                     ];
 
-                    if ($refundRequired) {
+                    if ($refund) {
 
-                        $updateSet[
-                            'principal_returned'
-                        ] = true;
+                        $set['principal_returned'] =
+                            true;
 
-                        $updateSet[
-                            'balance_refunded'
-                        ] = true;
-
-                        $updateSet[
-                            'refunded_at'
-                        ] = $now;
+                        $set['refunded_at'] =
+                            $now;
 
                     } else {
 
-                        $updateSet[
-                            'principal_returned'
-                        ] =
+                        $set['principal_returned'] =
                             $principalReturned;
-
-                        $updateSet[
-                            'balance_refunded'
-                        ] = false;
                     }
 
                     if ($adminNote !== '') {
-
-                        $updateSet[
-                            'admin_note'
-                        ] =
+                        $set['admin_note'] =
                             $adminNote;
                     }
 
                     /*
-                     * Only process the current state.
+                     * Change only current request.
                      */
                     $result =
                         $investments->updateOne(
@@ -2556,11 +2271,11 @@ try {
                                     $investmentObjectId,
 
                                 'status' =>
-                                    $currentStatus,
+                                    $status,
                             ],
                             [
                                 '$set' =>
-                                    $updateSet,
+                                    $set,
                             ],
                             [
                                 'session' =>
@@ -2569,7 +2284,7 @@ try {
                         );
 
                     if (
-                        $result->getModifiedCount() !== 1
+                        $result->getMatchedCount() !== 1
                     ) {
 
                         throw new RuntimeException(
@@ -2577,17 +2292,14 @@ try {
                         );
                     }
 
-                    /*
-                     * Record rejection/refund.
-                     */
-                    aiRecordRejectionTransaction(
+                    invCreateRejectionTransaction(
                         $transactions,
                         $investmentId,
-                        $investmentUserId,
+                        $ownerId,
                         $amount,
                         $walletBefore,
                         $walletAfter,
-                        $refundRequired,
+                        $refund,
                         $currentAdmin,
                         $now,
                         $session
@@ -2599,9 +2311,6 @@ try {
             $session->endSession();
         }
 
-        /*
-         * Audit.
-         */
         try {
 
             audit(
@@ -2611,45 +2320,39 @@ try {
                         $investmentId,
 
                     'user_id' =>
-                        $investmentUserId,
+                        $ownerId,
 
                     'amount' =>
                         $amount,
 
-                    'wallet_refunded' =>
-                        $refundRequired,
+                    'refund' =>
+                        $refund,
 
                     'refund_amount' =>
-                        $refundRequired
+                        $refund
                             ? $amount
                             : 0,
 
-                    'wallet_before' =>
-                        $walletBefore,
-
-                    'wallet_after' =>
-                        $walletAfter,
-
                     'admin_id' =>
-                        aiString(
-                            aiUserId(
+                        invString(
+                            invUserId(
                                 $currentAdmin
                             )
                         ),
                 ]
             );
 
-        } catch (Throwable $auditError) {
+        } catch (Throwable $e) {
 
             error_log(
-                'Investment rejection audit error: ' .
-                $auditError->getMessage()
+                'Investment rejection audit failed: ' .
+                $e->getMessage()
             );
         }
 
-        adminInvestmentResponse(
+        investmentApiResponse(
             true,
-            $refundRequired
+            $refund
                 ? 'Investment rejected and the previously deducted principal was refunded.'
                 : 'Investment rejected successfully. No wallet deduction occurred.',
             [
@@ -2657,7 +2360,7 @@ try {
                     $investmentId,
 
                 'user_id' =>
-                    $investmentUserId,
+                    $ownerId,
 
                 'amount' =>
                     $amount,
@@ -2666,10 +2369,10 @@ try {
                     'rejected',
 
                 'wallet_refunded' =>
-                    $refundRequired,
+                    $refund,
 
                 'refund_amount' =>
-                    $refundRequired
+                    $refund
                         ? $amount
                         : 0,
 
@@ -2684,15 +2387,12 @@ try {
 
 } catch (Throwable $e) {
 
-    /*
-     * Never expose raw database/server errors to users.
-     */
     error_log(
         'admin_investments POST error: ' .
         $e->getMessage()
     );
 
-    adminInvestmentResponse(
+    investmentApiResponse(
         false,
         'Unable to process the investment request. Please try again.',
         [],
@@ -2700,13 +2400,7 @@ try {
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| FALLBACK
-|--------------------------------------------------------------------------
-*/
-
-adminInvestmentResponse(
+investmentApiResponse(
     false,
     'Unable to process the investment request.',
     [],

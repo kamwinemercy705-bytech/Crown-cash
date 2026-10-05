@@ -2,1420 +2,1393 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Withdraw Funds | Crown Cash</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-    <meta name="description" content="Withdraw your available Crown Cash balance securely.">
+    <title>Withdraw | Crown Cash</title>
 
-    <style>
-        :root {
-            --bg: #10050f;
-            --bg2: #18091b;
-            --card: rgba(31, 12, 35, 0.82);
-            --card2: rgba(42, 14, 45, 0.75);
+    <meta
+        name="description"
+        content="Submit a secure Crown Cash withdrawal request.">
 
-            --gold: #f6c85f;
-            --gold2: #ffd978;
+    <link
+        rel="stylesheet"
+        href="withdraw.css?v=20261004WITHDRAW01">
 
-            --pink: #ff4fa3;
-            --pink2: #ff78bb;
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com">
 
-            --purple: #9b5cff;
-            --purple2: #c17cff;
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
 
-            --text: #ffffff;
-            --muted: #b9aebe;
-
-            --success: #45e6a6;
-            --danger: #ff5f72;
-            --warning: #ffc857;
-
-            --border: rgba(255, 255, 255, 0.09);
-
-            --shadow:
-                0 20px 60px rgba(0, 0, 0, 0.45),
-                0 0 35px rgba(255, 79, 163, 0.08);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            min-height: 100vh;
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-
-            color: var(--text);
-
-            background:
-                radial-gradient(
-                    circle at 15% 10%,
-                    rgba(155, 92, 255, 0.18),
-                    transparent 28%
-                ),
-                radial-gradient(
-                    circle at 85% 20%,
-                    rgba(255, 79, 163, 0.14),
-                    transparent 30%
-                ),
-                radial-gradient(
-                    circle at 50% 90%,
-                    rgba(246, 200, 95, 0.08),
-                    transparent 30%
-                ),
-                linear-gradient(135deg, #0d040d, #180818 45%, #0e050f);
-
-            overflow-x: hidden;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-
-            background-image:
-                linear-gradient(
-                    rgba(255, 255, 255, 0.015) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 0.015) 1px,
-                    transparent 1px
-                );
-
-            background-size: 42px 42px;
-            mask-image: linear-gradient(
-                to bottom,
-                black,
-                transparent 90%
-            );
-        }
-
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        button,
-        input {
-            font: inherit;
-        }
-
-        /* =========================
-           LAYOUT
-        ========================= */
-
-        .page {
-            min-height: 100vh;
-            padding: 28px;
-        }
-
-        .container {
-            width: min(1180px, 100%);
-            margin: 0 auto;
-        }
-
-        /* =========================
-           TOP BAR
-        ========================= */
-
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-
-            margin-bottom: 26px;
-            padding: 16px 20px;
-
-            background: rgba(18, 7, 20, 0.78);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(18px);
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-        }
-
-        .brand-icon {
-            width: 48px;
-            height: 48px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 15px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(246, 200, 95, 0.18),
-                    rgba(255, 79, 163, 0.12)
-                );
-
-            border: 1px solid rgba(246, 200, 95, 0.25);
-
-            box-shadow:
-                0 0 22px rgba(246, 200, 95, 0.12),
-                inset 0 0 20px rgba(255, 79, 163, 0.04);
-        }
-
-        .brand-icon svg {
-            width: 27px;
-            height: 27px;
-
-            stroke: var(--gold);
-            fill: none;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .brand-name {
-            font-size: 19px;
-            font-weight: 800;
-            letter-spacing: 0.2px;
-        }
-
-        .brand-subtitle {
-            margin-top: 3px;
-            font-size: 10px;
-            color: var(--pink2);
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            padding: 10px 15px;
-
-            color: #f7edf7;
-            background: rgba(255, 255, 255, 0.035);
-
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-
-            transition: 0.25s ease;
-        }
-
-        .back-btn:hover {
-            border-color: rgba(255, 79, 163, 0.35);
-            background: rgba(255, 79, 163, 0.07);
-            transform: translateY(-1px);
-        }
-
-        .back-btn svg {
-            width: 17px;
-            height: 17px;
-
-            fill: none;
-            stroke: var(--pink2);
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* =========================
-           HEADER
-        ========================= */
-
-        .page-heading {
-            margin: 25px 0;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            margin-bottom: 9px;
-
-            color: var(--gold);
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 1.4px;
-            text-transform: uppercase;
-        }
-
-        .eyebrow-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-
-            background: var(--gold);
-
-            box-shadow:
-                0 0 8px rgba(246, 200, 95, 0.75);
-        }
-
-        h1 {
-            font-size: clamp(30px, 5vw, 45px);
-            line-height: 1.05;
-            letter-spacing: -1px;
-        }
-
-        .heading-text {
-            margin-top: 10px;
-            color: var(--muted);
-            font-size: 15px;
-        }
-
-        /* =========================
-           GRID
-        ========================= */
-
-        .withdraw-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr);
-            gap: 22px;
-            align-items: start;
-        }
-
-        /* =========================
-           CARDS
-        ========================= */
-
-        .card {
-            position: relative;
-
-            padding: 24px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(38, 13, 42, 0.9),
-                    rgba(20, 8, 23, 0.88)
-                );
-
-            border: 1px solid var(--border);
-            border-radius: 23px;
-
-            box-shadow: var(--shadow);
-
-            backdrop-filter: blur(18px);
-        }
-
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 18%;
-            right: 18%;
-            height: 1px;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255, 79, 163, 0.7),
-                    rgba(246, 200, 95, 0.7),
-                    transparent
-                );
-
-            opacity: 0.65;
-        }
-
-        .card-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            margin-bottom: 20px;
-        }
-
-        .title-icon {
-            width: 43px;
-            height: 43px;
-
-            flex: 0 0 43px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 14px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255, 79, 163, 0.15),
-                    rgba(155, 92, 255, 0.14)
-                );
-
-            border: 1px solid rgba(255, 79, 163, 0.18);
-
-            box-shadow:
-                0 0 20px rgba(255, 79, 163, 0.08);
-        }
-
-        .title-icon svg {
-            width: 22px;
-            height: 22px;
-
-            fill: none;
-            stroke: var(--pink2);
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .card-title h2 {
-            font-size: 18px;
-        }
-
-        .card-title p {
-            margin-top: 3px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        /* =========================
-           BALANCE
-        ========================= */
-
-        .balance-card {
-            overflow: hidden;
-
-            background:
-                radial-gradient(
-                    circle at 85% 20%,
-                    rgba(246, 200, 95, 0.1),
-                    transparent 25%
-                ),
-                linear-gradient(
-                    145deg,
-                    rgba(45, 18, 48, 0.92),
-                    rgba(20, 8, 22, 0.94)
-                );
-        }
-
-        .balance-label {
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .balance-value {
-            margin-top: 8px;
-
-            font-size: clamp(30px, 5vw, 42px);
-            font-weight: 850;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    var(--gold),
-                    var(--gold2),
-                    var(--pink2)
-                );
-
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .balance-note {
-            margin-top: 7px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        /* =========================
-           CALCULATOR
-        ========================= */
-
-        .calculator {
-            margin-bottom: 22px;
-        }
-
-        .calculator-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .calc-box {
-            padding: 17px;
-
-            border-radius: 17px;
-
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .calc-label {
-            color: var(--muted);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        .calc-value {
-            margin-top: 8px;
-            font-size: 18px;
-            font-weight: 800;
-        }
-
-        .calc-value.fee {
-            color: var(--pink2);
-        }
-
-        .calc-value.receive {
-            color: var(--success);
-        }
-
-        /* =========================
-           FORM
-        ========================= */
-
-        .form-group {
-            margin-bottom: 19px;
-        }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            margin-bottom: 8px;
-
-            color: #f8edf7;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .form-label span {
-            color: var(--muted);
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .input-wrap {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-
-            width: 19px;
-            height: 19px;
-
-            transform: translateY(-50%);
-
-            fill: none;
-            stroke: var(--gold);
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-
-            pointer-events: none;
-        }
-
-        .form-input {
-            width: 100%;
-
-            padding: 15px 16px 15px 46px;
-
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.035);
-
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-
-            outline: none;
-
-            transition: 0.25s ease;
-        }
-
-        .form-input::placeholder {
-            color: #786d79;
-        }
-
-        .form-input:focus {
-            border-color: rgba(255, 79, 163, 0.55);
-
-            box-shadow:
-                0 0 0 3px rgba(255, 79, 163, 0.07),
-                0 0 25px rgba(255, 79, 163, 0.07);
-        }
-
-        .form-input[readonly] {
-            cursor: not-allowed;
-            color: #f7dca0;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    rgba(246, 200, 95, 0.07),
-                    rgba(255, 79, 163, 0.035)
-                );
-
-            border-color: rgba(246, 200, 95, 0.17);
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-
-            color: var(--gold);
-            font-size: 11px;
-            font-weight: 800;
-        }
-
-        .field-help {
-            margin-top: 7px;
-            color: #8e8290;
-            font-size: 11px;
-            line-height: 1.5;
-        }
-
-        /* =========================
-           REGISTERED NUMBER
-        ========================= */
-
-        .registered-box {
-            padding: 17px;
-
-            border-radius: 17px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(246, 200, 95, 0.08),
-                    rgba(255, 79, 163, 0.05)
-                );
-
-            border: 1px solid rgba(246, 200, 95, 0.16);
-
-            margin-bottom: 21px;
-        }
-
-        .registered-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            margin-bottom: 12px;
-        }
-
-        .verified-icon {
-            width: 34px;
-            height: 34px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 50%;
-
-            background: rgba(69, 230, 166, 0.08);
-            border: 1px solid rgba(69, 230, 166, 0.2);
-        }
-
-        .verified-icon svg {
-            width: 18px;
-            height: 18px;
-
-            fill: none;
-            stroke: var(--success);
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .registered-title {
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .verified-text {
-            color: var(--success);
-            font-size: 10px;
-            font-weight: 700;
-            margin-top: 2px;
-        }
-
-        .registered-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .registered-detail {
-            padding: 12px;
-
-            background: rgba(0, 0, 0, 0.14);
-            border-radius: 12px;
-        }
-
-        .registered-detail-label {
-            color: var(--muted);
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        .registered-detail-value {
-            margin-top: 5px;
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 750;
-        }
-
-        /* =========================
-           CHECKBOXES
-        ========================= */
-
-        .confirmations {
-            margin-top: 21px;
-        }
-
-        .confirmation-title {
-            margin-bottom: 12px;
-            color: #f7edf7;
-            font-size: 13px;
-            font-weight: 800;
-        }
-
-        .check-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 11px;
-
-            padding: 11px 0;
-
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.5;
-
-            cursor: pointer;
-        }
-
-        .check-row input {
-            appearance: none;
-
-            width: 18px;
-            height: 18px;
-
-            flex: 0 0 18px;
-
-            margin-top: 1px;
-
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 6px;
-
-            background: rgba(255, 255, 255, 0.03);
-
-            cursor: pointer;
-
-            position: relative;
-        }
-
-        .check-row input:checked {
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--pink),
-                    var(--purple)
-                );
-
-            border-color: transparent;
-        }
-
-        .check-row input:checked::after {
-            content: "";
-
-            position: absolute;
-
-            left: 5px;
-            top: 2px;
-
-            width: 5px;
-            height: 9px;
-
-            border-right: 2px solid #ffffff;
-            border-bottom: 2px solid #ffffff;
-
-            transform: rotate(45deg);
-        }
-
-        /* =========================
-           SUBMIT
-        ========================= */
-
-        .submit-btn {
-            width: 100%;
-
-            margin-top: 21px;
-            padding: 16px 20px;
-
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-
-            color: #160817;
-
-            font-size: 14px;
-            font-weight: 850;
-
-            background:
-                linear-gradient(
-                    100deg,
-                    var(--gold),
-                    var(--gold2),
-                    var(--pink2)
-                );
-
-            border: 0;
-            border-radius: 15px;
-
-            cursor: pointer;
-
-            box-shadow:
-                0 12px 35px rgba(255, 79, 163, 0.15);
-
-            transition: 0.25s ease;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 15px 42px rgba(255, 79, 163, 0.23);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .submit-btn svg {
-            width: 19px;
-            height: 19px;
-
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 1.9;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* =========================
-           MESSAGE
-        ========================= */
-
-        .message {
-            display: none;
-
-            margin-top: 15px;
-            padding: 13px 15px;
-
-            border-radius: 13px;
-
-            font-size: 12px;
-            line-height: 1.5;
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        .message.success {
-            color: #bfffe7;
-            background: rgba(69, 230, 166, 0.08);
-            border: 1px solid rgba(69, 230, 166, 0.18);
-        }
-
-        .message.error {
-            color: #ffd0d7;
-            background: rgba(255, 95, 114, 0.08);
-            border: 1px solid rgba(255, 95, 114, 0.18);
-        }
-
-        /* =========================
-           SIDE INFORMATION
-        ========================= */
-
-        .info-card {
-            margin-bottom: 20px;
-        }
-
-        .info-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .info-item {
-            display: flex;
-            gap: 11px;
-
-            padding: 12px;
-
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.055);
-            border-radius: 13px;
-        }
-
-        .info-icon {
-            width: 32px;
-            height: 32px;
-
-            flex: 0 0 32px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 10px;
-
-            background: rgba(255, 79, 163, 0.08);
-        }
-
-        .info-icon svg {
-            width: 17px;
-            height: 17px;
-
-            fill: none;
-            stroke: var(--pink2);
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .info-item strong {
-            display: block;
-            margin-bottom: 3px;
-            font-size: 12px;
-        }
-
-        .info-item span {
-            color: var(--muted);
-            font-size: 11px;
-            line-height: 1.45;
-        }
-
-        /* =========================
-           FEE CARD
-        ========================= */
-
-        .fee-card {
-            background:
-                radial-gradient(
-                    circle at 90% 0%,
-                    rgba(255, 79, 163, 0.13),
-                    transparent 35%
-                ),
-                linear-gradient(
-                    145deg,
-                    rgba(44, 15, 48, 0.9),
-                    rgba(20, 7, 22, 0.9)
-                );
-        }
-
-        .fee-big {
-            margin-top: 5px;
-
-            font-size: 34px;
-            font-weight: 900;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    var(--pink2),
-                    var(--purple2)
-                );
-
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .fee-description {
-            margin-top: 7px;
-
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .example {
-            margin-top: 16px;
-            padding: 13px;
-
-            background: rgba(0, 0, 0, 0.18);
-            border-radius: 13px;
-
-            color: #d8cbd8;
-            font-size: 11px;
-            line-height: 1.55;
-        }
-
-        .example strong {
-            color: var(--gold2);
-        }
-
-        /* =========================
-           SECURITY
-        ========================= */
-
-        .security {
-            display: flex;
-            gap: 12px;
-
-            padding: 15px;
-
-            border-radius: 15px;
-
-            background:
-                rgba(69, 230, 166, 0.045);
-
-            border: 1px solid rgba(69, 230, 166, 0.13);
-        }
-
-        .security svg {
-            width: 22px;
-            height: 22px;
-
-            flex: 0 0 22px;
-
-            fill: none;
-            stroke: var(--success);
-            stroke-width: 1.7;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .security strong {
-            display: block;
-            margin-bottom: 4px;
-
-            color: #d9ffef;
-            font-size: 12px;
-        }
-
-        .security p {
-            color: #91b8a9;
-            font-size: 11px;
-            line-height: 1.5;
-        }
-
-        /* =========================
-           LOADING
-        ========================= */
-
-        .loading {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-
-            margin-top: 10px;
-
-            color: var(--muted);
-            font-size: 11px;
-        }
-
-        .loading.show {
-            display: flex;
-        }
-
-        .spinner {
-            width: 15px;
-            height: 15px;
-
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--pink2);
-
-            border-radius: 50%;
-
-            animation: spin 0.75s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* =========================
-           RESPONSIVE
-        ========================= */
-
-        @media (max-width: 900px) {
-            .withdraw-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 650px) {
-            .page {
-                padding: 15px;
-            }
-
-            .topbar {
-                padding: 13px 14px;
-                border-radius: 17px;
-            }
-
-            .brand-icon {
-                width: 42px;
-                height: 42px;
-            }
-
-            .brand-name {
-                font-size: 16px;
-            }
-
-            .back-btn {
-                padding: 9px 11px;
-            }
-
-            .back-btn span {
-                display: none;
-            }
-
-            .card {
-                padding: 18px;
-                border-radius: 19px;
-            }
-
-            .calculator-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .registered-details {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                font-size: 31px;
-            }
-        }
-    </style>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
 
-<div class="page">
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay">
+</div>
 
-    <div class="container">
 
-        <!-- TOP BAR -->
-        <header class="topbar">
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
 
-            <a href="dashboard.html" class="brand">
+<aside
+    class="sidebar"
+    id="sidebar">
 
-                <div class="brand-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 3l2.2 4.5L19 9l-3.5 3.4.8 4.8L12 15l-4.3 2.2.8-4.8L5 9l4.8-1.5L12 3z"/>
-                        <path d="M8 20h8"/>
-                    </svg>
-                </div>
+    <div class="brand-area">
 
-                <div>
-                    <div class="brand-name">Crown Cash</div>
-                    <div class="brand-subtitle">Member Portal</div>
-                </div>
+        <a
+            href="dashboard.html"
+            class="brand">
 
-            </a>
+            <div class="brand-icon">
 
-            <a href="dashboard.html" class="back-btn">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
 
-                <svg viewBox="0 0 24 24">
-                    <path d="M19 12H5"/>
-                    <path d="M12 19l-7-7 7-7"/>
+                    <path
+                        d="M12 3L19 6V11C19 15.5 16.1 19.3 12 21C7.9 19.3 5 15.5 5 11V6L12 3Z"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"/>
+
+                    <path
+                        d="M9 12L11 14L15 10"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
                 </svg>
 
-                <span>Dashboard</span>
-
-            </a>
-
-        </header>
-
-
-        <!-- PAGE HEADING -->
-        <section class="page-heading">
-
-            <div class="eyebrow">
-                <span class="eyebrow-dot"></span>
-                Secure Withdrawal
             </div>
+
+            <div class="brand-text">
+
+                <strong>CROWN</strong>
+
+                <span>CASH</span>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a
+            href="dashboard.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <rect
+                        x="4"
+                        y="4"
+                        width="6"
+                        height="6"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <rect
+                        x="14"
+                        y="4"
+                        width="6"
+                        height="6"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <rect
+                        x="4"
+                        y="14"
+                        width="6"
+                        height="6"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <rect
+                        x="14"
+                        y="14"
+                        width="6"
+                        height="6"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                </svg>
+
+            </span>
+
+            Dashboard
+
+        </a>
+
+
+        <a
+            href="deposit.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M12 19V5"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M7 10L12 5L17 10"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
+                    <rect
+                        x="4"
+                        y="17"
+                        width="16"
+                        height="3"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.5"/>
+
+                </svg>
+
+            </span>
+
+            Deposit
+
+        </a>
+
+
+        <a
+            href="withdraw.html"
+            class="nav-item active">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M12 5V19"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M7 14L12 19L17 14"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
+                    <rect
+                        x="4"
+                        y="4"
+                        width="16"
+                        height="3"
+                        rx="1"
+                        stroke="currentColor"
+                        stroke-width="1.5"/>
+
+                </svg>
+
+            </span>
+
+            Withdraw
+
+        </a>
+
+
+        <a
+            href="investments.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M5 19V10"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M12 19V5"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M19 19V8"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M4 19H20"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                </svg>
+
+            </span>
+
+            Investments
+
+        </a>
+
+
+        <a
+            href="my-investments.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <rect
+                        x="4"
+                        y="5"
+                        width="16"
+                        height="14"
+                        rx="2"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M8 9H16"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M8 13H13"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                </svg>
+
+            </span>
+
+            My Investments
+
+        </a>
+
+
+        <a
+            href="transactions.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M7 7H19"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M7 12H16"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M7 17H13"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <circle
+                        cx="4"
+                        cy="7"
+                        r="1"
+                        fill="currentColor"/>
+
+                    <circle
+                        cx="4"
+                        cy="12"
+                        r="1"
+                        fill="currentColor"/>
+
+                    <circle
+                        cx="4"
+                        cy="17"
+                        r="1"
+                        fill="currentColor"/>
+
+                </svg>
+
+            </span>
+
+            Transactions
+
+        </a>
+
+
+        <a
+            href="team.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <circle
+                        cx="9"
+                        cy="8"
+                        r="3"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <circle
+                        cx="17"
+                        cy="9"
+                        r="2.5"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M3.5 19C3.5 15.7 5.8 13.5 9 13.5C12.2 13.5 14.5 15.7 14.5 19"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M14.5 14C17.5 13.7 20 15.7 20.5 18.5"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                </svg>
+
+            </span>
+
+            My Team
+
+        </a>
+
+
+        <a
+            href="profile.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="3.2"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M5 20C5.5 15.8 8.1 13.5 12 13.5C15.9 13.5 18.5 15.8 19 20"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                </svg>
+
+            </span>
+
+            Profile
+
+        </a>
+
+
+        <a
+            href="support.html"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M9.5 9.5C9.8 8.2 10.8 7.5 12.1 7.5C13.8 7.5 15 8.5 15 10C15 11.2 14.2 11.8 13 12.5C12.3 12.9 12 13.4 12 14.2"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <circle
+                        cx="12"
+                        cy="17"
+                        r=".8"
+                        fill="currentColor"/>
+
+                </svg>
+
+            </span>
+
+            Support
+
+        </a>
+
+
+        <a
+            href="#"
+            class="nav-item">
+
+            <span class="nav-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M19 12C19 11.4 18.9 10.9 18.7 10.4L20.1 9.3L18.2 6L16.5 6.7C15.7 6 14.8 5.6 13.8 5.4L13.5 3H10.5L10.2 5.4C9.2 5.6 8.3 6 7.5 6.7L5.8 6L3.9 9.3L5.3 10.4C5.1 10.9 5 11.4 5 12C5 12.6 5.1 13.1 5.3 13.6L3.9 14.7L5.8 18L7.5 17.3C8.3 18 9.2 18.4 10.2 18.6L10.5 21H13.5L13.8 18.6C14.8 18.4 15.7 18 16.5 17.3L18.2 18L20.1 14.7L18.7 13.6C18.9 13.1 19 12.6 19 12Z"
+                        stroke="currentColor"
+                        stroke-width="1.2"
+                        stroke-linejoin="round"/>
+
+                </svg>
+
+            </span>
+
+            Settings
+
+        </a>
+
+    </nav>
+
+
+    <div class="sidebar-bottom">
+
+        <div class="secure-box">
+
+            <div class="secure-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M12 3L19 6V11C19 15.5 16.1 19.3 12 21C7.9 19.3 5 15.5 5 11V6L12 3Z"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linejoin="round"/>
+
+                    <path
+                        d="M9 12L11 14L15 10"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
+                </svg>
+
+            </div>
+
+            <div>
+
+                <strong>Secure Account</strong>
+
+                <span>Protected connection</span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+===================================================== -->
+
+<main class="main-content">
+
+    <header class="topbar">
+
+        <button
+            type="button"
+            class="mobile-menu"
+            id="mobileMenuBtn"
+            aria-label="Open navigation">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
+
+        <div class="topbar-heading">
+
+            <span>Wallet</span>
 
             <h1>Withdraw Funds</h1>
 
-            <p class="heading-text">
-                Withdraw your available Crown Cash balance securely.
-            </p>
+        </div>
+
+
+        <div class="topbar-right">
+
+            <button
+                class="notification-btn"
+                type="button"
+                aria-label="Notifications">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M18 9C18 5.7 15.8 3.5 12 3.5C8.2 3.5 6 5.7 6 9V13L4.5 16H19.5L18 13V9Z"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linejoin="round"/>
+
+                    <path
+                        d="M10 19C10.5 20 11.2 20.5 12 20.5C12.8 20.5 13.5 20 14 19"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                </svg>
+
+            </button>
+
+
+            <a
+                href="profile.html"
+                class="user-mini">
+
+                <div class="user-avatar">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none">
+
+                        <circle
+                            cx="12"
+                            cy="8"
+                            r="3"
+                            stroke="currentColor"
+                            stroke-width="1.6"/>
+
+                        <path
+                            d="M6 20C6.5 16.5 8.5 14.5 12 14.5C15.5 14.5 17.5 16.5 18 20"
+                            stroke="currentColor"
+                            stroke-width="1.6"
+                            stroke-linecap="round"/>
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <strong id="topUserName">
+                        User
+                    </strong>
+
+                    <small>
+                        Member
+                    </small>
+
+                </div>
+
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <section class="page-content">
+
+
+        <!-- =================================================
+             INTRO
+        ================================================== -->
+
+        <div class="page-intro">
+
+            <div>
+
+                <span class="eyebrow">
+                    CROWN CASH WALLET
+                </span>
+
+                <h2>
+                    Withdraw your available funds
+                </h2>
+
+                <p>
+                    Submit a Mobile Money withdrawal request
+                    for review and processing.
+                </p>
+
+            </div>
+
+
+            <div class="intro-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <path
+                        d="M12 5V19"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"/>
+
+                    <path
+                        d="M7 14L12 19L17 14"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+
+                </svg>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             BALANCE
+        ================================================== -->
+
+        <section class="balance-card">
+
+            <div class="balance-info">
+
+                <div class="balance-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none">
+
+                        <rect
+                            x="3.5"
+                            y="6"
+                            width="17"
+                            height="13"
+                            rx="2"
+                            stroke="currentColor"
+                            stroke-width="1.7"/>
+
+                        <path
+                            d="M3.5 10H20.5"
+                            stroke="currentColor"
+                            stroke-width="1.7"/>
+
+                        <circle
+                            cx="16.5"
+                            cy="14.5"
+                            r="1.5"
+                            stroke="currentColor"
+                            stroke-width="1.5"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Available Balance
+                    </span>
+
+                    <strong id="availableBalance">
+                        UGX 0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="balance-status">
+
+                <span class="status-check">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none">
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="8"
+                            stroke="currentColor"
+                            stroke-width="1.7"/>
+
+                        <path
+                            d="M8.5 12L11 14.5L15.5 10"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"/>
+
+                    </svg>
+
+                </span>
+
+                Available
+
+            </div>
 
         </section>
 
 
-        <main class="withdraw-grid">
+        <!-- =================================================
+             WITHDRAW LAYOUT
+        ================================================== -->
 
-            <!-- =========================
-                 LEFT COLUMN
-            ========================== -->
-            <section>
-
-                <!-- BALANCE -->
-                <div class="card balance-card" style="margin-bottom:22px;">
-
-                    <div class="balance-label">
-                        Available Balance
-                    </div>
-
-                    <div class="balance-value" id="availableBalance">
-                        UGX 50,000
-                    </div>
-
-                    <div class="balance-note">
-                        Your withdrawal amount cannot exceed your available balance.
-                    </div>
-
-                </div>
+        <div class="withdraw-layout">
 
 
-                <!-- CALCULATOR -->
-                <div class="card calculator">
+            <!-- =================================================
+                 WITHDRAW FORM
+            ================================================== -->
 
-                    <div class="card-title">
+            <section class="glass-card">
 
-                        <div class="title-icon">
-                            <svg viewBox="0 0 24 24">
-                                <rect x="4" y="3" width="16" height="18" rx="2"/>
-                                <path d="M8 7h8"/>
-                                <path d="M8 11h2"/>
-                                <path d="M14 11h2"/>
-                                <path d="M8 15h2"/>
-                                <path d="M14 15h2"/>
-                                <path d="M8 18h8"/>
-                            </svg>
-                        </div>
+                <div class="card-title">
 
-                        <div>
-                            <h2>Withdrawal Calculator</h2>
-                            <p>See your fee and expected payout.</p>
-                        </div>
+                    <div class="title-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none">
+
+                            <path
+                                d="M12 5V19"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"/>
+
+                            <path
+                                d="M7 14L12 19L17 14"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"/>
+
+                        </svg>
 
                     </div>
 
+                    <div>
 
-                    <div class="calculator-grid">
+                        <h3>
+                            Request Withdrawal
+                        </h3>
 
-                        <div class="calc-box">
-
-                            <div class="calc-label">
-                                Withdrawal Amount
-                            </div>
-
-                            <div class="calc-value" id="calculatorAmount">
-                                UGX 0
-                            </div>
-
-                        </div>
-
-
-                        <div class="calc-box">
-
-                            <div class="calc-label">
-                                Withdrawal Fee
-                            </div>
-
-                            <div class="calc-value fee" id="calculatorFee">
-                                UGX 0
-                            </div>
-
-                        </div>
-
-
-                        <div class="calc-box">
-
-                            <div class="calc-label">
-                                You Will Receive
-                            </div>
-
-                            <div class="calc-value receive" id="calculatorReceive">
-                                UGX 0
-                            </div>
-
-                        </div>
+                        <p>
+                            Enter your withdrawal details below.
+                        </p>
 
                     </div>
 
                 </div>
 
 
-                <!-- WITHDRAWAL FORM -->
-                <div class="card">
-
-                    <div class="card-title">
-
-                        <div class="title-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 3v12"/>
-                                <path d="M7 10l5 5 5-5"/>
-                                <path d="M5 20h14"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <h2>Withdrawal Request</h2>
-                            <p>Enter the amount you want to withdraw.</p>
-                        </div>
-
-                    </div>
+                <form
+                    id="withdrawForm"
+                    novalidate>
 
 
                     <!-- AMOUNT -->
+
                     <div class="form-group">
 
-                        <label class="form-label" for="withdrawAmount">
-                            Withdrawal Amount
-                            <span>Minimum UGX 5,000</span>
+                        <label for="amount">
+                            Amount (UGX)
                         </label>
 
-                        <div class="input-wrap">
+                        <div class="input-box">
 
-                            <svg class="input-icon" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="8"/>
-                                <path d="M12 8v8"/>
-                                <path d="M9.5 10.5c0-1 1-1.5 2.5-1.5s2.5.5 2.5 1.5-1 1.5-2.5 1.5-2.5.5-2.5 1.5 1 1.5 2.5 1.5 2.5-.5 2.5-1.5"/>
-                            </svg>
+                            <span class="input-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none">
+
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="8"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+
+                                    <path
+                                        d="M14.5 9.5C14.2 8.7 13.4 8.2 12.3 8.2C11.2 8.2 10.2 8.8 10.2 9.7C10.2 10.6 11 11 12.4 11.3C13.8 11.6 14.8 12 14.8 13.2C14.8 14.3 13.8 15 12.5 15C11.3 15 10.3 14.5 9.8 13.6"
+                                        stroke="currentColor"
+                                        stroke-width="1.4"
+                                        stroke-linecap="round"/>
+
+                                    <path
+                                        d="M12 6.8V17.2"
+                                        stroke="currentColor"
+                                        stroke-width="1.4"
+                                        stroke-linecap="round"/>
+
+                                </svg>
+
+                            </span>
+
 
                             <input
                                 type="number"
-                                id="withdrawAmount"
-                                class="form-input"
+                                id="amount"
+                                name="amount"
                                 min="5000"
-                                step="1000"
+                                step="1"
                                 placeholder="Enter amount"
                                 autocomplete="off"
-                                inputmode="numeric"
-                            >
+                                required>
 
-                            <span class="input-suffix">
+
+                            <span class="currency">
                                 UGX
                             </span>
 
                         </div>
 
-                        <div class="field-help">
-                            Your available balance must cover the full withdrawal amount.
+                        <small>
+                            Minimum withdrawal: UGX 5,000
+                        </small>
+
+                    </div>
+
+
+                    <!-- PAYMENT METHOD -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Payment Method
+                        </label>
+
+
+                        <div class="method-list">
+
+
+                            <label
+                                class="method-card selected">
+
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="MTN"
+                                    checked
+                                    hidden>
+
+                                <span class="method-brand mtn">
+                                    MTN
+                                </span>
+
+                                <span class="method-text">
+
+                                    <strong>
+                                        MTN Mobile Money
+                                    </strong>
+
+                                    <small>
+                                        Receive through MTN
+                                    </small>
+
+                                </span>
+
+                                <span class="method-radio">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none">
+
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="8"
+                                            stroke="currentColor"
+                                            stroke-width="1.7"/>
+
+                                        <path
+                                            d="M8.5 12L11 14.5L15.5 10"
+                                            stroke="currentColor"
+                                            stroke-width="1.7"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"/>
+
+                                    </svg>
+
+                                </span>
+
+                            </label>
+
+
+                            <label
+                                class="method-card">
+
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="AIRTEL"
+                                    hidden>
+
+                                <span class="method-brand airtel">
+                                    AIRTEL
+                                </span>
+
+                                <span class="method-text">
+
+                                    <strong>
+                                        Airtel Money
+                                    </strong>
+
+                                    <small>
+                                        Receive through Airtel
+                                    </small>
+
+                                </span>
+
+                                <span class="method-radio">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none">
+
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="8"
+                                            stroke="currentColor"
+                                            stroke-width="1.7"/>
+
+                                        <path
+                                            d="M8.5 12L11 14.5L15.5 10"
+                                            stroke="currentColor"
+                                            stroke-width="1.7"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"/>
+
+                                    </svg>
+
+                                </span>
+
+                            </label>
+
                         </div>
 
                     </div>
 
 
-                    <!-- REGISTERED WITHDRAWAL DETAILS -->
-                    <div class="registered-box">
+                    <!-- REGISTERED PHONE -->
 
-                        <div class="registered-header">
+                    <div class="form-group">
 
-                            <div class="verified-icon">
+                        <label for="registeredPhone">
+                            Registered Mobile Money Number
+                        </label>
 
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M20 6L9 17l-5-5"/>
+                        <div class="input-box">
+
+                            <span class="input-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none">
+
+                                    <rect
+                                        x="7"
+                                        y="3"
+                                        width="10"
+                                        height="18"
+                                        rx="2"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+
+                                    <path
+                                        d="M10 6H14"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"/>
+
+                                    <circle
+                                        cx="12"
+                                        cy="17.5"
+                                        r="1"
+                                        fill="currentColor"/>
+
                                 </svg>
 
-                            </div>
+                            </span>
 
-                            <div>
 
-                                <div class="registered-title">
-                                    Registered Withdrawal Account
-                                </div>
-
-                                <div class="verified-text">
-                                    Automatically verified
-                                </div>
-
-                            </div>
+                            <input
+                                type="tel"
+                                id="registeredPhone"
+                                name="registeredPhone"
+                                placeholder="Loading registered number..."
+                                readonly>
 
                         </div>
 
+                        <small>
+                            This number is loaded from your Crown Cash profile.
+                        </small>
 
-                        <div class="registered-details">
-
-                            <div class="registered-detail">
-
-                                <div class="registered-detail-label">
-                                    Registered Number
-                                </div>
-
-                                <div
-                                    class="registered-detail-value"
-                                    id="registeredNumber"
-                                >
-                                    0783422169
-                                </div>
-
-                            </div>
+                    </div>
 
 
-                            <div class="registered-detail">
+                    <!-- PHONE SUBMISSION -->
 
-                                <div class="registered-detail-label">
-                                    Account Name
-                                </div>
+                    <div
+                        class="form-group"
+                        style="display:none;">
 
-                                <div
-                                    class="registered-detail-value"
-                                    id="accountName"
-                                >
-                                    Member
-                                </div>
+                        <label for="phone">
+                            Mobile Money Number
+                        </label>
 
-                            </div>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            autocomplete="tel">
+
+                    </div>
+
+
+                    <!-- ACCOUNT NAME -->
+
+                    <div class="form-group">
+
+                        <label for="accountName">
+                            Account Name
+                        </label>
+
+                        <div class="input-box">
+
+                            <span class="input-icon">
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none">
+
+                                    <circle
+                                        cx="12"
+                                        cy="8"
+                                        r="3"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+
+                                    <path
+                                        d="M5 20C5.5 15.8 8.1 13.5 12 13.5C15.9 13.5 18.5 15.8 19 20"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"
+                                        stroke-linecap="round"/>
+
+                                </svg>
+
+                            </span>
+
+
+                            <input
+                                type="text"
+                                id="accountName"
+                                name="accountName"
+                                placeholder="Loading account name..."
+                                readonly>
 
                         </div>
 
                     </div>
+
+
+                    <!-- CALCULATION -->
+
+                    <div class="withdraw-summary">
+
+                        <div>
+
+                            <span>
+                                Withdrawal Amount
+                            </span>
+
+                            <strong id="displayAmount">
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Withdrawal Fee
+                            </span>
+
+                            <strong id="withdrawalFee">
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                You Receive
+                            </span>
+
+                            <strong id="payoutAmount">
+                                UGX 0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CONFIRMATION -->
+
+                    <label
+                        class="confirmation-row">
+
+                        <input
+                            type="checkbox"
+                            id="confirmWithdrawal"
+                            required>
+
+                        <span>
+                            I confirm that the withdrawal details shown
+                            above are correct and I understand that the
+                            request must be approved by Crown Cash
+                            administration before my wallet balance is
+                            deducted.
+                        </span>
+
+                    </label>
 
 
                     <!-- SECURITY -->
-                    <div class="security">
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3l8 3v5c0 5-3.3 8.5-8 10-4.7-1.5-8-5-8-10V6l8-3z"/>
-                            <path d="M9 12l2 2 4-4"/>
+                    <div class="security-note">
+
+                        <div class="security-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none">
+
+                                <path
+                                    d="M12 3L19 6V11C19 15.5 16.1 19.3 12 21C7.9 19.3 5 15.5 5 11V6L12 3Z"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linejoin="round"/>
+
+                                <path
+                                    d="M9 12L11 14L15 10"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"/>
+
+                            </svg>
+
+                        </div>
+
+                        <p>
+                            Your withdrawal request is sent for
+                            administration review. Your wallet should
+                            remain unchanged until an authorized
+                            administrator approves the request.
+                        </p>
+
+                    </div>
+
+
+                    <!-- MESSAGE -->
+
+                    <div
+                        id="formMessage"
+                        class="form-message"
+                        role="alert"
+                        aria-live="polite">
+                    </div>
+
+
+                    <!-- BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="withdraw-button"
+                        id="withdrawButton">
+
+                        <span class="button-icon">
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none">
+
+                                <path
+                                    d="M12 5V19"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"/>
+
+                                <path
+                                    d="M7 14L12 19L17 14"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"/>
+
+                            </svg>
+
+                        </span>
+
+                        <span>
+                            Submit Withdrawal Request
+                        </span>
+
+                    </button>
+
+                </form>
+
+            </section>
+
+
+            <!-- =================================================
+                 INFORMATION
+            ================================================== -->
+
+            <section class="glass-card information-card">
+
+                <div class="card-title">
+
+                    <div class="title-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none">
+
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="8"
+                                stroke="currentColor"
+                                stroke-width="1.7"/>
+
+                            <path
+                                d="M12 10.5V16"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"/>
+
+                            <circle
+                                cx="12"
+                                cy="7.5"
+                                r=".8"
+                                fill="currentColor"/>
+
                         </svg>
+
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            How It Works
+                        </h3>
+
+                        <p>
+                            Your withdrawal follows these steps.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="steps">
+
+                    <div class="step">
+
+                        <span>1</span>
 
                         <div>
 
                             <strong>
-                                Registered Number Protection
+                                Enter amount
                             </strong>
 
                             <p>
-                                Your withdrawal will use the verified mobile
-                                money account registered on your Crown Cash
-                                account. Another person's number cannot be used.
+                                Choose an amount within your available
+                                wallet balance.
                             </p>
 
                         </div>
@@ -1423,806 +1396,440 @@
                     </div>
 
 
-                    <!-- CONFIRMATIONS -->
-                    <div class="confirmations">
+                    <div class="step">
 
-                        <div class="confirmation-title">
-                            Withdrawal Confirmation
+                        <span>2</span>
+
+                        <div>
+
+                            <strong>
+                                Select method
+                            </strong>
+
+                            <p>
+                                Choose MTN Mobile Money or Airtel Money.
+                            </p>
+
                         </div>
 
-
-                        <label class="check-row">
-
-                            <input
-                                type="checkbox"
-                                id="confirmAmount"
-                            >
-
-                            <span>
-                                I confirm that the withdrawal amount entered above
-                                is correct.
-                            </span>
-
-                        </label>
+                    </div>
 
 
-                        <label class="check-row">
+                    <div class="step">
 
-                            <input
-                                type="checkbox"
-                                id="confirmNumber"
-                            >
+                        <span>3</span>
 
-                            <span>
-                                I confirm that the displayed registered withdrawal
-                                number belongs to my Crown Cash account.
-                            </span>
+                        <div>
 
-                        </label>
+                            <strong>
+                                Submit request
+                            </strong>
 
+                            <p>
+                                The request is recorded as pending.
+                            </p>
 
-                        <label class="check-row">
-
-                            <input
-                                type="checkbox"
-                                id="confirmFee"
-                            >
-
-                            <span>
-                                I understand that a 20% withdrawal fee will be
-                                deducted from the amount I request.
-                            </span>
-
-                        </label>
+                        </div>
 
                     </div>
 
 
-                    <!-- SUBMIT -->
-                    <button
-                        type="button"
-                        id="withdrawButton"
-                        class="submit-btn"
-                    >
+                    <div class="step">
 
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 19V5"/>
-                            <path d="M6 11l6-6 6 6"/>
-                        </svg>
+                        <span>4</span>
 
-                        Request Withdrawal
+                        <div>
 
-                    </button>
+                            <strong>
+                                Admin approval
+                            </strong>
 
+                            <p>
+                                Your wallet is deducted only when the
+                                administrator approves the withdrawal.
+                            </p>
 
-                    <div
-                        id="loading"
-                        class="loading"
-                    >
-                        <span class="spinner"></span>
-                        Processing withdrawal request...
+                        </div>
+
                     </div>
 
+                </div>
 
-                    <div
-                        id="message"
-                        class="message"
-                    ></div>
+
+                <div class="warning-box">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none">
+
+                        <path
+                            d="M12 4L21 19H3L12 4Z"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linejoin="round"/>
+
+                        <path
+                            d="M12 9V13"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"/>
+
+                        <circle
+                            cx="12"
+                            cy="16"
+                            r=".8"
+                            fill="currentColor"/>
+
+                    </svg>
+
+                    <p>
+                        A withdrawal request does not mean that payment
+                        has already been completed.
+                    </p>
 
                 </div>
 
             </section>
 
+        </div>
 
-            <!-- =========================
-                 RIGHT COLUMN
-            ========================== -->
-            <aside>
 
-                <!-- FEE INFORMATION -->
-                <div class="card info-card fee-card">
+        <!-- =================================================
+             HISTORY
+        ================================================== -->
 
-                    <div class="card-title">
+        <section class="glass-card history-card">
 
-                        <div class="title-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 3v18"/>
-                                <path d="M17 7c0-2-2-3-5-3S7 5 7 7s2 3 5 3 5 1 5 3-2 3-5 3-5-1-5-3"/>
-                            </svg>
-                        </div>
+            <div class="card-title">
 
-                        <div>
-                            <h2>Withdrawal Fee</h2>
-                            <p>Applied to every withdrawal request.</p>
-                        </div>
+                <div class="title-icon">
 
-                    </div>
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none">
 
-                    <div class="fee-big">
-                        20%
-                    </div>
+                        <path
+                            d="M6 5H18"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"/>
 
-                    <p class="fee-description">
-                        A 20% withdrawal fee is deducted from the amount
-                        you request.
+                        <path
+                            d="M6 10H18"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"/>
+
+                        <path
+                            d="M6 15H14"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"/>
+
+                        <path
+                            d="M6 20H11"
+                            stroke="currentColor"
+                            stroke-width="1.7"
+                            stroke-linecap="round"/>
+
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <h3>
+                        Withdrawal History
+                    </h3>
+
+                    <p>
+                        Track your withdrawal requests.
                     </p>
 
-                    <div class="example">
-                        <strong>Example:</strong>
-                        A UGX 10,000 withdrawal has a UGX 2,000 fee,
-                        so you receive UGX 8,000.
-                    </div>
-
                 </div>
 
-
-                <!-- IMPORTANT INFORMATION -->
-                <div class="card info-card">
-
-                    <div class="card-title">
-
-                        <div class="title-icon">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="9"/>
-                                <path d="M12 10v6"/>
-                                <path d="M12 7h.01"/>
-                            </svg>
-                        </div>
-
-                        <div>
-                            <h2>Important Information</h2>
-                            <p>Please review before requesting.</p>
-                        </div>
-
-                    </div>
+            </div>
 
 
-                    <div class="info-list">
+            <div
+                id="withdrawalHistory"
+                class="history-list">
 
-                        <div class="info-item">
+                <div class="empty-history">
 
-                            <div class="info-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 4v16"/>
-                                    <path d="M8 8h7a3 3 0 010 6H9a3 3 0 010 6h7"/>
-                                </svg>
-                            </div>
+                    <div class="empty-icon">
 
-                            <div>
-                                <strong>Minimum Withdrawal</strong>
-                                <span>
-                                    The minimum amount you can request is
-                                    UGX 5,000.
-                                </span>
-                            </div>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none">
 
-                        </div>
+                            <rect
+                                x="4"
+                                y="5"
+                                width="16"
+                                height="14"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="1.7"/>
 
+                            <path
+                                d="M8 10H16"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"/>
 
-                        <div class="info-item">
+                            <path
+                                d="M8 14H13"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"/>
 
-                            <div class="info-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="9"/>
-                                    <path d="M12 7v5l3 2"/>
-                                </svg>
-                            </div>
-
-                            <div>
-                                <strong>Pending Requests</strong>
-                                <span>
-                                    A pending withdrawal must be processed
-                                    before another request can be made.
-                                </span>
-                            </div>
-
-                        </div>
-
-
-                        <div class="info-item">
-
-                            <div class="info-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 3l8 4v5c0 4.5-3 7.5-8 9-5-1.5-8-4.5-8-9V7l8-4z"/>
-                                    <path d="M9 12l2 2 4-4"/>
-                                </svg>
-                            </div>
-
-                            <div>
-                                <strong>Registered Account Only</strong>
-                                <span>
-                                    Funds can only be directed to the
-                                    verified withdrawal account on your profile.
-                                </span>
-                            </div>
-
-                        </div>
-
-
-                        <div class="info-item">
-
-                            <div class="info-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M4 12h16"/>
-                                    <path d="M12 4v16"/>
-                                </svg>
-                            </div>
-
-                            <div>
-                                <strong>Administration Review</strong>
-                                <span>
-                                    Withdrawal requests are reviewed by
-                                    Crown Cash administration before payout.
-                                </span>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- SECURITY CARD -->
-                <div class="card">
-
-                    <div class="security">
-
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 3l8 3v5c0 5-3.3 8.5-8 10-4.7-1.5-8-5-8-10V6l8-3z"/>
-                            <path d="M12 8v4"/>
-                            <path d="M12 16h.01"/>
                         </svg>
 
-                        <div>
-
-                            <strong>
-                                Secure Withdrawal Process
-                            </strong>
-
-                            <p>
-                                Approval of a withdrawal request does not
-                                automatically mean the funds have already
-                                been paid. Authorized Mobile Money payout
-                                processing must be completed.
-                            </p>
-
-                        </div>
-
                     </div>
+
+                    <h4>
+                        No withdrawal requests yet
+                    </h4>
+
+                    <p>
+                        Your withdrawal requests will appear here.
+                    </p>
 
                 </div>
 
-            </aside>
+            </div>
 
-        </main>
+        </section>
 
-    </div>
 
-</div>
+        <!-- =================================================
+             NOTICE
+        ================================================== -->
 
+        <section class="bottom-notice">
+
+            <div class="notice-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none">
+
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        stroke-width="1.7"/>
+
+                    <path
+                        d="M12 10V15"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"/>
+
+                    <circle
+                        cx="12"
+                        cy="7.5"
+                        r=".8"
+                        fill="currentColor"/>
+
+                </svg>
+
+            </div>
+
+            <div>
+
+                <strong>
+                    Important
+                </strong>
+
+                <p>
+                    Withdrawal requests are reviewed by Crown Cash
+                    administration. Your wallet balance must not be
+                    deducted merely because a request was submitted.
+                </p>
+
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+        <p>
+            ©
+            <span id="currentYear"></span>
+            Crown Cash. All rights reserved.
+        </p>
+
+        <div>
+
+            <a href="support.html">
+                Support
+            </a>
+
+            <a href="#">
+                Terms
+            </a>
+
+            <a href="#">
+                Privacy
+            </a>
+
+        </div>
+
+    </footer>
+
+</main>
+
+
+<!-- =====================================================
+     WITHDRAWAL JAVASCRIPT
+===================================================== -->
+
+<script src="withdraw.js?v=20261004WITHDRAW02"></script>
+
+
+<!-- =====================================================
+     SMALL PAGE HELPERS
+===================================================== -->
 
 <script>
+(function () {
+
+    const yearElement =
+        document.getElementById("currentYear");
+
+    if (yearElement) {
+        yearElement.textContent =
+            new Date().getFullYear();
+    }
+
+
     /*
-     * Crown Cash Withdrawal Page
+     * Make the two payment method cards work
+     * visually with the radio buttons.
      *
-     * IMPORTANT:
-     * The frontend does NOT submit:
-     * - payment method
-     * - withdrawal phone number
-     * - another person's account
+     * The actual selected method is read by
+     * withdraw.js from:
      *
-     * The authenticated backend should obtain the registered
-     * withdrawal details from the logged-in user's account.
+     * input[name="payment_method"]:checked
      */
 
-    const API_URL = "https://crown-cash1.onrender.com/withdraw.php";
-
-    const MIN_WITHDRAWAL = 5000;
-    const FEE_RATE = 0.20;
-
-    const amountInput = document.getElementById("withdrawAmount");
-
-    const availableBalanceElement =
-        document.getElementById("availableBalance");
-
-    const registeredNumberElement =
-        document.getElementById("registeredNumber");
-
-    const accountNameElement =
-        document.getElementById("accountName");
-
-    const calculatorAmount =
-        document.getElementById("calculatorAmount");
-
-    const calculatorFee =
-        document.getElementById("calculatorFee");
-
-    const calculatorReceive =
-        document.getElementById("calculatorReceive");
-
-    const confirmAmount =
-        document.getElementById("confirmAmount");
-
-    const confirmNumber =
-        document.getElementById("confirmNumber");
-
-    const confirmFee =
-        document.getElementById("confirmFee");
-
-    const withdrawButton =
-        document.getElementById("withdrawButton");
-
-    const messageElement =
-        document.getElementById("message");
-
-    const loadingElement =
-        document.getElementById("loading");
+    const methodCards =
+        document.querySelectorAll(".method-card");
 
 
-    function formatUGX(value) {
+    methodCards.forEach(function (card) {
 
-        const number = Number(value) || 0;
+        card.addEventListener("click", function () {
 
-        return "UGX " + Math.round(number).toLocaleString("en-UG");
+            methodCards.forEach(function (item) {
 
-    }
+                item.classList.remove("selected");
+
+            });
 
 
-    function getAvailableBalance() {
+            card.classList.add("selected");
 
-        const text =
-            availableBalanceElement.textContent
-                .replace(/UGX/gi, "")
-                .replace(/,/g, "")
-                .trim();
 
-        return Number(text) || 0;
+            const radio =
+                card.querySelector(
+                    'input[name="payment_method"]'
+                );
+
+
+            if (radio) {
+                radio.checked = true;
+            }
+
+        });
+
+    });
+
+
+    /*
+     * Mobile sidebar.
+     */
+
+    const menuButton =
+        document.getElementById("mobileMenuBtn");
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const overlay =
+        document.getElementById("sidebarOverlay");
+
+
+    function closeSidebar() {
+
+        if (sidebar) {
+            sidebar.classList.remove("open");
+        }
+
+        if (overlay) {
+            overlay.classList.remove("active");
+        }
 
     }
 
 
-    function updateCalculator() {
+    if (menuButton) {
 
-        const amount =
-            Number(amountInput.value) || 0;
+        menuButton.addEventListener(
+            "click",
+            function () {
 
-        const fee =
-            amount * FEE_RATE;
+                if (sidebar) {
+                    sidebar.classList.toggle("open");
+                }
 
-        const receive =
-            Math.max(0, amount - fee);
+                if (overlay) {
+                    overlay.classList.toggle("active");
+                }
 
-
-        calculatorAmount.textContent =
-            formatUGX(amount);
-
-        calculatorFee.textContent =
-            formatUGX(fee);
-
-        calculatorReceive.textContent =
-            formatUGX(receive);
-
-    }
-
-
-    function showMessage(text, type) {
-
-        messageElement.textContent = text;
-
-        messageElement.className =
-            "message show " + type;
-
-    }
-
-
-    function clearMessage() {
-
-        messageElement.textContent = "";
-
-        messageElement.className =
-            "message";
-
-    }
-
-
-    function setLoading(loading) {
-
-        withdrawButton.disabled = loading;
-
-        loadingElement.classList.toggle(
-            "show",
-            loading
+            }
         );
 
-        if (loading) {
+    }
 
-            withdrawButton.innerHTML = `
-                <span class="spinner"></span>
-                Processing...
-            `;
 
-        } else {
+    if (overlay) {
 
-            withdrawButton.innerHTML = `
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 19V5"/>
-                    <path d="M6 11l6-6 6 6"/>
-                </svg>
-                Request Withdrawal
-            `;
-
-        }
+        overlay.addEventListener(
+            "click",
+            closeSidebar
+        );
 
     }
 
 
     /*
-     * Load the authenticated user's registered
-     * withdrawal details.
-     *
-     * Your withdraw.php should return these values
-     * from the authenticated account.
+     * Close sidebar after selecting a navigation link
+     * on mobile.
      */
-    async function loadWithdrawalAccount() {
 
-        try {
+    document
+        .querySelectorAll(".sidebar-nav a")
+        .forEach(function (link) {
 
-            const response = await fetch(
-                API_URL,
-                {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                }
+            link.addEventListener(
+                "click",
+                closeSidebar
             );
 
+        });
 
-            const rawText =
-                await response.text();
-
-            let data = null;
-
-            try {
-                data = rawText
-                    ? JSON.parse(rawText)
-                    : null;
-            } catch (error) {
-                console.warn(
-                    "Withdrawal GET response was not valid JSON:",
-                    rawText
-                );
-            }
-
-
-            if (!response.ok) {
-
-                return;
-
-            }
-
-
-            /*
-             * These names support common response formats.
-             * The backend should return the authenticated
-             * user's registered withdrawal information.
-             */
-
-            const user =
-                data?.user ||
-                data?.account ||
-                data?.data?.user ||
-                data?.data ||
-                {};
-
-
-            const registeredNumber =
-                user.withdrawal_number ||
-                user.withdrawalNumber ||
-                user.phone ||
-                user.phone_number ||
-                user.phoneNumber ||
-                data?.withdrawal_number ||
-                data?.withdrawalNumber;
-
-
-            const accountName =
-                user.account_name ||
-                user.accountName ||
-                user.name ||
-                (
-                    [user.first_name, user.last_name]
-                        .filter(Boolean)
-                        .join(" ")
-                ) ||
-                data?.account_name ||
-                data?.accountName;
-
-
-            const balance =
-                user.available_balance ??
-                user.availableBalance ??
-                data?.available_balance ??
-                data?.availableBalance;
-
-
-            if (registeredNumber) {
-
-                registeredNumberElement.textContent =
-                    registeredNumber;
-
-            }
-
-
-            if (accountName) {
-
-                accountNameElement.textContent =
-                    accountName;
-
-            }
-
-
-            if (
-                balance !== undefined &&
-                balance !== null &&
-                !Number.isNaN(Number(balance))
-            ) {
-
-                availableBalanceElement.textContent =
-                    formatUGX(balance);
-
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Could not load withdrawal account:",
-                error
-            );
-
-        }
-
-    }
-
-
-    amountInput.addEventListener(
-        "input",
-        updateCalculator
-    );
-
-
-    withdrawButton.addEventListener(
-        "click",
-        async function () {
-
-            clearMessage();
-
-
-            const amount =
-                Number(amountInput.value);
-
-
-            const availableBalance =
-                getAvailableBalance();
-
-
-            if (
-                !Number.isFinite(amount) ||
-                amount <= 0
-            ) {
-
-                showMessage(
-                    "Please enter a valid withdrawal amount.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (amount < MIN_WITHDRAWAL) {
-
-                showMessage(
-                    "The minimum withdrawal amount is UGX 5,000.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (amount > availableBalance) {
-
-                showMessage(
-                    "Your withdrawal amount cannot exceed your available balance.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (!confirmAmount.checked) {
-
-                showMessage(
-                    "Please confirm that your withdrawal amount is correct.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (!confirmNumber.checked) {
-
-                showMessage(
-                    "Please confirm that the displayed registered withdrawal number belongs to your account.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            if (!confirmFee.checked) {
-
-                showMessage(
-                    "Please confirm that you understand the 20% withdrawal fee.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            /*
-             * IMPORTANT:
-             *
-             * Only the amount is sent.
-             *
-             * We intentionally DO NOT send:
-             * method
-             * account
-             * phone
-             * network
-             *
-             * The secure backend should retrieve those
-             * details from the authenticated user account.
-             */
-
-            const payload = {
-                amount: amount
-            };
-
-
-            try {
-
-                setLoading(true);
-
-
-                const response = await fetch(
-                    API_URL,
-                    {
-                        method: "POST",
-
-                        credentials: "include",
-
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Accept": "application/json"
-                        },
-
-                        body: JSON.stringify(payload)
-                    }
-                );
-
-
-                const rawText =
-                    await response.text();
-
-
-                let data = null;
-
-
-                try {
-
-                    data = rawText
-                        ? JSON.parse(rawText)
-                        : null;
-
-                } catch (parseError) {
-
-                    console.error(
-                        "Invalid JSON response:",
-                        rawText
-                    );
-
-                }
-
-
-                if (!response.ok) {
-
-                    const serverMessage =
-                        data?.message ||
-                        data?.error ||
-                        (
-                            response.status === 401
-                                ? "Your session has expired. Please log in again."
-                                : response.status === 403
-                                    ? "You are not authorized to make this withdrawal."
-                                    : "The withdrawal request could not be completed."
-                        );
-
-                    throw new Error(serverMessage);
-
-                }
-
-
-                if (
-                    data &&
-                    data.success === false
-                ) {
-
-                    throw new Error(
-                        data.message ||
-                        "The withdrawal request was rejected."
-                    );
-
-                }
-
-
-                showMessage(
-                    data?.message ||
-                    "Withdrawal request submitted successfully. It is now pending Crown Cash administration review.",
-                    "success"
-                );
-
-
-                amountInput.value = "";
-
-                confirmAmount.checked = false;
-                confirmNumber.checked = false;
-                confirmFee.checked = false;
-
-                updateCalculator();
-
-
-            } catch (error) {
-
-                console.error(
-                    "Withdrawal error:",
-                    error
-                );
-
-
-                showMessage(
-                    error.message ||
-                    "Unable to submit your withdrawal request. Please try again.",
-                    "error"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        }
-    );
-
-
-    updateCalculator();
-
-    loadWithdrawalAccount();
-
+})();
 </script>
 
 </body>

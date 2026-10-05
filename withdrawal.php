@@ -7,34 +7,39 @@ declare(strict_types=1);
 CROWN CASH - USER WITHDRAWAL API
 =========================================================
 
-WITHDRAWAL FLOW
+CORRECT WITHDRAWAL FLOW
 
-1. User submits withdrawal request.
-2. Registered account phone is verified.
-3. Withdrawal becomes PENDING.
-4. Wallet is NOT deducted.
-5. Admin reviews the request.
-6. ADMIN APPROVE:
-      - Wallet is deducted exactly once.
-      - Withdrawal becomes APPROVED.
-7. ADMIN REJECT:
-      - Wallet remains unchanged.
-      - Withdrawal becomes REJECTED.
+USER:
+    Submit withdrawal
+        ↓
+    Registered phone verified
+        ↓
+    PENDING
+        ↓
+    WALLET UNCHANGED
 
-SECURITY
+ADMIN:
+    APPROVE
+        ↓
+    Atomic wallet deduction
+        ↓
+    APPROVED
 
-- Canonical Crown Cash session.
-- Server-side authenticated user lookup.
-- Registered account phone required.
-- Submitted phone MUST match registered phone.
-- Uganda phone validation.
-- Suspended/blocked accounts cannot withdraw.
-- Minimum withdrawal UGX 5,000.
-- 20% withdrawal fee.
-- MTN / Airtel.
-- Prevents multiple pending withdrawals.
-- Prevents withdrawal above available wallet balance.
-- NO wallet deduction during request creation.
+ADMIN:
+    REJECT
+        ↓
+    REJECTED
+        ↓
+    WALLET UNCHANGED
+
+IMPORTANT:
+
+- Wallet is NEVER deducted here.
+- Wallet is deducted ONLY by admin_withdrawal.php
+  after admin approval.
+- Registered phone must match the account phone.
+- Only one active withdrawal is allowed.
+- approval_processing is treated as active.
 =========================================================
 */
 
@@ -50,21 +55,45 @@ require_once __DIR__ . '/config.php';
    CORS
 ========================================================= */
 
-header(
-    'Access-Control-Allow-Origin: https://crown-cash.vercel.app'
-);
+$allowedOrigins = [
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
+];
 
-header(
-    'Access-Control-Allow-Credentials: true'
-);
+$requestOrigin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
 
-header(
-    'Access-Control-Allow-Methods: POST, OPTIONS'
-);
+if (
+    $requestOrigin !== ''
+    &&
+    in_array(
+        $requestOrigin,
+        $allowedOrigins,
+        true
+    )
+) {
 
-header(
-    'Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With'
-);
+    header(
+        'Access-Control-Allow-Origin: ' .
+        $requestOrigin
+    );
+
+    header(
+        'Access-Control-Allow-Credentials: true'
+    );
+
+    header(
+        'Access-Control-Allow-Methods: POST, OPTIONS'
+    );
+
+    header(
+        'Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With'
+    );
+
+    header(
+        'Vary: Origin'
+    );
+}
 
 header(
     'Content-Type: application/json; charset=utf-8'
@@ -179,7 +208,8 @@ try {
 
     echo json_encode([
         'success' => false,
-        'message' => 'Unable to initialize secure session.'
+        'message' =>
+            'Unable to initialize secure session.'
     ]);
 
     exit;
@@ -360,6 +390,16 @@ function userWithdrawalObjectId(
         return $value;
     }
 
+    if (
+        is_array($value)
+        &&
+        isset($value['$oid'])
+    ) {
+
+        $value =
+            $value['$oid'];
+    }
+
     $value =
         userWithdrawalString(
             $value
@@ -405,16 +445,11 @@ function normalizeUgandaWithdrawalPhone(
             trim($phone)
         );
 
-
     if (!$phone) {
 
         return '';
     }
 
-
-    /*
-    +256XXXXXXXXX
-    */
 
     if (
         str_starts_with(
@@ -429,14 +464,8 @@ function normalizeUgandaWithdrawalPhone(
                 $phone,
                 4
             );
-    }
 
-
-    /*
-    256XXXXXXXXX
-    */
-
-    elseif (
+    } elseif (
         str_starts_with(
             $phone,
             '256'
@@ -451,11 +480,6 @@ function normalizeUgandaWithdrawalPhone(
             );
     }
 
-
-    /*
-    Uganda local format:
-    07XXXXXXXX
-    */
 
     if (
         preg_match(
@@ -484,8 +508,7 @@ function findWithdrawalUserForRequest(
 
 
     /*
-    First attempt:
-    MongoDB ObjectId
+    ObjectId.
     */
 
     $objectId =
@@ -523,8 +546,7 @@ function findWithdrawalUserForRequest(
 
 
     /*
-    Second attempt:
-    custom string ID
+    Custom string ID.
     */
 
     $id =
@@ -537,33 +559,41 @@ function findWithdrawalUserForRequest(
         $id !== ''
     ) {
 
-        try {
+        foreach (
+            [
+                'id',
+                'user_id',
+                'userId'
+            ] as $field
+        ) {
 
-            $user =
-                $users->findOne([
-                    'id' => $id
-                ]);
+            try {
 
-            if (
-                $user !== null
-            ) {
+                $user =
+                    $users->findOne([
+                        $field => $id
+                    ]);
 
-                return $user;
+                if (
+                    $user !== null
+                ) {
+
+                    return $user;
+                }
+
+            } catch (Throwable $e) {
+
+                error_log(
+                    'Withdrawal user ID lookup error: ' .
+                    $e->getMessage()
+                );
             }
-
-        } catch (Throwable $e) {
-
-            error_log(
-                'Withdrawal user string lookup error: ' .
-                $e->getMessage()
-            );
         }
     }
 
 
     /*
-    Third attempt:
-    email from session, if available.
+    Session email fallback.
     */
 
     $sessionEmail =
@@ -584,7 +614,10 @@ function findWithdrawalUserForRequest(
 
             $user =
                 $users->findOne([
-                    'email' => $sessionEmail
+                    'email' =>
+                        strtolower(
+                            $sessionEmail
+                        )
                 ]);
 
             if (
@@ -609,7 +642,7 @@ function findWithdrawalUserForRequest(
 
 
 /* =========================================================
-   USER WALLET BALANCE
+   WALLET BALANCE
 ========================================================= */
 
 function getWithdrawalUserBalance(
@@ -663,17 +696,12 @@ function getWithdrawalUserBalance(
 
     if (
         isset($user['wallet'])
-        &&
-        (
-            is_array($user['wallet'])
-            ||
-            $user['wallet']
-                instanceof MongoDB\Model\BSONDocument
-        )
     ) {
 
         return userWithdrawalMoney(
-            $user['wallet']['balance'] ?? 0
+            $user['wallet']['balance']
+            ??
+            0
         );
     }
 
@@ -683,10 +711,10 @@ function getWithdrawalUserBalance(
 
 
 /* =========================================================
-   GET PENDING WITHDRAWAL AMOUNT
+   FIND ACTIVE WITHDRAWALS
 ========================================================= */
 
-function getPendingWithdrawalAmount(
+function getActiveWithdrawalAmount(
     $userId
 ): float {
 
@@ -701,12 +729,8 @@ function getPendingWithdrawalAmount(
     }
 
 
-    $total = 0.0;
+    $queries = [];
 
-
-    /*
-    Support ObjectId user IDs.
-    */
 
     $objectId =
         userWithdrawalObjectId(
@@ -714,56 +738,97 @@ function getPendingWithdrawalAmount(
         );
 
 
-    $queries = [];
-
-
-    if (
-        $objectId !== null
-    ) {
-
-        $queries[] = [
-            'user_id' => $objectId,
-            'status' => 'pending'
-        ];
-
-        $queries[] = [
-            'userId' => $objectId,
-            'status' => 'pending'
-        ];
-    }
-
-
-    /*
-    Support string IDs too.
-    */
-
     $stringId =
         userWithdrawalString(
             $userId
         );
 
 
+    /*
+    ObjectId queries.
+    */
+
+    if (
+        $objectId !== null
+    ) {
+
+        $queries[] = [
+
+            'user_id' =>
+                $objectId,
+
+            'status' =>
+                [
+                    '$in' => [
+                        'pending',
+                        'approval_processing'
+                    ]
+                ]
+        ];
+
+        $queries[] = [
+
+            'userId' =>
+                $objectId,
+
+            'status' =>
+                [
+                    '$in' => [
+                        'pending',
+                        'approval_processing'
+                    ]
+                ]
+        ];
+    }
+
+
+    /*
+    String ID queries.
+    */
+
     if (
         $stringId !== ''
     ) {
 
         $queries[] = [
-            'user_id' => $stringId,
-            'status' => 'pending'
+
+            'user_id' =>
+                $stringId,
+
+            'status' =>
+                [
+                    '$in' => [
+                        'pending',
+                        'approval_processing'
+                    ]
+                ]
         ];
 
         $queries[] = [
-            'userId' => $stringId,
-            'status' => 'pending'
+
+            'userId' =>
+                $stringId,
+
+            'status' =>
+                [
+                    '$in' => [
+                        'pending',
+                        'approval_processing'
+                    ]
+                ]
         ];
     }
+
+
+    $total = 0.0;
+
+    $seen = [];
 
 
     try {
 
         foreach (
-            $queries
-            as $query
+            $queries as $query
         ) {
 
             $cursor =
@@ -773,11 +838,37 @@ function getPendingWithdrawalAmount(
 
 
             foreach (
-                $cursor
-                as $item
+                $cursor as $item
             ) {
 
-                $amount =
+                $id =
+                    isset($item['_id'])
+                        ? (string)$item['_id']
+                        : '';
+
+
+                /*
+                Prevent double-counting if the same
+                withdrawal was found through both
+                user_id and userId.
+                */
+
+                if (
+                    $id !== ''
+                ) {
+
+                    if (
+                        isset($seen[$id])
+                    ) {
+
+                        continue;
+                    }
+
+                    $seen[$id] = true;
+                }
+
+
+                $itemAmount =
                     userWithdrawalMoney(
                         $item['amount']
                         ??
@@ -788,10 +879,11 @@ function getPendingWithdrawalAmount(
 
 
                 if (
-                    $amount > 0
+                    $itemAmount > 0
                 ) {
 
-                    $total += $amount;
+                    $total +=
+                        $itemAmount;
                 }
             }
         }
@@ -799,7 +891,7 @@ function getPendingWithdrawalAmount(
     } catch (Throwable $e) {
 
         error_log(
-            'Pending withdrawal lookup error: ' .
+            'Active withdrawal lookup error: ' .
             $e->getMessage()
         );
     }
@@ -810,7 +902,7 @@ function getPendingWithdrawalAmount(
 
 
 /* =========================================================
-   READ REQUEST BODY
+   READ REQUEST
 ========================================================= */
 
 $rawInput =
@@ -873,7 +965,7 @@ $submittedPhone =
 
 
 /* =========================================================
-   AMOUNT REQUIRED
+   AMOUNT
 ========================================================= */
 
 if (
@@ -894,10 +986,6 @@ if (
 }
 
 
-/* =========================================================
-   AMOUNT NUMERIC
-========================================================= */
-
 if (
     !is_numeric($amountInput)
 ) {
@@ -913,10 +1001,6 @@ if (
     exit;
 }
 
-
-/* =========================================================
-   WHOLE UGX AMOUNT
-========================================================= */
 
 $amount =
     (int)$amountInput;
@@ -956,7 +1040,7 @@ if (
 
 
 /* =========================================================
-   MINIMUM WITHDRAWAL
+   MINIMUM
 ========================================================= */
 
 if (
@@ -1040,7 +1124,7 @@ if (
 try {
 
     /* =====================================================
-       FIND AUTHENTICATED USER
+       FIND USER
     ===================================================== */
 
     $user =
@@ -1049,9 +1133,7 @@ try {
         );
 
 
-    if (
-        !$user
-    ) {
+    if (!$user) {
 
         http_response_code(404);
 
@@ -1127,11 +1209,6 @@ try {
         );
 
 
-    /*
-    A withdrawal cannot proceed without
-    a valid registered number.
-    */
-
     if (
         $normalizedRegisteredPhone === ''
     ) {
@@ -1149,7 +1226,7 @@ try {
 
 
     /* =====================================================
-       USER MUST CONFIRM REGISTERED NUMBER
+       CONFIRM REGISTERED PHONE
     ===================================================== */
 
     if (
@@ -1161,9 +1238,7 @@ try {
         echo json_encode([
             'success' => false,
             'message' =>
-                'Please enter your registered account phone number to confirm the withdrawal.',
-            'registered_phone' =>
-                $normalizedRegisteredPhone
+                'Please enter your registered account phone number to confirm the withdrawal.'
         ]);
 
         exit;
@@ -1191,13 +1266,6 @@ try {
         exit;
     }
 
-
-    /*
-    IMPORTANT SECURITY CHECK.
-
-    The number supplied by the browser MUST
-    match the number stored on the user's account.
-    */
 
     if (
         $normalizedSubmittedPhone !==
@@ -1255,25 +1323,36 @@ try {
 
 
     /* =====================================================
-       PENDING WITHDRAWALS
+       ACTIVE WITHDRAWALS
     ===================================================== */
 
-    $pendingAmount =
-        getPendingWithdrawalAmount(
+    $activeAmount =
+        getActiveWithdrawalAmount(
             $userObjectId
         );
 
 
-    $availableForWithdrawal =
-        $walletBalance -
-        $pendingAmount;
+    /*
+    Important:
 
+    A withdrawal in approval_processing is still active.
+    */
 
     if (
-        $availableForWithdrawal < 0
+        $activeAmount > 0
     ) {
 
-        $availableForWithdrawal = 0;
+        http_response_code(409);
+
+        echo json_encode([
+            'success' => false,
+            'message' =>
+                'You already have a withdrawal request awaiting processing. Please wait for the current withdrawal to be approved or rejected before creating another one.',
+            'active_withdrawals' =>
+                $activeAmount
+        ]);
+
+        exit;
     }
 
 
@@ -1282,8 +1361,7 @@ try {
     ===================================================== */
 
     if (
-        $amount >
-        $availableForWithdrawal
+        $amount > $walletBalance
     ) {
 
         http_response_code(400);
@@ -1291,13 +1369,11 @@ try {
         echo json_encode([
             'success' => false,
             'message' =>
-                'Insufficient available wallet balance. Pending withdrawal requests are temporarily unavailable for another withdrawal.',
+                'Insufficient wallet balance.',
             'balance' =>
                 $walletBalance,
-            'pending_withdrawals' =>
-                $pendingAmount,
             'available_balance' =>
-                $availableForWithdrawal
+                $walletBalance
         ]);
 
         exit;
@@ -1305,29 +1381,7 @@ try {
 
 
     /* =====================================================
-       ONLY ONE PENDING WITHDRAWAL
-    ===================================================== */
-
-    if (
-        $pendingAmount > 0
-    ) {
-
-        http_response_code(409);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'You already have a pending withdrawal. Please wait for admin approval before creating another withdrawal.',
-            'pending_withdrawals' =>
-                $pendingAmount
-        ]);
-
-        exit;
-    }
-
-
-    /* =====================================================
-       WITHDRAWAL FEE
+       FEE
     ===================================================== */
 
     $withdrawalFee =
@@ -1359,7 +1413,7 @@ try {
 
 
     /* =====================================================
-       IDS
+       IDs / TIME
     ===================================================== */
 
     $withdrawalId =
@@ -1399,7 +1453,7 @@ try {
 
 
     /* =====================================================
-       WITHDRAWAL REFERENCE
+       REFERENCE
     ===================================================== */
 
     $reference =
@@ -1432,11 +1486,6 @@ try {
 
         'full_name' =>
             $fullName,
-
-        /*
-        IMPORTANT:
-        This is the verified registered phone.
-        */
 
         'registered_phone' =>
             $normalizedRegisteredPhone,
@@ -1481,7 +1530,9 @@ try {
             'pending',
 
         /*
-        NO MONEY IS DEDUCTED HERE.
+        ================================================
+        CRITICAL ACCOUNTING FLAGS
+        ================================================
         */
 
         'balance_reserved' =>
@@ -1505,7 +1556,7 @@ try {
 
 
     /* =====================================================
-       CREATE WITHDRAWAL
+       INSERT WITHDRAWAL
     ===================================================== */
 
     $withdrawalInsert =
@@ -1526,7 +1577,7 @@ try {
 
 
     /* =====================================================
-       TRANSACTION RECORD
+       TRANSACTION
     ===================================================== */
 
     $transactionDocument = [
@@ -1570,10 +1621,6 @@ try {
         'payment_method' =>
             $paymentMethod,
 
-        /*
-        Store the verified registered number.
-        */
-
         'registered_phone' =>
             $normalizedRegisteredPhone,
 
@@ -1590,7 +1637,8 @@ try {
             'pending',
 
         /*
-        NO WALLET DEDUCTION.
+        CRITICAL:
+        No wallet deduction.
         */
 
         'balance_reserved' =>
@@ -1622,15 +1670,15 @@ try {
     } catch (Throwable $transactionError) {
 
         /*
-        If the transaction record cannot be created,
-        remove the withdrawal request so we don't
-        leave an incomplete withdrawal.
+        Do not leave a withdrawal without its
+        corresponding transaction.
         */
 
         try {
 
             $withdrawals->deleteOne([
-                '_id' => $withdrawalId
+                '_id' =>
+                    $withdrawalId
             ]);
 
         } catch (Throwable $cleanupError) {
@@ -1646,7 +1694,7 @@ try {
 
 
     /* =====================================================
-       AUDIT LOG
+       AUDIT
     ===================================================== */
 
     if (
@@ -1693,7 +1741,13 @@ try {
                 'status' =>
                     'pending',
 
+                'balance_reserved' =>
+                    false,
+
                 'balance_deducted' =>
+                    false,
+
+                'admin_approved' =>
                     false,
 
                 'created_at' =>
@@ -1711,7 +1765,7 @@ try {
 
 
     /* =====================================================
-       SUCCESS RESPONSE
+       SUCCESS
     ===================================================== */
 
     echo json_encode([
@@ -1748,10 +1802,6 @@ try {
             'payment_method' =>
                 $paymentMethod,
 
-            /*
-            Verified number returned to frontend.
-            */
-
             'registered_phone' =>
                 $normalizedRegisteredPhone,
 
@@ -1764,7 +1814,13 @@ try {
             'status' =>
                 'pending',
 
+            'balance_reserved' =>
+                false,
+
             'balance_deducted' =>
+                false,
+
+            'admin_approved' =>
                 false,
 
             'payout_status' =>
@@ -1774,21 +1830,18 @@ try {
         'wallet' => [
 
             /*
-            This is the actual wallet balance.
-            It has NOT been deducted.
+            THIS IS THE REAL WALLET BALANCE.
+            IT HAS NOT BEEN DEDUCTED.
             */
 
             'balance' =>
                 $walletBalance,
 
             'pending_withdrawals' =>
-                $pendingAmount + $amount,
+                $amount,
 
             'available_balance' =>
-                max(
-                    0,
-                    $availableForWithdrawal - $amount
-                )
+                $walletBalance
         ]
 
     ]);

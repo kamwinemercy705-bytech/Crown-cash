@@ -1,55 +1,25 @@
 <?php
+/**
+ * Crown Cash - Withdrawal API
+ * File: withdrawal.php
+ *
+ * IMPORTANT BUSINESS RULES
+ * -------------------------
+ * 1. User requests withdrawal.
+ * 2. Registered mobile-money number is used automatically.
+ * 3. Wallet is NOT deducted at request time.
+ * 4. Withdrawal remains pending until admin approval.
+ * 5. Admin approval is responsible for wallet deduction.
+ * 6. Rejection does not affect wallet balance.
+ */
 
 declare(strict_types=1);
 
-/*
-=========================================================
-CROWN CASH - USER WITHDRAWAL API
-=========================================================
-
-CORRECT WITHDRAWAL FLOW
-
-USER:
-    Submit withdrawal
-        ↓
-    Registered phone verified
-        ↓
-    PENDING
-        ↓
-    WALLET UNCHANGED
-
-ADMIN:
-    APPROVE
-        ↓
-    Atomic wallet deduction
-        ↓
-    APPROVED
-
-ADMIN:
-    REJECT
-        ↓
-    REJECTED
-        ↓
-    WALLET UNCHANGED
-
-IMPORTANT:
-
-- Wallet is NEVER deducted here.
-- Wallet is deducted ONLY by admin_withdrawal.php
-  after admin approval.
-- Registered phone must match the account phone.
-- Only one active withdrawal is allowed.
-- approval_processing is treated as active.
-=========================================================
-*/
-
-
 /* =========================================================
-   LOAD CONFIG FIRST
+   CONFIG
 ========================================================= */
 
 require_once __DIR__ . '/config.php';
-
 
 /* =========================================================
    CORS
@@ -57,1824 +27,1038 @@ require_once __DIR__ . '/config.php';
 
 $allowedOrigins = [
     'https://crown-cash.vercel.app',
-    'https://www.crown-cash.vercel.app'
 ];
 
-$requestOrigin =
-    $_SERVER['HTTP_ORIGIN'] ?? '';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (
-    $requestOrigin !== ''
-    &&
-    in_array(
-        $requestOrigin,
-        $allowedOrigins,
-        true
-    )
-) {
-
-    header(
-        'Access-Control-Allow-Origin: ' .
-        $requestOrigin
-    );
-
-    header(
-        'Access-Control-Allow-Credentials: true'
-    );
-
-    header(
-        'Access-Control-Allow-Methods: POST, OPTIONS'
-    );
-
-    header(
-        'Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With'
-    );
-
-    header(
-        'Vary: Origin'
-    );
+if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: {$origin}");
+    header('Vary: Origin');
 }
 
-header(
-    'Content-Type: application/json; charset=utf-8'
-);
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Content-Type: application/json; charset=utf-8');
 
-
-/* =========================================================
-   OPTIONS
-========================================================= */
-
-if (
-    strtoupper(
-        $_SERVER['REQUEST_METHOD'] ?? ''
-    ) === 'OPTIONS'
-) {
-
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
+    exit;
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function cc_json_response(
+    bool $success,
+    string $message = '',
+    array $data = [],
+    int $statusCode = 200
+): void {
+    http_response_code($statusCode);
+
+    echo json_encode(
+        array_merge(
+            [
+                'success' => $success,
+                'message' => $message,
+            ],
+            $data
+        ),
+        JSON_UNESCAPED_SLASHES
+    );
 
     exit;
 }
 
-
-/* =========================================================
-   ONLY POST
-========================================================= */
-
-if (
-    strtoupper(
-        $_SERVER['REQUEST_METHOD'] ?? ''
-    ) !== 'POST'
-) {
-
-    http_response_code(405);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Method not allowed.'
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   SECURE SESSION
-========================================================= */
-
-try {
-
-    if (
-        function_exists('startSecureSession')
-    ) {
-
-        if (
-            session_status() !== PHP_SESSION_ACTIVE
-        ) {
-
-            startSecureSession();
-        }
-
-    } else {
-
-        if (
-            session_status() !== PHP_SESSION_ACTIVE
-        ) {
-
-            ini_set(
-                'session.use_only_cookies',
-                '1'
-            );
-
-            ini_set(
-                'session.use_strict_mode',
-                '1'
-            );
-
-            ini_set(
-                'session.cookie_httponly',
-                '1'
-            );
-
-            ini_set(
-                'session.cookie_secure',
-                '1'
-            );
-
-            session_name(
-                'CROWN_CASH_SESSION'
-            );
-
-            session_set_cookie_params([
-                'lifetime' => 0,
-                'path' => '/',
-                'domain' => '',
-                'secure' => true,
-                'httponly' => true,
-                'samesite' => 'None'
-            ]);
-
-            session_start();
-        }
+function cc_string(mixed $value): string
+{
+    if (is_string($value)) {
+        return trim($value);
     }
 
-} catch (Throwable $e) {
+    if (is_numeric($value)) {
+        return trim((string)$value);
+    }
 
-    error_log(
-        'Crown Cash withdrawal session error: ' .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Unable to initialize secure session.'
-    ]);
-
-    exit;
+    return '';
 }
 
+function cc_money(mixed $value): float
+{
+    if ($value === null || $value === '') {
+        return 0.0;
+    }
+
+    if (is_numeric($value)) {
+        return round((float)$value, 2);
+    }
+
+    $clean = preg_replace('/[^0-9.\-]/', '', (string)$value);
+
+    return round((float)$clean, 2);
+}
+
+function cc_normalize_phone(string $phone): string
+{
+    $phone = trim($phone);
+
+    if ($phone === '') {
+        return '';
+    }
+
+    // Remove spaces, brackets, hyphens, etc.
+    $phone = preg_replace('/[^0-9+]/', '', $phone);
+
+    // +256XXXXXXXXX -> 0XXXXXXXXX
+    if (str_starts_with($phone, '+256')) {
+        $phone = '0' . substr($phone, 4);
+    }
+
+    // 256XXXXXXXXX -> 0XXXXXXXXX
+    if (str_starts_with($phone, '256')) {
+        $phone = '0' . substr($phone, 3);
+    }
+
+    return $phone;
+}
+
+function cc_valid_uganda_phone(string $phone): bool
+{
+    return (bool)preg_match('/^07[0-9]{8}$/', $phone);
+}
+
+function cc_object_id_to_string(mixed $id): string
+{
+    if ($id === null) {
+        return '';
+    }
+
+    if (is_string($id)) {
+        return trim($id);
+    }
+
+    if (is_object($id) && method_exists($id, '__toString')) {
+        return trim((string)$id);
+    }
+
+    return '';
+}
+
+function cc_request_json(): array
+{
+    $raw = file_get_contents('php://input');
+
+    if ($raw === false || trim($raw) === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+
+    return is_array($decoded) ? $decoded : [];
+}
+
+/* =========================================================
+   SESSION
+========================================================= */
+
+if (function_exists('startSecureSession')) {
+    startSecureSession();
+} else {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_name('CROWN_CASH_SESSION');
+        session_start();
+    }
+}
 
 /* =========================================================
    AUTHENTICATION
 ========================================================= */
 
-$loggedIn =
-    (
-        ($_SESSION['logged_in'] ?? false) === true
-        ||
-        ($_SESSION['logged_in'] ?? null) === 1
-        ||
-        ($_SESSION['logged_in'] ?? null) === '1'
-        ||
-        ($_SESSION['authenticated'] ?? false) === true
+$loggedIn = (
+    isset($_SESSION['logged_in']) &&
+    $_SESSION['logged_in'] === true
+);
+
+if (!$loggedIn) {
+    cc_json_response(
+        false,
+        'Please log in before making a withdrawal.',
+        [],
+        401
     );
+}
 
-
-$userIdSession =
+$sessionUserId = cc_string(
     $_SESSION['user_id']
-    ??
-    $_SESSION['userId']
-    ??
-    $_SESSION['id']
-    ??
-    $_SESSION['_id']
-    ??
-    null;
+    ?? $_SESSION['userId']
+    ?? $_SESSION['id']
+    ?? ''
+);
 
+$sessionEmail = strtolower(
+    cc_string($_SESSION['email'] ?? '')
+);
 
+if ($sessionUserId === '' && $sessionEmail === '') {
+    cc_json_response(
+        false,
+        'Your login session is incomplete. Please log in again.',
+        [],
+        401
+    );
+}
+
+/* =========================================================
+   DATABASE COLLECTIONS
+========================================================= */
+
+/*
+ * Your existing config.php should provide the MongoDB
+ * connection/collection objects used by Crown Cash.
+ */
+
+$users = $usersCollection ?? null;
+$withdrawals = $withdrawalsCollection ?? null;
+$transactions = $transactionsCollection ?? null;
+$auditLogs = $auditLogsCollection ?? null;
+
+if ($users === null) {
+    cc_json_response(
+        false,
+        'Users database is not available.',
+        [],
+        500
+    );
+}
+
+if ($withdrawals === null) {
+    cc_json_response(
+        false,
+        'Withdrawals database is not available.',
+        [],
+        500
+    );
+}
+
+/* =========================================================
+   FIND AUTHENTICATED USER
+========================================================= */
+
+$user = null;
+
+/*
+ * First attempt: MongoDB ObjectId session ID.
+ */
 if (
-    !$loggedIn
-    ||
-    $userIdSession === null
-    ||
-    trim((string)$userIdSession) === ''
+    $sessionUserId !== '' &&
+    class_exists('\\MongoDB\\BSON\\ObjectId') &&
+    preg_match('/^[a-f0-9]{24}$/i', $sessionUserId)
 ) {
-
-    http_response_code(401);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Please login first.'
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   SETTINGS
-========================================================= */
-
-$minimumWithdrawal = 5000;
-
-$withdrawalFeeRate = 0.20;
-
-
-/* =========================================================
-   STRING HELPER
-========================================================= */
-
-function userWithdrawalString(
-    $value,
-    string $default = ''
-): string {
-
-    if ($value === null) {
-        return $default;
-    }
-
-    if (
-        $value instanceof MongoDB\BSON\ObjectId
-    ) {
-
-        return (string)$value;
-    }
-
-    if (
-        $value instanceof MongoDB\BSON\Decimal128
-    ) {
-
-        return $value->__toString();
-    }
-
-    if (
-        $value instanceof MongoDB\BSON\Int64
-    ) {
-
-        return $value->__toString();
-    }
-
-    if (is_string($value)) {
-
-        return trim($value);
-    }
-
-    if (is_scalar($value)) {
-
-        return trim((string)$value);
-    }
-
-    return $default;
-}
-
-
-/* =========================================================
-   MONEY HELPER
-========================================================= */
-
-function userWithdrawalMoney(
-    $value
-): float {
-
-    if (
-        $value instanceof MongoDB\BSON\Decimal128
-    ) {
-
-        return (float)$value->__toString();
-    }
-
-    if (
-        $value instanceof MongoDB\BSON\Int64
-    ) {
-
-        return (float)$value->__toString();
-    }
-
-    if (
-        is_int($value)
-        ||
-        is_float($value)
-    ) {
-
-        return (float)$value;
-    }
-
-    if (is_string($value)) {
-
-        $value =
-            str_replace(
-                [
-                    ',',
-                    'UGX',
-                    'ugx',
-                    ' '
-                ],
-                '',
-                $value
-            );
-
-        if (is_numeric($value)) {
-
-            return (float)$value;
-        }
-    }
-
-    return 0.0;
-}
-
-
-/* =========================================================
-   OBJECT ID HELPER
-========================================================= */
-
-function userWithdrawalObjectId(
-    $value
-): ?MongoDB\BSON\ObjectId {
-
-    if (
-        $value instanceof MongoDB\BSON\ObjectId
-    ) {
-
-        return $value;
-    }
-
-    if (
-        is_array($value)
-        &&
-        isset($value['$oid'])
-    ) {
-
-        $value =
-            $value['$oid'];
-    }
-
-    $value =
-        userWithdrawalString(
-            $value
-        );
-
-    if (
-        $value === ''
-        ||
-        !preg_match(
-            '/^[a-fA-F0-9]{24}$/',
-            $value
-        )
-    ) {
-
-        return null;
-    }
-
     try {
+        $objectId = new MongoDB\BSON\ObjectId($sessionUserId);
 
-        return new MongoDB\BSON\ObjectId(
-            $value
-        );
-
+        $user = $users->findOne([
+            '_id' => $objectId
+        ]);
     } catch (Throwable $e) {
-
-        return null;
+        $user = null;
     }
 }
 
+/*
+ * Second attempt: string id fields.
+ */
+if ($user === null && $sessionUserId !== '') {
+    try {
+        $user = $users->findOne([
+            '$or' => [
+                ['id' => $sessionUserId],
+                ['user_id' => $sessionUserId],
+                ['userId' => $sessionUserId],
+                ['_id' => $sessionUserId],
+            ]
+        ]);
+    } catch (Throwable $e) {
+        $user = null;
+    }
+}
+
+/*
+ * Third attempt: email.
+ */
+if ($user === null && $sessionEmail !== '') {
+    try {
+        $user = $users->findOne([
+            '$or' => [
+                ['email' => $sessionEmail],
+                ['email' => strtolower($sessionEmail)]
+            ]
+        ]);
+    } catch (Throwable $e) {
+        $user = null;
+    }
+}
+
+if ($user === null) {
+    cc_json_response(
+        false,
+        'Your account could not be found. Please log in again.',
+        [],
+        401
+    );
+}
 
 /* =========================================================
-   UGANDA PHONE NORMALIZATION
+   USER IDENTITY
 ========================================================= */
 
-function normalizeUgandaWithdrawalPhone(
-    string $phone
-): string {
+$dbUserId = '';
 
-    $phone =
-        preg_replace(
-            '/[^0-9+]/',
-            '',
-            trim($phone)
-        );
-
-    if (!$phone) {
-
-        return '';
-    }
-
-
-    if (
-        str_starts_with(
-            $phone,
-            '+256'
-        )
-    ) {
-
-        $phone =
-            '0' .
-            substr(
-                $phone,
-                4
-            );
-
-    } elseif (
-        str_starts_with(
-            $phone,
-            '256'
-        )
-    ) {
-
-        $phone =
-            '0' .
-            substr(
-                $phone,
-                3
-            );
-    }
-
-
-    if (
-        preg_match(
-            '/^07[0-9]{8}$/',
-            $phone
-        )
-    ) {
-
-        return $phone;
-    }
-
-
-    return '';
+if (isset($user->_id)) {
+    $dbUserId = cc_object_id_to_string($user->_id);
 }
 
+if ($dbUserId === '') {
+    $dbUserId = cc_string(
+        $user->id
+        ?? $user->user_id
+        ?? $user->userId
+        ?? $sessionUserId
+    );
+}
+
+$dbEmail = strtolower(
+    cc_string($user->email ?? $sessionEmail)
+);
 
 /* =========================================================
-   FIND USER
+   USER STATUS
 ========================================================= */
 
-function findWithdrawalUserForRequest(
-    $sessionUserId
-) {
+$userStatus = strtolower(
+    cc_string(
+        $user->status
+        ?? $user->account_status
+        ?? 'active'
+    )
+);
 
-    global $users;
+$blockedStatuses = [
+    'blocked',
+    'suspended',
+    'disabled',
+    'banned',
+    'inactive'
+];
 
-
-    /*
-    ObjectId.
-    */
-
-    $objectId =
-        userWithdrawalObjectId(
-            $sessionUserId
-        );
-
-
-    if (
-        $objectId !== null
-    ) {
-
-        try {
-
-            $user =
-                $users->findOne([
-                    '_id' => $objectId
-                ]);
-
-            if (
-                $user !== null
-            ) {
-
-                return $user;
-            }
-
-        } catch (Throwable $e) {
-
-            error_log(
-                'Withdrawal user ObjectId lookup error: ' .
-                $e->getMessage()
-            );
-        }
-    }
-
-
-    /*
-    Custom string ID.
-    */
-
-    $id =
-        userWithdrawalString(
-            $sessionUserId
-        );
-
-
-    if (
-        $id !== ''
-    ) {
-
-        foreach (
-            [
-                'id',
-                'user_id',
-                'userId'
-            ] as $field
-        ) {
-
-            try {
-
-                $user =
-                    $users->findOne([
-                        $field => $id
-                    ]);
-
-                if (
-                    $user !== null
-                ) {
-
-                    return $user;
-                }
-
-            } catch (Throwable $e) {
-
-                error_log(
-                    'Withdrawal user ID lookup error: ' .
-                    $e->getMessage()
-                );
-            }
-        }
-    }
-
-
-    /*
-    Session email fallback.
-    */
-
-    $sessionEmail =
-        userWithdrawalString(
-            $_SESSION['email']
-            ??
-            $_SESSION['user_email']
-            ??
-            ''
-        );
-
-
-    if (
-        $sessionEmail !== ''
-    ) {
-
-        try {
-
-            $user =
-                $users->findOne([
-                    'email' =>
-                        strtolower(
-                            $sessionEmail
-                        )
-                ]);
-
-            if (
-                $user !== null
-            ) {
-
-                return $user;
-            }
-
-        } catch (Throwable $e) {
-
-            error_log(
-                'Withdrawal user email lookup error: ' .
-                $e->getMessage()
-            );
-        }
-    }
-
-
-    return null;
+if (in_array($userStatus, $blockedStatuses, true)) {
+    cc_json_response(
+        false,
+        'Your account is not allowed to make withdrawals.',
+        [],
+        403
+    );
 }
 
+/* =========================================================
+   REGISTERED PHONE
+========================================================= */
+
+$registeredPhoneRaw =
+    $user->phone
+    ?? $user->phone_number
+    ?? $user->phoneNumber
+    ?? $user->mobile
+    ?? $user->mobile_number
+    ?? $user->mobileNumber
+    ?? '';
+
+$registeredPhone = cc_normalize_phone(
+    cc_string($registeredPhoneRaw)
+);
+
+if (!cc_valid_uganda_phone($registeredPhone)) {
+    cc_json_response(
+        false,
+        'Your registered mobile-money number is missing or invalid. Please update your profile before making a withdrawal.',
+        [
+            'registered_phone' => $registeredPhone
+        ],
+        400
+    );
+}
+
+/* =========================================================
+   USER NAME
+========================================================= */
+
+$firstName = cc_string(
+    $user->first_name
+    ?? $user->firstName
+    ?? ''
+);
+
+$lastName = cc_string(
+    $user->last_name
+    ?? $user->lastName
+    ?? ''
+);
+
+$fullName = cc_string(
+    $user->full_name
+    ?? $user->fullName
+    ?? $user->name
+    ?? ''
+);
+
+if ($fullName === '') {
+    $fullName = trim($firstName . ' ' . $lastName);
+}
+
+if ($fullName === '') {
+    $fullName = 'Crown Cash User';
+}
 
 /* =========================================================
    WALLET BALANCE
 ========================================================= */
 
-function getWithdrawalUserBalance(
-    $user
-): float {
+$currentBalance = cc_money(
+    $user->balance
+    ?? $user->wallet_balance
+    ?? $user->walletBalance
+    ?? 0
+);
 
-    if (!$user) {
-
-        return 0.0;
-    }
-
-
-    if (
-        array_key_exists(
-            'balance',
-            $user
-        )
-    ) {
-
-        return userWithdrawalMoney(
-            $user['balance']
-        );
-    }
-
-
-    if (
-        array_key_exists(
-            'wallet_balance',
-            $user
-        )
-    ) {
-
-        return userWithdrawalMoney(
-            $user['wallet_balance']
-        );
-    }
-
-
-    if (
-        array_key_exists(
-            'walletBalance',
-            $user
-        )
-    ) {
-
-        return userWithdrawalMoney(
-            $user['walletBalance']
-        );
-    }
-
-
-    if (
-        isset($user['wallet'])
-    ) {
-
-        return userWithdrawalMoney(
-            $user['wallet']['balance']
-            ??
-            0
-        );
-    }
-
-
-    return 0.0;
+if ($currentBalance < 0) {
+    $currentBalance = 0;
 }
 
-
 /* =========================================================
-   FIND ACTIVE WITHDRAWALS
+   CONSTANTS
 ========================================================= */
 
-function getActiveWithdrawalAmount(
-    $userId
-): float {
+$minimumWithdrawal = 5000.00;
+$feeRate = 0.20;
 
-    global $withdrawals;
+/* =========================================================
+   GET WITHDRAWAL HISTORY
+========================================================= */
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
-    if (
-        !isset($withdrawals)
-    ) {
-
-        return 0.0;
-    }
-
-
-    $queries = [];
-
-
-    $objectId =
-        userWithdrawalObjectId(
-            $userId
-        );
-
-
-    $stringId =
-        userWithdrawalString(
-            $userId
-        );
-
-
-    /*
-    ObjectId queries.
-    */
-
-    if (
-        $objectId !== null
-    ) {
-
-        $queries[] = [
-
-            'user_id' =>
-                $objectId,
-
-            'status' =>
-                [
-                    '$in' => [
-                        'pending',
-                        'approval_processing'
-                    ]
-                ]
-        ];
-
-        $queries[] = [
-
-            'userId' =>
-                $objectId,
-
-            'status' =>
-                [
-                    '$in' => [
-                        'pending',
-                        'approval_processing'
-                    ]
-                ]
-        ];
-    }
-
-
-    /*
-    String ID queries.
-    */
-
-    if (
-        $stringId !== ''
-    ) {
-
-        $queries[] = [
-
-            'user_id' =>
-                $stringId,
-
-            'status' =>
-                [
-                    '$in' => [
-                        'pending',
-                        'approval_processing'
-                    ]
-                ]
-        ];
-
-        $queries[] = [
-
-            'userId' =>
-                $stringId,
-
-            'status' =>
-                [
-                    '$in' => [
-                        'pending',
-                        'approval_processing'
-                    ]
-                ]
-        ];
-    }
-
-
-    $total = 0.0;
-
-    $seen = [];
-
+    $withdrawalDocuments = [];
 
     try {
 
-        foreach (
-            $queries as $query
-        ) {
+        $query = [];
 
-            $cursor =
-                $withdrawals->find(
-                    $query
-                );
+        if ($dbUserId !== '') {
 
+            $userOr = [
+                ['user_id' => $dbUserId],
+                ['userId' => $dbUserId],
+                ['id' => $dbUserId],
+            ];
 
-            foreach (
-                $cursor as $item
+            if (
+                class_exists('\\MongoDB\\BSON\\ObjectId') &&
+                preg_match('/^[a-f0-9]{24}$/i', $dbUserId)
             ) {
+                try {
+                    $objectId = new MongoDB\BSON\ObjectId($dbUserId);
 
-                $id =
-                    isset($item['_id'])
-                        ? (string)$item['_id']
-                        : '';
+                    $userOr[] = [
+                        'user_id' => $objectId
+                    ];
 
-
-                /*
-                Prevent double-counting if the same
-                withdrawal was found through both
-                user_id and userId.
-                */
-
-                if (
-                    $id !== ''
-                ) {
-
-                    if (
-                        isset($seen[$id])
-                    ) {
-
-                        continue;
-                    }
-
-                    $seen[$id] = true;
-                }
-
-
-                $itemAmount =
-                    userWithdrawalMoney(
-                        $item['amount']
-                        ??
-                        $item['requested_amount']
-                        ??
-                        0
-                    );
-
-
-                if (
-                    $itemAmount > 0
-                ) {
-
-                    $total +=
-                        $itemAmount;
+                    $userOr[] = [
+                        'userId' => $objectId
+                    ];
+                } catch (Throwable $e) {
+                    // Continue with string IDs.
                 }
             }
+
+            $query = [
+                '$or' => $userOr
+            ];
+        } elseif ($dbEmail !== '') {
+            $query = [
+                'email' => $dbEmail
+            ];
+        }
+
+        $cursor = $withdrawals->find(
+            $query,
+            [
+                'sort' => [
+                    'created_at' => -1,
+                    'createdAt' => -1,
+                    '_id' => -1
+                ],
+                'limit' => 50
+            ]
+        );
+
+        foreach ($cursor as $doc) {
+
+            $id = cc_object_id_to_string($doc->_id ?? '');
+
+            $amount = cc_money(
+                $doc->amount
+                ?? $doc->requested_amount
+                ?? 0
+            );
+
+            $fee = cc_money(
+                $doc->fee
+                ?? ($amount * $feeRate)
+            );
+
+            $payout = cc_money(
+                $doc->payout_amount
+                ?? $doc->net_amount
+                ?? ($amount - $fee)
+            );
+
+            $status = strtolower(
+                cc_string($doc->status ?? 'pending')
+            );
+
+            $createdAt =
+                $doc->created_at
+                ?? $doc->createdAt
+                ?? null;
+
+            $date = '';
+
+            if ($createdAt instanceof MongoDB\BSON\UTCDateTime) {
+                try {
+                    $date = $createdAt
+                        ->toDateTime()
+                        ->format('Y-m-d H:i:s');
+                } catch (Throwable $e) {
+                    $date = '';
+                }
+            } elseif ($createdAt instanceof DateTimeInterface) {
+                $date = $createdAt->format('Y-m-d H:i:s');
+            } else {
+                $date = cc_string($createdAt);
+            }
+
+            $withdrawalDocuments[] = [
+                'id' => $id,
+                '_id' => $id,
+                'amount' => $amount,
+                'fee' => $fee,
+                'payout_amount' => $payout,
+                'net_amount' => $payout,
+                'status' => $status,
+                'method' => 'mobile_money',
+                'payment_method' => 'mobile_money',
+                'phone' => $registeredPhone,
+                'balance_reserved' => (bool)($doc->balance_reserved ?? false),
+                'balance_deducted' => (bool)($doc->balance_deducted ?? false),
+                'admin_approved' => (bool)($doc->admin_approved ?? false),
+                'payout_status' => cc_string(
+                    $doc->payout_status ?? 'not_paid'
+                ),
+                'created_at' => $date
+            ];
         }
 
     } catch (Throwable $e) {
 
-        error_log(
-            'Active withdrawal lookup error: ' .
-            $e->getMessage()
+        cc_json_response(
+            false,
+            'Unable to load withdrawal history.',
+            [
+                'withdrawals' => [],
+                'data' => [],
+                'wallet' => [
+                    'balance' => $currentBalance
+                ]
+            ],
+            500
         );
     }
 
-
-    return $total;
+    cc_json_response(
+        true,
+        'Withdrawal history loaded.',
+        [
+            'withdrawals' => $withdrawalDocuments,
+            'data' => $withdrawalDocuments,
+            'wallet' => [
+                'balance' => $currentBalance
+            ],
+            'balance' => $currentBalance,
+            'available_balance' => $currentBalance,
+            'registered_phone' => $registeredPhone
+        ]
+    );
 }
 
+/* =========================================================
+   ONLY POST FROM HERE
+========================================================= */
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    cc_json_response(
+        false,
+        'Invalid request method.',
+        [],
+        405
+    );
+}
 
 /* =========================================================
    READ REQUEST
 ========================================================= */
 
-$rawInput =
-    file_get_contents(
-        'php://input'
-    );
+$input = cc_request_json();
 
+$amount = cc_money(
+    $input['amount'] ?? 0
+);
 
-$data =
-    json_decode(
-        $rawInput ?: '',
-        true
-    );
-
-
-if (
-    !is_array($data)
-) {
-
-    $data = $_POST;
-}
-
+/*
+ * The frontend may send the registered phone.
+ * We do NOT trust it as the source of truth.
+ *
+ * The authenticated user's registered number above is
+ * authoritative.
+ */
+$submittedPhone = cc_normalize_phone(
+    cc_string($input['phone'] ?? '')
+);
 
 /* =========================================================
-   INPUT
+   AMOUNT VALIDATION
 ========================================================= */
 
-$amountInput =
-    $data['amount']
-    ??
-    $data['requested_amount']
-    ??
-    null;
-
-
-$paymentMethod =
-    trim(
-        (string)(
-            $data['payment_method']
-            ??
-            $data['method']
-            ??
-            ''
-        )
+if ($amount <= 0) {
+    cc_json_response(
+        false,
+        'Please enter a valid withdrawal amount.',
+        [],
+        400
     );
-
-
-$submittedPhone =
-    trim(
-        (string)(
-            $data['phone']
-            ??
-            $data['phone_number']
-            ??
-            $data['mobile']
-            ??
-            ''
-        )
-    );
-
-
-/* =========================================================
-   AMOUNT
-========================================================= */
-
-if (
-    $amountInput === null
-    ||
-    $amountInput === ''
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Please enter a withdrawal amount.'
-    ]);
-
-    exit;
 }
 
-
-if (
-    !is_numeric($amountInput)
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Withdrawal amount must be a valid number.'
-    ]);
-
-    exit;
-}
-
-
-$amount =
-    (int)$amountInput;
-
-
-if (
-    $amount <= 0
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Withdrawal amount must be greater than zero.'
-    ]);
-
-    exit;
-}
-
-
-if (
-    (float)$amountInput !==
-    (float)$amount
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Withdrawal amount must be a whole UGX amount.'
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   MINIMUM
-========================================================= */
-
-if (
-    $amount < $minimumWithdrawal
-) {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Minimum withdrawal is UGX ' .
-            number_format(
-                $minimumWithdrawal
-            ) .
-            '.'
-    ]);
-
-    exit;
-}
-
-
-/* =========================================================
-   PAYMENT METHOD
-========================================================= */
-
-$normalizedMethod =
-    strtolower(
-        preg_replace(
-            '/[^a-z]/',
-            '',
-            $paymentMethod
-        )
-    );
-
-
-if (
-    in_array(
-        $normalizedMethod,
+if ($amount < $minimumWithdrawal) {
+    cc_json_response(
+        false,
+        'Minimum withdrawal amount is UGX 5,000.',
         [
-            'mtn',
-            'mtnmobilemoney'
+            'minimum_withdrawal' => $minimumWithdrawal
         ],
-        true
-    )
-) {
-
-    $paymentMethod = 'MTN';
-
-} elseif (
-    in_array(
-        $normalizedMethod,
-        [
-            'airtel',
-            'airtelmoney'
-        ],
-        true
-    )
-) {
-
-    $paymentMethod = 'Airtel';
-
-} else {
-
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Please select MTN Mobile Money or Airtel Money.'
-    ]);
-
-    exit;
+        400
+    );
 }
 
+/*
+ * Crown Cash withdrawals must be whole Uganda Shillings.
+ */
+if (floor($amount) !== $amount) {
+    cc_json_response(
+        false,
+        'Withdrawal amount must be a whole number.',
+        [],
+        400
+    );
+}
 
 /* =========================================================
-   MAIN PROCESS
+   PHONE VALIDATION
+========================================================= */
+
+/*
+ * If the frontend supplied a phone, make sure it matches
+ * the authenticated user's registered number.
+ *
+ * The server still uses $registeredPhone as the actual
+ * withdrawal destination.
+ */
+if (
+    $submittedPhone !== '' &&
+    $submittedPhone !== $registeredPhone
+) {
+    cc_json_response(
+        false,
+        'The withdrawal number does not match your registered mobile-money number.',
+        [
+            'registered_phone' => $registeredPhone
+        ],
+        400
+    );
+}
+
+/* =========================================================
+   BALANCE CHECK
+========================================================= */
+
+if ($amount > $currentBalance) {
+    cc_json_response(
+        false,
+        'Insufficient wallet balance.',
+        [
+            'balance' => $currentBalance,
+            'requested_amount' => $amount
+        ],
+        400
+    );
+}
+
+/* =========================================================
+   PREVENT MULTIPLE PENDING WITHDRAWALS
 ========================================================= */
 
 try {
 
-    /* =====================================================
-       FIND USER
-    ===================================================== */
+    $pendingStatuses = [
+        'pending',
+        'approval_processing'
+    ];
 
-    $user =
-        findWithdrawalUserForRequest(
-            $userIdSession
-        );
+    $pendingQuery = [];
 
+    if ($dbUserId !== '') {
 
-    if (!$user) {
+        $userOr = [
+            ['user_id' => $dbUserId],
+            ['userId' => $dbUserId],
+            ['id' => $dbUserId],
+        ];
 
-        http_response_code(404);
+        if (
+            class_exists('\\MongoDB\\BSON\\ObjectId') &&
+            preg_match('/^[a-f0-9]{24}$/i', $dbUserId)
+        ) {
+            try {
+                $objectId = new MongoDB\BSON\ObjectId($dbUserId);
 
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'User account was not found.'
-        ]);
+                $userOr[] = [
+                    'user_id' => $objectId
+                ];
 
-        exit;
+                $userOr[] = [
+                    'userId' => $objectId
+                ];
+            } catch (Throwable $e) {
+                // Continue.
+            }
+        }
+
+        $pendingQuery = [
+            '$and' => [
+                [
+                    '$or' => $userOr
+                ],
+                [
+                    'status' => [
+                        '$in' => $pendingStatuses
+                    ]
+                ]
+            ]
+        ];
+
+    } else {
+
+        $pendingQuery = [
+            'email' => $dbEmail,
+            'status' => [
+                '$in' => $pendingStatuses
+            ]
+        ];
     }
 
+    $existingPending = $withdrawals->findOne(
+        $pendingQuery
+    );
 
-    /* =====================================================
-       ACCOUNT STATUS
-    ===================================================== */
-
-    $accountStatus =
-        strtolower(
-            userWithdrawalString(
-                $user['status']
-                ??
-                'active'
-            )
-        );
-
-
-    if (
-        in_array(
-            $accountStatus,
+    if ($existingPending !== null) {
+        cc_json_response(
+            false,
+            'You already have a pending withdrawal. Please wait for admin approval before making another withdrawal.',
             [
-                'blocked',
-                'suspended',
-                'disabled',
-                'banned',
-                'inactive'
+                'existing_withdrawal' => [
+                    'id' => cc_object_id_to_string(
+                        $existingPending->_id ?? ''
+                    ),
+                    'status' => cc_string(
+                        $existingPending->status ?? 'pending'
+                    ),
+                    'amount' => cc_money(
+                        $existingPending->amount ?? 0
+                    )
+                ]
             ],
-            true
-        )
-    ) {
-
-        http_response_code(403);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Your account is not allowed to make withdrawals.'
-        ]);
-
-        exit;
+            409
+        );
     }
 
+} catch (Throwable $e) {
 
-    /* =====================================================
-       REGISTERED PHONE
-    ===================================================== */
+    cc_json_response(
+        false,
+        'Unable to verify your existing withdrawal requests.',
+        [],
+        500
+    );
+}
 
-    $registeredPhone =
-        userWithdrawalString(
-            $user['phone']
-            ??
-            $user['phone_number']
-            ??
-            $user['mobile']
-            ??
-            ''
-        );
+/* =========================================================
+   CALCULATE FEE
+========================================================= */
 
+$fee = round(
+    $amount * $feeRate,
+    2
+);
 
-    $normalizedRegisteredPhone =
-        normalizeUgandaWithdrawalPhone(
-            $registeredPhone
-        );
+$payoutAmount = round(
+    $amount - $fee,
+    2
+);
 
+/* =========================================================
+   TIMESTAMP
+========================================================= */
 
-    if (
-        $normalizedRegisteredPhone === ''
-    ) {
+$now = new MongoDB\BSON\UTCDateTime(
+    (int)(microtime(true) * 1000)
+);
 
-        http_response_code(400);
+/* =========================================================
+   CREATE WITHDRAWAL
+========================================================= */
 
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Your registered account phone number is missing or invalid. Please update your account phone number before withdrawing.'
-        ]);
+/*
+ * IMPORTANT:
+ *
+ * balance_reserved = false
+ * balance_deducted = false
+ *
+ * The user's wallet remains unchanged.
+ *
+ * Admin approval will be responsible for deducting
+ * the requested withdrawal amount.
+ */
 
-        exit;
-    }
+$withdrawalDocument = [
+    'user_id' => $dbUserId,
+    'userId' => $dbUserId,
 
+    'email' => $dbEmail,
+    'name' => $fullName,
 
-    /* =====================================================
-       CONFIRM REGISTERED PHONE
-    ===================================================== */
-
-    if (
-        $submittedPhone === ''
-    ) {
-
-        http_response_code(400);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Please enter your registered account phone number to confirm the withdrawal.'
-        ]);
-
-        exit;
-    }
-
-
-    $normalizedSubmittedPhone =
-        normalizeUgandaWithdrawalPhone(
-            $submittedPhone
-        );
-
-
-    if (
-        $normalizedSubmittedPhone === ''
-    ) {
-
-        http_response_code(400);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Please enter a valid Ugandan mobile number.'
-        ]);
-
-        exit;
-    }
-
-
-    if (
-        $normalizedSubmittedPhone !==
-        $normalizedRegisteredPhone
-    ) {
-
-        http_response_code(403);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'The withdrawal phone number does not match the phone number registered on your Crown Cash account.'
-        ]);
-
-        exit;
-    }
-
-
-    /* =====================================================
-       WALLET BALANCE
-    ===================================================== */
-
-    $walletBalance =
-        getWithdrawalUserBalance(
-            $user
-        );
-
-
-    /* =====================================================
-       USER ID
-    ===================================================== */
-
-    $userObjectId =
-        $user['_id']
-        ??
-        userWithdrawalObjectId(
-            $userIdSession
-        );
-
-
-    if (
-        $userObjectId === null
-    ) {
-
-        http_response_code(400);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Invalid user account ID.'
-        ]);
-
-        exit;
-    }
-
-
-    /* =====================================================
-       ACTIVE WITHDRAWALS
-    ===================================================== */
-
-    $activeAmount =
-        getActiveWithdrawalAmount(
-            $userObjectId
-        );
-
+    'phone' => $registeredPhone,
 
     /*
-    Important:
+     * Internal method only.
+     * User does not choose a payment method.
+     */
+    'method' => 'mobile_money',
+    'payment_method' => 'mobile_money',
 
-    A withdrawal in approval_processing is still active.
-    */
+    'amount' => $amount,
+    'requested_amount' => $amount,
 
-    if (
-        $activeAmount > 0
-    ) {
+    'fee' => $fee,
+    'fee_rate' => $feeRate,
 
-        http_response_code(409);
+    'payout_amount' => $payoutAmount,
+    'net_amount' => $payoutAmount,
 
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'You already have a withdrawal request awaiting processing. Please wait for the current withdrawal to be approved or rejected before creating another one.',
-            'active_withdrawals' =>
-                $activeAmount
-        ]);
+    'status' => 'pending',
 
-        exit;
-    }
+    'balance_reserved' => false,
+    'balance_deducted' => false,
 
+    'admin_approved' => false,
+    'admin_rejected' => false,
 
-    /* =====================================================
-       BALANCE CHECK
-    ===================================================== */
+    'payout_status' => 'not_paid',
 
-    if (
-        $amount > $walletBalance
-    ) {
+    'created_at' => $now,
+    'updated_at' => $now,
 
-        http_response_code(400);
+    /*
+     * Useful audit information.
+     */
+    'requested_from' => 'member_withdrawal_page',
+    'registered_phone_used' => true
+];
 
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'Insufficient wallet balance.',
-            'balance' =>
-                $walletBalance,
-            'available_balance' =>
-                $walletBalance
-        ]);
+/* =========================================================
+   INSERT WITHDRAWAL
+========================================================= */
 
-        exit;
-    }
+try {
 
+    $insertResult = $withdrawals->insertOne(
+        $withdrawalDocument
+    );
 
-    /* =====================================================
-       FEE
-    ===================================================== */
+} catch (Throwable $e) {
 
-    $withdrawalFee =
-        (int)round(
-            $amount *
-            $withdrawalFeeRate
-        );
+    cc_json_response(
+        false,
+        'Unable to create the withdrawal request. Please try again.',
+        [],
+        500
+    );
+}
 
+$withdrawalId = cc_object_id_to_string(
+    $insertResult->getInsertedId() ?? ''
+);
 
-    $payoutAmount =
-        $amount -
-        $withdrawalFee;
+if ($withdrawalId === '') {
 
+    cc_json_response(
+        false,
+        'Withdrawal request could not be created.',
+        [],
+        500
+    );
+}
 
-    if (
-        $payoutAmount <= 0
-    ) {
+/* =========================================================
+   CREATE TRANSACTION RECORD
+========================================================= */
 
-        http_response_code(400);
-
-        echo json_encode([
-            'success' => false,
-            'message' =>
-                'The withdrawal amount is too small after applying the withdrawal fee.'
-        ]);
-
-        exit;
-    }
-
-
-    /* =====================================================
-       IDs / TIME
-    ===================================================== */
-
-    $withdrawalId =
-        new MongoDB\BSON\ObjectId();
-
-
-    $now =
-        new MongoDB\BSON\UTCDateTime();
-
-
-    /* =====================================================
-       USER DETAILS
-    ===================================================== */
-
-    $userEmail =
-        userWithdrawalString(
-            $user['email']
-            ??
-            $_SESSION['email']
-            ??
-            $_SESSION['user_email']
-            ??
-            ''
-        );
-
-
-    $fullName =
-        userWithdrawalString(
-            $user['full_name']
-            ??
-            $user['fullName']
-            ??
-            $user['name']
-            ??
-            ''
-        );
-
-
-    /* =====================================================
-       REFERENCE
-    ===================================================== */
-
-    $reference =
-        'WD-' .
-        strtoupper(
-            substr(
-                (string)$withdrawalId,
-                -10
-            )
-        );
-
-
-    /* =====================================================
-       WITHDRAWAL DOCUMENT
-    ===================================================== */
-
-    $withdrawalDocument = [
-
-        '_id' =>
-            $withdrawalId,
-
-        'user_id' =>
-            $userObjectId,
-
-        'userId' =>
-            $userObjectId,
-
-        'user_email' =>
-            $userEmail,
-
-        'full_name' =>
-            $fullName,
-
-        'registered_phone' =>
-            $normalizedRegisteredPhone,
-
-        'phone' =>
-            $normalizedRegisteredPhone,
-
-        'account_number' =>
-            $normalizedRegisteredPhone,
-
-        'confirmed_phone' =>
-            $normalizedSubmittedPhone,
-
-        'phone_verified' =>
-            true,
-
-        'payment_method' =>
-            $paymentMethod,
-
-        'method' =>
-            $paymentMethod,
-
-        'requested_amount' =>
-            $amount,
-
-        'amount' =>
-            $amount,
-
-        'fee_rate' =>
-            $withdrawalFeeRate,
-
-        'fee' =>
-            $withdrawalFee,
-
-        'payout_amount' =>
-            $payoutAmount,
-
-        'reference' =>
-            $reference,
-
-        'status' =>
-            'pending',
-
-        /*
-        ================================================
-        CRITICAL ACCOUNTING FLAGS
-        ================================================
-        */
-
-        'balance_reserved' =>
-            false,
-
-        'balance_deducted' =>
-            false,
-
-        'admin_approved' =>
-            false,
-
-        'payout_status' =>
-            'not_paid',
-
-        'created_at' =>
-            $now,
-
-        'updated_at' =>
-            $now
-    ];
-
-
-    /* =====================================================
-       INSERT WITHDRAWAL
-    ===================================================== */
-
-    $withdrawalInsert =
-        $withdrawals->insertOne(
-            $withdrawalDocument
-        );
-
-
-    if (
-        $withdrawalInsert->getInsertedCount()
-        !== 1
-    ) {
-
-        throw new RuntimeException(
-            'Withdrawal request could not be created.'
-        );
-    }
-
-
-    /* =====================================================
-       TRANSACTION
-    ===================================================== */
-
-    $transactionDocument = [
-
-        '_id' =>
-            new MongoDB\BSON\ObjectId(),
-
-        'user_id' =>
-            $userObjectId,
-
-        'type' =>
-            'withdrawal',
-
-        'transaction_type' =>
-            'withdrawal',
-
-        'reference' =>
-            $reference,
-
-        'withdrawal_id' =>
-            $withdrawalId,
-
-        'withdrawal_record_id' =>
-            $withdrawalId,
-
-        'amount' =>
-            $amount,
-
-        'requested_amount' =>
-            $amount,
-
-        'fee_rate' =>
-            $withdrawalFeeRate,
-
-        'fee' =>
-            $withdrawalFee,
-
-        'payout_amount' =>
-            $payoutAmount,
-
-        'payment_method' =>
-            $paymentMethod,
-
-        'registered_phone' =>
-            $normalizedRegisteredPhone,
-
-        'phone' =>
-            $normalizedRegisteredPhone,
-
-        'confirmed_phone' =>
-            $normalizedSubmittedPhone,
-
-        'phone_verified' =>
-            true,
-
-        'status' =>
-            'pending',
-
-        /*
-        CRITICAL:
-        No wallet deduction.
-        */
-
-        'balance_reserved' =>
-            false,
-
-        'balance_deducted' =>
-            false,
-
-        'admin_approved' =>
-            false,
-
-        'description' =>
-            'Withdrawal request awaiting admin approval.',
-
-        'created_at' =>
-            $now,
-
-        'updated_at' =>
-            $now
-    ];
-
+if ($transactions !== null) {
 
     try {
+
+        $transactionDocument = [
+            'user_id' => $dbUserId,
+            'userId' => $dbUserId,
+
+            'email' => $dbEmail,
+            'name' => $fullName,
+
+            'type' => 'withdrawal',
+            'transaction_type' => 'withdrawal',
+
+            'amount' => $amount,
+
+            'fee' => $fee,
+            'payout_amount' => $payoutAmount,
+
+            'status' => 'pending',
+
+            'method' => 'mobile_money',
+            'payment_method' => 'mobile_money',
+
+            'phone' => $registeredPhone,
+
+            'withdrawal_id' => $withdrawalId,
+
+            /*
+             * Transaction record MUST NOT represent
+             * a wallet deduction yet.
+             */
+            'balance_reserved' => false,
+            'balance_deducted' => false,
+
+            'created_at' => $now,
+            'updated_at' => $now
+        ];
 
         $transactions->insertOne(
             $transactionDocument
         );
 
-    } catch (Throwable $transactionError) {
+    } catch (Throwable $e) {
 
         /*
-        Do not leave a withdrawal without its
-        corresponding transaction.
-        */
-
-        try {
-
-            $withdrawals->deleteOne([
-                '_id' =>
-                    $withdrawalId
-            ]);
-
-        } catch (Throwable $cleanupError) {
-
-            error_log(
-                'Withdrawal cleanup error: ' .
-                $cleanupError->getMessage()
-            );
-        }
-
-        throw $transactionError;
+         * Do not fail the withdrawal request simply because
+         * the secondary transaction log failed.
+         *
+         * The canonical withdrawal record already exists.
+         */
     }
+}
 
+/* =========================================================
+   AUDIT LOG
+========================================================= */
 
-    /* =====================================================
-       AUDIT
-    ===================================================== */
+if ($auditLogs !== null) {
 
-    if (
-        isset($auditLogs)
-    ) {
+    try {
 
-        try {
-
-            $auditLogs->insertOne([
-
-                'user_id' =>
-                    $userObjectId,
-
-                'action' =>
-                    'withdrawal_requested',
-
-                'type' =>
-                    'withdrawal',
-
-                'withdrawal_id' =>
-                    $withdrawalId,
-
-                'reference' =>
-                    $reference,
-
-                'amount' =>
-                    $amount,
-
-                'fee' =>
-                    $withdrawalFee,
-
-                'payout_amount' =>
-                    $payoutAmount,
-
-                'payment_method' =>
-                    $paymentMethod,
-
-                'registered_phone' =>
-                    $normalizedRegisteredPhone,
-
-                'phone_verified' =>
-                    true,
-
-                'status' =>
-                    'pending',
-
-                'balance_reserved' =>
-                    false,
-
-                'balance_deducted' =>
-                    false,
-
-                'admin_approved' =>
-                    false,
-
-                'created_at' =>
-                    $now
-            ]);
-
-        } catch (Throwable $auditError) {
-
-            error_log(
-                'Withdrawal audit error: ' .
-                $auditError->getMessage()
-            );
-        }
-    }
-
-
-    /* =====================================================
-       SUCCESS
-    ===================================================== */
-
-    echo json_encode([
-
-        'success' =>
-            true,
-
-        'message' =>
-            'Withdrawal request submitted successfully. Your registered phone number has been confirmed. Your wallet will only be deducted after admin approval.',
-
-        'withdrawal' => [
-
-            'id' =>
-                (string)$withdrawalId,
-
-            'reference' =>
-                $reference,
-
-            'requested_amount' =>
-                $amount,
-
-            'amount' =>
-                $amount,
-
-            'fee_rate' =>
-                $withdrawalFeeRate,
-
-            'fee' =>
-                $withdrawalFee,
-
-            'payout_amount' =>
-                $payoutAmount,
-
-            'payment_method' =>
-                $paymentMethod,
-
-            'registered_phone' =>
-                $normalizedRegisteredPhone,
-
-            'phone' =>
-                $normalizedRegisteredPhone,
-
-            'phone_verified' =>
-                true,
-
-            'status' =>
-                'pending',
-
-            'balance_reserved' =>
-                false,
-
-            'balance_deducted' =>
-                false,
-
-            'admin_approved' =>
-                false,
-
-            'payout_status' =>
-                'not_paid'
-        ],
-
-        'wallet' => [
+        $auditLogs->insertOne([
+            'user_id' => $dbUserId,
+            'email' => $dbEmail,
+            'action' => 'withdrawal_requested',
+            'type' => 'withdrawal',
+            'withdrawal_id' => $withdrawalId,
+            'amount' => $amount,
+            'fee' => $fee,
+            'payout_amount' => $payoutAmount,
+            'phone' => $registeredPhone,
+            'status' => 'pending',
 
             /*
-            THIS IS THE REAL WALLET BALANCE.
-            IT HAS NOT BEEN DEDUCTED.
-            */
+             * Explicit security/accounting record.
+             */
+            'balance_deducted' => false,
 
-            'balance' =>
-                $walletBalance,
+            'created_at' => $now
+        ]);
 
-            'pending_withdrawals' =>
-                $amount,
-
-            'available_balance' =>
-                $walletBalance
-        ]
-
-    ]);
-
-} catch (
-    MongoDB\Driver\Exception\Exception $e
-) {
-
-    error_log(
-        'Crown Cash withdrawal MongoDB error: ' .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Database error while processing withdrawal.'
-    ]);
-
-} catch (Throwable $e) {
-
-    error_log(
-        'Crown Cash withdrawal error: ' .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        'success' => false,
-        'message' =>
-            'Unable to process withdrawal.'
-    ]);
+    } catch (Throwable $e) {
+        // Audit failure must not cancel a valid withdrawal request.
+    }
 }
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+cc_json_response(
+    true,
+    'Withdrawal request submitted successfully. Your wallet will only be deducted after admin approval.',
+    [
+        'withdrawal' => [
+            'id' => $withdrawalId,
+            'amount' => $amount,
+            'fee' => $fee,
+            'payout_amount' => $payoutAmount,
+
+            'status' => 'pending',
+
+            'method' => 'mobile_money',
+            'payment_method' => 'mobile_money',
+
+            'phone' => $registeredPhone,
+
+            'balance_reserved' => false,
+            'balance_deducted' => false,
+
+            'admin_approved' => false,
+            'payout_status' => 'not_paid'
+        ],
+
+        /*
+         * VERY IMPORTANT:
+         * Wallet remains exactly as it was.
+         */
+        'wallet' => [
+            'balance' => $currentBalance
+        ],
+
+        'balance' => $currentBalance,
+        'available_balance' => $currentBalance,
+
+        'registered_phone' => $registeredPhone
+    ]
+);
+?>

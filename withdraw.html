@@ -6,19 +6,22 @@
 
     <title>Withdraw Funds | Crown Cash</title>
 
-    <meta name="description" content="Withdraw your available Crown Cash funds through Mobile Money.">
+    <meta
+        name="description"
+        content="Withdraw your available Crown Cash funds through your registered Mobile Money number."
+    >
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="withdraw.css?v=20261005ADVANCED01">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="withdraw.css?v=20261005WITHDRAW03">
 
     <style>
-        /* =========================================================
-           CROWN CASH — COMPACT ADVANCED WITHDRAWAL LAYOUT
-           ========================================================= */
-
         * {
             box-sizing: border-box;
         }
@@ -33,8 +36,16 @@
         body {
             font-family: Inter, Arial, sans-serif;
             background:
-                radial-gradient(circle at top right, rgba(198, 0, 255, .10), transparent 30%),
-                radial-gradient(circle at bottom left, rgba(128, 21, 50, .10), transparent 30%),
+                radial-gradient(
+                    circle at top right,
+                    rgba(198, 0, 255, .10),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at bottom left,
+                    rgba(128, 21, 50, .10),
+                    transparent 30%
+                ),
                 #08050a;
             color: #fff;
         }
@@ -48,14 +59,18 @@
             font-family: inherit;
         }
 
-        /* APP */
+        /* =====================================================
+           APP
+           ===================================================== */
 
         .withdraw-app {
             min-height: 100vh;
             display: flex;
         }
 
-        /* SIDEBAR */
+        /* =====================================================
+           SIDEBAR
+           ===================================================== */
 
         .sidebar {
             width: 245px;
@@ -65,7 +80,11 @@
             z-index: 1000;
             padding: 18px 14px;
             background:
-                linear-gradient(180deg, #100811 0%, #08050a 100%);
+                linear-gradient(
+                    180deg,
+                    #100811 0%,
+                    #08050a 100%
+                );
             border-right: 1px solid rgba(198, 0, 255, .16);
             overflow-y: auto;
         }
@@ -119,7 +138,11 @@
         .nav-link.active {
             color: #fff;
             background:
-                linear-gradient(90deg, rgba(198, 0, 255, .18), rgba(198, 0, 255, .05));
+                linear-gradient(
+                    90deg,
+                    rgba(198, 0, 255, .18),
+                    rgba(198, 0, 255, .05)
+                );
             border: 1px solid rgba(198, 0, 255, .18);
         }
 
@@ -153,7 +176,9 @@
             box-shadow: 0 0 9px rgba(65,229,138,.55);
         }
 
-        /* MAIN */
+        /* =====================================================
+           MAIN
+           ===================================================== */
 
         .main {
             width: calc(100% - 245px);
@@ -232,7 +257,9 @@
             font-size: 9px;
         }
 
-        /* CONTENT */
+        /* =====================================================
+           CONTENT
+           ===================================================== */
 
         .content {
             max-width: 1180px;
@@ -274,7 +301,9 @@
             white-space: nowrap;
         }
 
-        /* BALANCE */
+        /* =====================================================
+           BALANCE
+           ===================================================== */
 
         .balance-card {
             position: relative;
@@ -284,25 +313,15 @@
             border: 1px solid rgba(198,0,255,.18);
             border-radius: 16px;
             background:
-                linear-gradient(135deg, rgba(91,11,32,.58), rgba(18,11,19,.95));
+                linear-gradient(
+                    135deg,
+                    rgba(91,11,32,.58),
+                    rgba(18,11,19,.95)
+                );
             box-shadow: 0 12px 35px rgba(0,0,0,.20);
         }
 
-        .balance-card::after {
-            content: "";
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            right: -50px;
-            top: -70px;
-            border-radius: 50%;
-            background: rgba(198,0,255,.12);
-            filter: blur(5px);
-        }
-
         .balance-label {
-            position: relative;
-            z-index: 1;
             color: #a79da8;
             font-size: 10px;
             font-weight: 700;
@@ -311,8 +330,6 @@
         }
 
         .balance-row {
-            position: relative;
-            z-index: 1;
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
@@ -335,11 +352,15 @@
             font-weight: 800;
         }
 
-        /* GRID */
+        /* =====================================================
+           GRID
+           ===================================================== */
 
         .withdraw-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+            grid-template-columns:
+                minmax(0, 1.45fr)
+                minmax(280px, .75fr);
             gap: 15px;
             align-items: start;
         }
@@ -375,7 +396,9 @@
             padding: 15px 16px;
         }
 
-        /* FORM */
+        /* =====================================================
+           FORM
+           ===================================================== */
 
         .form-group {
             margin-bottom: 12px;
@@ -406,7 +429,7 @@
 
         .form-control {
             width: 100%;
-            height: 39px;
+            height: 40px;
             padding: 0 11px;
             border: 1px solid rgba(255,255,255,.08);
             border-radius: 9px;
@@ -434,61 +457,61 @@
             font-size: 9px;
         }
 
-        /* PAYMENT */
+        /* =====================================================
+           REGISTERED NUMBER
+           ===================================================== */
 
-        .payment-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .payment-option {
+        .registered-number {
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid rgba(198,0,255,.20);
+            border-radius: 10px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(198,0,255,.06),
+                    rgba(255,255,255,.015)
+                );
         }
 
-        .payment-option input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .payment-label {
-            display: block;
-            padding: 10px;
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 9px;
-            cursor: pointer;
-            background: rgba(255,255,255,.02);
-            transition: .2s ease;
-        }
-
-        .payment-label:hover {
-            border-color: rgba(198,0,255,.25);
-        }
-
-        .payment-option input:checked + .payment-label {
-            border-color: rgba(198,0,255,.55);
-            background: rgba(198,0,255,.08);
-            box-shadow: 0 0 0 1px rgba(198,0,255,.12);
-        }
-
-        .payment-name {
-            font-size: 11px;
+        .registered-number-label {
+            color: #807582;
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
             font-weight: 800;
         }
 
-        .payment-description {
-            margin-top: 2px;
-            color: #817581;
-            font-size: 8px;
+        .registered-number-value {
+            margin-top: 3px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: .5px;
         }
 
-        /* READONLY INFO */
+        .registered-badge {
+            padding: 5px 8px;
+            border-radius: 7px;
+            background: rgba(65,229,138,.08);
+            color: #7fe5a8;
+            font-size: 8px;
+            font-weight: 800;
+        }
+
+        /* =====================================================
+           ACCOUNT INFO
+           ===================================================== */
 
         .readonly-box {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
+            margin-top: 10px;
         }
 
         .info-field {
@@ -515,7 +538,9 @@
             word-break: break-word;
         }
 
-        /* SUMMARY */
+        /* =====================================================
+           SUMMARY
+           ===================================================== */
 
         .summary {
             margin-top: 12px;
@@ -555,7 +580,9 @@
             font-size: 13px;
         }
 
-        /* CONFIRMATION */
+        /* =====================================================
+           CONFIRMATION
+           ===================================================== */
 
         .confirmation {
             display: flex;
@@ -580,7 +607,9 @@
             cursor: pointer;
         }
 
-        /* BUTTON */
+        /* =====================================================
+           BUTTON
+           ===================================================== */
 
         .withdraw-button {
             width: 100%;
@@ -588,7 +617,12 @@
             margin-top: 11px;
             border: 0;
             border-radius: 9px;
-            background: linear-gradient(135deg, #801532, #c600ff);
+            background:
+                linear-gradient(
+                    135deg,
+                    #801532,
+                    #c600ff
+                );
             color: #fff;
             font-size: 11px;
             font-weight: 800;
@@ -608,15 +642,15 @@
             transform: none;
         }
 
-        /* MESSAGE */
-
         #formMessage {
             margin-top: 9px;
             font-size: 10px;
             line-height: 1.4;
         }
 
-        /* SIDE INFORMATION */
+        /* =====================================================
+           SIDE INFORMATION
+           ===================================================== */
 
         .side-card {
             padding: 14px;
@@ -678,7 +712,9 @@
             line-height: 1.45;
         }
 
-        /* HISTORY */
+        /* =====================================================
+           HISTORY
+           ===================================================== */
 
         .history-card {
             margin-top: 15px;
@@ -691,7 +727,9 @@
             font-size: 10px;
         }
 
-        /* FOOTER */
+        /* =====================================================
+           FOOTER
+           ===================================================== */
 
         footer {
             padding: 18px 5px 8px;
@@ -705,9 +743,12 @@
             margin: 0 5px;
         }
 
-        /* MOBILE */
+        /* =====================================================
+           MOBILE
+           ===================================================== */
 
         @media (max-width: 900px) {
+
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform .25s ease;
@@ -732,6 +773,7 @@
         }
 
         @media (max-width: 600px) {
+
             .content {
                 padding: 12px;
             }
@@ -762,7 +804,6 @@
                 gap: 7px;
             }
 
-            .payment-options,
             .readonly-box {
                 grid-template-columns: 1fr;
             }
@@ -778,14 +819,13 @@
 
 <div class="withdraw-app">
 
-    <!-- =====================================================
-         SIDEBAR
-         ===================================================== -->
+    <!-- SIDEBAR -->
 
     <aside class="sidebar" id="sidebar">
 
         <div class="brand">
             <span class="brand-crown">♛</span>
+
             <span>
                 <span>CROWN</span>
                 <span class="brand-cash"> CASH</span>
@@ -850,9 +890,7 @@
 
     </aside>
 
-    <!-- =====================================================
-         MAIN
-         ===================================================== -->
+    <!-- MAIN -->
 
     <main class="main">
 
@@ -870,7 +908,10 @@
                 </button>
 
                 <div>
-                    <div class="page-title">Withdraw Funds</div>
+                    <div class="page-title">
+                        Withdraw Funds
+                    </div>
+
                     <div class="page-subtitle">
                         Secure Mobile Money withdrawal
                     </div>
@@ -879,12 +920,21 @@
             </div>
 
             <div class="user-chip">
-                <div class="user-avatar">U</div>
+
+                <div class="user-avatar">
+                    U
+                </div>
 
                 <div>
-                    <div class="user-name">Member</div>
-                    <div class="user-role">Crown Cash User</div>
+                    <div class="user-name">
+                        Member
+                    </div>
+
+                    <div class="user-role">
+                        Crown Cash User
+                    </div>
                 </div>
+
             </div>
 
         </header>
@@ -896,11 +946,15 @@
             <div class="hero">
 
                 <div>
-                    <h1>Withdraw Funds</h1>
+
+                    <h1>
+                        Withdraw Funds
+                    </h1>
 
                     <p>
-                        Submit a withdrawal request for administration review.
+                        Withdraw directly to your registered Mobile Money number.
                     </p>
+
                 </div>
 
                 <div class="secure-badge">
@@ -939,27 +993,32 @@
 
             <div class="withdraw-grid">
 
-                <!-- WITHDRAW FORM -->
+                <!-- FORM -->
 
                 <div class="card">
 
                     <div class="card-header">
 
                         <div>
+
                             <div class="card-title">
                                 Request Withdrawal
                             </div>
 
                             <div class="card-description">
-                                Enter your withdrawal details below.
+                                Enter the amount you want to withdraw.
                             </div>
+
                         </div>
 
                     </div>
 
                     <div class="card-body">
 
-                        <form id="withdrawForm" novalidate>
+                        <form
+                            id="withdrawForm"
+                            novalidate
+                        >
 
                             <!-- AMOUNT -->
 
@@ -999,92 +1058,54 @@
 
                             </div>
 
-                            <!-- PAYMENT METHOD -->
+                            <!-- REGISTERED NUMBER -->
 
                             <div class="form-group">
 
                                 <label class="form-label">
-                                    Payment Method
+                                    Registered Mobile Money Number
                                 </label>
 
-                                <div class="payment-options">
+                                <div class="registered-number">
 
-                                    <div class="payment-option">
+                                    <div>
 
-                                        <input
-                                            type="radio"
-                                            id="mtn"
-                                            name="payment_method"
-                                            value="MTN"
+                                        <div class="registered-number-label">
+                                            Withdrawal Number
+                                        </div>
+
+                                        <div
+                                            class="registered-number-value"
+                                            id="registeredPhone"
                                         >
-
-                                        <label
-                                            for="mtn"
-                                            class="payment-label"
-                                        >
-                                            <div class="payment-name">
-                                                MTN Mobile Money
-                                            </div>
-
-                                            <div class="payment-description">
-                                                Receive through MTN
-                                            </div>
-                                        </label>
+                                            Loading...
+                                        </div>
 
                                     </div>
 
-                                    <div class="payment-option">
-
-                                        <input
-                                            type="radio"
-                                            id="airtel"
-                                            name="payment_method"
-                                            value="AIRTEL"
-                                        >
-
-                                        <label
-                                            for="airtel"
-                                            class="payment-label"
-                                        >
-                                            <div class="payment-name">
-                                                Airtel Money
-                                            </div>
-
-                                            <div class="payment-description">
-                                                Receive through Airtel
-                                            </div>
-                                        </label>
-
+                                    <div class="registered-badge">
+                                        VERIFIED
                                     </div>
 
+                                </div>
+
+                                <!-- Automatically submitted with request -->
+                                <input
+                                    type="hidden"
+                                    id="phone"
+                                    name="phone"
+                                >
+
+                                <div class="hint">
+                                    Your withdrawal will be sent to this
+                                    registered Crown Cash number.
                                 </div>
 
                             </div>
 
-                            <!-- ACCOUNT INFORMATION -->
+                            <!-- ACCOUNT NAME -->
 
                             <div class="readonly-box">
-
-                                <div class="info-field">
-
-                                    <div class="info-label">
-                                        Registered Number
-                                    </div>
-
-                                    <div
-                                        class="info-value"
-                                        id="registeredPhone"
-                                    >
-                                        Loading...
-                                    </div>
-
-                                    <input
-                                        type="hidden"
-                                        id="phone"
-                                        name="phone"
-                                    >
-
-                                </div>
 
                                 <div class="info-field">
 
@@ -1097,6 +1118,18 @@
                                         id="accountName"
                                     >
                                         Loading...
+                                    </div>
+
+                                </div>
+
+                                <div class="info-field">
+
+                                    <div class="info-label">
+                                        Withdrawal Status
+                                    </div>
+
+                                    <div class="info-value">
+                                        Admin Approval Required
                                     </div>
 
                                 </div>
@@ -1164,11 +1197,12 @@
                                 >
 
                                 <label for="confirmWithdrawal">
-                                    I confirm that the withdrawal details
-                                    shown above are correct and understand
-                                    that the request must be approved by
-                                    Crown Cash administration before my
-                                    wallet balance is deducted.
+
+                                    I confirm that the registered Mobile Money
+                                    number and withdrawal details are correct.
+                                    I understand that my wallet will only be
+                                    deducted after administrator approval.
+
                                 </label>
 
                             </div>
@@ -1177,7 +1211,7 @@
 
                             <div id="formMessage"></div>
 
-                            <!-- BUTTON -->
+                            <!-- SUBMIT -->
 
                             <button
                                 type="submit"
@@ -1193,7 +1227,7 @@
 
                 </div>
 
-                <!-- SIDE INFORMATION -->
+                <!-- HOW IT WORKS -->
 
                 <div class="card side-card">
 
@@ -1210,14 +1244,15 @@
                             </div>
 
                             <div>
+
                                 <div class="step-title">
                                     Enter amount
                                 </div>
 
                                 <div class="step-text">
-                                    Choose an amount within your available
-                                    wallet balance.
+                                    Enter the amount you want to withdraw.
                                 </div>
+
                             </div>
 
                         </div>
@@ -1229,13 +1264,16 @@
                             </div>
 
                             <div>
+
                                 <div class="step-title">
-                                    Select method
+                                    Registered number
                                 </div>
 
                                 <div class="step-text">
-                                    Choose MTN Mobile Money or Airtel Money.
+                                    Crown Cash automatically uses your
+                                    registered Mobile Money number.
                                 </div>
+
                             </div>
 
                         </div>
@@ -1247,13 +1285,16 @@
                             </div>
 
                             <div>
+
                                 <div class="step-title">
                                     Submit request
                                 </div>
 
                                 <div class="step-text">
-                                    Your withdrawal is recorded as pending.
+                                    Your withdrawal request is recorded
+                                    as pending.
                                 </div>
+
                             </div>
 
                         </div>
@@ -1265,6 +1306,7 @@
                             </div>
 
                             <div>
+
                                 <div class="step-title">
                                     Admin approval
                                 </div>
@@ -1273,6 +1315,7 @@
                                     Your wallet is deducted only after an
                                     authorized administrator approves it.
                                 </div>
+
                             </div>
 
                         </div>
@@ -1280,10 +1323,12 @@
                     </div>
 
                     <div class="security-note">
+
                         <strong>Important:</strong>
-                        A withdrawal request does not mean payment has
-                        already been completed. Your wallet should remain
-                        unchanged until administrator approval.
+                        Your wallet balance should remain unchanged when
+                        the request is submitted. The wallet deduction
+                        happens only after administrator approval.
+
                     </div>
 
                 </div>
@@ -1297,6 +1342,7 @@
                 <div class="card-header">
 
                     <div>
+
                         <div class="card-title">
                             Withdrawal History
                         </div>
@@ -1304,6 +1350,7 @@
                         <div class="card-description">
                             Track your withdrawal requests.
                         </div>
+
                     </div>
 
                 </div>
@@ -1318,11 +1365,22 @@
             </div>
 
             <footer>
-                © <span id="currentYear">2026</span> Crown Cash.
-                All rights reserved.
-                <a href="support.html">Support</a>
-                <a href="#">Terms</a>
-                <a href="#">Privacy</a>
+
+                © <span id="currentYear">2026</span>
+                Crown Cash. All rights reserved.
+
+                <a href="support.html">
+                    Support
+                </a>
+
+                <a href="#">
+                    Terms
+                </a>
+
+                <a href="#">
+                    Privacy
+                </a>
+
             </footer>
 
         </section>
@@ -1332,42 +1390,37 @@
 </div>
 
 <script>
-    /* =========================================================
-       COMPACT WITHDRAW PAGE HELPERS
-       ========================================================= */
+document.addEventListener("DOMContentLoaded", function () {
 
-    document.addEventListener("DOMContentLoaded", function () {
+    const year = document.getElementById("currentYear");
 
-        const year = document.getElementById("currentYear");
+    if (year) {
+        year.textContent = new Date().getFullYear();
+    }
 
-        if (year) {
-            year.textContent = new Date().getFullYear();
-        }
+    const menu = document.getElementById("mobileMenu");
+    const sidebar = document.getElementById("sidebar");
 
-        const menu = document.getElementById("mobileMenu");
-        const sidebar = document.getElementById("sidebar");
+    if (menu && sidebar) {
 
-        if (menu && sidebar) {
+        menu.addEventListener("click", function () {
+            sidebar.classList.toggle("open");
+        });
 
-            menu.addEventListener("click", function () {
-                sidebar.classList.toggle("open");
+        sidebar.querySelectorAll("a").forEach(function (link) {
+
+            link.addEventListener("click", function () {
+                sidebar.classList.remove("open");
             });
 
-            sidebar.querySelectorAll("a").forEach(function (link) {
+        });
+    }
 
-                link.addEventListener("click", function () {
-                    sidebar.classList.remove("open");
-                });
-
-            });
-
-        }
-
-    });
+});
 </script>
 
 <!-- EXISTING WITHDRAWAL LOGIC -->
-<script src="withdraw.js?v=20261005ADVANCED02"></script>
+<script src="withdraw.js?v=20261005WITHDRAW04"></script>
 
 </body>
 </html>

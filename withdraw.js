@@ -1,952 +1,1160 @@
-const API_BASE = "https://crown-cash1.onrender.com";
+/* ============================================================
+   CROWN CASH
+   WITHDRAWAL CONTROLLER
+   Automatic Registered Mobile Money Number
+   ============================================================ */
 
-const MINIMUM_WITHDRAWAL = 5000;
-const WITHDRAWAL_FEE_RATE = 0.20;
+(() => {
+    "use strict";
 
+    /* ============================================================
+       CONFIGURATION
+       ============================================================ */
 
-// ======================================================
-// ELEMENTS
-// ======================================================
+    const API_BASE = "https://crown-cash1.onrender.com";
 
-const withdrawForm = document.getElementById("withdrawForm");
+    const PROFILE_API = `${API_BASE}/profile.php`;
+    const WITHDRAW_API = `${API_BASE}/withdrawal.php`;
 
-const amountInput = document.getElementById("amount");
+    const MIN_WITHDRAWAL = 5000;
+    const WITHDRAWAL_FEE_RATE = 0.20;
 
-const availableBalanceElement =
-    document.getElementById("availableBalance");
+    let currentUser = null;
+    let registeredPhone = "";
+    let availableBalance = 0;
 
-const displayAmountElement =
-    document.getElementById("displayAmount");
+    let isSubmitting = false;
 
-const withdrawalFeeElement =
-    document.getElementById("withdrawalFee");
+    /* ============================================================
+       DOM HELPERS
+       ============================================================ */
 
-const payoutAmountElement =
-    document.getElementById("payoutAmount");
+    const $ = (id) => document.getElementById(id);
 
-const registeredPhoneElement =
-    document.getElementById("registeredPhone");
+    const form = $("withdrawForm");
+    const amountInput = $("amount");
 
-const phoneInput =
-    document.getElementById("phone");
+    const balanceElement = $("availableBalance");
 
-const accountNameInput =
-    document.getElementById("accountName");
+    const registeredPhoneElement = $("registeredPhone");
+    const phoneInput = $("phone");
 
-const confirmWithdrawal =
-    document.getElementById("confirmWithdrawal");
+    const accountNameElement = $("accountName");
 
-const withdrawButton =
-    document.getElementById("withdrawButton");
+    const displayAmount = $("displayAmount");
+    const withdrawalFee = $("withdrawalFee");
+    const payoutAmount = $("payoutAmount");
 
-const formMessage =
-    document.getElementById("formMessage");
+    const confirmation = $("confirmWithdrawal");
 
+    const withdrawButton = $("withdrawButton");
 
-// ======================================================
-// VARIABLES
-// ======================================================
+    const formMessage = $("formMessage");
 
-let availableBalance = 0;
+    const withdrawalHistory = $("withdrawalHistory");
 
-let registeredPhone = "";
+    /* ============================================================
+       NUMBER HELPERS
+       ============================================================ */
 
-let registeredFullName = "";
+    function toNumber(value) {
+        if (typeof value === "number") {
+            return Number.isFinite(value) ? value : 0;
+        }
 
+        if (value === null || value === undefined) {
+            return 0;
+        }
 
-// ======================================================
-// FORMAT MONEY
-// ======================================================
+        const cleaned = String(value)
+            .replace(/UGX/gi, "")
+            .replace(/,/g, "")
+            .replace(/\s/g, "")
+            .trim();
 
-function formatMoney(amount) {
+        const number = Number(cleaned);
 
-    const value = Number(amount) || 0;
-
-    return new Intl.NumberFormat("en-UG", {
-        maximumFractionDigits: 0
-    }).format(value);
-
-}
-
-
-// ======================================================
-// SHOW MESSAGE
-// ======================================================
-
-function showMessage(message, type = "error") {
-
-    if (!formMessage) {
-        return;
+        return Number.isFinite(number) ? number : 0;
     }
 
-    formMessage.textContent = message;
+    function formatUGX(value) {
+        const amount = Math.max(0, Math.round(toNumber(value)));
 
-    formMessage.className =
-        "form-message " + type;
-
-}
-
-
-// ======================================================
-// CLEAR MESSAGE
-// ======================================================
-
-function clearMessage() {
-
-    if (!formMessage) {
-        return;
+        return `UGX ${amount.toLocaleString("en-UG")}`;
     }
 
-    formMessage.textContent = "";
+    /* ============================================================
+       PHONE HELPERS
+       ============================================================ */
 
-    formMessage.className =
-        "form-message";
+    function normalizeUgandaPhone(value) {
+        let phone = String(value || "")
+            .replace(/\s+/g, "")
+            .replace(/-/g, "")
+            .replace(/\(/g, "")
+            .replace(/\)/g, "");
 
-}
+        if (!phone) {
+            return "";
+        }
 
+        /* +256XXXXXXXXX -> 0XXXXXXXXX */
+        if (phone.startsWith("+256")) {
+            phone = "0" + phone.substring(4);
+        }
 
-// ======================================================
-// NORMALIZE UGANDAN PHONE NUMBER
-// ======================================================
+        /* 256XXXXXXXXX -> 0XXXXXXXXX */
+        if (phone.startsWith("256")) {
+            phone = "0" + phone.substring(3);
+        }
 
-function normalizeUgandaPhone(phone) {
+        /* Remove any remaining + */
+        phone = phone.replace(/\+/g, "");
 
-    let value = String(phone || "")
-        .trim()
-        .replace(/[\s\-()]/g, "");
-
-
-    if (value.startsWith("+256")) {
-
-        value =
-            "0" +
-            value.substring(4);
-
-    } else if (value.startsWith("256")) {
-
-        value =
-            "0" +
-            value.substring(3);
-
+        return phone;
     }
 
+    function isValidUgandaPhone(phone) {
+        const normalized = normalizeUgandaPhone(phone);
 
-    return value;
+        return /^07\d{8}$/.test(normalized);
+    }
 
-}
+    /* ============================================================
+       NAME HELPERS
+       ============================================================ */
 
+    function getUserName(user) {
+        if (!user || typeof user !== "object") {
+            return "";
+        }
 
-// ======================================================
-// VALIDATE UGANDAN PHONE
-// ======================================================
+        const directNames = [
+            user.full_name,
+            user.fullName,
+            user.name,
+            user.display_name,
+            user.displayName
+        ];
 
-function isValidUgandaPhone(phone) {
-
-    return /^07[0-9]{8}$/.test(phone);
-
-}
-
-
-// ======================================================
-// LOAD USER PROFILE
-// ======================================================
-
-async function loadUserProfile() {
-
-    try {
-
-        registeredPhoneElement.textContent =
-            "Loading...";
-
-
-        const response = await fetch(
-            `${API_BASE}/profile.php`,
-            {
-                method: "GET",
-                credentials: "include",
-                cache: "no-store"
+        for (const value of directNames) {
+            if (String(value || "").trim()) {
+                return String(value).trim();
             }
-        );
-
-
-        if (response.status === 401) {
-
-            window.location.href =
-                "/login.html?redirect=withdraw";
-
-            return;
-
         }
 
+        const firstName =
+            user.first_name ||
+            user.firstName ||
+            "";
 
-        const data = await response.json();
+        const lastName =
+            user.last_name ||
+            user.lastName ||
+            "";
 
+        const combined = `${firstName} ${lastName}`.trim();
 
-        if (
-            !response.ok ||
-            !data.success ||
-            !data.user
-        ) {
+        return combined;
+    }
 
-            throw new Error(
-                data.message ||
-                "Unable to load your account."
-            );
+    /* ============================================================
+       PHONE EXTRACTION
+       ============================================================ */
 
+    function getUserPhone(user) {
+        if (!user || typeof user !== "object") {
+            return "";
         }
 
+        const possiblePhones = [
+            user.phone,
+            user.phone_number,
+            user.phoneNumber,
+            user.mobile,
+            user.mobile_number,
+            user.mobileNumber,
+            user.registered_phone,
+            user.registeredPhone
+        ];
 
-        const user = data.user;
+        for (const value of possiblePhones) {
+            const normalized = normalizeUgandaPhone(value);
 
-
-        // ----------------------------------------------
-        // Registered phone
-        // ----------------------------------------------
-
-        registeredPhone =
-            normalizeUgandaPhone(
-                user.phone ||
-                user.phone_number ||
-                user.mobile ||
-                ""
-            );
-
-
-        if (!registeredPhone) {
-
-            registeredPhoneElement.textContent =
-                "No registered phone";
-
-            showMessage(
-                "Your account does not have a registered mobile number. Please contact support.",
-                "error"
-            );
-
-            if (withdrawButton) {
-                withdrawButton.disabled = true;
+            if (normalized) {
+                return normalized;
             }
-
-            return;
-
         }
 
-
-        if (!isValidUgandaPhone(registeredPhone)) {
-
-            registeredPhoneElement.textContent =
-                "Invalid registered phone";
-
-            showMessage(
-                "Your registered mobile number is invalid. Please contact support.",
-                "error"
-            );
-
-            if (withdrawButton) {
-                withdrawButton.disabled = true;
-            }
-
-            return;
-
-        }
-
-
-        // ----------------------------------------------
-        // Display registered phone
-        // ----------------------------------------------
-
-        if (registeredPhoneElement) {
-
-            registeredPhoneElement.textContent =
-                registeredPhone;
-
-        }
-
-
-        // ----------------------------------------------
-        // Hidden phone field
-        // ----------------------------------------------
-
-        if (phoneInput) {
-
-            phoneInput.value =
-                registeredPhone;
-
-        }
-
-
-        // ----------------------------------------------
-        // Account name
-        // ----------------------------------------------
-
-        registeredFullName =
-            user.full_name ||
-            `${user.first_name || ""} ${user.last_name || ""}`.trim();
-
-
-        if (accountNameInput) {
-
-            accountNameInput.value =
-                registeredFullName;
-
-        }
-
-
-        // ----------------------------------------------
-        // Balance
-        // ----------------------------------------------
-
-        availableBalance =
-            Number(user.balance) || 0;
-
-
-        if (availableBalanceElement) {
-
-            availableBalanceElement.textContent =
-                `UGX ${formatMoney(availableBalance)}`;
-
-        }
-
-
-        // ----------------------------------------------
-        // Make sure button is available
-        // ----------------------------------------------
-
-        if (withdrawButton) {
-            withdrawButton.disabled = false;
-        }
-
-
-        updateCalculator();
-
-
-    } catch (error) {
-
-        console.error(
-            "Profile loading error:",
-            error
-        );
-
-
-        if (registeredPhoneElement) {
-
-            registeredPhoneElement.textContent =
-                "Unable to load";
-
-        }
-
-
-        showMessage(
-            error.message ||
-            "Unable to load your account information. Please try again.",
-            "error"
-        );
-
-    }
-
-}
-
-
-// ======================================================
-// CALCULATE WITHDRAWAL
-// ======================================================
-
-function updateCalculator() {
-
-    const amount =
-        Number(amountInput?.value) || 0;
-
-
-    if (amount <= 0) {
-
-        if (displayAmountElement) {
-            displayAmountElement.textContent =
-                "UGX 0";
-        }
-
-        if (withdrawalFeeElement) {
-            withdrawalFeeElement.textContent =
-                "UGX 0";
-        }
-
-        if (payoutAmountElement) {
-            payoutAmountElement.textContent =
-                "UGX 0";
-        }
-
-        return;
-
-    }
-
-
-    const fee =
-        amount * WITHDRAWAL_FEE_RATE;
-
-
-    const payout =
-        amount - fee;
-
-
-    if (displayAmountElement) {
-
-        displayAmountElement.textContent =
-            `UGX ${formatMoney(amount)}`;
-
-    }
-
-
-    if (withdrawalFeeElement) {
-
-        withdrawalFeeElement.textContent =
-            `UGX ${formatMoney(fee)}`;
-
-    }
-
-
-    if (payoutAmountElement) {
-
-        payoutAmountElement.textContent =
-            `UGX ${formatMoney(payout)}`;
-
-    }
-
-}
-
-
-// ======================================================
-// AMOUNT INPUT
-// ======================================================
-
-if (amountInput) {
-
-    amountInput.addEventListener(
-        "input",
-        function () {
-
-            clearMessage();
-
-            updateCalculator();
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// VALIDATE AMOUNT
-// ======================================================
-
-function validateAmount(amount) {
-
-    if (!Number.isFinite(amount)) {
-
-        return {
-            valid: false,
-            message: "Please enter a valid withdrawal amount."
-        };
-
-    }
-
-
-    if (amount < MINIMUM_WITHDRAWAL) {
-
-        return {
-            valid: false,
-            message:
-                `Minimum withdrawal is UGX ${formatMoney(MINIMUM_WITHDRAWAL)}.`
-        };
-
-    }
-
-
-    if (!Number.isInteger(amount)) {
-
-        return {
-            valid: false,
-            message:
-                "Withdrawal amount must be a whole Uganda Shilling amount."
-        };
-
-    }
-
-
-    if (amount > availableBalance) {
-
-        return {
-            valid: false,
-            message:
-                `Insufficient balance. Your available balance is UGX ${formatMoney(availableBalance)}.`
-        };
-
-    }
-
-
-    return {
-        valid: true
-    };
-
-}
-
-
-// ======================================================
-// GET PAYMENT METHOD
-// ======================================================
-
-function getPaymentMethod() {
-
-    const selected =
-        document.querySelector(
-            'input[name="payment_method"]:checked'
-        );
-
-
-    if (!selected) {
         return "";
     }
 
-
-    return selected.value;
-
-}
-
-
-// ======================================================
-// VALIDATE PAYMENT METHOD
-// ======================================================
-
-function validatePaymentMethod(method) {
-
-    if (!method) {
-
-        return {
-            valid: false,
-            message:
-                "Please select MTN Mobile Money or Airtel Money."
-        };
-
-    }
-
-
-    const normalized =
-        method.toLowerCase();
-
-
-    if (
-        normalized !== "mtn" &&
-        normalized !== "airtel"
-    ) {
-
-        return {
-            valid: false,
-            message:
-                "Please select a valid payment method."
-        };
-
-    }
-
-
-    return {
-        valid: true
-    };
-
-}
-
-
-// ======================================================
-// CONFIRM WITHDRAWAL
-// ======================================================
-
-async function submitWithdrawal() {
-
-    clearMessage();
-
-
-    // ----------------------------------------------
-    // Make sure profile is loaded
-    // ----------------------------------------------
-
-    if (!registeredPhone) {
-
-        showMessage(
-            "Your registered mobile number has not loaded yet. Please wait and try again.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    // ----------------------------------------------
-    // Amount
-    // ----------------------------------------------
-
-    const amount =
-        Number(amountInput?.value);
-
-
-    const amountValidation =
-        validateAmount(amount);
-
-
-    if (!amountValidation.valid) {
-
-        showMessage(
-            amountValidation.message,
-            "error"
-        );
-
-        amountInput?.focus();
-
-        return;
-
-    }
-
-
-    // ----------------------------------------------
-    // Payment method
-    // ----------------------------------------------
-
-    const paymentMethod =
-        getPaymentMethod();
-
-
-    const methodValidation =
-        validatePaymentMethod(paymentMethod);
-
-
-    if (!methodValidation.valid) {
-
-        showMessage(
-            methodValidation.message,
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    // ----------------------------------------------
-    // Phone validation
-    // ----------------------------------------------
-
-    const normalizedPhone =
-        normalizeUgandaPhone(registeredPhone);
-
-
-    if (!isValidUgandaPhone(normalizedPhone)) {
-
-        showMessage(
-            "Your registered mobile number is invalid. Please contact support.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    // ----------------------------------------------
-    // Confirmation checkbox
-    // ----------------------------------------------
-
-    if (
-        !confirmWithdrawal ||
-        !confirmWithdrawal.checked
-    ) {
-
-        showMessage(
-            "Please confirm the withdrawal information before continuing.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    // ----------------------------------------------
-    // Calculate amounts
-    // ----------------------------------------------
-
-    const fee =
-        amount * WITHDRAWAL_FEE_RATE;
-
-
-    const payout =
-        amount - fee;
-
-
-    // ----------------------------------------------
-    // Final confirmation
-    // ----------------------------------------------
-
-    const confirmationMessage =
-        `Confirm your withdrawal?\n\n` +
-
-        `Requested amount: UGX ${formatMoney(amount)}\n` +
-
-        `Withdrawal fee: UGX ${formatMoney(fee)} (20%)\n` +
-
-        `You will receive: UGX ${formatMoney(payout)}\n\n` +
-
-        `Payment method: ${paymentMethod}\n` +
-
-        `Registered number: ${normalizedPhone}\n\n` +
-
-        `The withdrawal will be submitted for admin approval.`;
-
-
-    const confirmed =
-        window.confirm(
-            confirmationMessage
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    // ----------------------------------------------
-    // Disable button
-    // ----------------------------------------------
-
-    if (withdrawButton) {
-
-        withdrawButton.disabled = true;
-
-        withdrawButton.dataset.originalText =
-            withdrawButton.innerHTML;
-
-        withdrawButton.innerHTML =
-            "⏳ Processing...";
-
-    }
-
-
-    try {
-
-        // ------------------------------------------
-        // Keep hidden field synchronized
-        // ------------------------------------------
-
-        if (phoneInput) {
-
-            phoneInput.value =
-                normalizedPhone;
-
+    /* ============================================================
+       RESPONSE HELPERS
+       ============================================================ */
+
+    async function parseResponse(response) {
+        const text = await response.text();
+
+        if (!text) {
+            return {};
         }
 
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return {
+                success: false,
+                message: text
+            };
+        }
+    }
 
-        // ------------------------------------------
-        // Send request
-        // ------------------------------------------
+    function extractData(response) {
+        if (!response || typeof response !== "object") {
+            return {};
+        }
 
-        const response = await fetch(
-            `${API_BASE}/withdrawal.php`,
-            {
-                method: "POST",
+        if (
+            response.data &&
+            typeof response.data === "object"
+        ) {
+            return response.data;
+        }
 
+        return response;
+    }
+
+    /* ============================================================
+       MESSAGE DISPLAY
+       ============================================================ */
+
+    function clearMessage() {
+        if (!formMessage) {
+            return;
+        }
+
+        formMessage.textContent = "";
+        formMessage.style.display = "none";
+        formMessage.style.color = "";
+        formMessage.style.background = "";
+        formMessage.style.border = "";
+        formMessage.style.padding = "";
+        formMessage.style.borderRadius = "";
+    }
+
+    function showMessage(message, type = "error") {
+        if (!formMessage) {
+            return;
+        }
+
+        formMessage.textContent = message;
+        formMessage.style.display = "block";
+        formMessage.style.padding = "9px 10px";
+        formMessage.style.borderRadius = "8px";
+
+        if (type === "success") {
+            formMessage.style.color = "#8ff0b4";
+            formMessage.style.background =
+                "rgba(65,229,138,.07)";
+            formMessage.style.border =
+                "1px solid rgba(65,229,138,.18)";
+        } else {
+            formMessage.style.color = "#ff9b9b";
+            formMessage.style.background =
+                "rgba(255,70,70,.07)";
+            formMessage.style.border =
+                "1px solid rgba(255,70,70,.18)";
+        }
+    }
+
+    /* ============================================================
+       LOADING STATE
+       ============================================================ */
+
+    function setButtonState(loading) {
+        if (!withdrawButton) {
+            return;
+        }
+
+        withdrawButton.disabled = loading;
+
+        if (loading) {
+            withdrawButton.dataset.originalText =
+                withdrawButton.textContent;
+
+            withdrawButton.textContent =
+                "Submitting Request...";
+        } else {
+            withdrawButton.textContent =
+                withdrawButton.dataset.originalText ||
+                "Submit Withdrawal Request";
+        }
+    }
+
+    /* ============================================================
+       FETCH PROFILE
+       ============================================================ */
+
+    async function loadProfile() {
+        try {
+            const response = await fetch(PROFILE_API, {
+                method: "GET",
                 credentials: "include",
-
                 headers: {
-                    "Content-Type":
-                        "application/json"
+                    "Accept": "application/json"
                 },
+                cache: "no-store"
+            });
 
-                body: JSON.stringify({
+            const data = await parseResponse(response);
 
-                    amount: amount,
-
-                    payment_method:
-                        paymentMethod,
-
-                    phone:
-                        normalizedPhone
-
-                })
+            if (response.status === 401) {
+                window.location.href =
+                    "/login.html?redirect=withdraw";
+                return null;
             }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Unable to load your Crown Cash profile."
+                );
+            }
+
+            if (
+                data.success === false &&
+                !data.user &&
+                !data.data
+            ) {
+                throw new Error(
+                    data.message ||
+                    "Unable to load your profile."
+                );
+            }
+
+            const profileData = extractData(data);
+
+            const user =
+                profileData.user ||
+                profileData.profile ||
+                profileData;
+
+            if (!user || typeof user !== "object") {
+                throw new Error(
+                    "Your profile information could not be loaded."
+                );
+            }
+
+            currentUser = user;
+
+            return user;
+
+        } catch (error) {
+
+            console.error(
+                "Crown Cash profile error:",
+                error
+            );
+
+            showMessage(
+                error.message ||
+                "Unable to load your Crown Cash profile."
+            );
+
+            return null;
+        }
+    }
+
+    /* ============================================================
+       DISPLAY PROFILE
+       ============================================================ */
+
+    function displayProfile(user) {
+        if (!user) {
+            return false;
+        }
+
+        /* --------------------------------------------------------
+           PHONE
+           -------------------------------------------------------- */
+
+        registeredPhone = getUserPhone(user);
+
+        if (!registeredPhone) {
+
+            if (registeredPhoneElement) {
+                registeredPhoneElement.textContent =
+                    "Number unavailable";
+            }
+
+            if (phoneInput) {
+                phoneInput.value = "";
+            }
+
+        } else {
+
+            if (registeredPhoneElement) {
+                registeredPhoneElement.textContent =
+                    registeredPhone;
+            }
+
+            if (phoneInput) {
+                phoneInput.value =
+                    registeredPhone;
+            }
+        }
+
+        /* --------------------------------------------------------
+           ACCOUNT NAME
+           -------------------------------------------------------- */
+
+        const name = getUserName(user);
+
+        if (accountNameElement) {
+            accountNameElement.textContent =
+                name || "Crown Cash Member";
+        }
+
+        /* --------------------------------------------------------
+           BALANCE
+           -------------------------------------------------------- */
+
+        const balance =
+            user.balance ??
+            user.wallet_balance ??
+            user.walletBalance ??
+            user.available_balance ??
+            user.availableBalance ??
+            0;
+
+        availableBalance = toNumber(balance);
+
+        if (balanceElement) {
+            balanceElement.textContent =
+                formatUGX(availableBalance);
+        }
+
+        return true;
+    }
+
+    /* ============================================================
+       CALCULATE WITHDRAWAL
+       ============================================================ */
+
+    function calculateWithdrawal() {
+
+        if (!amountInput) {
+            return;
+        }
+
+        const amount = toNumber(
+            amountInput.value
         );
 
+        if (!amount || amount <= 0) {
 
-        let data = null;
+            if (displayAmount) {
+                displayAmount.textContent =
+                    "UGX 0";
+            }
 
+            if (withdrawalFee) {
+                withdrawalFee.textContent =
+                    "UGX 0";
+            }
+
+            if (payoutAmount) {
+                payoutAmount.textContent =
+                    "UGX 0";
+            }
+
+            return;
+        }
+
+        const fee =
+            Math.round(
+                amount * WITHDRAWAL_FEE_RATE
+            );
+
+        const payout =
+            Math.max(
+                0,
+                amount - fee
+            );
+
+        if (displayAmount) {
+            displayAmount.textContent =
+                formatUGX(amount);
+        }
+
+        if (withdrawalFee) {
+            withdrawalFee.textContent =
+                formatUGX(fee);
+        }
+
+        if (payoutAmount) {
+            payoutAmount.textContent =
+                formatUGX(payout);
+        }
+    }
+
+    /* ============================================================
+       VALIDATE FORM
+       ============================================================ */
+
+    function validateForm() {
+
+        const amount = toNumber(
+            amountInput ? amountInput.value : 0
+        );
+
+        if (!amount || amount <= 0) {
+            return "Please enter the withdrawal amount.";
+        }
+
+        if (!Number.isInteger(amount)) {
+            return "Withdrawal amount must be a whole number.";
+        }
+
+        if (amount < MIN_WITHDRAWAL) {
+            return `Minimum withdrawal is ${formatUGX(MIN_WITHDRAWAL)}.`;
+        }
+
+        if (amount > availableBalance) {
+            return "Withdrawal amount cannot exceed your available wallet balance.";
+        }
+
+        /* --------------------------------------------------------
+           REGISTERED PHONE
+           -------------------------------------------------------- */
+
+        const phone =
+            normalizeUgandaPhone(
+                registeredPhone ||
+                (phoneInput ? phoneInput.value : "")
+            );
+
+        if (!phone) {
+            return "Your registered Mobile Money number could not be loaded.";
+        }
+
+        if (!isValidUgandaPhone(phone)) {
+            return "Your registered Mobile Money number is invalid. Please update your profile.";
+        }
+
+        /* --------------------------------------------------------
+           CONFIRMATION
+           -------------------------------------------------------- */
+
+        if (
+            confirmation &&
+            !confirmation.checked
+        ) {
+            return "Please confirm that your withdrawal details are correct.";
+        }
+
+        return "";
+    }
+
+    /* ============================================================
+       SUBMIT WITHDRAWAL
+       ============================================================ */
+
+    async function submitWithdrawal(event) {
+
+        event.preventDefault();
+
+        if (isSubmitting) {
+            return;
+        }
+
+        clearMessage();
+
+        const validationError =
+            validateForm();
+
+        if (validationError) {
+
+            showMessage(
+                validationError,
+                "error"
+            );
+
+            return;
+        }
+
+        const amount = toNumber(
+            amountInput.value
+        );
+
+        const phone =
+            normalizeUgandaPhone(
+                registeredPhone
+            );
+
+        /* --------------------------------------------------------
+           FINAL PHONE SAFETY CHECK
+           -------------------------------------------------------- */
+
+        if (!phone || !isValidUgandaPhone(phone)) {
+
+            showMessage(
+                "Your registered Mobile Money number is unavailable or invalid.",
+                "error"
+            );
+
+            return;
+        }
+
+        /* --------------------------------------------------------
+           CONFIRMATION
+           -------------------------------------------------------- */
+
+        const confirmed =
+            window.confirm(
+                `Submit a withdrawal request for ${formatUGX(amount)} to your registered Mobile Money number ${phone}?\n\nYour wallet will NOT be deducted until an authorized administrator approves the request.`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        isSubmitting = true;
+
+        setButtonState(true);
 
         try {
 
-            data =
-                await response.json();
+            /* ----------------------------------------------------
+               IMPORTANT:
+               No payment_method is sent.
+               The registered phone is used automatically.
+               ---------------------------------------------------- */
 
-        } catch (jsonError) {
+            const payload = {
+                amount: amount,
+                phone: phone
+            };
 
-            data = null;
+            const response = await fetch(
+                WITHDRAW_API,
+                {
+                    method: "POST",
+                    credentials: "include",
 
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            const data =
+                await parseResponse(response);
+
+            /* ----------------------------------------------------
+               AUTHENTICATION
+               ---------------------------------------------------- */
+
+            if (response.status === 401) {
+
+                window.location.href =
+                    "/login.html?redirect=withdraw";
+
+                return;
+            }
+
+            /* ----------------------------------------------------
+               ERROR
+               ---------------------------------------------------- */
+
+            if (
+                !response.ok ||
+                data.success === false
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    "Withdrawal request could not be submitted."
+                );
+            }
+
+            /* ----------------------------------------------------
+               SUCCESS
+               ---------------------------------------------------- */
+
+            showMessage(
+                data.message ||
+                "Withdrawal request submitted successfully. Your wallet remains unchanged until administrator approval.",
+                "success"
+            );
+
+            /* ----------------------------------------------------
+               IMPORTANT:
+               Do NOT reduce availableBalance here.
+               The wallet remains unchanged until admin approval.
+               ---------------------------------------------------- */
+
+            const responseData =
+                extractData(data);
+
+            if (
+                responseData.wallet &&
+                responseData.wallet.balance !== undefined
+            ) {
+
+                availableBalance =
+                    toNumber(
+                        responseData.wallet.balance
+                    );
+
+            } else if (
+                responseData.balance !== undefined
+            ) {
+
+                availableBalance =
+                    toNumber(
+                        responseData.balance
+                    );
+            }
+
+            if (balanceElement) {
+
+                balanceElement.textContent =
+                    formatUGX(
+                        availableBalance
+                    );
+            }
+
+            /* ----------------------------------------------------
+               RESET FORM
+               ---------------------------------------------------- */
+
+            if (form) {
+                form.reset();
+            }
+
+            /* Restore hidden registered phone */
+            if (phoneInput) {
+                phoneInput.value =
+                    registeredPhone;
+            }
+
+            calculateWithdrawal();
+
+            /* ----------------------------------------------------
+               REFRESH PROFILE
+               ---------------------------------------------------- */
+
+            const updatedUser =
+                await loadProfile();
+
+            if (updatedUser) {
+                displayProfile(updatedUser);
+            }
+
+            /* ----------------------------------------------------
+               LOAD HISTORY
+               ---------------------------------------------------- */
+
+            await loadWithdrawalHistory();
+
+        } catch (error) {
+
+            console.error(
+                "Crown Cash withdrawal error:",
+                error
+            );
+
+            showMessage(
+                error.message ||
+                "Unable to submit withdrawal request.",
+                "error"
+            );
+
+        } finally {
+
+            isSubmitting = false;
+
+            setButtonState(false);
+        }
+    }
+
+    /* ============================================================
+       WITHDRAWAL HISTORY
+       ============================================================ */
+
+    async function loadWithdrawalHistory() {
+
+        if (!withdrawalHistory) {
+            return;
         }
 
+        /*
+         * We intentionally do not assume a separate history endpoint.
+         * If withdrawal.php supports GET for the logged-in user,
+         * use it.
+         */
 
-        if (response.status === 401) {
+        try {
 
-            window.location.href =
-                "/login.html?redirect=withdraw";
+            const response =
+                await fetch(
+                    WITHDRAW_API,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                        headers: {
+                            "Accept":
+                                "application/json"
+                        },
+                        cache: "no-store"
+                    }
+                );
+
+            const data =
+                await parseResponse(response);
+
+            if (response.status === 401) {
+                return;
+            }
+
+            if (!response.ok) {
+                return;
+            }
+
+            const responseData =
+                extractData(data);
+
+            const withdrawals =
+                responseData.withdrawals ||
+                responseData.data ||
+                [];
+
+            if (!Array.isArray(withdrawals)) {
+                return;
+            }
+
+            renderWithdrawalHistory(
+                withdrawals
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Withdrawal history could not be loaded:",
+                error
+            );
+
+        }
+    }
+
+    /* ============================================================
+       HISTORY RENDERER
+       ============================================================ */
+
+    function renderWithdrawalHistory(items) {
+
+        if (!withdrawalHistory) {
+            return;
+        }
+
+        if (!items.length) {
+
+            withdrawalHistory.innerHTML =
+                "No withdrawal requests yet";
+
+            withdrawalHistory.className =
+                "history-empty";
 
             return;
-
         }
 
+        const recent =
+            items.slice(0, 10);
 
-        if (!response.ok || !data?.success) {
+        withdrawalHistory.className =
+            "withdrawal-history-list";
 
-            throw new Error(
-                data?.message ||
-                "Withdrawal request failed."
-            );
+        withdrawalHistory.innerHTML =
+            recent.map(
+                (item) => {
 
-        }
+                    const amount =
+                        toNumber(
+                            item.amount ??
+                            item.withdrawal_amount ??
+                            0
+                        );
 
+                    const status =
+                        String(
+                            item.status ||
+                            item.withdrawal_status ||
+                            "pending"
+                        );
 
-        // ------------------------------------------
-        // Server response
-        // ------------------------------------------
+                    const normalizedStatus =
+                        status.toLowerCase();
 
-        const serverFee =
-            Number(data.fee) || fee;
+                    let statusClass =
+                        "pending";
 
+                    if (
+                        normalizedStatus.includes(
+                            "approved"
+                        )
+                    ) {
+                        statusClass =
+                            "approved";
+                    } else if (
+                        normalizedStatus.includes(
+                            "reject"
+                        )
+                    ) {
+                        statusClass =
+                            "rejected";
+                    } else if (
+                        normalizedStatus.includes(
+                            "processing"
+                        )
+                    ) {
+                        statusClass =
+                            "processing";
+                    }
 
-        const serverPayout =
-            Number(data.payout_amount) || payout;
+                    const date =
+                        item.created_at ||
+                        item.createdAt ||
+                        item.date ||
+                        item.requested_at ||
+                        "";
 
+                    const formattedDate =
+                        formatDate(date);
 
-        showMessage(
-            `Withdrawal request submitted successfully. Requested: UGX ${formatMoney(amount)}. Fee: UGX ${formatMoney(serverFee)}. You will receive: UGX ${formatMoney(serverPayout)} after approval.`,
-            "success"
-        );
+                    return `
+                        <div
+                            style="
+                                display:flex;
+                                align-items:center;
+                                justify-content:space-between;
+                                gap:10px;
+                                padding:10px;
+                                margin-bottom:7px;
+                                border:1px solid rgba(255,255,255,.06);
+                                border-radius:9px;
+                                background:rgba(255,255,255,.018);
+                            "
+                        >
 
+                            <div>
 
-        // ------------------------------------------
-        // Reset form
-        // ------------------------------------------
+                                <div
+                                    style="
+                                        color:#fff;
+                                        font-size:11px;
+                                        font-weight:800;
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        formatUGX(amount)
+                                    )}
+                                </div>
 
-        if (amountInput) {
-            amountInput.value = "";
-        }
+                                <div
+                                    style="
+                                        margin-top:3px;
+                                        color:#756b76;
+                                        font-size:8px;
+                                    "
+                                >
+                                    ${escapeHtml(
+                                        formattedDate
+                                    )}
+                                </div>
 
+                            </div>
 
-        const selectedMethod =
-            document.querySelector(
-                'input[name="payment_method"]:checked'
-            );
+                            <div
+                                class="withdraw-status ${statusClass}"
+                                style="
+                                    padding:5px 8px;
+                                    border-radius:7px;
+                                    font-size:8px;
+                                    font-weight:800;
+                                    text-transform:uppercase;
+                                "
+                            >
+                                ${escapeHtml(
+                                    status.replace(
+                                        /_/g,
+                                        " "
+                                    )
+                                )}
+                            </div>
 
+                        </div>
+                    `;
+                }
+            ).join("");
 
-        if (selectedMethod) {
-            selectedMethod.checked = false;
-        }
-
-
-        if (confirmWithdrawal) {
-            confirmWithdrawal.checked = false;
-        }
-
-
-        updateCalculator();
-
-
-        // ------------------------------------------
-        // Refresh balance/profile
-        // ------------------------------------------
-
-        await loadUserProfile();
-
-
-    } catch (error) {
-
-        console.error(
-            "Withdrawal error:",
-            error
-        );
-
-
-        showMessage(
-            error.message ||
-            "Unable to submit your withdrawal request. Please try again.",
-            "error"
-        );
-
-    } finally {
-
-        // ------------------------------------------
-        // Restore button
-        // ------------------------------------------
-
-        if (withdrawButton) {
-
-            withdrawButton.disabled = false;
-
-            withdrawButton.innerHTML =
-                withdrawButton.dataset.originalText ||
-                "💸 Request Withdrawal";
-
-        }
-
+        applyHistoryStatusStyles();
     }
 
-}
+    /* ============================================================
+       DATE
+       ============================================================ */
 
+    function formatDate(value) {
 
-// ======================================================
-// FORM SUBMISSION
-// ======================================================
-
-if (withdrawForm) {
-
-    withdrawForm.addEventListener(
-        "submit",
-        function (event) {
-
-            event.preventDefault();
-
-            submitWithdrawal();
-
+        if (!value) {
+            return "Date not available";
         }
-    );
 
-}
+        let date;
 
+        if (
+            typeof value === "object" &&
+            value.$date
+        ) {
+            date =
+                new Date(
+                    value.$date
+                );
+        } else {
+            date =
+                new Date(value);
+        }
 
-// ======================================================
-// PAYMENT METHOD MESSAGE CLEAR
-// ======================================================
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "Date not available";
+        }
 
-document
-    .querySelectorAll(
-        'input[name="payment_method"]'
-    )
-    .forEach(function (radio) {
-
-        radio.addEventListener(
-            "change",
-            function () {
-
-                clearMessage();
-
+        return date.toLocaleString(
+            "en-UG",
+            {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
             }
         );
-
-    });
-
-
-// ======================================================
-// INITIALIZATION
-// ======================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        updateCalculator();
-
-        loadUserProfile();
-
     }
-);
+
+    /* ============================================================
+       HISTORY STATUS STYLES
+       ============================================================ */
+
+    function applyHistoryStatusStyles() {
+
+        const styles =
+            document.createElement("style");
+
+        styles.textContent = `
+            .withdraw-status.pending {
+                color:#f3d66b;
+                background:rgba(243,214,107,.08);
+                border:1px solid rgba(243,214,107,.12);
+            }
+
+            .withdraw-status.processing {
+                color:#d47cff;
+                background:rgba(198,0,255,.08);
+                border:1px solid rgba(198,0,255,.12);
+            }
+
+            .withdraw-status.approved {
+                color:#7fe5a8;
+                background:rgba(65,229,138,.08);
+                border:1px solid rgba(65,229,138,.12);
+            }
+
+            .withdraw-status.rejected {
+                color:#ff9292;
+                background:rgba(255,70,70,.08);
+                border:1px solid rgba(255,70,70,.12);
+            }
+        `;
+
+        document.head.appendChild(styles);
+    }
+
+    /* ============================================================
+       ESCAPE HTML
+       ============================================================ */
+
+    function escapeHtml(value) {
+
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    /* ============================================================
+       EVENT LISTENERS
+       ============================================================ */
+
+    if (amountInput) {
+
+        amountInput.addEventListener(
+            "input",
+            calculateWithdrawal
+        );
+
+        amountInput.addEventListener(
+            "change",
+            calculateWithdrawal
+        );
+    }
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            submitWithdrawal
+        );
+    }
+
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
+
+    async function initialize() {
+
+        clearMessage();
+
+        calculateWithdrawal();
+
+        const user =
+            await loadProfile();
+
+        if (!user) {
+            return;
+        }
+
+        displayProfile(user);
+
+        await loadWithdrawalHistory();
+
+        calculateWithdrawal();
+    }
+
+    initialize();
+
+})();

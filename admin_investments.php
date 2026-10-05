@@ -11,15 +11,16 @@ declare(strict_types=1);
 |   - Loading investments
 |   - Approving investments
 |   - Rejecting investments
-|   - Deducting investment principal ON APPROVAL
-|   - Refunding principal on rejection when applicable
-|   - Investment/user enrichment
-|   - Daily earnings initialization
+|   - Deducting principal ON APPROVAL
+|   - Refunding legacy deducted principal on rejection
+|   - User enrichment
+|   - Earnings initialization
+|   - Transaction/audit records
 |
-| ACCOUNTING RULE
+| ACCOUNTING FLOW
 |--------------------------------------------------------------------------
 |
-| NEW FLOW:
+| NEW INVESTMENT:
 |
 | User creates investment
 |       ↓
@@ -28,17 +29,19 @@ declare(strict_types=1);
 |       ↓
 | Admin approves
 |       ↓
-| Wallet deducted ONCE
+| Wallet deducted exactly once
 |       ↓
-| Investment becomes approved
-|       ↓
-| Daily earnings can run
+| Investment = approved
 |
-| Admin rejects
+| ADMIN REJECTS:
+|
+| If balance_deducted = false
 |       ↓
-| If money was deducted/reserved → refund ONCE
+| No wallet change
+|
+| If legacy balance_deducted = true
 |       ↓
-| status = rejected
+| Refund exactly once
 |
 |--------------------------------------------------------------------------
 */
@@ -184,7 +187,6 @@ function invFindUser(
     $id = invObjectId($userId);
 
     if ($id !== null) {
-
         $user = $users->findOne([
             '_id' => $id,
         ]);
@@ -197,7 +199,6 @@ function invFindUser(
     $stringId = trim((string) $userId);
 
     if ($stringId !== '') {
-
         $user = $users->findOne([
             '$or' => [
                 ['id' => $stringId],
@@ -214,7 +215,6 @@ function invFindUser(
     $email = trim((string) $email);
 
     if ($email !== '') {
-
         $user = $users->findOne([
             'email' => $email,
         ]);
@@ -311,13 +311,6 @@ function invUserName(array $user): string
 
 function invWalletField(array $user): string
 {
-    /*
-     * Crown Cash normally uses balance.
-     *
-     * We detect the actual existing wallet field so that
-     * approval does not accidentally create a second wallet field.
-     */
-
     if (array_key_exists('balance', $user)) {
         return 'balance';
     }
@@ -433,7 +426,11 @@ function invAdminAllowed(array $user): bool
 
     $isAdminFlag =
         isset($user['is_admin']) &&
-        $user['is_admin'] === true;
+        (
+            $user['is_admin'] === true ||
+            $user['is_admin'] === 1 ||
+            $user['is_admin'] === '1'
+        );
 
     return
         $isAdminFlag ||
@@ -484,7 +481,8 @@ function authenticateInvestmentAdmin(): array
 
     $currentAdmin = invFindUser(
         $users,
-        $sessionUserId
+        $sessionUserId,
+        $_SESSION['email'] ?? ''
     );
 
     if ($currentAdmin === null) {
@@ -550,7 +548,7 @@ function authenticateInvestmentAdmin(): array
 
 /*
 |--------------------------------------------------------------------------
-| FIND INVESTMENT OWNER
+| RESOLVE INVESTMENT OWNER
 |--------------------------------------------------------------------------
 */
 
@@ -580,7 +578,214 @@ function invResolveOwner(
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATE ADMIN
+| DATE
+|--------------------------------------------------------------------------
+*/
+
+function invUtcNow(): MongoDB\BSON\UTCDateTime
+{
+    return new MongoDB\BSON\UTCDateTime(
+        (int) round(microtime(true) * 1000)
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| READ INVESTMENT AMOUNT
+|--------------------------------------------------------------------------
+*/
+
+function invInvestmentAmount(array $investment): int
+{
+    return invMoney(
+        $investment['amount']
+        ?? $investment['principal']
+        ?? $investment['investment_amount']
+        ?? 0
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| READ DAILY RATE
+|--------------------------------------------------------------------------
+*/
+
+function invDailyRate(array $investment): float
+{
+    $rate = (float) (
+        $investment['daily_rate']
+        ?? $investment['dailyRate']
+        ?? $investment['rate']
+        ?? 0
+    );
+
+    /*
+     * Existing records may contain either:
+     * 0.10 or 10.
+     */
+    if ($rate > 1) {
+        $rate /= 100;
+    }
+
+    if ($rate < 0) {
+        $rate = 0;
+    }
+
+    return $rate;
+}
+
+/*
+|--------------------------------------------------------------------------
+| READ DURATION
+|--------------------------------------------------------------------------
+*/
+
+function invDuration(array $investment): int
+{
+    $duration = (int) (
+        $investment['duration']
+        ?? $investment['duration_days']
+        ?? 30
+    );
+
+    return $duration > 0 ? $duration : 30;
+}
+
+/*
+|--------------------------------------------------------------------------
+| CREATE/UPDATE TRANSACTION
+|--------------------------------------------------------------------------
+*/
+
+function invRecordApprovalTransaction(
+    MongoDB\Collection $transactions,
+    array $investment,
+    string $investmentId,
+    string $userId,
+    int $amount,
+    int $walletBefore,
+    int $walletAfter,
+    array $admin,
+    MongoDB\BSON\UTCDateTime $now,
+    ?MongoDB\Driver\Session $session = null
+): void {
+
+    $filter = [
+        'investment_id' => $investmentId,
+        'type' => 'investment_approved',
+    ];
+
+    $document = [
+        'user_id' => $userId,
+        'userId' => $userId,
+        'investment_id' => $investmentId,
+        'investmentId' => $investmentId,
+        'type' => 'investment_approved',
+        'category' => 'investment',
+        'direction' => 'debit',
+        'amount' => $amount,
+        'balance_before' => $walletBefore,
+        'balance_after' => $walletAfter,
+        'balance_change' => $walletAfter - $walletBefore,
+        'status' => 'completed',
+        'description' =>
+            'Investment approved by administrator.',
+        'admin_id' =>
+            invString(invUserIdValue($admin)),
+        'admin_email' =>
+            (string) ($admin['email'] ?? ''),
+        'created_at' => $now,
+    ];
+
+    $options = [
+        'upsert' => true,
+    ];
+
+    if ($session !== null) {
+        $options['session'] = $session;
+    }
+
+    $transactions->updateOne(
+        $filter,
+        [
+            '$setOnInsert' => $document,
+        ],
+        $options
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| CREATE REJECTION TRANSACTION
+|--------------------------------------------------------------------------
+*/
+
+function invRecordRejectionTransaction(
+    MongoDB\Collection $transactions,
+    string $investmentId,
+    string $userId,
+    int $amount,
+    int $walletBefore,
+    int $walletAfter,
+    bool $refunded,
+    array $admin,
+    MongoDB\BSON\UTCDateTime $now,
+    ?MongoDB\Driver\Session $session = null
+): void {
+
+    $type = $refunded
+        ? 'investment_rejected_refund'
+        : 'investment_rejected';
+
+    $filter = [
+        'investment_id' => $investmentId,
+        'type' => $type,
+    ];
+
+    $document = [
+        'user_id' => $userId,
+        'userId' => $userId,
+        'investment_id' => $investmentId,
+        'investmentId' => $investmentId,
+        'type' => $type,
+        'category' => 'investment',
+        'direction' => $refunded ? 'credit' : 'none',
+        'amount' => $amount,
+        'balance_before' => $walletBefore,
+        'balance_after' => $walletAfter,
+        'balance_change' => $walletAfter - $walletBefore,
+        'status' => 'completed',
+        'description' => $refunded
+            ? 'Investment rejected and previously deducted principal refunded.'
+            : 'Investment rejected without wallet deduction.',
+        'admin_id' =>
+            invString(invUserIdValue($admin)),
+        'admin_email' =>
+            (string) ($admin['email'] ?? ''),
+        'created_at' => $now,
+    ];
+
+    $options = [
+        'upsert' => true,
+    ];
+
+    if ($session !== null) {
+        $options['session'] = $session;
+    }
+
+    $transactions->updateOne(
+        $filter,
+        [
+            '$setOnInsert' => $document,
+        ],
+        $options
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN AUTH
 |--------------------------------------------------------------------------
 */
 
@@ -588,7 +793,7 @@ $currentAdmin = authenticateInvestmentAdmin();
 
 /*
 |--------------------------------------------------------------------------
-| GET - LOAD INVESTMENTS
+| GET
 |--------------------------------------------------------------------------
 */
 
@@ -611,9 +816,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
         $filter['status'] = $status;
     }
 
-    /*
-     * Search.
-     */
     if ($search !== '') {
 
         $searchConditions = [];
@@ -621,7 +823,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
         $objectId = invObjectId($search);
 
         if ($objectId !== null) {
-
             $searchConditions[] = [
                 '_id' => $objectId,
             ];
@@ -637,40 +838,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
 
         $searchConditions[] = [
             'email' => [
-                '$regex' => preg_quote(
-                    $search,
-                    '/'
-                ),
+                '$regex' => preg_quote($search, '/'),
                 '$options' => 'i',
             ],
         ];
 
         $searchConditions[] = [
             'name' => [
-                '$regex' => preg_quote(
-                    $search,
-                    '/'
-                ),
+                '$regex' => preg_quote($search, '/'),
                 '$options' => 'i',
             ],
         ];
 
         $searchConditions[] = [
             'full_name' => [
-                '$regex' => preg_quote(
-                    $search,
-                    '/'
-                ),
+                '$regex' => preg_quote($search, '/'),
                 '$options' => 'i',
             ],
         ];
 
         $searchConditions[] = [
             'user_name' => [
-                '$regex' => preg_quote(
-                    $search,
-                    '/'
-                ),
+                '$regex' => preg_quote($search, '/'),
                 '$options' => 'i',
             ],
         ];
@@ -709,12 +898,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                 ?? ''
             );
 
-            $amount = invMoney(
-                $investment['amount']
-                ?? $investment['principal']
-                ?? $investment['investment_amount']
-                ?? 0
-            );
+            $amount = invInvestmentAmount($investment);
 
             $plan = (string) (
                 $investment['plan']
@@ -727,59 +911,43 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                 $investment['status'] ?? 'pending'
             );
 
-            $dailyRate = (float) (
-                $investment['daily_rate']
-                ?? $investment['dailyRate']
-                ?? $investment['rate']
-                ?? 0.10
+            $dailyRate = invDailyRate($investment);
+
+            $dailyEarning = (int) round(
+                $amount * $dailyRate
             );
 
-            if ($dailyRate > 1) {
-                $dailyRate /= 100;
-            }
-
-            $dailyEarning = $amount * $dailyRate;
-
-            /*
-             * Resolve actual user.
-             */
             $investmentUser = invResolveOwner(
                 $users,
                 $investment
             );
 
             $userName = '';
-
             $userEmail = '';
-
             $userPhone = '';
 
             if ($investmentUser !== null) {
 
-                $userName =
-                    invUserName(
-                        $investmentUser
-                    );
+                $userName = invUserName(
+                    $investmentUser
+                );
 
-                $userEmail =
-                    (string) (
-                        $investmentUser['email']
-                        ?? ''
-                    );
+                $userEmail = (string) (
+                    $investmentUser['email'] ?? ''
+                );
 
-                $userPhone =
-                    (string) (
-                        $investmentUser['phone']
-                        ?? $investmentUser['phone_number']
-                        ?? $investmentUser['phoneNumber']
-                        ?? ''
-                    );
+                $userPhone = (string) (
+                    $investmentUser['phone']
+                    ?? $investmentUser['phone_number']
+                    ?? $investmentUser['phoneNumber']
+                    ?? ''
+                );
             }
 
-            /*
-             * Fall back to investment-stored information.
-             */
-            if ($userName === '' || $userName === 'Unknown user') {
+            if (
+                $userName === '' ||
+                $userName === 'Unknown user'
+            ) {
 
                 $storedName = trim(
                     (string) (
@@ -833,54 +1001,35 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
             $items[] = [
 
                 'id' => $id,
-
                 '_id' => $id,
-
                 'investment_id' => $id,
-
                 'investmentId' => $id,
 
                 'user_id' => $userId,
-
                 'userId' => $userId,
 
                 'user_name' => $userName,
-
                 'userName' => $userName,
-
                 'name' => $userName,
-
                 'full_name' => $userName,
 
                 'email' => $userEmail,
-
                 'phone' => $userPhone,
 
                 'plan' => $plan,
-
                 'plan_name' => $plan,
 
                 'amount' => $amount,
-
                 'principal' => $amount,
-
                 'investment_amount' => $amount,
 
                 'daily_rate' => $dailyRate,
-
                 'dailyRate' => $dailyRate,
 
-                'daily_earning' =>
-                    (int) round($dailyEarning),
+                'daily_earning' => $dailyEarning,
+                'dailyIncome' => $dailyEarning,
 
-                'dailyIncome' =>
-                    (int) round($dailyEarning),
-
-                'duration' => (int) (
-                    $investment['duration']
-                    ?? $investment['duration_days']
-                    ?? 30
-                ),
+                'duration' => invDuration($investment),
 
                 'status' => $investmentStatus,
 
@@ -934,14 +1083,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                         ?? false
                     ),
 
-                'created_at' =>
-                    $createdAt,
-
-                'approved_at' =>
-                    $approvedAt,
-
-                'activated_at' =>
-                    $activatedAt,
+                'created_at' => $createdAt,
+                'approved_at' => $approvedAt,
+                'activated_at' => $activatedAt,
 
                 'admin_note' =>
                     (string) (
@@ -954,33 +1098,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
         /*
          * Statistics.
          */
-        $allDocs = $investments->find([]);
-
         $stats = [
             'total' => 0,
-
             'pending' => 0,
-
             'approved' => 0,
-
+            'approval_processing' => 0,
             'active' => 0,
-
             'running' => 0,
-
             'completed' => 0,
-
             'rejected' => 0,
-
             'cancelled' => 0,
 
             'total_amount' => 0,
-
             'pending_amount' => 0,
-
             'active_amount' => 0,
-
             'completed_amount' => 0,
         ];
+
+        $allDocs = $investments->find([]);
 
         foreach ($allDocs as $doc) {
 
@@ -990,12 +1125,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                 $row['status'] ?? 'pending'
             );
 
-            $rowAmount = invMoney(
-                $row['amount']
-                ?? $row['principal']
-                ?? $row['investment_amount']
-                ?? 0
-            );
+            $rowAmount = invInvestmentAmount($row);
 
             $stats['total']++;
 
@@ -1003,11 +1133,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                 $stats[$rowStatus]++;
             }
 
-            $stats['total_amount'] +=
-                $rowAmount;
+            $stats['total_amount'] += $rowAmount;
 
-            if ($rowStatus === 'pending') {
-
+            if (
+                in_array(
+                    $rowStatus,
+                    [
+                        'pending',
+                        'approval_processing',
+                    ],
+                    true
+                )
+            ) {
                 $stats['pending_amount'] +=
                     $rowAmount;
             }
@@ -1023,13 +1160,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
                     true
                 )
             ) {
-
                 $stats['active_amount'] +=
                     $rowAmount;
             }
 
             if ($rowStatus === 'completed') {
-
                 $stats['completed_amount'] +=
                     $rowAmount;
             }
@@ -1039,17 +1174,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
             true,
             'Investments loaded successfully.',
             [
-                'investments' =>
-                    $items,
-
-                'data' =>
-                    $items,
-
-                'total' =>
-                    count($items),
-
-                'stats' =>
-                    $stats,
+                'investments' => $items,
+                'data' => $items,
+                'total' => count($items),
+                'stats' => $stats,
             ]
         );
 
@@ -1071,7 +1199,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
 
 /*
 |--------------------------------------------------------------------------
-| ONLY POST REMAINS
+| ONLY POST
 |--------------------------------------------------------------------------
 */
 
@@ -1145,7 +1273,6 @@ $adminNote = trim(
 );
 
 if ($investmentId === '') {
-
     investmentResponse(
         false,
         'Investment ID is required.',
@@ -1166,7 +1293,6 @@ if (
         true
     )
 ) {
-
     investmentResponse(
         false,
         'Invalid investment action.',
@@ -1175,12 +1301,9 @@ if (
     );
 }
 
-$objectId = invObjectId(
-    $investmentId
-);
+$objectId = invObjectId($investmentId);
 
 if ($objectId === null) {
-
     investmentResponse(
         false,
         'Invalid investment ID.',
@@ -1202,7 +1325,6 @@ try {
     ]);
 
     if ($investmentDoc === null) {
-
         investmentResponse(
             false,
             'Investment not found.',
@@ -1216,90 +1338,79 @@ try {
 
     $currentStatus =
         invNormalizeStatus(
-            $investment['status']
-            ?? 'pending'
+            $investment['status'] ?? 'pending'
         );
 
     /*
-     * Already approved investments should never be
-     * deducted again.
-     *
-     * This is important for old records.
+     * Final states cannot be processed again.
      */
     if (
-        $action === 'approve' ||
-        $action === 'approved'
+        in_array(
+            $currentStatus,
+            [
+                'approved',
+                'active',
+                'running',
+                'completed',
+                'rejected',
+                'cancelled',
+            ],
+            true
+        )
     ) {
 
-        if (
-            in_array(
-                $currentStatus,
-                [
-                    'approved',
-                    'active',
-                    'running',
-                    'completed',
-                ],
-                true
-            )
-        ) {
+        investmentResponse(
+            false,
+            'This investment has already been processed.',
+            [
+                'investment_id' =>
+                    $investmentId,
 
-            investmentResponse(
-                false,
-                'This investment has already been approved or completed.',
-                [
-                    'status' =>
-                        $currentStatus,
+                'status' =>
+                    $currentStatus,
 
-                    'balance_deducted' =>
-                        (bool) (
-                            $investment[
-                                'balance_deducted'
-                            ] ?? false
-                        ),
-                ],
-                409
-            );
-        }
+                'balance_deducted' =>
+                    (bool) (
+                        $investment['balance_deducted']
+                        ?? false
+                    ),
+            ],
+            409
+        );
     }
 
+    /*
+     * Only pending/approval_processing records are
+     * allowed through this administrative workflow.
+     */
     if (
-        $action === 'reject' ||
-        $action === 'rejected'
+        !in_array(
+            $currentStatus,
+            [
+                'pending',
+                'approval_processing',
+                'processing',
+            ],
+            true
+        )
     ) {
 
-        if (
-            in_array(
-                $currentStatus,
-                [
-                    'rejected',
-                    'completed',
-                ],
-                true
-            )
-        ) {
-
-            investmentResponse(
-                false,
-                'This investment has already been processed.',
-                [
-                    'status' =>
-                        $currentStatus,
-                ],
-                409
-            );
-        }
+        investmentResponse(
+            false,
+            'This investment is not available for administrative processing.',
+            [
+                'status' =>
+                    $currentStatus,
+            ],
+            409
+        );
     }
 
-    $amount = invMoney(
-        $investment['amount']
-        ?? $investment['principal']
-        ?? $investment['investment_amount']
-        ?? 0
+    $amount = invInvestmentAmount(
+        $investment
     );
 
     if ($amount <= 0) {
-
         investmentResponse(
             false,
             'Investment amount is invalid.',
@@ -1318,7 +1429,6 @@ try {
         );
 
     if ($investmentUser === null) {
-
         investmentResponse(
             false,
             'Investment owner could not be found.',
@@ -1335,7 +1445,6 @@ try {
         );
 
     if ($investmentUserId === '') {
-
         investmentResponse(
             false,
             'Investment owner ID is missing.',
@@ -1344,9 +1453,6 @@ try {
         );
     }
 
-    /*
-     * Current wallet.
-     */
     $walletField =
         invWalletField(
             $investmentUser
@@ -1357,29 +1463,19 @@ try {
             $investmentUser
         );
 
-    /*
-     * Existing accounting flags.
-     */
-    $balanceWasReserved =
-        (bool) (
-            $investment[
-                'balance_reserved'
-            ] ?? false
-        );
-
     $balanceWasDeducted =
         (bool) (
-            $investment[
-                'balance_deducted'
-            ] ?? false
+            $investment['balance_deducted']
+            ?? false
         );
 
     $principalReturned =
         (bool) (
-            $investment[
-                'principal_returned'
-            ] ?? false
+            $investment['principal_returned']
+            ?? false
         );
+
+    $now = invUtcNow();
 
     /*
     |--------------------------------------------------------------------------
@@ -1393,33 +1489,18 @@ try {
     ) {
 
         /*
-         * IMPORTANT:
+         * LEGACY RECORD
          *
-         * If the investment was already deducted by an
-         * older investment.php, DO NOT deduct again.
+         * If balance_deducted is already true, the money
+         * must NOT be deducted again.
          */
         if ($balanceWasDeducted) {
 
-            $walletAfter =
-                $walletBefore;
+            $dailyRate =
+                invDailyRate($investment);
 
-            $now = nowUtc();
-
-            $dailyRate = (float) (
-                $investment['daily_rate']
-                ?? $investment['dailyRate']
-                ?? 0.10
-            );
-
-            if ($dailyRate > 1) {
-                $dailyRate /= 100;
-            }
-
-            $duration = (int) (
-                $investment['duration']
-                ?? $investment['duration_days']
-                ?? 30
-            );
+            $duration =
+                invDuration($investment);
 
             $dailyEarning =
                 (int) round(
@@ -1428,191 +1509,166 @@ try {
 
             $nextEarningDate =
                 new MongoDB\BSON\UTCDateTime(
-                    (time() + 86400) * 1000
+                    (int) round(
+                        (microtime(true) + 86400) * 1000
+                    )
                 );
 
-            $set = [
-
-                'status' =>
-                    'approved',
-
-                'approved_at' =>
-                    $now,
-
-                'activated_at' =>
-                    $now,
-
-                'start_date' =>
-                    $now,
-
-                'updated_at' =>
-                    $now,
-
-                'balance_reserved' =>
-                    $balanceWasReserved,
-
-                'balance_deducted' =>
-                    true,
-
-                'admin_approved' =>
-                    true,
-
-                'admin_id' =>
-                    invString(
-                        invUserIdValue(
-                            $currentAdmin
-                        )
-                    ),
-
-                'admin_email' =>
-                    (string) (
-                        $currentAdmin['email']
-                        ?? ''
-                    ),
-
-                'daily_earning' =>
-                    $dailyEarning,
-
-                'daily_rate' =>
-                    $dailyRate,
-
-                'duration' =>
-                    $duration,
-
-                'earnings_processed' =>
-                    invMoney(
-                        $investment[
-                            'earnings_processed'
-                        ] ?? 0
-                    ),
-
-                'total_earnings_paid' =>
-                    invMoney(
-                        $investment[
-                            'total_earnings_paid'
-                        ] ?? 0
-                    ),
-
-                'earning_days' =>
-                    (int) (
-                        $investment[
-                            'earning_days'
-                        ] ?? 0
-                    ),
-
-                'next_earning_date' =>
-                    $investment[
-                        'next_earning_date'
-                    ] ?? $nextEarningDate,
-            ];
-
-            if ($adminNote !== '') {
-                $set['admin_note'] =
-                    $adminNote;
-            }
-
-            $result =
-                $investments->updateOne(
-                    [
-                        '_id' =>
-                            $objectId,
-
-                        'status' =>
-                            $currentStatus,
-                    ],
-                    [
-                        '$set' =>
-                            $set,
-                    ]
+            $maturityDate =
+                new MongoDB\BSON\UTCDateTime(
+                    (int) round(
+                        (
+                            microtime(true)
+                            + ($duration * 86400)
+                        ) * 1000
+                    )
                 );
-
-            if (
-                $result->getModifiedCount() !== 1
-            ) {
-
-                investmentResponse(
-                    false,
-                    'Investment could not be approved. It may already have been processed.',
-                    [],
-                    409
-                );
-            }
 
             /*
-             * Log approval.
+             * Mongo transaction.
              */
+            $session = $client->startSession();
+
             try {
 
-                $transactions->insertOne([
-
-                    'user_id' =>
-                        $investmentUserId,
-
-                    'userId' =>
-                        $investmentUserId,
-
-                    'investment_id' =>
+                $session->withTransaction(
+                    function (
+                        MongoDB\Driver\Session $session
+                    ) use (
+                        $investments,
+                        $transactions,
+                        $investment,
+                        $objectId,
                         $investmentId,
-
-                    'investmentId' =>
-                        $investmentId,
-
-                    'type' =>
-                        'investment_approved',
-
-                    'category' =>
-                        'investment',
-
-                    'direction' =>
-                        'debit',
-
-                    'amount' =>
+                        $investmentUserId,
                         $amount,
-
-                    'balance_before' =>
                         $walletBefore,
-
-                    'balance_after' =>
-                        $walletAfter,
-
-                    'balance_change' =>
-                        0,
-
-                    'status' =>
-                        'approved',
-
-                    'description' =>
-                        'Investment approved. Principal had already been deducted.',
-
-                    'admin_id' =>
-                        invString(
-                            invUserIdValue(
-                                $currentAdmin
-                            )
-                        ),
-
-                    'admin_email' =>
-                        (string) (
-                            $currentAdmin['email']
-                            ?? ''
-                        ),
-
-                    'created_at' =>
+                        $currentAdmin,
                         $now,
-                ]);
+                        $dailyRate,
+                        $dailyEarning,
+                        $duration,
+                        $nextEarningDate,
+                        $maturityDate,
+                        $adminNote
+                    ): void {
 
-            } catch (Throwable $transactionError) {
+                        $set = [
 
-                error_log(
-                    'Investment legacy approval transaction error: ' .
-                    $transactionError->getMessage()
+                            'status' =>
+                                'approved',
+
+                            'approved_at' =>
+                                $investment['approved_at']
+                                ?? $now,
+
+                            'activated_at' =>
+                                $investment['activated_at']
+                                ?? $now,
+
+                            'start_date' =>
+                                $investment['start_date']
+                                ?? $now,
+
+                            'maturity_date' =>
+                                $investment['maturity_date']
+                                ?? $maturityDate,
+
+                            'updated_at' =>
+                                $now,
+
+                            'balance_deducted' =>
+                                true,
+
+                            'admin_approved' =>
+                                true,
+
+                            'admin_id' =>
+                                invString(
+                                    invUserIdValue(
+                                        $currentAdmin
+                                    )
+                                ),
+
+                            'admin_email' =>
+                                (string) (
+                                    $currentAdmin['email']
+                                    ?? ''
+                                ),
+
+                            'daily_rate' =>
+                                $dailyRate,
+
+                            'daily_earning' =>
+                                $dailyEarning,
+
+                            'duration' =>
+                                $duration,
+
+                            'next_earning_date' =>
+                                $investment[
+                                    'next_earning_date'
+                                ]
+                                ?? $nextEarningDate,
+                        ];
+
+                        if ($adminNote !== '') {
+                            $set['admin_note'] =
+                                $adminNote;
+                        }
+
+                        $result =
+                            $investments->updateOne(
+                                [
+                                    '_id' =>
+                                        $objectId,
+
+                                    'status' =>
+                                        $currentStatus,
+
+                                    'balance_deducted' =>
+                                        true,
+                                ],
+                                [
+                                    '$set' =>
+                                        $set,
+                                ],
+                                [
+                                    'session' =>
+                                        $session,
+                                ]
+                            );
+
+                        if (
+                            $result->getModifiedCount() !== 1
+                        ) {
+                            throw new RuntimeException(
+                                'Investment was already processed.'
+                            );
+                        }
+
+                        invRecordApprovalTransaction(
+                            $transactions,
+                            $investment,
+                            $investmentId,
+                            $investmentUserId,
+                            $amount,
+                            $walletBefore,
+                            $walletBefore,
+                            $currentAdmin,
+                            $now,
+                            $session
+                        );
+                    }
                 );
+
+            } finally {
+                $session->endSession();
             }
 
             try {
-
                 audit(
-                    'investment_approved',
+                    'investment_approved_legacy',
                     [
                         'investment_id' =>
                             $investmentId,
@@ -1637,18 +1693,16 @@ try {
                             ),
                     ]
                 );
-
-            } catch (Throwable $auditError) {
-
+            } catch (Throwable $e) {
                 error_log(
-                    'Investment approval audit error: ' .
-                    $auditError->getMessage()
+                    'Legacy investment audit error: ' .
+                    $e->getMessage()
                 );
             }
 
             investmentResponse(
                 true,
-                'Investment approved. The principal had already been deducted.',
+                'Investment approved. Its principal had already been deducted.',
                 [
                     'investment_id' =>
                         $investmentId,
@@ -1668,19 +1722,20 @@ try {
                     'already_deducted' =>
                         true,
 
-                    'wallet_balance' =>
-                        $walletAfter,
+                    'wallet_before' =>
+                        $walletBefore,
+
+                    'wallet_after' =>
+                        $walletBefore,
                 ]
             );
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | NEW INVESTMENT:
-        | DEDUCT WALLET NOW
-        |--------------------------------------------------------------------------
-        */
-
+         * NEW RECORD
+         *
+         * Principal is deducted here, exactly once.
+         */
         if ($walletBefore < $amount) {
 
             investmentResponse(
@@ -1700,404 +1755,321 @@ try {
             );
         }
 
-        $now = nowUtc();
+        $dailyRate =
+            invDailyRate($investment);
 
         /*
-         * Atomic deduction.
-         *
-         * The balance must still be >= amount at the
-         * exact moment of deduction.
+         * If the investment does not contain a rate,
+         * preserve the existing project's configured
+         * rate rather than leaving it empty.
          */
-        $walletFilter =
-            invGetUserFilter(
-                $investmentUser
-            );
-
-        $walletFilter['$and'] = [
-            [
-                $walletField => [
-                    '$gte' =>
-                        $amount,
-                ],
-            ],
-        ];
-
-        $deductResult =
-            $users->updateOne(
-                $walletFilter,
-                [
-                    '$inc' => [
-                        $walletField =>
-                            -$amount,
-                    ],
-
-                    '$set' => [
-                        'updated_at' =>
-                            $now,
-                    ],
-                ]
-            );
-
-        if (
-            $deductResult->getModifiedCount() !== 1
-        ) {
-
-            /*
-             * Re-read wallet to provide accurate information.
-             */
-            $freshUser =
-                invFindUser(
-                    $users,
-                    $investmentUserId,
-                    $investmentUser['email'] ?? ''
-                );
-
-            $freshBalance =
-                $freshUser !== null
-                    ? invWalletBalance($freshUser)
-                    : 0;
-
-            investmentResponse(
-                false,
-                'Investment could not be approved because the wallet balance changed or is insufficient.',
-                [
-                    'wallet_balance' =>
-                        $freshBalance,
-
-                    'required' =>
-                        $amount,
-                ],
-                409
-            );
-        }
-
-        $walletAfter =
-            $walletBefore - $amount;
-
-        /*
-         * Calculate earnings.
-         */
-        $dailyRate = (float) (
-            $investment['daily_rate']
-            ?? $investment['dailyRate']
-            ?? $investment['rate']
-            ?? 0.10
-        );
-
-        if ($dailyRate > 1) {
-            $dailyRate /= 100;
-        }
-
         if ($dailyRate <= 0) {
             $dailyRate = 0.10;
         }
 
-        $duration = (int) (
-            $investment['duration']
-            ?? $investment['duration_days']
-            ?? 30
-        );
-
-        if ($duration <= 0) {
-            $duration = 30;
-        }
+        $duration =
+            invDuration($investment);
 
         $dailyEarning =
             (int) round(
                 $amount * $dailyRate
             );
 
-        /*
-         * The first earning is scheduled for the next day.
-         */
         $nextEarningDate =
             new MongoDB\BSON\UTCDateTime(
-                (time() + 86400) * 1000
+                (int) round(
+                    (microtime(true) + 86400) * 1000
+                )
             );
 
-        /*
-         * Calculate maturity date.
-         */
         $maturityDate =
             new MongoDB\BSON\UTCDateTime(
-                (time() + ($duration * 86400)) * 1000
+                (int) round(
+                    (
+                        microtime(true)
+                        + ($duration * 86400)
+                    ) * 1000
+                )
             );
 
-        /*
-         * Update investment.
-         */
-        $set = [
+        $walletAfter =
+            $walletBefore - $amount;
 
-            'status' =>
-                'approved',
-
-            'approved_at' =>
-                $now,
-
-            'activated_at' =>
-                $now,
-
-            'start_date' =>
-                $now,
-
-            'maturity_date' =>
-                $maturityDate,
-
-            'updated_at' =>
-                $now,
-
-            'balance_reserved' =>
-                false,
-
-            'balance_deducted' =>
-                true,
-
-            'admin_approved' =>
-                true,
-
-            'admin_id' =>
-                invString(
-                    invUserIdValue(
-                        $currentAdmin
-                    )
-                ),
-
-            'admin_email' =>
-                (string) (
-                    $currentAdmin['email']
-                    ?? ''
-                ),
-
-            /*
-             * Earnings engine fields.
-             */
-            'daily_rate' =>
-                $dailyRate,
-
-            'daily_earning' =>
-                $dailyEarning,
-
-            'duration' =>
-                $duration,
-
-            'earnings_processed' =>
-                0,
-
-            'total_earnings_paid' =>
-                0,
-
-            'earning_days' =>
-                0,
-
-            'last_earning_date' =>
-                null,
-
-            'next_earning_date' =>
-                $nextEarningDate,
-
-            'earnings_paid' =>
-                false,
-
-            'principal_returned' =>
-                false,
-        ];
-
-        if ($adminNote !== '') {
-            $set['admin_note'] =
-                $adminNote;
-        }
-
-        /*
-         * Store resolved user information.
-         */
-        $resolvedName =
-            invUserName(
+        $walletFilter =
+            invGetUserFilter(
                 $investmentUser
             );
 
-        if ($resolvedName !== 'Unknown user') {
-
-            $set['user_name'] =
-                $resolvedName;
-
-            $set['name'] =
-                $resolvedName;
-
-            $set['full_name'] =
-                $resolvedName;
-        }
-
-        if (
-            !empty(
-                $investmentUser['email']
-            )
-        ) {
-
-            $set['email'] =
-                (string) (
-                    $investmentUser['email']
-                );
-        }
-
         /*
-         * Update only pending investment.
+         * The wallet must still contain enough funds
+         * at the exact time of the deduction.
          */
-        $investmentUpdate =
-            $investments->updateOne(
-                [
-                    '_id' =>
-                        $objectId,
-
-                    'status' =>
-                        $currentStatus,
-
-                    'balance_deducted' =>
-                        [
-                            '$ne' =>
-                                true,
-                        ],
-                ],
-                [
-                    '$set' =>
-                        $set,
-                ]
-            );
+        $walletFilter[$walletField] = [
+            '$gte' => $amount,
+        ];
 
         /*
-         * If investment update failed after wallet deduction,
-         * attempt to restore the wallet immediately.
+         * Mongo transaction:
+         *
+         * 1. Deduct wallet
+         * 2. Approve investment
+         * 3. Create accounting transaction
+         *
+         * All three succeed or fail together.
          */
-        if (
-            $investmentUpdate->getModifiedCount() !== 1
-        ) {
-
-            try {
-
-                $rollbackFilter =
-                    invGetUserFilter(
-                        $investmentUser
-                    );
-
-                $users->updateOne(
-                    $rollbackFilter,
-                    [
-                        '$inc' => [
-                            $walletField =>
-                                $amount,
-                        ],
-
-                        '$set' => [
-                            'updated_at' =>
-                                $now,
-                        ],
-                    ]
-                );
-
-            } catch (Throwable $rollbackError) {
-
-                error_log(
-                    'CRITICAL investment approval rollback failed: ' .
-                    $rollbackError->getMessage() .
-                    ' | investment=' .
-                    $investmentId .
-                    ' | amount=' .
-                    $amount
-                );
-            }
-
-            investmentResponse(
-                false,
-                'Investment approval failed. The wallet deduction was rolled back.',
-                [],
-                409
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE WALLET TRANSACTION
-        |--------------------------------------------------------------------------
-        */
+        $session = $client->startSession();
 
         try {
 
-            $transactions->insertOne([
-
-                'user_id' =>
-                    $investmentUserId,
-
-                'userId' =>
-                    $investmentUserId,
-
-                'investment_id' =>
+            $session->withTransaction(
+                function (
+                    MongoDB\Driver\Session $session
+                ) use (
+                    $users,
+                    $investments,
+                    $transactions,
+                    $investment,
+                    $objectId,
                     $investmentId,
-
-                'investmentId' =>
-                    $investmentId,
-
-                'type' =>
-                    'investment_approved',
-
-                'category' =>
-                    'investment',
-
-                'direction' =>
-                    'debit',
-
-                'amount' =>
+                    $investmentUser,
+                    $investmentUserId,
                     $amount,
-
-                'balance_before' =>
+                    $walletField,
                     $walletBefore,
-
-                'balance_after' =>
                     $walletAfter,
-
-                'balance_change' =>
-                    -$amount,
-
-                'status' =>
-                    'completed',
-
-                'description' =>
-                    'Investment approved. Investment principal deducted from wallet.',
-
-                'admin_id' =>
-                    invString(
-                        invUserIdValue(
-                            $currentAdmin
-                        )
-                    ),
-
-                'admin_email' =>
-                    (string) (
-                        $currentAdmin['email']
-                        ?? ''
-                    ),
-
-                'created_at' =>
+                    $currentStatus,
+                    $currentAdmin,
                     $now,
-            ]);
+                    $dailyRate,
+                    $dailyEarning,
+                    $duration,
+                    $nextEarningDate,
+                    $maturityDate,
+                    $adminNote,
+                    $walletFilter
+                ): void {
 
-        } catch (Throwable $transactionError) {
+                    /*
+                     * Atomic wallet deduction.
+                     */
+                    $deductResult =
+                        $users->updateOne(
+                            $walletFilter,
+                            [
+                                '$inc' => [
+                                    $walletField =>
+                                        -$amount,
+                                ],
 
-            /*
-             * The financial operation already succeeded.
-             * Do not roll back the investment because the
-             * transaction log failed.
-             */
-            error_log(
-                'Investment approval transaction log error: ' .
-                $transactionError->getMessage()
+                                '$set' => [
+                                    'updated_at' =>
+                                        $now,
+                                ],
+                            ],
+                            [
+                                'session' =>
+                                    $session,
+                            ]
+                        );
+
+                    if (
+                        $deductResult->getModifiedCount() !== 1
+                    ) {
+                        throw new RuntimeException(
+                            'Wallet balance changed or is insufficient.'
+                        );
+                    }
+
+                    /*
+                     * Resolve user information.
+                     */
+                    $resolvedName =
+                        invUserName(
+                            $investmentUser
+                        );
+
+                    $set = [
+
+                        'status' =>
+                            'approved',
+
+                        'approved_at' =>
+                            $now,
+
+                        'activated_at' =>
+                            $now,
+
+                        'start_date' =>
+                            $now,
+
+                        'maturity_date' =>
+                            $maturityDate,
+
+                        'updated_at' =>
+                            $now,
+
+                        'balance_reserved' =>
+                            false,
+
+                        'balance_deducted' =>
+                            true,
+
+                        'admin_approved' =>
+                            true,
+
+                        'admin_id' =>
+                            invString(
+                                invUserIdValue(
+                                    $currentAdmin
+                                )
+                            ),
+
+                        'admin_email' =>
+                            (string) (
+                                $currentAdmin['email']
+                                ?? ''
+                            ),
+
+                        'daily_rate' =>
+                            $dailyRate,
+
+                        'daily_earning' =>
+                            $dailyEarning,
+
+                        'duration' =>
+                            $duration,
+
+                        'earnings_processed' =>
+                            invMoney(
+                                $investment[
+                                    'earnings_processed'
+                                ] ?? 0
+                            ),
+
+                        'total_earnings_paid' =>
+                            invMoney(
+                                $investment[
+                                    'total_earnings_paid'
+                                ] ?? 0
+                            ),
+
+                        'earning_days' =>
+                            (int) (
+                                $investment[
+                                    'earning_days'
+                                ] ?? 0
+                            ),
+
+                        'last_earning_date' =>
+                            $investment[
+                                'last_earning_date'
+                            ] ?? null,
+
+                        'next_earning_date' =>
+                            $nextEarningDate,
+
+                        'earnings_paid' =>
+                            (bool) (
+                                $investment[
+                                    'earnings_paid'
+                                ] ?? false
+                            ),
+
+                        'principal_returned' =>
+                            false,
+                    ];
+
+                    if (
+                        $resolvedName !== 'Unknown user'
+                    ) {
+                        $set['user_name'] =
+                            $resolvedName;
+
+                        $set['name'] =
+                            $resolvedName;
+
+                        $set['full_name'] =
+                            $resolvedName;
+                    }
+
+                    if (
+                        !empty(
+                            $investmentUser['email']
+                        )
+                    ) {
+                        $set['email'] =
+                            (string) (
+                                $investmentUser['email']
+                            );
+                    }
+
+                    if ($adminNote !== '') {
+                        $set['admin_note'] =
+                            $adminNote;
+                    }
+
+                    /*
+                     * Only a still-pending/processing
+                     * investment may be approved.
+                     */
+                    $investmentUpdate =
+                        $investments->updateOne(
+                            [
+                                '_id' =>
+                                    $objectId,
+
+                                'status' =>
+                                    $currentStatus,
+
+                                'balance_deducted' =>
+                                    [
+                                        '$ne' =>
+                                            true,
+                                    ],
+                            ],
+                            [
+                                '$set' =>
+                                    $set,
+                            ],
+                            [
+                                'session' =>
+                                    $session,
+                            ]
+                        );
+
+                    if (
+                        $investmentUpdate->getModifiedCount() !== 1
+                    ) {
+                        throw new RuntimeException(
+                            'Investment was already processed.'
+                        );
+                    }
+
+                    /*
+                     * Accounting transaction.
+                     */
+                    invRecordApprovalTransaction(
+                        $transactions,
+                        $investment,
+                        $investmentId,
+                        $investmentUserId,
+                        $amount,
+                        $walletBefore,
+                        $walletAfter,
+                        $currentAdmin,
+                        $now,
+                        $session
+                    );
+                }
             );
+
+        } finally {
+            $session->endSession();
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | AUDIT
-        |--------------------------------------------------------------------------
-        */
-
+         * Audit outside the transaction.
+         */
         try {
 
             audit(
@@ -2127,6 +2099,9 @@ try {
                     'daily_earning' =>
                         $dailyEarning,
 
+                    'duration' =>
+                        $duration,
+
                     'admin_id' =>
                         invString(
                             invUserIdValue(
@@ -2144,15 +2119,9 @@ try {
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUCCESS
-        |--------------------------------------------------------------------------
-        */
-
         investmentResponse(
             true,
-            'Investment approved successfully. Wallet has been deducted.',
+            'Investment approved successfully. The wallet principal has been deducted once.',
             [
                 'investment_id' =>
                     $investmentId,
@@ -2204,18 +2173,9 @@ try {
         $action === 'rejected'
     ) {
 
-        $now = nowUtc();
-
         /*
-         * If the wallet was deducted, rejection must refund it.
-         *
-         * For the new flow:
-         * balance_deducted = false
-         * therefore there is normally nothing to refund.
-         *
-         * For legacy records:
-         * balance_deducted = true
-         * therefore refund exactly once.
+         * A legacy investment with an already deducted
+         * principal must be refunded exactly once.
          */
         $refundRequired =
             $balanceWasDeducted &&
@@ -2224,315 +2184,195 @@ try {
         $walletAfter =
             $walletBefore;
 
-        /*
-         * IMPORTANT:
-         *
-         * If the investment was never deducted,
-         * the user's wallet stays unchanged.
-         */
-        if ($refundRequired) {
+        $session =
+            $client->startSession();
 
-            $userFilter =
-                invGetUserFilter(
-                    $investmentUser
-                );
+        try {
 
-            $refundResult =
-                $users->updateOne(
-                    $userFilter,
-                    [
-                        '$inc' => [
-                            $walletField =>
-                                $amount,
-                        ],
+            $session->withTransaction(
+                function (
+                    MongoDB\Driver\Session $session
+                ) use (
+                    $users,
+                    $investments,
+                    $transactions,
+                    $investment,
+                    $objectId,
+                    $investmentId,
+                    $investmentUser,
+                    $investmentUserId,
+                    $amount,
+                    $walletBefore,
+                    &$walletAfter,
+                    $walletField,
+                    $refundRequired,
+                    $principalReturned,
+                    $currentStatus,
+                    $currentAdmin,
+                    $now,
+                    $adminNote
+                ): void {
 
-                        '$set' => [
-                            'updated_at' =>
-                                $now,
-                        ],
-                    ]
-                );
+                    /*
+                     * Refund legacy principal.
+                     */
+                    if ($refundRequired) {
 
-            if (
-                $refundResult->getModifiedCount() !== 1
-            ) {
+                        $userFilter =
+                            invGetUserFilter(
+                                $investmentUser
+                            );
 
-                investmentResponse(
-                    false,
-                    'Investment could not be rejected because the wallet refund failed.',
-                    [],
-                    500
-                );
-            }
+                        $refundResult =
+                            $users->updateOne(
+                                $userFilter,
+                                [
+                                    '$inc' => [
+                                        $walletField =>
+                                            $amount,
+                                    ],
 
-            $walletAfter =
-                $walletBefore + $amount;
-        }
+                                    '$set' => [
+                                        'updated_at' =>
+                                            $now,
+                                    ],
+                                ],
+                                [
+                                    'session' =>
+                                        $session,
+                                ]
+                            );
 
-        /*
-         * Investment rejection update.
-         */
-        $updateSet = [
+                        if (
+                            $refundResult->getModifiedCount() !== 1
+                        ) {
+                            throw new RuntimeException(
+                                'Wallet refund failed.'
+                            );
+                        }
 
-            'status' =>
-                'rejected',
+                        $walletAfter =
+                            $walletBefore + $amount;
+                    }
 
-            'rejected_at' =>
-                $now,
+                    /*
+                     * Reject investment.
+                     */
+                    $updateSet = [
 
-            'updated_at' =>
-                $now,
+                        'status' =>
+                            'rejected',
 
-            'admin_approved' =>
-                false,
+                        'rejected_at' =>
+                            $now,
 
-            'admin_id' =>
-                invString(
-                    invUserIdValue(
-                        $currentAdmin
-                    )
-                ),
+                        'updated_at' =>
+                            $now,
 
-            'admin_email' =>
-                (string) (
-                    $currentAdmin['email']
-                    ?? ''
-                ),
+                        'admin_approved' =>
+                            false,
 
-            'balance_reserved' =>
-                false,
-        ];
+                        'admin_id' =>
+                            invString(
+                                invUserIdValue(
+                                    $currentAdmin
+                                )
+                            ),
 
-        if ($refundRequired) {
+                        'admin_email' =>
+                            (string) (
+                                $currentAdmin['email']
+                                ?? ''
+                            ),
 
-            $updateSet[
-                'principal_returned'
-            ] = true;
+                        'balance_reserved' =>
+                            false,
+                    ];
 
-            $updateSet[
-                'balance_refunded'
-            ] = true;
+                    if ($refundRequired) {
 
-            $updateSet[
-                'refunded_at'
-            ] = $now;
+                        $updateSet[
+                            'principal_returned'
+                        ] = true;
 
-        } else {
+                        $updateSet[
+                            'balance_refunded'
+                        ] = true;
 
-            $updateSet[
-                'principal_returned'
-            ] =
-                $principalReturned;
+                        $updateSet[
+                            'refunded_at'
+                        ] = $now;
 
-            $updateSet[
-                'balance_refunded'
-            ] = false;
-        }
+                    } else {
 
-        if ($adminNote !== '') {
+                        $updateSet[
+                            'principal_returned'
+                        ] =
+                            $principalReturned;
 
-            $updateSet[
-                'admin_note'
-            ] = $adminNote;
-        }
+                        $updateSet[
+                            'balance_refunded'
+                        ] = false;
+                    }
 
-        /*
-         * Only process the currently pending investment.
-         */
-        $result =
-            $investments->updateOne(
-                [
-                    '_id' =>
-                        $objectId,
+                    if ($adminNote !== '') {
+                        $updateSet['admin_note'] =
+                            $adminNote;
+                    }
 
-                    'status' =>
-                        $currentStatus,
-                ],
-                [
-                    '$set' =>
-                        $updateSet,
-                ]
-            );
+                    $result =
+                        $investments->updateOne(
+                            [
+                                '_id' =>
+                                    $objectId,
 
-        if (
-            $result->getModifiedCount() !== 1
-        ) {
+                                'status' =>
+                                    $currentStatus,
+                            ],
+                            [
+                                '$set' =>
+                                    $updateSet,
+                            ],
+                            [
+                                'session' =>
+                                    $session,
+                            ]
+                        );
 
-            /*
-             * If refund happened but status update failed,
-             * log critical condition.
-             */
-            if ($refundRequired) {
+                    if (
+                        $result->getModifiedCount() !== 1
+                    ) {
+                        throw new RuntimeException(
+                            'Investment was already processed.'
+                        );
+                    }
 
-                error_log(
-                    'CRITICAL: Investment refund completed but status update failed. Investment ID: ' .
-                    $investmentId
-                );
-            }
-
-            investmentResponse(
-                false,
-                'Investment could not be rejected. It may already have been processed.',
-                [],
-                409
-            );
-        }
-
-        /*
-         |--------------------------------------------------------------------------
-         | REFUND TRANSACTION
-         |--------------------------------------------------------------------------
-         */
-
-        if ($refundRequired) {
-
-            try {
-
-                $transactions->insertOne([
-
-                    'user_id' =>
-                        $investmentUserId,
-
-                    'userId' =>
-                        $investmentUserId,
-
-                    'investment_id' =>
+                    /*
+                     * Record rejection/refund inside the
+                     * same transaction.
+                     */
+                    invRecordRejectionTransaction(
+                        $transactions,
                         $investmentId,
-
-                    'investmentId' =>
-                        $investmentId,
-
-                    'type' =>
-                        'investment_rejected_refund',
-
-                    'category' =>
-                        'investment',
-
-                    'direction' =>
-                        'credit',
-
-                    'amount' =>
+                        $investmentUserId,
                         $amount,
-
-                    'balance_before' =>
                         $walletBefore,
-
-                    'balance_after' =>
                         $walletAfter,
-
-                    'balance_change' =>
-                        $amount,
-
-                    'status' =>
-                        'completed',
-
-                    'description' =>
-                        'Investment rejected. Previously deducted principal refunded to wallet.',
-
-                    'admin_id' =>
-                        invString(
-                            invUserIdValue(
-                                $currentAdmin
-                            )
-                        ),
-
-                    'admin_email' =>
-                        (string) (
-                            $currentAdmin['email']
-                            ?? ''
-                        ),
-
-                    'created_at' =>
+                        $refundRequired,
+                        $currentAdmin,
                         $now,
-                ]);
+                        $session
+                    );
+                }
+            );
 
-            } catch (Throwable $transactionError) {
-
-                error_log(
-                    'Investment refund transaction error: ' .
-                    $transactionError->getMessage()
-                );
-            }
-        } else {
-
-            /*
-             * Record rejection even when there was no refund.
-             */
-            try {
-
-                $transactions->insertOne([
-
-                    'user_id' =>
-                        $investmentUserId,
-
-                    'userId' =>
-                        $investmentUserId,
-
-                    'investment_id' =>
-                        $investmentId,
-
-                    'investmentId' =>
-                        $investmentId,
-
-                    'type' =>
-                        'investment_rejected',
-
-                    'category' =>
-                        'investment',
-
-                    'direction' =>
-                        'none',
-
-                    'amount' =>
-                        $amount,
-
-                    'balance_before' =>
-                        $walletBefore,
-
-                    'balance_after' =>
-                        $walletBefore,
-
-                    'balance_change' =>
-                        0,
-
-                    'status' =>
-                        'completed',
-
-                    'description' =>
-                        'Investment rejected. No wallet deduction had occurred.',
-
-                    'admin_id' =>
-                        invString(
-                            invUserIdValue(
-                                $currentAdmin
-                            )
-                        ),
-
-                    'admin_email' =>
-                        (string) (
-                            $currentAdmin['email']
-                            ?? ''
-                        ),
-
-                    'created_at' =>
-                        $now,
-                ]);
-
-            } catch (Throwable $transactionError) {
-
-                error_log(
-                    'Investment rejection transaction error: ' .
-                    $transactionError->getMessage()
-                );
-            }
+        } finally {
+            $session->endSession();
         }
 
         /*
-         |--------------------------------------------------------------------------
-         | AUDIT REJECTION
-         |--------------------------------------------------------------------------
+         * Audit.
          */
-
         try {
 
             audit(
@@ -2581,8 +2421,8 @@ try {
         investmentResponse(
             true,
             $refundRequired
-                ? 'Investment rejected and the deducted principal was refunded.'
-                : 'Investment rejected successfully. No wallet deduction had occurred.',
+                ? 'Investment rejected and the previously deducted principal was refunded.'
+                : 'Investment rejected successfully. No wallet deduction occurred.',
             [
                 'investment_id' =>
                     $investmentId,
@@ -2622,7 +2462,8 @@ try {
 
     investmentResponse(
         false,
-        'Unable to process investment request.',
+        'Unable to process investment request: ' .
+        $e->getMessage(),
         [],
         500
     );

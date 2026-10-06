@@ -3,26 +3,54 @@
  * Crown Cash
  * daily_earnings.php
  *
- * Daily investment earnings accounting engine.
+ * ============================================================
+ * AUTOMATIC DAILY INVESTMENT EARNINGS ENGINE
+ * ============================================================
  *
- * IMPORTANT:
- * - This file only processes earnings already configured on an
- *   approved investment.
- * - It does NOT invent a default return rate.
- * - It does NOT deduct investment principal.
- * - It does NOT return investment principal.
- * - It does NOT automatically pay referral commissions.
+ * NEW CROWN CASH INVESTMENT STRUCTURE
  *
- * The investment must already contain either:
- *   daily_earning
- * or:
- *   daily_rate
+ * 1. User can invest any amount >= UGX 10,000.
+ * 2. investment.php validates the amount.
+ * 3. investment.php deducts the investment amount from wallet.
+ * 4. investment.php creates the investment as ACTIVE.
+ * 5. No administrator approval is required.
+ * 6. This file processes earnings only for ACTIVE investments.
+ * 7. The server-side investment record determines the daily rate.
+ * 8. The frontend is never trusted for the daily rate.
+ * 9. Investment principal is NOT deducted here.
+ * 10. Investment principal is NOT returned here.
+ * 11. Referral commissions are NOT processed here.
+ * 12. Every daily earning has a deterministic ledger key.
+ * 13. Wallet, ledger, transaction and investment tracking are
+ *     updated inside the SAME MongoDB transaction.
  *
- * The engine is idempotent using:
- *   investment_earning:{investment_id}:{day_number}
+ * IDEMPOTENCY KEY:
  *
- * All wallet, ledger, transaction and investment updates belonging
- * to one earning are performed inside the SAME MongoDB transaction.
+ * investment_earning:{investment_id}:{day_number}
+ *
+ * Example:
+ *
+ * investment_earning:68f123456789abcdef123456:1
+ *
+ * This prevents the same investment/day from being credited twice.
+ *
+ * TIMING:
+ *
+ * Earnings begin after one complete 24-hour period from the
+ * investment's started_at/activated_at timestamp.
+ *
+ * Example:
+ *
+ * Investment:
+ * 5 Oct 2026 10:00 UTC
+ *
+ * Day 1:
+ * 6 Oct 2026 10:00 UTC
+ *
+ * Day 2:
+ * 7 Oct 2026 10:00 UTC
+ *
+ * etc.
  */
 
 declare(strict_types=1);
@@ -31,7 +59,6 @@ require_once __DIR__ . '/config.php';
 
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
-use MongoDB\Driver\Exception\Exception as MongoException;
 
 /* =========================================================
    CORS
@@ -46,17 +73,37 @@ $allowedOrigins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
-    header("Access-Control-Allow-Origin: {$origin}");
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Cron-Token');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+if (
+    $origin !== ''
+    && in_array($origin, $allowedOrigins, true)
+) {
+    header(
+        "Access-Control-Allow-Origin: {$origin}"
+    );
+
+    header(
+        'Access-Control-Allow-Credentials: true'
+    );
+
+    header(
+        'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Cron-Token'
+    );
+
+    header(
+        'Access-Control-Allow-Methods: GET, POST, OPTIONS'
+    );
+
     header('Vary: Origin');
 }
 
-header('Content-Type: application/json; charset=utf-8');
+header(
+    'Content-Type: application/json; charset=utf-8'
+);
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? 'GET')
+    === 'OPTIONS'
+) {
     http_response_code(204);
     exit;
 }
@@ -66,10 +113,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
    ========================================================= */
 
 try {
-    if (function_exists('startSecureSession')) {
+    if (
+        function_exists(
+            'startSecureSession'
+        )
+    ) {
         startSecureSession();
-    } elseif (session_status() !== PHP_SESSION_ACTIVE) {
-        session_name('CROWN_CASH_SESSION');
+    } elseif (
+        session_status()
+        !== PHP_SESSION_ACTIVE
+    ) {
+        session_name(
+            'CROWN_CASH_SESSION'
+        );
 
         session_set_cookie_params([
             'httponly' => true,
@@ -80,7 +136,10 @@ try {
         session_start();
     }
 } catch (Throwable $e) {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
+    if (
+        session_status()
+        !== PHP_SESSION_ACTIVE
+    ) {
         @session_start();
     }
 }
@@ -115,8 +174,10 @@ function earningsResponse(
    GENERAL HELPERS
    ========================================================= */
 
-function earningString($value, string $default = ''): string
-{
+function earningString(
+    $value,
+    string $default = ''
+): string {
     if ($value === null) {
         return $default;
     }
@@ -126,31 +187,45 @@ function earningString($value, string $default = ''): string
     }
 
     if ($value instanceof UTCDateTime) {
-        return $value->toDateTime()->format('c');
+        return $value
+            ->toDateTime()
+            ->format('c');
     }
 
     if (is_scalar($value)) {
-        return trim((string) $value);
+        return trim(
+            (string) $value
+        );
     }
 
     return $default;
 }
 
-function earningMoney($value, float $default = 0.0): float
-{
-    if ($value === null || $value === '') {
+function earningMoney(
+    $value,
+    float $default = 0.0
+): float {
+    if (
+        $value === null
+        || $value === ''
+    ) {
         return $default;
     }
 
     if (is_numeric($value)) {
-        return round((float) $value, 2);
+        return round(
+            (float) $value,
+            2
+        );
     }
 
     return $default;
 }
 
-function earningBool($value, bool $default = false): bool
-{
+function earningBool(
+    $value,
+    bool $default = false
+): bool {
     if ($value === null) {
         return $default;
     }
@@ -165,7 +240,9 @@ function earningBool($value, bool $default = false): bool
 
     if (is_string($value)) {
         return in_array(
-            strtolower(trim($value)),
+            strtolower(
+                trim($value)
+            ),
             [
                 '1',
                 'true',
@@ -179,20 +256,28 @@ function earningBool($value, bool $default = false): bool
     return $default;
 }
 
-function earningObjectId($value): ?ObjectId
-{
+function earningObjectId(
+    $value
+): ?ObjectId {
     if ($value instanceof ObjectId) {
         return $value;
     }
 
-    $value = earningString($value);
+    $value = earningString(
+        $value
+    );
 
     if (
         $value !== ''
-        && preg_match('/^[a-f0-9]{24}$/i', $value)
+        && preg_match(
+            '/^[a-f0-9]{24}$/i',
+            $value
+        )
     ) {
         try {
-            return new ObjectId($value);
+            return new ObjectId(
+                $value
+            );
         } catch (Throwable $e) {
             return null;
         }
@@ -204,6 +289,14 @@ function earningObjectId($value): ?ObjectId
 function earningNow(): UTCDateTime
 {
     return new UTCDateTime();
+}
+
+function earningUtcNow(): DateTimeImmutable
+{
+    return new DateTimeImmutable(
+        'now',
+        new DateTimeZone('UTC')
+    );
 }
 
 /* =========================================================
@@ -222,7 +315,9 @@ function earningsSessionUserId(): string
     ];
 
     foreach ($values as $value) {
-        $id = earningString($value);
+        $id = earningString(
+            $value
+        );
 
         if ($id !== '') {
             return $id;
@@ -241,10 +336,14 @@ function earningsSessionEmail(): string
     ];
 
     foreach ($values as $value) {
-        $email = earningString($value);
+        $email = earningString(
+            $value
+        );
 
         if ($email !== '') {
-            return strtolower($email);
+            return strtolower(
+                $email
+            );
         }
     }
 
@@ -268,7 +367,9 @@ function getUserIdValue($user): string
             $user['user_id'] ?? null
         ] as $value
     ) {
-        $id = earningString($value);
+        $id = earningString(
+            $value
+        );
 
         if ($id !== '') {
             return $id;
@@ -278,8 +379,10 @@ function getUserIdValue($user): string
     return '';
 }
 
-function findUserByFlexibleId($users, string $id)
-{
+function findUserByFlexibleId(
+    $users,
+    string $id
+) {
     $id = trim($id);
 
     if ($id === '') {
@@ -288,7 +391,9 @@ function findUserByFlexibleId($users, string $id)
 
     $or = [];
 
-    $oid = earningObjectId($id);
+    $oid = earningObjectId(
+        $id
+    );
 
     if ($oid !== null) {
         $or[] = [
@@ -304,9 +409,16 @@ function findUserByFlexibleId($users, string $id)
         'user_id' => $id
     ];
 
-    if (filter_var($id, FILTER_VALIDATE_EMAIL)) {
+    if (
+        filter_var(
+            $id,
+            FILTER_VALIDATE_EMAIL
+        )
+    ) {
         $or[] = [
-            'email' => strtolower($id)
+            'email' => strtolower(
+                $id
+            )
         ];
     }
 
@@ -319,15 +431,22 @@ function findUserByFlexibleId($users, string $id)
     }
 }
 
-function findSessionUser($users)
-{
-    $userId = earningsSessionUserId();
-    $email = earningsSessionEmail();
+function findSessionUser(
+    $users
+) {
+    $userId =
+        earningsSessionUserId();
+
+    $email =
+        earningsSessionEmail();
 
     $or = [];
 
     if ($userId !== '') {
-        $oid = earningObjectId($userId);
+        $oid =
+            earningObjectId(
+                $userId
+            );
 
         if ($oid !== null) {
             $or[] = [
@@ -367,8 +486,9 @@ function findSessionUser($users)
    INVESTMENT HELPERS
    ========================================================= */
 
-function investmentId($investment): string
-{
+function investmentId(
+    $investment
+): string {
     foreach (
         [
             $investment['_id'] ?? null,
@@ -376,7 +496,9 @@ function investmentId($investment): string
             $investment['investment_id'] ?? null
         ] as $value
     ) {
-        $id = earningString($value);
+        $id = earningString(
+            $value
+        );
 
         if ($id !== '') {
             return $id;
@@ -386,8 +508,9 @@ function investmentId($investment): string
     return '';
 }
 
-function investmentUserId($investment): string
-{
+function investmentUserId(
+    $investment
+): string {
     foreach (
         [
             $investment['user_id'] ?? null,
@@ -397,7 +520,9 @@ function investmentUserId($investment): string
             $investment['ownerId'] ?? null
         ] as $value
     ) {
-        $id = earningString($value);
+        $id = earningString(
+            $value
+        );
 
         if ($id !== '') {
             return $id;
@@ -407,8 +532,9 @@ function investmentUserId($investment): string
     return '';
 }
 
-function investmentPrincipal($investment): float
-{
+function investmentPrincipal(
+    $investment
+): float {
     foreach (
         [
             'amount',
@@ -418,10 +544,15 @@ function investmentPrincipal($investment): float
             'capital'
         ] as $field
     ) {
-        if (isset($investment[$field])) {
-            $amount = earningMoney(
+        if (
+            isset(
                 $investment[$field]
-            );
+            )
+        ) {
+            $amount =
+                earningMoney(
+                    $investment[$field]
+                );
 
             if ($amount > 0) {
                 return $amount;
@@ -432,8 +563,9 @@ function investmentPrincipal($investment): float
     return 0.0;
 }
 
-function investmentDailyEarning($investment): float
-{
+function investmentDailyEarning(
+    $investment
+): float {
     foreach (
         [
             'daily_earning',
@@ -445,13 +577,18 @@ function investmentDailyEarning($investment): float
         ] as $field
     ) {
         if (
-            isset($investment[$field])
-            && is_numeric($investment[$field])
+            isset(
+                $investment[$field]
+            )
+            && is_numeric(
+                $investment[$field]
+            )
         ) {
-            $amount = round(
-                (float) $investment[$field],
-                2
-            );
+            $amount =
+                round(
+                    (float) $investment[$field],
+                    2
+                );
 
             if ($amount > 0) {
                 return $amount;
@@ -462,8 +599,9 @@ function investmentDailyEarning($investment): float
     return 0.0;
 }
 
-function investmentDailyRate($investment): float
-{
+function investmentDailyRate(
+    $investment
+): float {
     foreach (
         [
             'daily_rate',
@@ -474,22 +612,29 @@ function investmentDailyRate($investment): float
         ] as $field
     ) {
         if (
-            isset($investment[$field])
-            && is_numeric($investment[$field])
+            isset(
+                $investment[$field]
+            )
+            && is_numeric(
+                $investment[$field]
+            )
         ) {
-            $rate = (float) $investment[$field];
+            $rate =
+                (float) $investment[$field];
 
             if ($rate <= 0) {
                 continue;
             }
 
             /*
-             * Support both:
+             * Support:
+             *
              * 0.10 = 10%
              * 10    = 10%
              */
             if ($rate > 1) {
-                $rate = $rate / 100;
+                $rate =
+                    $rate / 100;
             }
 
             return $rate;
@@ -499,8 +644,9 @@ function investmentDailyRate($investment): float
     return 0.0;
 }
 
-function investmentDuration($investment): int
-{
+function investmentDuration(
+    $investment
+): int {
     foreach (
         [
             'duration_days',
@@ -510,8 +656,13 @@ function investmentDuration($investment): int
             'term_days'
         ] as $field
     ) {
-        if (isset($investment[$field])) {
-            $days = (int) $investment[$field];
+        if (
+            isset(
+                $investment[$field]
+            )
+        ) {
+            $days =
+                (int) $investment[$field];
 
             if ($days > 0) {
                 return $days;
@@ -522,8 +673,9 @@ function investmentDuration($investment): int
     return 0;
 }
 
-function investmentStatus($investment): string
-{
+function investmentStatus(
+    $investment
+): string {
     return strtolower(
         earningString(
             $investment['status']
@@ -533,44 +685,45 @@ function investmentStatus($investment): string
     );
 }
 
-function investmentIsApproved($investment): bool
-{
-    $status = investmentStatus($investment);
+/**
+ * NEW STRUCTURE:
+ *
+ * Only active/running investments are eligible.
+ *
+ * There is NO admin approval requirement.
+ */
+function investmentIsActive(
+    $investment
+): bool {
+    $status =
+        investmentStatus(
+            $investment
+        );
 
-    if (
-        in_array(
-            $status,
-            [
-                'approved',
-                'active',
-                'running',
-                'in_progress',
-                'in-progress'
-            ],
-            true
-        )
-    ) {
-        return true;
-    }
-
-    return earningBool(
-        $investment['admin_approved']
-        ?? $investment['approved']
-        ?? $investment['is_approved']
-        ?? false
+    return in_array(
+        $status,
+        [
+            'active',
+            'running',
+            'in_progress',
+            'in-progress'
+        ],
+        true
     );
 }
 
-function investmentBalanceDeducted($investment): bool
-{
+function investmentBalanceDeducted(
+    $investment
+): bool {
     return earningBool(
         $investment['balance_deducted']
         ?? false
     );
 }
 
-function investmentPrincipalReturned($investment): bool
-{
+function investmentPrincipalReturned(
+    $investment
+): bool {
     return earningBool(
         $investment['principal_returned']
         ?? false
@@ -581,33 +734,51 @@ function investmentPrincipalReturned($investment): bool
    INVESTMENT START DATE
    ========================================================= */
 
-function investmentActivationDate($investment): ?DateTimeImmutable
-{
+function investmentActivationDate(
+    $investment
+): ?DateTimeImmutable {
+    /*
+     * NEW STRUCTURE:
+     *
+     * started_at is preferred.
+     * activated_at is supported for compatibility.
+     *
+     * No approved_at / approval_date is used.
+     */
     $fields = [
+        'started_at',
         'activated_at',
         'activation_date',
-        'approved_at',
-        'approval_date',
-        'started_at',
         'start_date'
     ];
 
     foreach ($fields as $field) {
-        if (!isset($investment[$field])) {
+        if (
+            !isset(
+                $investment[$field]
+            )
+        ) {
             continue;
         }
 
-        $value = $investment[$field];
+        $value =
+            $investment[$field];
 
         try {
-            if ($value instanceof UTCDateTime) {
+            if (
+                $value instanceof UTCDateTime
+            ) {
                 return new DateTimeImmutable(
-                    $value->toDateTime()->format('c'),
+                    $value
+                        ->toDateTime()
+                        ->format('c'),
                     new DateTimeZone('UTC')
                 );
             }
 
-            if ($value instanceof DateTimeInterface) {
+            if (
+                $value instanceof DateTimeInterface
+            ) {
                 return new DateTimeImmutable(
                     $value->format('c'),
                     new DateTimeZone('UTC')
@@ -635,8 +806,9 @@ function investmentActivationDate($investment): ?DateTimeImmutable
    WALLET HELPERS
    ========================================================= */
 
-function userWalletBalance($user): float
-{
+function userWalletBalance(
+    $user
+): float {
     if (!$user) {
         return 0.0;
     }
@@ -649,8 +821,12 @@ function userWalletBalance($user): float
         ] as $field
     ) {
         if (
-            isset($user[$field])
-            && is_numeric($user[$field])
+            isset(
+                $user[$field]
+            )
+            && is_numeric(
+                $user[$field]
+            )
         ) {
             return round(
                 (float) $user[$field],
@@ -660,10 +836,18 @@ function userWalletBalance($user): float
     }
 
     if (
-        isset($user['wallet'])
-        && is_array($user['wallet'])
-        && isset($user['wallet']['balance'])
-        && is_numeric($user['wallet']['balance'])
+        isset(
+            $user['wallet']
+        )
+        && is_array(
+            $user['wallet']
+        )
+        && isset(
+            $user['wallet']['balance']
+        )
+        && is_numeric(
+            $user['wallet']['balance']
+        )
     ) {
         return round(
             (float) $user['wallet']['balance'],
@@ -674,9 +858,13 @@ function userWalletBalance($user): float
     return 0.0;
 }
 
-function userWalletFilter($user): array
-{
-    $id = getUserIdValue($user);
+function userWalletFilter(
+    $user
+): array {
+    $id =
+        getUserIdValue(
+            $user
+        );
 
     if ($id === '') {
         throw new RuntimeException(
@@ -684,7 +872,10 @@ function userWalletFilter($user): array
         );
     }
 
-    $oid = earningObjectId($id);
+    $oid =
+        earningObjectId(
+            $id
+        );
 
     if ($oid !== null) {
         return [
@@ -705,10 +896,7 @@ function userWalletFilter($user): array
 }
 
 /**
- * Credit wallet inside the supplied MongoDB transaction.
- *
- * The user's current balance is read again using the SAME
- * transaction session.
+ * Credit wallet inside MongoDB transaction.
  */
 function creditWalletInsideTransaction(
     $users,
@@ -722,14 +910,18 @@ function creditWalletInsideTransaction(
         );
     }
 
-    $filter = userWalletFilter($user);
+    $filter =
+        userWalletFilter(
+            $user
+        );
 
-    $currentUser = $users->findOne(
-        $filter,
-        [
-            'session' => $session
-        ]
-    );
+    $currentUser =
+        $users->findOne(
+            $filter,
+            [
+                'session' => $session
+            ]
+        );
 
     if (!$currentUser) {
         throw new RuntimeException(
@@ -737,62 +929,87 @@ function creditWalletInsideTransaction(
         );
     }
 
-    $before = userWalletBalance(
-        $currentUser
-    );
+    $before =
+        userWalletBalance(
+            $currentUser
+        );
 
     $inc = [];
 
-    if (array_key_exists(
-        'balance',
-        (array) $currentUser
-    )) {
-        $inc['balance'] = $amount;
-    }
-
-    if (array_key_exists(
-        'wallet_balance',
-        (array) $currentUser
-    )) {
-        $inc['wallet_balance'] = $amount;
-    }
-
-    if (array_key_exists(
-        'walletBalance',
-        (array) $currentUser
-    )) {
-        $inc['walletBalance'] = $amount;
+    if (
+        array_key_exists(
+            'balance',
+            (array) $currentUser
+        )
+    ) {
+        $inc['balance'] =
+            $amount;
     }
 
     if (
-        isset($currentUser['wallet'])
-        && is_array($currentUser['wallet'])
+        array_key_exists(
+            'wallet_balance',
+            (array) $currentUser
+        )
+    ) {
+        $inc['wallet_balance'] =
+            $amount;
+    }
+
+    if (
+        array_key_exists(
+            'walletBalance',
+            (array) $currentUser
+        )
+    ) {
+        $inc['walletBalance'] =
+            $amount;
+    }
+
+    if (
+        isset(
+            $currentUser['wallet']
+        )
+        && is_array(
+            $currentUser['wallet']
+        )
         && array_key_exists(
             'balance',
             $currentUser['wallet']
         )
     ) {
-        $inc['wallet.balance'] = $amount;
+        $inc['wallet.balance'] =
+            $amount;
     }
 
+    /*
+     * If the account does not yet contain a recognized
+     * wallet field, create the standard balance field.
+     */
     if (!$inc) {
-        $inc['balance'] = $amount;
+        $inc['balance'] =
+            $amount;
     }
 
-    $result = $users->updateOne(
-        $filter,
-        [
-            '$inc' => $inc,
-            '$set' => [
-                'updated_at' => earningNow()
+    $result =
+        $users->updateOne(
+            $filter,
+            [
+                '$inc' => $inc,
+                '$set' => [
+                    'updated_at' =>
+                        earningNow()
+                ]
+            ],
+            [
+                'session' => $session
             ]
-        ],
-        [
-            'session' => $session
-        ]
-    );
+        );
 
-    if ($result->getMatchedCount() !== 1) {
+    if (
+        $result->getMatchedCount()
+        !== 1
+    ) {
         throw new RuntimeException(
             'Wallet update failed.'
         );
@@ -814,7 +1031,10 @@ function creditWalletInsideTransaction(
 function investmentMongoFilter(
     string $investmentId
 ): array {
-    $oid = earningObjectId($investmentId);
+    $oid =
+        earningObjectId(
+            $investmentId
+        );
 
     if ($oid !== null) {
         return [
@@ -828,7 +1048,8 @@ function investmentMongoFilter(
                 'id' => $investmentId
             ],
             [
-                'investment_id' => $investmentId
+                'investment_id' =>
+                    $investmentId
             ]
         ]
     ];
@@ -838,8 +1059,9 @@ function investmentMongoFilter(
    LEDGER
    ========================================================= */
 
-function ensureEarningsLedgerIndex($earnings): void
-{
+function ensureEarningsLedgerIndex(
+    $earnings
+): void {
     try {
         $earnings->createIndex(
             [
@@ -847,43 +1069,43 @@ function ensureEarningsLedgerIndex($earnings): void
             ],
             [
                 'unique' => true,
-                'name' => 'unique_ledger_key'
+                'name' =>
+                    'unique_ledger_key'
             ]
         );
     } catch (Throwable $e) {
         /*
          * Index may already exist.
-         * Do not stop earnings processing.
+         *
+         * Do not stop the processor because of an
+         * already-existing index.
          */
     }
 }
 
-/**
- * Checks whether a deterministic ledger key already exists.
- */
 function ledgerExists(
     $earnings,
     string $ledgerKey,
     $session
 ): bool {
-    $existing = $earnings->findOne(
-        [
-            'ledger_key' => $ledgerKey
-        ],
-        [
-            'projection' => [
-                '_id' => 1
+    $existing =
+        $earnings->findOne(
+            [
+                'ledger_key' =>
+                    $ledgerKey
             ],
-            'session' => $session
-        ]
-    );
+            [
+                'projection' => [
+                    '_id' => 1
+                ],
+                'session' =>
+                    $session
+            ]
+        );
 
     return $existing !== null;
 }
 
-/**
- * Inserts a ledger entry using the SAME transaction session.
- */
 function insertLedgerInsideTransaction(
     $earnings,
     array $document,
@@ -898,7 +1120,7 @@ function insertLedgerInsideTransaction(
 }
 
 /* =========================================================
-   TRANSACTION RECORD
+   TRANSACTION HISTORY
    ========================================================= */
 
 function upsertEarningTransaction(
@@ -907,17 +1129,14 @@ function upsertEarningTransaction(
     array $document,
     $session
 ): void {
-    /*
-     * The reference is deterministic.
-     * This prevents duplicate transaction history entries
-     * if the engine is called repeatedly.
-     */
     $transactions->updateOne(
         [
-            'reference' => $reference
+            'reference' =>
+                $reference
         ],
         [
-            '$setOnInsert' => $document
+            '$setOnInsert' =>
+                $document
         ],
         [
             'upsert' => true,
@@ -939,43 +1158,61 @@ function processOneInvestmentEarning(
     $client,
     int $dayNumber
 ): array {
-    $investmentId = investmentId(
-        $investment
-    );
+    $investmentId =
+        investmentId(
+            $investment
+        );
 
     if ($investmentId === '') {
         return [
             'success' => false,
             'processed' => false,
-            'message' => 'Investment ID is missing.'
+            'message' =>
+                'Investment ID is missing.'
         ];
     }
 
-    $userId = investmentUserId(
-        $investment
-    );
+    $userId =
+        investmentUserId(
+            $investment
+        );
 
     if ($userId === '') {
         return [
             'success' => false,
             'processed' => false,
-            'message' => 'Investment owner is missing.'
-        ];
-    }
-
-    if (!investmentIsApproved($investment)) {
-        return [
-            'success' => true,
-            'processed' => false,
-            'message' => 'Investment is not approved.'
+            'message' =>
+                'Investment owner is missing.'
         ];
     }
 
     /*
-     * Earnings should only be processed after the investment
-     * principal has actually been deducted by admin approval.
+     * NEW STRUCTURE:
+     *
+     * No admin approval is checked.
      */
-    if (!investmentBalanceDeducted($investment)) {
+    if (
+        !investmentIsActive(
+            $investment
+        )
+    ) {
+        return [
+            'success' => true,
+            'processed' => false,
+            'message' =>
+                'Investment is not active.'
+        ];
+    }
+
+    /*
+     * The investment amount must already have been
+     * deducted from the user's wallet.
+     */
+    if (
+        !investmentBalanceDeducted(
+            $investment
+        )
+    ) {
         return [
             'success' => true,
             'processed' => false,
@@ -984,7 +1221,14 @@ function processOneInvestmentEarning(
         ];
     }
 
-    if (investmentPrincipalReturned($investment)) {
+    /*
+     * Do not continue processing after principal return.
+     */
+    if (
+        investmentPrincipalReturned(
+            $investment
+        )
+    ) {
         return [
             'success' => true,
             'processed' => false,
@@ -993,9 +1237,10 @@ function processOneInvestmentEarning(
         ];
     }
 
-    $principal = investmentPrincipal(
-        $investment
-    );
+    $principal =
+        investmentPrincipal(
+            $investment
+        );
 
     if ($principal <= 0) {
         return [
@@ -1006,9 +1251,10 @@ function processOneInvestmentEarning(
         ];
     }
 
-    $duration = investmentDuration(
-        $investment
-    );
+    $duration =
+        investmentDuration(
+            $investment
+        );
 
     if ($duration <= 0) {
         return [
@@ -1032,21 +1278,21 @@ function processOneInvestmentEarning(
     }
 
     /*
-     * First preference:
-     * explicitly stored daily earning.
+     * Prefer the server-stored daily earning.
      */
-    $dailyEarning = investmentDailyEarning(
-        $investment
-    );
-
-    /*
-     * Second preference:
-     * calculate from the investment's stored rate.
-     */
-    if ($dailyEarning <= 0) {
-        $dailyRate = investmentDailyRate(
+    $dailyEarning =
+        investmentDailyEarning(
             $investment
         );
+
+    /*
+     * Otherwise calculate from the stored server-side rate.
+     */
+    if ($dailyEarning <= 0) {
+        $dailyRate =
+            investmentDailyRate(
+                $investment
+            );
 
         if ($dailyRate <= 0) {
             return [
@@ -1057,10 +1303,11 @@ function processOneInvestmentEarning(
             ];
         }
 
-        $dailyEarning = round(
-            $principal * $dailyRate,
-            2
-        );
+        $dailyEarning =
+            round(
+                $principal * $dailyRate,
+                2
+            );
     }
 
     if ($dailyEarning <= 0) {
@@ -1072,10 +1319,11 @@ function processOneInvestmentEarning(
         ];
     }
 
-    $user = findUserByFlexibleId(
-        $users,
-        $userId
-    );
+    $user =
+        findUserByFlexibleId(
+            $users,
+            $userId
+        );
 
     if (!$user) {
         return [
@@ -1089,7 +1337,8 @@ function processOneInvestmentEarning(
     $session = null;
 
     try {
-        $session = $client->startSession();
+        $session =
+            $client->startSession();
 
         $result = [
             'success' => false,
@@ -1099,7 +1348,6 @@ function processOneInvestmentEarning(
         $session->withTransaction(
             function () use (
                 &$result,
-                $investment,
                 $investmentId,
                 $userId,
                 $user,
@@ -1109,20 +1357,23 @@ function processOneInvestmentEarning(
                 $investments,
                 $dailyEarning,
                 $dayNumber,
+                $duration,
                 $session
             ): void {
                 /*
-                 * Re-read the investment using the SAME session.
-                 * This prevents processing a stale investment record.
+                 * Re-read the investment using the same
+                 * transaction session.
                  */
-                $freshInvestment = $investments->findOne(
-                    investmentMongoFilter(
-                        $investmentId
-                    ),
-                    [
-                        'session' => $session
-                    ]
-                );
+                $freshInvestment =
+                    $investments->findOne(
+                        investmentMongoFilter(
+                            $investmentId
+                        ),
+                        [
+                            'session' =>
+                                $session
+                        ]
+                    );
 
                 if (!$freshInvestment) {
                     throw new RuntimeException(
@@ -1130,8 +1381,11 @@ function processOneInvestmentEarning(
                     );
                 }
 
+                /*
+                 * Investment must still be active.
+                 */
                 if (
-                    !investmentIsApproved(
+                    !investmentIsActive(
                         $freshInvestment
                     )
                 ) {
@@ -1139,12 +1393,15 @@ function processOneInvestmentEarning(
                         'success' => true,
                         'processed' => false,
                         'message' =>
-                            'Investment is no longer approved.'
+                            'Investment is no longer active.'
                     ];
 
                     return;
                 }
 
+                /*
+                 * Principal must have been deducted.
+                 */
                 if (
                     !investmentBalanceDeducted(
                         $freshInvestment
@@ -1161,6 +1418,24 @@ function processOneInvestmentEarning(
                 }
 
                 /*
+                 * Do not process after principal return.
+                 */
+                if (
+                    investmentPrincipalReturned(
+                        $freshInvestment
+                    )
+                ) {
+                    $result = [
+                        'success' => true,
+                        'processed' => false,
+                        'message' =>
+                            'Investment principal has already been returned.'
+                    ];
+
+                    return;
+                }
+
+                /*
                  * Deterministic idempotency key.
                  */
                 $ledgerKey =
@@ -1170,7 +1445,7 @@ function processOneInvestmentEarning(
                     . $dayNumber;
 
                 /*
-                 * If already credited, DO NOT credit wallet again.
+                 * If already credited, stop immediately.
                  */
                 if (
                     ledgerExists(
@@ -1183,8 +1458,11 @@ function processOneInvestmentEarning(
                         'success' => true,
                         'processed' => false,
                         'duplicate' => true,
+                        'investment_id' =>
+                            $investmentId,
+                        'day_number' =>
+                            $dayNumber,
                         'daily_earning' => 0,
-                        'day_number' => $dayNumber,
                         'message' =>
                             'This daily earning was already processed.'
                     ];
@@ -1193,14 +1471,18 @@ function processOneInvestmentEarning(
                 }
 
                 /*
-                 * Re-read user inside the SAME transaction.
+                 * Re-read the user inside the transaction.
                  */
-                $freshUser = $users->findOne(
-                    userWalletFilter($user),
-                    [
-                        'session' => $session
-                    ]
-                );
+                $freshUser =
+                    $users->findOne(
+                        userWalletFilter(
+                            $user
+                        ),
+                        [
+                            'session' =>
+                                $session
+                        ]
+                    );
 
                 if (!$freshUser) {
                     throw new RuntimeException(
@@ -1214,38 +1496,63 @@ function processOneInvestmentEarning(
                     );
 
                 /*
-                 * -------------------------------------------------
-                 * 1. LEDGER
-                 * -------------------------------------------------
+                 * =================================================
+                 * 1. LEDGER ENTRY
+                 * =================================================
                  */
                 insertLedgerInsideTransaction(
                     $earnings,
                     [
-                        'ledger_key' => $ledgerKey,
-                        'type' => 'investment_earning',
+                        'ledger_key' =>
+                            $ledgerKey,
+
+                        'type' =>
+                            'investment_earning',
+
                         'earning_type' =>
                             'daily_investment_earning',
+
                         'user_id' =>
                             $freshUser['_id']
-                            ?? earningObjectId($userId)
+                            ?? earningObjectId(
+                                $userId
+                            )
                             ?? $userId,
-                        'userId' => $userId,
+
+                        'userId' =>
+                            $userId,
+
                         'investment_id' =>
-                            earningObjectId($investmentId)
+                            earningObjectId(
+                                $investmentId
+                            )
                             ?? $investmentId,
-                        'investmentId' => $investmentId,
-                        'day_number' => $dayNumber,
-                        'amount' => $dailyEarning,
-                        'status' => 'credited',
-                        'created_at' => earningNow()
+
+                        'investmentId' =>
+                            $investmentId,
+
+                        'day_number' =>
+                            $dayNumber,
+
+                        'amount' =>
+                            $dailyEarning,
+
+                        'status' =>
+                            'credited',
+
+                        'currency' =>
+                            'UGX',
+
+                        'created_at' =>
+                            earningNow()
                     ],
                     $session
                 );
 
                 /*
-                 * -------------------------------------------------
-                 * 2. WALLET CREDIT
-                 * -------------------------------------------------
+                 * =================================================
+                 * 2. CREDIT USER WALLET
+                 * =================================================
                  */
                 $walletResult =
                     creditWalletInsideTransaction(
@@ -1256,9 +1563,9 @@ function processOneInvestmentEarning(
                     );
 
                 /*
-                 * -------------------------------------------------
+                 * =================================================
                  * 3. TRANSACTION HISTORY
-                 * -------------------------------------------------
+                 * =================================================
                  */
                 $reference =
                     'EARN-'
@@ -1279,41 +1586,69 @@ function processOneInvestmentEarning(
                     [
                         'type' =>
                             'investment_earning',
+
                         'transaction_type' =>
                             'investment_earning',
+
                         'category' =>
                             'daily_earning',
+
                         'direction' =>
                             'credit',
+
                         'user_id' =>
                             $freshUser['_id']
-                            ?? earningObjectId($userId)
+                            ?? earningObjectId(
+                                $userId
+                            )
                             ?? $userId,
-                        'userId' => $userId,
+
+                        'userId' =>
+                            $userId,
+
                         'investment_id' =>
-                            earningObjectId($investmentId)
+                            earningObjectId(
+                                $investmentId
+                            )
                             ?? $investmentId,
+
                         'investmentId' =>
                             $investmentId,
+
                         'day_number' =>
                             $dayNumber,
+
                         'amount' =>
                             $dailyEarning,
+
                         'credit' =>
                             $dailyEarning,
+
                         'debit' =>
                             0,
+
+                        'currency' =>
+                            'UGX',
+
                         'balance_before' =>
                             $balanceBefore,
+
                         'balance_after' =>
                             $walletResult['after'],
+
                         'status' =>
                             'completed',
+
                         'reference' =>
                             $reference,
+
+                        'ledger_key' =>
+                            $ledgerKey,
+
                         'description' =>
                             'Investment daily earning - Day '
                             . $dayNumber,
+
                         'created_at' =>
                             earningNow()
                     ],
@@ -1321,10 +1656,11 @@ function processOneInvestmentEarning(
                 );
 
                 /*
-                 * -------------------------------------------------
-                 * 4. INVESTMENT EARNING TRACKING
-                 * -------------------------------------------------
+                 * =================================================
+                 * 4. UPDATE INVESTMENT EARNINGS
+                 * =================================================
                  */
+
                 $existingProcessed =
                     earningMoney(
                         $freshInvestment[
@@ -1347,8 +1683,7 @@ function processOneInvestmentEarning(
                     );
 
                 /*
-                 * Never allow tracking counters to move
-                 * backwards.
+                 * Never move the earning day backwards.
                  */
                 $newDays =
                     max(
@@ -1370,39 +1705,85 @@ function processOneInvestmentEarning(
                         2
                     );
 
-                $now = earningNow();
+                $now =
+                    earningNow();
 
-                $nextDate =
-                    new DateTimeImmutable(
-                        'now',
-                        new DateTimeZone('UTC')
-                    );
-
-                $nextDate =
-                    $nextDate->modify('+1 day');
-
-                $nextEarningDate =
-                    new UTCDateTime(
-                        $nextDate->getTimestamp()
-                        * 1000
-                    );
-
+                /*
+                 * Determine whether the investment has
+                 * reached its configured duration.
+                 */
                 $investmentUpdate = [
                     '$set' => [
                         'earnings_processed' =>
                             $newProcessed,
+
                         'total_earnings_paid' =>
                             $newTotalPaid,
+
                         'earning_days' =>
                             $newDays,
+
                         'last_earning_date' =>
                             $now,
-                        'next_earning_date' =>
-                            $nextEarningDate,
+
                         'updated_at' =>
                             $now
                     ]
                 ];
+
+                /*
+                 * If this was the final earning day,
+                 * mark the investment completed.
+                 *
+                 * Principal is NOT returned here.
+                 */
+                if (
+                    $newDays >= $duration
+                ) {
+                    $investmentUpdate[
+                        '$set'
+                    ]['status'] =
+                        'completed';
+
+                    $investmentUpdate[
+                        '$set'
+                    ]['completed_at'] =
+                        $now;
+
+                    $investmentUpdate[
+                        '$set'
+                    ]['next_earning_date'] =
+                        null;
+                } else {
+                    /*
+                     * Next earning is one day after the
+                     * current processing time.
+                     */
+                    $nextDate =
+                        new DateTimeImmutable(
+                            'now',
+                            new DateTimeZone(
+                                'UTC'
+                            )
+                        );
+
+                    $nextDate =
+                        $nextDate->modify(
+                            '+1 day'
+                        );
+
+                    $nextEarningDate =
+                        new UTCDateTime(
+                            $nextDate
+                                ->getTimestamp()
+                            * 1000
+                        );
+
+                    $investmentUpdate[
+                        '$set'
+                    ]['next_earning_date'] =
+                        $nextEarningDate;
+                }
 
                 $updateResult =
                     $investments->updateOne(
@@ -1411,12 +1792,14 @@ function processOneInvestmentEarning(
                         ),
                         $investmentUpdate,
                         [
-                            'session' => $session
+                            'session' =>
+                                $session
                         ]
                     );
 
                 if (
-                    $updateResult->getMatchedCount()
+                    $updateResult
+                        ->getMatchedCount()
                     !== 1
                 ) {
                     throw new RuntimeException(
@@ -1439,7 +1822,15 @@ function processOneInvestmentEarning(
                     'balance_before' =>
                         $balanceBefore,
                     'balance_after' =>
-                        $walletResult['after']
+                        $walletResult[
+                            'after'
+                        ],
+                    'investment_status' =>
+                        (
+                            $newDays >= $duration
+                            ? 'completed'
+                            : 'active'
+                        )
                 ];
             }
         );
@@ -1462,14 +1853,16 @@ function processOneInvestmentEarning(
             try {
                 $session->endSession();
             } catch (Throwable $e) {
-                // Ignore cleanup errors.
+                /*
+                 * Ignore cleanup errors.
+                 */
             }
         }
     }
 }
 
 /* =========================================================
-   DETERMINE DUE DAY
+   DETERMINE ELAPSED DAYS
    ========================================================= */
 
 function investmentElapsedFullDays(
@@ -1504,7 +1897,7 @@ function investmentElapsedFullDays(
 }
 
 /* =========================================================
-   PROCESS ALL
+   PROCESS ALL ACTIVE INVESTMENTS
    ========================================================= */
 
 function processDailyEarnings(
@@ -1514,30 +1907,37 @@ function processDailyEarnings(
     $transactions,
     $client
 ): array {
+    /*
+     * Make sure the deterministic ledger key is unique.
+     */
     ensureEarningsLedgerIndex(
         $earnings
     );
 
     $now =
-        new DateTimeImmutable(
-            'now',
-            new DateTimeZone('UTC')
-        );
+        earningUtcNow();
 
     /*
-     * Only approved/active investments.
+     * =========================================================
+     * NEW STRUCTURE
+     * =========================================================
+     *
+     * Only ACTIVE investments are selected.
+     *
+     * There is NO:
+     *
+     * admin_approved
+     * approved
+     * approval_date
+     * approved_at
+     *
+     * requirement.
      */
     $filter = [
-        'status' => [
-            '$in' => [
-                'approved',
-                'active',
-                'running',
-                'in_progress',
-                'in-progress'
-            ]
-        ],
+        'status' => 'active',
+
         'balance_deducted' => true,
+
         'principal_returned' => [
             '$ne' => true
         ]
@@ -1555,16 +1955,26 @@ function processDailyEarnings(
         );
 
     $processedInvestments = 0;
+
     $skippedInvestments = 0;
+
     $failedInvestments = 0;
+
     $duplicateInvestments = 0;
+
+    $completedInvestments = 0;
 
     $totalEarnings = 0.0;
 
+    $totalDaysProcessed = 0;
+
     foreach ($cursor as $investment) {
         try {
+            /*
+             * Safety check.
+             */
             if (
-                !investmentIsApproved(
+                !investmentIsActive(
                     $investment
                 )
             ) {
@@ -1572,8 +1982,24 @@ function processDailyEarnings(
                 continue;
             }
 
+            /*
+             * Principal must already have been
+             * deducted from the wallet.
+             */
             if (
                 !investmentBalanceDeducted(
+                    $investment
+                )
+            ) {
+                $skippedInvestments++;
+                continue;
+            }
+
+            /*
+             * Do not process after principal return.
+             */
+            if (
+                investmentPrincipalReturned(
                     $investment
                 )
             ) {
@@ -1591,19 +2017,26 @@ function processDailyEarnings(
                 continue;
             }
 
+            /*
+             * Determine how many complete 24-hour periods
+             * have passed since the investment started.
+             */
             $elapsedDays =
                 investmentElapsedFullDays(
                     $investment,
                     $now
                 );
 
+            /*
+             * No full day has passed yet.
+             */
             if ($elapsedDays < 1) {
                 $skippedInvestments++;
                 continue;
             }
 
             /*
-             * Do not process future days.
+             * Never process beyond the investment duration.
              */
             $targetDay =
                 min(
@@ -1612,11 +2045,501 @@ function processDailyEarnings(
                 );
 
             /*
-             * Resume from the investment's tracked earning
-             * day. This allows catch-up if the scheduler was
-             * offline for several days.
+             * Find how many days have already been credited.
              */
             $alreadyProcessedDays =
                 max(
                     0,
+                    (int) (
+                        $investment[
+                            'earning_days'
+                        ] ?? 0
+                    )
+                );
+
+            /*
+             * Nothing new is due.
+             */
+            if (
+                $alreadyProcessedDays
+                >= $targetDay
+            ) {
+                $duplicateInvestments++;
+                continue;
+            }
+
+            /*
+             * Resume from the next unprocessed day.
+             *
+             * Example:
+             *
+             * earning_days = 2
+             * target_day   = 5
+             *
+             * Process:
+             * 3
+             * 4
+             * 5
+             */
+            $startDay =
+                $alreadyProcessedDays + 1;
+
+            for (
+                $dayNumber = $startDay;
+                $dayNumber <= $targetDay;
+                $dayNumber++
+            ) {
+                $earningResult =
+                    processOneInvestmentEarning(
+                        $investment,
+                        $users,
+                        $earnings,
+                        $transactions,
+                        $investments,
+                        $client,
+                        $dayNumber
+                    );
+
+                if (
+                    !(
+                        $earningResult[
+                            'success'
+                        ] ?? false
+                    )
+                ) {
+                    $failedInvestments++;
+                    continue;
+                }
+
+                if (
                     (
+                        $earningResult[
+                            'duplicate'
+                        ] ?? false
+                    )
+                ) {
+                    $duplicateInvestments++;
+                    continue;
+                }
+
+                if (
+                    (
+                        $earningResult[
+                            'processed'
+                        ] ?? false
+                    )
+                ) {
+                    $processedInvestments++;
+
+                    $totalDaysProcessed++;
+
+                    $totalEarnings +=
+                        earningMoney(
+                            $earningResult[
+                                'daily_earning'
+                            ] ?? 0
+                        );
+
+                    /*
+                     * Keep our local investment copy synchronized
+                     * for catch-up processing.
+                     */
+                    $investment[
+                        'earning_days'
+                    ] = $dayNumber;
+
+                    $investment[
+                        'earnings_processed'
+                    ] =
+                        earningMoney(
+                            $investment[
+                                'earnings_processed'
+                            ] ?? 0
+                        )
+                        + earningMoney(
+                            $earningResult[
+                                'daily_earning'
+                            ] ?? 0
+                        );
+
+                    $investment[
+                        'total_earnings_paid'
+                    ] =
+                        earningMoney(
+                            $investment[
+                                'total_earnings_paid'
+                            ] ?? 0
+                        )
+                        + earningMoney(
+                            $earningResult[
+                                'daily_earning'
+                            ] ?? 0
+                        );
+
+                    /*
+                     * If final day was reached, stop processing
+                     * this investment.
+                     */
+                    if (
+                        $dayNumber >= $duration
+                    ) {
+                        $completedInvestments++;
+                        break;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            $failedInvestments++;
+
+            error_log(
+                'Crown Cash daily investment loop error: '
+                . $e->getMessage()
+            );
+        }
+    }
+
+    return [
+        'success' => true,
+
+        'message' =>
+            'Daily investment earnings processing completed.',
+
+        'data' => [
+            'processed_investments' =>
+                $processedInvestments,
+
+            'skipped_investments' =>
+                $skippedInvestments,
+
+            'failed_investments' =>
+                $failedInvestments,
+
+            'duplicate_investments' =>
+                $duplicateInvestments,
+
+            'completed_investments' =>
+                $completedInvestments,
+
+            'total_days_processed' =>
+                $totalDaysProcessed,
+
+            'total_earnings' =>
+                round(
+                    $totalEarnings,
+                    2
+                ),
+
+            'currency' =>
+                'UGX',
+
+            'processed_at' =>
+                $now->format(
+                    'c'
+                )
+        ]
+    ];
+}
+
+/* =========================================================
+   DATABASE COLLECTION RESOLUTION
+   ========================================================= */
+
+function crownCashCollection(
+    string $name
+) {
+    /*
+     * Prefer collections already created by config.php.
+     *
+     * Supported common variable names:
+     *
+     * $users
+     * $investments
+     * $earnings
+     * $transactions
+     */
+
+    $variableCandidates = [
+        $name
+    ];
+
+    foreach (
+        $variableCandidates as $variable
+    ) {
+        if (
+            isset(
+                $GLOBALS[$variable]
+            )
+        ) {
+            return $GLOBALS[
+                $variable
+            ];
+        }
+    }
+
+    /*
+     * If config.php exposes a MongoDB database object,
+     * create the collection from it.
+     */
+    if (
+        isset(
+            $GLOBALS['db']
+        )
+        && $GLOBALS['db'] !== null
+    ) {
+        $db =
+            $GLOBALS['db'];
+
+        $collectionMap = [
+            'users' =>
+                'users',
+
+            'investments' =>
+                'investments',
+
+            'earnings' =>
+                'earnings',
+
+            'transactions' =>
+                'transactions'
+        ];
+
+        return $db->selectCollection(
+            $collectionMap[$name]
+            ?? $name
+        );
+    }
+
+    if (
+        isset(
+            $GLOBALS['database']
+        )
+        && $GLOBALS['database'] !== null
+    ) {
+        $database =
+            $GLOBALS['database'];
+
+        $collectionMap = [
+            'users' =>
+                'users',
+
+            'investments' =>
+                'investments',
+
+            'earnings' =>
+                'earnings',
+
+            'transactions' =>
+                'transactions'
+        ];
+
+        return $database->selectCollection(
+            $collectionMap[$name]
+            ?? $name
+        );
+    }
+
+    throw new RuntimeException(
+        'MongoDB collection "' . $name . '" is not available.'
+    );
+}
+
+/* =========================================================
+   REQUEST / CRON SECURITY
+   ========================================================= */
+
+/**
+ * Optional cron token.
+ *
+ * If your config.php defines:
+ *
+ * CROWN_CASH_CRON_TOKEN
+ *
+ * then this endpoint requires the same token in:
+ *
+ * X-Cron-Token
+ *
+ * or:
+ *
+ * Authorization: Bearer TOKEN
+ *
+ * If the constant is not defined, the endpoint remains
+ * compatible with your existing setup.
+ */
+function validateCronTokenIfConfigured(): void
+{
+    if (
+        !defined(
+            'CROWN_CASH_CRON_TOKEN'
+        )
+    ) {
+        return;
+    }
+
+    $expected =
+        trim(
+            (string) constant(
+                'CROWN_CASH_CRON_TOKEN'
+            )
+        );
+
+    if ($expected === '') {
+        return;
+    }
+
+    $provided =
+        trim(
+            (string) (
+                $_SERVER[
+                    'HTTP_X_CRON_TOKEN'
+                ] ?? ''
+            )
+        );
+
+    if ($provided === '') {
+        $authorization =
+            trim(
+                (string) (
+                    $_SERVER[
+                        'HTTP_AUTHORIZATION'
+                    ] ?? ''
+                )
+            );
+
+        if (
+            preg_match(
+                '/^Bearer\s+(.+)$/i',
+                $authorization,
+                $matches
+            )
+        ) {
+            $provided =
+                trim(
+                    $matches[1]
+                );
+        }
+    }
+
+    if (
+        $provided === ''
+        || !hash_equals(
+            $expected,
+            $provided
+        )
+    ) {
+        earningsResponse(
+            false,
+            'Unauthorized earnings processor request.',
+            [],
+            401
+        );
+    }
+}
+
+/* =========================================================
+   MAIN EXECUTION
+   ========================================================= */
+
+try {
+    /*
+     * Protect scheduled/background execution when a cron
+     * token has been configured.
+     */
+    validateCronTokenIfConfigured();
+
+    /*
+     * Locate MongoDB client.
+     */
+    $client =
+        $GLOBALS['client']
+        ?? $GLOBALS['mongoClient']
+        ?? $GLOBALS['mongodb']
+        ?? null;
+
+    if (!$client) {
+        throw new RuntimeException(
+            'MongoDB client is not available. Check config.php.'
+        );
+    }
+
+    /*
+     * Locate collections.
+     *
+     * If config.php already creates these collections,
+     * those objects are used directly.
+     */
+    $users =
+        crownCashCollection(
+            'users'
+        );
+
+    $investments =
+        crownCashCollection(
+            'investments'
+        );
+
+    $earnings =
+        crownCashCollection(
+            'earnings'
+        );
+
+    $transactions =
+        crownCashCollection(
+            'transactions'
+        );
+
+    /*
+     * Run the automatic earnings processor.
+     */
+    $processing =
+        processDailyEarnings(
+            $investments,
+            $users,
+            $earnings,
+            $transactions,
+            $client
+        );
+
+    /*
+     * processDailyEarnings returns the complete response
+     * structure.
+     */
+    earningsResponse(
+        (bool) (
+            $processing['success']
+            ?? false
+        ),
+        earningString(
+            $processing['message']
+            ?? 'Daily earnings processing completed.'
+        ),
+        is_array(
+            $processing['data']
+            ?? null
+        )
+            ? $processing['data']
+            : [],
+        (
+            (
+                $processing['success']
+                ?? false
+            )
+                ? 200
+                : 500
+        )
+    );
+} catch (Throwable $e) {
+    /*
+     * Never expose internal MongoDB/server errors to clients.
+     */
+    error_log(
+        'Crown Cash daily_earnings.php fatal error: '
+        . $e->getMessage()
+    );
+
+    earningsResponse(
+        false,
+        'Daily earnings processing could not be completed.',
+        [],
+        500
+    );
+}

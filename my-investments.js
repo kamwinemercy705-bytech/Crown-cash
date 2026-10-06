@@ -1,6 +1,6 @@
 /* ==========================================================================
    CROWN CASH - MY INVESTMENTS
-   Complete production JavaScript
+   New Custom Investment System
    ========================================================================== */
 
 "use strict";
@@ -46,20 +46,15 @@ async function loadInvestments() {
             `${API_URL}/my-investments.php`,
             {
                 method: "GET",
-
                 credentials: "include",
-
                 headers: {
                     "Accept": "application/json"
                 },
-
                 cache: "no-store"
             }
         );
 
-
-        let data = null;
-
+        let data;
 
         try {
 
@@ -72,7 +67,6 @@ async function loadInvestments() {
             );
 
         }
-
 
         console.log(
             "Crown Cash My Investments:",
@@ -89,7 +83,6 @@ async function loadInvestments() {
                 );
 
             }
-
 
             throw new Error(
                 data.message ||
@@ -112,16 +105,11 @@ async function loadInvestments() {
 
         renderInvestments();
 
-
-        if (allInvestments.length === 0) {
-
-            showState("empty");
-
-        } else {
-
-            showState("list");
-
-        }
+        showState(
+            allInvestments.length > 0
+                ? "list"
+                : "empty"
+        );
 
 
     } catch (error) {
@@ -133,7 +121,9 @@ async function loadInvestments() {
 
 
         const errorMessage =
-            document.getElementById("errorMessage");
+            document.getElementById(
+                "errorMessage"
+            );
 
 
         if (errorMessage) {
@@ -158,11 +148,13 @@ async function loadInvestments() {
 
 function updateBalance(data) {
 
-    const balanceElement =
-        document.getElementById("availableBalance");
+    const element =
+        document.getElementById(
+            "availableBalance"
+        );
 
 
-    if (!balanceElement) {
+    if (!element) {
         return;
     }
 
@@ -174,11 +166,13 @@ function updateBalance(data) {
             data.wallet_balance ??
             data.walletBalance ??
             data.balance ??
+            data.wallet?.balance ??
+            data.wallet?.new_balance ??
             0
         );
 
 
-    balanceElement.textContent =
+    element.textContent =
         `UGX ${formatMoney(balance)}`;
 
 }
@@ -204,10 +198,10 @@ function updateSummary(data) {
         );
 
 
-    let pending =
+    let completed =
         Number(
-            data.pending_investments ??
-            data.pendingInvestments
+            data.completed_investments ??
+            data.completedInvestments
         );
 
 
@@ -240,14 +234,14 @@ function updateSummary(data) {
     }
 
 
-    if (!Number.isFinite(pending)) {
+    if (!Number.isFinite(completed)) {
 
-        pending =
+        completed =
             allInvestments.filter(
                 investment =>
                     normalizeStatus(
                         investment.status
-                    ) === "pending"
+                    ) === "completed"
             ).length;
 
     }
@@ -264,7 +258,9 @@ function updateSummary(data) {
 
                     return sum +
                         getNumber(
-                            investment.amount
+                            investment.amount ??
+                            investment.investment_amount ??
+                            investment.principal
                         );
 
                 },
@@ -287,8 +283,8 @@ function updateSummary(data) {
 
 
     setText(
-        "pendingInvestments",
-        formatMoney(pending)
+        "completedInvestments",
+        formatMoney(completed)
     );
 
 
@@ -301,7 +297,7 @@ function updateSummary(data) {
 
 
 /* ==========================================================================
-   RENDER INVESTMENTS
+   RENDER
    ========================================================================== */
 
 function renderInvestments() {
@@ -327,15 +323,27 @@ function renderInvestments() {
 
         list.innerHTML = `
             <div class="state-box">
+
                 <div class="state-icon">
                     <i class="fa-solid fa-filter-circle-xmark"></i>
                 </div>
 
-                <h3>No investments found</h3>
+                <h3>
+                    No investments found
+                </h3>
 
                 <p>
                     There are no investments matching this filter.
                 </p>
+
+                <a
+                    href="/investments.html"
+                    class="empty-action-btn"
+                >
+                    <i class="fa-solid fa-plus"></i>
+                    Start New Investment
+                </a>
+
             </div>
         `;
 
@@ -363,18 +371,13 @@ function renderInvestments() {
 
 function createInvestmentCard(investment) {
 
-    const plan =
-        normalizePlan(
-            investment.plan ||
-            investment.plan_name ||
-            investment.planName ||
-            investment.package
-        );
-
-
     const amount =
         getNumber(
-            investment.amount
+            investment.amount ??
+            investment.investment_amount ??
+            investment.investmentAmount ??
+            investment.principal ??
+            investment.reserved_amount
         );
 
 
@@ -385,10 +388,12 @@ function createInvestmentCard(investment) {
 
 
     const reference =
-        investment.reference ||
-        investment.transaction_reference ||
-        investment.transactionReference ||
-        investment.investment_reference ||
+        investment.reference ??
+        investment.investment_reference ??
+        investment.investmentReference ??
+        investment.transaction_reference ??
+        investment.transactionReference ??
+        investment._id ??
         "Not available";
 
 
@@ -397,28 +402,68 @@ function createInvestmentCard(investment) {
             investment.start_date ??
             investment.startDate ??
             investment.started_at ??
-            investment.approved_at ??
-            investment.approvedAt ??
-            investment.created_at
+            investment.startedAt ??
+            investment.activated_at ??
+            investment.activatedAt ??
+            investment.created_at ??
+            investment.createdAt
         );
 
 
-    const endDate =
+    let endDate =
         getDate(
             investment.end_date ??
             investment.endDate ??
             investment.matures_at ??
-            investment.completed_at
+            investment.maturesAt ??
+            investment.completed_at ??
+            investment.completedAt
         );
 
 
     const duration =
-        Number(
+        getNumber(
             investment.duration_days ??
             investment.durationDays ??
             investment.days ??
+            investment.term_days ??
+            investment.termDays ??
             30
         );
+
+
+    /*
+     * If the backend did not provide an end date,
+     * calculate it from the server-provided start date
+     * and duration.
+     */
+
+    if (
+        !endDate.date &&
+        startDate.date &&
+        duration > 0
+    ) {
+
+        const calculatedEnd =
+            new Date(
+                startDate.date.getTime() +
+                duration *
+                24 *
+                60 *
+                60 *
+                1000
+            );
+
+
+        endDate = {
+            date: calculatedEnd,
+            display:
+                formatDate(
+                    calculatedEnd
+                )
+        };
+
+    }
 
 
     const progress =
@@ -431,21 +476,64 @@ function createInvestmentCard(investment) {
         );
 
 
+    const dailyIncome =
+        getNumber(
+            investment.daily_income ??
+            investment.dailyIncome ??
+            investment.daily_earning ??
+            investment.dailyEarning ??
+            investment.daily_return_amount ??
+            investment.dailyReturnAmount ??
+            investment.daily_profit ??
+            investment.dailyProfit
+        );
+
+
+    const totalEarnings =
+        getNumber(
+            investment.total_earnings ??
+            investment.totalEarnings ??
+            investment.earnings ??
+            investment.total_income ??
+            investment.totalIncome ??
+            investment.profit ??
+            investment.profits
+        );
+
+
+    const dailyRate =
+        getNumber(
+            investment.daily_rate ??
+            investment.dailyRate ??
+            0
+        );
+
+
     const icon =
-        getPlanIcon(plan);
+        getInvestmentIcon(
+            status
+        );
 
 
     const statusIcon =
-        getStatusIcon(status);
+        getStatusIcon(
+            status
+        );
 
 
     const statusLabel =
-        capitalize(status);
+        getStatusLabel(
+            status
+        );
 
 
     return `
-        <article class="investment-item">
+        <article
+            class="investment-item"
+            data-status="${escapeHTML(status)}"
+        >
 
+            <!-- TOP -->
             <div class="investment-top">
 
                 <div class="investment-title">
@@ -457,9 +545,7 @@ function createInvestmentCard(investment) {
                     <div>
 
                         <h3>
-                            ${escapeHTML(
-                                getPlanName(plan)
-                            )}
+                            Crown Cash Investment
                         </h3>
 
                         <div class="investment-reference">
@@ -474,7 +560,9 @@ function createInvestmentCard(investment) {
                 </div>
 
 
-                <div class="investment-status ${escapeHTML(status)}">
+                <div
+                    class="investment-status ${escapeHTML(status)}"
+                >
 
                     <i class="${statusIcon}"></i>
 
@@ -485,6 +573,7 @@ function createInvestmentCard(investment) {
             </div>
 
 
+            <!-- MAIN DETAILS -->
             <div class="investment-details">
 
                 <div class="investment-detail">
@@ -495,6 +584,45 @@ function createInvestmentCard(investment) {
 
                     <strong>
                         UGX ${formatMoney(amount)}
+                    </strong>
+
+                </div>
+
+
+                <div class="investment-detail">
+
+                    <span>
+                        Daily Income
+                    </span>
+
+                    <strong>
+                        UGX ${formatMoney(dailyIncome)}
+                    </strong>
+
+                </div>
+
+
+                <div class="investment-detail">
+
+                    <span>
+                        Total Earnings
+                    </span>
+
+                    <strong>
+                        UGX ${formatMoney(totalEarnings)}
+                    </strong>
+
+                </div>
+
+
+                <div class="investment-detail">
+
+                    <span>
+                        Daily Rate
+                    </span>
+
+                    <strong>
+                        ${formatRate(dailyRate)}
                     </strong>
 
                 </div>
@@ -545,6 +673,7 @@ function createInvestmentCard(investment) {
             </div>
 
 
+            <!-- PROGRESS -->
             <div class="investment-progress">
 
                 <div class="progress-header">
@@ -612,7 +741,9 @@ function setupFilters() {
                     (
                         button.dataset.filter ||
                         "all"
-                    ).toLowerCase();
+                    )
+                    .toLowerCase()
+                    .trim();
 
 
                 renderInvestments();
@@ -625,24 +756,27 @@ function setupFilters() {
 }
 
 
-function filterInvestments(investments) {
+function filterInvestments(
+    investments
+) {
 
-    if (currentFilter === "all") {
+    if (
+        currentFilter === "all"
+    ) {
+
         return investments;
+
     }
 
 
     return investments.filter(
         investment => {
 
-            const status =
+            return (
                 normalizeStatus(
                     investment.status
-                );
-
-
-            return status ===
-                currentFilter;
+                ) === currentFilter
+            );
 
         }
     );
@@ -662,108 +796,128 @@ function calculateProgress(
     duration
 ) {
 
-    if (status === "completed") {
+    if (
+        status === "completed"
+    ) {
+
         return 100;
+
     }
 
 
     if (
-        status === "pending" ||
         status === "rejected" ||
         status === "failed" ||
         status === "cancelled"
     ) {
+
         return 0;
+
     }
-
-
-    let start =
-        startDate.date;
-
-
-    let end =
-        endDate.date;
 
 
     /*
-     * If an active investment has a start date but
-     * no end date, calculate the maturity date here.
+     * New investments are active immediately.
      */
 
     if (
-        start &&
-        !end &&
-        duration > 0
+        status === "active"
     ) {
 
-        end =
-            new Date(
-                start.getTime() +
-                duration *
-                24 *
-                60 *
-                60 *
-                1000
-            );
+        if (
+            !startDate.date
+        ) {
 
-    }
+            return 0;
+
+        }
 
 
-    if (
-        !start ||
-        !end ||
-        end <= start
-    ) {
-        return 0;
-    }
+        let end =
+            endDate.date;
 
 
-    const now =
-        new Date();
+        if (
+            !end &&
+            duration > 0
+        ) {
+
+            end =
+                new Date(
+                    startDate.date.getTime() +
+                    duration *
+                    24 *
+                    60 *
+                    60 *
+                    1000
+                );
+
+        }
 
 
-    if (now <= start) {
-        return 0;
-    }
+        if (
+            !end ||
+            end <= startDate.date
+        ) {
+
+            return 0;
+
+        }
 
 
-    if (now >= end) {
-        return 100;
-    }
+        const now =
+            new Date();
 
 
-    const total =
-        end.getTime() -
-        start.getTime();
+        if (
+            now <= startDate.date
+        ) {
+
+            return 0;
+
+        }
 
 
-    const elapsed =
-        now.getTime() -
-        start.getTime();
+        if (
+            now >= end
+        ) {
+
+            return 100;
+
+        }
 
 
-    let percentage =
-        (elapsed / total) * 100;
+        const total =
+            end.getTime() -
+            startDate.date.getTime();
 
 
-    if (!Number.isFinite(percentage)) {
-        percentage = 0;
-    }
+        const elapsed =
+            now.getTime() -
+            startDate.date.getTime();
 
 
-    percentage =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                percentage
+        const percentage =
+            (
+                elapsed /
+                total
+            ) * 100;
+
+
+        return Math.round(
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    percentage
+                )
             )
         );
 
+    }
 
-    return Math.round(
-        percentage
-    );
+
+    return 0;
 
 }
 
@@ -788,12 +942,16 @@ function getDate(value) {
         typeof value === "object"
     ) {
 
-        if (value.$date) {
+        if (
+            value.$date !== undefined
+        ) {
 
             value =
                 value.$date;
 
-        } else if (value.date) {
+        } else if (
+            value.date !== undefined
+        ) {
 
             value =
                 value.date;
@@ -826,103 +984,27 @@ function getDate(value) {
         date,
 
         display:
-            date.toLocaleDateString(
-                "en-UG",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                }
-            )
+            formatDate(date)
 
     };
 
 }
 
 
-/* ==========================================================================
-   PLAN
-   ========================================================================== */
+function formatDate(date) {
 
-function normalizePlan(value) {
-
-    const plan =
-        String(
-            value || ""
-        )
-        .toLowerCase()
-        .trim();
-
-
-    if (
-        plan.includes("starter")
-    ) {
-        return "starter";
+    if (!date) {
+        return "Not available";
     }
 
 
-    if (
-        plan.includes("standard")
-    ) {
-        return "standard";
-    }
-
-
-    if (
-        plan.includes("advanced")
-    ) {
-        return "advanced";
-    }
-
-
-    return "starter";
-
-}
-
-
-function getPlanName(plan) {
-
-    const names = {
-
-        starter:
-            "Starter Plan",
-
-        standard:
-            "Standard Plan",
-
-        advanced:
-            "Advanced Plan"
-
-    };
-
-
-    return (
-        names[plan] ||
-        "Investment Plan"
-    );
-
-}
-
-
-function getPlanIcon(plan) {
-
-    const icons = {
-
-        starter:
-            "fa-solid fa-seedling",
-
-        standard:
-            "fa-solid fa-chart-line",
-
-        advanced:
-            "fa-solid fa-crown"
-
-    };
-
-
-    return (
-        icons[plan] ||
-        "fa-solid fa-briefcase"
+    return date.toLocaleDateString(
+        "en-UG",
+        {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }
     );
 
 }
@@ -936,18 +1018,25 @@ function normalizeStatus(value) {
 
     const status =
         String(
-            value || "pending"
+            value || "active"
         )
         .toLowerCase()
         .trim();
 
+
+    /*
+     * Legacy statuses are normalized to
+     * the new system.
+     */
 
     if (
         status === "approved" ||
         status === "running" ||
         status === "in_progress"
     ) {
+
         return "active";
+
     }
 
 
@@ -956,14 +1045,18 @@ function normalizeStatus(value) {
         status === "matured" ||
         status === "finished"
     ) {
+
         return "completed";
+
     }
 
 
     if (
         status === "declined"
     ) {
+
         return "rejected";
+
     }
 
 
@@ -972,12 +1065,39 @@ function normalizeStatus(value) {
 }
 
 
+function getStatusLabel(status) {
+
+    const labels = {
+
+        active:
+            "Active",
+
+        completed:
+            "Completed",
+
+        rejected:
+            "Rejected",
+
+        failed:
+            "Failed",
+
+        cancelled:
+            "Cancelled"
+
+    };
+
+
+    return (
+        labels[status] ||
+        "Active"
+    );
+
+}
+
+
 function getStatusIcon(status) {
 
     const icons = {
-
-        pending:
-            "fa-solid fa-clock",
 
         active:
             "fa-solid fa-circle-check",
@@ -999,8 +1119,39 @@ function getStatusIcon(status) {
 
     return (
         icons[status] ||
-        "fa-solid fa-circle-info"
+        "fa-solid fa-circle-check"
     );
+
+}
+
+
+/* ==========================================================================
+   INVESTMENT ICON
+   ========================================================================== */
+
+function getInvestmentIcon(status) {
+
+    if (
+        status === "completed"
+    ) {
+
+        return "fa-solid fa-flag-checkered";
+
+    }
+
+
+    if (
+        status === "rejected" ||
+        status === "failed" ||
+        status === "cancelled"
+    ) {
+
+        return "fa-solid fa-circle-xmark";
+
+    }
+
+
+    return "fa-solid fa-chart-line";
 
 }
 
@@ -1015,7 +1166,9 @@ function getNumber(value) {
         value === null ||
         value === undefined
     ) {
+
         return 0;
+
     }
 
 
@@ -1039,9 +1192,11 @@ function getNumber(value) {
             undefined
         ) {
 
-            return Number(
-                value.$numberDecimal
-            ) || 0;
+            return (
+                Number(
+                    value.$numberDecimal
+                ) || 0
+            );
 
         }
 
@@ -1051,9 +1206,11 @@ function getNumber(value) {
             undefined
         ) {
 
-            return Number(
-                value.$numberLong
-            ) || 0;
+            return (
+                Number(
+                    value.$numberLong
+                ) || 0
+            );
 
         }
 
@@ -1063,9 +1220,11 @@ function getNumber(value) {
             undefined
         ) {
 
-            return Number(
-                value.value
-            ) || 0;
+            return (
+                Number(
+                    value.value
+                ) || 0
+            );
 
         }
 
@@ -1075,6 +1234,10 @@ function getNumber(value) {
     return (
         Number(
             String(value)
+                .replace(
+                    /,/g,
+                    ""
+                )
         ) || 0
     );
 
@@ -1094,6 +1257,45 @@ function formatMoney(value) {
 }
 
 
+function formatRate(value) {
+
+    const rate =
+        getNumber(value);
+
+
+    if (
+        rate === 0
+    ) {
+
+        return "Server configured";
+
+    }
+
+
+    /*
+     * Backend may return either:
+     *
+     * 0.10 = 10%
+     * 10   = 10%
+     */
+
+    const percentage =
+        rate <= 1
+            ? rate * 100
+            : rate;
+
+
+    return (
+        Number.isInteger(
+            percentage
+        )
+            ? `${percentage}%`
+            : `${percentage.toFixed(2)}%`
+    );
+
+}
+
+
 /* ==========================================================================
    UI HELPERS
    ========================================================================== */
@@ -1108,8 +1310,10 @@ function setText(
 
 
     if (element) {
+
         element.textContent =
             value;
+
     }
 
 }
@@ -1246,7 +1450,9 @@ function setupMobileMenu() {
         !menuToggle ||
         !sidebar
     ) {
+
         return;
+
     }
 
 
@@ -1269,7 +1475,6 @@ function setupMobileMenu() {
                 overlay.classList.toggle(
                     "active"
                 );
-
 
                 overlay.classList.toggle(
                     "show"
@@ -1422,51 +1627,33 @@ function setCurrentYear() {
 
 
 /* ==========================================================================
-   CAPITALIZE
-   ========================================================================== */
-
-function capitalize(value) {
-
-    const text =
-        String(value || "");
-
-
-    if (!text) {
-        return "";
-    }
-
-
-    return (
-        text.charAt(0).toUpperCase() +
-        text.slice(1)
-    );
-
-}
-
-
-/* ==========================================================================
    HTML ESCAPING
    ========================================================================== */
 
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"

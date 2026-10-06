@@ -1,0 +1,29 @@
+{
+    "name": "Crown Cash",
+    "short_name": "Crown Cash",
+    "description": "Crown Cash investment and wallet platform",
+    "start_url": "./dashboard.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#08050a",
+    "theme_color": "#08050a",
+    "categories": [
+        "finance",
+        "business"
+    ],
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

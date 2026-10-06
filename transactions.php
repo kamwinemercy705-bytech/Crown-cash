@@ -6,53 +6,77 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 | CROWN CASH - TRANSACTIONS API
 |--------------------------------------------------------------------------
-| Returns transactions belonging ONLY to the authenticated Crown Cash user.
+| Frontend:
+| https://crown-cash.vercel.app
 |
-| Supported transaction types:
-|   - deposit
-|   - withdrawal
-|   - investment
-|   - income
-|
-| This endpoint is read-only.
-| No investment approval/rejection workflow is used here.
+| Backend:
+| https://crown-cash1.onrender.com
 |--------------------------------------------------------------------------
 */
+
+require_once __DIR__ . '/config.php';
 
 
 /*
 |--------------------------------------------------------------------------
-| ERROR HANDLING
+| SESSION
+|--------------------------------------------------------------------------
+| IMPORTANT:
+| Use the exact same session configuration as login.php.
+| config.php provides startSecureSession().
 |--------------------------------------------------------------------------
 */
 
-ini_set("display_errors", "0");
-error_reporting(E_ALL);
+startSecureSession();
 
 
 /*
 |--------------------------------------------------------------------------
-| RESPONSE HEADERS / CORS
+| CORS
 |--------------------------------------------------------------------------
 */
-
-header("Content-Type: application/json; charset=UTF-8");
 
 $allowedOrigins = [
-    "https://crown-cash.vercel.app",
-    "https://www.crown-cash.vercel.app"
+    'https://crown-cash.vercel.app',
+    'https://www.crown-cash.vercel.app'
 ];
 
-$origin = $_SERVER["HTTP_ORIGIN"] ?? "";
+$requestOrigin =
+    $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins, true)) {
-    header("Access-Control-Allow-Origin: " . $origin);
+if (
+    in_array(
+        $requestOrigin,
+        $allowedOrigins,
+        true
+    )
+) {
+
+    header(
+        'Access-Control-Allow-Origin: ' .
+        $requestOrigin
+    );
 }
 
-header("Vary: Origin");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Accept");
+header(
+    'Access-Control-Allow-Credentials: true'
+);
+
+header(
+    'Access-Control-Allow-Methods: GET, OPTIONS'
+);
+
+header(
+    'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With'
+);
+
+header(
+    'Vary: Origin'
+);
+
+header(
+    'Content-Type: application/json; charset=utf-8'
+);
 
 
 /*
@@ -61,8 +85,12 @@ header("Access-Control-Allow-Headers: Content-Type, Accept");
 |--------------------------------------------------------------------------
 */
 
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS'
+) {
+
     http_response_code(204);
+
     exit;
 }
 
@@ -73,383 +101,14 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
 |--------------------------------------------------------------------------
 */
 
-if ($_SERVER["REQUEST_METHOD"] !== "GET") {
-
-    http_response_code(405);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| SESSION
-|--------------------------------------------------------------------------
-|
-| Keep the same cross-site cookie configuration used by Crown Cash.
-|--------------------------------------------------------------------------
-*/
-
-session_set_cookie_params([
-    "lifetime" => 0,
-    "path" => "/",
-    "secure" => true,
-    "httponly" => true,
-    "samesite" => "None"
-]);
-
-session_start();
-
-
-/*
-|--------------------------------------------------------------------------
-| MONGODB
-|--------------------------------------------------------------------------
-*/
-
-use MongoDB\BSON\ObjectId;
-
-
-/*
-|--------------------------------------------------------------------------
-| LOAD DATABASE CONFIGURATION
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    require_once __DIR__ . "/config.php";
-
-} catch (Throwable $e) {
-
-    error_log(
-        "Crown Cash transactions.php config error: " .
-        $e->getMessage()
-    );
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Database configuration could not be loaded."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK TRANSACTIONS COLLECTION
-|--------------------------------------------------------------------------
-*/
-
-if (!isset($transactions)) {
-
-    http_response_code(500);
-
-    echo json_encode([
-        "success" => false,
-        "message" => "Transactions collection is not configured."
-    ]);
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: JSON RESPONSE
-|--------------------------------------------------------------------------
-*/
-
-function transactionResponse(
-    bool $success,
-    string $message,
-    int $statusCode,
-    array $data = []
-): never {
-
-    http_response_code($statusCode);
-
-    echo json_encode(
-        array_merge(
-            [
-                "success" => $success,
-                "message" => $message
-            ],
-            $data
-        ),
-        JSON_UNESCAPED_SLASHES
-    );
-
-    exit;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: NUMERIC VALUE
-|--------------------------------------------------------------------------
-*/
-
-function transactionNumber(mixed $value): float|int
-{
-    if ($value === null) {
-        return 0;
-    }
-
-    if (is_int($value) || is_float($value)) {
-        return $value;
-    }
-
-    if (is_string($value)) {
-
-        $clean = trim($value);
-
-        if ($clean === "") {
-            return 0;
-        }
-
-        return is_numeric($clean)
-            ? (float)$clean
-            : 0;
-    }
-
-    if (is_object($value)) {
-
-        /*
-         * MongoDB Decimal128 / Int64 / similar BSON values.
-         */
-
-        if (method_exists($value, "toString")) {
-
-            $stringValue = $value->toString();
-
-            return is_numeric($stringValue)
-                ? (float)$stringValue
-                : 0;
-        }
-    }
-
-    return 0;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: STRING VALUE
-|--------------------------------------------------------------------------
-*/
-
-function transactionString(mixed $value): string
-{
-    if ($value === null) {
-        return "";
-    }
-
-    if (is_string($value)) {
-        return $value;
-    }
-
-    if (is_scalar($value)) {
-        return (string)$value;
-    }
-
-    if (is_object($value) && method_exists($value, "toString")) {
-        return $value->toString();
-    }
-
-    return "";
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: DATE
-|--------------------------------------------------------------------------
-*/
-
-function transactionDate(mixed $value): ?string
-{
-    if ($value === null) {
-        return null;
-    }
-
-    try {
-
-        if (
-            is_object($value) &&
-            method_exists($value, "toDateTime")
-        ) {
-
-            return $value
-                ->toDateTime()
-                ->format(DateTime::ATOM);
-        }
-
-        if ($value instanceof DateTimeInterface) {
-
-            return $value->format(DateTime::ATOM);
-        }
-
-        if (is_string($value)) {
-
-            $timestamp = strtotime($value);
-
-            if ($timestamp === false) {
-                return null;
-            }
-
-            return date(
-                DateTime::ATOM,
-                $timestamp
-            );
-        }
-
-    } catch (Throwable $e) {
-
-        return null;
-    }
-
-    return null;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: TRANSACTION TYPE
-|--------------------------------------------------------------------------
-*/
-
-function normalizeTransactionType(mixed $value): string
-{
-    $type = strtolower(
-        trim(
-            transactionString($value)
-        )
-    );
-
-    if (
-        str_contains($type, "deposit") ||
-        $type === "credit" ||
-        $type === "funding" ||
-        $type === "topup" ||
-        $type === "top-up"
-    ) {
-
-        return "deposit";
-    }
-
-    if (
-        str_contains($type, "withdraw") ||
-        $type === "debit"
-    ) {
-
-        return "withdrawal";
-    }
-
-    if (
-        str_contains($type, "invest")
-    ) {
-
-        return "investment";
-    }
-
-    if (
-        str_contains($type, "income") ||
-        str_contains($type, "earning") ||
-        str_contains($type, "profit") ||
-        str_contains($type, "return") ||
-        str_contains($type, "commission") ||
-        str_contains($type, "referral")
-    ) {
-
-        return "income";
-    }
-
-    return "other";
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: TRANSACTION STATUS
-|--------------------------------------------------------------------------
-*/
-
-function normalizeTransactionStatus(mixed $value): string
-{
-    $status = strtolower(
-        trim(
-            transactionString($value)
-        )
-    );
-
-    if (
-        $status === "complete" ||
-        $status === "completed" ||
-        $status === "success" ||
-        $status === "successful" ||
-        $status === "approved" ||
-        $status === "paid"
-    ) {
-
-        return "completed";
-    }
-
-    if (
-        $status === "failed" ||
-        $status === "failure" ||
-        $status === "error"
-    ) {
-
-        return "failed";
-    }
-
-    if (
-        $status === "rejected" ||
-        $status === "declined" ||
-        $status === "denied"
-    ) {
-
-        return "rejected";
-    }
-
-    return "pending";
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| HELPER: DEFAULT TITLE
-|--------------------------------------------------------------------------
-*/
-
-function transactionTitle(string $type): string
-{
-    return match ($type) {
-
-        "deposit" =>
-            "Deposit",
-
-        "withdrawal" =>
-            "Withdrawal",
-
-        "investment" =>
-            "Crown Cash Investment",
-
-        "income" =>
-            "Investment Income",
-
-        default =>
-            "Transaction"
-    };
+if (
+    ($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET'
+) {
+
+    jsonResponse([
+        'success' => false,
+        'message' => 'Method not allowed.'
+    ], 405);
 }
 
 
@@ -457,889 +116,858 @@ function transactionTitle(string $type): string
 |--------------------------------------------------------------------------
 | AUTHENTICATION
 |--------------------------------------------------------------------------
-|
-| We support the different session key names that may have been used
-| by the Crown Cash login system.
-|
-| IMPORTANT:
-| We NEVER trust a user ID supplied by the browser URL or request.
-| The identity comes from the server-side PHP session.
-|--------------------------------------------------------------------------
 */
 
-$sessionUserId = null;
-$sessionEmail = null;
+try {
 
-
-/*
-|--------------------------------------------------------------------------
-| USER ID FROM SESSION
-|--------------------------------------------------------------------------
-*/
-
-$possibleUserIdKeys = [
-    "user_id",
-    "userId",
-    "id",
-    "uid"
-];
-
-foreach ($possibleUserIdKeys as $key) {
+    /*
+    |--------------------------------------------------------------------------
+    | Use the SAME session created by login.php
+    |--------------------------------------------------------------------------
+    */
 
     if (
-        isset($_SESSION[$key]) &&
-        $_SESSION[$key] !== ""
+        empty($_SESSION['logged_in']) ||
+        empty($_SESSION['user_id'])
     ) {
 
-        $sessionUserId =
-            transactionString(
-                $_SESSION[$key]
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' => 'You are not logged in.'
+        ], 401);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SESSION USER ID
+    |--------------------------------------------------------------------------
+    */
+
+    $sessionUserId =
+        trim(
+            (string)$_SESSION['user_id']
+        );
+
+
+    if ($sessionUserId === '') {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' => 'User session is invalid.'
+        ], 401);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND USER
+    |--------------------------------------------------------------------------
+    */
+
+    $user = null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OBJECT ID LOOKUP
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        isValidObjectId($sessionUserId)
+    ) {
+
+        $objectId =
+            new MongoDB\BSON\ObjectId(
+                $sessionUserId
             );
 
-        if ($sessionUserId !== "") {
-            break;
-        }
+
+        $user =
+            $users->findOne([
+                '_id' => $objectId
+            ]);
     }
-}
 
 
-/*
-|--------------------------------------------------------------------------
-| USER ID FROM NESTED SESSION USER
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | STRING ID FALLBACK
+    |--------------------------------------------------------------------------
+    */
 
-if ($sessionUserId === null || $sessionUserId === "") {
+    if (!$user) {
+
+        $user =
+            $users->findOne([
+                '_id' => $sessionUserId
+            ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EMAIL FALLBACK
+    |--------------------------------------------------------------------------
+    */
 
     if (
-        isset($_SESSION["user"]) &&
-        is_array($_SESSION["user"])
-    ) {
-
-        foreach (
-            ["_id", "id", "user_id", "userId"]
-            as $key
-        ) {
-
-            if (
-                isset($_SESSION["user"][$key]) &&
-                $_SESSION["user"][$key] !== ""
-            ) {
-
-                $sessionUserId =
-                    transactionString(
-                        $_SESSION["user"][$key]
-                    );
-
-                if ($sessionUserId !== "") {
-                    break;
-                }
-            }
-        }
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| EMAIL FROM SESSION
-|--------------------------------------------------------------------------
-*/
-
-$possibleEmailKeys = [
-    "email",
-    "user_email",
-    "userEmail"
-];
-
-foreach ($possibleEmailKeys as $key) {
-
-    if (
-        isset($_SESSION[$key]) &&
-        $_SESSION[$key] !== ""
+        !$user &&
+        !empty($_SESSION['user_email'])
     ) {
 
         $sessionEmail =
             strtolower(
                 trim(
-                    transactionString(
-                        $_SESSION[$key]
-                    )
+                    (string)$_SESSION['user_email']
                 )
             );
 
-        if ($sessionEmail !== "") {
-            break;
+
+        if ($sessionEmail !== '') {
+
+            $user =
+                $users->findOne([
+                    'email' => $sessionEmail
+                ]);
         }
     }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| EMAIL FROM NESTED SESSION USER
-|--------------------------------------------------------------------------
-*/
-
-if ($sessionEmail === null || $sessionEmail === "") {
-
-    if (
-        isset($_SESSION["user"]) &&
-        is_array($_SESSION["user"])
-    ) {
-
-        foreach (
-            ["email", "user_email", "userEmail"]
-            as $key
-        ) {
-
-            if (
-                isset($_SESSION["user"][$key]) &&
-                $_SESSION["user"][$key] !== ""
-            ) {
-
-                $sessionEmail =
-                    strtolower(
-                        trim(
-                            transactionString(
-                                $_SESSION["user"][$key]
-                            )
-                        )
-                    );
-
-                if ($sessionEmail !== "") {
-                    break;
-                }
-            }
-        }
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| AUTHENTICATION CHECK
-|--------------------------------------------------------------------------
-|
-| We accept either a valid server session user ID OR email.
-|--------------------------------------------------------------------------
-*/
-
-if (
-    ($sessionUserId === null || $sessionUserId === "") &&
-    ($sessionEmail === null || $sessionEmail === "")
-) {
-
-    transactionResponse(
-        false,
-        "You are not logged in. Please log in again.",
-        401
-    );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| FIND THE AUTHENTICATED USER
-|--------------------------------------------------------------------------
-*/
-
-$user = null;
-
-if (isset($users)) {
-
-    $userQueries = [];
 
 
     /*
-     * ObjectId user ID.
-     */
+    |--------------------------------------------------------------------------
+    | USER NOT FOUND
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$user) {
+
+        jsonResponse([
+            'success' => false,
+            'authenticated' => false,
+            'authorized' => false,
+            'message' =>
+                'Your user account could not be found.'
+        ], 401);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REAL DATABASE USER ID
+    |--------------------------------------------------------------------------
+    */
+
+    $realUserId =
+        isset($user['_id'])
+            ? (string)$user['_id']
+            : $sessionUserId;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | USER ID VARIANTS
+    |--------------------------------------------------------------------------
+    */
+
+    $userIdVariants = [];
+
+
+    if ($realUserId !== '') {
+
+        $userIdVariants[] =
+            $realUserId;
+    }
+
+
+    if ($sessionUserId !== '') {
+
+        $userIdVariants[] =
+            $sessionUserId;
+    }
+
 
     if (
-        $sessionUserId !== null &&
-        $sessionUserId !== "" &&
-        preg_match(
-            "/^[a-f0-9]{24}$/i",
-            $sessionUserId
+        isset($user['_id']) &&
+        $user['_id'] instanceof MongoDB\BSON\ObjectId
+    ) {
+
+        $userIdVariants[] =
+            $user['_id'];
+    }
+
+
+    $userIdVariants = array_values(
+        array_unique(
+            array_map(
+                static function ($value) {
+
+                    if (
+                        $value instanceof MongoDB\BSON\ObjectId
+                    ) {
+                        return (string)$value;
+                    }
+
+                    return (string)$value;
+                },
+                $userIdVariants
+            )
         )
-    ) {
-
-        try {
-
-            $userQueries[] = [
-                "_id" => new ObjectId(
-                    $sessionUserId
-                )
-            ];
-
-        } catch (Throwable $e) {
-            // Ignore invalid ObjectId.
-        }
-    }
-
-
-    /*
-     * String user ID.
-     */
-
-    if (
-        $sessionUserId !== null &&
-        $sessionUserId !== ""
-    ) {
-
-        $userQueries[] = [
-            "_id" => $sessionUserId
-        ];
-
-        $userQueries[] = [
-            "user_id" => $sessionUserId
-        ];
-
-        $userQueries[] = [
-            "id" => $sessionUserId
-        ];
-    }
-
-
-    /*
-     * Email.
-     */
-
-    if (
-        $sessionEmail !== null &&
-        $sessionEmail !== ""
-    ) {
-
-        $userQueries[] = [
-            "email" => $sessionEmail
-        ];
-    }
-
-
-    /*
-     * Find user.
-     */
-
-    foreach ($userQueries as $query) {
-
-        try {
-
-            $foundUser =
-                $users->findOne($query);
-
-            if ($foundUser) {
-
-                $user = $foundUser;
-
-                break;
-            }
-
-        } catch (Throwable $e) {
-
-            continue;
-        }
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| IF USER COLLECTION EXISTS BUT USER CANNOT BE FOUND
-|--------------------------------------------------------------------------
-*/
-
-if (isset($users) && !$user) {
-
-    transactionResponse(
-        false,
-        "Your account could not be found. Please log in again.",
-        401
     );
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| BUILD SAFE USER IDENTIFIERS
-|--------------------------------------------------------------------------
-|
-| These identifiers are used ONLY against server-side database records.
-|--------------------------------------------------------------------------
-*/
-
-$identityQueries = [];
-
-
-/*
-|--------------------------------------------------------------------------
-| Session user ID variants
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $sessionUserId !== null &&
-    $sessionUserId !== ""
-) {
-
-    $identityQueries[] = [
-        "user_id" => $sessionUserId
-    ];
-
-    $identityQueries[] = [
-        "userId" => $sessionUserId
-    ];
-
-    $identityQueries[] = [
-        "user" => $sessionUserId
-    ];
-
-    $identityQueries[] = [
-        "account_id" => $sessionUserId
-    ];
 
 
     /*
-     * ObjectId variant.
-     */
+    |--------------------------------------------------------------------------
+    | TRANSACTION QUERY
+    |--------------------------------------------------------------------------
+    */
 
-    if (
-        preg_match(
-            "/^[a-f0-9]{24}$/i",
-            $sessionUserId
-        )
+    $transactionQueries = [];
+
+
+    foreach (
+        $userIdVariants as $variant
     ) {
 
-        try {
+        $transactionQueries[] = [
+            'user_id' => $variant
+        ];
 
-            $objectId =
-                new ObjectId(
-                    $sessionUserId
-                );
+        $transactionQueries[] = [
+            'userId' => $variant
+        ];
 
-            $identityQueries[] = [
-                "user_id" => $objectId
-            ];
+        $transactionQueries[] = [
+            'user' => $variant
+        ];
 
-            $identityQueries[] = [
-                "userId" => $objectId
-            ];
-
-            $identityQueries[] = [
-                "user" => $objectId
-            ];
-
-            $identityQueries[] = [
-                "account_id" => $objectId
-            ];
-
-        } catch (Throwable $e) {
-            // Ignore.
-        }
+        $transactionQueries[] = [
+            'account_id' => $variant
+        ];
     }
-}
 
 
-/*
-|--------------------------------------------------------------------------
-| Authenticated user's email
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | OBJECT ID QUERIES
+    |--------------------------------------------------------------------------
+    */
 
-if ($user) {
+    if (
+        isset($user['_id']) &&
+        $user['_id'] instanceof MongoDB\BSON\ObjectId
+    ) {
 
-    $databaseUserEmail =
+        $objectId =
+            $user['_id'];
+
+
+        $transactionQueries[] = [
+            'user_id' => $objectId
+        ];
+
+        $transactionQueries[] = [
+            'userId' => $objectId
+        ];
+
+        $transactionQueries[] = [
+            'user' => $objectId
+        ];
+
+        $transactionQueries[] = [
+            'account_id' => $objectId
+        ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | EMAIL QUERY
+    |--------------------------------------------------------------------------
+    */
+
+    $userEmail =
         strtolower(
             trim(
-                transactionString(
-                    $user["email"] ?? ""
+                (string)(
+                    $user['email'] ??
+                    $_SESSION['user_email'] ??
+                    ''
                 )
             )
         );
 
-    if ($databaseUserEmail !== "") {
 
-        $identityQueries[] = [
-            "email" => $databaseUserEmail
+    if ($userEmail !== '') {
+
+        $transactionQueries[] = [
+            'email' => $userEmail
         ];
 
-        $identityQueries[] = [
-            "user_email" => $databaseUserEmail
+        $transactionQueries[] = [
+            'user_email' => $userEmail
         ];
     }
-}
 
 
-/*
-|--------------------------------------------------------------------------
-| Session email
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $sessionEmail !== null &&
-    $sessionEmail !== ""
-) {
-
-    $identityQueries[] = [
-        "email" => $sessionEmail
-    ];
-
-    $identityQueries[] = [
-        "user_email" => $sessionEmail
-    ];
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| LOAD TRANSACTIONS
-|--------------------------------------------------------------------------
-*/
-
-try {
+    /*
+    |--------------------------------------------------------------------------
+    | FETCH TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
 
     $documents = [];
 
 
-    /*
-     * --------------------------------------------------------------
-     * SEARCH TRANSACTIONS
-     * --------------------------------------------------------------
-     */
+    if (!empty($transactionQueries)) {
 
-    foreach ($identityQueries as $query) {
-
-        try {
-
-            $cursor =
-                $transactions->find(
-                    $query,
-                    [
-                        "sort" => [
-                            "created_at" => -1,
-                            "_id" => -1
-                        ],
-                        "limit" => 500
+        $cursor =
+            $transactions->find(
+                [
+                    '$or' =>
+                        $transactionQueries
+                ],
+                [
+                    'sort' => [
+                        'created_at' => -1
                     ]
-                );
+                ]
+            );
 
 
-            foreach ($cursor as $document) {
+        foreach ($cursor as $document) {
 
-                if (!isset($document["_id"])) {
-                    continue;
-                }
-
-                $documentId =
-                    (string)$document["_id"];
-
-
-                /*
-                 * Deduplicate records that were found
-                 * using multiple identity fields.
-                 */
-
-                $documents[$documentId] =
-                    $document;
-            }
-
-        } catch (Throwable $e) {
-
-            /*
-             * One legacy query failing should not prevent
-             * the other supported identity queries.
-             */
-
-            continue;
+            $documents[] =
+                $document;
         }
     }
 
 
     /*
-     * --------------------------------------------------------------
-     * SORT NEWEST FIRST
-     * --------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | DEDUPLICATE TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
 
-    $documents =
-        array_values($documents);
-
-
-    usort(
-        $documents,
-        function ($a, $b) {
-
-            $dateA =
-                $a["created_at"] ??
-                $a["createdAt"] ??
-                $a["date"] ??
-                $a["timestamp"] ??
-                null;
-
-            $dateB =
-                $b["created_at"] ??
-                $b["createdAt"] ??
-                $b["date"] ??
-                $b["timestamp"] ??
-                null;
+    $uniqueTransactions = [];
 
 
-            $timeA = 0;
-            $timeB = 0;
+    foreach (
+        $documents as $document
+    ) {
+
+        $transactionId =
+            isset($document['_id'])
+                ? (string)$document['_id']
+                : sha1(
+                    json_encode(
+                        jsonSafe($document)
+                    )
+                );
 
 
-            try {
-
-                if (
-                    $dateA instanceof DateTimeInterface
-                ) {
-
-                    $timeA =
-                        $dateA->getTimestamp();
-
-                } elseif ($dateA !== null) {
-
-                    $parsedA =
-                        strtotime(
-                            transactionString($dateA)
-                        );
-
-                    if ($parsedA !== false) {
-                        $timeA = $parsedA;
-                    }
-                }
-
-            } catch (Throwable $e) {
-                $timeA = 0;
-            }
-
-
-            try {
-
-                if (
-                    $dateB instanceof DateTimeInterface
-                ) {
-
-                    $timeB =
-                        $dateB->getTimestamp();
-
-                } elseif ($dateB !== null) {
-
-                    $parsedB =
-                        strtotime(
-                            transactionString($dateB)
-                        );
-
-                    if ($parsedB !== false) {
-                        $timeB = $parsedB;
-                    }
-                }
-
-            } catch (Throwable $e) {
-                $timeB = 0;
-            }
-
-
-            return $timeB <=> $timeA;
+        if (
+            isset(
+                $uniqueTransactions[
+                    $transactionId
+                ]
+            )
+        ) {
+            continue;
         }
-    );
+
+
+        $uniqueTransactions[
+            $transactionId
+        ] =
+            $document;
+    }
 
 
     /*
-     * --------------------------------------------------------------
-     * FORMAT TRANSACTIONS
-     * --------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | FORMAT TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
 
-    $result = [];
+    $formattedTransactions = [];
 
 
-    foreach ($documents as $document) {
+    foreach (
+        $uniqueTransactions as $document
+    ) {
 
         /*
-         * Type.
-         */
+        |--------------------------------------------------------------------------
+        | TYPE
+        |--------------------------------------------------------------------------
+        */
 
         $rawType =
-            $document["type"] ??
-            $document["transaction_type"] ??
-            $document["transactionType"] ??
-            $document["category"] ??
-            $document["kind"] ??
-            "";
+            strtolower(
+                trim(
+                    (string)(
+                        $document['type'] ??
+                        $document['transaction_type'] ??
+                        $document['transactionType'] ??
+                        ''
+                    )
+                )
+            );
 
 
         $type =
-            normalizeTransactionType(
-                $rawType
-            );
+            $rawType;
+
+
+        if (
+            in_array(
+                $rawType,
+                [
+                    'deposit',
+                    'credit',
+                    'funding',
+                    'topup',
+                    'top_up'
+                ],
+                true
+            )
+        ) {
+
+            $type = 'deposit';
+
+        } elseif (
+            in_array(
+                $rawType,
+                [
+                    'withdrawal',
+                    'withdraw',
+                    'debit'
+                ],
+                true
+            )
+        ) {
+
+            $type = 'withdrawal';
+
+        } elseif (
+            in_array(
+                $rawType,
+                [
+                    'investment',
+                    'invest'
+                ],
+                true
+            )
+        ) {
+
+            $type = 'investment';
+
+        } elseif (
+            in_array(
+                $rawType,
+                [
+                    'income',
+                    'earning',
+                    'earnings',
+                    'profit',
+                    'return',
+                    'commission',
+                    'referral'
+                ],
+                true
+            )
+        ) {
+
+            $type = 'income';
+
+        } elseif ($type === '') {
+
+            $type = 'other';
+        }
 
 
         /*
-         * Status.
-         */
+        |--------------------------------------------------------------------------
+        | STATUS
+        |--------------------------------------------------------------------------
+        */
 
         $rawStatus =
-            $document["status"] ??
-            $document["state"] ??
-            "pending";
-
-
-        $status =
-            normalizeTransactionStatus(
-                $rawStatus
+            strtolower(
+                trim(
+                    (string)(
+                        $document['status'] ??
+                        ''
+                    )
+                )
             );
 
 
+        if (
+            in_array(
+                $rawStatus,
+                [
+                    'complete',
+                    'completed',
+                    'success',
+                    'successful',
+                    'approved'
+                ],
+                true
+            )
+        ) {
+
+            $status = 'completed';
+
+        } elseif (
+            in_array(
+                $rawStatus,
+                [
+                    'failed',
+                    'failure',
+                    'error'
+                ],
+                true
+            )
+        ) {
+
+            $status = 'failed';
+
+        } elseif (
+            in_array(
+                $rawStatus,
+                [
+                    'rejected',
+                    'declined',
+                    'denied'
+                ],
+                true
+            )
+        ) {
+
+            $status = 'rejected';
+
+        } else {
+
+            $status =
+                $rawStatus !== ''
+                    ? $rawStatus
+                    : 'pending';
+        }
+
+
         /*
-         * Amount.
-         */
+        |--------------------------------------------------------------------------
+        | AMOUNT
+        |--------------------------------------------------------------------------
+        */
 
         $amount =
-            transactionNumber(
-                $document["amount"] ??
-                $document["value"] ??
-                $document["total"] ??
-                $document["transaction_amount"] ??
+            (float)(
+                $document['amount'] ??
+                $document['value'] ??
                 0
             );
 
 
         /*
-         * Reference.
-         */
+        |--------------------------------------------------------------------------
+        | TITLE
+        |--------------------------------------------------------------------------
+        */
+
+        if ($type === 'investment') {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Do not expose old Starter / Standard / Advanced plan names.
+            |--------------------------------------------------------------------------
+            */
+
+            $title =
+                'Crown Cash Investment';
+
+        } elseif ($type === 'deposit') {
+
+            $title =
+                'Wallet Deposit';
+
+        } elseif ($type === 'withdrawal') {
+
+            $title =
+                'Wallet Withdrawal';
+
+        } elseif ($type === 'income') {
+
+            $title =
+                'Crown Cash Earnings';
+
+        } else {
+
+            $title =
+                ucfirst(
+                    str_replace(
+                        '_',
+                        ' ',
+                        $type
+                    )
+                );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | DESCRIPTION
+        |--------------------------------------------------------------------------
+        */
+
+        $description =
+            (string)(
+                $document['description'] ??
+                $document['note'] ??
+                $document['message'] ??
+                ''
+            );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REFERENCE
+        |--------------------------------------------------------------------------
+        */
 
         $reference =
-            $document["transaction_reference"] ??
-            $document["reference"] ??
-            $document["transaction_id"] ??
-            $document["transactionId"] ??
-            $document["ref"] ??
-            (
-                isset($document["_id"])
-                    ? (string)$document["_id"]
-                    : ""
+            (string)(
+                $document['reference'] ??
+                $document['transaction_reference'] ??
+                $document['transactionReference'] ??
+                $document['ref'] ??
+                ''
             );
 
 
         /*
-         * Description.
-         */
-
-        $description =
-            $document["description"] ??
-            $document["title"] ??
-            $document["name"] ??
-            null;
-
-
-        $description =
-            transactionString(
-                $description
-            );
-
-
-        /*
-         * For new Crown Cash investments, don't expose
-         * old Starter / Standard / Advanced plan names.
-         */
-
-        if ($type === "investment") {
-
-            $description =
-                "Crown Cash Investment";
-        }
-
-
-        if ($description === "") {
-
-            $description =
-                transactionTitle($type);
-        }
-
-
-        /*
-         * Date.
-         */
-
-        $createdAt =
-            $document["created_at"] ??
-            $document["createdAt"] ??
-            $document["date"] ??
-            $document["timestamp"] ??
-            null;
-
-
-        /*
-         * Payment method.
-         */
+        |--------------------------------------------------------------------------
+        | PAYMENT METHOD
+        |--------------------------------------------------------------------------
+        */
 
         $paymentMethod =
-            transactionString(
-                $document["payment_method"] ??
-                $document["method"] ??
-                ""
+            (string)(
+                $document['payment_method'] ??
+                $document['paymentMethod'] ??
+                $document['method'] ??
+                ''
             );
 
 
         /*
-         * Optional investment reference.
-         */
+        |--------------------------------------------------------------------------
+        | INVESTMENT ID
+        |--------------------------------------------------------------------------
+        */
 
         $investmentId =
-            transactionString(
-                $document["investment_id"] ??
-                $document["investmentId"] ??
-                ""
+            $document['investment_id'] ??
+            $document['investmentId'] ??
+            null;
+
+
+        if (
+            $investmentId instanceof MongoDB\BSON\ObjectId
+        ) {
+
+            $investmentId =
+                (string)$investmentId;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATED DATE
+        |--------------------------------------------------------------------------
+        */
+
+        $createdAt =
+            $document['created_at'] ??
+            $document['createdAt'] ??
+            $document['date'] ??
+            $document['timestamp'] ??
+            null;
+
+
+        $createdAt =
+            toIsoDate(
+                $createdAt
             );
 
 
         /*
-         * Optional metadata.
-         */
+        |--------------------------------------------------------------------------
+        | SIGN
+        |--------------------------------------------------------------------------
+        */
 
-        $result[] = [
+        $displayAmount =
+            abs($amount);
 
-            "id" =>
-                isset($document["_id"])
-                    ? (string)$document["_id"]
-                    : null,
 
-            "type" =>
+        if ($type === 'withdrawal') {
+
+            $displayAmount =
+                -$displayAmount;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OUTPUT
+        |--------------------------------------------------------------------------
+        */
+
+        $formattedTransactions[] = [
+
+            'id' =>
+                isset($document['_id'])
+                    ? (string)$document['_id']
+                    : '',
+
+            'type' =>
                 $type,
 
-            "title" =>
+            'title' =>
+                $title,
+
+            'description' =>
                 $description,
 
-            "description" =>
-                $description,
+            'amount' =>
+                $displayAmount,
 
-            "amount" =>
-                $amount,
+            'currency' =>
+                (string)(
+                    $document['currency'] ??
+                    'UGX'
+                ),
 
-            "currency" =>
-                "UGX",
-
-            "status" =>
+            'status' =>
                 $status,
 
-            "reference" =>
-                transactionString(
-                    $reference
-                ),
+            'reference' =>
+                $reference,
 
-            "transaction_reference" =>
-                transactionString(
-                    $reference
-                ),
-
-            "payment_method" =>
+            'payment_method' =>
                 $paymentMethod,
 
-            "method" =>
+            'method' =>
                 $paymentMethod,
 
-            "investment_id" =>
+            'investment_id' =>
                 $investmentId,
 
-            "created_at" =>
-                transactionDate(
-                    $createdAt
-                )
+            'created_at' =>
+                $createdAt
         ];
     }
 
 
     /*
-     * --------------------------------------------------------------
-     * GET CURRENT WALLET BALANCE
-     * --------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | SORT NEWEST FIRST
+    |--------------------------------------------------------------------------
+    */
 
-    $balance = 0;
+    usort(
+        $formattedTransactions,
+        static function (
+            array $a,
+            array $b
+        ): int {
 
-
-    if ($user) {
-
-        $balance =
-            transactionNumber(
-                $user["balance"] ??
-                $user["wallet_balance"] ??
-                $user["walletBalance"] ??
-                0
+            return strcmp(
+                (string)(
+                    $b['created_at'] ?? ''
+                ),
+                (string)(
+                    $a['created_at'] ?? ''
+                )
             );
-    }
+        }
+    );
 
 
     /*
-     * --------------------------------------------------------------
-     * CALCULATE SUMMARY
-     * --------------------------------------------------------------
-     *
-     * Only completed financial transactions are included in totals.
-     * This prevents pending/failed deposits or withdrawals from
-     * incorrectly inflating the dashboard totals.
-     *
-     * Investments are counted when their transaction itself is
-     * completed, because the new Crown Cash investment flow deducts
-     * the amount immediately.
-     * --------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | SUMMARY
+    |--------------------------------------------------------------------------
+    */
 
-    $summary = [
-        "deposits" => 0,
-        "withdrawals" => 0,
-        "investments" => 0,
-        "income" => 0
-    ];
+    $totalDeposits = 0.0;
+    $totalWithdrawals = 0.0;
+    $totalInvestments = 0.0;
+    $totalIncome = 0.0;
 
 
-    foreach ($result as $transaction) {
+    foreach (
+        $formattedTransactions as $transaction
+    ) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Only completed transactions affect summary.
+        |--------------------------------------------------------------------------
+        */
 
         if (
-            $transaction["status"] !== "completed"
+            $transaction['status'] !== 'completed'
         ) {
             continue;
         }
 
 
         $amount =
-            transactionNumber(
-                $transaction["amount"]
+            abs(
+                (float)$transaction['amount']
             );
 
 
         switch (
-            $transaction["type"]
+            $transaction['type']
         ) {
 
-            case "deposit":
+            case 'deposit':
 
-                $summary["deposits"] +=
+                $totalDeposits +=
                     $amount;
 
                 break;
 
 
-            case "withdrawal":
+            case 'withdrawal':
 
-                $summary["withdrawals"] +=
+                $totalWithdrawals +=
                     $amount;
 
                 break;
 
 
-            case "investment":
+            case 'investment':
 
-                $summary["investments"] +=
+                $totalInvestments +=
                     $amount;
 
                 break;
 
 
-            case "income":
+            case 'income':
 
-                $summary["income"] +=
+                $totalIncome +=
                     $amount;
 
                 break;
@@ -1348,54 +976,116 @@ try {
 
 
     /*
-     * --------------------------------------------------------------
-     * RESPONSE
-     * --------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | USER WALLET BALANCE
+    |--------------------------------------------------------------------------
+    */
 
-    transactionResponse(
-        true,
-        "Transactions loaded successfully.",
-        200,
-        [
+    $walletBalance =
+        (float)(
+            $user['balance'] ??
+            $user['wallet_balance'] ??
+            $user['walletBalance'] ??
+            0
+        );
 
-            "balance" =>
-                $balance,
 
-            "available_balance" =>
-                $balance,
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
-            "wallet_balance" =>
-                $balance,
+    jsonResponse([
 
-            "transactions" =>
-                $result,
+        'success' =>
+            true,
 
-            "summary" =>
-                $summary,
+        'authenticated' =>
+            true,
 
-            "count" =>
-                count($result)
-        ]
-    );
+        'authorized' =>
+            true,
+
+        'message' =>
+            'Transactions loaded successfully.',
+
+        'user' => [
+
+            'id' =>
+                $realUserId,
+
+            'email' =>
+                $userEmail,
+
+            'name' =>
+                (string)(
+                    $user['full_name'] ??
+                    $user['fullName'] ??
+                    $user['name'] ??
+                    $user['username'] ??
+                    'Member'
+                )
+        ],
+
+        'balance' =>
+            $walletBalance,
+
+        'available_balance' =>
+            $walletBalance,
+
+        'wallet_balance' =>
+            $walletBalance,
+
+        'summary' => [
+
+            'total_deposits' =>
+                $totalDeposits,
+
+            'total_withdrawals' =>
+                $totalWithdrawals,
+
+            'total_investments' =>
+                $totalInvestments,
+
+            'total_income' =>
+                $totalIncome
+        ],
+
+        'transactions' =>
+            array_values(
+                $formattedTransactions
+            ),
+
+        'count' =>
+            count(
+                $formattedTransactions
+            )
+
+    ], 200);
 
 
 } catch (Throwable $e) {
 
     error_log(
-        "Crown Cash transactions.php error: " .
+        'Crown Cash transactions error: ' .
         $e->getMessage()
     );
 
 
-    /*
-     * Never expose database/server error details
-     * to the user in production.
-     */
+    jsonResponse([
 
-    transactionResponse(
-        false,
-        "Unable to load transactions. Please try again.",
-        500
-    );
+        'success' =>
+            false,
+
+        'authenticated' =>
+            true,
+
+        'authorized' =>
+            false,
+
+        'message' =>
+            'Unable to load transactions right now.'
+
+    ], 500);
 }

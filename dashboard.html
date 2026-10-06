@@ -9,6 +9,13 @@
 
     <meta name="theme-color" content="#08050a">
 
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Crown Cash">
+
+    <link rel="manifest" href="manifest.json">
+
     <title>Crown Cash | Dashboard</title>
 
     <link rel="stylesheet"
@@ -153,13 +160,7 @@
                 Support
             </a>
 
-
             <!-- ================= ADMIN PANEL ================= -->
-            <!--
-                IMPORTANT:
-                Do NOT permanently hide this with display:none.
-                dashboard.js will decide whether to show it.
-            -->
             <a href="admin.html"
                id="adminNavLink"
                class="nav-item admin-nav"
@@ -176,7 +177,6 @@
             </a>
 
         </nav>
-
 
         <!-- LOGOUT -->
         <button class="logout-btn" id="logoutBtn">
@@ -199,7 +199,6 @@
     <!-- ================= MAIN ================= -->
     <main class="main">
 
-
         <!-- ================= MOBILE HEADER ================= -->
         <header class="mobile-header">
 
@@ -212,7 +211,6 @@
 
             </button>
 
-
             <div class="mobile-brand">
 
                 <div class="small-crown">
@@ -222,7 +220,6 @@
                 <strong>Crown Cash</strong>
 
             </div>
-
 
             <div class="mobile-user">
                 <i class="fa-solid fa-user"></i>
@@ -251,7 +248,6 @@
 
             </div>
 
-
             <div class="welcome-crown">
                 <i class="fa-solid fa-crown"></i>
             </div>
@@ -271,22 +267,18 @@
                     CROWN CASH DAILY GROWTH
                 </div>
 
-
                 <h2>
                     <span>10%</span> DAILY RETURN RATE
                 </h2>
-
 
                 <h3>
                     FOR 30 DAYS
                 </h3>
 
-
                 <p>
                     Explore our configured investment plans and track
                     your projected daily growth.
                 </p>
-
 
                 <div class="hero-actions">
 
@@ -298,7 +290,6 @@
                         <i class="fa-solid fa-arrow-right"></i>
 
                     </a>
-
 
                     <div class="rate-badge">
 
@@ -312,7 +303,6 @@
 
             </div>
 
-
             <div class="hero-illustration">
 
                 <div class="coin coin-one">
@@ -322,7 +312,6 @@
                 <div class="coin coin-two">
                     <i class="fa-solid fa-coins"></i>
                 </div>
-
 
                 <div class="growth-chart">
 
@@ -349,7 +338,6 @@
 
                         </defs>
 
-
                         <path
                             d="M10 130
                                C45 120 50 110 80 112
@@ -364,7 +352,6 @@
                     </svg>
 
                 </div>
-
 
                 <div class="hero-crown">
                     <i class="fa-solid fa-crown"></i>
@@ -399,7 +386,6 @@
                     AVAILABLE WALLET BALANCE
                 </div>
 
-
                 <div class="wallet-amount"
                      id="availableBalance"
                      data-value="0">
@@ -408,11 +394,9 @@
 
                 </div>
 
-
                 <p>
                     Available balance
                 </p>
-
 
                 <div class="wallet-buttons">
 
@@ -424,7 +408,6 @@
                         DEPOSIT
 
                     </a>
-
 
                     <a href="withdraw.html"
                        class="secondary-button">
@@ -438,7 +421,6 @@
                 </div>
 
             </div>
-
 
             <div class="wallet-icon-large">
                 <i class="fa-solid fa-wallet"></i>
@@ -460,11 +442,9 @@
 
             </div>
 
-
             <div class="quick-grid">
 
-
-                <!-- ================= DEPOSIT ================= -->
+                <!-- DEPOSIT -->
                 <a href="deposit.html"
                    class="action-card">
 
@@ -483,13 +463,11 @@
 
                     </div>
 
-
                     <h3>Deposit</h3>
 
                     <p>
                         Fund wallet
                     </p>
-
 
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
@@ -498,22 +476,18 @@
                 </a>
 
 
-                <!-- ================= INVEST ================= -->
+                <!-- INVEST -->
                 <a href="investments.html"
                    class="action-card">
 
                     <div class="action-icon invest-icon">
 
                         <svg viewBox="0 0 24 24">
-
                             <polyline points="3,17 9,11 13,14 21,5"/>
-
                             <polyline points="15,5 21,5 21,11"/>
-
                         </svg>
 
                     </div>
-
 
                     <h3>
                         Invest
@@ -523,7 +497,6 @@
                         Start investing
                     </p>
 
-
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
                     </span>
@@ -531,7 +504,7 @@
                 </a>
 
 
-                <!-- ================= WITHDRAW ================= -->
+                <!-- WITHDRAW -->
                 <a href="withdraw.html"
                    class="action-card">
 
@@ -549,7 +522,6 @@
 
                     </div>
 
-
                     <h3>
                         Withdraw
                     </h3>
@@ -558,7 +530,6 @@
                         To Mobile Money
                     </p>
 
-
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
                     </span>
@@ -566,7 +537,7 @@
                 </a>
 
 
-                <!-- ================= MY INVESTMENTS ================= -->
+                <!-- MY INVESTMENTS -->
                 <a href="my-investments.html"
                    class="action-card">
 
@@ -590,7 +561,6 @@
 
                     </div>
 
-
                     <h3>
                         My Investments
                     </h3>
@@ -599,7 +569,6 @@
                         Active investments
                     </p>
 
-
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
                     </span>
@@ -607,7 +576,7 @@
                 </a>
 
 
-                <!-- ================= RECORDS ================= -->
+                <!-- RECORDS -->
                 <a href="transactions.html"
                    class="action-card">
 
@@ -622,15 +591,12 @@
                                   rx="2"/>
 
                             <path d="M8 8h8"/>
-
                             <path d="M8 12h8"/>
-
                             <path d="M8 16h5"/>
 
                         </svg>
 
                     </div>
-
 
                     <h3>
                         Records
@@ -640,7 +606,6 @@
                         Transactions
                     </p>
 
-
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
                     </span>
@@ -648,7 +613,7 @@
                 </a>
 
 
-                <!-- ================= SUPPORT ================= -->
+                <!-- SUPPORT -->
                 <a href="support.html"
                    class="action-card">
 
@@ -668,7 +633,6 @@
 
                     </div>
 
-
                     <h3>
                         Support
                     </h3>
@@ -677,9 +641,62 @@
                         Get help
                     </p>
 
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+
+                </a>
+
+
+                <!-- ================= WHATSAPP GROUP ================= -->
+                <a href="https://chat.whatsapp.com/ByjfqKM9vBMAazOlrXJYNz?s=cl&p=a&mlu=4&ilr=4"
+                   class="action-card whatsapp-card"
+                   id="whatsappGroupLink"
+                   target="_blank"
+                   rel="noopener noreferrer">
+
+                    <div class="action-icon">
+
+                        <i class="fa-brands fa-whatsapp"></i>
+
+                    </div>
+
+                    <h3>
+                        WhatsApp Group
+                    </h3>
+
+                    <p>
+                        Join Crown Cash
+                    </p>
 
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+
+                </a>
+
+
+                <!-- ================= INSTALL APP ================= -->
+                <a href="#"
+                   class="action-card install-card"
+                   id="installAppButton">
+
+                    <div class="action-icon">
+
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+
+                    </div>
+
+                    <h3>
+                        Install Crown Cash
+                    </h3>
+
+                    <p>
+                        Add app to phone
+                    </p>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-download"></i>
                     </span>
 
                 </a>
@@ -703,7 +720,6 @@
 
                     </div>
 
-
                     <h3>
                         Admin Panel
                     </h3>
@@ -711,7 +727,6 @@
                     <p>
                         Manage Crown Cash
                     </p>
-
 
                     <span class="card-arrow">
                         <i class="fa-solid fa-arrow-right"></i>
@@ -739,19 +754,13 @@
 
             </div>
 
-
             <div class="stats-grid">
 
-
-                <!-- TOTAL INVESTED -->
                 <div class="stat-card">
 
                     <div class="stat-icon">
-
                         <i class="fa-solid fa-chart-line"></i>
-
                     </div>
-
 
                     <div>
 
@@ -768,15 +777,11 @@
                 </div>
 
 
-                <!-- TOTAL EARNINGS -->
                 <div class="stat-card">
 
                     <div class="stat-icon gold">
-
                         <i class="fa-solid fa-coins"></i>
-
                     </div>
-
 
                     <div>
 
@@ -793,15 +798,11 @@
                 </div>
 
 
-                <!-- REFERRAL TEAM -->
                 <div class="stat-card">
 
                     <div class="stat-icon">
-
                         <i class="fa-solid fa-users"></i>
-
                     </div>
-
 
                     <div>
 
@@ -818,15 +819,11 @@
                 </div>
 
 
-                <!-- TRANSACTIONS -->
                 <div class="stat-card">
 
                     <div class="stat-icon gold">
-
                         <i class="fa-solid fa-receipt"></i>
-
                     </div>
-
 
                     <div>
 
@@ -862,7 +859,6 @@
 
             </div>
 
-
             <div class="calculator-card">
 
                 <div class="calculator-form">
@@ -871,13 +867,11 @@
                         Investment Amount
                     </label>
 
-
                     <div class="amount-input">
 
                         <span>
                             UGX
                         </span>
-
 
                         <input
                             type="number"
@@ -887,7 +881,6 @@
                             step="1000">
 
                     </div>
-
 
                     <div class="rate-display">
 
@@ -903,7 +896,6 @@
 
                 </div>
 
-
                 <div class="calculator-results">
 
                     <div>
@@ -918,7 +910,6 @@
 
                     </div>
 
-
                     <div>
 
                         <small>
@@ -930,7 +921,6 @@
                         </strong>
 
                     </div>
-
 
                     <div>
 
@@ -985,7 +975,6 @@
 
         </a>
 
-
         <a href="team.html"
            class="bottom-item">
 
@@ -998,7 +987,6 @@
             </small>
 
         </a>
-
 
         <a href="investments.html"
            class="bottom-item">
@@ -1013,7 +1001,6 @@
 
         </a>
 
-
         <a href="my-investments.html"
            class="bottom-item">
 
@@ -1026,7 +1013,6 @@
             </small>
 
         </a>
-
 
         <a href="profile.html"
            class="bottom-item">
@@ -1046,14 +1032,7 @@
 </div>
 
 
-<!--
-=========================================================
-CROWN CASH DASHBOARD SCRIPT
-=========================================================
-Cache-busted version ensures the newest JavaScript loads.
--->
-
-<script src="dashboard.js?v=20261003PROD02"></script>
+<script src="dashboard.js?v=20261006APP"></script>
 
 </body>
 </html>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -98,7 +99,10 @@
             align-items: center;
             gap: 12px;
 
-            padding: 10px 12px 28px;
+            padding:
+                10px
+                12px
+                28px;
         }
 
         .brand-logo {
@@ -131,6 +135,7 @@
 
         .brand-text span {
             display: block;
+
             margin-top: 2px;
 
             color: #a9a2a8;
@@ -151,7 +156,9 @@
             align-items: center;
             gap: 12px;
 
-            padding: 13px 14px;
+            padding:
+                13px
+                14px;
 
             border-radius: 10px;
 
@@ -184,13 +191,19 @@
 
         .logout-btn {
             border: 0;
-            background: transparent;
+
+            background:
+                transparent;
+
             cursor: pointer;
+
             text-align: left;
         }
 
         .logout-btn:hover {
-            background: rgba(255,255,255,.08);
+            background:
+                rgba(255,255,255,.08);
+
             color: #ffffff;
         }
 
@@ -200,6 +213,7 @@
 
         .main {
             margin-left: 255px;
+
             min-height: 100vh;
 
             padding:
@@ -226,8 +240,13 @@
             font-size: 24px;
         }
 
+        .page-title h1 span {
+            color: #a9a0aa;
+            font-weight: 400;
+        }
+
         .page-title i {
-            color: #ffffff;
+            color: #f3d66b;
         }
 
         .wallet-link {
@@ -235,7 +254,9 @@
             align-items: center;
             gap: 8px;
 
-            padding: 11px 15px;
+            padding:
+                11px
+                15px;
 
             border-radius: 10px;
 
@@ -251,8 +272,8 @@
             font-weight: 700;
         }
 
-        .wallet-link span {
-            color: #ffffff;
+        .wallet-link i {
+            color: #f3d66b;
         }
 
         .menu-btn {
@@ -279,7 +300,9 @@
         ===================================================== */
 
         .hero {
-            padding: 35px 28px;
+            padding:
+                35px
+                28px;
 
             border-radius: 22px;
 
@@ -332,11 +355,12 @@
         }
 
         .hero p {
-            max-width: 650px;
+            max-width: 700px;
 
             color: #b9b1b8;
 
             font-size: 16px;
+
             line-height: 1.7;
         }
 
@@ -389,6 +413,8 @@
             align-items: center;
             justify-content: space-between;
 
+            gap: 15px;
+
             margin-bottom: 18px;
         }
 
@@ -408,164 +434,189 @@
         }
 
         /* =====================================================
-           PLANS
+           INVESTMENT CARD
         ===================================================== */
 
-        .plans {
+        .investment-area {
             display: grid;
 
             grid-template-columns:
-                repeat(
-                    3,
-                    minmax(0,1fr)
-                );
+                minmax(0, 1.3fr)
+                minmax(320px, .7fr);
 
             gap: 20px;
+
+            align-items: stretch;
         }
 
-        .plan-card {
+        .investment-card {
             position: relative;
 
-            padding: 24px;
+            padding: 30px;
 
-            border-radius: 20px;
+            border-radius: 22px;
 
             background:
                 linear-gradient(
-                    180deg,
+                    145deg,
                     #ffffff,
-                    #f6f4f5
+                    #f3f0f2
                 );
 
-            color: #150912;
+            color: #160811;
 
             box-shadow:
-                0 15px 45px
+                0 20px 60px
                 rgba(0,0,0,.25);
 
             overflow: hidden;
         }
 
-        .plan-card::before {
+        .investment-card::before {
             content: "";
 
             position: absolute;
 
-            top: 0;
             left: 0;
+            top: 0;
             right: 0;
 
-            height: 4px;
+            height: 5px;
 
             background:
                 linear-gradient(
                     90deg,
-                    #160611,
-                    #8d164c,
-                    #160611
+                    #170711,
+                    #9b174f,
+                    #170711
                 );
         }
 
-        .plan-card.featured {
-            transform:
-                translateY(-5px);
+        .investment-badge {
+            display: inline-flex;
 
-            box-shadow:
-                0 20px 55px
-                rgba(0,0,0,.35);
-        }
+            align-items: center;
+            gap: 7px;
 
-        .selected-label {
-            position: absolute;
+            padding:
+                7px
+                11px;
 
-            top: 14px;
-            right: 14px;
+            border-radius: 30px;
 
-            padding: 6px 9px;
+            background:
+                #eee9ec;
 
-            border-radius: 20px;
+            color: #5d4e57;
 
-            background: #150912;
-            color: #ffffff;
-
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 800;
 
-            letter-spacing: .8px;
+            margin-bottom: 18px;
         }
 
-        .plan-icon {
-            width: 48px;
-            height: 48px;
-
-            border-radius: 14px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: #f0eaed;
-
-            color: #170711;
-
-            font-size: 20px;
-
-            margin-bottom: 17px;
+        .investment-badge i {
+            color: #7e1642;
         }
 
-        .plan-label {
-            font-size: 10px;
-            font-weight: 900;
-
-            letter-spacing: 1.5px;
-
-            color: #7d7179;
-
-            margin-bottom: 7px;
-        }
-
-        .plan-card h3 {
-            font-size: 23px;
+        .investment-card h3 {
+            font-size: 30px;
 
             margin-bottom: 9px;
         }
 
-        .plan-description {
-            min-height: 52px;
+        .investment-card-description {
+            color: #71656d;
 
-            color: #776d74;
+            font-size: 14px;
 
-            font-size: 13px;
-            line-height: 1.55;
+            line-height: 1.65;
 
-            margin-bottom: 20px;
+            max-width: 650px;
+
+            margin-bottom: 25px;
         }
 
-        .plan-amount {
-            padding: 16px;
-
-            border-radius: 13px;
-
-            background: #f0edef;
-
-            margin-bottom: 14px;
-        }
-
-        .plan-amount span {
+        .amount-label {
             display: block;
 
-            color: #82777e;
+            color: #655963;
+
+            font-size: 12px;
+            font-weight: 800;
+
+            margin-bottom: 8px;
+        }
+
+        .amount-input-wrap {
+            position: relative;
+        }
+
+        .currency-label {
+            position: absolute;
+
+            left: 16px;
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            color: #756972;
+
+            font-size: 13px;
+            font-weight: 800;
+
+            z-index: 2;
+        }
+
+        #investmentAmount {
+            width: 100%;
+
+            padding:
+                17px
+                18px
+                17px
+                65px;
+
+            border-radius: 14px;
+
+            border:
+                2px solid
+                #ddd7da;
+
+            background:
+                #faf9fa;
+
+            color: #170811;
+
+            outline: none;
+
+            font-size: 21px;
+            font-weight: 800;
+
+            transition:
+                border-color .2s ease,
+                box-shadow .2s ease;
+        }
+
+        #investmentAmount:focus {
+            border-color:
+                #7d1644;
+
+            box-shadow:
+                0 0 0 4px
+                rgba(125,22,68,.08);
+        }
+
+        .minimum-text {
+            margin-top: 9px;
+
+            color: #81757c;
 
             font-size: 11px;
-
-            margin-bottom: 4px;
         }
 
-        .plan-amount strong {
-            font-size: 23px;
-        }
-
-        .plan-details {
+        .investment-preview {
             display: grid;
 
             grid-template-columns:
@@ -574,46 +625,49 @@
                     minmax(0,1fr)
                 );
 
-            gap: 9px;
+            gap: 10px;
 
-            margin-bottom: 20px;
+            margin-top: 22px;
         }
 
-        .plan-detail {
-            padding: 11px;
+        .preview-item {
+            padding: 15px;
 
-            border-radius: 10px;
+            border-radius: 13px;
 
-            background: #f7f5f6;
+            background:
+                #f0edef;
         }
 
-        .plan-detail span {
+        .preview-item span {
             display: block;
 
-            color: #81767d;
+            color: #82777e;
 
             font-size: 10px;
 
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
-        .plan-detail strong {
-            font-size: 14px;
+        .preview-item strong {
+            font-size: 17px;
         }
 
-        .invest-btn {
+        .create-investment-btn {
             width: 100%;
 
-            padding: 15px;
+            padding: 17px;
+
+            margin-top: 20px;
 
             border: 0;
-            border-radius: 13px;
+            border-radius: 14px;
 
             background:
                 linear-gradient(
                     135deg,
                     #170711,
-                    #4c0c2a
+                    #58102f
                 );
 
             color: #ffffff;
@@ -628,19 +682,14 @@
                 opacity .2s ease;
         }
 
-        .invest-btn:hover {
+        .create-investment-btn:hover {
             transform:
                 translateY(-2px);
 
-            opacity: .93;
+            opacity: .94;
         }
 
-        .invest-btn:active {
-            transform:
-                translateY(0);
-        }
-
-        .invest-btn:disabled {
+        .create-investment-btn:disabled {
             opacity: .55;
 
             cursor: wait;
@@ -648,12 +697,151 @@
             transform: none;
         }
 
+        .wallet-warning {
+            display: none;
+
+            margin-top: 12px;
+
+            padding: 12px 14px;
+
+            border-radius: 11px;
+
+            background:
+                #fff0f2;
+
+            color: #8c1c34;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+        }
+
+        .wallet-warning.show {
+            display: block;
+        }
+
+        /* =====================================================
+           SIDE INFORMATION
+        ===================================================== */
+
+        .investment-info-card {
+            padding: 25px;
+
+            border-radius: 22px;
+
+            background:
+                rgba(255,255,255,.045);
+
+            border:
+                1px solid
+                rgba(255,255,255,.08);
+        }
+
+        .info-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 22px;
+        }
+
+        .info-card-title-icon {
+            width: 42px;
+            height: 42px;
+
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                rgba(255,255,255,.08);
+
+            color: #f3d66b;
+        }
+
+        .info-card-title h3 {
+            font-size: 17px;
+        }
+
+        .info-card-title span {
+            display: block;
+
+            color: #90858d;
+
+            font-size: 10px;
+
+            margin-top: 3px;
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        .info-row {
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 12px;
+
+            padding-bottom: 13px;
+
+            border-bottom:
+                1px solid
+                rgba(255,255,255,.06);
+        }
+
+        .info-row:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-row-icon {
+            flex: 0 0 auto;
+
+            width: 32px;
+            height: 32px;
+
+            border-radius: 9px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background:
+                rgba(255,255,255,.06);
+
+            color: #d9d1d7;
+
+            font-size: 12px;
+        }
+
+        .info-row strong {
+            display: block;
+
+            font-size: 13px;
+
+            margin-bottom: 4px;
+        }
+
+        .info-row p {
+            color: #9d939b;
+
+            font-size: 11px;
+
+            line-height: 1.5;
+        }
+
         /* =====================================================
            CALCULATOR
         ===================================================== */
 
         .calculator {
-            margin-top: 35px;
+            margin-top: 30px;
 
             padding: 25px;
 
@@ -668,6 +856,16 @@
         }
 
         .calculator h2 {
+            margin-bottom: 7px;
+        }
+
+        .calculator-description {
+            color: #968b93;
+
+            font-size: 12px;
+
+            line-height: 1.6;
+
             margin-bottom: 20px;
         }
 
@@ -675,10 +873,8 @@
             display: grid;
 
             grid-template-columns:
-                repeat(
-                    2,
-                    minmax(0,1fr)
-                );
+                minmax(0,1fr)
+                minmax(0,1fr);
 
             gap: 16px;
         }
@@ -694,11 +890,11 @@
             margin-bottom: 7px;
         }
 
-        .input-wrap {
+        .calculator-input-wrap {
             position: relative;
         }
 
-        .input-wrap span {
+        .calculator-input-wrap span {
             position: absolute;
 
             left: 14px;
@@ -709,18 +905,18 @@
 
             color: #817780;
 
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
         }
 
-        .input-wrap input {
+        .calculator-input-wrap input {
             width: 100%;
 
             padding:
                 14px
                 14px
                 14px
-                54px;
+                55px;
 
             border-radius: 11px;
 
@@ -738,7 +934,7 @@
             font-size: 15px;
         }
 
-        .input-wrap input:focus {
+        .calculator-input-wrap input:focus {
             border-color:
                 rgba(255,255,255,.35);
         }
@@ -789,7 +985,7 @@
         ===================================================== */
 
         .how-it-works {
-            margin-top: 35px;
+            margin-top: 30px;
         }
 
         .steps {
@@ -852,11 +1048,12 @@
             color: #a79ea5;
 
             font-size: 12px;
+
             line-height: 1.6;
         }
 
         /* =====================================================
-           INFO
+           INFORMATION
         ===================================================== */
 
         .info-box {
@@ -878,6 +1075,7 @@
             color: #aaa1a8;
 
             font-size: 12px;
+
             line-height: 1.7;
         }
 
@@ -911,7 +1109,6 @@
 
         .footer-links {
             display: flex;
-
             gap: 15px;
         }
 
@@ -1026,13 +1223,8 @@
 
         @media (max-width: 1100px) {
 
-            .plans {
-                grid-template-columns:
-                    1fr 1fr;
-            }
-
-            .plan-card.featured {
-                transform: none;
+            .investment-area {
+                grid-template-columns: 1fr;
             }
 
             .steps {
@@ -1108,10 +1300,6 @@
                 font-size: 18px;
             }
 
-            .plans {
-                grid-template-columns: 1fr;
-            }
-
             .calculator-grid {
                 grid-template-columns: 1fr;
             }
@@ -1132,8 +1320,17 @@
                 grid-template-columns: 1fr;
             }
 
-            .section-header h2 {
-                font-size: 20px;
+            .section-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .investment-card {
+                padding: 22px;
+            }
+
+            .investment-preview {
+                grid-template-columns: 1fr;
             }
 
             .steps {
@@ -1151,6 +1348,7 @@
         }
 
     </style>
+
 </head>
 
 <body>
@@ -1263,6 +1461,10 @@
 <main class="main">
 
 
+    <!-- =====================================================
+         TOPBAR
+    ====================================================== -->
+
     <header class="topbar">
 
         <div class="page-title">
@@ -1273,7 +1475,9 @@
                 id="menuBtn"
                 aria-label="Open menu"
             >
+
                 <i class="fa-solid fa-bars"></i>
+
             </button>
 
             <h1>
@@ -1316,7 +1520,7 @@
 
         <h2>
 
-            Grow Your Money<br>
+            Invest Any Amount<br>
 
             <span>
                 With Crown Cash
@@ -1325,8 +1529,13 @@
         </h2>
 
         <p>
-            Choose an investment plan and earn daily
-            returns according to your selected plan.
+
+            Choose the amount you want to invest.
+            There are no fixed investment plans.
+            Enter any amount from the minimum investment
+            requirement and create your investment directly
+            from your Crown Cash wallet.
+
         </p>
 
 
@@ -1335,11 +1544,11 @@
             <div class="hero-stat">
 
                 <strong>
-                    10%
+                    UGX 10K+
                 </strong>
 
                 <span>
-                    Daily Return
+                    Minimum Investment
                 </span>
 
             </div>
@@ -1348,11 +1557,11 @@
             <div class="hero-stat">
 
                 <strong>
-                    30
+                    Active
                 </strong>
 
                 <span>
-                    Days
+                    Investment Status
                 </span>
 
             </div>
@@ -1361,11 +1570,11 @@
             <div class="hero-stat">
 
                 <strong>
-                    3
+                    Automatic
                 </strong>
 
                 <span>
-                    Plans
+                    Daily Earnings Processing
                 </span>
 
             </div>
@@ -1376,13 +1585,13 @@
 
 
     <!-- =====================================================
-         PLAN HEADER
+         INVESTMENT HEADER
     ====================================================== -->
 
     <div class="section-header">
 
         <h2>
-            Choose Your Plan
+            Create Investment
         </h2>
 
         <a href="my-investments.html">
@@ -1397,40 +1606,76 @@
 
 
     <!-- =====================================================
-         PLANS
+         INVESTMENT AREA
     ====================================================== -->
 
-    <section class="plans">
+    <section class="investment-area">
 
 
-        <!-- STARTER -->
+        <!-- =================================================
+             INVESTMENT FORM
+        ================================================== -->
 
-        <article class="plan-card">
+        <article class="investment-card">
 
-            <div class="plan-icon">
-                <i class="fa-solid fa-seedling"></i>
+            <div class="investment-badge">
+
+                <i class="fa-solid fa-bolt"></i>
+
+                Instant Investment
+
             </div>
 
-            <div class="plan-label">
-                STARTER
-            </div>
 
             <h3>
-                Starter Plan
+                Invest Any Amount
             </h3>
 
-            <p class="plan-description">
-                Start small and experience Crown Cash
-                investment returns.
+
+            <p class="investment-card-description">
+
+                Enter the amount you want to invest.
+                Your investment amount will be deducted
+                from your Crown Cash wallet when the
+                investment is successfully created.
+
             </p>
 
 
-            <div class="plan-amount">
+            <label
+                class="amount-label"
+                for="investmentAmount"
+            >
 
-                <span>
-                    Investment Amount
+                Investment Amount
+
+            </label>
+
+
+            <div class="amount-input-wrap">
+
+                <span class="currency-label">
+                    UGX
                 </span>
 
+                <input
+                    type="number"
+                    id="investmentAmount"
+                    name="investmentAmount"
+                    min="10000"
+                    step="1000"
+                    value="10000"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    placeholder="Enter amount"
+                >
+
+            </div>
+
+
+            <div class="minimum-text">
+
+                Minimum investment:
                 <strong>
                     UGX 10,000
                 </strong>
@@ -1438,55 +1683,59 @@
             </div>
 
 
-            <div class="plan-details">
+            <!-- =============================================
+                 PREVIEW
+            ============================================== -->
 
-                <div class="plan-detail">
+            <div class="investment-preview">
+
+                <div class="preview-item">
 
                     <span>
-                        Daily Return
+                        Amount to Invest
                     </span>
 
-                    <strong>
-                        10%
+                    <strong id="previewAmount">
+                        UGX 10,000
                     </strong>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="preview-item">
 
                     <span>
-                        Duration
+                        Wallet Balance
                     </span>
 
-                    <strong>
-                        30 Days
+                    <strong id="previewWallet">
+                        UGX 0
                     </strong>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="preview-item">
 
                     <span>
-                        Daily Income
+                        Estimated Daily Income
                     </span>
 
-                    <strong>
+                    <strong id="previewDailyIncome">
                         UGX 1,000
                     </strong>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="preview-item">
 
                     <span>
-                        30-Day Income
+                        Balance After Investment
                     </span>
 
-                    <strong>
-                        UGX 30,000
+                    <strong id="previewRemaining">
+                        UGX 0
                     </strong>
 
                 </div>
@@ -1494,16 +1743,24 @@
             </div>
 
 
+            <div
+                class="wallet-warning"
+                id="walletWarning"
+            >
+                Your wallet balance is not enough for this
+                investment amount.
+            </div>
+
+
             <button
                 type="button"
-                class="invest-btn"
-                data-plan="starter"
-                data-amount="10000"
-                data-rate="10"
-                data-days="30"
+                class="create-investment-btn"
+                id="createInvestmentBtn"
             >
 
-                Invest UGX 10,000
+                <i class="fa-solid fa-coins"></i>
+
+                Invest Now
 
                 <i class="fa-solid fa-arrow-right"></i>
 
@@ -1512,228 +1769,165 @@
         </article>
 
 
-        <!-- STANDARD -->
+        <!-- =================================================
+             INFORMATION CARD
+        ================================================== -->
 
-        <article
-            class="plan-card featured"
-        >
+        <aside class="investment-info-card">
 
-            <div class="selected-label">
-                MOST SELECTED
-            </div>
+            <div class="info-card-title">
 
-            <div class="plan-icon">
-                <i class="fa-solid fa-crown"></i>
-            </div>
+                <div class="info-card-title-icon">
 
-            <div class="plan-label">
-                STANDARD
-            </div>
-
-            <h3>
-                Standard Plan
-            </h3>
-
-            <p class="plan-description">
-                A balanced investment option for
-                consistent daily returns.
-            </p>
-
-
-            <div class="plan-amount">
-
-                <span>
-                    Investment Amount
-                </span>
-
-                <strong>
-                    UGX 15,000
-                </strong>
-
-            </div>
-
-
-            <div class="plan-details">
-
-                <div class="plan-detail">
-
-                    <span>
-                        Daily Return
-                    </span>
-
-                    <strong>
-                        10%
-                    </strong>
+                    <i class="fa-solid fa-circle-info"></i>
 
                 </div>
 
+                <div>
 
-                <div class="plan-detail">
-
-                    <span>
-                        Duration
-                    </span>
-
-                    <strong>
-                        30 Days
-                    </strong>
-
-                </div>
-
-
-                <div class="plan-detail">
+                    <h3>
+                        Investment Details
+                    </h3>
 
                     <span>
-                        Daily Income
+                        How your investment works
                     </span>
-
-                    <strong>
-                        UGX 1,500
-                    </strong>
-
-                </div>
-
-
-                <div class="plan-detail">
-
-                    <span>
-                        30-Day Income
-                    </span>
-
-                    <strong>
-                        UGX 45,000
-                    </strong>
 
                 </div>
 
             </div>
 
 
-            <button
-                type="button"
-                class="invest-btn"
-                data-plan="standard"
-                data-amount="15000"
-                data-rate="10"
-                data-days="30"
-            >
-
-                Invest UGX 15,000
-
-                <i class="fa-solid fa-arrow-right"></i>
-
-            </button>
-
-        </article>
+            <div class="info-list">
 
 
-        <!-- ADVANCED -->
+                <div class="info-row">
 
-        <article class="plan-card">
+                    <div class="info-row-icon">
 
-            <div class="plan-icon">
-                <i class="fa-solid fa-gem"></i>
-            </div>
+                        <i class="fa-solid fa-money-bill-transfer"></i>
 
-            <div class="plan-label">
-                ADVANCED
-            </div>
+                    </div>
 
-            <h3>
-                Advanced Plan
-            </h3>
+                    <div>
 
-            <p class="plan-description">
-                A larger investment option designed
-                for higher daily income.
-            </p>
+                        <strong>
+                            Wallet Deduction
+                        </strong>
 
+                        <p>
+                            The investment amount is deducted
+                            from your wallet when the investment
+                            is successfully created.
+                        </p>
 
-            <div class="plan-amount">
-
-                <span>
-                    Investment Amount
-                </span>
-
-                <strong>
-                    UGX 25,000
-                </strong>
-
-            </div>
-
-
-            <div class="plan-details">
-
-                <div class="plan-detail">
-
-                    <span>
-                        Daily Return
-                    </span>
-
-                    <strong>
-                        10%
-                    </strong>
+                    </div>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="info-row">
 
-                    <span>
-                        Duration
-                    </span>
+                    <div class="info-row-icon">
 
-                    <strong>
-                        30 Days
-                    </strong>
+                        <i class="fa-solid fa-circle-check"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Active Immediately
+                        </strong>
+
+                        <p>
+                            A successfully created investment
+                            becomes active without waiting for
+                            manual administrator approval.
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="info-row">
 
-                    <span>
-                        Daily Income
-                    </span>
+                    <div class="info-row-icon">
 
-                    <strong>
-                        UGX 2,500
-                    </strong>
+                        <i class="fa-solid fa-server"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Server-Controlled Rate
+                        </strong>
+
+                        <p>
+                            The actual daily earning rate is
+                            determined by the Crown Cash server,
+                            not by the amount entered here.
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <div class="plan-detail">
+                <div class="info-row">
 
-                    <span>
-                        30-Day Income
-                    </span>
+                    <div class="info-row-icon">
 
-                    <strong>
-                        UGX 75,000
-                    </strong>
+                        <i class="fa-solid fa-calendar-day"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Daily Processing
+                        </strong>
+
+                        <p>
+                            Active investments are processed by
+                            the daily earnings system according
+                            to the configured server rules.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-row">
+
+                    <div class="info-row-icon">
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Multiple Investments
+                        </strong>
+
+                        <p>
+                            Each successful investment is recorded
+                            separately, allowing your investment
+                            history to be tracked individually.
+                        </p>
+
+                    </div>
 
                 </div>
 
             </div>
 
-
-            <button
-                type="button"
-                class="invest-btn"
-                data-plan="advanced"
-                data-amount="25000"
-                data-rate="10"
-                data-days="30"
-            >
-
-                Invest UGX 25,000
-
-                <i class="fa-solid fa-arrow-right"></i>
-
-            </button>
-
-        </article>
+        </aside>
 
     </section>
 
@@ -1745,19 +1939,28 @@
     <section class="calculator">
 
         <h2>
-            Plan Your Earnings
+            Earnings Preview
         </h2>
+
+        <p class="calculator-description">
+
+            This preview uses the currently displayed
+            configured rate for illustration. The actual
+            earning rate is controlled and calculated by
+            the Crown Cash backend.
+
+        </p>
 
 
         <div class="calculator-grid">
 
             <div class="input-group">
 
-                <label for="investmentAmount">
+                <label for="calculatorAmount">
                     Investment Amount
                 </label>
 
-                <div class="input-wrap">
+                <div class="calculator-input-wrap">
 
                     <span>
                         UGX
@@ -1765,7 +1968,7 @@
 
                     <input
                         type="number"
-                        id="investmentAmount"
+                        id="calculatorAmount"
                         value="10000"
                         min="10000"
                         step="1000"
@@ -1779,10 +1982,10 @@
             <div class="input-group">
 
                 <label for="dailyReturn">
-                    Daily Return
+                    Displayed Daily Rate
                 </label>
 
-                <div class="input-wrap">
+                <div class="calculator-input-wrap">
 
                     <span>
                         %
@@ -1808,7 +2011,7 @@
             <div class="result-card">
 
                 <span>
-                    Daily Income
+                    Estimated Daily Income
                 </span>
 
                 <strong id="dailyIncome">
@@ -1821,7 +2024,7 @@
             <div class="result-card">
 
                 <span>
-                    30-Day Income
+                    Estimated 30-Day Income
                 </span>
 
                 <strong id="monthlyIncome">
@@ -1834,7 +2037,7 @@
             <div class="result-card">
 
                 <span>
-                    Total After 30 Days
+                    Estimated Total
                 </span>
 
                 <strong id="totalAfter30">
@@ -1857,7 +2060,7 @@
         <div class="section-header">
 
             <h2>
-                Simple Process
+                How It Works
             </h2>
 
         </div>
@@ -1873,16 +2076,20 @@
                 </div>
 
                 <div class="step-icon">
-                    <i class="fa-solid fa-layer-group"></i>
+
+                    <i class="fa-solid fa-keyboard"></i>
+
                 </div>
 
                 <h3>
-                    Choose a Plan
+                    Enter Amount
                 </h3>
 
                 <p>
-                    Select the investment plan that
-                    matches the amount you want to invest.
+
+                    Enter any amount of at least
+                    UGX 10,000 that you want to invest.
+
                 </p>
 
             </div>
@@ -1895,16 +2102,20 @@
                 </div>
 
                 <div class="step-icon">
+
                     <i class="fa-solid fa-check"></i>
+
                 </div>
 
                 <h3>
-                    Confirm Investment
+                    Confirm
                 </h3>
 
                 <p>
-                    Confirm your investment. The investment
-                    amount is deducted from your wallet.
+
+                    Review the amount and confirm that
+                    you want to create the investment.
+
                 </p>
 
             </div>
@@ -1917,16 +2128,20 @@
                 </div>
 
                 <div class="step-icon">
-                    <i class="fa-solid fa-clock"></i>
+
+                    <i class="fa-solid fa-wallet"></i>
+
                 </div>
 
                 <h3>
-                    Admin Approval
+                    Deduct & Activate
                 </h3>
 
                 <p>
-                    Your investment is submitted for review
-                    and approval.
+
+                    The server deducts the investment
+                    amount and activates the investment.
+
                 </p>
 
             </div>
@@ -1939,16 +2154,20 @@
                 </div>
 
                 <div class="step-icon">
+
                     <i class="fa-solid fa-coins"></i>
+
                 </div>
 
                 <h3>
-                    Earn Daily
+                    Daily Earnings
                 </h3>
 
                 <p>
-                    Once approved, daily earnings are processed
-                    according to your plan.
+
+                    The daily earnings processor handles
+                    earnings for your active investment.
+
                 </p>
 
             </div>
@@ -1966,7 +2185,7 @@
 
         <strong>
 
-            <i class="fa-solid fa-circle-info"></i>
+            <i class="fa-solid fa-shield-halved"></i>
 
             Investment Information
 
@@ -1974,10 +2193,18 @@
 
         <br>
 
-        Investment amounts are deducted from your
-        Crown Cash wallet when an investment is
-        successfully created. Daily earnings begin
-        after the investment has been approved.
+        The minimum investment amount is
+        <strong>UGX 10,000</strong>.
+        You may enter any amount above the minimum.
+        The investment amount is deducted from your
+        Crown Cash wallet when the server successfully
+        creates the investment.
+
+        <br><br>
+
+        The investment page does not control the actual
+        earning rate or investment rules. Those values are
+        controlled by the Crown Cash backend.
 
     </div>
 
@@ -2046,13 +2273,35 @@
 
 /* =========================================================
    CROWN CASH INVESTMENTS
+   NEW AUTOMATIC INVESTMENT STRUCTURE
 ========================================================= */
 
 const API_URL =
     "https://crown-cash1.onrender.com";
 
 
-let submittingInvestment = false;
+const MINIMUM_INVESTMENT =
+    10000;
+
+
+/*
+ * This is only a frontend display value for the
+ * earnings preview.
+ *
+ * The backend must remain the authority for the
+ * actual investment rate.
+ */
+
+const DISPLAY_DAILY_RATE =
+    10;
+
+
+let walletBalance =
+    0;
+
+
+let submittingInvestment =
+    false;
 
 
 /* =========================================================
@@ -2067,7 +2316,7 @@ document.addEventListener(
 
         setupLogout();
 
-        setupInvestmentButtons();
+        setupInvestmentForm();
 
         setupCalculator();
 
@@ -2080,106 +2329,184 @@ document.addEventListener(
 
 
 /* =========================================================
-   INVESTMENT BUTTONS
+   INVESTMENT FORM
 ========================================================= */
 
-function setupInvestmentButtons() {
+function setupInvestmentForm() {
 
-    const buttons =
-        document.querySelectorAll(
-            ".invest-btn"
+    const amountInput =
+        document.getElementById(
+            "investmentAmount"
         );
 
 
-    buttons.forEach(
-        function (button) {
-
-            button.addEventListener(
-                "click",
-                function (event) {
-
-                    event.preventDefault();
-
-                    if (
-                        submittingInvestment
-                    ) {
-                        return;
-                    }
+    const button =
+        document.getElementById(
+            "createInvestmentBtn"
+        );
 
 
-                    const plan =
-                        String(
-                            button.dataset.plan ||
-                            ""
-                        )
-                        .trim()
-                        .toLowerCase();
+    if (
+        amountInput
+    ) {
+
+        amountInput.addEventListener(
+            "input",
+            updateInvestmentPreview
+        );
+
+        amountInput.addEventListener(
+            "change",
+            updateInvestmentPreview
+        );
+
+    }
 
 
-                    const amount =
-                        Number(
-                            button.dataset.amount
-                        );
+    if (
+        button
+    ) {
+
+        button.addEventListener(
+            "click",
+            submitInvestment
+        );
+
+    }
 
 
-                    const rate =
-                        Number(
-                            button.dataset.rate ||
-                            10
-                        );
-
-
-                    const days =
-                        Number(
-                            button.dataset.days ||
-                            30
-                        );
-
-
-                    if (
-                        !plan ||
-                        !Number.isFinite(amount) ||
-                        amount <= 0
-                    ) {
-
-                        showMessage(
-                            "Investment Error",
-                            "The selected investment plan is not configured correctly.",
-                            "error"
-                        );
-
-                        return;
-                    }
-
-
-                    createInvestment(
-                        plan,
-                        amount,
-                        rate,
-                        days,
-                        button
-                    );
-
-                }
-            );
-
-        }
-    );
+    updateInvestmentPreview();
 
 }
 
 
 /* =========================================================
-   CREATE INVESTMENT
+   UPDATE INVESTMENT PREVIEW
 ========================================================= */
 
-async function createInvestment(
-    plan,
-    amount,
-    rate,
-    days,
-    button
-) {
+function updateInvestmentPreview() {
+
+    const input =
+        document.getElementById(
+            "investmentAmount"
+        );
+
+
+    if (
+        !input
+    ) {
+        return;
+    }
+
+
+    let amount =
+        Number(
+            input.value
+        );
+
+
+    if (
+        !Number.isFinite(amount) ||
+        amount < 0
+    ) {
+
+        amount = 0;
+
+    }
+
+
+    const dailyIncome =
+        amount *
+        (
+            DISPLAY_DAILY_RATE /
+            100
+        );
+
+
+    const remaining =
+        walletBalance -
+        amount;
+
+
+    setText(
+        "previewAmount",
+        "UGX " +
+        formatMoney(amount)
+    );
+
+
+    setText(
+        "previewWallet",
+        "UGX " +
+        formatMoney(walletBalance)
+    );
+
+
+    setText(
+        "previewDailyIncome",
+        "UGX " +
+        formatMoney(dailyIncome)
+    );
+
+
+    setText(
+        "previewRemaining",
+        "UGX " +
+        formatMoney(
+            Math.max(
+                0,
+                remaining
+            )
+        )
+    );
+
+
+    const warning =
+        document.getElementById(
+            "walletWarning"
+        );
+
+
+    if (
+        warning
+    ) {
+
+        if (
+            amount >= MINIMUM_INVESTMENT &&
+            walletBalance > 0 &&
+            amount > walletBalance
+        ) {
+
+            warning.textContent =
+                "Insufficient wallet balance. You need UGX " +
+                formatMoney(
+                    amount -
+                    walletBalance
+                ) +
+                " more to make this investment.";
+
+            warning.classList.add(
+                "show"
+            );
+
+        } else {
+
+            warning.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   SUBMIT INVESTMENT
+========================================================= */
+
+async function submitInvestment() {
 
     if (
         submittingInvestment
@@ -2188,97 +2515,133 @@ async function createInvestment(
     }
 
 
-    const planNames = {
-
-        starter:
-            "Starter Plan",
-
-        standard:
-            "Standard Plan",
-
-        advanced:
-            "Advanced Plan"
-
-    };
+    const input =
+        document.getElementById(
+            "investmentAmount"
+        );
 
 
-    const planName =
-        planNames[plan] ||
-        "Investment Plan";
+    const button =
+        document.getElementById(
+            "createInvestmentBtn"
+        );
+
+
+    if (
+        !input ||
+        !button
+    ) {
+        return;
+    }
+
+
+    const amount =
+        Number(
+            input.value
+        );
+
+
+    /* =====================================================
+       CLIENT-SIDE VALIDATION
+    ===================================================== */
+
+    if (
+        !Number.isFinite(amount)
+    ) {
+
+        showMessage(
+            "Invalid Amount",
+            "Please enter a valid investment amount.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        amount < MINIMUM_INVESTMENT
+    ) {
+
+        showMessage(
+            "Minimum Investment",
+            "The minimum investment amount is UGX " +
+            formatMoney(
+                MINIMUM_INVESTMENT
+            ) +
+            ".",
+            "error"
+        );
+
+        return;
+    }
 
 
     /*
-     * First make sure the current wallet
-     * has enough money.
+     * Only allow whole UGX amounts.
      */
 
-    showMessage(
-        "Checking Wallet",
-        "Checking your available Crown Cash balance...",
-        "success"
-    );
+    if (
+        !Number.isInteger(amount)
+    ) {
 
-
-    try {
-
-        const wallet =
-            await getWalletBalance();
-
-
-        if (
-            wallet !== null &&
-            wallet < amount
-        ) {
-
-            showMessage(
-                "Insufficient Balance",
-                "You need UGX " +
-                formatMoney(amount) +
-                " but your available balance is UGX " +
-                formatMoney(wallet) +
-                ".",
-                "error"
-            );
-
-            return;
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "Wallet check failed:",
-            error
+        showMessage(
+            "Invalid Amount",
+            "Please enter a whole UGX amount.",
+            "error"
         );
 
+        return;
     }
 
+
+    /*
+     * Check currently loaded wallet balance.
+     * The backend performs the real balance check.
+     */
+
+    if (
+        walletBalance > 0 &&
+        amount > walletBalance
+    ) {
+
+        showMessage(
+            "Insufficient Balance",
+            "Your wallet balance is UGX " +
+            formatMoney(walletBalance) +
+            ". You cannot invest UGX " +
+            formatMoney(amount) +
+            ".",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       CONFIRMATION
+    ===================================================== */
 
     const confirmed =
         window.confirm(
 
             "Confirm Investment\n\n" +
 
-            "Plan: " +
-            planName +
-
-            "\nAmount: UGX " +
+            "Investment Amount: UGX " +
             formatMoney(amount) +
-
-            "\nDaily Return: " +
-            rate +
-            "%" +
-
-            "\nDuration: " +
-            days +
-            " days" +
 
             "\n\n" +
 
-            "UGX " +
-            formatMoney(amount) +
-            " will be deducted from your wallet when the investment is successfully created." +
+            "The amount will be deducted from your Crown Cash wallet when the server successfully creates the investment." +
 
-            "\n\nDo you want to continue?"
+            "\n\n" +
+
+            "The investment will become active automatically." +
+
+            "\n\n" +
+
+            "Do you want to continue?"
 
         );
 
@@ -2287,17 +2650,19 @@ async function createInvestment(
         !confirmed
     ) {
 
-        hideMessage();
-
         return;
     }
 
+
+    /* =====================================================
+       LOCK SUBMISSION
+    ===================================================== */
 
     submittingInvestment =
         true;
 
 
-    const originalText =
+    const originalButtonHTML =
         button.innerHTML;
 
 
@@ -2306,19 +2671,32 @@ async function createInvestment(
 
 
     button.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+        '<i class="fa-solid fa-spinner fa-spin"></i> Creating Investment...';
 
 
     showMessage(
-        "Processing Investment",
-        "Creating your " +
-        planName +
-        "...",
+        "Creating Investment",
+        "Please wait while Crown Cash creates your investment...",
         "success"
     );
 
 
     try {
+
+        /*
+         * IMPORTANT:
+         *
+         * Only amount and currency are sent.
+         *
+         * The client does NOT send:
+         * - plan
+         * - plan name
+         * - daily rate
+         * - duration
+         * - daily return
+         *
+         * The backend controls those values.
+         */
 
         const response =
             await fetch(
@@ -2347,29 +2725,11 @@ async function createInvestment(
                     body:
                         JSON.stringify({
 
-                            plan:
-                                plan,
-
-                            plan_name:
-                                planName,
-
                             amount:
                                 amount,
 
                             currency:
-                                "UGX",
-
-                            duration:
-                                days,
-
-                            duration_days:
-                                days,
-
-                            daily_rate:
-                                rate / 100,
-
-                            daily_return:
-                                rate
+                                "UGX"
 
                         })
 
@@ -2377,17 +2737,11 @@ async function createInvestment(
             );
 
 
-        /*
-         * Read the response as text first.
-         * This allows us to see server errors even
-         * when PHP returns malformed JSON.
-         */
-
         const rawResponse =
             await response.text();
 
 
-        let data = null;
+        let data;
 
 
         try {
@@ -2400,32 +2754,20 @@ async function createInvestment(
         } catch (jsonError) {
 
             console.error(
-                "Invalid investment response:",
+                "Invalid investment API response:",
                 rawResponse
             );
 
 
             throw new Error(
-
-                "Investment server returned an invalid response." +
-
-                (
-                    rawResponse
-                        ? " Server response: " +
-                          rawResponse.substring(
-                              0,
-                              250
-                          )
-                        : ""
-                )
-
+                "The investment server returned an invalid response."
             );
 
         }
 
 
         console.log(
-            "Investment HTTP status:",
+            "Investment response status:",
             response.status
         );
 
@@ -2435,6 +2777,10 @@ async function createInvestment(
             data
         );
 
+
+        /* =================================================
+           AUTHENTICATION ERRORS
+        ================================================= */
 
         if (
             response.status === 401
@@ -2454,38 +2800,48 @@ async function createInvestment(
 
             throw new Error(
                 data.message ||
-                "Investment access was denied by the server."
+                "Investment access was denied."
             );
 
         }
 
 
+        /* =================================================
+           VALIDATION ERRORS
+        ================================================= */
+
         if (
-            response.status === 404
+            response.status === 400
         ) {
 
             throw new Error(
                 data.message ||
-                "The investment service could not be found."
+                "The investment amount is invalid."
             );
 
         }
 
+
+        /* =================================================
+           SERVER ERRORS
+        ================================================= */
 
         if (
             response.status >= 500
         ) {
 
             throw new Error(
-
-                data.error ||
                 data.message ||
-                "The Crown Cash investment server encountered an error."
-
+                data.error ||
+                "The investment server encountered an error. Please try again."
             );
 
         }
 
+
+        /* =================================================
+           GENERAL FAILURE
+        ================================================= */
 
         if (
             !response.ok ||
@@ -2494,11 +2850,9 @@ async function createInvestment(
         ) {
 
             throw new Error(
-
                 data.message ||
                 data.error ||
                 "Unable to create the investment."
-
             );
 
         }
@@ -2509,58 +2863,55 @@ async function createInvestment(
         ================================================= */
 
         const newBalance =
-
-            data.new_balance !== undefined
-
-                ? data.new_balance
-
-                : (
-                    data.wallet &&
-                    data.wallet.new_balance !== undefined
-
-                        ? data.wallet.new_balance
-
-                        : (
-                            data.balance !== undefined
-
-                                ? data.balance
-
-                                : null
-                          )
-                  );
+            extractNewBalance(
+                data
+            );
 
 
         if (
             newBalance !== null
         ) {
 
+            walletBalance =
+                newBalance;
+
+
             updateWalletDisplay(
-                newBalance
+                walletBalance
             );
 
+
+            updateInvestmentPreview();
+
         } else {
+
+            /*
+             * If the investment endpoint does not return
+             * the new balance, retrieve it directly from
+             * the dashboard endpoint.
+             */
 
             await loadWalletBalance();
 
         }
 
 
-        showMessage(
-
-            "Investment Submitted",
-
+        const successMessage =
             data.message ||
 
-            `${planName} has been submitted successfully for admin approval.`,
+            "Your investment has been created successfully and is now active.";
 
+
+        showMessage(
+            "Investment Active",
+            successMessage,
             "success"
-
         );
 
 
         /*
-         * Go to My Investments after
-         * the user sees the success message.
+         * Send user to My Investments after
+         * successful creation.
          */
 
         setTimeout(
@@ -2577,21 +2928,16 @@ async function createInvestment(
     } catch (error) {
 
         console.error(
-            "Crown Cash investment error:",
+            "Investment creation error:",
             error
         );
 
 
         showMessage(
-
             "Investment Failed",
-
             error.message ||
-
-            "Unable to create the investment.",
-
+            "Unable to create your investment.",
             "error"
-
         );
 
 
@@ -2600,7 +2946,7 @@ async function createInvestment(
 
 
         button.innerHTML =
-            originalText;
+            originalButtonHTML;
 
     } finally {
 
@@ -2608,6 +2954,93 @@ async function createInvestment(
             false;
 
     }
+
+}
+
+
+/* =========================================================
+   EXTRACT NEW BALANCE
+========================================================= */
+
+function extractNewBalance(
+    data
+) {
+
+    if (
+        !data
+    ) {
+        return null;
+    }
+
+
+    const possibleValues = [
+
+        data.new_balance,
+
+        data.newBalance,
+
+        data.balance,
+
+        data.wallet_balance,
+
+        data.available_balance,
+
+        data.wallet &&
+        data.wallet.new_balance,
+
+        data.wallet &&
+        data.wallet.balance,
+
+        data.data &&
+        data.data.new_balance,
+
+        data.data &&
+        data.data.newBalance,
+
+        data.data &&
+        data.data.balance,
+
+        data.data &&
+        data.data.wallet_balance,
+
+        data.data &&
+        data.data.wallet &&
+        data.data.wallet.balance
+
+    ];
+
+
+    for (
+        const value
+        of possibleValues
+    ) {
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        ) {
+
+            const number =
+                Number(
+                    value
+                );
+
+
+            if (
+                Number.isFinite(number)
+            ) {
+
+                return number;
+
+            }
+
+        }
+
+    }
+
+
+    return null;
 
 }
 
@@ -2647,7 +3080,10 @@ async function getWalletBalance() {
         !response.ok
     ) {
 
-        return null;
+        throw new Error(
+            "Unable to retrieve wallet balance."
+        );
+
     }
 
 
@@ -2660,57 +3096,120 @@ async function getWalletBalance() {
         data.success !== true
     ) {
 
-        return null;
+        throw new Error(
+            data?.message ||
+            "Unable to retrieve wallet balance."
+        );
+
     }
 
 
     const balance =
-
-        data.balance !== undefined
-
-            ? data.balance
-
-            : (
-                data.available_balance !== undefined
-
-                    ? data.available_balance
-
-                    : (
-                        data.wallet_balance !== undefined
-
-                            ? data.wallet_balance
-
-                            : (
-                                data.wallet &&
-                                data.wallet.balance !== undefined
-
-                                    ? data.wallet.balance
-
-                                    : 0
-                              )
-                      )
-              );
-
-
-    const number =
-        Number(balance);
+        extractDashboardBalance(
+            data
+        );
 
 
     if (
-        !Number.isFinite(number)
+        balance === null
     ) {
 
-        return 0;
+        throw new Error(
+            "Wallet balance was not returned by the server."
+        );
+
     }
 
 
-    return number;
+    return balance;
 
 }
 
 
 /* =========================================================
-   LOAD WALLET
+   EXTRACT DASHBOARD BALANCE
+========================================================= */
+
+function extractDashboardBalance(
+    data
+) {
+
+    if (
+        !data
+    ) {
+        return null;
+    }
+
+
+    const possibleValues = [
+
+        data.balance,
+
+        data.wallet_balance,
+
+        data.available_balance,
+
+        data.availableBalance,
+
+        data.wallet &&
+        data.wallet.balance,
+
+        data.wallet &&
+        data.wallet.wallet_balance,
+
+        data.data &&
+        data.data.balance,
+
+        data.data &&
+        data.data.wallet_balance,
+
+        data.data &&
+        data.data.available_balance,
+
+        data.data &&
+        data.data.wallet &&
+        data.data.wallet.balance
+
+    ];
+
+
+    for (
+        const value
+        of possibleValues
+    ) {
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        ) {
+
+            const number =
+                Number(
+                    value
+                );
+
+
+            if (
+                Number.isFinite(number)
+            ) {
+
+                return number;
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   LOAD WALLET BALANCE
 ========================================================= */
 
 async function loadWalletBalance() {
@@ -2721,21 +3220,27 @@ async function loadWalletBalance() {
             await getWalletBalance();
 
 
-        if (
-            balance !== null
-        ) {
+        walletBalance =
+            balance;
 
-            updateWalletDisplay(
-                balance
-            );
 
-        }
+        updateWalletDisplay(
+            walletBalance
+        );
+
+
+        updateInvestmentPreview();
 
     } catch (error) {
 
         console.error(
             "Wallet balance error:",
             error
+        );
+
+
+        updateWalletDisplay(
+            0
         );
 
     }
@@ -2781,7 +3286,7 @@ function setupCalculator() {
 
     const amountInput =
         document.getElementById(
-            "investmentAmount"
+            "calculatorAmount"
         );
 
 
@@ -2817,12 +3322,16 @@ function setupCalculator() {
 }
 
 
+/* =========================================================
+   CALCULATE INVESTMENT
+========================================================= */
+
 function calculateInvestment() {
 
     const amount =
         Number(
             document.getElementById(
-                "investmentAmount"
+                "calculatorAmount"
             )?.value
         ) || 0;
 
@@ -2843,14 +3352,14 @@ function calculateInvestment() {
         );
 
 
-    const monthly =
+    const thirtyDayIncome =
         daily *
         30;
 
 
     const total =
         amount +
-        monthly;
+        thirtyDayIncome;
 
 
     setText(
@@ -2866,7 +3375,7 @@ function calculateInvestment() {
         "monthlyIncome",
         "UGX " +
         formatMoney(
-            monthly
+            thirtyDayIncome
         )
     );
 
@@ -3001,7 +3510,6 @@ function setupLogout() {
     if (
         !logoutBtn
     ) {
-
         return;
     }
 
@@ -3031,7 +3539,10 @@ function setupLogout() {
                             "Accept":
                                 "application/json"
 
-                        }
+                        },
+
+                        cache:
+                            "no-store"
 
                     }
                 );

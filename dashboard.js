@@ -1,9 +1,11 @@
 /* =========================================================
    CROWN CASH — DASHBOARD.JS
    Production Version
+   WhatsApp + PWA Install
    ========================================================= */
 
 "use strict";
+
 
 /* =========================================================
    API
@@ -20,6 +22,171 @@ const PROFILE_API =
 
 const LOGOUT_API =
     `${API_BASE}/logout.php`;
+
+
+/* =========================================================
+   PWA INSTALL
+========================================================= */
+
+let deferredInstallPrompt = null;
+
+
+/*
+ * Capture Android / Chrome install prompt.
+ */
+window.addEventListener(
+    "beforeinstallprompt",
+    function (event) {
+
+        event.preventDefault();
+
+        deferredInstallPrompt = event;
+
+        showInstallButton();
+    }
+);
+
+
+/*
+ * Detect when Crown Cash has been installed.
+ */
+window.addEventListener(
+    "appinstalled",
+    function () {
+
+        deferredInstallPrompt = null;
+
+        hideInstallButton();
+
+        console.log(
+            "Crown Cash was installed."
+        );
+    }
+);
+
+
+/* =========================================================
+   INSTALL BUTTON
+========================================================= */
+
+function showInstallButton() {
+
+    const button =
+        document.getElementById(
+            "installAppButton"
+        );
+
+    if (!button) {
+        return;
+    }
+
+    button.style.display = "";
+}
+
+
+function hideInstallButton() {
+
+    const button =
+        document.getElementById(
+            "installAppButton"
+        );
+
+    if (!button) {
+        return;
+    }
+
+    /*
+     * Keep the card available so users can
+     * still receive instructions on browsers
+     * where the automatic prompt is unavailable.
+     */
+}
+
+
+/* =========================================================
+   INSTALL CROWN CASH
+========================================================= */
+
+async function installCrownCash() {
+
+    /*
+     * Android / Chrome / supported browsers
+     */
+
+    if (deferredInstallPrompt) {
+
+        deferredInstallPrompt.prompt();
+
+        try {
+
+            const result =
+                await deferredInstallPrompt.userChoice;
+
+            console.log(
+                "Crown Cash install choice:",
+                result.outcome
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Install prompt error:",
+                error
+            );
+        }
+
+        deferredInstallPrompt = null;
+
+        return;
+    }
+
+
+    /*
+     * If the automatic install prompt isn't
+     * available, provide a simple instruction.
+     */
+
+    const isIOS =
+        /iphone|ipad|ipod/i.test(
+            navigator.userAgent
+        );
+
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
+
+
+    if (isStandalone) {
+
+        alert(
+            "Crown Cash is already installed on this phone."
+        );
+
+        return;
+    }
+
+
+    if (isIOS) {
+
+        alert(
+            "To install Crown Cash on iPhone/iPad:\n\n" +
+            "1. Tap the Share button in Safari.\n" +
+            "2. Select 'Add to Home Screen'.\n" +
+            "3. Tap 'Add'."
+        );
+
+        return;
+    }
+
+
+    alert(
+        "To install Crown Cash:\n\n" +
+        "Open your browser menu and choose " +
+        "'Install app' or 'Add to Home screen'."
+    );
+}
 
 
 /* =========================================================
@@ -404,25 +571,6 @@ function updateOverview(data) {
    ADMIN ROLE DETECTION
 ========================================================= */
 
-/*
-   IMPORTANT:
-
-   The Admin Panel is now displayed ONLY when
-   the user's actual role is "admin".
-
-   We do NOT use:
-       authorized
-       success
-       logged_in
-       is_admin = true
-
-   by themselves to display the Admin Panel.
-
-   This prevents a normal account from seeing
-   the administrator controls merely because an
-   authorization flag was returned by the API.
-*/
-
 function isAdminRole(data, profile = null) {
 
     const user =
@@ -439,50 +587,30 @@ function isAdminRole(data, profile = null) {
     const possibleRoles = [
 
         user.role,
-
         user.user_role,
-
         user.account_type,
-
         user.accountType,
-
         user.userType,
-
         user.type,
 
         profileUser.role,
-
         profileUser.user_role,
-
         profileUser.account_type,
-
         profileUser.accountType,
-
         profileUser.userType,
-
         profileUser.type,
 
         data?.role,
-
         data?.user_role,
-
         data?.account_type,
-
         data?.accountType,
 
         data?.data?.role,
-
         data?.data?.user_role,
 
         data?.admin?.role
     ];
 
-
-    /*
-       If we have an explicit role, use it.
-
-       Only "admin" is accepted.
-    */
 
     for (const role of possibleRoles) {
 
@@ -499,13 +627,6 @@ function isAdminRole(data, profile = null) {
         }
     }
 
-
-    /*
-       No explicit role means:
-       NOT an administrator.
-
-       This is intentional.
-    */
 
     return false;
 }
@@ -534,76 +655,29 @@ function updateAdminVisibility(
         );
 
 
-    /*
-       Admin only.
-    */
-
     if (authorized) {
 
         if (adminNav) {
 
             adminNav.style.display =
                 "";
+
+            adminNav.hidden =
+                false;
         }
 
         if (adminCard) {
 
             adminCard.style.display =
                 "";
-        }
-
-    } else {
-
-        /*
-           Hide completely for normal users.
-        */
-
-        if (adminNav) {
-
-            adminNav.style.display =
-                "none";
-        }
-
-        if (adminCard) {
-
-            adminCard.style.display =
-                "none";
-        }
-    }
-
-
-    /*
-       Also protect the elements from being
-       temporarily visible while the API loads.
-    */
-
-    if (!authorized) {
-
-        if (adminNav) {
-
-            adminNav.hidden =
-                true;
-        }
-
-        if (adminCard) {
-
-            adminCard.hidden =
-                true;
-        }
-
-    } else {
-
-        if (adminNav) {
-
-            adminNav.hidden =
-                false;
-        }
-
-        if (adminCard) {
 
             adminCard.hidden =
                 false;
         }
+
+    } else {
+
+        hideAdminControls();
     }
 }
 
@@ -668,14 +742,6 @@ async function loadProfile() {
 
 async function loadDashboard() {
 
-    /*
-       Hide Admin Panel immediately while
-       authorization is being determined.
-
-       This prevents normal users from seeing
-       it even briefly during page loading.
-    */
-
     hideAdminControls();
 
 
@@ -703,10 +769,6 @@ async function loadDashboard() {
             );
 
 
-        /*
-         * User is not logged in.
-         */
-
         if (
             response.status === 401
         ) {
@@ -718,10 +780,6 @@ async function loadDashboard() {
         }
 
 
-        /*
-         * User does not have permission.
-         */
-
         if (
             response.status === 403
         ) {
@@ -731,10 +789,6 @@ async function loadDashboard() {
             return;
         }
 
-
-        /*
-         * Other HTTP errors.
-         */
 
         if (!response.ok) {
 
@@ -748,11 +802,6 @@ async function loadDashboard() {
             await response.json();
 
 
-        /*
-         * Backend may explicitly say
-         * authentication is required.
-         */
-
         if (
             data &&
             data.authenticated === false
@@ -764,10 +813,6 @@ async function loadDashboard() {
             return;
         }
 
-
-        /*
-         * Backend returned unsuccessful response.
-         */
 
         if (
             data &&
@@ -781,10 +826,6 @@ async function loadDashboard() {
         }
 
 
-        /*
-         * Update normal dashboard.
-         */
-
         updateUserDisplay(data);
 
         updateWallet(data);
@@ -792,19 +833,9 @@ async function loadDashboard() {
         updateOverview(data);
 
 
-        /*
-         * Load profile separately so that
-         * the actual account role is checked.
-         */
-
         const profile =
             await loadProfile();
 
-
-        /*
-         * Admin Panel is shown ONLY if
-         * actual role === admin.
-         */
 
         updateAdminVisibility(
             data,
@@ -814,22 +845,10 @@ async function loadDashboard() {
 
     } catch (error) {
 
-        /*
-         * Keep dashboard usable.
-
-         * Never show the old diagnostic box.
-         */
-
         console.error(
             "Crown Cash dashboard API error:",
             error
         );
-
-
-        /*
-         * If API fails, hide admin controls
-         * for security.
-         */
 
         hideAdminControls();
     }
@@ -1062,18 +1081,59 @@ function setCurrentYear() {
 
 
 /* =========================================================
+   PWA SERVICE WORKER
+========================================================= */
+
+function registerServiceWorker() {
+
+    if (
+        "serviceWorker" in navigator
+    ) {
+
+        window.addEventListener(
+            "load",
+            function () {
+
+                navigator.serviceWorker
+                    .register(
+                        "service-worker.js",
+                        {
+                            scope: "./"
+                        }
+                    )
+                    .then(
+                        function (registration) {
+
+                            console.log(
+                                "Crown Cash service worker registered:",
+                                registration.scope
+                            );
+
+                        }
+                    )
+                    .catch(
+                        function (error) {
+
+                            console.error(
+                                "Service worker registration failed:",
+                                error
+                            );
+
+                        }
+                    );
+            }
+        );
+    }
+}
+
+
+/* =========================================================
    EVENTS
 ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
     function () {
-
-        /*
-         * SECURITY:
-         * Hide administrator controls before
-         * any API request finishes.
-         */
 
         hideAdminControls();
 
@@ -1091,11 +1151,31 @@ document.addEventListener(
         }
 
 
+        const installButton =
+            byId("installAppButton");
+
+
+        if (installButton) {
+
+            installButton.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    installCrownCash();
+                }
+            );
+        }
+
+
         calculateReturns();
 
         setupMobileMenu();
 
         setCurrentYear();
+
+        registerServiceWorker();
 
 
         const logoutButton =
@@ -1115,10 +1195,6 @@ document.addEventListener(
             );
         }
 
-
-        /*
-         * Load real account data.
-         */
 
         loadDashboard();
     }

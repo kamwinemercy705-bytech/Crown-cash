@@ -1,0 +1,54 @@
+name: Crown Cash Daily Earnings
+
+on:
+  schedule:
+    # Run every hour at minute 17.
+    # GitHub Actions schedules use UTC by default.
+    - cron: "17 * * * *"
+
+  # Allows you to run the earnings processor manually
+  # from GitHub Actions.
+  workflow_dispatch:
+
+jobs:
+  process-daily-earnings:
+    name: Process Crown Cash Earnings
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Crown Cash daily earnings
+        env:
+          CRON_URL: ${{ secrets.CROWN_CASH_CRON_URL }}
+          CRON_SECRET: ${{ secrets.CROWN_CASH_CRON_SECRET }}
+        run: |
+          set -e
+
+          if [ -z "$CRON_URL" ]; then
+            echo "ERROR: CROWN_CASH_CRON_URL secret is not configured."
+            exit 1
+          fi
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "ERROR: CROWN_CASH_CRON_SECRET secret is not configured."
+            exit 1
+          fi
+
+          echo "Starting Crown Cash daily earnings processor..."
+
+          RESPONSE=$(curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --location \
+            --max-time 120 \
+            --retry 3 \
+            --retry-delay 5 \
+            --request POST \
+            --header "X-Cron-Token: $CRON_SECRET" \
+            --header "Accept: application/json" \
+            "$CRON_URL")
+
+          echo "Crown Cash earnings processor response:"
+          echo "$RESPONSE"
+
+          echo "Daily earnings job completed successfully."
